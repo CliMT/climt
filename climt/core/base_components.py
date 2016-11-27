@@ -8,3 +8,6 @@ class Prognostic(object):
 
 class Diagnostic(object):
     pass
+
+class Monitor(object):
+    pass
