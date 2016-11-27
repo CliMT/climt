@@ -7,6 +7,31 @@ from climt import (
     MonitorCollection, SharedKeyException,
 )
 
+class MockPrognostic(Prognostic):
+
+    def ensure_state_is_valid_input(self, state):
+        return
+
+    def __call__(self):
+        return {}, {}
+
+
+class MockDiagnostic(Diagnostic):
+
+    def ensure_state_is_valid_input(self, state):
+        return
+
+    def __call__(self, state):
+        return {}
+
+
+class MockMonitor(Monitor):
+    def ensure_state_is_valid_input(self, state):
+        return
+
+    def store(self, state):
+        return
+
 
 def test_empty_prognostic_collection():
     prognostic_collection = PrognosticCollection([])
@@ -19,12 +44,12 @@ def test_empty_prognostic_collection():
     assert isinstance(diagnostics, dict)
 
 
-@mock.patch.object(climt.Prognostic, 'ensure_state_is_valid_input')
-@mock.patch.object(climt.Prognostic, '__call__')
+@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
+@mock.patch.object(MockPrognostic, '__call__')
 def test_prognostic_collection_calls_one_prognostic(mock_call, mock_ensure):
     mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 50.})
     mock_ensure.return_value = None
-    prognostic_collection = PrognosticCollection([Prognostic()])
+    prognostic_collection = PrognosticCollection([MockPrognostic()])
     state = {'air_temperature': 273.15}
     prognostic_collection.ensure_state_is_valid_input(state)
     assert mock_ensure.called
@@ -34,11 +59,12 @@ def test_prognostic_collection_calls_one_prognostic(mock_call, mock_ensure):
     assert diagnostics == {'foo': 50.}
 
 
-@mock.patch.object(climt.Prognostic, 'ensure_state_is_valid_input')
-@mock.patch.object(climt.Prognostic, '__call__')
+@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
+@mock.patch.object(MockPrognostic, '__call__')
 def test_prognostic_collection_calls_two_prognostics(mock_call, mock_ensure):
     mock_call.return_value = ({'air_temperature': 0.5}, {})
-    prognostic_collection = PrognosticCollection([Prognostic(), Prognostic()])
+    prognostic_collection = PrognosticCollection(
+        [MockPrognostic(), MockPrognostic()])
     state = {'air_temperature': 273.15}
     prognostic_collection.ensure_state_is_valid_input(state)
     assert mock_ensure.called
@@ -59,12 +85,12 @@ def test_empty_diagnostic_collection():
     assert isinstance(diagnostics, dict)
 
 
-@mock.patch.object(climt.Diagnostic, 'ensure_state_is_valid_input')
-@mock.patch.object(climt.Diagnostic, '__call__')
+@mock.patch.object(MockDiagnostic, 'ensure_state_is_valid_input')
+@mock.patch.object(MockDiagnostic, '__call__')
 def test_diagnostic_collection_calls_one_diagnostic(mock_call, mock_ensure):
     mock_call.return_value = ({'foo': 50.})
     mock_ensure.return_value = None
-    diagnostic_collection = DiagnosticCollection([Diagnostic()])
+    diagnostic_collection = DiagnosticCollection([MockDiagnostic()])
     state = {'air_temperature': 273.15}
     diagnostic_collection.ensure_state_is_valid_input(state)
     assert mock_ensure.called
@@ -81,12 +107,12 @@ def test_empty_monitor_collection():
     monitor_collection.store(state)
 
 
-@mock.patch.object(climt.Monitor, 'ensure_state_is_valid_input')
-@mock.patch.object(climt.Monitor, 'store')
+@mock.patch.object(MockMonitor, 'ensure_state_is_valid_input')
+@mock.patch.object(MockMonitor, 'store')
 def test_monitor_collection_calls_one_monitor(mock_store, mock_ensure):
     mock_store.return_value = None
     mock_ensure.return_value = None
-    monitor_collection = MonitorCollection([Monitor()])
+    monitor_collection = MonitorCollection([MockMonitor()])
     state = {'air_temperature': 273.15}
     monitor_collection.ensure_state_is_valid_input(state)
     assert mock_ensure.called
@@ -94,12 +120,12 @@ def test_monitor_collection_calls_one_monitor(mock_store, mock_ensure):
     assert mock_store.called
 
 
-@mock.patch.object(climt.Monitor, 'ensure_state_is_valid_input')
-@mock.patch.object(climt.Monitor, 'store')
+@mock.patch.object(MockMonitor, 'ensure_state_is_valid_input')
+@mock.patch.object(MockMonitor, 'store')
 def test_monitor_collection_calls_two_monitors(mock_store, mock_ensure):
     mock_store.return_value = None
     mock_ensure.return_value = None
-    monitor_collection = MonitorCollection([Monitor(), Monitor()])
+    monitor_collection = MonitorCollection([MockMonitor(), MockMonitor()])
     state = {'air_temperature': 273.15}
     monitor_collection.ensure_state_is_valid_input(state)
     assert mock_ensure.called
