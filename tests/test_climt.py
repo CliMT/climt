@@ -11,9 +11,6 @@ Tests for `climt` module.
 import pytest
 
 
-from climt import climt
-
-
 @pytest.fixture
 def response():
     """Sample pytest fixture.
