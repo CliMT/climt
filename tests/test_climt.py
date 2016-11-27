@@ -10,6 +10,7 @@ Tests for `climt` module.
 
 import pytest
 
+import climt
 
 @pytest.fixture
 def response():
