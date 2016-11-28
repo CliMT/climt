@@ -187,6 +187,10 @@ class PrognosticCollection(ComponentCollection):
             diagnostics (dict): A dicitonary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the time of the input state.
+
+        Raises:
+            SharedKeyException: if multiple Prognostic objects contained in the
+            collection return the same diagnostic quantity.
         """
         return_tendencies = {}
         return_diagnostics = {}
@@ -241,6 +245,10 @@ class DiagnosticCollection(ComponentCollection):
             diagnostics (dict): A dicitonary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the time of the input state.
+
+        Raises:
+            SharedKeyException: if multiple Diagnostic objects contained in the
+            collection return the same diagnostic quantity.
         """
         return_diagnostics = {}
         for diagnostic_component in self._components:

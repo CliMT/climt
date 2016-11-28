@@ -76,6 +76,25 @@ def test_prognostic_collection_calls_two_prognostics(mock_call, mock_ensure):
     assert diagnostics == {}
 
 
+@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
+@mock.patch.object(MockPrognostic, '__call__')
+def test_prognostic_errors_when_overlapping_diagnostics(mock_call, mock_ensure):
+    """Test that when two Prognostic objects in a collection return the same
+    diagnostic, a SharedKeyException is raised."""
+    mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 1.})
+    prognostic_collection = PrognosticCollection(
+        [MockPrognostic(), MockPrognostic()])
+    state = {'air_temperature': 273.15}
+    try:
+        tendencies, diagnostics = prognostic_collection(state)
+    except SharedKeyException:
+        pass
+    except Exception as err:
+        raise err
+    else:
+        raise AssertionError
+
+
 def test_empty_diagnostic_collection():
     diagnostic_collection = DiagnosticCollection([])
     state = {'air_temperature': 273.15}
@@ -97,6 +116,25 @@ def test_diagnostic_collection_calls_one_diagnostic(mock_call, mock_ensure):
     diagnostics = diagnostic_collection(state)
     assert mock_call.called
     assert diagnostics == {'foo': 50.}
+
+
+@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
+@mock.patch.object(MockPrognostic, '__call__')
+def test_diagnostic_errors_when_overlapping_diagnostics(mock_call, mock_ensure):
+    """Test that when two Prognostic objects in a collection return the same
+    diagnostic, a SharedKeyException is raised."""
+    mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 1.})
+    diagnostic_collection = PrognosticCollection(
+        [MockPrognostic(), MockPrognostic()])
+    state = {'air_temperature': 273.15}
+    try:
+        diagnostics = diagnostic_collection(state)
+    except SharedKeyException:
+        pass
+    except Exception as err:
+        raise err
+    else:
+        raise AssertionError
 
 
 def test_empty_monitor_collection():
