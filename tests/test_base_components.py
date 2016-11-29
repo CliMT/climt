@@ -1,7 +1,5 @@
 import pytest
-import unittest
 import mock
-import climt
 from climt import (
     Prognostic, Diagnostic, Monitor, PrognosticCollection, DiagnosticCollection,
     MonitorCollection, SharedKeyException,
