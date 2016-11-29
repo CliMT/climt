@@ -18,7 +18,6 @@ class Implicit(object):
         Returns:
             None
         """
-        return
 
     @abc.abstractmethod
     def __call__(self, state, timestep):
@@ -37,7 +36,6 @@ class Implicit(object):
                 state quantities and values are the value of those quantities
                 at the timestep after input state.
         """
-        return
 
 
 class Prognostic(object):
@@ -56,7 +54,6 @@ class Prognostic(object):
         Returns:
             None
         """
-        return
 
     @abc.abstractmethod
     def __call__(self, state):
@@ -74,7 +71,6 @@ class Prognostic(object):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        return
 
 
 class Diagnostic(object):
@@ -90,7 +86,6 @@ class Diagnostic(object):
             InvalidStateException: if state is not a valid input for the
                 Diagnostic instance.
         """
-        return
 
     @abc.abstractmethod
     def __call__(self, state):
@@ -105,7 +100,6 @@ class Diagnostic(object):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        return {}
 
     def update_state(self, state):
         """
@@ -149,7 +143,6 @@ class Monitor(object):
         Args:
             state (dict): A model state dictionary.
         """
-        return
 
 
 class ComponentCollection(object):
