@@ -5,12 +5,13 @@ from climt import (
     MonitorCollection, SharedKeyException,
 )
 
+
 class MockPrognostic(Prognostic):
 
     def ensure_state_is_valid_input(self, state):
         return
 
-    def __call__(self):
+    def __call__(self, state):
         return {}, {}
 
 
@@ -169,6 +170,68 @@ def test_monitor_collection_calls_two_monitors(mock_store, mock_ensure):
     monitor_collection.store(state)
     assert mock_store.called
     assert mock_store.call_count == 2
+
+
+def test_prognostic_collection_cannot_use_diagnostic():
+    try:
+        PrognosticCollection([MockDiagnostic()])
+    except TypeError:
+        pass
+    except Exception as err:
+        raise err
+    else:
+        raise AssertionError('TypeError should have been raised')
+
+
+def test_diagnostic_collection_cannot_use_prognostic():
+    try:
+        DiagnosticCollection([MockPrognostic()])
+    except TypeError:
+        pass
+    except Exception as err:
+        raise err
+    else:
+        raise AssertionError('TypeError should have been raised')
+
+
+@mock.patch.object(MockDiagnostic, '__call__')
+def test_diagnostic_collection_call(mock_call):
+    mock_call.return_value = {'foo': 5.}
+    state = {'bar': 10.}
+    diagnostics = DiagnosticCollection([MockDiagnostic()])
+    new_state = diagnostics(state)
+    assert list(state.keys()) == ['bar']
+    assert state['bar'] == 10.
+    assert list(new_state.keys()) == ['foo']
+    assert new_state['foo'] == 5.
+
+
+@mock.patch.object(MockDiagnostic, '__call__')
+def test_diagnostic_collection_update(mock_call):
+    mock_call.return_value = {'foo': 5.}
+    state = {'bar': 10.}
+    diagnostics = DiagnosticCollection([MockDiagnostic()])
+    diagnostics.update_state(state)
+    assert len(state.keys()) == 2
+    assert 'foo' in state.keys()
+    assert 'bar' in state.keys()
+    assert state['foo'] == 5.
+    assert state['bar'] == 10.
+
+
+@mock.patch.object(MockDiagnostic, '__call__')
+def test_diagnostic_collection_update_will_not_overwrite(mock_call):
+    mock_call.return_value = {'foo': 5.}
+    state = {'foo': 10.}
+    diagnostics = DiagnosticCollection([MockDiagnostic()])
+    try:
+        diagnostics.update_state(state)
+    except SharedKeyException:
+        pass
+    except Exception as err:
+        raise err
+    else:
+        raise AssertionError('SharedKeyException should have been raised')
 
 
 if __name__ == '__main__':
