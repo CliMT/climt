@@ -167,8 +167,8 @@ class ComponentCollection(object):
 def ensure_components_have_class(components, component_class):
     for component in components:
         if not isinstance(component, component_class):
-            raise ValueError(
-                "Components must be of class {}".format(component_class))
+            raise TypeError(
+                "require components of type {}".format(component_class))
 
 
 class PrognosticCollection(ComponentCollection):
