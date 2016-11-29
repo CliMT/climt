@@ -6,7 +6,7 @@ CliMT
 .. image:: https://img.shields.io/pypi/v/climt.svg
         :target: https://pypi.python.org/pypi/climt
 
-.. image:: https://img.shields.io/travis/CliMT/climt.svg
+.. image:: https://img.shields.io/travis/CliMT/climt-future.svg
         :target: https://travis-ci.org/CliMT/climt
 
 .. image:: https://readthedocs.org/projects/climt/badge/?version=latest

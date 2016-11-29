@@ -101,9 +101,9 @@ def test_leapfrog_array_no_change_one_step(mock_prognostic_call):
     timestep = timedelta(seconds=1.)
     time_stepper = Leapfrog([MockPrognostic()])
     current_state, new_state = time_stepper.step(state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*273.).all()
 
 
@@ -115,21 +115,21 @@ def test_leapfrog_array_no_change_three_steps(mock_prognostic_call):
     timestep = timedelta(seconds=1.)
     time_stepper = Leapfrog([MockPrognostic()])
     current_state, new_state = time_stepper.step(state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*273.).all()
     current_state = new_state
     current_state, new_state = time_stepper.step(current_state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*273.).all()
     current_state = new_state
     current_state, new_state = time_stepper.step(current_state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*273.).all()
 
 
@@ -141,9 +141,9 @@ def test_leapfrog_array_one_step(mock_prognostic_call):
     timestep = timedelta(seconds=1.)
     time_stepper = Leapfrog([MockPrognostic()])
     current_state, new_state = time_stepper.step(state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*274.).all()
 
 @mock.patch.object(MockPrognostic, '__call__')
@@ -154,21 +154,21 @@ def test_leapfrog_array_three_steps(mock_prognostic_call):
     timestep = timedelta(seconds=1.)
     time_stepper = Leapfrog([MockPrognostic()])
     current_state, new_state = time_stepper.step(state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*274.).all()
     current_state = new_state
     current_state, new_state = time_stepper.step(new_state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*274.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*275.).all()
     current_state = new_state
     current_state, new_state = time_stepper.step(current_state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*275.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*276.).all()
 
 
@@ -181,9 +181,9 @@ def test_leapfrog_array_two_steps_filtered(mock_prognostic_call):
     timestep = timedelta(seconds=1.)
     time_stepper = Leapfrog([MockPrognostic()], asselin_strength=0.5)
     current_state, new_state = time_stepper.step(state, timestep)
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*273.).all()
     current_state = new_state
     mock_prognostic_call.return_value = (
@@ -191,12 +191,12 @@ def test_leapfrog_array_two_steps_filtered(mock_prognostic_call):
     input_current_state = current_state
     current_state, new_state = time_stepper.step(current_state, timestep)
     # Asselin filter modifies the current state
-    assert current_state.keys() == ['air_temperature']
+    assert list(current_state.keys()) == ['air_temperature']
     assert (current_state['air_temperature'] == np.ones((3,3))*274.).all()
     # but the input current state should not be changed
-    assert input_current_state.keys() == ['air_temperature']
+    assert list(input_current_state.keys()) == ['air_temperature']
     assert (input_current_state['air_temperature'] == np.ones((3,3))*273.).all()
-    assert new_state.keys() == ['air_temperature']
+    assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3,3))*277.).all()
 
 if __name__ == '__main__':
