@@ -1,17 +1,23 @@
-===============================
+=====
 CliMT
-===============================
+=====
 
 
 .. image:: https://img.shields.io/pypi/v/climt.svg
-        :target: https://pypi.python.org/pypi/climt
+    :target: https://pypi.python.org/pypi/climt
+    :alt: PyPI
 
 .. image:: https://img.shields.io/travis/CliMT/climt-future.svg
-        :target: https://travis-ci.org/CliMT/climt
+    :target: https://travis-ci.org/CliMT/climt
+    :alt: Continuous Integration
+
+.. image:: https://img.shields.io/codecov/c/github/CliMT/climt-future.svg
+    :target: https://travis-ci.org/CliMT/climt
+    :alt: Coverage
 
 .. image:: https://readthedocs.org/projects/climt/badge/?version=latest
-        :target: https://climt.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
+    :target: https://climt.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 .. image:: https://pyup.io/repos/github/CliMT/climt/shield.svg
      :target: https://pyup.io/repos/github/CliMT/climt/
@@ -31,7 +37,7 @@ Features
 * TODO
 
 Credits
----------
+-------
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
