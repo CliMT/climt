@@ -10,11 +10,12 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    # TODO: put package requirements here
+    'numpy>=1.11',
 ]
 
 test_requirements = [
-    # TODO: put package test requirements here
+    'pytest>=2.9.2',
+    'mock>=2.0.0',
 ]
 
 setup(
