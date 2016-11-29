@@ -1,5 +1,5 @@
 import abc
-from .exceptions import SharedKeyException
+from .util import ensure_no_shared_keys, add_dicts_inplace
 
 
 class Implicit(object):
@@ -89,9 +89,6 @@ class Diagnostic(object):
         Raises:
             InvalidStateException: if state is not a valid input for the
                 Diagnostic instance.
-
-        Returns:
-            None
         """
         return
 
@@ -108,7 +105,25 @@ class Diagnostic(object):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        return
+        return {}
+
+    def update_state(self, state):
+        """
+        Gets diagnostics from the passed model state and updates the state with those
+        diagnostics (in place).
+
+        Args:
+            state (dict): A model state dictionary.
+
+        Raises:
+            InvalidStateException: if state already includes any diagnostics being output.
+
+        Returns:
+            None
+        """
+        diagnostics = self(state)
+        ensure_no_shared_keys(state, diagnostics)
+        state.update(diagnostics)
 
 
 class Monitor(object):
@@ -122,9 +137,6 @@ class Monitor(object):
         Raises:
             InvalidStateException: if state is not a valid input for the
                 Diagnostic instance.
-
-        Returns:
-            None
         """
         return  # by default all states are valid
 
@@ -136,9 +148,6 @@ class Monitor(object):
 
         Args:
             state (dict): A model state dictionary.
-
-        Returns:
-            None
         """
         return
 
@@ -199,33 +208,6 @@ class PrognosticCollection(ComponentCollection):
         return return_tendencies, return_diagnostics
 
 
-def add_dicts_inplace(dict1, dict2):
-    """
-    Takes two dictionaries. For any keys in both dictionary, it adds the value
-    in dict2 to the value in dict1. This is done in-place if the values are
-    array-like, to avoid data copying. None is returned.
-    """
-    for key in dict2.keys():
-        if key not in dict1:
-            dict1[key] = dict2[key]
-        else:
-            try:
-                # works for array-like objects, in-place
-                dict1[key][:] += dict2[key][:]
-            except TypeError:
-                dict1[key] += dict2[key]
-    return  # not returning anything emphasizes that this is in-place
-
-
-def ensure_no_shared_keys(dict1, dict2):
-    """
-    Raises SharedKeyException if there exists a key present in both
-    dictionaries.
-    """
-    if len(set(dict1.keys()).intersection(dict2.keys())) > 0:
-        raise SharedKeyException()
-
-
 class DiagnosticCollection(ComponentCollection):
 
     component_class = Diagnostic
@@ -249,6 +231,23 @@ class DiagnosticCollection(ComponentCollection):
             ensure_no_shared_keys(return_diagnostics, diagnostics)
             return_diagnostics.update(diagnostics)
         return return_diagnostics
+
+    def update_state(self, state):
+        """
+        Gets diagnostics from the passed model state and updates the state with those
+        diagnostics (in place).
+
+        Args:
+            state (dict): A model state dictionary.
+
+        Raises:
+            InvalidStateException: if state already includes any diagnostics being output.
+
+        Returns:
+            None
+        """
+        for diagnostic_component in self._components:
+            diagnostic_component.update_state(state)
 
 
 class MonitorCollection(ComponentCollection):
