@@ -1,5 +1,6 @@
 from .exceptions import SharedKeyException
 
+
 def add_dicts_inplace(dict1, dict2):
     """
     Takes two dictionaries. For any keys in both dictionary, it adds the value

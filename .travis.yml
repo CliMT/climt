@@ -6,6 +6,7 @@ python: 3.5
 
 env:
   - TOXENV=cov
+  - TOXENV=flake8
   - TOXENV=py35
   - TOXENV=py34
   - TOXENV=py33

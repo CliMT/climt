@@ -97,7 +97,6 @@ def test_leapfrog_requires_same_timestep(mock_prognostic_call):
     """Test that the Asselin filter is being correctly applied"""
     mock_prognostic_call.return_value = ({'air_temperature': 0.}, {})
     state = {'air_temperature': 273.}
-    timestep = timedelta(seconds=1.)
     time_stepper = Leapfrog([MockPrognostic()], asselin_strength=0.5)
     state = time_stepper.step(state, timedelta(seconds=1.))
     try:
@@ -237,6 +236,7 @@ def test_leapfrog_array_two_steps_filtered_williams(mock_prognostic_call):
     assert (state['air_temperature'] == np.ones((3, 3))*273.5).all()
     assert list(new_state.keys()) == ['air_temperature']
     assert (new_state['air_temperature'] == np.ones((3, 3))*276.5).all()
+
 
 if __name__ == '__main__':
     pytest.main([__file__])
