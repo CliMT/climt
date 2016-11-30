@@ -210,7 +210,7 @@ def fourth_bashforth(state, tendencies_list, timestep):
     return_state = {}
     for key in tendencies_list[0].keys():
         return_state[key] = state[key] + timestep.total_seconds() * (
-            55./24*tendencies_list[-1][key] - 59./24*tendencies_list[-2][key]
-            + 37./24*tendencies_list[-3][key] - 3./8*tendencies_list[-4][key]
+            55./24*tendencies_list[-1][key] - 59./24*tendencies_list[-2][key] +
+            37./24*tendencies_list[-3][key] - 3./8*tendencies_list[-4][key]
         )
     return return_state
