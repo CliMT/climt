@@ -48,6 +48,9 @@ class Federation(object):
             self._monitor = MonitorCollection([])
         else:
             self._monitor = monitor
+        self._implicit.ensure_state_is_valid_input(self._state)
+        self._time_stepper.ensure_state_is_valid_input(self._state)
+        self._monitor.ensure_state_is_valid_input(self._state)
 
     def step(self):
         pass

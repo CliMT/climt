@@ -31,6 +31,10 @@ class TimeStepper(object):
             new_state (dict): The model state at the next timestep.
         """
 
+    def ensure_state_is_valid_input(self, state):
+        self._prognostic.ensure_state_is_valid_input(state)
+        self._diagnostic.ensure_state_is_valid_input(state)
+
 
 class AdamsBashforth(TimeStepper):
     """A TimeStepper using the Adams-Bashforth scheme."""
