@@ -27,7 +27,50 @@ class TimeStepper(object):
 
 
 class AdamsBashforth(TimeStepper):
-    pass
+
+    def __init__(self, prognostic_list, diagnostic_list=(), order=2):
+        """
+        Initialize an Adams-Bashforth time stepper.
+
+        Args:
+            prognostic_list (iterable of Prognostic): Objects used to get
+                tendencies for time stepping.
+            diagnostic_list (iterable of Diagnostic): Objects used to get
+                diagnostics before time stepping.
+            order (int, optional): The order of accuracy to use. Must be between
+                1 and 4. 1 is the same as the Euler method. Default is 2.
+        """
+        self._order = order
+        self._timestep = None
+        self._tendencies_list = []
+        super(AdamsBashforth, self).__init__(prognostic_list, diagnostic_list)
+
+    def step(self, state, timestep):
+        self._ensure_constant_timestep(timestep)
+        self._diagnostic.update_state(state)
+        tendencies, diagnostics = self._prognostic(state)
+        ensure_no_shared_keys(state, diagnostics)
+        state.update(diagnostics)
+        self._tendencies_list.append(tendencies)
+        # if we don't have enough previous tendencies built up, use lower order
+        order = min(self._order, len(self._tendencies_list))
+        if order == 1:
+            new_state = step_forward_euler(state, tendencies, timestep)
+        elif order == 2:
+            new_state = second_bashforth(state, self._tendencies_list, timestep)
+        elif order == 3:
+            new_state = third_bashforth(state, self._tendencies_list, timestep)
+        elif order == 4:
+            new_state = fourth_bashforth(state, self._tendencies_list, timestep)
+        if len(self._tendencies_list) == self._order:
+            self._tendencies_list.pop(0)  # remove the oldest entry
+        return new_state
+
+    def _ensure_constant_timestep(self, timestep):
+        if self._timestep is None:
+            self._timestep = timestep
+        elif self._timestep != timestep:
+            raise ValueError('timestep must be constant for Leapfrog time stepping')
 
 
 class Leapfrog(TimeStepper):
@@ -128,4 +171,46 @@ def step_forward_euler(state, tendencies, timestep):
     return_state = {}
     for key in tendencies.keys():
         return_state[key] = state[key] + tendencies[key]*timestep.total_seconds()
+    return return_state
+
+
+def second_bashforth(state, tendencies_list, timestep):
+    """Return the new state using second-order Adams-Bashforth. tendencies_list
+    should be a list of dictionaries whose values are tendencies in
+    units/second (from oldest to newest), and timestep should be a timedelta
+    object. The dictionaries in tendencies_list should all have the same keys.
+    """
+    return_state = {}
+    for key in tendencies_list[0].keys():
+        return_state[key] = state[key] + timestep.total_seconds() * (
+            1.5*tendencies_list[-1][key] - 0.5*tendencies_list[-2][key]
+        )
+    return return_state
+
+
+def third_bashforth(state, tendencies_list, timestep):
+    """Return the new state using third-order Adams-Bashforth. tendencies_list
+    should be a list of dictionaries whose values are tendencies in
+    units/second (from oldest to newest), and timestep should be a timedelta
+    object."""
+    return_state = {}
+    for key in tendencies_list[0].keys():
+        return_state[key] = state[key] + timestep.total_seconds() * (
+            23./12*tendencies_list[-1][key] - 4./3*tendencies_list[-2][key] +
+            5./12*tendencies_list[-3][key]
+        )
+    return return_state
+
+
+def fourth_bashforth(state, tendencies_list, timestep):
+    """Return the new state using fourth-order Adams-Bashforth. tendencies_list
+    should be a list of dictionaries whose values are tendencies in
+    units/second (from oldest to newest), and timestep should be a timedelta
+    object."""
+    return_state = {}
+    for key in tendencies_list[0].keys():
+        return_state[key] = state[key] + timestep.total_seconds() * (
+            55./24*tendencies_list[-1][key] - 59./24*tendencies_list[-2][key]
+            + 37./24*tendencies_list[-3][key] - 3./8*tendencies_list[-4][key]
+        )
     return return_state
