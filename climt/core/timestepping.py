@@ -4,6 +4,12 @@ import abc
 
 
 class TimeStepper(object):
+    """An object which integrates model state forward in time.
+
+    It uses Prognostic and Diagnostic objects to update the current model state
+    with diagnostics, and to return the model state at the next timestep.
+    """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, prognostic_list, diagnostic_list=(), **kwargs):
@@ -27,8 +33,9 @@ class TimeStepper(object):
 
 
 class AdamsBashforth(TimeStepper):
+    """A TimeStepper using the Adams-Bashforth scheme."""
 
-    def __init__(self, prognostic_list, diagnostic_list=(), order=2):
+    def __init__(self, prognostic_list, diagnostic_list=(), order=3):
         """
         Initialize an Adams-Bashforth time stepper.
 
@@ -38,7 +45,7 @@ class AdamsBashforth(TimeStepper):
             diagnostic_list (iterable of Diagnostic): Objects used to get
                 diagnostics before time stepping.
             order (int, optional): The order of accuracy to use. Must be between
-                1 and 4. 1 is the same as the Euler method. Default is 2.
+                1 and 4. 1 is the same as the Euler method. Default is 3.
         """
         self._order = order
         self._timestep = None
@@ -46,6 +53,18 @@ class AdamsBashforth(TimeStepper):
         super(AdamsBashforth, self).__init__(prognostic_list, diagnostic_list)
 
     def step(self, state, timestep):
+        """
+        Updates the input state dictionary and returns a new state corresponding
+        to the next timestep.
+
+        Args:
+            state (dict): The current model state. Will be updated in-place by
+                the call with any diagnostics from the current timestep.
+            timestep (timedelta): The amount of time to step forward.
+
+        Returns:
+            new_state (dict): The model state at the next timestep.
+        """
         self._ensure_constant_timestep(timestep)
         self._diagnostic.update_state(state)
         tendencies, diagnostics = self._prognostic(state)
@@ -70,10 +89,20 @@ class AdamsBashforth(TimeStepper):
         if self._timestep is None:
             self._timestep = timestep
         elif self._timestep != timestep:
-            raise ValueError('timestep must be constant for Leapfrog time stepping')
+            raise ValueError(
+                'timestep must be constant for Adams-Bashforth time stepping')
 
 
 class Leapfrog(TimeStepper):
+    """A TimeStepper using the Leapfrog scheme.
+
+    This scheme calculates the
+    values at time $t_{n+1}$ using the derivatives at $t_{n}$ and values at
+    $t_{n-1}$. Following the step, an Asselin filter is applied to damp the
+    computational mode that results from the scheme and maintain stability. The
+    Asselin filter brings the values at $t_{n}$ (and optionally the values at
+    $t_{n+1}$, according to Williams (2009)) closer to the mean of the values
+    at $t_{n-1}$ and $t_{n+1}$."""
 
     def __init__(
             self, prognostic_list, diagnostic_list=(), asselin_strength=0.05,
@@ -107,6 +136,18 @@ class Leapfrog(TimeStepper):
         super(Leapfrog, self).__init__(prognostic_list, diagnostic_list)
 
     def step(self, state, timestep):
+        """
+        Updates the input state dictionary and returns a new state corresponding
+        to the next timestep.
+
+        Args:
+            state (dict): The current model state. Will be updated in-place by
+                the call with any diagnostics from the current timestep.
+            timestep (timedelta): The amount of time to step forward.
+
+        Returns:
+            new_state (dict): The model state at the next timestep.
+        """
         self._ensure_constant_timestep(timestep)
         self._diagnostic.update_state(state)
         tendencies, diagnostics = self._prognostic(state)
@@ -125,7 +166,8 @@ class Leapfrog(TimeStepper):
         if self._timestep is None:
             self._timestep = timestep
         elif self._timestep != timestep:
-            raise ValueError('timestep must be constant for Leapfrog time stepping')
+            raise ValueError(
+                'timestep must be constant for Leapfrog time stepping')
 
 
 def step_leapfrog(
