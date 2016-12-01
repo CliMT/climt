@@ -1,5 +1,5 @@
 Welcome to CliMT's documentation!
-======================================
+=================================
 
 Contents:
 
@@ -9,8 +9,10 @@ Contents:
    readme
    installation
    usage
+   components
    contributing
-   authorshistory
+   authors
+   history
 
 Indices and tables
 ==================

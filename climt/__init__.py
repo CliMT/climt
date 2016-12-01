@@ -7,6 +7,7 @@ from .core.timestepping import TimeStepper, Leapfrog, AdamsBashforth
 from .core.exceptions import InvalidStateException, SharedKeyException
 from .core.array import DataArray
 
+__version__ = 'v1.0.0'
 __all__ = (
     Prognostic, Diagnostic, Implicit, Monitor, PrognosticCollection,
     DiagnosticCollection, MonitorCollection,
