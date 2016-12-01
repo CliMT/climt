@@ -44,7 +44,7 @@ The ``ensure_state_is_valid_input`` method exists on all component classes, and
 is called in the same way as shown above.
 
 Initializing a Component
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 You can create a component object, such as ``RRTMRadiation`` like so:
 
