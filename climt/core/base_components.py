@@ -26,12 +26,11 @@ class Implicit(object):
         forward in time according to the timestep.
 
         Args:
-            state (dict): A model state dictionary.
+            state (dict): A model state dictionary. Will be updated with any
+                diagnostic quantities produced by this object for the time of
+                the input state.
 
         Returns:
-            current_diagnostics (dict): A dicitonary whose keys are strings
-                indicating state quantities and values are the value of those
-                quantities at the time of the input state.
             next_state (dict): A dicitonary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the timestep after input state.
