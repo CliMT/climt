@@ -22,6 +22,8 @@ can initialize (e.g. there is no one 'prognostic' scheme), but they each have
 subclasses defined in CliMT, which can all be used in the ways described in
 this section.
 
+.. _consistency:
+
 Ensuring consistency
 --------------------
 
@@ -133,6 +135,9 @@ can call an Implicit object like so:
 Following the ``implicit`` call, ``state`` will have been modified in-place to
 include any diagnostics produced by the ``Implicit`` component for the timestep
 of the input state.
+
+This is important, so we'll repeat it:
+**the input state can be modified by the call to the ``Implicit`` object**.
 
 Monitor
 -------
