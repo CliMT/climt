@@ -1,6 +1,6 @@
 import pytest
 import mock
-from climt import Prognostic, Leapfrog, AdamsBashforth
+from climt import Prognostic, Leapfrog, AdamsBashforth, DataArray
 from datetime import timedelta
 import numpy as np
 
@@ -148,6 +148,118 @@ class TimesteppingBase(object):
         assert (state['air_temperature'] == np.ones((3, 3))*275.).all()
         assert list(new_state.keys()) == ['air_temperature']
         assert (new_state['air_temperature'] == np.ones((3, 3))*276.).all()
+
+    @mock.patch.object(MockPrognostic, '__call__')
+    def test_dataarray_no_change_one_step(self, mock_prognostic_call):
+        mock_prognostic_call.return_value = (
+            {'air_temperature':
+                 DataArray(np.zeros((3, 3)), attrs={'units': 'K/s'})},
+            {})
+        state = {'air_temperature': DataArray(np.ones((3, 3))*273.,
+                                              attrs={'units': 'K'})}
+        timestep = timedelta(seconds=1.)
+        time_stepper = self.timestepper_class([MockPrognostic()])
+        new_state = time_stepper.step(state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'].values == np.ones((3, 3))*273.).all()
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'].values == np.ones((3, 3))*273.).all()
+        assert len(new_state['air_temperature'].attrs) == 1
+        assert new_state['air_temperature'].attrs['units'] == 'K'
+
+    @mock.patch.object(MockPrognostic, '__call__')
+    def test_dataarray_no_change_three_steps(self, mock_prognostic_call):
+        mock_prognostic_call.return_value = (
+            {'air_temperature':
+                DataArray(np.zeros((3, 3)), attrs={'units': 'K/s'})},
+            {})
+        state = {'air_temperature': DataArray(np.ones((3, 3))*273.,
+                                              attrs={'units': 'K'})}
+        timestep = timedelta(seconds=1.)
+        time_stepper = self.timestepper_class([MockPrognostic()])
+        new_state = time_stepper.step(state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'] == np.ones((3, 3))*273.).all()
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'] == np.ones((3, 3))*273.).all()
+        state = new_state
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        new_state = time_stepper.step(state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'] == np.ones((3, 3))*273.).all()
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'] == np.ones((3, 3))*273.).all()
+        state = new_state
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        new_state = time_stepper.step(state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'] == np.ones((3, 3))*273.).all()
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'] == np.ones((3, 3))*273.).all()
+        assert len(new_state['air_temperature'].attrs) == 1
+        assert new_state['air_temperature'].attrs['units'] == 'K'
+
+    @mock.patch.object(MockPrognostic, '__call__')
+    def test_dataarray_one_step(self, mock_prognostic_call):
+        mock_prognostic_call.return_value = (
+            {'air_temperature':
+                DataArray(np.ones((3, 3)), attrs={'units': 'K/s'})},
+            {})
+        state = {'air_temperature': DataArray(np.ones((3, 3))*273.,
+                                              attrs={'units': 'K'})}
+        timestep = timedelta(seconds=1.)
+        time_stepper = self.timestepper_class([MockPrognostic()])
+        new_state = time_stepper.step(state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'] == np.ones((3, 3))*273.).all()
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'] == np.ones((3, 3))*274.).all()
+        assert len(new_state['air_temperature'].attrs) == 1
+        assert new_state['air_temperature'].attrs['units'] == 'K'
+
+    @mock.patch.object(MockPrognostic, '__call__')
+    def test_dataarray_three_steps(self, mock_prognostic_call):
+        mock_prognostic_call.return_value = (
+            {'air_temperature':
+                DataArray(np.ones((3, 3)), attrs={'units': 'K/s'})},
+            {})
+        state = {'air_temperature': DataArray(np.ones((3, 3))*273.,
+                                              attrs={'units': 'K'})}
+        timestep = timedelta(seconds=1.)
+        time_stepper = self.timestepper_class([MockPrognostic()])
+        new_state = time_stepper.step(state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'] == np.ones((3, 3))*273.).all()
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'] == np.ones((3, 3))*274.).all()
+        state = new_state
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        new_state = time_stepper.step(new_state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'] == np.ones((3, 3))*274.).all()
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'] == np.ones((3, 3))*275.).all()
+        state = new_state
+        assert len(state['air_temperature'].attrs) == 1
+        assert state['air_temperature'].attrs['units'] == 'K'
+        new_state = time_stepper.step(state, timestep)
+        assert list(state.keys()) == ['air_temperature']
+        assert (state['air_temperature'] == np.ones((3, 3))*275.).all()
+        assert list(new_state.keys()) == ['air_temperature']
+        assert (new_state['air_temperature'] == np.ones((3, 3))*276.).all()
+        assert len(new_state['air_temperature'].attrs) == 1
+        assert new_state['air_temperature'].attrs['units'] == 'K'
 
 
 class TestLeapfrog(TimesteppingBase):
