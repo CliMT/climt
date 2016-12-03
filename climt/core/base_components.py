@@ -14,9 +14,6 @@ class Implicit(object):
         Raises:
             InvalidStateException: if state is not a valid input for the
                 Implicit instance.
-
-        Returns:
-            None
         """
 
     @abc.abstractmethod
@@ -49,9 +46,6 @@ class Prognostic(object):
         Raises:
             InvalidStateException: if state is not a valid input for the
                 Prognostic instance.
-
-        Returns:
-            None
         """
 
     @abc.abstractmethod
@@ -110,9 +104,6 @@ class Diagnostic(object):
 
         Raises:
             InvalidStateException: if state already includes any diagnostics being output.
-
-        Returns:
-            None
         """
         diagnostics = self(state)
         ensure_no_shared_keys(state, diagnostics)
@@ -242,9 +233,6 @@ class DiagnosticCollection(ComponentCollection):
 
         Raises:
             InvalidStateException: if state already includes any diagnostics being output.
-
-        Returns:
-            None
         """
         for diagnostic_component in self._components:
             diagnostic_component.update_state(state)
@@ -261,9 +249,6 @@ class MonitorCollection(ComponentCollection):
 
         Args:
             state (dict): A model state dictionary.
-
-        Returns:
-            None
         """
         for monitor in self._components:
             monitor.store(state)

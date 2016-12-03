@@ -10,6 +10,7 @@ Contents:
    installation
    usage
    components
+   timestepping
    contributing
    authors
    history
