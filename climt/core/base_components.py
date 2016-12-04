@@ -96,8 +96,8 @@ class Diagnostic(object):
 
     def update_state(self, state):
         """
-        Gets diagnostics from the passed model state and updates the state with those
-        diagnostics (in place).
+        Gets diagnostics from the passed model state and updates the state with
+        those diagnostics (in place).
 
         Args:
             state (dict): A model state dictionary.
@@ -135,7 +135,7 @@ class Monitor(object):
         """
 
 
-class ComponentCollection(object):
+class ComponentComposite(object):
 
     component_class = None
 
@@ -161,7 +161,7 @@ def ensure_components_have_class(components, component_class):
                 "require components of type {}".format(component_class))
 
 
-class PrognosticCollection(ComponentCollection):
+class PrognosticComposite(ComponentComposite):
 
     component_class = Prognostic
 
@@ -182,7 +182,7 @@ class PrognosticCollection(ComponentCollection):
 
         Raises:
             SharedKeyException: if multiple Prognostic objects contained in the
-            collection return the same diagnostic quantity.
+                collection return the same diagnostic quantity.
         """
         return_tendencies = {}
         return_diagnostics = {}
@@ -195,7 +195,7 @@ class PrognosticCollection(ComponentCollection):
         return return_tendencies, return_diagnostics
 
 
-class DiagnosticCollection(ComponentCollection):
+class DiagnosticComposite(ComponentComposite):
 
     component_class = Diagnostic
 
@@ -213,7 +213,7 @@ class DiagnosticCollection(ComponentCollection):
 
         Raises:
             SharedKeyException: if multiple Diagnostic objects contained in the
-            collection return the same diagnostic quantity.
+                collection return the same diagnostic quantity.
         """
         return_diagnostics = {}
         for diagnostic_component in self._components:
@@ -238,7 +238,7 @@ class DiagnosticCollection(ComponentCollection):
             diagnostic_component.update_state(state)
 
 
-class MonitorCollection(ComponentCollection):
+class MonitorComposite(ComponentComposite):
 
     component_class = Monitor
 

@@ -1,4 +1,4 @@
-from .base_components import PrognosticCollection, DiagnosticCollection
+from .base_components import PrognosticComposite, DiagnosticComposite
 from .util import ensure_no_shared_keys
 import abc
 
@@ -13,8 +13,8 @@ class TimeStepper(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, prognostic_list, diagnostic_list=(), **kwargs):
-        self._prognostic = PrognosticCollection(prognostic_list)
-        self._diagnostic = DiagnosticCollection(diagnostic_list)
+        self._prognostic = PrognosticComposite(prognostic_list)
+        self._diagnostic = DiagnosticComposite(diagnostic_list)
 
     @abc.abstractmethod
     def step(self, state, timestep):
@@ -29,6 +29,10 @@ class TimeStepper(object):
 
         Returns:
             new_state (dict): The model state at the next timestep.
+
+        Raises:
+            SharedKeyException: if a Diagnostic object has an output that is
+                already in the state at the start of the timestep.
         """
 
     def ensure_state_is_valid_input(self, state):
@@ -74,6 +78,12 @@ class AdamsBashforth(TimeStepper):
 
         Returns:
             new_state (dict): The model state at the next timestep.
+
+        Raises:
+            SharedKeyException: if a Diagnostic object has an output that is
+                already in the state at the start of the timestep.
+            ValueError: If the timestep is not the same as the last time
+                step() was called on this instance of this object.
         """
         self._ensure_constant_timestep(timestep)
         self._diagnostic.update_state(state)
@@ -92,6 +102,7 @@ class AdamsBashforth(TimeStepper):
         elif order == 4:
             new_state = fourth_bashforth(state, self._tendencies_list, timestep)
         else:
+            # the following should never happen, if it is there's a bug
             raise RuntimeError('order should be integer between 1 and 4')
         if len(self._tendencies_list) == self._order:
             self._tendencies_list.pop(0)  # remove the oldest entry
@@ -159,6 +170,12 @@ class Leapfrog(TimeStepper):
 
         Returns:
             new_state (dict): The model state at the next timestep.
+
+        Raises:
+            SharedKeyException: If a Diagnostic object has an output that is
+                already in the state at the start of the timestep.
+            ValueError: If the timestep is not the same as the last time
+                step() was called on this instance of this object.
         """
         self._ensure_constant_timestep(timestep)
         self._diagnostic.update_state(state)

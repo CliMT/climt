@@ -1,4 +1,4 @@
-from .base_components import MonitorCollection
+from .base_components import MonitorComposite
 from .timestepping import AdamsBashforth
 from collections import Iterable
 
@@ -43,9 +43,9 @@ class Federation(object):
             diagnostic_list=self._diagnostic_list,
             order=3)
         if isinstance(monitor, Iterable):
-            self._monitor = MonitorCollection(monitor)
+            self._monitor = MonitorComposite(monitor)
         elif monitor is None:
-            self._monitor = MonitorCollection([])
+            self._monitor = MonitorComposite([])
         else:
             self._monitor = monitor
         if self._implicit is not None:

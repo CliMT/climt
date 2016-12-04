@@ -1,6 +1,8 @@
 import pytest
 import mock
-from climt import Prognostic, Leapfrog, AdamsBashforth, DataArray
+from climt import (
+    Prognostic, Diagnostic, Leapfrog, AdamsBashforth, DataArray,
+    SharedKeyException)
 from datetime import timedelta
 import numpy as np
 
@@ -12,6 +14,16 @@ class MockPrognostic(Prognostic):
 
     def __call__(self):
         return {}, {}
+
+
+class MockDiagnostic(Diagnostic):
+
+    def ensure_state_is_valid_input(self, state):
+        return
+
+    def __call__(self):
+        return {}, {}
+
 
 class TimesteppingBase(object):
 
@@ -26,6 +38,39 @@ class TimesteppingBase(object):
         new_state = time_stepper.step(state, timestep)
         assert state == {'air_temperature': 273.}
         assert new_state == {'air_temperature': 273.}
+
+    @mock.patch.object(MockDiagnostic, '__call__')
+    @mock.patch.object(MockPrognostic, '__call__')
+    def test_float_no_change_one_step_diagnostic(
+            self, mock_prognostic_call, mock_diagnostic_call):
+        mock_prognostic_call.return_value = ({'air_temperature': 0.}, {})
+        mock_diagnostic_call.return_value = {'foo': 'bar'}
+        state = {'air_temperature': 273.}
+        timestep = timedelta(seconds=1.)
+        time_stepper = self.timestepper_class(
+            [MockPrognostic()], [MockDiagnostic()])
+        new_state = time_stepper.step(state, timestep)
+        assert state == {'air_temperature': 273., 'foo': 'bar'}
+        assert new_state == {'air_temperature': 273.}
+
+    @mock.patch.object(MockDiagnostic, '__call__')
+    @mock.patch.object(MockPrognostic, '__call__')
+    def test_float_no_change_one_step_diagnostic_wont_overwrite(
+            self, mock_prognostic_call, mock_diagnostic_call):
+        mock_prognostic_call.return_value = ({'air_temperature': 0.}, {})
+        mock_diagnostic_call.return_value = {'foo': 'bar'}
+        state = {'air_temperature': 273., 'foo': 'bang'}
+        timestep = timedelta(seconds=1.)
+        time_stepper = self.timestepper_class(
+            [MockPrognostic()], [MockDiagnostic()])
+        try:
+            time_stepper.step(state, timestep)
+        except SharedKeyException:
+            pass
+        except Exception as err:
+            raise err
+        else:
+            raise AssertionError('SharedKeyException should be raised')
 
     @mock.patch.object(MockPrognostic, '__call__')
     def test_float_no_change_three_steps(self, mock_prognostic_call):
