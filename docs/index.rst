@@ -8,8 +8,8 @@ Contents:
 
    readme
    installation
-   usage
    components
+   composites
    timestepping
    contributing
    authors
