@@ -51,6 +51,12 @@ class AdamsBashforth(TimeStepper):
             order (int, optional): The order of accuracy to use. Must be between
                 1 and 4. 1 is the same as the Euler method. Default is 3.
         """
+        if isinstance(order, float) and order.is_integer():
+            order = int(order)
+        if not isinstance(order, int):
+            raise TypeError('order must be an integer')
+        if not 1 <= order <= 4:
+            raise ValueError('order must be between 1 and 4')
         self._order = order
         self._timestep = None
         self._tendencies_list = []
@@ -85,6 +91,8 @@ class AdamsBashforth(TimeStepper):
             new_state = third_bashforth(state, self._tendencies_list, timestep)
         elif order == 4:
             new_state = fourth_bashforth(state, self._tendencies_list, timestep)
+        else:
+            raise RuntimeError('order should be integer between 1 and 4')
         if len(self._tendencies_list) == self._order:
             self._tendencies_list.pop(0)  # remove the oldest entry
         return new_state
