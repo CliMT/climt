@@ -11,6 +11,7 @@ Contents:
    components
    composites
    timestepping
+   naming
    contributing
    authors
    history
