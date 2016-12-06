@@ -11,19 +11,19 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'numpy>=1.11',
-    'pint>=0.7.2'
+    'pint>=0.7.2',
+    'xarray>=0.8.2',
 ]
 
 test_requirements = [
     'pytest>=2.9.2',
     'mock>=2.0.0',
-    'xarray>=0.8.2'
 ]
 
 setup(
     name='climt',
     version='1.0.0',
-    description="CliMT is a Toolkit for building Earth system models in Python.",
+    description='CliMT is a Toolkit for building Earth system models in Python.',
     long_description=readme + '\n\n' + history,
     author="Rodrigo Caballero",
     author_email='rodrigo.caballero@misu.su.se',
@@ -44,10 +44,8 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
