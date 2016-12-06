@@ -12,6 +12,28 @@ You can contribute in many ways:
 Types of Contributions
 ----------------------
 
+Usage in Publications
+~~~~~~~~~~~~~~~~~~~~~
+
+If you use CliMT to perform research, your publication is a valuable resource
+for others looking to learn the ways they can leverage CliMT's capabilities.
+If you have used CliMT in a publication, please let us know so we can add it to
+the list.
+
+Presenting CliMT to Others
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CliMT is meant to be an accessible, community-driven model. You can help the
+community of users grow and be more effective in many ways, such as:
+
+* Running a workshop
+* Offering to be a resource for others to ask questions
+* Presenting research that uses CliMT
+
+If you or someone you know is contributing to the CliMT community by presenting
+it or assisting others with the model, please let us know so we can add that
+person to the contributors list.
+
 Report Bugs
 ~~~~~~~~~~~
 
@@ -38,9 +60,13 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-CliMT could always use more documentation, whether as part of the
-official CliMT docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+CliMT could always use more documentation. You could:
+
+* Clean up or add to the official CliMT docs and docstrings.
+* Write useful and clear examples that are missing from the examples folder.
+* Create a Jupyter notebook that uses CliMT and share it with others.
+* Prepare reproducible model scripts to distribute with a paper using CliMT.
+* Anything else that communicates useful information about CliMT.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
