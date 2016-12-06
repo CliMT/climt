@@ -37,5 +37,24 @@ def test_array_subtraction_keeps_left_attrs():
     assert result.attrs['units'] == 'm/s'
     assert result.attrs['foo'] == 'bar'
 
+
+def test_array_unit_conversion_same_units():
+    a = DataArray(np.array([1., 2., 3.]), attrs={'units': 'm', 'foo': 'bar'})
+    result = a.to_units('m')
+    assert (result.values == np.array([1., 2., 3.])).all()
+    assert len(result.attrs) == 2
+    assert result.attrs['units'] == 'm'
+    assert result.attrs['foo'] == 'bar'
+
+
+def test_array_unit_conversion_different_units():
+    a = DataArray(np.array([1., 2., 3.]),
+                  attrs={'units': 'km', 'foo': 'bar'})
+    result = a.to_units('m')
+    assert (result.values == np.array([1000., 2000., 3000.])).all()
+    assert len(result.attrs) == 2
+    assert result.attrs['units'] == 'm'
+    assert result.attrs['foo'] == 'bar'
+
 if __name__ == '__main__':
     pytest.main([__file__])

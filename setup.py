@@ -11,11 +11,13 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'numpy>=1.11',
+    'pint>=0.7.2'
 ]
 
 test_requirements = [
     'pytest>=2.9.2',
     'mock>=2.0.0',
+    'xarray>=0.8.2'
 ]
 
 setup(
