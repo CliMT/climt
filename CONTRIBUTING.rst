@@ -131,6 +131,26 @@ Before you submit a pull request, check that it meets these guidelines:
    https://travis-ci.org/CliMT/climt/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
+Style
+-----
+
+In the CliMT code, we follow PEP 8 style guidelines (tested by flake8). You can
+test style by running "tox -e flake8" from the root directory of the repository.
+There are some exceptions to PEP 8:
+
+* All lines should be shorter than 80 characters. However, lines
+  longer than this are permissible if this increases readability (particularly
+  for lines representing complicated equations).
+* Space should be assigned around arithmetic operators in a way that maximizes
+  readability. For some cases, this may mean not including whitespace around
+  certain operations to make the separation of terms clearer,
+  e.g. "Cp*T + g*z + Lv*q".
+* While state dictionary keys are full and verbose, within components they may
+  be assigned to shorter names if it makes the code clearer.
+* We can take advantage of known scientific abbreviations for quantities within
+  components (e.g. "T" for "air_temperature") even thought they do not follow
+  pothole_case.
+
 Tips
 ----
 
