@@ -1,6 +1,17 @@
 import pint
 
-unit_registry = pint.UnitRegistry()
+
+class UnitRegistry(pint.UnitRegistry):
+
+    def __call__(self, input_string, **kwargs):
+        return super(UnitRegistry, self).__call__(
+            input_string.replace(
+                '%', 'percent').replace(
+                '°', 'degree'
+            ), **kwargs)
+
+
+unit_registry = UnitRegistry()
 unit_registry.define('degrees_north = degree_north = degree_N = degrees_N = degreeN = degreesN')
 unit_registry.define('degrees_east = degree_east = degree_E = degrees_E = degreeE = degreesE')
 unit_registry.define('percent = 0.01*count = %')
