@@ -10,6 +10,8 @@ env:
   - TOXENV=py35
   - TOXENV=py34
   - TOXENV=py27
+  - LLVM_VERSION="3.8.0"
+  - LLVM_CONFIG="llvm-config-3.8"
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -U tox
