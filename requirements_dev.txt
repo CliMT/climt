@@ -13,4 +13,5 @@ pytest-cov==2.4.0
 mock==2.0.0
 xarray==0.8.2
 llvmlite==0.12.1
+enum34
 coveralls
