@@ -9,7 +9,7 @@ from .core.array import DataArray
 from .core.federation import Federation
 from .core.constants import default_constants
 from .components import (
-    Frierson06GrayLongwaveRadiation)
+    Frierson06GrayLongwaveRadiation, PlotFunctionMonitor)
 
 __version__ = '1.0.0'
 __all__ = (
