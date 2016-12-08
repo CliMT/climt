@@ -2,7 +2,9 @@ from ..core.base_components import Prognostic
 from ..core.array import DataArray
 from ..core.util import (
     ensure_shared_coordinates, ensure_third_dim_is_vertical,
-    ensure_horizontal_only, ensure_number_of_dims, jit)
+    ensure_horizontal_only, ensure_number_of_dims, jit,
+    replace_none_with_default,
+)
 from ..core.exceptions import InvalidStateException
 import numpy as np
 
@@ -13,9 +15,9 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
             self, linear_optical_depth_parameter=0.1,
             longwave_optical_depth_at_equator=6,
             longwave_optical_depth_at_poles=1.5,
-            sigma=5.6734e-8,
-            g=9.80665,
-            Cpd=1004.64):
+            sigma=None,
+            g=None,
+            Cpd=None):
         """
 
         Args:
@@ -31,17 +33,18 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
                 poles.
                 Default is 1.5 as in Frierson et al., 2006.
             sigma: Stefan-Boltzmann constant $\sigma$ in $W m^{-2} K^{-4}$.
-                Default is 5.6734e-8
-            g: Gravitational acceleration in $m s^{-2}$. Default is 9.80665.
+                Default taken from climt.default_constants.
+            g: Gravitational acceleration in $m s^{-2}$.
+                Default taken from climt.default_constants.
             Cpd: Heat capacity of dry air in $J kg^{-1} K^{-1}$.
-                Default is 1004.64
+                Default taken from climt.default_constants.
         """
         self._fl = linear_optical_depth_parameter
         self._tau0e = longwave_optical_depth_at_equator
         self._tau0p = longwave_optical_depth_at_poles
-        self._sigma = sigma
-        self._g = g
-        self._Cpd = Cpd
+        self._sigma = replace_none_with_default('sigma', sigma)
+        self._g = replace_none_with_default('g', g)
+        self._Cpd = replace_none_with_default('Cpd', Cpd)
 
     def ensure_state_is_valid_input(self, state):
         """

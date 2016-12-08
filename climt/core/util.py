@@ -1,4 +1,5 @@
 from .exceptions import SharedKeyException, InvalidStateException
+from .constants import default_constants
 try:
     from numba import jit
 except ImportError:
@@ -20,6 +21,15 @@ vertical_dimension_names.extend(['lev', 'levels', 'half_levels'])
 horizontal_dimension_names = (
     'x', 'y', 'lon', 'lat', 'longitude', 'latitude',
 )
+
+
+def replace_none_with_default(constant_name, value):
+    """If value is None, returns the default constant for the constant name.
+    Otherwise, returns value."""
+    if value is None:
+        return default_constants[constant_name]
+    else:
+        return value
 
 
 def add_dicts_inplace(dict1, dict2):
