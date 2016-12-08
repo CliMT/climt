@@ -5,11 +5,11 @@ language: python
 python: 3.5
 
 env:
-  - TOXENV=cov LLVM_VERSION="3.8.0"
-  - TOXENV=flake8 LLVM_VERSION="3.8.0"
-  - TOXENV=py35 LLVM_VERSION="3.8.0"
-  - TOXENV=py34 LLVM_VERSION="3.8.0"
-  - TOXENV=py27 LLVM_VERSION="3.8.0"
+  - TOXENV=cov
+  - TOXENV=flake8
+  - TOXENV=py35
+  - TOXENV=py34
+  - TOXENV=py27
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -U tox
