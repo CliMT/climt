@@ -13,6 +13,7 @@ requirements = [
     'numpy>=1.11',
     'pint>=0.7.2',
     'xarray>=0.8.2',
+    'matplotlib',
 ]
 
 test_requirements = [
