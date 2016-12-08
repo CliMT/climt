@@ -1,10 +1,9 @@
 from ..core.base_components import Prognostic
 from ..core.array import DataArray
-from ..core.util import(
+from ..core.util import (
     ensure_shared_coordinates, ensure_third_dim_is_vertical,
     ensure_horizontal_only, ensure_number_of_dims, jit)
 from ..core.exceptions import InvalidStateException
-from ..core.units import to_units
 import numpy as np
 
 
@@ -14,10 +13,9 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
             self, linear_optical_depth_parameter=0.1,
             longwave_optical_depth_at_equator=6,
             longwave_optical_depth_at_poles=1.5,
-            sigma=5.6734e-8,  # W/m^2/K^4
-            g=9.80665,  # m/s^2
-            Cpd=1004.64,  #J/kg/K
-            ):
+            sigma=5.6734e-8,
+            g=9.80665,
+            Cpd=1004.64):
         """
 
         Args:
@@ -70,7 +68,7 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
             p = state['air_pressure'].to_units('Pa').values  # x, y, z
             ps = state['surface_pressure'].to_units('Pa').values  # x, y
             Ts = state['surface_temperature'].to_units('degK').values  # x, y
-            lat = to_units(T.coords['latitude'], 'degrees_north').values  # y
+            state['latitude'].to_units('degrees_north').values  # y
         except AttributeError:
             raise TypeError(
                 'provided quantities must be climt.DataArray objects')
