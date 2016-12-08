@@ -13,7 +13,6 @@ requirements = [
     'numpy>=1.11',
     'pint>=0.7.2',
     'xarray>=0.8.2',
-    'numba>=0.27.0',
 ]
 
 test_requirements = [

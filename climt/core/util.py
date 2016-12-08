@@ -1,4 +1,14 @@
 from .exceptions import SharedKeyException, InvalidStateException
+try:
+    from numba import jit
+except ImportError:
+    # define a function with the same call signature as jit that does nothing
+    def jit(signature_or_function=None, **kwargs):
+        if signature_or_function is None:
+            return lambda x: x
+        else:
+            return signature_or_function
+
 
 vertical_dimension_names = [
     'height', 'z', 'alt', 'pres', 'pressure', 'air_pressure', 'altitude']

@@ -2,10 +2,9 @@ from ..core.base_components import Prognostic
 from ..core.array import DataArray
 from ..core.util import(
     ensure_shared_coordinates, ensure_third_dim_is_vertical,
-    ensure_horizontal_only, ensure_number_of_dims)
+    ensure_horizontal_only, ensure_number_of_dims, jit)
 from ..core.exceptions import InvalidStateException
 from ..core.units import to_units
-from numba import jit
 import numpy as np
 
 
