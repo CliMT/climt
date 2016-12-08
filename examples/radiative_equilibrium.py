@@ -29,7 +29,7 @@ state.update(constant_state)
 
 
 def plot_function(fig, state):
-    ax = fig.add_subplot(1,1,1)
+    ax = fig.add_subplot(1, 1, 1)
     ax.plot(
         state['air_temperature'].values.flatten(),
         state['air_pressure'].values.flatten())

@@ -20,5 +20,5 @@ __all__ = (
     DataArray,
     Federation,
     default_constants,
-    Frierson06GrayLongwaveRadiation,
+    Frierson06GrayLongwaveRadiation, PlotFunctionMonitor
 )
