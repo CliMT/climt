@@ -8,25 +8,17 @@ from climt import (
 
 class MockPrognostic(Prognostic):
 
-    def ensure_state_is_valid_input(self, state):
-        return
-
     def __call__(self, state):
         return {}, {}
 
 
 class MockDiagnostic(Diagnostic):
 
-    def ensure_state_is_valid_input(self, state):
-        return
-
     def __call__(self, state):
         return {}
 
 
 class MockMonitor(Monitor):
-    def ensure_state_is_valid_input(self, state):
-        return
 
     def store(self, state):
         return
@@ -35,7 +27,6 @@ class MockMonitor(Monitor):
 def test_empty_prognostic_composite():
     prognostic_composite = PrognosticComposite([])
     state = {'air_temperature': 273.15}
-    prognostic_composite.ensure_state_is_valid_input(state)
     tendencies, diagnostics = prognostic_composite(state)
     assert len(tendencies) == 0
     assert len(diagnostics) == 0
@@ -43,31 +34,23 @@ def test_empty_prognostic_composite():
     assert isinstance(diagnostics, dict)
 
 
-@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
 @mock.patch.object(MockPrognostic, '__call__')
-def test_prognostic_composite_calls_one_prognostic(mock_call, mock_ensure):
+def test_prognostic_composite_calls_one_prognostic(mock_call):
     mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 50.})
-    mock_ensure.return_value = None
     prognostic_composite = PrognosticComposite([MockPrognostic()])
     state = {'air_temperature': 273.15}
-    prognostic_composite.ensure_state_is_valid_input(state)
-    assert mock_ensure.called
     tendencies, diagnostics = prognostic_composite(state)
     assert mock_call.called
     assert tendencies == {'air_temperature': 0.5}
     assert diagnostics == {'foo': 50.}
 
 
-@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
 @mock.patch.object(MockPrognostic, '__call__')
-def test_prognostic_composite_calls_two_prognostics(mock_call, mock_ensure):
+def test_prognostic_composite_calls_two_prognostics(mock_call):
     mock_call.return_value = ({'air_temperature': 0.5}, {})
     prognostic_composite = PrognosticComposite(
         [MockPrognostic(), MockPrognostic()])
     state = {'air_temperature': 273.15}
-    prognostic_composite.ensure_state_is_valid_input(state)
-    assert mock_ensure.called
-    assert mock_ensure.call_count == 2
     tendencies, diagnostics = prognostic_composite(state)
     assert mock_call.called
     assert mock_call.call_count == 2
@@ -75,9 +58,8 @@ def test_prognostic_composite_calls_two_prognostics(mock_call, mock_ensure):
     assert diagnostics == {}
 
 
-@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
 @mock.patch.object(MockPrognostic, '__call__')
-def test_prognostic_errors_when_overlapping_diagnostics(mock_call, mock_ensure):
+def test_prognostic_errors_when_overlapping_diagnostics(mock_call):
     """Test that when two Prognostic objects in a collection return the same
     diagnostic, a SharedKeyException is raised."""
     mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 1.})
@@ -97,29 +79,23 @@ def test_prognostic_errors_when_overlapping_diagnostics(mock_call, mock_ensure):
 def test_empty_diagnostic_composite():
     diagnostic_composite = DiagnosticComposite([])
     state = {'air_temperature': 273.15}
-    diagnostic_composite.ensure_state_is_valid_input(state)
     diagnostics = diagnostic_composite(state)
     assert len(diagnostics) == 0
     assert isinstance(diagnostics, dict)
 
 
-@mock.patch.object(MockDiagnostic, 'ensure_state_is_valid_input')
 @mock.patch.object(MockDiagnostic, '__call__')
-def test_diagnostic_composite_calls_one_diagnostic(mock_call, mock_ensure):
+def test_diagnostic_composite_calls_one_diagnostic(mock_call):
     mock_call.return_value = {'foo': 50.}
-    mock_ensure.return_value = None
     diagnostic_composite = DiagnosticComposite([MockDiagnostic()])
     state = {'air_temperature': 273.15}
-    diagnostic_composite.ensure_state_is_valid_input(state)
-    assert mock_ensure.called
     diagnostics = diagnostic_composite(state)
     assert mock_call.called
     assert diagnostics == {'foo': 50.}
 
 
-@mock.patch.object(MockPrognostic, 'ensure_state_is_valid_input')
 @mock.patch.object(MockPrognostic, '__call__')
-def test_diagnostic_errors_when_overlapping_diagnostics(mock_call, mock_ensure):
+def test_diagnostic_errors_when_overlapping_diagnostics(mock_call):
     """Test that when two Prognostic objects in a collection return the same
     diagnostic, a SharedKeyException is raised."""
     mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 1.})
@@ -140,33 +116,23 @@ def test_empty_monitor_collection():
     # mainly we're testing that nothing errors
     monitor_collection = MonitorComposite([])
     state = {'air_temperature': 273.15}
-    monitor_collection.ensure_state_is_valid_input(state)
     monitor_collection.store(state)
 
 
-@mock.patch.object(MockMonitor, 'ensure_state_is_valid_input')
 @mock.patch.object(MockMonitor, 'store')
-def test_monitor_collection_calls_one_monitor(mock_store, mock_ensure):
+def test_monitor_collection_calls_one_monitor(mock_store):
     mock_store.return_value = None
-    mock_ensure.return_value = None
     monitor_collection = MonitorComposite([MockMonitor()])
     state = {'air_temperature': 273.15}
-    monitor_collection.ensure_state_is_valid_input(state)
-    assert mock_ensure.called
     monitor_collection.store(state)
     assert mock_store.called
 
 
-@mock.patch.object(MockMonitor, 'ensure_state_is_valid_input')
 @mock.patch.object(MockMonitor, 'store')
-def test_monitor_collection_calls_two_monitors(mock_store, mock_ensure):
+def test_monitor_collection_calls_two_monitors(mock_store):
     mock_store.return_value = None
-    mock_ensure.return_value = None
     monitor_collection = MonitorComposite([MockMonitor(), MockMonitor()])
     state = {'air_temperature': 273.15}
-    monitor_collection.ensure_state_is_valid_input(state)
-    assert mock_ensure.called
-    assert mock_ensure.call_count == 2
     monitor_collection.store(state)
     assert mock_store.called
     assert mock_store.call_count == 2

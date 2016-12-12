@@ -1,4 +1,4 @@
-from .._core.base_components import Prognostic
+from .._core.base_components import Prognostic, Diagnostic
 from .._core.array import DataArray
 from .._core.units import unit_registry as ureg
 
@@ -6,6 +6,16 @@ from .._core.units import unit_registry as ureg
 class ConstantPrognostic(Prognostic):
 
     def __init__(self, tendencies, diagnostics=None):
+        """
+
+        Args:
+            tendencies (dict): A dictionary whose keys are strings indicating
+                state quantities and values are the time derivative of those
+                quantities in units/second to be returned by this Prognostic.
+            diagnostics (dict): A dictionary whose keys are strings indicating
+                state quantities and values are the value of those quantities
+                to be returned by this Prognostic.
+        """
         self._tendencies = tendencies
         if diagnostics is not None:
             self._diagnostics = diagnostics
@@ -14,7 +24,9 @@ class ConstantPrognostic(Prognostic):
 
     def __call__(self, state):
         """
-        Gets tendencies and diagnostics from the passed model state.
+        Gets tendencies and diagnostics from the passed model state. The
+        returned dictionaries will contain the same values as were passed at
+        initialization.
 
         Args:
             state (dict): A model state dictionary.
@@ -22,12 +34,41 @@ class ConstantPrognostic(Prognostic):
         Returns:
             tendencies (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the time derivative of those
-                quantities in units/second at the time of the input state.
+                quantities in units/second.
             diagnostics (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the value of those quantities
-                at the time of the input state.
+                state quantities and values are the value of those quantities.
         """
         return self._tendencies.copy(), self._diagnostics.copy()
+
+
+class ConstantDiagnostic(Diagnostic):
+
+    def __init__(self, diagnostics):
+        """
+
+        Args:
+            diagnostics (dict): A dictionary whose keys are strings indicating
+                state quantities and values are the value of those quantities.
+                The values in the dictionary will be returned when this
+                Diagnostic is called.
+        """
+        self._diagnostics = diagnostics
+
+    def __call__(self, state):
+        """
+        Returns diagnostic values.
+
+        Args:
+            state (dict): A model state dictionary. Is not used, and is only
+                taken in to keep an API consistent with a Diagnostic.
+
+        Returns:
+            diagnostics (dict): A dictionary whose keys are strings indicating
+                state quantities and values are the value of those quantities.
+                The values in the returned dictionary are the same as were
+                passed into this object at initialization.
+        """
+        return self._diagnostics
 
 
 class RelaxationPrognostic(Prognostic):

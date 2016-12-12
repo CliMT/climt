@@ -9,17 +9,11 @@ import numpy as np
 
 class MockPrognostic(Prognostic):
 
-    def ensure_state_is_valid_input(self, state):
-        return
-
     def __call__(self):
         return {}, {}
 
 
 class MockDiagnostic(Diagnostic):
-
-    def ensure_state_is_valid_input(self, state):
-        return
 
     def __call__(self):
         return {}, {}

@@ -48,10 +48,6 @@ class Federation(object):
             self._monitor = MonitorComposite([])
         else:
             self._monitor = monitor
-        if self._implicit is not None:
-            self._implicit.ensure_state_is_valid_input(self._state)
-        self._time_stepper.ensure_state_is_valid_input(self._state)
-        self._monitor.ensure_state_is_valid_input(self._state)
 
     def step(self):
         pass
