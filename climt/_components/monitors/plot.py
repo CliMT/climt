@@ -1,4 +1,4 @@
-from ...core.base_components import Monitor
+from ..._core.base_components import Monitor
 import matplotlib.pyplot as plt
 
 

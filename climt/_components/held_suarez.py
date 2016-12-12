@@ -1,6 +1,6 @@
-from ..core.base_components import Prognostic
-from ..core.util import replace_none_with_default, ensure_3d
-from ..core.array import DataArray
+from .._core.base_components import Prognostic
+from .._core.util import replace_none_with_default, ensure_3d
+from .._core.array import DataArray
 import numpy as np
 
 

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-from .core.base_components import (
+from ._core.base_components import (
     Prognostic, Diagnostic, Implicit, Monitor, PrognosticComposite,
     DiagnosticComposite, MonitorComposite
 )
-from .core.timestepping import TimeStepper, Leapfrog, AdamsBashforth
-from .core.exceptions import InvalidStateException, SharedKeyException
-from .core.array import DataArray
-from .core.federation import Federation
-from .core.constants import default_constants
-from .components import (
+from ._core.timestepping import TimeStepper, Leapfrog, AdamsBashforth
+from ._core.exceptions import InvalidStateException, SharedKeyException
+from ._core.array import DataArray
+from ._core.federation import Federation
+from ._core.constants import default_constants
+from ._components import (
     Frierson06GrayLongwaveRadiation, PlotFunctionMonitor)
 
 __version__ = '1.0.0'

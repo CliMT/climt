@@ -1,6 +1,6 @@
-from ..core.base_components import Prognostic
-from ..core.array import DataArray
-from ..core.units import unit_registry as ureg
+from .._core.base_components import Prognostic
+from .._core.array import DataArray
+from .._core.units import unit_registry as ureg
 
 
 class ConstantPrognostic(Prognostic):
