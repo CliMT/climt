@@ -12,7 +12,7 @@ cache_folder = os.path.join(
 
 def cache_dictionary(dictionary, filename):
     dataset = xr.Dataset(dictionary)
-    dataset.to_netcdf(filename)
+    dataset.to_netcdf(filename, engine='scipy')
 
 
 def load_dictionary(filename):
