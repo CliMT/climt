@@ -45,6 +45,8 @@ class HeldSuarez(Prognostic):
             self._k_t = None
         if sigma is not None:
             self._k_v = self._get_k_v(sigma)
+        else:
+            self._k_v = None
 
     def __call__(self, state):
         """
@@ -91,7 +93,7 @@ class HeldSuarez(Prognostic):
             latitude.to_units('degrees_N').values, data_dim_if_1d=2)
         air_pressure = ensure_3d(
             air_pressure.to_units('Pa').values, data_dim_if_1d=3)
-        return np.max(
+        return np.maximum(
             200,
             (315 - self._delta_T_y*np.sin(latitude)**2 -
              self._delta_theta_z*np.log(air_pressure/self._p0)*np.cos(latitude)**2
@@ -105,11 +107,11 @@ class HeldSuarez(Prognostic):
         return (
             self._k_a +
             (self._k_s - self._k_a) *
-            np.max(0, (sigma - self._sigma_b)/(1 - self._sigma_b)) *
+            np.maximum(0, (sigma - self._sigma_b)/(1 - self._sigma_b)) *
             np.cos(latitude)**4)
 
     def _get_k_v(self, sigma):
         sigma = ensure_3d(sigma.to_units('').values, data_dim_if_1d=3)
-        return self._k_f * np.max(
+        return self._k_f * np.maximum(
             0,
             (sigma - self._sigma_b)/(1 - self._sigma_b))

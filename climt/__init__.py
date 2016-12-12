@@ -10,7 +10,7 @@ from ._core.federation import Federation
 from ._core.constants import default_constants
 from ._components import (
     Frierson06GrayLongwaveRadiation, PlotFunctionMonitor,
-    ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic)
+    ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez)
 
 __version__ = '1.0.0'
 __all__ = (
@@ -22,5 +22,5 @@ __all__ = (
     Federation,
     default_constants,
     Frierson06GrayLongwaveRadiation, PlotFunctionMonitor,
-    ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic
+    ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez
 )
