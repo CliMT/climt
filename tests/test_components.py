@@ -16,7 +16,7 @@ def cache_dictionary(dictionary, filename):
 
 
 def load_dictionary(filename):
-    dataset = xr.open_dataset(filename)
+    dataset = xr.open_dataset(filename, engine='scipy')
     return dict(dataset.data_vars)
 
 
@@ -53,7 +53,12 @@ class ComponentBase(object):
     def compare_outputs(self, current, cached):
         for i in range(len(current)):
             for key in current[i].keys():
-                assert np.all(current[i][key] == cached[i][key])
+                assert np.all(current[i][key].values == cached[i][key].values)
+                for attr in current[i][key].attrs:
+                    assert current[i][key].attrs[attr] == cached[i][key].attrs[attr]
+                for attr in cached[i][key].attrs:
+                    assert attr in current[i][key].attrs
+                assert current[i][key].dims == cached[i][key].dims
             for key in cached[i].keys():
                 assert key in current[i].keys()
 
