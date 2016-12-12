@@ -83,18 +83,18 @@ class TestHeldSuarez(ComponentBase):
             'latitude': DataArray(
                 random.randn(3), dims=['lat'], attrs={'units': 'degrees_N'}),
             'air_pressure': DataArray(
-                random.rand(2, 3, 4), dims=['lon', 'lat', 'lev'],
+                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
                 attrs={'units': 'hPa'},),
             'sigma': DataArray(
-                np.linspace(0., 1., num=4), dims=['lev'], attrs={'units': ''}),
+                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}),
             'air_temperature': DataArray(
-                270. + random.randn(2, 3, 4), dims=['lon', 'lat', 'lev'],
+                270. + random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
                 attrs={'units': 'degK'}),
             'eastward_wind': DataArray(
-                random.randn(2, 3, 4), dims=['lon', 'lat', 'lev'],
+                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
                 attrs={'units': 'm/s'}),
             'northward_wind': DataArray(
-                random.randn(2, 3, 4), dims=['lon', 'lat', 'lev'],
+                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
                 attrs={'units': 'm/s'}),
         }
 
