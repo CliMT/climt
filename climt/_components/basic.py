@@ -16,9 +16,9 @@ class ConstantPrognostic(Prognostic):
                 state quantities and values are the value of those quantities
                 to be returned by this Prognostic.
         """
-        self._tendencies = tendencies
+        self._tendencies = tendencies.copy()
         if diagnostics is not None:
-            self._diagnostics = diagnostics
+            self._diagnostics = diagnostics.copy()
         else:
             self._diagnostics = {}
 
@@ -52,7 +52,7 @@ class ConstantDiagnostic(Diagnostic):
                 The values in the dictionary will be returned when this
                 Diagnostic is called.
         """
-        self._diagnostics = diagnostics
+        self._diagnostics = diagnostics.copy()
 
     def __call__(self, state):
         """
@@ -68,13 +68,27 @@ class ConstantDiagnostic(Diagnostic):
                 The values in the returned dictionary are the same as were
                 passed into this object at initialization.
         """
-        return self._diagnostics
+        return self._diagnostics.copy()
 
 
 class RelaxationPrognostic(Prognostic):
+    """Applies Newtonian relaxation to a single quantity.
+
+    The relaxation takes the form $\frac{dx}{dt} = - \frac{x - x_{eq}}{\tau}$
+    where $x$ is the quantity being relaxed, $x_{eq}$ is the equilibrium
+    value, and $\tau$ is the timescale of the relaxation."""
 
     def __init__(self, quantity_name, equilibrium_value=None,
                  relaxation_timescale=None):
+        """
+        Args:
+            quantity_name (str): The name of the quantity to which Newtonian
+                relaxation should be applied
+            equilibrium_value (DataArray, optional): The equilibrium value
+                to which the quantity is relaxed
+            relaxation_timescale (DataArray, optional): The timescale tau with
+                which the Newtonian relaxation occurs.
+        """
         self._quantity_name = quantity_name
         self._equilibrium_value = equilibrium_value
         self._tau = relaxation_timescale
@@ -84,7 +98,15 @@ class RelaxationPrognostic(Prognostic):
         Gets tendencies and diagnostics from the passed model state.
 
         Args:
-            state (dict): A model state dictionary.
+            state (dict): A model state dictionary. Below, (quantity_name)
+                refers to the quantity_name passed at initialization. The state
+                must contain:
+
+                * (quantity_name)
+                * equilibrium_(quantity_name), unless this was passed at
+                  initialisation time in which case that value is used
+                * (quantity_name)_relaxation_timescale, unless this was passed
+                  at initialisation time in which case that value is used
 
         Returns:
             tendencies (dict): A dictionary whose keys are strings indicating
@@ -94,24 +116,24 @@ class RelaxationPrognostic(Prognostic):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        value = state[self._quantity_name].values
+        value = state[self._quantity_name]
         if self._equilibrium_value is None:
             equilibrium = state['equilibrium_' + self._quantity_name].to_units(
-                value.attrs['units']).values
+                value.attrs['units'])
         else:
             equilibrium = self._equilibrium_value.to_units(
-                value.attrs['units']).values
+                value.attrs['units'])
         if self._tau is None:
             tau = state[
                 self._quantity_name + '_relaxation_timescale'].to_units(
-                's').values
+                's')
         else:
-            tau = self._tau.to_units('s').values
+            tau = self._tau.to_units('s')
         tendency_unit_string = str(
             ureg(state[self._quantity_name].attrs['units']) / ureg('s'))
         tendencies = {
             self._quantity_name: DataArray(
-                (equilibrium - value)/tau,
+                (equilibrium.values - value.values)/tau.values,
                 dims=value.dims,
                 attrs={'units': tendency_unit_string}
             )
