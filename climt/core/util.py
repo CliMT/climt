@@ -105,3 +105,26 @@ def ensure_number_of_dims(value, num_dims, name):
     if len(value.dims) != num_dims:
         raise InvalidStateException(
             '{} must have {} dimensions'.format(name, num_dims))
+
+
+def ensure_3d(value, data_dim_if_1d):
+    """If the given array is 3D, it is returned. If it is 1D, that array is
+    returned broadcast to 3D with the original dim becoming dimension
+    data_dim_if_1d. data_dim_if_1d should be an integer from 1 to 3."""
+    if len(value.shape) == 3:
+        return value
+    elif len(value.shape) == 1:
+        if data_dim_if_1d == 1:
+            return value[:, None, None]
+        elif data_dim_if_1d == 2:
+            return value[None, :, None]
+        elif data_dim_if_1d == 3:
+            return value[None, None, :]
+        else:
+            raise ValueError(
+                'data_dim_if_1d should be an integer from 1 to 3, '
+                'got {}'.format(data_dim_if_1d))
+    else:
+        raise ValueError(
+            'value should be a 1D or 3D array, instead got {}D'.format(
+                len(value.shape)))
