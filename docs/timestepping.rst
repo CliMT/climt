@@ -30,10 +30,6 @@ this is likely not a useful thing to do.
 Usage
 -----
 
-:py:class:`climt.TimeStepper` objects support the same consistency checks
-as components (the ``ensure_state_is_valid_input`` method) outlined in
-:ref:`consistency`.
-
 Once initialized, a :py:class:`climt.TimeStepper` object has a very similar
 interface to the :py:class:`Implicit` object.
 

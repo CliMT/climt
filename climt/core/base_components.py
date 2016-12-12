@@ -6,17 +6,6 @@ class Implicit(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def ensure_state_is_valid_input(self, state):
-        """
-        Args:
-            state (dict): A model state dictionary.
-
-        Raises:
-            InvalidStateException: if state is not a valid input for the
-                Implicit instance.
-        """
-
-    @abc.abstractmethod
     def __call__(self, state, timestep):
         """
         Gets diagnostics from the current model state and steps the state
@@ -31,22 +20,16 @@ class Implicit(object):
             next_state (dict): A dicitonary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the timestep after input state.
+
+        Raises:
+            KeyError: If a required quantity is missing from the state.
+            InvalidStateException: If state is not a valid input for the
+                Implicit instance for other reasons.
         """
 
 
 class Prognostic(object):
     __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def ensure_state_is_valid_input(self, state):
-        """
-        Args:
-            state (dict): A model state dictionary.
-
-        Raises:
-            InvalidStateException: if state is not a valid input for the
-                Prognostic instance.
-        """
 
     @abc.abstractmethod
     def __call__(self, state):
@@ -60,25 +43,19 @@ class Prognostic(object):
             tendencies (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the time derivative of those
                 quantities in units/second at the time of the input state.
-            diagnostics (dict): A dicitonary whose keys are strings indicating
+            diagnostics (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the time of the input state.
+
+        Raises:
+            KeyError: If a required quantity is missing from the state.
+            InvalidStateException: If state is not a valid input for the
+                Prognostic instance.
         """
 
 
 class Diagnostic(object):
     __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def ensure_state_is_valid_input(self, state):
-        """
-        Args:
-            state (dict): A model state dictionary.
-
-        Raises:
-            InvalidStateException: if state is not a valid input for the
-                Diagnostic instance.
-        """
 
     @abc.abstractmethod
     def __call__(self, state):
@@ -92,6 +69,11 @@ class Diagnostic(object):
             diagnostics (dict): A dicitonary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the time of the input state.
+
+        Raises:
+            KeyError: If a required quantity is missing from the state.
+            InvalidStateException: If state is not a valid input for the
+                Prognostic instance.
         """
 
     def update_state(self, state):
@@ -103,7 +85,9 @@ class Diagnostic(object):
             state (dict): A model state dictionary.
 
         Raises:
-            InvalidStateException: if state already includes any diagnostics being output.
+            KeyError: If a required quantity is missing from the state.
+            InvalidStateException: If state is not a valid input for the
+                Diagnostic instance.
         """
         diagnostics = self(state)
         ensure_no_shared_keys(state, diagnostics)
@@ -113,17 +97,6 @@ class Diagnostic(object):
 class Monitor(object):
     __metaclass__ = abc.ABCMeta
 
-    def ensure_state_is_valid_input(self, state):
-        """
-        Args:
-            state (dict): A model state dictionary.
-
-        Raises:
-            InvalidStateException: if state is not a valid input for the
-                Diagnostic instance.
-        """
-        return  # by default all states are valid
-
     @abc.abstractmethod
     def store(self, state):
         """
@@ -132,6 +105,10 @@ class Monitor(object):
 
         Args:
             state (dict): A model state dictionary.
+
+        Raises:
+            InvalidStateException: if state is not a valid input for the
+                Diagnostic instance.
         """
 
 
@@ -142,16 +119,12 @@ class ComponentComposite(object):
     def __init__(self, component_list):
         """
         Args:
-            component_list (iterable): the components that should be
+            component_list (iterable): The components that should be
                 wrapped by this object.
         """
         if self.component_class is not None:
             ensure_components_have_class(component_list, self.component_class)
         self._components = component_list
-
-    def ensure_state_is_valid_input(self, state):
-        for component in self._components:
-            component.ensure_state_is_valid_input(state)
 
 
 def ensure_components_have_class(components, component_class):
@@ -183,6 +156,9 @@ class PrognosticComposite(ComponentComposite):
         Raises:
             SharedKeyException: if multiple Prognostic objects contained in the
                 collection return the same diagnostic quantity.
+            KeyError: If a required quantity is missing from the state.
+            InvalidStateException: If state is not a valid input for a
+                Prognostic instance.
         """
         return_tendencies = {}
         return_diagnostics = {}
@@ -214,6 +190,9 @@ class DiagnosticComposite(ComponentComposite):
         Raises:
             SharedKeyException: if multiple Diagnostic objects contained in the
                 collection return the same diagnostic quantity.
+            KeyError: If a required quantity is missing from the state.
+            InvalidStateException: If state is not a valid input for a
+                Diagnostic instance.
         """
         return_diagnostics = {}
         for diagnostic_component in self._components:
@@ -249,6 +228,11 @@ class MonitorComposite(ComponentComposite):
 
         Args:
             state (dict): A model state dictionary.
+
+        Raises:
+            KeyError: If a required quantity is missing from the state.
+            InvalidStateException: If state is not a valid input for a
+                Monitor instance.
         """
         for monitor in self._components:
             monitor.store(state)

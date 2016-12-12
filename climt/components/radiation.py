@@ -46,54 +46,6 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
         self._g = replace_none_with_default('g', g)
         self._Cpd = replace_none_with_default('Cpd', Cpd)
 
-    def ensure_state_is_valid_input(self, state):
-        """
-        Args:
-            state (dict): A model state dictionary. Must contain the following
-                as climt.DataArray objects with valid units:
-
-                * air_temperature
-                * air_pressure
-                * surface_pressure
-                * surface_temperature
-
-                Dimension orders must be (longitude, latitude, height), with
-                height starting at the surface.
-
-        Raises:
-            KeyError: if a required quantity is missing from the state
-            TypeError: if a required quantity is not a climt.DataArray
-            InvalidStateException: if state is not a valid input for the
-                Prognostic instance.
-        """
-        try:
-            T = state['air_temperature'].to_units('degK').values
-            p = state['air_pressure'].to_units('Pa').values  # x, y, z
-            ps = state['surface_pressure'].to_units('Pa').values  # x, y
-            Ts = state['surface_temperature'].to_units('degK').values  # x, y
-            state['latitude'].to_units('degrees_north').values  # y
-        except AttributeError:
-            raise TypeError(
-                'provided quantities must be climt.DataArray objects')
-        try:
-            ensure_shared_coordinates(T, p)
-        except AssertionError:
-            raise InvalidStateException(
-                'air_temperature and air_pressure must share '
-                'the same coordinates')
-        try:
-            ensure_shared_coordinates(Ts, ps)
-        except AssertionError:
-            raise InvalidStateException(
-                'surface_temperature and surface_pressure must share '
-                'the same coordinates')
-        for name in 'air_temperature', 'air_pressure':
-            ensure_third_dim_is_vertical(state[name], name)
-        for name in 'surface_pressure', 'surface_temperature':
-            ensure_horizontal_only(state[name], name)
-        for name in ('surface_temperature', 'surface_pressure'):
-            ensure_number_of_dims(state[name], num_dims=2, name=name)
-
     def __call__(self, state):
         """
         Gets tendencies and diagnostics from the passed model state.
@@ -105,7 +57,7 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
             tendencies (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the time derivative of those
                 quantities in units/second at the time of the input state.
-            diagnostics (dict): A dicitonary whose keys are strings indicating
+            diagnostics (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """

@@ -25,30 +25,6 @@ can initialize (e.g. there is no one 'prognostic' scheme), but they each have
 subclasses defined in CliMT, which can all be used in the ways described in
 this section.
 
-.. _consistency:
-
-Ensuring consistency
---------------------
-
-To make sure that a given state dictionary is valid to pass in to a
-component, you can write (for example, with a :py:class:`climt.Prognostic`):
-
-.. code-block:: python
-
-    prognostic = RRTMRadiation()
-    prognostic.ensure_state_is_valid_input(state)
-
-where ``state`` is your state dictionary. This call will raise an
-:py:class:`climt.InvalidStateException` if the input state is not valid.
-This is good, because if you call a :py:class:`climt.Prognostic` with an
-invalid input, it may give results which are not scientifically valid.
-For instance, if the object requires the horizontal grid to have
-constant spacing, it may assume this to be true without checking when
-it is called (for performance reasons).
-
-The ``ensure_state_is_valid_input`` method exists on all component classes, and
-is called in the same way as shown above.
-
 Initializing a Component
 ------------------------
 
