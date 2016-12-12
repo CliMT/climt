@@ -1,11 +1,6 @@
 from .._core.base_components import Prognostic
 from .._core.array import DataArray
-from .._core.util import (
-    ensure_shared_coordinates, ensure_third_dim_is_vertical,
-    ensure_horizontal_only, ensure_number_of_dims, jit,
-    replace_none_with_default,
-)
-from .._core.exceptions import InvalidStateException
+from .._core.util import jit, replace_none_with_default
 import numpy as np
 
 
