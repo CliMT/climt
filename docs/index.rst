@@ -8,10 +8,12 @@ Contents:
 
    readme
    installation
+   component_types
    components
    composites
    timestepping
    naming
+   memory_management
    contributing
    authors
    history
