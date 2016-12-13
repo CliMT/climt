@@ -102,5 +102,42 @@ class TestHeldSuarez(ComponentBase):
         return HeldSuarez()
 
 
+class TestHeldSuarezCachedCoordinates(ComponentBase):
+
+    def get_input_state(self):
+        random = np.random.RandomState(0)
+        return {
+            'latitude': DataArray(
+                np.linspace(-90, 90, num=3),
+                dims=['lat'], attrs={'units': 'degrees_N'}),
+            'air_pressure': DataArray(
+                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                attrs={'units': 'hPa'},),
+            'sigma': DataArray(
+                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}),
+            'air_temperature': DataArray(
+                270. + random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                attrs={'units': 'degK'}),
+            'eastward_wind': DataArray(
+                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                attrs={'units': 'm/s'}),
+            'northward_wind': DataArray(
+                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                attrs={'units': 'm/s'}),
+        }
+
+    def get_component_instance(self):
+        random = np.random.RandomState(0)
+        return HeldSuarez(
+            latitude=DataArray(
+                np.linspace(-90, 90, num=3),
+                dims=['lat'], attrs={'units': 'degrees_N'}),
+            air_pressure=DataArray(
+                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                attrs={'units': 'hPa'},),
+            sigma=DataArray(
+                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}))
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
