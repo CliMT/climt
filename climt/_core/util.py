@@ -16,11 +16,15 @@ vertical_dimension_names = [
 for name in tuple(vertical_dimension_names):
     vertical_dimension_names.append(name + '_on_full_levels')
     vertical_dimension_names.append(name + '_on_half_levels')
-vertical_dimension_names.extend(['lev', 'levels', 'half_levels'])
+vertical_dimension_names.extend([
+    'lev', 'levels', 'half_levels', 'mid_level', 'mid_levels',
+    'interface_level', 'interface_levels'])
 
-horizontal_dimension_names = (
-    'x', 'y', 'lon', 'lat', 'longitude', 'latitude',
-)
+x_dimension_names = ('x', 'lon', 'longitude')
+
+y_dimension_names = ('y', 'lat', 'latitude')
+
+horizontal_dimension_names = x_dimension_names + y_dimension_names
 
 
 def set_prognostic_update_frequency(prognostic_class, update_timedelta):
@@ -172,3 +176,27 @@ def ensure_3d(value, data_dim_if_1d):
         raise ValueError(
             'value should be a 1D or 3D array, instead got {}D'.format(
                 len(value.shape)))
+
+
+def get_3d_numpy_array(data_array):
+    """Takes in a DataArray, and returns a (x, y, z) 3-dimensional numpy
+    array from that DataArray."""
+    indices = [None, None, None]
+    dimensions = []
+    for i, dimension_names in zip(
+            range(3), [x_dimension_names, y_dimension_names,
+                       vertical_dimension_names]):
+        dims = set(data_array.dims).intersection(dimension_names)
+        if len(dims) == 1:
+            dim = dims.pop()
+            dimensions.append(dim)
+            indices[i] = slice(0, len(data_array.coords[dim]))
+        elif len(dims) > 1:
+            raise ValueError(
+                'DataArray has multiple dimensions for a single direction')
+    if len(dimensions) < len(data_array.dims):
+        raise ValueError(
+            'Was not able to classify all dimensions as x/y/z: {}'.format(
+                data_array.dims))
+    # Transpose correctly orders existing dimensions, indices creates new ones
+    return data_array.transpose(*dimensions).values[indices]

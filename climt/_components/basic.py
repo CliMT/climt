@@ -4,10 +4,16 @@ from .._core.units import unit_registry as ureg
 
 
 class ConstantPrognostic(Prognostic):
+    """
+    Prescribes constant tendencies provided at initialization.
+
+    Note: Any arrays in the passed dictionaries are not copied, so that
+        if you were to modify them after passing them into this object,
+        it would also modify the values inside this object.
+    """
 
     def __init__(self, tendencies, diagnostics=None):
         """
-
         Args:
             tendencies (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the time derivative of those
@@ -42,10 +48,16 @@ class ConstantPrognostic(Prognostic):
 
 
 class ConstantDiagnostic(Diagnostic):
+    """
+    Yields constant diagnostics provided at initialization.
+
+    Note: Any arrays in the passed dictionaries are not copied, so that
+        if you were to modify them after passing them into this object,
+        it would also modify the values inside this object.
+    """
 
     def __init__(self, diagnostics):
         """
-
         Args:
             diagnostics (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the value of those quantities.

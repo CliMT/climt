@@ -1,45 +1,44 @@
 from .._core.base_components import Prognostic
 from .._core.array import DataArray
-from .._core.util import jit, replace_none_with_default
+from .._core.util import jit, replace_none_with_default, ensure_horizontal_only
+from .._core.util import get_3d_numpy_array as to_3d_array
 import numpy as np
 
 
-class Frierson06GrayLongwaveRadiation(Prognostic):
+class GrayLongwaveRadiation(Prognostic):
 
     def __init__(
-            self, linear_optical_depth_parameter=0.1,
-            longwave_optical_depth_at_equator=6,
-            longwave_optical_depth_at_poles=1.5,
-            sigma=None,
-            g=None,
-            Cpd=None):
+            self,
+            optical_depth=None,
+            stefan_boltzmann=None,
+            gravitational_acceleration=None,
+            heat_capacity_of_dry_air_at_constant_pressure=None):
         """
 
         Args:
-            linear_optical_depth_parameter: The constant $f_l$ which determines
-                how much of the variation of $\tau$ with pressure is linear
-                rather than quartic.
-                $\tau = \tau_0 [f_l \frac{p}{p_s} + (1 - f_l) (\frac{p}{p_s})^4]$
-                Default is 0.1 as in Frierson et al., 2006.
-            longwave_optical_depth_at_equator: The value of $\tau_0$ at the
-                equator.
-                Default is 6 as in Frierson et al. 2006.
-            longwave_optical_depth_at_poles: The value of $\tau_0$ at the
-                poles.
-                Default is 1.5 as in Frierson et al., 2006.
-            sigma: Stefan-Boltzmann constant $\sigma$ in $W m^{-2} K^{-4}$.
+            optical_depth (DataArray): The optical depth $\tau$ of the
+                atmosphere, with the greatest values at the surface.
+            stefan_boltzmann: Stefan-Boltzmann constant $\sigma$ in
+                $W m^{-2} K^{-4}$.
                 Default taken from climt.default_constants.
-            g: Gravitational acceleration in $m s^{-2}$.
+            gravitational_acceleration: Gravitational acceleration in
+                $m s^{-2}$.
                 Default taken from climt.default_constants.
-            Cpd: Heat capacity of dry air in $J kg^{-1} K^{-1}$.
+            heat_capacity_of_dry_air_at_constant_pressure: Heat capacity of
+                dry air at constnat pressure in $J kg^{-1} K^{-1}$.
                 Default taken from climt.default_constants.
         """
-        self._fl = linear_optical_depth_parameter
-        self._tau0e = longwave_optical_depth_at_equator
-        self._tau0p = longwave_optical_depth_at_poles
-        self._sigma = replace_none_with_default('sigma', sigma)
-        self._g = replace_none_with_default('g', g)
-        self._Cpd = replace_none_with_default('Cpd', Cpd)
+        if optical_depth is not None:
+            self._optical_depth = to_3d_array(optical_depth.to_units(''))
+        else:
+            self._optical_depth = None
+        self._stefan_boltzmann = replace_none_with_default(
+            'stefan_boltzmann', stefan_boltzmann)
+        self._g = replace_none_with_default(
+            'gravitational_acceleration', gravitational_acceleration)
+        self._Cpd = replace_none_with_default(
+            'heat_capacity_of_dry_air_at_constant_pressure',
+            heat_capacity_of_dry_air_at_constant_pressure)
 
     def __call__(self, state):
         """
@@ -56,15 +55,20 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        T = state['air_temperature'].to_units('degK').values
-        p = state['air_pressure'].to_units('Pa').values  # x, y, z
-        ps = state['surface_pressure'].to_units('Pa').values  # x, y
-        Ts = state['surface_temperature'].to_units('degK').values  # x, y
-        lat = state['latitude'].to_units('degrees_north').values  # y
+        if self._optical_depth is None:
+            tau = to_3d_array(state['optical_depth'].to_units(''))
+        else:
+            tau = self._optical_depth
+        T = to_3d_array(state['air_temperature'].to_units('degK'))
+        p_interface = to_3d_array(
+            state['air_pressure_on_interface_levels'].to_units('Pa'))
+        Ts = state['surface_temperature'].to_units('degK')  # x, y
+        ensure_horizontal_only(Ts, 'surface_temperature')
+        Ts = Ts.values
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
-            T, p, ps[:, :, None], Ts, lat[None, :, None], self._tau0e,
-            self._tau0p, self._fl, self._sigma, self._g, self._Cpd)
+            T, p_interface, Ts, tau, self._stefan_boltzmann,
+            self._g, self._Cpd)
         dims_half = state['air_temperature'].dims
         dims_full = (
             list(state['air_temperature'].dims[:2]) + ['full_levels'])
@@ -75,8 +79,6 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
                 upward_flux, dims=dims_full, attrs={'units': 'W m^-2'}),
             'net_longwave_flux': DataArray(
                 net_lw_flux, dims=dims_full, attrs={'units': 'W m^-2'}),
-            'optical_depth': DataArray(
-                tau, dims=dims_half, attrs={'units': ''}),
             'longwave_heating_rate': DataArray(
                 lw_temperature_tendency, dims=dims_half,
                 attrs={'units': 'K s^-1'}),
@@ -86,6 +88,77 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
                 lw_temperature_tendency, dims=dims_half,
                 attrs={'units': 'K s^-1'})
         }
+        return tendencies, diagnostics
+
+
+class Frierson06GrayLongwaveRadiation(Prognostic):
+
+    def __init__(
+            self, linear_optical_depth_parameter=0.1,
+            longwave_optical_depth_at_equator=6,
+            longwave_optical_depth_at_poles=1.5,
+            stefan_boltzmann=None,
+            gravitational_acceleration=None,
+            heat_capacity_of_dry_air_at_constant_pressure=None):
+        """
+
+        Args:
+            linear_optical_depth_parameter (float): The constant $f_l$ which
+                determines how much of the variation of $\tau$ with pressure
+                is linear rather than quartic.
+                $\tau = \tau_0 [f_l \frac{p}{p_s} + (1 - f_l) (\frac{p}{p_s})^4]$
+                Default is 0.1 as in Frierson et al., 2006.
+            longwave_optical_depth_at_equator (float): The value of $\tau_0$
+                at the equator.
+                Default is 6 as in Frierson et al. 2006.
+            longwave_optical_depth_at_poles (float): The value of $\tau_0$
+                at the poles.
+                Default is 1.5 as in Frierson et al., 2006.
+            stefan_boltzmann: Stefan-Boltzmann constant $\sigma$ in
+                $W m^{-2} K^{-4}$.
+                Default taken from climt.default_constants.
+            gravitational_acceleration: Gravitational acceleration in
+                $m s^{-2}$.
+                Default taken from climt.default_constants.
+            heat_capacity_of_dry_air_at_constant_pressure: Heat capacity of
+                dry air at constnat pressure in $J kg^{-1} K^{-1}$.
+                Default taken from climt.default_constants.
+        """
+        self._fl = linear_optical_depth_parameter
+        self._tau0e = longwave_optical_depth_at_equator
+        self._tau0p = longwave_optical_depth_at_poles
+        self._gray_radiation = GrayLongwaveRadiation(
+            stefan_boltzmann=stefan_boltzmann,
+            gravitational_acceleration=gravitational_acceleration,
+            heat_capacity_of_dry_air_at_constant_pressure=heat_capacity_of_dry_air_at_constant_pressure)
+
+    def __call__(self, state):
+        """
+        Gets tendencies and diagnostics from the passed model state.
+
+        Args:
+            state (dict): A model state dictionary.
+
+        Returns:
+            tendencies (dict): A dictionary whose keys are strings indicating
+                state quantities and values are the time derivative of those
+                quantities in units/second at the time of the input state.
+            diagnostics (dict): A dictionary whose keys are strings indicating
+                state quantities and values are the value of those quantities
+                at the time of the input state.
+        """
+        lat = to_3d_array(state['latitude'].to_units('degrees_north'))
+        sigma_interface = to_3d_array(
+            state['sigma_on_interface_levels'].to_units(''))
+        tau = DataArray(
+            get_frierson_06_tau(
+                lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
+            dims=state['air_temperature'].dims,
+            attrs={'units': ''})
+        state_with_tau = state.copy()
+        state_with_tau['optical_depth'] = tau
+        tendencies, diagnostics = self._gray_radiation(state_with_tau)
+        diagnostics['optical_depth'] = tau
         return tendencies, diagnostics
 
 
@@ -156,16 +229,19 @@ def integrate_downward_longwave(T, tau, sigma):
 
 @jit(nopython=True)
 def get_longwave_fluxes(
-        T, p, ps, T_surface, latitude, tau0e, tau0p, fl, sigma, g, Cpd):
-    pi = get_interface_pressures(p, ps)
-    tau_0 = tau0e + (tau0p - tau0e) * np.sin(latitude/360.)**2
-    tau = tau_0 * (
-        fl*pi/ps + (1 - fl)*(pi/ps)**4)
+        T, p_interface, T_surface, tau, sigma, g, Cpd):
     upward_flux = integrate_upward_longwave(T, T_surface, tau, sigma)
     downward_flux = integrate_downward_longwave(T, tau, sigma)
     net_lw_flux = upward_flux - downward_flux
     longwave_temperature_tendency = g/Cpd * (
         net_lw_flux[:, :, 1:] - net_lw_flux[:, :, :-1])/(
-        pi[:, :, 1:] - pi[:, :, :-1])
+        p_interface[:, :, 1:] - p_interface[:, :, :-1])
     return (downward_flux, upward_flux, net_lw_flux,
             longwave_temperature_tendency, tau)
+
+
+@jit(nopython=True)
+def get_frierson_06_tau(latitude, sigma, tau0e, tau0p, fl):
+    tau_0 = tau0e + (tau0p - tau0e) * np.sin(latitude/360.)**2
+    tau = tau_0 * (fl*sigma + (1 - fl)*sigma**4)
+    return tau
