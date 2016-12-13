@@ -8,6 +8,7 @@ from ._core.exceptions import InvalidStateException, SharedKeyException
 from ._core.array import DataArray
 from ._core.federation import Federation
 from ._core.constants import default_constants
+from ._core.util import set_prognostic_update_frequency
 from ._components import (
     Frierson06GrayLongwaveRadiation, PlotFunctionMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez)
@@ -21,6 +22,7 @@ __all__ = (
     DataArray,
     Federation,
     default_constants,
+    set_prognostic_update_frequency,
     Frierson06GrayLongwaveRadiation, PlotFunctionMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez
 )

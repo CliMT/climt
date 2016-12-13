@@ -23,6 +23,50 @@ horizontal_dimension_names = (
 )
 
 
+def set_prognostic_update_frequency(prognostic_class, update_timedelta):
+    """
+    Alters a prognostic class so that when it is called, it only computes its
+    output once for every period of length update_timedelta. In between these
+    calls, the cached output from the last computation will be returned.
+
+    Note that the *class* itself must be updated, not an *instance* of that
+    class.
+
+    Once modified, the class requires that the 'time' quantity is set on
+    states it receives, and that it is a datetime or timedelta object.
+
+    Example:
+        This how the function should be used on a Prognostic class MyPrognostic.
+
+        >>> from climt import MyPrognostic
+        >>> from datetime import timedelta
+        >>> set_prognostic_update_frequency(MyPrognostic, timedelta(hours=1))
+        >>> prognostic = MyPrognostic()
+
+    Args:
+        prognostic_class (type): A Prognostic class (not an instance).
+        update_timedelta (timedelta): The amount that state['time'] must differ
+            from when output was cached before new output is
+            computed.
+
+    Returns:
+        prognostic (Prognostic): The input Prognostic, altered in-place
+    """
+    prognostic_class._update_timedelta = update_timedelta
+    prognostic_class._last_update_time = None
+    original_call = prognostic_class.__call__
+
+    def __call__(self, state):
+        if (self._last_update_time is None or
+                state['time'] >= self._last_update_time + self._update_timedelta):
+            self._cached_output = original_call(self, state)
+            self._last_update_time = state['time']
+        return self._cached_output
+
+    prognostic_class.__call__ = __call__
+    return prognostic_class
+
+
 def replace_none_with_default(constant_name, value):
     """If value is None, returns the default constant for the constant name.
     Otherwise, returns value."""
