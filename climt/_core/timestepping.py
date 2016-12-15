@@ -12,34 +12,35 @@ class TimeStepper(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, prognostic_list, diagnostic_list=(), **kwargs):
+    def __init__(self, prognostic_list, **kwargs):
         self._prognostic = PrognosticComposite(prognostic_list)
-        self._diagnostic = DiagnosticComposite(diagnostic_list)
 
     @abc.abstractmethod
     def step(self, state, timestep):
         """
-        Updates the input state dictionary and returns a new state corresponding
+        Retrieves any diagnostics and returns a new state corresponding
         to the next timestep.
 
         Args:
-            state (dict): The current model state. Will be updated in-place by
-                the call with any diagnostics from the current timestep.
+            state (dict): The current model state.
             timestep (timedelta): The amount of time to step forward.
 
         Returns:
+            diagnostics (dict): Diagnostics from the timestep of the input
+                state.
             new_state (dict): The model state at the next timestep.
-
-        Raises:
-            SharedKeyException: if a Diagnostic object has an output that is
-                already in the state at the start of the timestep.
         """
+
+    def _copy_untouched_quantities(self, old_state, new_state):
+        for key in old_state.keys():
+            if key not in new_state:
+                new_state[key] = old_state[key]
 
 
 class AdamsBashforth(TimeStepper):
     """A TimeStepper using the Adams-Bashforth scheme."""
 
-    def __init__(self, prognostic_list, diagnostic_list=(), order=3):
+    def __init__(self, prognostic_list, order=3):
         """
         Initialize an Adams-Bashforth time stepper.
 
@@ -60,7 +61,7 @@ class AdamsBashforth(TimeStepper):
         self._order = order
         self._timestep = None
         self._tendencies_list = []
-        super(AdamsBashforth, self).__init__(prognostic_list, diagnostic_list)
+        super(AdamsBashforth, self).__init__(prognostic_list)
 
     def step(self, state, timestep):
         """
@@ -80,14 +81,14 @@ class AdamsBashforth(TimeStepper):
                 step() was called on this instance of this object.
         """
         self._ensure_constant_timestep(timestep)
-        self._diagnostic.update_state(state)
+        state = state.copy()
         tendencies, diagnostics = self._prognostic(state)
-        state.update(diagnostics)
         self._tendencies_list.append(tendencies)
         new_state = self._perform_step(state, timestep)
+        self._copy_untouched_quantities(state, new_state)
         if len(self._tendencies_list) == self._order:
             self._tendencies_list.pop(0)  # remove the oldest entry
-        return new_state
+        return diagnostics, new_state
 
     def _perform_step(self, state, timestep):
         # if we don't have enough previous tendencies built up, use lower order
@@ -104,9 +105,6 @@ class AdamsBashforth(TimeStepper):
         else:
             # the following should never happen, if it is there's a bug
             raise RuntimeError('order should be integer between 1 and 4')
-        for key in state.keys():
-            if state not in new_state:
-                new_state[key] = state[key]
         return new_state
 
     def _ensure_constant_timestep(self, timestep):
@@ -129,8 +127,8 @@ class Leapfrog(TimeStepper):
     at $t_{n-1}$ and $t_{n+1}$."""
 
     def __init__(
-            self, prognostic_list, diagnostic_list=(), asselin_strength=0.05,
-            alpha=1.):
+            self, prognostic_list, asselin_strength=0.05,
+            alpha=0.5):
         """
         Initialize a Leapfrog time stepper.
 
@@ -146,7 +144,7 @@ class Leapfrog(TimeStepper):
                 shifted by (1-alpha)*influence. If alpha is 1 then the behavior
                 is that of the classic Robert-Asselin time filter, while if it
                 is 0.5 the filter will conserve the three-point mean.
-                Default is 1.
+                Default is 0.5.
 
         References:
             Williams, P., 2009: A Proposed Modification to the Robert-Asselin
@@ -157,7 +155,7 @@ class Leapfrog(TimeStepper):
         self._asselin_strength = asselin_strength
         self._timestep = None
         self._alpha = alpha
-        super(Leapfrog, self).__init__(prognostic_list, diagnostic_list)
+        super(Leapfrog, self).__init__(prognostic_list)
 
     def step(self, state, timestep):
         """
@@ -166,7 +164,7 @@ class Leapfrog(TimeStepper):
 
         Args:
             state (dict): The current model state. Will be updated in-place by
-                the call with any diagnostics from the current timestep.
+                the call due to the Robert-Asselin-Williams filter.
             timestep (timedelta): The amount of time to step forward.
 
         Returns:
@@ -178,19 +176,21 @@ class Leapfrog(TimeStepper):
             ValueError: If the timestep is not the same as the last time
                 step() was called on this instance of this object.
         """
+        original_state = state
+        state = state.copy()
         self._ensure_constant_timestep(timestep)
-        self._diagnostic.update_state(state)
         tendencies, diagnostics = self._prognostic(state)
-        ensure_no_shared_keys(state, diagnostics)
-        state.update(diagnostics)
         if self._old_state is None:
             new_state = step_forward_euler(state, tendencies, timestep)
         else:
             state, new_state = step_leapfrog(
                 self._old_state, state, tendencies, timestep,
                 asselin_strength=self._asselin_strength, alpha=self._alpha)
+        self._copy_untouched_quantities(state, new_state)
         self._old_state = state
-        return new_state
+        for key in original_state.keys():
+            original_state[key] = state[key]  # allow filtering to be applied
+        return diagnostics, new_state
 
     def _ensure_constant_timestep(self, timestep):
         if self._timestep is None:

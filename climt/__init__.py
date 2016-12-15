@@ -7,7 +7,6 @@ from ._core.timestepping import TimeStepper, Leapfrog, AdamsBashforth
 from ._core.exceptions import (
     InvalidStateException, SharedKeyException, InvalidSetupException)
 from ._core.array import DataArray
-from ._core.federation import Federation
 from ._core.constants import default_constants
 from ._core.util import set_prognostic_update_frequency
 from ._components import (
@@ -22,7 +21,6 @@ __all__ = (
     TimeStepper, Leapfrog, AdamsBashforth,
     InvalidStateException, SharedKeyException, InvalidSetupException,
     DataArray,
-    Federation,
     default_constants,
     set_prognostic_update_frequency,
     Frierson06GrayLongwaveRadiation, GrayLongwaveRadiation, PlotFunctionMonitor,
