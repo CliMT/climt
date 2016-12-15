@@ -203,7 +203,7 @@ def get_3d_numpy_array(data_array):
 
 
 def get_2d_numpy_array(data_array):
-    """Takes in a DataArray, and returns a (x, y, z) 3-dimensional numpy
+    """Takes in a DataArray, and returns a (x, y) 2-dimensional numpy
     array from that DataArray."""
     indices = [None, None]
     dimensions = []
