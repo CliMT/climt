@@ -200,3 +200,26 @@ def get_3d_numpy_array(data_array):
                 data_array.dims))
     # Transpose correctly orders existing dimensions, indices creates new ones
     return data_array.transpose(*dimensions).values[indices]
+
+
+def get_2d_numpy_array(data_array):
+    """Takes in a DataArray, and returns a (x, y, z) 3-dimensional numpy
+    array from that DataArray."""
+    indices = [None, None]
+    dimensions = []
+    for i, dimension_names in zip(
+            range(2), [x_dimension_names, y_dimension_names]):
+        dims = set(data_array.dims).intersection(dimension_names)
+        if len(dims) == 1:
+            dim = dims.pop()
+            dimensions.append(dim)
+            indices[i] = slice(0, len(data_array.coords[dim]))
+        elif len(dims) > 1:
+            raise ValueError(
+                'DataArray has multiple dimensions for a single direction')
+    if len(dimensions) < len(data_array.dims):
+        raise ValueError(
+            'Was not able to classify all dimensions as x/y: {}'.format(
+                data_array.dims))
+    # Transpose correctly orders existing dimensions, indices creates new ones
+    return data_array.transpose(*dimensions).values[indices]
