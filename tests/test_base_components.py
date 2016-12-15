@@ -6,6 +6,11 @@ from climt import (
 )
 
 
+def same_list(list1, list2):
+    return (len(list1) == len(list2) and all(
+        [item in list2 for item in list1] + [item in list1 for item in list2]))
+
+
 class MockPrognostic(Prognostic):
 
     def __call__(self, state):
@@ -199,6 +204,79 @@ def test_diagnostic_composite_update_will_not_overwrite(mock_call):
     else:
         raise AssertionError('SharedKeyException should have been raised')
 
+
+def test_prognostic_composite_includes_attributes():
+    prognostic = MockPrognostic()
+    prognostic.inputs = ('input1',)
+    prognostic.diagnostics = ('diagnostic1',)
+    prognostic.tendencies = ('tendency1',)
+    composite = PrognosticComposite([prognostic])
+    assert composite.inputs == ('input1',)
+    assert composite.diagnostics == ('diagnostic1',)
+    assert composite.tendencies == ('tendency1',)
+
+
+def test_prognostic_composite_includes_attributes_from_two():
+    prognostic1 = MockPrognostic()
+    prognostic1.inputs = ('input1',)
+    prognostic1.diagnostics = ('diagnostic1',)
+    prognostic1.tendencies = ('tendency1',)
+    prognostic2 = MockPrognostic()
+    prognostic2.inputs = ('input2',)
+    prognostic2.diagnostics = ('diagnostic2',)
+    prognostic2.tendencies = ('tendency2',)
+    composite = PrognosticComposite([prognostic1, prognostic2])
+    assert same_list(composite.inputs, ('input1', 'input2'))
+    assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
+    assert same_list(composite.tendencies, ('tendency1', 'tendency2'))
+
+
+def test_prognostic_merges_attributes():
+    prognostic1 = MockPrognostic()
+    prognostic1.inputs = ('input1',)
+    prognostic1.diagnostics = ('diagnostic1', 'diagnostic2')
+    prognostic1.tendencies = ('tendency1', 'tendency2')
+    prognostic2 = MockPrognostic()
+    prognostic2.inputs = ('input1', 'input2')
+    prognostic2.diagnostics = ('diagnostic1', 'diagnostic2')
+    prognostic2.tendencies = ('tendency2',)
+    composite = PrognosticComposite([prognostic1, prognostic2])
+    assert same_list(composite.inputs, ('input1', 'input2'))
+    assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
+    assert same_list(composite.tendencies, ('tendency1', 'tendency2'))
+
+
+def test_diagnostic_composite_includes_attributes():
+    diagnostic = MockDiagnostic()
+    diagnostic.inputs = ('input1',)
+    diagnostic.diagnostics = ('diagnostic1',)
+    composite = DiagnosticComposite([diagnostic])
+    assert composite.inputs == ('input1',)
+    assert composite.diagnostics == ('diagnostic1',)
+
+
+def test_diagnostic_composite_includes_attributes_from_two():
+    diagnostic1 = MockDiagnostic()
+    diagnostic1.inputs = ('input1',)
+    diagnostic1.diagnostics = ('diagnostic1',)
+    diagnostic2 = MockDiagnostic()
+    diagnostic2.inputs = ('input2',)
+    diagnostic2.diagnostics = ('diagnostic2',)
+    composite = DiagnosticComposite([diagnostic1, diagnostic2])
+    assert same_list(composite.inputs, ('input1', 'input2'))
+    assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
+
+
+def test_diagnostic_merges_attributes():
+    diagnostic1 = MockDiagnostic()
+    diagnostic1.inputs = ('input1',)
+    diagnostic1.diagnostics = ('diagnostic1', 'diagnostic2')
+    diagnostic2 = MockDiagnostic()
+    diagnostic2.inputs = ('input1', 'input2')
+    diagnostic2.diagnostics = ('diagnostic1', 'diagnostic2')
+    composite = DiagnosticComposite([diagnostic1, diagnostic2])
+    assert same_list(composite.inputs, ('input1', 'input2'))
+    assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
 
 if __name__ == '__main__':
     pytest.main([__file__])

@@ -3,7 +3,20 @@ from .util import ensure_no_shared_keys, add_dicts_inplace
 
 
 class Implicit(object):
+    """
+    Attributes:
+        inputs (tuple of str): The quantities required in the state when the
+            object is called.
+        outputs (tuple of str): The quantities for which values for the new
+            state are returned when the object is called.
+        diagnostics (tuple of str): The diagnostic quantities that are inserted
+            into the old state when the object is called.
+    """
     __metaclass__ = abc.ABCMeta
+
+    inputs = ()
+    outputs = ()
+    diagnostics = ()
 
     @abc.abstractmethod
     def __call__(self, state, timestep):
@@ -68,7 +81,17 @@ class Prognostic(object):
 
 
 class Diagnostic(object):
+    """
+    Attributes:
+        inputs (tuple of str): The quantities required in the state when the
+            object is called.
+        diagnostics (tuple of str): The diagnostic quantities returned when
+            the object is called.
+    """
     __metaclass__ = abc.ABCMeta
+
+    inputs = ()
+    diagnostics = ()
 
     @abc.abstractmethod
     def __call__(self, state):
@@ -139,6 +162,20 @@ class ComponentComposite(object):
             ensure_components_have_class(component_list, self.component_class)
         self._components = component_list
 
+    def _combine_attribute(self, attr):
+        return_attr = []
+        for component in self._components:
+            return_attr.extend(getattr(component, attr))
+        return tuple(set(return_attr))  # set to deduplicate
+
+    @property
+    def inputs(self):
+        return self._combine_attribute('inputs')
+
+    @property
+    def diagnostics(self):
+        return self._combine_attribute('diagnostics')
+
 
 def ensure_components_have_class(components, component_class):
     for component in components:
@@ -182,6 +219,10 @@ class PrognosticComposite(ComponentComposite):
             ensure_no_shared_keys(return_diagnostics, diagnostics)
             return_diagnostics.update(diagnostics)
         return return_tendencies, return_diagnostics
+
+    @property
+    def tendencies(self):
+        return self._combine_attribute('tendencies')
 
 
 class DiagnosticComposite(ComponentComposite):
