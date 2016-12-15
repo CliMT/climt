@@ -1,5 +1,4 @@
-from .base_components import PrognosticComposite, DiagnosticComposite
-from .util import ensure_no_shared_keys
+from .base_components import PrognosticComposite
 import abc
 
 
