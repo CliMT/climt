@@ -5,20 +5,94 @@ import numpy as np
 
 
 class HeldSuarez(Prognostic):
+    """
+    Produces the forcings proposed by Held and Suarez for the intercomparison
+    of dynamical cores of AGCMs. Relaxes the temperature field to a zonally
+    symmetric equilibrium state, and uses Rayleigh damping of low-level winds
+    to represent boundary-layer friction. Details can be found in
+    Held and Suarez (1994).
+
+    Attributes:
+        inputs (tuple of str): The quantities required in the state when the
+            object is called.
+        tendencies (tuple of str): The quantities for which tendencies are
+            returned when the object is called.
+        diagnostics (tuple of str): The diagnostic quantities returned when
+            the object is called.
+
+    References:
+        Held, I. and M. Suarez, 1994: A Proposal for the Intercomparison of the
+            Dynamical Cores of Atmospheric General Circulation Models.
+            Bull. Amer. Meteor. Soc., 75, 1825–1830,
+            doi: 10.1175/1520-0477(1994)075<1825:APFTIO>2.0.CO;2.
+    """
+
+    inputs = None  # defined at initialization
+    tendencies = ('eastward_wind', 'northward_wind', 'air_temperature')
+    diagnostics = ()
 
     def __init__(self, latitude=None, air_pressure=None, sigma=None,
-                 sigma_b=0.7,
+                 sigma_boundary_layer_top=0.7,
                  k_f=1/86400., k_a=1/40./86400., k_s=1/4./86400.,
-                 delta_T_y=60, delta_theta_z=10,
+                 equator_pole_temperature_difference=60, delta_theta_z=10,
                  reference_pressure=None, gas_constant_for_dry_air=None,
                  heat_capacity_of_dry_air_at_constant_pressure=None,
                  planetary_rotation_rate=None, gravitational_acceleration=None,
                  planetary_radius=None):
-        self._sigma_b = sigma_b
+        """
+
+        Args:
+            latitude (DataArray): The latitude coordinate. Passing this in at
+                initialization makes it so that this object uses that value
+                instead of any value that might be present in the state.
+            air_pressure (DataArray): The air pressure coordinate. Passing this in at
+                initialization makes it so that this object uses that value
+                instead of any value that might be present in the state. Do not
+                pass this in if pressure is not a constant coordinate.
+            sigma (DataArray): The sigma (air_pressure/surface_pressure) coordinate.
+                Passing this in at
+                initialization makes it so that this object uses that value
+                instead of any value that might be present in the state.
+                Do not pass this in if sigma is not a constant coordinate.
+            sigma_boundary_layer_top (float): The height of the boundary
+                layer top in sigma coordinates. Corresponds to $\sigma_b$
+                in Held and Suarez, 1994. Default is 0.7.
+            k_f (float): Velocity damping coefficient at the surface in s^{-1}.
+                Default is $1 day^{-1}$.
+            k_a (float): Parameter used in defining vertical profile of the
+                temperature damping in $s^{-1}$, as outlined in
+                Held and Suarez, 1994.
+                Default is $1/40 day^{-1}$
+            k_s (float): Parameter used in defining vertical profile of the
+                temperature damping in $s^{-1}$, as outlined in
+                Held and Suarez, 1994.
+                Default is $1/40 day^{-1}$
+            equator_pole_temperature_difference (float): Equator to pole
+                temperature difference, in K.
+                Default is 60K.
+            delta_theta_z (float): Parameter used in defining the equilibrium
+                temperature profile as outlined in Held and Suarez, 1994, in K.
+                Default is 10K.
+            reference_pressure (float): Parameter used to define the
+                equilibrium temperature profile, roughly equal to the surface
+                pressure, in Pa. Default value is $10^5$ Pa.
+            gas_constant_for_dry_air (float): Value in $J kg^{-1} K^{-1}$.
+                Default is taken from climt.default_constants.
+            heat_capacity_of_dry_air_at_constant_pressure: Value in
+                $J kg^{-1} K^{-1}$.
+                Default is taken from climt.default_constants.
+            planetary_rotation_rate (float) Value in $s^{-1}$.
+                Default is taken from climt.default_constants.
+            gravitational_acceleration (float): Value in $m s^{-2}$.
+                Default is taken from climt.default_constants.
+            planetary_radius (float): Value in m.
+                Default is taken from climt.default_constants.
+        """
+        self._sigma_b = sigma_boundary_layer_top
         self._k_f = k_f
         self._k_a = k_a
         self._k_s = k_s
-        self._delta_T_y = delta_T_y
+        self._delta_T_y = equator_pole_temperature_difference
         self._delta_theta_z = delta_theta_z
         self._p0 = replace_none_with_default(
             'reference_pressure', reference_pressure)
@@ -47,6 +121,14 @@ class HeldSuarez(Prognostic):
             self._k_v = self._get_k_v(sigma)
         else:
             self._k_v = None
+        self.inputs = ['eastward_wind', 'northward_wind', 'air_temperature']
+        if sigma is None:
+            self.inputs.append('sigma')
+        if latitude is None:
+            self.inputs.append('latitude')
+        if air_pressure is None:
+            self.inputs.append('air_pressure')
+        self.inputs = tuple(self.inputs)
 
     def __call__(self, state):
         """

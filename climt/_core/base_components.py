@@ -29,7 +29,20 @@ class Implicit(object):
 
 
 class Prognostic(object):
+    """
+    Attributes:
+        inputs (tuple of str): The quantities required in the state when the
+            object is called.
+        tendencies (tuple of str): The quantities for which tendencies are
+            returned when the object is called.
+        diagnostics (tuple of str): The diagnostic quantities returned when
+            the object is called.
+    """
     __metaclass__ = abc.ABCMeta
+
+    inputs = ()
+    tendencies = ()
+    diagnostics = ()
 
     @abc.abstractmethod
     def __call__(self, state):
