@@ -4,3 +4,7 @@ class InvalidStateException(Exception):
 
 class SharedKeyException(Exception):
     pass
+
+
+class InvalidSetupException(Exception):
+    pass

@@ -1,5 +1,6 @@
 import abc
 from .util import ensure_no_shared_keys, add_dicts_inplace
+from .exceptions import InvalidSetupException
 
 
 class Implicit(object):
@@ -115,7 +116,7 @@ class Diagnostic(object):
     def update_state(self, state):
         """
         Gets diagnostics from the passed model state and updates the state with
-        those diagnostics (in place).
+        those diagnostics (in place). Will replace any existing entries.
 
         Args:
             state (dict): A model state dictionary.
@@ -125,9 +126,7 @@ class Diagnostic(object):
             InvalidStateException: If state is not a valid input for the
                 Diagnostic instance.
         """
-        diagnostics = self(state)
-        ensure_no_shared_keys(state, diagnostics)
-        state.update(diagnostics)
+        state.update(self(state))
 
 
 class Monitor(object):
@@ -161,20 +160,18 @@ class ComponentComposite(object):
         if self.component_class is not None:
             ensure_components_have_class(component_list, self.component_class)
         self._components = component_list
+        if hasattr(self, 'diagnostics'):
+            if (len(self.diagnostics) !=
+                    sum([len(comp.diagnostics) for comp in self._components])):
+                raise InvalidSetupException(
+                    'Two components in a composite should not compute '
+                    'the same diagnostic')
 
     def _combine_attribute(self, attr):
         return_attr = []
         for component in self._components:
             return_attr.extend(getattr(component, attr))
         return tuple(set(return_attr))  # set to deduplicate
-
-    @property
-    def inputs(self):
-        return self._combine_attribute('inputs')
-
-    @property
-    def diagnostics(self):
-        return self._combine_attribute('diagnostics')
 
 
 def ensure_components_have_class(components, component_class):
@@ -215,10 +212,16 @@ class PrognosticComposite(ComponentComposite):
         for prognostic in self._components:
             tendencies, diagnostics = prognostic(state)
             add_dicts_inplace(return_tendencies, tendencies)
-            # ensure we won't overwrite already-existing diagnostics
-            ensure_no_shared_keys(return_diagnostics, diagnostics)
             return_diagnostics.update(diagnostics)
         return return_tendencies, return_diagnostics
+
+    @property
+    def inputs(self):
+        return self._combine_attribute('inputs')
+
+    @property
+    def diagnostics(self):
+        return self._combine_attribute('diagnostics')
 
     @property
     def tendencies(self):
@@ -251,7 +254,7 @@ class DiagnosticComposite(ComponentComposite):
         return_diagnostics = {}
         for diagnostic_component in self._components:
             diagnostics = diagnostic_component(state)
-            # ensure we won't overwrite already-existing diagnostics
+            # ensure two diagnostics don't compute the same quantity
             ensure_no_shared_keys(return_diagnostics, diagnostics)
             return_diagnostics.update(diagnostics)
         return return_diagnostics
@@ -269,6 +272,14 @@ class DiagnosticComposite(ComponentComposite):
         """
         for diagnostic_component in self._components:
             diagnostic_component.update_state(state)
+
+    @property
+    def inputs(self):
+        return self._combine_attribute('inputs')
+
+    @property
+    def diagnostics(self):
+        return self._combine_attribute('diagnostics')
 
 
 class MonitorComposite(ComponentComposite):

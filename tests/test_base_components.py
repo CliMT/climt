@@ -2,7 +2,7 @@ import pytest
 import mock
 from climt import (
     Prognostic, Diagnostic, Monitor, PrognosticComposite, DiagnosticComposite,
-    MonitorComposite, SharedKeyException,
+    MonitorComposite, SharedKeyException, InvalidSetupException
 )
 
 
@@ -63,24 +63,6 @@ def test_prognostic_composite_calls_two_prognostics(mock_call):
     assert diagnostics == {}
 
 
-@mock.patch.object(MockPrognostic, '__call__')
-def test_prognostic_errors_when_overlapping_diagnostics(mock_call):
-    """Test that when two Prognostic objects in a collection return the same
-    diagnostic, a SharedKeyException is raised."""
-    mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 1.})
-    prognostic_composite = PrognosticComposite(
-        [MockPrognostic(), MockPrognostic()])
-    state = {'air_temperature': 273.15}
-    try:
-        tendencies, diagnostics = prognostic_composite(state)
-    except SharedKeyException:
-        pass
-    except Exception as err:
-        raise err
-    else:
-        raise AssertionError
-
-
 def test_empty_diagnostic_composite():
     diagnostic_composite = DiagnosticComposite([])
     state = {'air_temperature': 273.15}
@@ -97,24 +79,6 @@ def test_diagnostic_composite_calls_one_diagnostic(mock_call):
     diagnostics = diagnostic_composite(state)
     assert mock_call.called
     assert diagnostics == {'foo': 50.}
-
-
-@mock.patch.object(MockPrognostic, '__call__')
-def test_diagnostic_errors_when_overlapping_diagnostics(mock_call):
-    """Test that when two Prognostic objects in a collection return the same
-    diagnostic, a SharedKeyException is raised."""
-    mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 1.})
-    diagnostic_composite = PrognosticComposite(
-        [MockPrognostic(), MockPrognostic()])
-    state = {'air_temperature': 273.15}
-    try:
-        diagnostics = diagnostic_composite(state)
-    except SharedKeyException:
-        pass
-    except Exception as err:
-        raise err
-    else:
-        raise AssertionError
 
 
 def test_empty_monitor_collection():
@@ -190,21 +154,6 @@ def test_diagnostic_composite_update(mock_call):
     assert state['bar'] == 10.
 
 
-@mock.patch.object(MockDiagnostic, '__call__')
-def test_diagnostic_composite_update_will_not_overwrite(mock_call):
-    mock_call.return_value = {'foo': 5.}
-    state = {'foo': 10.}
-    diagnostics = DiagnosticComposite([MockDiagnostic()])
-    try:
-        diagnostics.update_state(state)
-    except SharedKeyException:
-        pass
-    except Exception as err:
-        raise err
-    else:
-        raise AssertionError('SharedKeyException should have been raised')
-
-
 def test_prognostic_composite_includes_attributes():
     prognostic = MockPrognostic()
     prognostic.inputs = ('input1',)
@@ -234,16 +183,34 @@ def test_prognostic_composite_includes_attributes_from_two():
 def test_prognostic_merges_attributes():
     prognostic1 = MockPrognostic()
     prognostic1.inputs = ('input1',)
-    prognostic1.diagnostics = ('diagnostic1', 'diagnostic2')
+    prognostic1.diagnostics = ('diagnostic1',)
     prognostic1.tendencies = ('tendency1', 'tendency2')
     prognostic2 = MockPrognostic()
     prognostic2.inputs = ('input1', 'input2')
-    prognostic2.diagnostics = ('diagnostic1', 'diagnostic2')
+    prognostic2.diagnostics = ('diagnostic2',)
     prognostic2.tendencies = ('tendency2',)
     composite = PrognosticComposite([prognostic1, prognostic2])
     assert same_list(composite.inputs, ('input1', 'input2'))
     assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
     assert same_list(composite.tendencies, ('tendency1', 'tendency2'))
+
+
+def test_prognostic_composite_ensures_valid_state():
+    prognostic1 = MockPrognostic()
+    prognostic1.inputs = ('input1',)
+    prognostic1.diagnostics = ('diagnostic1',)
+    prognostic2 = MockPrognostic()
+    prognostic2.inputs = ('input1', 'input2')
+    prognostic2.diagnostics = ('diagnostic1',)
+    try:
+        PrognosticComposite([prognostic1, prognostic2])
+    except InvalidSetupException:
+        pass
+    except Exception as err:
+        raise err
+    else:
+        raise AssertionError(
+            'Should not be able to have overlapping diagnostics in composite')
 
 
 def test_diagnostic_composite_includes_attributes():
@@ -267,16 +234,35 @@ def test_diagnostic_composite_includes_attributes_from_two():
     assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
 
 
-def test_diagnostic_merges_attributes():
+def test_diagnostic_composite_merges_attributes():
     diagnostic1 = MockDiagnostic()
     diagnostic1.inputs = ('input1',)
-    diagnostic1.diagnostics = ('diagnostic1', 'diagnostic2')
+    diagnostic1.diagnostics = ('diagnostic1',)
     diagnostic2 = MockDiagnostic()
     diagnostic2.inputs = ('input1', 'input2')
-    diagnostic2.diagnostics = ('diagnostic1', 'diagnostic2')
+    diagnostic2.diagnostics = ('diagnostic2',)
     composite = DiagnosticComposite([diagnostic1, diagnostic2])
     assert same_list(composite.inputs, ('input1', 'input2'))
     assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
+
+
+def test_diagnostic_composite_ensures_valid_state():
+    diagnostic1 = MockDiagnostic()
+    diagnostic1.inputs = ('input1',)
+    diagnostic1.diagnostics = ('diagnostic1',)
+    diagnostic2 = MockDiagnostic()
+    diagnostic2.inputs = ('input1', 'input2')
+    diagnostic2.diagnostics = ('diagnostic1',)
+    try:
+        DiagnosticComposite([diagnostic1, diagnostic2])
+    except InvalidSetupException:
+        pass
+    except Exception as err:
+        raise err
+    else:
+        raise AssertionError(
+            'Should not be able to have overlapping diagnostics in composite')
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

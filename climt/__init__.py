@@ -4,7 +4,8 @@ from ._core.base_components import (
     DiagnosticComposite, MonitorComposite
 )
 from ._core.timestepping import TimeStepper, Leapfrog, AdamsBashforth
-from ._core.exceptions import InvalidStateException, SharedKeyException
+from ._core.exceptions import (
+    InvalidStateException, SharedKeyException, InvalidSetupException)
 from ._core.array import DataArray
 from ._core.federation import Federation
 from ._core.constants import default_constants
@@ -19,7 +20,7 @@ __all__ = (
     Prognostic, Diagnostic, Implicit, Monitor, PrognosticComposite,
     DiagnosticComposite, MonitorComposite,
     TimeStepper, Leapfrog, AdamsBashforth,
-    InvalidStateException, SharedKeyException,
+    InvalidStateException, SharedKeyException, InvalidSetupException,
     DataArray,
     Federation,
     default_constants,

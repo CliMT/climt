@@ -76,21 +76,25 @@ class AdamsBashforth(TimeStepper):
             new_state (dict): The model state at the next timestep.
 
         Raises:
-            SharedKeyException: if a Diagnostic object has an output that is
-                already in the state at the start of the timestep.
             ValueError: If the timestep is not the same as the last time
                 step() was called on this instance of this object.
         """
         self._ensure_constant_timestep(timestep)
         self._diagnostic.update_state(state)
         tendencies, diagnostics = self._prognostic(state)
-        ensure_no_shared_keys(state, diagnostics)
         state.update(diagnostics)
         self._tendencies_list.append(tendencies)
+        new_state = self._perform_step(state, timestep)
+        if len(self._tendencies_list) == self._order:
+            self._tendencies_list.pop(0)  # remove the oldest entry
+        return new_state
+
+    def _perform_step(self, state, timestep):
         # if we don't have enough previous tendencies built up, use lower order
         order = min(self._order, len(self._tendencies_list))
         if order == 1:
-            new_state = step_forward_euler(state, tendencies, timestep)
+            new_state = step_forward_euler(
+                state, self._tendencies_list[-1], timestep)
         elif order == 2:
             new_state = second_bashforth(state, self._tendencies_list, timestep)
         elif order == 3:
@@ -100,8 +104,9 @@ class AdamsBashforth(TimeStepper):
         else:
             # the following should never happen, if it is there's a bug
             raise RuntimeError('order should be integer between 1 and 4')
-        if len(self._tendencies_list) == self._order:
-            self._tendencies_list.pop(0)  # remove the oldest entry
+        for key in state.keys():
+            if state not in new_state:
+                new_state[key] = state[key]
         return new_state
 
     def _ensure_constant_timestep(self, timestep):
