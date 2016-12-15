@@ -23,7 +23,7 @@ class HeldSuarez(Prognostic):
     References:
         Held, I. and M. Suarez, 1994: A Proposal for the Intercomparison of the
             Dynamical Cores of Atmospheric General Circulation Models.
-            Bull. Amer. Meteor. Soc., 75, 1825–1830,
+            Bull. Amer. Meteor. Soc., 75, 1825-1830,
             doi: 10.1175/1520-0477(1994)075<1825:APFTIO>2.0.CO;2.
     """
 
