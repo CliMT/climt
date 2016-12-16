@@ -36,4 +36,3 @@ def get_default_state(coordinate_state, quantity_list=(), component_list=()):
     output_state = coordinate_state.copy()
     for name in quantity_list:
         output_state[name] = _quantity_func_dictionary[name](coordinate_state)
-
