@@ -10,9 +10,9 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'numpy>=1.11',
-    'pint>=0.7.2',
-    'xarray>=0.8.2',
+    'numpy>=1.10',
+    'pint>=0.7.0',
+    'xarray>=0.8.0',
     'matplotlib',
 ]
 

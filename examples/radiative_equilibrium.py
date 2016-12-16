@@ -68,7 +68,8 @@ time_stepper = AdamsBashforth([radiation])
 timestep = timedelta(hours=4)
 for i in range(6*7*4*8):
     print(i)
-    new_state = time_stepper.step(state, timestep)
+    diagnostics, new_state = time_stepper.step(state, timestep)
+    state.update(diagnostics)
     new_state.update(constant_state)
     if i % 5 == 0:
         monitor.store(state)
