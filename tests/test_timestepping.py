@@ -7,6 +7,11 @@ from datetime import timedelta
 import numpy as np
 
 
+def same_list(list1, list2):
+    return (len(list1) == len(list2) and all(
+        [item in list2 for item in list1] + [item in list1 for item in list2]))
+
+
 class MockPrognostic(Prognostic):
 
     def __call__(self, state):
@@ -25,6 +30,49 @@ class TimesteppingBase(object):
         assert state == {'air_temperature': 273.}
         assert new_state == {'air_temperature': 273.}
 
+    def test_timestepper_reveals_inputs(self):
+        prog1 = MockPrognostic()
+        prog1.inputs = ('input1',)
+        time_stepper = self.timestepper_class([prog1])
+        assert same_list(time_stepper.inputs, ('input1',))
+
+    def test_timestepper_combines_inputs(self):
+        prog1 = MockPrognostic()
+        prog1.inputs = ('input1',)
+        prog2 = MockPrognostic()
+        prog2.inputs = ('input2',)
+        time_stepper = self.timestepper_class([prog1, prog2])
+        assert same_list(time_stepper.inputs, ('input1', 'input2'))
+
+    def test_timestepper_doesnt_duplicate_inputs(self):
+        prog1 = MockPrognostic()
+        prog1.inputs = ('input1',)
+        prog2 = MockPrognostic()
+        prog2.inputs = ('input1',)
+        time_stepper = self.timestepper_class([prog1, prog2])
+        assert same_list(time_stepper.inputs, ('input1',))
+
+    def test_timestepper_reveals_outputs(self):
+        prog1 = MockPrognostic()
+        prog1.tendencies = ('output1',)
+        time_stepper = self.timestepper_class([prog1])
+        assert same_list(time_stepper.outputs, ('output1',))
+
+    def test_timestepper_combines_outputs(self):
+        prog1 = MockPrognostic()
+        prog1.tendencies = ('output1',)
+        prog2 = MockPrognostic()
+        prog2.tendencies = ('output2',)
+        time_stepper = self.timestepper_class([prog1, prog2])
+        assert same_list(time_stepper.outputs, ('output1', 'output2'))
+
+    def test_timestepper_doesnt_duplicate_outputs(self):
+        prog1 = MockPrognostic()
+        prog1.tendencies = ('output1',)
+        prog2 = MockPrognostic()
+        prog2.tendencies = ('output1',)
+        time_stepper = self.timestepper_class([prog1, prog2])
+        assert same_list(time_stepper.outputs, ('output1',))
 
     @mock.patch.object(MockPrognostic, '__call__')
     def test_float_no_change_one_step(self, mock_prognostic_call):

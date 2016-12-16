@@ -35,6 +35,14 @@ class TimeStepper(object):
             if key not in new_state:
                 new_state[key] = old_state[key]
 
+    @property
+    def inputs(self):
+        return self._prognostic.inputs
+
+    @property
+    def outputs(self):
+        return self._prognostic.tendencies
+
 
 class AdamsBashforth(TimeStepper):
     """A TimeStepper using the Adams-Bashforth scheme."""
