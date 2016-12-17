@@ -69,23 +69,23 @@ class GrayLongwaveRadiation(Prognostic):
          lw_temperature_tendency, tau) = get_longwave_fluxes(
             T, p_interface, Ts, tau, self._stefan_boltzmann,
             self._g, self._Cpd)
-        dims_half = state['air_temperature'].dims
-        dims_full = (
-            list(state['air_temperature'].dims[:2]) + ['full_levels'])
+        dims_mid = state['air_temperature'].dims
+        dims_interface = (
+            list(state['air_temperature'].dims[:2]) + ['interface_levels'])
         diagnostics = {
             'downward_longwave_flux': DataArray(
-                downward_flux, dims=dims_full, attrs={'units': 'W m^-2'}),
+                downward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}),
             'upward_longwave_flux': DataArray(
-                upward_flux, dims=dims_full, attrs={'units': 'W m^-2'}),
+                upward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}),
             'net_longwave_flux': DataArray(
-                net_lw_flux, dims=dims_full, attrs={'units': 'W m^-2'}),
+                net_lw_flux, dims=dims_interface, attrs={'units': 'W m^-2'}),
             'longwave_heating_rate': DataArray(
-                lw_temperature_tendency, dims=dims_half,
+                lw_temperature_tendency, dims=dims_mid,
                 attrs={'units': 'K s^-1'}),
         }
         tendencies = {
             'air_temperature': DataArray(
-                lw_temperature_tendency, dims=dims_half,
+                lw_temperature_tendency, dims=dims_mid,
                 attrs={'units': 'K s^-1'})
         }
         return tendencies, diagnostics
@@ -153,7 +153,7 @@ class Frierson06GrayLongwaveRadiation(Prognostic):
         tau = DataArray(
             get_frierson_06_tau(
                 lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
-            dims=state['air_temperature'].dims,
+            dims=state['sigma_on_interface_levels'].dims,
             attrs={'units': ''})
         state_with_tau = state.copy()
         state_with_tau['optical_depth'] = tau

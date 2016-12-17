@@ -8,3 +8,11 @@ class SharedKeyException(Exception):
 
 class InvalidSetupException(Exception):
     pass
+
+
+class DependencyException(Exception):
+    pass
+
+
+class IOException(Exception):
+    pass

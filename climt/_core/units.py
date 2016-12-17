@@ -18,7 +18,7 @@ unit_registry.define('degrees_east = degree_east = degree_E = degrees_E = degree
 unit_registry.define('percent = 0.01*count = %')
 
 
-def to_units(value, units):
+def data_array_to_units(value, units):
     if not hasattr(value, 'attrs') or 'units' not in value.attrs:
         raise TypeError(
             'Cannot retrieve units from type {}'.format(type(value)))
@@ -28,3 +28,7 @@ def to_units(value, units):
         attrs['units'] = units
         value.attrs = attrs
     return value
+
+
+def from_unit_to_another(value, original_units, new_units):
+    return (unit_registry(original_units)*value).to(new_units).magnitude

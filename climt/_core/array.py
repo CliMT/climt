@@ -1,4 +1,4 @@
-from .units import to_units as to_units_function
+from .units import data_array_to_units as to_units_function
 import xarray as xr
 
 

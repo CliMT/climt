@@ -5,13 +5,15 @@ from ._core.base_components import (
 )
 from ._core.timestepping import TimeStepper, Leapfrog, AdamsBashforth
 from ._core.exceptions import (
-    InvalidStateException, SharedKeyException, InvalidSetupException)
+    InvalidStateException, SharedKeyException, InvalidSetupException,
+    DependencyException, IOException)
 from ._core.array import DataArray
 from ._core.constants import default_constants
 from ._core.util import set_prognostic_update_frequency
 from ._core.initialization import get_default_state
 from ._components import (
     Frierson06GrayLongwaveRadiation, GrayLongwaveRadiation, PlotFunctionMonitor,
+    NetCDFMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez,
     GridScaleCondensation)
 
@@ -21,11 +23,13 @@ __all__ = (
     DiagnosticComposite, MonitorComposite,
     TimeStepper, Leapfrog, AdamsBashforth,
     InvalidStateException, SharedKeyException, InvalidSetupException,
+    DependencyException, IOException,
     DataArray,
     default_constants,
     set_prognostic_update_frequency,
     get_default_state,
     Frierson06GrayLongwaveRadiation, GrayLongwaveRadiation, PlotFunctionMonitor,
+    NetCDFMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez,
     GridScaleCondensation
 )
