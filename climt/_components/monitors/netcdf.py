@@ -26,11 +26,27 @@ if nc4 is None:
 
 else:
     class NetCDFMonitor(Monitor):
+        """A Monitor which caches stored states and then writes them to a
+        NetCDF file when requested."""
 
-        def __init__(self, filename, time_units='seconds'):
+        def __init__(
+                self, filename, time_units='seconds', write_on_store=False):
+            """
+            Args:
+                filename (str): The file to which the NetCDF file will be
+                    written.
+                time_units (str, optional): The units in which time will be
+                    stored in the NetCDF file. Time is stored as an integer
+                    number of these units.
+                write_on_store (bool, optional): If True, stored changes are
+                    immediately written to file. This can result in many file
+                    open/close operations. Default is to write only when
+                    the write() method is called directly.
+            """
             self._cached_states = {}
             self._filename = filename
             self._time_units = time_units
+            self._write_on_store = write_on_store
 
         def store(self, state):
             """
@@ -50,6 +66,8 @@ else:
                 # This only copies the dictionary, not the arrays it contains
                 state = state.copy()
                 self._cached_states[state.pop('time')] = state
+            if self._write_on_store:
+                self.write()
 
         @property
         def _write_mode(self):
@@ -72,6 +90,8 @@ else:
             return zip(*sorted(self._cached_states.items(), key=lambda x: x[0]))
 
         def write(self):
+            """Write all cached states to the NetCDF file. This will append
+            to any existing NetCDF file."""
             self._ensure_cached_states_have_same_keys()
             with nc4.Dataset(self._filename, self._write_mode) as dataset:
                 times, states = self._get_ordered_times_and_states()
