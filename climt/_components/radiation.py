@@ -183,7 +183,7 @@ def integrate_upward_longwave(T, T_surface, tau, sigma):
             bottom, and z is on half levels.
         T_surface: 2D x-y surface temperature array in Kelvin
         tau: 3D x-y-z optical depth array where z starts at the bottom, and z
-            is on half levels.
+            is on full levels.
         sigma: Stefann-Boltzmann constant
 
     Returns:
@@ -197,8 +197,8 @@ def integrate_upward_longwave(T, T_surface, tau, sigma):
     for k in range(1, T.shape[2]+1):
         dtau = tau[:, :, k] - tau[:, :, k-1]
         upward_flux[:, :, k] = (
-            upward_flux[:, :, k-1] * np.exp(dtau) +
-            sigma * T[:, :, k-1]**4 * (1. - np.exp(dtau)))
+            upward_flux[:, :, k-1] * np.exp(-dtau) +
+            sigma * T[:, :, k-1]**4 * (1. - np.exp(-dtau)))
     return upward_flux
 
 
@@ -209,7 +209,7 @@ def integrate_downward_longwave(T, tau, sigma):
         T: 3D x-y-z air temperature array in Kelvin where z starts at the
             bottom, and z is on half levels.
         tau: 3D x-y-z optical depth array where z starts at the bottom, and z
-            is on half levels.
+            is on full levels.
         sigma: Stefann-Boltzmann constant
 
     Returns:
@@ -219,11 +219,11 @@ def integrate_downward_longwave(T, tau, sigma):
     """
     downward_flux = np.zeros(
         (T.shape[0], T.shape[1], T.shape[2]+1), dtype=np.float32)
-    for k in range(T.shape[2]-2, -1, -1):
-        dtau = tau[:, :, k] - tau[:, :, k+1]
+    for k in range(T.shape[2]-1, -1, -1):
+        dtau = tau[:, :, k+1] - tau[:, :, k]
         downward_flux[:, :, k] = (
-            downward_flux[:, :, k+1]*np.exp(-dtau) -
-            sigma * T[:, :, k]**4 * (np.exp(-dtau) - 1.))
+            downward_flux[:, :, k+1]*np.exp(-dtau) +
+            sigma * T[:, :, k]**4 * (1 - np.exp(-dtau)))
     return downward_flux
 
 
