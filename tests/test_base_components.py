@@ -30,7 +30,7 @@ class MockMonitor(Monitor):
 
 
 def test_empty_prognostic_composite():
-    prognostic_composite = PrognosticComposite([])
+    prognostic_composite = PrognosticComposite()
     state = {'air_temperature': 273.15}
     tendencies, diagnostics = prognostic_composite(state)
     assert len(tendencies) == 0
@@ -42,7 +42,7 @@ def test_empty_prognostic_composite():
 @mock.patch.object(MockPrognostic, '__call__')
 def test_prognostic_composite_calls_one_prognostic(mock_call):
     mock_call.return_value = ({'air_temperature': 0.5}, {'foo': 50.})
-    prognostic_composite = PrognosticComposite([MockPrognostic()])
+    prognostic_composite = PrognosticComposite(MockPrognostic())
     state = {'air_temperature': 273.15}
     tendencies, diagnostics = prognostic_composite(state)
     assert mock_call.called
@@ -54,7 +54,7 @@ def test_prognostic_composite_calls_one_prognostic(mock_call):
 def test_prognostic_composite_calls_two_prognostics(mock_call):
     mock_call.return_value = ({'air_temperature': 0.5}, {})
     prognostic_composite = PrognosticComposite(
-        [MockPrognostic(), MockPrognostic()])
+        MockPrognostic(), MockPrognostic())
     state = {'air_temperature': 273.15}
     tendencies, diagnostics = prognostic_composite(state)
     assert mock_call.called
@@ -64,7 +64,7 @@ def test_prognostic_composite_calls_two_prognostics(mock_call):
 
 
 def test_empty_diagnostic_composite():
-    diagnostic_composite = DiagnosticComposite([])
+    diagnostic_composite = DiagnosticComposite()
     state = {'air_temperature': 273.15}
     diagnostics = diagnostic_composite(state)
     assert len(diagnostics) == 0
@@ -74,7 +74,7 @@ def test_empty_diagnostic_composite():
 @mock.patch.object(MockDiagnostic, '__call__')
 def test_diagnostic_composite_calls_one_diagnostic(mock_call):
     mock_call.return_value = {'foo': 50.}
-    diagnostic_composite = DiagnosticComposite([MockDiagnostic()])
+    diagnostic_composite = DiagnosticComposite(MockDiagnostic())
     state = {'air_temperature': 273.15}
     diagnostics = diagnostic_composite(state)
     assert mock_call.called
@@ -83,7 +83,7 @@ def test_diagnostic_composite_calls_one_diagnostic(mock_call):
 
 def test_empty_monitor_collection():
     # mainly we're testing that nothing errors
-    monitor_collection = MonitorComposite([])
+    monitor_collection = MonitorComposite()
     state = {'air_temperature': 273.15}
     monitor_collection.store(state)
 
@@ -91,7 +91,7 @@ def test_empty_monitor_collection():
 @mock.patch.object(MockMonitor, 'store')
 def test_monitor_collection_calls_one_monitor(mock_store):
     mock_store.return_value = None
-    monitor_collection = MonitorComposite([MockMonitor()])
+    monitor_collection = MonitorComposite(MockMonitor())
     state = {'air_temperature': 273.15}
     monitor_collection.store(state)
     assert mock_store.called
@@ -100,7 +100,7 @@ def test_monitor_collection_calls_one_monitor(mock_store):
 @mock.patch.object(MockMonitor, 'store')
 def test_monitor_collection_calls_two_monitors(mock_store):
     mock_store.return_value = None
-    monitor_collection = MonitorComposite([MockMonitor(), MockMonitor()])
+    monitor_collection = MonitorComposite(MockMonitor(), MockMonitor())
     state = {'air_temperature': 273.15}
     monitor_collection.store(state)
     assert mock_store.called
@@ -109,7 +109,7 @@ def test_monitor_collection_calls_two_monitors(mock_store):
 
 def test_prognostic_composite_cannot_use_diagnostic():
     try:
-        PrognosticComposite([MockDiagnostic()])
+        PrognosticComposite(MockDiagnostic())
     except TypeError:
         pass
     except Exception as err:
@@ -120,7 +120,7 @@ def test_prognostic_composite_cannot_use_diagnostic():
 
 def test_diagnostic_composite_cannot_use_prognostic():
     try:
-        DiagnosticComposite([MockPrognostic()])
+        DiagnosticComposite(MockPrognostic())
     except TypeError:
         pass
     except Exception as err:
@@ -133,7 +133,7 @@ def test_diagnostic_composite_cannot_use_prognostic():
 def test_diagnostic_composite_call(mock_call):
     mock_call.return_value = {'foo': 5.}
     state = {'bar': 10.}
-    diagnostics = DiagnosticComposite([MockDiagnostic()])
+    diagnostics = DiagnosticComposite(MockDiagnostic())
     new_state = diagnostics(state)
     assert list(state.keys()) == ['bar']
     assert state['bar'] == 10.
@@ -145,7 +145,7 @@ def test_diagnostic_composite_call(mock_call):
 def test_diagnostic_composite_update(mock_call):
     mock_call.return_value = {'foo': 5.}
     state = {'bar': 10.}
-    diagnostics = DiagnosticComposite([MockDiagnostic()])
+    diagnostics = DiagnosticComposite(MockDiagnostic())
     diagnostics.update_state(state)
     assert len(state.keys()) == 2
     assert 'foo' in state.keys()
@@ -159,7 +159,7 @@ def test_prognostic_composite_includes_attributes():
     prognostic.inputs = ('input1',)
     prognostic.diagnostics = ('diagnostic1',)
     prognostic.tendencies = ('tendency1',)
-    composite = PrognosticComposite([prognostic])
+    composite = PrognosticComposite(prognostic)
     assert composite.inputs == ('input1',)
     assert composite.diagnostics == ('diagnostic1',)
     assert composite.tendencies == ('tendency1',)
@@ -174,7 +174,7 @@ def test_prognostic_composite_includes_attributes_from_two():
     prognostic2.inputs = ('input2',)
     prognostic2.diagnostics = ('diagnostic2',)
     prognostic2.tendencies = ('tendency2',)
-    composite = PrognosticComposite([prognostic1, prognostic2])
+    composite = PrognosticComposite(prognostic1, prognostic2)
     assert same_list(composite.inputs, ('input1', 'input2'))
     assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
     assert same_list(composite.tendencies, ('tendency1', 'tendency2'))
@@ -189,7 +189,7 @@ def test_prognostic_merges_attributes():
     prognostic2.inputs = ('input1', 'input2')
     prognostic2.diagnostics = ('diagnostic2',)
     prognostic2.tendencies = ('tendency2',)
-    composite = PrognosticComposite([prognostic1, prognostic2])
+    composite = PrognosticComposite(prognostic1, prognostic2)
     assert same_list(composite.inputs, ('input1', 'input2'))
     assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
     assert same_list(composite.tendencies, ('tendency1', 'tendency2'))
@@ -203,7 +203,7 @@ def test_prognostic_composite_ensures_valid_state():
     prognostic2.inputs = ('input1', 'input2')
     prognostic2.diagnostics = ('diagnostic1',)
     try:
-        PrognosticComposite([prognostic1, prognostic2])
+        PrognosticComposite(prognostic1, prognostic2)
     except InvalidSetupException:
         pass
     except Exception as err:
@@ -217,7 +217,7 @@ def test_diagnostic_composite_includes_attributes():
     diagnostic = MockDiagnostic()
     diagnostic.inputs = ('input1',)
     diagnostic.diagnostics = ('diagnostic1',)
-    composite = DiagnosticComposite([diagnostic])
+    composite = DiagnosticComposite(diagnostic)
     assert composite.inputs == ('input1',)
     assert composite.diagnostics == ('diagnostic1',)
 
@@ -229,7 +229,7 @@ def test_diagnostic_composite_includes_attributes_from_two():
     diagnostic2 = MockDiagnostic()
     diagnostic2.inputs = ('input2',)
     diagnostic2.diagnostics = ('diagnostic2',)
-    composite = DiagnosticComposite([diagnostic1, diagnostic2])
+    composite = DiagnosticComposite(diagnostic1, diagnostic2)
     assert same_list(composite.inputs, ('input1', 'input2'))
     assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
 
@@ -241,7 +241,7 @@ def test_diagnostic_composite_merges_attributes():
     diagnostic2 = MockDiagnostic()
     diagnostic2.inputs = ('input1', 'input2')
     diagnostic2.diagnostics = ('diagnostic2',)
-    composite = DiagnosticComposite([diagnostic1, diagnostic2])
+    composite = DiagnosticComposite(diagnostic1, diagnostic2)
     assert same_list(composite.inputs, ('input1', 'input2'))
     assert same_list(composite.diagnostics, ('diagnostic1', 'diagnostic2'))
 
@@ -254,7 +254,7 @@ def test_diagnostic_composite_ensures_valid_state():
     diagnostic2.inputs = ('input1', 'input2')
     diagnostic2.diagnostics = ('diagnostic1',)
     try:
-        DiagnosticComposite([diagnostic1, diagnostic2])
+        DiagnosticComposite(diagnostic1, diagnostic2)
     except InvalidSetupException:
         pass
     except Exception as err:

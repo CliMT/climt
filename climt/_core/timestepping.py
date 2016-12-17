@@ -12,7 +12,7 @@ class TimeStepper(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, prognostic_list, **kwargs):
-        self._prognostic = PrognosticComposite(prognostic_list)
+        self._prognostic = PrognosticComposite(*prognostic_list)
 
     @abc.abstractmethod
     def step(self, state, timestep):

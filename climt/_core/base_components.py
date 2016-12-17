@@ -151,15 +151,14 @@ class ComponentComposite(object):
 
     component_class = None
 
-    def __init__(self, component_list):
+    def __init__(self, *args):
         """
         Args:
-            component_list (iterable): The components that should be
-                wrapped by this object.
+            *args: The components that should be wrapped by this object.
         """
         if self.component_class is not None:
-            ensure_components_have_class(component_list, self.component_class)
-        self._components = component_list
+            ensure_components_have_class(args, self.component_class)
+        self._components = args
         if hasattr(self, 'diagnostics'):
             if (len(self.diagnostics) !=
                     sum([len(comp.diagnostics) for comp in self._components])):
