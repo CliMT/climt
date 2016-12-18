@@ -209,5 +209,63 @@ class TestFrierson06LongwaveOpticalDepth(ComponentBase):
     def get_component_instance(self):
         return Frierson06LongwaveOpticalDepth()
 
+
+class TestGrayLongwaveRadiation(ComponentBase):
+
+    def get_component_instance(self):
+        return GrayLongwaveRadiation()
+
+    def get_input_state(self):
+        random = np.random.RandomState(1)
+        nx, ny, nz = 4, 4, 10
+        state = {
+            'longwave_optical_depth_on_interface_levels': DataArray(
+                (np.linspace(0, 6, nz+1)[None, None, :] *
+                 (1 + 0.1*random.randn(nx, ny))[:, :, None]),
+                dims=['x', 'y', 'interface_levels'], attrs={'units': ''},
+            ),
+            'air_temperature': DataArray(
+                5*random.randn(nx, ny, nz) + 270.,
+                dims=['x', 'y', 'mid_levels'], attrs={'units': 'degK'},
+            ),
+            'air_pressure_on_interface_levels': DataArray(
+                np.linspace(1e5, 0, nz+1),
+                dims=['interface_levels'], attrs={'units': 'Pa'},
+            ),
+            'surface_temperature': DataArray(
+                5 * random.randn(nx, ny) + 270.,
+                dims=['x', 'y'], attrs={'units': 'degK'},
+            )}
+        return state
+
+
+class TestGrayLongwaveRadiation1D(ComponentBase):
+
+    def get_component_instance(self):
+        return GrayLongwaveRadiation()
+
+    def get_input_state(self):
+        random = np.random.RandomState(1)
+        nz = 10
+        state = {
+            'longwave_optical_depth_on_interface_levels': DataArray(
+                np.linspace(0, 6, nz+1)[None, None, :],
+                dims=['interface_levels'], attrs={'units': ''},
+            ),
+            'air_temperature': DataArray(
+                5*random.randn(nz) + 270.,
+                dims=['mid_levels'], attrs={'units': 'degK'},
+            ),
+            'air_pressure_on_interface_levels': DataArray(
+                np.linspace(1e5, 0, nz+1),
+                dims=['interface_levels'], attrs={'units': 'Pa'},
+            ),
+            'surface_temperature': DataArray(
+                270.,
+                dims=[], attrs={'units': 'degK'},
+            )}
+        return state
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
