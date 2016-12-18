@@ -249,7 +249,7 @@ class TestGrayLongwaveRadiation1D(ComponentBase):
         nz = 10
         state = {
             'longwave_optical_depth_on_interface_levels': DataArray(
-                np.linspace(0, 6, nz+1)[None, None, :],
+                np.linspace(0, 6, nz+1),
                 dims=['interface_levels'], attrs={'units': ''},
             ),
             'air_temperature': DataArray(
