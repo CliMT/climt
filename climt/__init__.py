@@ -12,7 +12,7 @@ from ._core.constants import default_constants
 from ._core.util import set_prognostic_update_frequency
 from ._core.initialization import get_default_state
 from ._components import (
-    Frierson06GrayLongwaveRadiation, GrayLongwaveRadiation, PlotFunctionMonitor,
+    Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, PlotFunctionMonitor,
     NetCDFMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez,
     GridScaleCondensation)
@@ -28,7 +28,7 @@ __all__ = (
     default_constants,
     set_prognostic_update_frequency,
     get_default_state,
-    Frierson06GrayLongwaveRadiation, GrayLongwaveRadiation, PlotFunctionMonitor,
+    Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, PlotFunctionMonitor,
     NetCDFMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez,
     GridScaleCondensation

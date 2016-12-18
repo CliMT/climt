@@ -1,6 +1,6 @@
 from climt import (
-    DataArray, Frierson06GrayLongwaveRadiation, AdamsBashforth,
-    PlotFunctionMonitor)
+    DataArray, Frierson06LongwaveOpticalDepth, AdamsBashforth,
+    PlotFunctionMonitor, GrayLongwaveRadiation)
 import numpy as np
 from datetime import timedelta
 
@@ -59,15 +59,19 @@ def plot_function(fig, state):
         state['air_temperature'].values.flatten(),
         state['air_pressure'].values.flatten())
     ax.axes.invert_yaxis()
+    print(state['air_temperature'].values.flatten())
+    print(state['air_pressure'].values.flatten())
     ax.set_yscale('log')
     ax.set_ylim(1e5, 100.)
 
 monitor = PlotFunctionMonitor(plot_function)
-radiation = Frierson06GrayLongwaveRadiation()
+diagnostic = Frierson06LongwaveOpticalDepth()
+radiation = GrayLongwaveRadiation()
 time_stepper = AdamsBashforth([radiation])
 timestep = timedelta(hours=4)
 for i in range(6*7*4*8):
     print(i)
+    state.update(diagnostic(state))
     diagnostics, new_state = time_stepper.step(state, timestep)
     state.update(diagnostics)
     new_state.update(constant_state)
