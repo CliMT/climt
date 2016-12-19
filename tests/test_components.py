@@ -6,7 +6,9 @@ import xarray as xr
 import numpy as np
 from climt import (
     DataArray, HeldSuarez, GrayLongwaveRadiation,
-    Frierson06LongwaveOpticalDepth, vertical_dimension_names)
+    Frierson06LongwaveOpticalDepth, GridScaleCondensation,
+    vertical_dimension_names, Implicit, TimeStepper)
+from datetime import timedelta
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
@@ -43,6 +45,14 @@ def transpose_state(state, dims=None):
         else:
             return_state[name] = state[name].transpose(*dims)
     return return_state
+
+
+def call_with_timestep_if_needed(
+        component, state, timestep=timedelta(seconds=10.)):
+    if isinstance(component, (Implicit, TimeStepper)):
+        return component(state, timestep=timestep)
+    else:
+        return component(state)
 
 
 class ComponentBase(object):
@@ -83,7 +93,7 @@ class ComponentBase(object):
     def test_output_matches_cached_output(self):
         state = self.get_3d_input_state()
         component = self.get_component_instance()
-        output = component(state)
+        output = call_with_timestep_if_needed(component, state)
         cached_output = self.get_cached_output()
         if cached_output is None:
             self.cache_output(output)
@@ -96,7 +106,7 @@ class ComponentBase(object):
         state = state_3d_to_1d(self.get_3d_input_state())
         component = self.get_component_instance(
             state_modification_func=state_3d_to_1d)
-        output = component(state)
+        output = call_with_timestep_if_needed(component, state)
         cached_output = self.get_cached_output()
         if cached_output is None:
             raise AssertionError(
@@ -114,7 +124,7 @@ class ComponentBase(object):
         state = transpose_state(self.get_3d_input_state())
         component = self.get_component_instance(
             state_modification_func=transpose_state)
-        output = component(state)
+        output = call_with_timestep_if_needed(component, state)
         cached_output = self.get_cached_output()
         if cached_output is None:
             raise AssertionError(
@@ -128,7 +138,7 @@ class ComponentBase(object):
         input_state = {}
         for key in component.inputs:
             input_state[key] = state[key]
-        output = component(state)
+        output = call_with_timestep_if_needed(component, state)
         cached_output = self.get_cached_output()
         if cached_output is not None:
             compare_outputs(output, cached_output)
@@ -137,7 +147,7 @@ class ComponentBase(object):
         input_state = self.get_3d_input_state()
         assert_dimension_lengths_are_consistent(input_state)
         component = self.get_component_instance()
-        output = component(input_state)
+        output = call_with_timestep_if_needed(component, input_state)
         if isinstance(output, tuple):
             # Check diagnostics/tendencies/outputs are consistent with one
             # another
@@ -154,10 +164,15 @@ def assert_dimension_lengths_are_consistent(state):
     dimension_lengths = {}
     for name, value in state.items():
         for i, dim_name in enumerate(value.dims):
-            if dim_name in dimension_lengths:
-                assert dimension_lengths[dim_name] == value.shape[i]
-            else:
-                dimension_lengths[dim_name] = value.shape[i]
+            try:
+                if dim_name in dimension_lengths:
+                    assert dimension_lengths[dim_name] == value.shape[i]
+                else:
+                    dimension_lengths[dim_name] = value.shape[i]
+            except AssertionError as err:
+                raise AssertionError(
+                    'Inconsistent length on dimension {} for value {}:'
+                    '{}'.format(dim_name, name, err))
 
 
 def compare_outputs(current, cached):
@@ -332,6 +347,32 @@ class TestGrayLongwaveRadiation(ComponentBase):
             )}
         return state
 
+
+class TestGridScaleCondensation(ComponentBase):
+
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return GridScaleCondensation()
+
+    def get_3d_input_state(self):
+        nx, ny, nz = 2, 3, 10
+        p_interface = DataArray(
+            np.linspace(1e5, 0, nz+1),
+            dims=['interface_levels'], attrs={'units': 'Pa'},
+        )
+        p = DataArray(
+            0.5*(p_interface.values[1:] + p_interface.values[:-1]),
+            dims=['mid_levels'], attrs={'units': 'Pa'})
+        random = np.random.RandomState(0)
+        return {
+            'air_pressure': p,
+            'air_temperature': DataArray(
+                270. + random.randn(nx, ny, nz),
+                dims=['lon', 'lat', 'mid_levels'], attrs={'units': 'degK'}),
+            'specific_humidity': DataArray(
+                random.rand(nx, ny, nz)*15.,
+                dims=['lon', 'lat', 'mid_levels'], attrs={'units': 'kg/kg'}),
+            'air_pressure_on_interface_levels': p_interface,
+        }
 
 if __name__ == '__main__':
     pytest.main([__file__])

@@ -37,7 +37,7 @@ class HeldSuarez(Prognostic):
                  sigma_boundary_layer_top=0.7,
                  k_f=1/86400., k_a=1/40./86400., k_s=1/4./86400.,
                  equator_pole_temperature_difference=60, delta_theta_z=10,
-                 reference_pressure=None, gas_constant_for_dry_air=None,
+                 reference_pressure=None, gas_constant_of_dry_air=None,
                  heat_capacity_of_dry_air_at_constant_pressure=None,
                  planetary_rotation_rate=None, gravitational_acceleration=None,
                  planetary_radius=None):
@@ -78,7 +78,7 @@ class HeldSuarez(Prognostic):
             reference_pressure (float): Parameter used to define the
                 equilibrium temperature profile, roughly equal to the surface
                 pressure, in Pa. Default value is $10^5$ Pa.
-            gas_constant_for_dry_air (float): Value in $J kg^{-1} K^{-1}$.
+            gas_constant_of_dry_air (float): Value in $J kg^{-1} K^{-1}$.
                 Default is taken from climt.default_constants.
             heat_capacity_of_dry_air_at_constant_pressure: Value in
                 $J kg^{-1} K^{-1}$.
@@ -102,7 +102,7 @@ class HeldSuarez(Prognostic):
             'heat_capacity_of_dry_air_at_constant_pressure',
             heat_capacity_of_dry_air_at_constant_pressure)
         self._R_d = replace_none_with_default(
-            'gas_constant_for_dry_air', gas_constant_for_dry_air)
+            'gas_constant_of_dry_air', gas_constant_of_dry_air)
         self._kappa = self._R_d/self._Cpd
         self._Omega = replace_none_with_default(
             'planetary_rotation_rate', planetary_rotation_rate)

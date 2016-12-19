@@ -1,7 +1,8 @@
 from .._core.base_components import Implicit
 from .._core.array import DataArray
-from .._core.util import jit, replace_none_with_default
-from .._core.util import get_3d_numpy_array as to_3d_array
+from .._core.util import (
+    jit, replace_none_with_default, get_3d_numpy_array,
+    combine_dimensions_in_3d, combine_dimensions_in_2d,)
 import numpy as np
 
 
@@ -24,7 +25,8 @@ class GridScaleCondensation(Implicit):
     condensed water falls as precipitation."""
 
     inputs = (
-        'air_temperature', 'specific_humidity', 'air_pressure', 'air_mass',
+        'air_temperature', 'specific_humidity', 'air_pressure',
+        'air_pressure_on_interface_levels',
     )
     diagnostic_outputs = (
         'column_integrated_precipitation_rate',
@@ -37,18 +39,27 @@ class GridScaleCondensation(Implicit):
                  gas_constant_of_dry_air=None,
                  gas_constant_of_water_vapor=None,
                  heat_capacity_of_dry_air_at_constant_pressure=None,
-                 latent_heat_of_vaporization_of_water=None,):
+                 latent_heat_of_vaporization_of_water=None,
+                 gravitational_acceleration=None,
+                 density_of_liquid_water=None):
         """
 
         Args:
-            gas_constant_of_dry_air: Value in $J kg^{-1} K^{-1}$.
+            gas_constant_of_dry_air (float, optional): Value in
+                $J kg^{-1} K^{-1}$.
                 Default taken from climt.default_constants.
-            gas_constant_of_water_vapor: Value in $J kg^{-1} K^{-1}$
+            gas_constant_of_water_vapor (float, optional): Value in
+                $J kg^{-1} K^{-1}$.
                 Default taken from climt.default_constants.
-            heat_capacity_of_dry_air_at_constant_pressure: Value in
-                $J kg^{-1} K^{-1}$
+            heat_capacity_of_dry_air_at_constant_pressure (float, optional):
+                Value in $J kg^{-1} K^{-1}$.
                 Default taken from climt.default_constants.
-            latent_heat_of_vaporization_of_water: Value in $J kg^{-1}$.
+            latent_heat_of_vaporization_of_water (float, optional): Value in
+                $J kg^{-1}$.
+                Default taken from climt.default_constants.
+            gravitational_acceleration (float, optional): Value in $m s^{-2}$.
+                Default taken from climt.default_constants.
+            density_of_liquid_water (float, optional): Value in $kg m^{-3}$.
                 Default taken from climt.default_constants.
         """
 
@@ -62,10 +73,14 @@ class GridScaleCondensation(Implicit):
                                              gas_constant_of_dry_air)
         self._Rh20 = replace_none_with_default('gas_constant_of_water_vapor',
                                                gas_constant_of_water_vapor)
+        self._g = replace_none_with_default('gravitational_acceleration',
+                                            gravitational_acceleration)
+        self._rhow = replace_none_with_default('density_of_liquid_water',
+                                               density_of_liquid_water)
         self._q_sat = bolton_q_sat
         self._dqsat_dT = bolton_dqsat_dT
 
-    def __call__(self, state, time_step):
+    def __call__(self, state, timestep):
         """
         Gets diagnostics from the current model state and steps the state
         forward in time according to the timestep.
@@ -76,7 +91,7 @@ class GridScaleCondensation(Implicit):
                 the input state.
 
         Returns:
-            next_state (dict): A dicitonary whose keys are strings indicating
+            next_state (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the timestep after input state.
 
@@ -85,10 +100,11 @@ class GridScaleCondensation(Implicit):
             InvalidStateException: If state is not a valid input for the
                 Implicit instance for other reasons.
         """
-        T = to_3d_array(state['air_temperature'].to_units('degK'))
-        q = to_3d_array(state['specific_humidity'].to_units('kg/kg'))
-        p = to_3d_array(state['air_pressure'].to_units('Pa'))
-        mass = to_3d_array(state['air_mass'].to_units('kg'))
+        T = get_3d_numpy_array(state['air_temperature'].to_units('degK'))
+        q = get_3d_numpy_array(state['specific_humidity'].to_units('kg/kg'))
+        p = get_3d_numpy_array(state['air_pressure'].to_units('Pa'))
+        p_interface = get_3d_numpy_array(
+            state['air_pressure_on_interface_levels'].to_units('Pa'))
         q_sat = self._q_sat(T, p, self._Rd, self._Rh20)
         saturated = q > q_sat
         dqsat_dT = self._dqsat_dT(
@@ -101,16 +117,27 @@ class GridScaleCondensation(Implicit):
         new_T = T.copy()
         new_q[saturated] -= condensed_q[saturated]
         new_T[saturated] += self._Lv/self._Cpd * condensed_q[saturated]
+        mass = (p_interface[:, :, 1:] - p_interface[:, :, :-1])/(
+            self._g*self._rhow)
         precipitation = np.sum(condensed_q * mass, axis=2)
-        state['column_integrated_precipitation_rate'] = DataArray(
-            precipitation/time_step.total_seconds(),
-            dims=('x', 'y'), attrs={'units': 'kg/s'})
+
+        dims_3d = combine_dimensions_in_3d(
+            state['air_temperature'], state['specific_humidity'],
+            state['air_pressure'])
+        dims_2d = combine_dimensions_in_2d(
+            state['air_temperature'], state['specific_humidity'],
+            state['air_pressure'])
+        diagnostics = {
+            'column_integrated_precipitation_rate': DataArray(
+                precipitation / timestep.total_seconds(),
+                dims=dims_2d, attrs={'units': 'kg/s'}).squeeze()
+        }
         new_state = {
             'air_temperature': DataArray(
-                new_T, dims=state['air_temperature'].dims,
-                attrs=state['air_temperature'].attrs),
+                new_T, dims=dims_3d,
+                attrs=state['air_temperature'].attrs).squeeze(),
             'specific_humidity': DataArray(
-                new_q, dims=state['specific_humidity'].dims,
-                attrs=state['specific_humidity'].attrs),
+                new_q, dims=dims_3d,
+                attrs=state['specific_humidity'].attrs).squeeze(),
         }
-        return new_state
+        return diagnostics, new_state
