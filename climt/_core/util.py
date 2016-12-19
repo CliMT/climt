@@ -37,7 +37,7 @@ def combine_dimensions_in_3d(*args):
             for i, dim_list in enumerate(
                     [x_dimension_names, y_dimension_names,
                      vertical_dimension_names]):
-                if dim in dim_list:
+                if (dim in dim_list) and (dim not in ('x', 'y', 'z')):
                     if dims[i] is None:
                         dims[i] = dim
                     elif dims[i] != dim:

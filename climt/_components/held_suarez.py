@@ -1,5 +1,7 @@
 from .._core.base_components import Prognostic
-from .._core.util import replace_none_with_default, ensure_3d
+from .._core.util import (
+    replace_none_with_default, combine_dimensions_in_3d,
+    get_3d_numpy_array)
 from .._core.array import DataArray
 import numpy as np
 
@@ -141,7 +143,7 @@ class HeldSuarez(Prognostic):
             tendencies (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the time derivative of those
                 quantities in units/second at the time of the input state.
-            diagnostics (dict): A dicitonary whose keys are strings indicating
+            diagnostics (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
@@ -159,41 +161,52 @@ class HeldSuarez(Prognostic):
             k_v = self._k_v
         tendencies = {
             'eastward_wind': DataArray(
-                - k_v * state['eastward_wind'].to_units('m s^-1').values,
-                dims=state['eastward_wind'].dims, attrs={'units': 'm s^-2'}),
+                - k_v.values * state['eastward_wind'].to_units('m s^-1').values,
+                dims=combine_dimensions_in_3d(k_v, state['eastward_wind']),
+                attrs={'units': 'm s^-2'}).squeeze(),
             'northward_wind': DataArray(
-                - k_v * state['northward_wind'].to_units('m s^-1').values,
-                dims=state['northward_wind'].dims, attrs={'units': 'm s^-2'}),
+                - k_v.values * (
+                    state['northward_wind'].to_units('m s^-1').values),
+                dims=combine_dimensions_in_3d(k_v, state['northward_wind']),
+                attrs={'units': 'm s^-2'}).squeeze(),
             'air_temperature': DataArray(
-                - k_t * (state['air_temperature'].to_units('K').values - Teq),
-                dims=state['air_temperature'].dims, attrs={'units': 'K s^-1'})
+                - k_t.values * (
+                    state['air_temperature'].to_units('K').values - Teq.values),
+                dims=combine_dimensions_in_3d(k_t, state['air_temperature']),
+                attrs={'units': 'K s^-1'}).squeeze()
         }
         return tendencies, {}
 
     def _get_Teq(self, latitude, air_pressure):
-        latitude = ensure_3d(
-            latitude.to_units('degrees_N').values, data_dim_if_1d=2)
-        air_pressure = ensure_3d(
-            air_pressure.to_units('Pa').values, data_dim_if_1d=3)
-        return np.maximum(
+        out_dims = combine_dimensions_in_3d(latitude, air_pressure)
+        latitude = get_3d_numpy_array(latitude.to_units('degrees_N'))
+        air_pressure = get_3d_numpy_array(air_pressure.to_units('Pa'))
+        return DataArray(np.maximum(
             200,
             (315 - self._delta_T_y*np.sin(latitude)**2 -
              self._delta_theta_z*np.log(air_pressure/self._p0)*np.cos(latitude)**2
-             ) * (air_pressure/self._p0)**self._kappa
-        )
+             ) * (air_pressure/self._p0)**self._kappa),
+            dims=out_dims,
+            attrs={'units': 'degK'})
 
     def _get_k_t(self, latitude, sigma):
-        latitude = ensure_3d(
-            latitude.to_units('degrees_north').values, data_dim_if_1d=2)
-        sigma = ensure_3d(sigma.to_units('').values, data_dim_if_1d=3)
-        return (
+        out_dims = combine_dimensions_in_3d(latitude, sigma)
+        latitude = get_3d_numpy_array(latitude.to_units('degrees_N'))
+        sigma = get_3d_numpy_array(sigma.to_units(''))
+        return DataArray(
             self._k_a +
             (self._k_s - self._k_a) *
             np.maximum(0, (sigma - self._sigma_b)/(1 - self._sigma_b)) *
-            np.cos(latitude)**4)
+            np.cos(latitude)**4,
+            dims=out_dims,
+            attrs={'units': 's^-1'})
 
     def _get_k_v(self, sigma):
-        sigma = ensure_3d(sigma.to_units('').values, data_dim_if_1d=3)
-        return self._k_f * np.maximum(
-            0,
-            (sigma - self._sigma_b)/(1 - self._sigma_b))
+        out_dims = combine_dimensions_in_3d(sigma)
+        sigma = get_3d_numpy_array(sigma.to_units(''))
+        return DataArray(
+            self._k_f * np.maximum(
+                0,
+                (sigma - self._sigma_b)/(1 - self._sigma_b)),
+            dims=out_dims,
+            attrs={'units': 's^-1'})

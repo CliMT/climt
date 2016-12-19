@@ -96,7 +96,8 @@ class GrayLongwaveRadiation(Prognostic):
                 upward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
             ).squeeze(),
             'net_longwave_flux': DataArray(
-                net_lw_flux, dims=dims_interface, attrs={'units': 'W m^-2'}),
+                net_lw_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
+            ).squeeze(),
             'air_temperature_tendency_due_to_longwave_radiation': DataArray(
                 lw_temperature_tendency, dims=dims_mid,
                 attrs={'units': 'K s^-1'}).squeeze(),
@@ -106,6 +107,7 @@ class GrayLongwaveRadiation(Prognostic):
                 lw_temperature_tendency, dims=dims_mid,
                 attrs={'units': 'K s^-1'}).squeeze()
         }
+        print(diagnostics['air_temperature_tendency_due_to_longwave_radiation'].dims)
         return tendencies, diagnostics
 
 
@@ -160,8 +162,9 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 get_frierson_06_tau(
                     self._latitude, self._sigma_on_interface_levels,
                     self._tau0e, self._tau0p, self._fl),
-                dims=self._sigma_on_interface_levels.dims,
-                attrs={'units': ''})
+                dims=combine_dimensions_in_3d(
+                    self._latitude, self._sigma_on_interface_levels),
+                attrs={'units': ''}).squeeze()
         else:
             self._tau = None
 
@@ -193,8 +196,9 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
             tau = DataArray(
                 get_frierson_06_tau(
                     lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
-                dims=['x', 'y', 'interface_levels'],
-                attrs={'units': ''})
+                dims=combine_dimensions_in_3d(
+                    state['latitude'], state['sigma_on_interface_levels']),
+                attrs={'units': ''}).squeeze()
         else:
             tau = self._tau
         return {

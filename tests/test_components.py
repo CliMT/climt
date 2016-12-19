@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 from climt import (
     DataArray, HeldSuarez, GrayLongwaveRadiation,
-    Frierson06LongwaveOpticalDepth)
+    Frierson06LongwaveOpticalDepth, vertical_dimension_names)
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
@@ -22,17 +22,30 @@ def load_dictionary(filename):
     return dict(dataset.data_vars)
 
 
+def state_3d_to_1d(state):
+    return_state = {}
+    for name, value in state.items():
+        dim_list = []
+        for i, dim in enumerate(value.dims):
+            if dim in vertical_dimension_names:
+                dim_list.append(slice(0, value.shape[i]))
+            else:
+                dim_list.append(0)
+        return_state[name] = value[tuple(dim_list)]
+    return return_state
+
+
 class ComponentBase(object):
 
     @abc.abstractmethod
-    def get_input_state(self):
+    def get_3d_input_state(self):
         pass
 
     @abc.abstractmethod
     def get_component_instance(self):
         pass
 
-    def get_cached_output(self):
+    def get_cached_output(self,):
         cache_filename_list = sorted(glob(
             os.path.join(
                 cache_folder,
@@ -58,7 +71,7 @@ class ComponentBase(object):
             cache_dictionary(output[i], cache_filename)
 
     def test_output_matches_cached_output(self):
-        state = self.get_input_state()
+        state = self.get_3d_input_state()
         component = self.get_component_instance()
         output = component(state)
         cached_output = self.get_cached_output()
@@ -69,8 +82,25 @@ class ComponentBase(object):
         else:
             compare_outputs(output, cached_output)
 
+    def test_1d_output_matches_cached_output(self):
+        state = state_3d_to_1d(self.get_3d_input_state())
+        component = self.get_component_instance()
+        output = component(state)
+        cached_output = self.get_cached_output()
+        if cached_output is None:
+            raise AssertionError(
+                'Failed due to no cached output.')
+        else:
+            if isinstance(cached_output, dict):
+                compare_outputs(output, state_3d_to_1d(cached_output))
+            else:
+                cached_output_1d = []
+                for cached_state in cached_output:
+                    cached_output_1d.append(state_3d_to_1d(cached_state))
+                compare_outputs(output, tuple(cached_output_1d))
+
     def test_component_listed_inputs_are_accurate(self):
-        state = self.get_input_state()
+        state = self.get_3d_input_state()
         component = self.get_component_instance()
         input_state = {}
         for key in component.inputs:
@@ -81,7 +111,7 @@ class ComponentBase(object):
             compare_outputs(output, cached_output)
 
     def test_consistent_dim_length(self):
-        input_state = self.get_input_state()
+        input_state = self.get_3d_input_state()
         assert_dimension_lengths_are_consistent(input_state)
         component = self.get_component_instance()
         output = component(input_state)
@@ -119,19 +149,22 @@ def compare_outputs(current, cached):
 
 def compare_one_state_pair(current, cached):
     for key in current.keys():
-        assert np.all(current[key].values == cached[key].values)
-        for attr in current[key].attrs:
-            assert current[key].attrs[attr] == cached[key].attrs[attr]
-        for attr in cached[key].attrs:
-            assert attr in current[key].attrs
-        assert current[key].dims == cached[key].dims
+        try:
+            assert np.all(current[key].values == cached[key].values)
+            for attr in current[key].attrs:
+                assert current[key].attrs[attr] == cached[key].attrs[attr]
+            for attr in cached[key].attrs:
+                assert attr in current[key].attrs
+            assert current[key].dims == cached[key].dims
+        except AssertionError as err:
+            raise AssertionError('Error for {}: {}'.format(key, err))
     for key in cached.keys():
         assert key in current.keys()
 
 
 class TestHeldSuarez(ComponentBase):
 
-    def get_input_state(self):
+    def get_3d_input_state(self):
         random = np.random.RandomState(0)
         return {
             'latitude': DataArray(
@@ -158,7 +191,7 @@ class TestHeldSuarez(ComponentBase):
 
 class TestHeldSuarezCachedCoordinates(ComponentBase):
 
-    def get_input_state(self):
+    def get_3d_input_state(self):
         random = np.random.RandomState(0)
         return {
             'latitude': DataArray(
@@ -192,10 +225,36 @@ class TestHeldSuarezCachedCoordinates(ComponentBase):
             sigma=DataArray(
                 np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}))
 
+    def test_1d_output_matches_cached_output(self):
+        state = state_3d_to_1d(self.get_3d_input_state())
+        random = np.random.RandomState(0)
+        component = HeldSuarez(
+            latitude=DataArray(
+                np.linspace(-90, 90, num=3),
+                dims=['lat'], attrs={'units': 'degrees_N'})[0],
+            air_pressure=DataArray(
+                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                attrs={'units': 'hPa'},)[0, 0, :],
+            sigma=DataArray(
+                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}))
+        output = component(state)
+        cached_output = self.get_cached_output()
+        if cached_output is None:
+            raise AssertionError(
+                'Failed due to no cached output.')
+        else:
+            if isinstance(cached_output, dict):
+                compare_outputs(output, state_3d_to_1d(cached_output))
+            else:
+                cached_output_1d = []
+                for cached_state in cached_output:
+                    cached_output_1d.append(state_3d_to_1d(cached_state))
+                compare_outputs(output, tuple(cached_output_1d))
+
 
 class TestFrierson06LongwaveOpticalDepth(ComponentBase):
 
-    def get_input_state(self):
+    def get_3d_input_state(self):
         state = {
             'latitude': DataArray(
                 np.linspace(-90, 90, num=10),
@@ -206,6 +265,13 @@ class TestFrierson06LongwaveOpticalDepth(ComponentBase):
         }
         return state
 
+    def get_1d_input_state(self):
+        state_3d = self.get_3d_input_state()
+        return {
+            'latitude': state_3d['latitude'][0],
+            'sigma_on_interface_levels': state_3d['sigma_on_interface_levels']
+        }
+
     def get_component_instance(self):
         return Frierson06LongwaveOpticalDepth()
 
@@ -215,7 +281,7 @@ class TestGrayLongwaveRadiation(ComponentBase):
     def get_component_instance(self):
         return GrayLongwaveRadiation()
 
-    def get_input_state(self):
+    def get_3d_input_state(self):
         random = np.random.RandomState(1)
         nx, ny, nz = 4, 4, 10
         state = {
@@ -235,34 +301,6 @@ class TestGrayLongwaveRadiation(ComponentBase):
             'surface_temperature': DataArray(
                 5 * random.randn(nx, ny) + 270.,
                 dims=['x', 'y'], attrs={'units': 'degK'},
-            )}
-        return state
-
-
-class TestGrayLongwaveRadiation1D(ComponentBase):
-
-    def get_component_instance(self):
-        return GrayLongwaveRadiation()
-
-    def get_input_state(self):
-        random = np.random.RandomState(1)
-        nz = 10
-        state = {
-            'longwave_optical_depth_on_interface_levels': DataArray(
-                np.linspace(0, 6, nz+1),
-                dims=['interface_levels'], attrs={'units': ''},
-            ),
-            'air_temperature': DataArray(
-                5*random.randn(nz) + 270.,
-                dims=['mid_levels'], attrs={'units': 'degK'},
-            ),
-            'air_pressure_on_interface_levels': DataArray(
-                np.linspace(1e5, 0, nz+1),
-                dims=['interface_levels'], attrs={'units': 'Pa'},
-            ),
-            'surface_temperature': DataArray(
-                270.,
-                dims=[], attrs={'units': 'degK'},
             )}
         return state
 
