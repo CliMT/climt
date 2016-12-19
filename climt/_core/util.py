@@ -27,6 +27,49 @@ y_dimension_names = ('y', 'lat', 'latitude')
 horizontal_dimension_names = x_dimension_names + y_dimension_names
 
 
+def combine_dimensions_in_3d(*args):
+    """Returns a tuple of 3 dimensions (x, y, z), with names corresponding to
+    dimension names from the DataArray objects given by *args when present.
+    """
+    dims = [None, None, None]
+    for value in args:
+        for dim in value.dims:
+            for i, dim_list in enumerate(
+                    [x_dimension_names, y_dimension_names,
+                     vertical_dimension_names]):
+                if dim in dim_list:
+                    if dims[i] is None:
+                        dims[i] = dim
+                    elif dims[i] != dim:
+                        raise ValueError(
+                            'Multiple dimensions along same x/y/z coordinate')
+    for i, default in enumerate(['x', 'y', 'z']):
+        if dims[i] is None:
+            dims[i] = default
+    return dims
+
+
+def combine_dimensions_in_2d(*args):
+    """Returns a tuple of 3 dimensions (x, y, z), with names corresponding to
+    dimension names from the DataArray objects given by *args when present.
+    """
+    dims = [None, None]
+    for value in args:
+        for dim in value.dims:
+            for i, dim_list in enumerate(
+                    [x_dimension_names, y_dimension_names]):
+                if dim in dim_list:
+                    if dims[i] is None:
+                        dims[i] = dim
+                    elif dims[i] != dim:
+                        raise ValueError(
+                            'Multiple dimensions along same x/y coordinate')
+    for i, default in enumerate(['x', 'y']):
+        if dims[i] is None:
+            dims[i] = default
+    return dims
+
+
 def set_prognostic_update_frequency(prognostic_class, update_timedelta):
     """
     Alters a prognostic class so that when it is called, it only computes its
@@ -40,12 +83,12 @@ def set_prognostic_update_frequency(prognostic_class, update_timedelta):
     states it receives, and that it is a datetime or timedelta object.
 
     Example:
-        This how the function should be used on a Prognostic class MyPrognostic.
+        This how the function should be used on a Prognostic class GrayLongwaveRadiation.
 
-        >>> from climt import MyPrognostic
+        >>> from climt import GrayLongwaveRadiation
         >>> from datetime import timedelta
-        >>> set_prognostic_update_frequency(MyPrognostic, timedelta(hours=1))
-        >>> prognostic = MyPrognostic()
+        >>> set_prognostic_update_frequency(GrayLongwaveRadiation, timedelta(hours=1))
+        >>> prognostic = GrayLongwaveRadiation()
 
     Args:
         prognostic_class (type): A Prognostic class (not an instance).

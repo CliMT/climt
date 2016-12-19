@@ -1,6 +1,7 @@
 from .._core.base_components import Prognostic, Diagnostic
 from .._core.array import DataArray
-from .._core.util import jit, replace_none_with_default, ensure_horizontal_only
+from .._core.util import (
+    jit, replace_none_with_default, ensure_horizontal_only, combine_dimensions_in_3d)
 from .._core.util import get_3d_numpy_array as to_3d_array
 import numpy as np
 
@@ -81,24 +82,29 @@ class GrayLongwaveRadiation(Prognostic):
          lw_temperature_tendency, tau) = get_longwave_fluxes(
             T, p_interface, Ts, tau, self._stefan_boltzmann,
             self._g, self._Cpd)
-        dims_mid = state['air_temperature'].dims
-        dims_interface = (
-            list(state['air_temperature'].dims[:2]) + ['interface_levels'])
+        dims_mid = combine_dimensions_in_3d(
+            state['surface_temperature'],
+            state['air_temperature'])
+        dims_interface = combine_dimensions_in_3d(
+            state['air_pressure_on_interface_levels'],
+            state['surface_temperature'])
         diagnostics = {
             'downward_longwave_flux': DataArray(
-                downward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}),
+                downward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
+            ).squeeze(),
             'upward_longwave_flux': DataArray(
-                upward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}),
+                upward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
+            ).squeeze(),
             'net_longwave_flux': DataArray(
                 net_lw_flux, dims=dims_interface, attrs={'units': 'W m^-2'}),
             'air_temperature_tendency_due_to_longwave_radiation': DataArray(
                 lw_temperature_tendency, dims=dims_mid,
-                attrs={'units': 'K s^-1'}),
+                attrs={'units': 'K s^-1'}).squeeze(),
         }
         tendencies = {
             'air_temperature': DataArray(
                 lw_temperature_tendency, dims=dims_mid,
-                attrs={'units': 'K s^-1'})
+                attrs={'units': 'K s^-1'}).squeeze()
         }
         return tendencies, diagnostics
 
