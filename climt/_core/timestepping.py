@@ -15,7 +15,7 @@ class TimeStepper(object):
         self._prognostic = PrognosticComposite(*prognostic_list)
 
     @abc.abstractmethod
-    def step(self, state, timestep):
+    def __call__(self, state, timestep):
         """
         Retrieves any diagnostics and returns a new state corresponding
         to the next timestep.
@@ -70,7 +70,7 @@ class AdamsBashforth(TimeStepper):
         self._tendencies_list = []
         super(AdamsBashforth, self).__init__(prognostic_list)
 
-    def step(self, state, timestep):
+    def __call__(self, state, timestep):
         """
         Updates the input state dictionary and returns a new state corresponding
         to the next timestep.
@@ -164,7 +164,7 @@ class Leapfrog(TimeStepper):
         self._alpha = alpha
         super(Leapfrog, self).__init__(prognostic_list)
 
-    def step(self, state, timestep):
+    def __call__(self, state, timestep):
         """
         Updates the input state dictionary and returns a new state corresponding
         to the next timestep.

@@ -1,8 +1,8 @@
 from .._core.base_components import Prognostic, Diagnostic
 from .._core.array import DataArray
 from .._core.util import (
-    jit, replace_none_with_default, ensure_horizontal_only, combine_dimensions_in_3d)
-from .._core.util import get_3d_numpy_array as to_3d_array
+    jit, replace_none_with_default, combine_dimensions_in_3d)
+from .._core.util import get_3d_numpy_array, get_2d_numpy_array
 import numpy as np
 
 
@@ -40,7 +40,7 @@ class GrayLongwaveRadiation(Prognostic):
                 Default taken from climt.default_constants.
         """
         if longwave_optical_depth_on_interface_levels is not None:
-            self._optical_depth = to_3d_array(
+            self._optical_depth = get_3d_numpy_array(
                 longwave_optical_depth_on_interface_levels .to_units(''))
         else:
             self._optical_depth = None
@@ -68,16 +68,14 @@ class GrayLongwaveRadiation(Prognostic):
                 at the time of the input state.
         """
         if self._optical_depth is None:
-            tau = to_3d_array(state[
+            tau = get_3d_numpy_array(state[
                 'longwave_optical_depth_on_interface_levels'].to_units(''))
         else:
             tau = self._optical_depth
-        T = to_3d_array(state['air_temperature'].to_units('degK'))
-        p_interface = to_3d_array(
+        T = get_3d_numpy_array(state['air_temperature'].to_units('degK'))
+        p_interface = get_3d_numpy_array(
             state['air_pressure_on_interface_levels'].to_units('Pa'))
-        Ts = state['surface_temperature'].to_units('degK')  # x, y
-        ensure_horizontal_only(Ts, 'surface_temperature')
-        Ts = Ts.values
+        Ts = get_2d_numpy_array(state['surface_temperature'].to_units('degK'))
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
             T, p_interface, Ts, tau, self._stefan_boltzmann,
@@ -107,7 +105,6 @@ class GrayLongwaveRadiation(Prognostic):
                 lw_temperature_tendency, dims=dims_mid,
                 attrs={'units': 'K s^-1'}).squeeze()
         }
-        print(diagnostics['air_temperature_tendency_due_to_longwave_radiation'].dims)
         return tendencies, diagnostics
 
 
@@ -184,11 +181,11 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 at the time of the input state.
         """
         if self._latitude is None:
-            lat = to_3d_array(state['latitude'].to_units('degrees_north'))
+            lat = get_3d_numpy_array(state['latitude'].to_units('degrees_north'))
         else:
             lat = self._latitude
         if self._sigma_on_interface_levels is None:
-            sigma_interface = to_3d_array(
+            sigma_interface = get_3d_numpy_array(
                 state['sigma_on_interface_levels'].to_units(''))
         else:
             sigma_interface = self._sigma_on_interface_levels

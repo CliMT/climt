@@ -35,6 +35,16 @@ def state_3d_to_1d(state):
     return return_state
 
 
+def transpose_state(state, dims=None):
+    return_state = {}
+    for name, value in state.items():
+        if dims is None:
+            return_state[name] = state[name].transpose()
+        else:
+            return_state[name] = state[name].transpose(*dims)
+    return return_state
+
+
 class ComponentBase(object):
 
     @abc.abstractmethod
@@ -42,7 +52,7 @@ class ComponentBase(object):
         pass
 
     @abc.abstractmethod
-    def get_component_instance(self):
+    def get_component_instance(self, state_modification_func=lambda x: x):
         pass
 
     def get_cached_output(self,):
@@ -84,7 +94,8 @@ class ComponentBase(object):
 
     def test_1d_output_matches_cached_output(self):
         state = state_3d_to_1d(self.get_3d_input_state())
-        component = self.get_component_instance()
+        component = self.get_component_instance(
+            state_modification_func=state_3d_to_1d)
         output = component(state)
         cached_output = self.get_cached_output()
         if cached_output is None:
@@ -98,6 +109,18 @@ class ComponentBase(object):
                 for cached_state in cached_output:
                     cached_output_1d.append(state_3d_to_1d(cached_state))
                 compare_outputs(output, tuple(cached_output_1d))
+
+    def test_reversed_state_gives_same_output(self):
+        state = transpose_state(self.get_3d_input_state())
+        component = self.get_component_instance(
+            state_modification_func=transpose_state)
+        output = component(state)
+        cached_output = self.get_cached_output()
+        if cached_output is None:
+            raise AssertionError(
+                'Failed due to no cached output.')
+        else:
+            compare_outputs(output, cached_output)
 
     def test_component_listed_inputs_are_accurate(self):
         state = self.get_3d_input_state()
@@ -185,7 +208,7 @@ class TestHeldSuarez(ComponentBase):
                 attrs={'units': 'm/s'}),
         }
 
-    def get_component_instance(self):
+    def get_component_instance(self, state_modification_func=lambda x: x):
         return HeldSuarez()
 
 
@@ -213,17 +236,22 @@ class TestHeldSuarezCachedCoordinates(ComponentBase):
                 attrs={'units': 'm/s'}),
         }
 
-    def get_component_instance(self):
+    def get_component_instance(self, state_modification_func=lambda x: x):
         random = np.random.RandomState(0)
-        return HeldSuarez(
-            latitude=DataArray(
+        state = state_modification_func({
+            'latitude': DataArray(
                 np.linspace(-90, 90, num=3),
                 dims=['lat'], attrs={'units': 'degrees_N'}),
-            air_pressure=DataArray(
+            'air_pressure': DataArray(
                 random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
                 attrs={'units': 'hPa'},),
-            sigma=DataArray(
-                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}))
+            'sigma': DataArray(
+                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''})
+        })
+        return HeldSuarez(
+            latitude=state['latitude'],
+            air_pressure=state['air_pressure'],
+            sigma=state['sigma'])
 
     def test_1d_output_matches_cached_output(self):
         state = state_3d_to_1d(self.get_3d_input_state())
@@ -272,13 +300,13 @@ class TestFrierson06LongwaveOpticalDepth(ComponentBase):
             'sigma_on_interface_levels': state_3d['sigma_on_interface_levels']
         }
 
-    def get_component_instance(self):
+    def get_component_instance(self, state_modification_func=lambda x: x):
         return Frierson06LongwaveOpticalDepth()
 
 
 class TestGrayLongwaveRadiation(ComponentBase):
 
-    def get_component_instance(self):
+    def get_component_instance(self, state_modification_func=lambda x: x):
         return GrayLongwaveRadiation()
 
     def get_3d_input_state(self):

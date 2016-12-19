@@ -159,19 +159,20 @@ class HeldSuarez(Prognostic):
             k_v = self._get_k_v(state['sigma'])
         else:
             k_v = self._k_v
+        u = get_3d_numpy_array(state['eastward_wind'].to_units('m s^-1'))
+        v = get_3d_numpy_array(state['northward_wind'].to_units('m s^-1'))
+        T = get_3d_numpy_array(state['air_temperature'].to_units('degK'))
         tendencies = {
             'eastward_wind': DataArray(
-                - k_v.values * state['eastward_wind'].to_units('m s^-1').values,
+                - k_v.values * u,
                 dims=combine_dimensions_in_3d(k_v, state['eastward_wind']),
                 attrs={'units': 'm s^-2'}).squeeze(),
             'northward_wind': DataArray(
-                - k_v.values * (
-                    state['northward_wind'].to_units('m s^-1').values),
+                - k_v.values * v,
                 dims=combine_dimensions_in_3d(k_v, state['northward_wind']),
                 attrs={'units': 'm s^-2'}).squeeze(),
             'air_temperature': DataArray(
-                - k_t.values * (
-                    state['air_temperature'].to_units('K').values - Teq.values),
+                - k_t.values * (T - Teq.values),
                 dims=combine_dimensions_in_3d(k_t, state['air_temperature']),
                 attrs={'units': 'K s^-1'}).squeeze()
         }
