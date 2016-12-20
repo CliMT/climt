@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, Extension
+import numpy as np
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -21,6 +22,12 @@ test_requirements = [
     'mock>=2.0.0',
 ]
 
+ext_modules = [
+    Extension(
+        'climt._components._berger_solar_insolation',
+        ['climt/_components/_berger_solar_insolation.c']),
+]
+
 setup(
     name='climt',
     version='1.0.0',
@@ -34,6 +41,8 @@ setup(
     ],
     package_dir={'climt':
                  'climt'},
+    include_dirs=[np.get_include()],
+    ext_modules=ext_modules,
     include_package_data=True,
     install_requires=requirements,
     license="BSD license",
