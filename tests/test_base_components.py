@@ -141,19 +141,6 @@ def test_diagnostic_composite_call(mock_call):
     assert new_state['foo'] == 5.
 
 
-@mock.patch.object(MockDiagnostic, '__call__')
-def test_diagnostic_composite_update(mock_call):
-    mock_call.return_value = {'foo': 5.}
-    state = {'bar': 10.}
-    diagnostics = DiagnosticComposite(MockDiagnostic())
-    diagnostics.update_state(state)
-    assert len(state.keys()) == 2
-    assert 'foo' in state.keys()
-    assert 'bar' in state.keys()
-    assert state['foo'] == 5.
-    assert state['bar'] == 10.
-
-
 def test_prognostic_composite_includes_attributes():
     prognostic = MockPrognostic()
     prognostic.inputs = ('input1',)

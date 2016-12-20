@@ -113,21 +113,6 @@ class Diagnostic(object):
                 Prognostic instance.
         """
 
-    def update_state(self, state):
-        """
-        Gets diagnostics from the passed model state and updates the state with
-        those diagnostics (in place). Will replace any existing entries.
-
-        Args:
-            state (dict): A model state dictionary.
-
-        Raises:
-            KeyError: If a required quantity is missing from the state.
-            InvalidStateException: If state is not a valid input for the
-                Diagnostic instance.
-        """
-        state.update(self(state))
-
 
 class Monitor(object):
     __metaclass__ = abc.ABCMeta
