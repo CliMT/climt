@@ -6,6 +6,9 @@ import xarray as xr
 
 
 class BergerSolarInsolation(Diagnostic):
+    """Determines solar insolation using spectral solutions for orbital
+    constants from Berger 1978. This is the same approach taken by CAM 3.
+    """
     inputs = ('time', 'longitude', 'latitude')
     diagnostics = (
         'solar_insolation',
@@ -16,6 +19,12 @@ class BergerSolarInsolation(Diagnostic):
     )
 
     def __init__(self, solar_constant=None):
+        """
+        Args:
+            solar_constant (float, optional): Solar constant $S_0$ to use when
+                one is not provided in the input state, in $W m^{-2}$.
+                Default is taken from climt.default_constants.
+        """
         self._orbital_parameters = {}
         self._solar_constant = replace_none_with_default(
             'solar_constant', solar_constant)
