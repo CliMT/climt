@@ -1,7 +1,7 @@
 from .._core.base_components import Diagnostic
 from .._core.util import replace_none_with_default
 from .._core.array import DataArray
-from ._berger_solar_insolation import get_parameters
+from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
 import xarray as xr
 
 
@@ -16,6 +16,7 @@ class BergerSolarInsolation(Diagnostic):
     )
 
     def __init__(self, solar_constant=None):
+        self._orbital_parameters = {}
         self._solar_constant = replace_none_with_default(
             'solar_constant', solar_constant)
 
@@ -47,14 +48,8 @@ class BergerSolarInsolation(Diagnostic):
                 solar_constant = state['solar_constant'].values.item()
         else:
             solar_constant = self._solar_constant
-        solar_insolation, solar_zenith_angle, obliquity, eccentricity, rho = get_parameters(
-            years_since_jan_1_1950_ad(state['time']),
-            years_since_vernal_equinox(state['time']),
-            fractional_day(state['time']),
-            lat.values.flatten(),
-            lon.values.flatten(),
-            solar_constant,
-        )
+        solar_insolation, solar_zenith_angle, obliquity, eccentricity, rho = \
+            self._driver(state, lat, lon, solar_constant)
         diagnostics = {
             'solar_insolation': DataArray(
                 solar_insolation.reshape(lat.shape),
@@ -75,6 +70,27 @@ class BergerSolarInsolation(Diagnostic):
             ),
         }
         return diagnostics
+
+    def _driver(self, state, lat, lon, solar_constant):
+        # We can compute orbital parameters yearly because they change very
+        # slowly
+        year = state['time'].year
+        if year not in self._orbital_parameters:
+            self._orbital_parameters[year] = get_orbital_parameters(
+                float(year - 1950))
+        lambda_m0, eccentricity, omega_tilde, obliquity = (
+            self._orbital_parameters[year])
+        return get_solar_parameters(
+            lambda_m0,
+            eccentricity,
+            omega_tilde,
+            obliquity,
+            years_since_vernal_equinox(state['time']),
+            fractional_day(state['time']),
+            lat.values.flatten(),
+            lon.values.flatten(),
+            solar_constant,)
+
 
 
 def fractional_year(dt):
