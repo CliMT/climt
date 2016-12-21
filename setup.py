@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, Extension
+try:
+    import numpy as np
+    include_dirs = [np.get_include]
+except ImportError:
+    include_dirs = []
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -43,6 +48,7 @@ setup(
     include_package_data=True,
     install_requires=requirements,
     ext_modules=ext_modules,
+    include_dirs=include_dirs,
     license="BSD license",
     zip_safe=False,
     keywords='climt',
