@@ -4,7 +4,7 @@
 from setuptools import setup, Extension
 try:
     import numpy as np
-    include_dirs = [np.get_include]
+    include_dirs = [np.get_include()]
 except ImportError:
     include_dirs = []
 
