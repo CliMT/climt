@@ -202,6 +202,7 @@ cdef DTYPE_t *delta_prime = [
 cdef DTYPE_t arcsec_to_degree = 1./3600.
 
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef get_orbital_parameters(DTYPE_t years_since_jan_1_1950):
@@ -251,6 +252,7 @@ cpdef get_orbital_parameters(DTYPE_t years_since_jan_1_1950):
     return lambda_m0, eccentricity, omega_tilde, obliquity
 
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef get_solar_parameters(
@@ -311,6 +313,7 @@ cpdef get_solar_parameters(
     return solar_insolation, solar_zenith_angle, obliquity, eccentricity, rho
 
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef DTYPE_t get_fixed_vernal_equinox_longitude_of_perihelion(
