@@ -92,18 +92,6 @@ class BergerSolarInsolation(Diagnostic):
             solar_constant,)
 
 
-def fractional_year(dt):
-    """Returns a float indicating the fraction of the current year that has
-    passed in the given datetime object."""
-    year_start = type(dt)(dt.year, 1, 1)
-    year_end = type(dt)(dt.year+1, 1, 1)
-    return (dt - year_start).total_seconds() / (year_end - year_start).total_seconds()
-
-
-def years_since_jan_1_1950_ad(dt):
-    return (dt.year - 1950) + fractional_year(dt)
-
-
 def years_since_vernal_equinox(dt):
     """Fractional years since last March 20, noon UTC (assumed time of
     vernal equinox)."""
