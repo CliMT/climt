@@ -92,7 +92,6 @@ class BergerSolarInsolation(Diagnostic):
             solar_constant,)
 
 
-
 def fractional_year(dt):
     """Returns a float indicating the fraction of the current year that has
     passed in the given datetime object."""
