@@ -21,6 +21,12 @@ test_requirements = [
     'mock>=2.0.0',
 ]
 
+ext_modules = [
+    Extension(
+        'climt._components._berger_solar_insolation',
+        ['climt/_components/_berger_solar_insolation.pyx'])
+]
+
 setup(
     name='climt',
     version='1.0.0',
@@ -36,6 +42,7 @@ setup(
                  'climt'},
     include_package_data=True,
     install_requires=requirements,
+    ext_modules=ext_modules,
     license="BSD license",
     zip_safe=False,
     keywords='climt',

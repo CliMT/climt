@@ -17,7 +17,7 @@ from ._components import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, PlotFunctionMonitor,
     NetCDFMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez,
-    GridScaleCondensation)
+    GridScaleCondensation, BergerSolarInsolation)
 
 __version__ = '1.0.0'
 __all__ = (
@@ -34,5 +34,5 @@ __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, PlotFunctionMonitor,
     NetCDFMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic, HeldSuarez,
-    GridScaleCondensation
+    GridScaleCondensation, BergerSolarInsolation
 )

@@ -1,14 +1,18 @@
 import pytest
 import abc
 import os
+os.environ['NUMBA_DISABLE_JIT'] = '1'
 from glob import glob
 import xarray as xr
 import numpy as np
 from climt import (
     DataArray, HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
+    BergerSolarInsolation,
     vertical_dimension_names, Implicit, TimeStepper)
-from datetime import timedelta
+from datetime import datetime, timedelta
+
+
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
@@ -27,23 +31,29 @@ def load_dictionary(filename):
 def state_3d_to_1d(state):
     return_state = {}
     for name, value in state.items():
-        dim_list = []
-        for i, dim in enumerate(value.dims):
-            if dim in vertical_dimension_names:
-                dim_list.append(slice(0, value.shape[i]))
-            else:
-                dim_list.append(0)
-        return_state[name] = value[tuple(dim_list)]
+        if name is 'time':
+            return_state[name] = value
+        else:
+            dim_list = []
+            for i, dim in enumerate(value.dims):
+                if dim in vertical_dimension_names:
+                    dim_list.append(slice(0, value.shape[i]))
+                else:
+                    dim_list.append(0)
+            return_state[name] = value[tuple(dim_list)]
     return return_state
 
 
 def transpose_state(state, dims=None):
     return_state = {}
     for name, value in state.items():
-        if dims is None:
-            return_state[name] = state[name].transpose()
+        if name is 'time':
+            return_state[name] = state[name]
         else:
-            return_state[name] = state[name].transpose(*dims)
+            if dims is None:
+                return_state[name] = state[name].transpose()
+            else:
+                return_state[name] = state[name].transpose(*dims)
     return return_state
 
 
@@ -163,16 +173,17 @@ class ComponentBase(object):
 def assert_dimension_lengths_are_consistent(state):
     dimension_lengths = {}
     for name, value in state.items():
-        for i, dim_name in enumerate(value.dims):
-            try:
-                if dim_name in dimension_lengths:
-                    assert dimension_lengths[dim_name] == value.shape[i]
-                else:
-                    dimension_lengths[dim_name] = value.shape[i]
-            except AssertionError as err:
-                raise AssertionError(
-                    'Inconsistent length on dimension {} for value {}:'
-                    '{}'.format(dim_name, name, err))
+        if name != 'time':
+            for i, dim_name in enumerate(value.dims):
+                try:
+                    if dim_name in dimension_lengths:
+                        assert dimension_lengths[dim_name] == value.shape[i]
+                    else:
+                        dimension_lengths[dim_name] = value.shape[i]
+                except AssertionError as err:
+                    raise AssertionError(
+                        'Inconsistent length on dimension {} for value {}:'
+                        '{}'.format(dim_name, name, err))
 
 
 def compare_outputs(current, cached):
@@ -372,6 +383,43 @@ class TestGridScaleCondensation(ComponentBase):
                 random.rand(nx, ny, nz)*15.,
                 dims=['lon', 'lat', 'mid_levels'], attrs={'units': 'kg/kg'}),
             'air_pressure_on_interface_levels': p_interface,
+        }
+
+
+class TestBergerSolarInsolation(ComponentBase):
+
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return BergerSolarInsolation()
+
+    def get_3d_input_state(self):
+        nx = 5
+        ny = 10
+        return {
+            'time': datetime(2016, 12, 20, 6),
+            'longitude': DataArray(
+                np.linspace(-90, 90, nx, endpoint=False),
+                dims=['lon'], attrs={'units': 'degree_E'}),
+            'latitude': DataArray(
+                np.linspace(-180., 180., num=ny),
+                dims=['lat'], attrs={'units': 'degrees_north'}),
+        }
+
+
+class TestBergerSolarInsolationDifferentTime(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return BergerSolarInsolation()
+
+    def get_3d_input_state(self):
+        nx = 5
+        ny = 10
+        return {
+            'time': datetime(1916, 12, 20, 6),
+            'longitude': DataArray(
+                np.linspace(-90, 90, nx, endpoint=False),
+                dims=['lon'], attrs={'units': 'degree_E'}),
+            'latitude': DataArray(
+                np.linspace(-180., 180., num=ny),
+                dims=['lat'], attrs={'units': 'degrees_north'}),
         }
 
 if __name__ == '__main__':

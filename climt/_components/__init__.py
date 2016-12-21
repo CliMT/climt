@@ -4,10 +4,11 @@ from .monitors.netcdf import NetCDFMonitor
 from .basic import ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic
 from .held_suarez import HeldSuarez
 from .grid_scale_condensation import GridScaleCondensation
+from .berger_solar_insolation import BergerSolarInsolation
 
 __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
     PlotFunctionMonitor,
     NetCDFMonitor,
     ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic,
-    HeldSuarez, GridScaleCondensation)
+    HeldSuarez, GridScaleCondensation, BergerSolarInsolation)

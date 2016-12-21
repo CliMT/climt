@@ -103,7 +103,7 @@ class Diagnostic(object):
             state (dict): A model state dictionary.
 
         Returns:
-            diagnostics (dict): A dicitonary whose keys are strings indicating
+            diagnostics (dict): A dictionary whose keys are strings indicating
                 state quantities and values are the value of those quantities
                 at the time of the input state.
 

@@ -2,6 +2,7 @@ from libc.math cimport sin, cos, sqrt, asin, acos, atan, floor
 from libc.math cimport M_PI as PI
 import numpy as np
 cimport numpy as np
+cimport cython
 
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
@@ -194,8 +195,15 @@ cdef np.ndarray delta_prime = np.array([
 
 cdef DTYPE_t arcsec_to_degree = 1./3600.
 
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef get_parameters(
-        DTYPE_t years_since_march_21_1950, np.ndarray lat, np.ndarray lon,
+        DTYPE_t years_since_jan_1_1950,
+        DTYPE_t years_since_vernal_equinox,
+        DTYPE_t fractional_day,
+        np.ndarray[DTYPE_t, ndim=1] lat,
+        np.ndarray[DTYPE_t, ndim=1] lon,
         DTYPE_t solar_constant):
     """
     Vernal equinox is assumed to occur on March 21. If you give a difference
@@ -204,6 +212,8 @@ cpdef get_parameters(
 
     Args:
         years_since_march_21_1950:
+        years_since_vernal_equinox:
+        fractional_day:
         lat:
         lon:
         solar_constant:
@@ -212,25 +222,26 @@ cpdef get_parameters(
 
     """
     cdef int i_max = lat.size
+    cdef int i
     assert lat.dtype == DTYPE and lon.dtype == DTYPE
-    cdef np.ndarray solar_zenith_angle = np.zeros([lat.shape[0]], dtype=DTYPE)
-    cdef np.ndarray solar_insolation = np.zeros([lat.shape[0]], dtype=DTYPE)
-    cdef DTYPE_t t = years_since_march_21_1950
+    cdef np.ndarray[DTYPE_t, ndim=1] solar_zenith_angle = np.zeros([lat.shape[0]], dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=1] solar_insolation = np.zeros([lat.shape[0]], dtype=DTYPE)
+    cdef DTYPE_t t = years_since_jan_1_1950
     # Equation 1
-    cdef DTYPE_t obliquity = (
-        23.320556 + sum(
-            A*arcsec_to_degree*cos(
-                (f*arcsec_to_degree*t + delta) * PI/180.
-            )
-        )
-    )
+    cdef DTYPE_t obliquity = 23.320556
+    for i in range(A.shape[0]):
+        obliquity += A[i]*arcsec_to_degree*cos(
+            (f[i]*arcsec_to_degree*t + delta[i]) * PI/180.)
     obliquity = obliquity * PI/180.
     # Equations 2-3
-    cdef DTYPE_t cos_sum = sum(P*cos(alpha*arcsec_to_degree*t + zeta))
-    cdef DTYPE_t sin_sum = sum(P*sin(alpha*arcsec_to_degree*t + zeta))
+    cdef DTYPE_t cos_sum = 0.
+    cdef DTYPE_t sin_sum = 0
+    for i in range(alpha.shape[0]):
+        cos_sum += P[i]*cos(alpha[i]*arcsec_to_degree*t + zeta[i])
+        sin_sum += P[i]*sin(alpha[i]*arcsec_to_degree*t + zeta[i])
     cdef DTYPE_t eccentricity_squared = cos_sum*cos_sum + sin_sum*sin_sum
     cdef DTYPE_t eccentricity = sqrt(eccentricity_squared)
-    cdef DTYPE_t eccentricity_cubed = eccentricity*eccentricity_squared\
+    cdef DTYPE_t eccentricity_cubed = eccentricity*eccentricity_squared
     # Equation 4
     cdef DTYPE_t pi = get_fixed_vernal_equinox_longitude_of_perihelion(
         cos_sum, sin_sum)
@@ -238,9 +249,11 @@ cpdef get_parameters(
     cdef DTYPE_t omega_tilde = (
         pi * 180./PI +
         50.439273*arcsec_to_degree*t +
-        3.392506 +
-        sum(F*sin((f_prime*arcsec_to_degree*t + delta_prime)*PI/180.))
+        3.392506
     )
+    for i in range(F.shape[0]):
+        omega_tilde += F[i]*sin(
+            (f_prime[i]*arcsec_to_degree*t + delta_prime[i]) * PI/180.)
     while omega_tilde < 0.:
         omega_tilde += 360.
     while omega_tilde > 360:
@@ -256,7 +269,7 @@ cpdef get_parameters(
         0.125*eccentricity_cubed*(1./3. + beta)*sin(3*(omega_tilde + PI))
     )
 
-    cdef DTYPE_t lambda_m = lambda_m0 + floor(t)*2.*PI
+    cdef DTYPE_t lambda_m = lambda_m0 + years_since_vernal_equinox*2.*PI
     cdef DTYPE_t temp = lambda_m - (omega_tilde + PI)
     cdef DTYPE_t sin_temp = sin(temp)
     cdef DTYPE_t lmbda = lambda_m + eccentricity*(
@@ -274,13 +287,15 @@ cpdef get_parameters(
     cdef DTYPE_t sin_delta = sin(solar_declination_angle)
     cdef DTYPE_t cos_delta = cos(solar_declination_angle)
     for i in range(i_max):
-        H = 2*PI*(t + lon[i]/360.)
+        H = 2*PI*(fractional_day + lon[i]/360.)
         cos_mu = sin(lat[i])*sin_delta - cos(lat[i])*cos_delta*cos(H)
         solar_zenith_angle[i] = acos(cos_mu)
         solar_insolation[i] = solar_constant * inverse_rho_squared * cos_mu
     return solar_insolation, solar_zenith_angle, obliquity, eccentricity, rho
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef DTYPE_t get_fixed_vernal_equinox_longitude_of_perihelion(
         DTYPE_t cos_sum, DTYPE_t sin_sum):
     cdef DTYPE_t pi
