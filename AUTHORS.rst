@@ -7,13 +7,12 @@ Original Creator
 
 * Rodrigo Caballero <rodrigo.caballero@misu.su.se>
 
-Development Leads
------------------
+Development Lead
+----------------
 
 * Joy Monteiro <joy.monteiro@misu.su.se>
-* Jeremy McGibbon <mcgibbon@uw.edu>
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Jeremy McGibbon <mcgibbon@uw.edu>

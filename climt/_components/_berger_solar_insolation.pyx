@@ -8,6 +8,7 @@ ctypedef np.float64_t DTYPE_t
 
 # Abbreviations/term names used are as in Berger 1978. Values are taken from
 # CAM 3.0, shr_orb_mod.f90.
+# Also useful is http://www.cesm.ucar.edu/models/atm-cam/docs/description/node22.html
 
 # amplitudes for obliquity cos series
 cdef np.ndarray A = np.array([
