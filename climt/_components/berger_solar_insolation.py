@@ -1,6 +1,4 @@
-from .._core.base_components import Diagnostic
-from .._core.util import replace_none_with_default
-from .._core.array import DataArray
+from sympl import Diagnostic, replace_none_with_default, DataArray
 from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
 import xarray as xr
 

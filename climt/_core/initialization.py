@@ -1,4 +1,4 @@
-from .base_components import Diagnostic, DiagnosticComposite
+from sympl import Diagnostic, DiagnosticComposite
 
 _quantity_func_dictionary = {}
 

@@ -1,8 +1,6 @@
-from .._core.base_components import Prognostic, Diagnostic
-from .._core.array import DataArray
-from .._core.util import (
-    jit, replace_none_with_default, combine_dimensions_in_3d)
-from .._core.util import get_3d_numpy_array, get_2d_numpy_array
+from sympl import (
+    Prognostic, Diagnostic, DataArray, jit, replace_none_with_default,
+    combine_dimensions, get_numpy_array)
 import numpy as np
 
 
@@ -40,8 +38,9 @@ class GrayLongwaveRadiation(Prognostic):
                 Default taken from climt.default_constants.
         """
         if longwave_optical_depth_on_interface_levels is not None:
-            self._optical_depth = get_3d_numpy_array(
-                longwave_optical_depth_on_interface_levels .to_units(''))
+            self._optical_depth = get_numpy_array(
+                longwave_optical_depth_on_interface_levels .to_units(''),
+                out_dims=('x', 'y', 'z'))
         else:
             self._optical_depth = None
         self._stefan_boltzmann = replace_none_with_default(
@@ -68,24 +67,29 @@ class GrayLongwaveRadiation(Prognostic):
                 at the time of the input state.
         """
         if self._optical_depth is None:
-            tau = get_3d_numpy_array(state[
+            tau = get_numpy_array(state[
                 'longwave_optical_depth_on_interface_levels'].to_units(''))
         else:
             tau = self._optical_depth
-        T = get_3d_numpy_array(state['air_temperature'].to_units('degK'))
-        p_interface = get_3d_numpy_array(
-            state['air_pressure_on_interface_levels'].to_units('Pa'))
-        Ts = get_2d_numpy_array(state['surface_temperature'].to_units('degK'))
+        T = get_numpy_array(
+            state['air_temperature'].to_units('degK'), out_dims=('x', 'y', 'z'))
+        p_interface = get_numpy_array(
+            state['air_pressure_on_interface_levels'].to_units('Pa'),
+            out_dims=('x', 'y', 'z'))
+        Ts = get_numpy_array(
+            state['surface_temperature'].to_units('degK'), out_dims=('x', 'y'))
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
             T, p_interface, Ts, tau, self._stefan_boltzmann,
             self._g, self._Cpd)
-        dims_mid = combine_dimensions_in_3d(
+        dims_mid = combine_dimensions(
             state['surface_temperature'],
-            state['air_temperature'])
-        dims_interface = combine_dimensions_in_3d(
+            state['air_temperature'],
+            out_dims=('x', 'y', 'z'))
+        dims_interface = combine_dimensions(
             state['air_pressure_on_interface_levels'],
-            state['surface_temperature'])
+            state['surface_temperature'],
+            out_dims=('x', 'y', 'z'))
         diagnostics = {
             'downward_longwave_flux': DataArray(
                 downward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
@@ -159,8 +163,9 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 get_frierson_06_tau(
                     self._latitude, self._sigma_on_interface_levels,
                     self._tau0e, self._tau0p, self._fl),
-                dims=combine_dimensions_in_3d(
-                    self._latitude, self._sigma_on_interface_levels),
+                dims=combine_dimensions(
+                    self._latitude, self._sigma_on_interface_levels,
+                    out_dims=('x', 'y', 'z')),
                 attrs={'units': ''}).squeeze()
         else:
             self._tau = None
@@ -181,20 +186,24 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 at the time of the input state.
         """
         if self._latitude is None:
-            lat = get_3d_numpy_array(state['latitude'].to_units('degrees_north'))
+            lat = get_numpy_array(
+                state['latitude'].to_units('degrees_north'),
+                out_dims=('x', 'y', 'z'))
         else:
             lat = self._latitude
         if self._sigma_on_interface_levels is None:
-            sigma_interface = get_3d_numpy_array(
-                state['sigma_on_interface_levels'].to_units(''))
+            sigma_interface = get_numpy_array(
+                state['sigma_on_interface_levels'].to_units(''),
+                out_dims=('x', 'y', 'z'))
         else:
             sigma_interface = self._sigma_on_interface_levels
         if self._tau is None:
             tau = DataArray(
                 get_frierson_06_tau(
                     lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
-                dims=combine_dimensions_in_3d(
-                    state['latitude'], state['sigma_on_interface_levels']),
+                dims=combine_dimensions(
+                    state['latitude'], state['sigma_on_interface_levels'],
+                    out_dims=('x', 'y', 'z')),
                 attrs={'units': ''}).squeeze()
         else:
             tau = self._tau

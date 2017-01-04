@@ -1,8 +1,6 @@
-from .._core.base_components import Prognostic
-from .._core.util import (
-    replace_none_with_default, combine_dimensions_in_3d,
-    get_3d_numpy_array)
-from .._core.array import DataArray
+from sympl import (
+    Prognostic, DataArray, replace_none_with_default, combine_dimensions,
+    get_numpy_array)
 import numpy as np
 
 
@@ -159,29 +157,38 @@ class HeldSuarez(Prognostic):
             k_v = self._get_k_v(state['sigma'])
         else:
             k_v = self._k_v
-        u = get_3d_numpy_array(state['eastward_wind'].to_units('m s^-1'))
-        v = get_3d_numpy_array(state['northward_wind'].to_units('m s^-1'))
-        T = get_3d_numpy_array(state['air_temperature'].to_units('degK'))
+        u = get_numpy_array(
+            state['eastward_wind'].to_units('m s^-1'), out_dims=('x', 'y', 'z'))
+        v = get_numpy_array(
+            state['northward_wind'].to_units('m s^-1'), out_dims=('x', 'y', 'z'))
+        T = get_numpy_array(
+            state['air_temperature'].to_units('degK'), out_dims=('x', 'y', 'z'))
         tendencies = {
             'eastward_wind': DataArray(
                 - k_v.values * u,
-                dims=combine_dimensions_in_3d(k_v, state['eastward_wind']),
+                dims=combine_dimensions(
+                    k_v, state['eastward_wind'], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'm s^-2'}).squeeze(),
             'northward_wind': DataArray(
                 - k_v.values * v,
-                dims=combine_dimensions_in_3d(k_v, state['northward_wind']),
+                dims=combine_dimensions(
+                    k_v, state['northward_wind'], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'm s^-2'}).squeeze(),
             'air_temperature': DataArray(
                 - k_t.values * (T - Teq.values),
-                dims=combine_dimensions_in_3d(k_t, state['air_temperature']),
+                dims=combine_dimensions(
+                    k_t, state['air_temperature'], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'K s^-1'}).squeeze()
         }
         return tendencies, {}
 
     def _get_Teq(self, latitude, air_pressure):
-        out_dims = combine_dimensions_in_3d(latitude, air_pressure)
-        latitude = get_3d_numpy_array(latitude.to_units('degrees_N'))
-        air_pressure = get_3d_numpy_array(air_pressure.to_units('Pa'))
+        out_dims = combine_dimensions(
+            latitude, air_pressure, out_dims=('x', 'y', 'z'))
+        latitude = get_numpy_array(
+            latitude.to_units('degrees_N'), out_dims=('x', 'y', 'z'))
+        air_pressure = get_numpy_array(
+            air_pressure.to_units('Pa'), out_dims=('x', 'y', 'z'))
         return DataArray(np.maximum(
             200,
             (315 - self._delta_T_y*np.sin(latitude)**2 -
@@ -191,9 +198,10 @@ class HeldSuarez(Prognostic):
             attrs={'units': 'degK'})
 
     def _get_k_t(self, latitude, sigma):
-        out_dims = combine_dimensions_in_3d(latitude, sigma)
-        latitude = get_3d_numpy_array(latitude.to_units('degrees_N'))
-        sigma = get_3d_numpy_array(sigma.to_units(''))
+        out_dims = combine_dimensions(latitude, sigma, out_dims=('x', 'y', 'z'))
+        latitude = get_numpy_array(
+            latitude.to_units('degrees_N'), out_dims=('x', 'y', 'z'))
+        sigma = get_numpy_array(sigma.to_units(''), out_dims=('x', 'y', 'z'))
         return DataArray(
             self._k_a +
             (self._k_s - self._k_a) *
@@ -203,8 +211,8 @@ class HeldSuarez(Prognostic):
             attrs={'units': 's^-1'})
 
     def _get_k_v(self, sigma):
-        out_dims = combine_dimensions_in_3d(sigma)
-        sigma = get_3d_numpy_array(sigma.to_units(''))
+        out_dims = combine_dimensions(sigma, out_dims=('x', 'y', 'z'))
+        sigma = get_numpy_array(sigma.to_units(''), out_dims=('x', 'y', 'z'))
         return DataArray(
             self._k_f * np.maximum(
                 0,

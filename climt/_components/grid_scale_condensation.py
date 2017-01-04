@@ -1,8 +1,6 @@
-from .._core.base_components import Implicit
-from .._core.array import DataArray
-from .._core.util import (
-    jit, replace_none_with_default, get_3d_numpy_array,
-    combine_dimensions_in_3d, combine_dimensions_in_2d,)
+from sympl import (
+    Implicit, DataArray, jit, replace_none_with_default,
+    get_numpy_array, combine_dimensions)
 import numpy as np
 
 
@@ -100,11 +98,18 @@ class GridScaleCondensation(Implicit):
             InvalidStateException: If state is not a valid input for the
                 Implicit instance for other reasons.
         """
-        T = get_3d_numpy_array(state['air_temperature'].to_units('degK'))
-        q = get_3d_numpy_array(state['specific_humidity'].to_units('kg/kg'))
-        p = get_3d_numpy_array(state['air_pressure'].to_units('Pa'))
-        p_interface = get_3d_numpy_array(
-            state['air_pressure_on_interface_levels'].to_units('Pa'))
+        T = get_numpy_array(
+            state['air_temperature'].to_units('degK'),
+            out_dims=('x', 'y', 'z'))
+        q = get_numpy_array(
+            state['specific_humidity'].to_units('kg/kg'),
+            out_dims=('x', 'y', 'z'))
+        p = get_numpy_array(
+            state['air_pressure'].to_units('Pa'),
+            out_dims=('x', 'y', 'z'))
+        p_interface = get_numpy_array(
+            state['air_pressure_on_interface_levels'].to_units('Pa'),
+            out_dims=('x', 'y', 'z'))
         q_sat = self._q_sat(T, p, self._Rd, self._Rh20)
         saturated = q > q_sat
         dqsat_dT = self._dqsat_dT(
@@ -121,12 +126,14 @@ class GridScaleCondensation(Implicit):
             self._g*self._rhow)
         precipitation = np.sum(condensed_q * mass, axis=2)
 
-        dims_3d = combine_dimensions_in_3d(
+        dims_3d = combine_dimensions(
             state['air_temperature'], state['specific_humidity'],
-            state['air_pressure'])
-        dims_2d = combine_dimensions_in_2d(
+            state['air_pressure'],
+            out_dims=('x', 'y', 'z'))
+        dims_2d = combine_dimensions(
             state['air_temperature'], state['specific_humidity'],
-            state['air_pressure'])
+            state['air_pressure'],
+            out_dims=('x', 'y'))
         diagnostics = {
             'column_integrated_precipitation_rate': DataArray(
                 precipitation / timestep.total_seconds(),
