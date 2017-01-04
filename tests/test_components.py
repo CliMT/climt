@@ -8,11 +8,12 @@ import numpy as np
 from climt import (
     DataArray, HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
-    BergerSolarInsolation,
-    vertical_dimension_names, Implicit, TimeStepper)
+    BergerSolarInsolation, Implicit, TimeStepper, set_dimension_names)
 from datetime import datetime, timedelta
 
-
+vertical_dimension_names = [
+    'lev', 'interface_levels', 'mid_levels', 'full_levels']
+set_dimension_names(x='lon', y='lat', z=vertical_dimension_names)
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
