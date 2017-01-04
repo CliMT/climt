@@ -50,7 +50,7 @@ def combine_dimensions_in_3d(*args):
 
 
 def combine_dimensions_in_2d(*args):
-    """Returns a tuple of 3 dimensions (x, y, z), with names corresponding to
+    """Returns a tuple of 2 dimensions from (x, y, z), with names corresponding to
     dimension names from the DataArray objects given by *args when present.
     """
     dims = [None, None]

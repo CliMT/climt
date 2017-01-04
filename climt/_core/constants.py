@@ -9,4 +9,5 @@ default_constants = {
     'planetary_radius': 6.371e-6,  # m
     'latent_heat_of_vaporization_of_water': 2.5e6,  # J kg^-1
     'density_of_liquid_water': 1e3,  # kg m^-3
+    'solar_constant': 1367.  # W m^-2
 }
