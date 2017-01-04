@@ -167,24 +167,24 @@ class HeldSuarez(Prognostic):
             'eastward_wind': DataArray(
                 - k_v.values * u,
                 dims=combine_dimensions(
-                    k_v, state['eastward_wind'], out_dims=('x', 'y', 'z')),
+                    [k_v, state['eastward_wind']], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'm s^-2'}).squeeze(),
             'northward_wind': DataArray(
                 - k_v.values * v,
                 dims=combine_dimensions(
-                    k_v, state['northward_wind'], out_dims=('x', 'y', 'z')),
+                    [k_v, state['northward_wind']], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'm s^-2'}).squeeze(),
             'air_temperature': DataArray(
                 - k_t.values * (T - Teq.values),
                 dims=combine_dimensions(
-                    k_t, state['air_temperature'], out_dims=('x', 'y', 'z')),
+                    [k_t, state['air_temperature']], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'K s^-1'}).squeeze()
         }
         return tendencies, {}
 
     def _get_Teq(self, latitude, air_pressure):
         out_dims = combine_dimensions(
-            latitude, air_pressure, out_dims=('x', 'y', 'z'))
+            [latitude, air_pressure], out_dims=('x', 'y', 'z'))
         latitude = get_numpy_array(
             latitude.to_units('degrees_N'), out_dims=('x', 'y', 'z'))
         air_pressure = get_numpy_array(
@@ -198,7 +198,7 @@ class HeldSuarez(Prognostic):
             attrs={'units': 'degK'})
 
     def _get_k_t(self, latitude, sigma):
-        out_dims = combine_dimensions(latitude, sigma, out_dims=('x', 'y', 'z'))
+        out_dims = combine_dimensions([latitude, sigma], out_dims=('x', 'y', 'z'))
         latitude = get_numpy_array(
             latitude.to_units('degrees_N'), out_dims=('x', 'y', 'z'))
         sigma = get_numpy_array(sigma.to_units(''), out_dims=('x', 'y', 'z'))
@@ -211,7 +211,7 @@ class HeldSuarez(Prognostic):
             attrs={'units': 's^-1'})
 
     def _get_k_v(self, sigma):
-        out_dims = combine_dimensions(sigma, out_dims=('x', 'y', 'z'))
+        out_dims = combine_dimensions([sigma], out_dims=('x', 'y', 'z'))
         sigma = get_numpy_array(sigma.to_units(''), out_dims=('x', 'y', 'z'))
         return DataArray(
             self._k_f * np.maximum(

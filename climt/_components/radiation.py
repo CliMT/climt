@@ -83,12 +83,12 @@ class GrayLongwaveRadiation(Prognostic):
             T, p_interface, Ts, tau, self._stefan_boltzmann,
             self._g, self._Cpd)
         dims_mid = combine_dimensions(
-            state['surface_temperature'],
-            state['air_temperature'],
+            [state['surface_temperature'],
+            state['air_temperature']],
             out_dims=('x', 'y', 'z'))
         dims_interface = combine_dimensions(
-            state['air_pressure_on_interface_levels'],
-            state['surface_temperature'],
+            [state['air_pressure_on_interface_levels'],
+            state['surface_temperature']],
             out_dims=('x', 'y', 'z'))
         diagnostics = {
             'downward_longwave_flux': DataArray(
@@ -164,7 +164,7 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                     self._latitude, self._sigma_on_interface_levels,
                     self._tau0e, self._tau0p, self._fl),
                 dims=combine_dimensions(
-                    self._latitude, self._sigma_on_interface_levels,
+                    [self._latitude, self._sigma_on_interface_levels],
                     out_dims=('x', 'y', 'z')),
                 attrs={'units': ''}).squeeze()
         else:
@@ -202,7 +202,7 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 get_frierson_06_tau(
                     lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
                 dims=combine_dimensions(
-                    state['latitude'], state['sigma_on_interface_levels'],
+                    [state['latitude'], state['sigma_on_interface_levels']],
                     out_dims=('x', 'y', 'z')),
                 attrs={'units': ''}).squeeze()
         else:
