@@ -14,7 +14,6 @@ env:
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
   - pip install -U tox
-  - pip install git+git://github.com/mcgibbon/sympl.git@master
 
 # command to run tests, e.g. python setup.py test
 script: tox -e ${TOXENV}
