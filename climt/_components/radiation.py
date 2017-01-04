@@ -84,11 +84,11 @@ class GrayLongwaveRadiation(Prognostic):
             self._g, self._Cpd)
         dims_mid = combine_dimensions(
             [state['surface_temperature'],
-            state['air_temperature']],
+             state['air_temperature']],
             out_dims=('x', 'y', 'z'))
         dims_interface = combine_dimensions(
             [state['air_pressure_on_interface_levels'],
-            state['surface_temperature']],
+             state['surface_temperature']],
             out_dims=('x', 'y', 'z'))
         diagnostics = {
             'downward_longwave_flux': DataArray(
