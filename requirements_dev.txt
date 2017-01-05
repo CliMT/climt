@@ -13,7 +13,7 @@ pytest-cov==2.4.0
 mock==2.0.0
 xarray==0.8.2
 scipy
-git+git://github.com/mcgibbon/sympl.git
 numpy>=0.10
+sympl
 cython
 coveralls
