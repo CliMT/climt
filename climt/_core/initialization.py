@@ -12,13 +12,13 @@ def get_default_state(coordinate_state, quantity_list=(), component_list=()):
             state quantities.
         quantity_list (iterable, optional): Names of quantities to include in
             the returned default state.
-        component_list (iterable, optional): The components for which a default
+        component_list (iterable, optional): The _components for which a default
             state is required, in the order that they are called.
             It is assumed diagnostic outputs are updated into
             the state and passed into the next component, and that the state
             from the previous component is passed into the next component. The
             function will attempt to determine required inputs from the series
-            of components.
+            of _components.
 
     Returns:
         default_state (dict): A state dictionary containing the requested

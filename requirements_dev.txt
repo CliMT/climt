@@ -14,6 +14,6 @@ mock==2.0.0
 xarray==0.8.2
 scipy
 numpy>=0.10
-sympl
+git+git://github.com/mcgibbon/sympl@master
 cython
 coveralls
