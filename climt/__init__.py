@@ -9,7 +9,6 @@ from sympl import (
     NetCDFMonitor, ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic,
 )
 '''
-import sympl
 from ._core.initialization import get_default_state
 from ._components import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
