@@ -68,7 +68,8 @@ class GrayLongwaveRadiation(Prognostic):
         """
         if self._optical_depth is None:
             tau = get_numpy_array(state[
-                'longwave_optical_depth_on_interface_levels'].to_units(''))
+                'longwave_optical_depth_on_interface_levels'].to_units(''),
+                out_dims=('x', 'y', 'z'))
         else:
             tau = self._optical_depth
         T = get_numpy_array(
@@ -78,10 +79,11 @@ class GrayLongwaveRadiation(Prognostic):
             out_dims=('x', 'y', 'z'))
         Ts = get_numpy_array(
             state['surface_temperature'].to_units('degK'), out_dims=('x', 'y'))
+
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
-            T, p_interface, Ts, tau, self._stefan_boltzmann,
-            self._g, self._Cpd)
+            T, p_interface, Ts, tau, self._stefan_boltzmann.values,
+            self._g.values, self._Cpd.values)
         dims_mid = combine_dimensions(
             [state['surface_temperature'],
              state['air_temperature']],

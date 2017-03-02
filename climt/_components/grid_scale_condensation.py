@@ -130,10 +130,7 @@ class GridScaleCondensation(Implicit):
             [state['air_temperature'], state['specific_humidity'],
              state['air_pressure']],
             out_dims=('x', 'y', 'z'))
-        dims_2d = combine_dimensions(
-            [state['air_temperature'], state['specific_humidity'],
-             state['air_pressure']],
-            out_dims=('x', 'y'))
+        dims_2d = dims_3d[:-1]
         diagnostics = {
             'column_integrated_precipitation_rate': DataArray(
                 precipitation / timestep.total_seconds(),

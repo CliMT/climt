@@ -163,6 +163,7 @@ class HeldSuarez(Prognostic):
             state['northward_wind'].to_units('m s^-1'), out_dims=('x', 'y', 'z'))
         T = get_numpy_array(
             state['air_temperature'].to_units('degK'), out_dims=('x', 'y', 'z'))
+
         tendencies = {
             'eastward_wind': DataArray(
                 - k_v.values * u,

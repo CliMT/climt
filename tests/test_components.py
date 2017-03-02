@@ -6,9 +6,12 @@ from glob import glob
 import xarray as xr
 import numpy as np
 from climt import (
-    DataArray, HeldSuarez, GrayLongwaveRadiation,
+    HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
-    BergerSolarInsolation, Implicit, TimeStepper, set_dimension_names)
+    BergerSolarInsolation)
+from sympl import (
+    DataArray, Implicit, TimeStepper, set_dimension_names
+)
 from datetime import datetime, timedelta
 
 vertical_dimension_names = [

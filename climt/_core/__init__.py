@@ -1,4 +1,4 @@
+from .federation import Federation
 
-
-__all__ = (
+__all__ = (Federation
 )
