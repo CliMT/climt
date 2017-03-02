@@ -6,7 +6,7 @@ from os import system
 
 # compile the fortran modules without linking
 fortran_mod_comp = 'gfortran simple_physics_custom.f90 -c -o simple_physics_custom.o -O3 -fPIC'
-print fortran_mod_comp
+print(fortran_mod_comp)
 system(fortran_mod_comp)
 
 ext_modules = [

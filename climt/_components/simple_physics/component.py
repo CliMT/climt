@@ -3,7 +3,7 @@ from sympl import DataArray
 from sympl import replace_none_with_default
 from sympl import get_numpy_array
 from sympl import combine_dimensions
-import _simple_physics as phys
+import ._simple_physics as phys
 
 
 class SimplePhysics(Implicit):
