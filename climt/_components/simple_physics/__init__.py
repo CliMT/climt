@@ -1,3 +1,3 @@
-from component import SimplePhysics
+from .component import SimplePhysics
 
 __all__ = (SimplePhysics)
