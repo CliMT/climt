@@ -1,6 +1,7 @@
 from sympl import (
     DataArray, AdamsBashforth,
     PlotFunctionMonitor)
+import sympl
 from climt import SimplePhysics
 import numpy as np
 from datetime import timedelta
@@ -21,6 +22,7 @@ def get_interface_pressures(p, ps):
     interface_pressures[:, :, 0] = ps[:, :]
     return interface_pressures
 
+sympl.set_dimension_names(z=['interface_levels', 'mid_levels'])
 
 state = {
     'air_temperature': DataArray(

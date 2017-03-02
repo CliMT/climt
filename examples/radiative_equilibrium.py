@@ -4,6 +4,7 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation)
 import numpy as np
 from datetime import timedelta
+import sympl
 
 pressure_axis = np.array(
     [1e5, 9e4, 8e4, 7e4, 5e4, 3e4, 1e4, 8e3, 4e3, 1e3, 7e2, 4e2, 1e2,
@@ -21,6 +22,7 @@ def get_interface_pressures(p, ps):
     interface_pressures[:, :, 0] = ps[:, :]
     return interface_pressures
 
+sympl.set_dimension_names(z=['interface_levels', 'mid_levels'])
 
 state = {
     'air_temperature': DataArray(
