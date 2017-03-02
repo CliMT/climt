@@ -1,6 +1,7 @@
+from sympl import (
+    DataArray, AdamsBashforth, PlotFunctionMonitor)
 from climt import (
-    DataArray, Frierson06LongwaveOpticalDepth, AdamsBashforth,
-    PlotFunctionMonitor, GrayLongwaveRadiation)
+    Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation)
 import numpy as np
 from datetime import timedelta
 
@@ -10,7 +11,7 @@ pressure_axis = np.array(
 
 
 def get_interface_pressures(p, ps):
-    """Given 3D pressure on model half levels (cell centers) and the 2D surface
+    """Given 3D pressure on model mid levels (cell centers) and the 2D surface
     pressure, return the 3D pressure on model full levels (cell interfaces).
     If the z-dimension of p is length K, the returned p_full will have a
     z-dimension of length K+1."""
@@ -24,7 +25,7 @@ def get_interface_pressures(p, ps):
 state = {
     'air_temperature': DataArray(
         np.ones((1, 1, len(pressure_axis)))*250.,
-        dims=('x', 'y', 'half_levels'),
+        dims=('x', 'y', 'mid_levels'),
         attrs={'units': 'degK'}),
 }
 constant_state = {
@@ -57,7 +58,7 @@ def plot_function(fig, state):
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(
         state['air_temperature'].values.flatten(),
-        state['air_pressure'].values.flatten())
+        state['air_pressure'].values.flatten(), '-o')
     ax.axes.invert_yaxis()
     print(state['air_temperature'].values.flatten())
     print(state['air_pressure'].values.flatten())
@@ -69,7 +70,7 @@ diagnostic = Frierson06LongwaveOpticalDepth()
 radiation = GrayLongwaveRadiation()
 time_stepper = AdamsBashforth([radiation])
 timestep = timedelta(hours=4)
-for i in range(6*7*4*8):
+for i in range(6*7*4*10):
     print(i)
     state.update(diagnostic(state))
     diagnostics, new_state = time_stepper.__call__(state, timestep)
