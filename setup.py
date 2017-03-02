@@ -8,6 +8,9 @@ try:
 except ImportError:
     include_dirs = []
 
+import os
+import subprocess
+
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
@@ -32,6 +35,15 @@ ext_modules = [
         'climt._components._berger_solar_insolation',
         ['climt/_components/_berger_solar_insolation.pyx'])
 ]
+
+fortran_ext = {'simple_physics': 'climt/_components/simple_physics'}
+
+for module in fortran_ext.keys():
+    mycwd = os.getcwd()
+    os.chdir(fortran_ext[module])
+    build_process = subprocess.call(['python','setup.py','build_ext','--inplace'])
+    os.chdir(mycwd)
+
 
 setup(
     name='climt',
