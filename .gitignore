@@ -13,6 +13,9 @@ __pycache__/
 *.mod
 *.o
 
+# Vim files
+*.swp
+
 # Distribution / packaging
 .Python
 env/

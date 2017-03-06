@@ -36,7 +36,8 @@ ext_modules = [
         ['climt/_components/_berger_solar_insolation.pyx'])
 ]
 
-fortran_ext = {'simple_physics': 'climt/_components/simple_physics'}
+fortran_ext = {'simple_physics': 'climt/_components/simple_physics',
+               'rrtmg_longwave': 'climt/_components/rrtmg/lw'}
 
 for module in fortran_ext.keys():
     mycwd = os.getcwd()
