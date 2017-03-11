@@ -178,6 +178,7 @@ class SimplePhysics(Implicit):
              Pint, q, Ps, Ts,
              lats, timestep.seconds)
 
+
         new_state = {
             'eastward_wind': DataArray(
                 u_out, dims=dims_mid, attrs=state['eastward_wind'].attrs
@@ -196,6 +197,5 @@ class SimplePhysics(Implicit):
             ).squeeze(),
         }
 
-        state.update(new_state)
 
-        return {}, state
+        return {}, new_state
