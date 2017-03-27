@@ -1,5 +1,6 @@
       module parkind
 
+      use iso_c_binding
       implicit none
       save
 
@@ -23,7 +24,8 @@
 !     real kinds
 !     ----------
 !
-      integer, parameter :: kind_rb = selected_real_kind(12) ! 8 byte real
+      !integer, parameter :: kind_rb = selected_real_kind(12) ! 8 byte real
+      integer, parameter :: kind_rb = c_double ! 8 byte real
       integer, parameter :: kind_rm = selected_real_kind(6)  ! 4 byte real
       integer, parameter :: kind_rn = kind(1.0)              ! native real
 

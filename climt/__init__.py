@@ -9,15 +9,22 @@ from sympl import (
     NetCDFMonitor, ConstantPrognostic, ConstantDiagnostic, RelaxationPrognostic,
 )
 '''
-from ._core.initialization import get_default_state
+import sympl
+sympl.set_dimension_names(z=['interface_levels', 'mid_levels'])
+
+from ._core import (
+    get_default_state,
+    mass_to_volume_mixing_ratio)
+
 from ._components import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
-    GridScaleCondensation, BergerSolarInsolation, SimplePhysics)
+    GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMLongwave)
 
 __version__ = '1.0.0'
+
 __all__ = (
-    get_default_state,
+    sympl, get_default_state, mass_to_volume_mixing_ratio,
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation,
-    SimplePhysics
+    SimplePhysics, RRTMLongwave
 )

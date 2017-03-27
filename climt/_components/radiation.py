@@ -11,8 +11,7 @@ class GrayLongwaveRadiation(Prognostic):
         'air_pressure_on_interface_levels', 'surface_temperature')
     diagnostics = (
         'downward_longwave_flux', 'upward_longwave_flux',
-        'net_longwave_flux',
-        'air_temperature_tendency_due_to_longwave_radiation')
+        'net_longwave_flux')
     tendencies = ('air_temperature',)
 
     def __init__(
@@ -44,7 +43,7 @@ class GrayLongwaveRadiation(Prognostic):
         else:
             self._optical_depth = None
         self._stefan_boltzmann = replace_none_with_default(
-            'stefan_boltzmann', stefan_boltzmann)
+            'stefan_boltzmann_constant', stefan_boltzmann)
         self._g = replace_none_with_default(
             'gravitational_acceleration', gravitational_acceleration)
         self._Cpd = replace_none_with_default(
@@ -102,9 +101,6 @@ class GrayLongwaveRadiation(Prognostic):
             'net_longwave_flux': DataArray(
                 net_lw_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
             ).squeeze(),
-            'air_temperature_tendency_due_to_longwave_radiation': DataArray(
-                lw_temperature_tendency, dims=dims_mid,
-                attrs={'units': 'K s^-1'}).squeeze(),
         }
         tendencies = {
             'air_temperature': DataArray(

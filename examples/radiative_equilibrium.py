@@ -22,8 +22,6 @@ def get_interface_pressures(p, ps):
     interface_pressures[:, :, 0] = ps[:, :]
     return interface_pressures
 
-sympl.set_dimension_names(z=['interface_levels', 'mid_levels'])
-
 state = {
     'air_temperature': DataArray(
         np.ones((1, 1, len(pressure_axis)))*250.,

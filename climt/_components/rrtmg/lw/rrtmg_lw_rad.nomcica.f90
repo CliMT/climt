@@ -64,6 +64,8 @@
       use rrtmg_lw_setcoef, only: setcoef
       use rrtmg_lw_taumol, only: taumol
 
+!JOY adding iso_c_binding
+      use iso_c_binding
       implicit none
 
 ! public interfaces/functions/subroutines
@@ -86,7 +88,7 @@
              taucld  ,cicewp  ,cliqwp  ,reice   ,reliq   , &
              tauaer  , &
              uflx    ,dflx    ,hr      ,uflxc   ,dflxc,  hrc, &
-             duflx_dt,duflxc_dt )
+             duflx_dt,duflxc_dt )bind(c, name='rrtmg_longwave')
 
 ! -------- Description --------
 
@@ -196,50 +198,50 @@
                                                       !    1: Normal forward calculation with
                                                       !       duflx_dt and duflxc_dt output
 
-      real(kind=rb), intent(in) :: play(:,:)          ! Layer pressures (hPa, mb)
+      real(kind=rb), intent(in) :: play(ncol,nlay)          ! Layer pressures (hPa, mb)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: plev(:,:)          ! Interface pressures (hPa, mb)
+      real(kind=rb), intent(in) :: plev(ncol,nlay+1)          ! Interface pressures (hPa, mb)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(in) :: tlay(:,:)          ! Layer temperatures (K)
+      real(kind=rb), intent(in) :: tlay(ncol,nlay)          ! Layer temperatures (K)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: tlev(:,:)          ! Interface temperatures (K)
+      real(kind=rb), intent(in) :: tlev(ncol,nlay+1)          ! Interface temperatures (K)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(in) :: tsfc(:)            ! Surface temperature (K)
+      real(kind=rb), intent(in) :: tsfc(ncol) ! Surface temperature (K)
                                                       !    Dimensions: (ncol)
-      real(kind=rb), intent(in) :: h2ovmr(:,:)        ! H2O volume mixing ratio
+      real(kind=rb), intent(in) :: h2ovmr(ncol,nlay)        ! H2O volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: o3vmr(:,:)         ! O3 volume mixing ratio
+      real(kind=rb), intent(in) :: o3vmr(ncol,nlay)         ! O3 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: co2vmr(:,:)        ! CO2 volume mixing ratio
+      real(kind=rb), intent(in) :: co2vmr(ncol,nlay)        ! CO2 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: ch4vmr(:,:)        ! Methane volume mixing ratio
+      real(kind=rb), intent(in) :: ch4vmr(ncol,nlay)        ! Methane volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: n2ovmr(:,:)        ! Nitrous oxide volume mixing ratio
+      real(kind=rb), intent(in) :: n2ovmr(ncol,nlay)        ! Nitrous oxide volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: o2vmr(:,:)         ! Oxygen volume mixing ratio
+      real(kind=rb), intent(in) :: o2vmr(ncol,nlay)         ! Oxygen volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: cfc11vmr(:,:)      ! CFC11 volume mixing ratio
+      real(kind=rb), intent(in) :: cfc11vmr(ncol,nlay)      ! CFC11 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: cfc12vmr(:,:)      ! CFC12 volume mixing ratio
+      real(kind=rb), intent(in) :: cfc12vmr(ncol,nlay)      ! CFC12 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: cfc22vmr(:,:)      ! CFC22 volume mixing ratio
+      real(kind=rb), intent(in) :: cfc22vmr(ncol,nlay)      ! CFC22 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: ccl4vmr(:,:)       ! CCL4 volume mixing ratio
+      real(kind=rb), intent(in) :: ccl4vmr(ncol,nlay)       ! CCL4 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: emis(:,:)          ! Surface emissivity
+      real(kind=rb), intent(in) :: emis(ncol,nbndlw)          ! Surface emissivity
                                                       !    Dimensions: (ncol,nbndlw)
 
       integer(kind=im), intent(in) :: inflglw         ! Flag for cloud optical properties
       integer(kind=im), intent(in) :: iceflglw        ! Flag for ice particle specification
       integer(kind=im), intent(in) :: liqflglw        ! Flag for liquid droplet specification
 
-      real(kind=rb), intent(in) :: cldfr(:,:)         ! Cloud fraction
+      real(kind=rb), intent(in) :: cldfr(ncol,nlay)         ! Cloud fraction
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: cicewp(:,:)        ! Cloud ice water path (g/m2)
+      real(kind=rb), intent(in) :: cicewp(ncol,nlay)        ! Cloud ice water path (g/m2)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: cliqwp(:,:)        ! Cloud liquid water path (g/m2)
+      real(kind=rb), intent(in) :: cliqwp(ncol,nlay)        ! Cloud liquid water path (g/m2)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: reice(:,:)         ! Cloud ice particle effective size (microns)
+      real(kind=rb), intent(in) :: reice(ncol,nlay)         ! Cloud ice particle effective size (microns)
                                                       !    Dimensions: (ncol,nlay)
                                                       ! specific definition of reice depends on setting of iceflglw:
                                                       ! iceflglw = 0: ice effective radius, r_ec, (Ebert and Curry, 1992),
@@ -251,9 +253,9 @@
                                                       ! iceflglw = 3: generalized effective size, dge, (Fu, 1996),
                                                       !               dge range is limited to 5.0 to 140.0 microns
                                                       !               [dge = 1.0315 * r_ec]
-      real(kind=rb), intent(in) :: reliq(:,:)         ! Cloud water drop effective radius (microns)
+      real(kind=rb), intent(in) :: reliq(ncol,nlay)         ! Cloud water drop effective radius (microns)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: taucld(:,:,:)      ! In-cloud optical depth
+      real(kind=rb), intent(in) :: taucld(nbndlw,ncol,nlay)      ! In-cloud optical depth
                                                       !    Dimensions: (nbndlw,ncol,nlay)
 !      real(kind=rb), intent(in) :: ssacld(:,:,:)     ! In-cloud single scattering albedo
                                                       !    Dimensions: (nbndlw,ncol,nlay)
@@ -263,7 +265,7 @@
                                                       !    Dimensions: (nbndlw,ncol,nlay)
                                                       !   for future expansion 
                                                       !   (lw scattering not yet available)
-      real(kind=rb), intent(in) :: tauaer(:,:,:)      ! aerosol optical depth
+      real(kind=rb), intent(in) :: tauaer(ncol,nlay,nbndlw)      ! aerosol optical depth
                                                       !    Dimensions: (ncol,nlay,nbndlw)
 !      real(kind=rb), intent(in) :: ssaaer(:,:,:)     ! aerosol single scattering albedo
                                                       !    Dimensions: (ncol,nlay,nbndlw)
@@ -277,17 +279,17 @@
 
 ! ----- Output -----
 
-      real(kind=rb), intent(out) :: uflx(:,:)         ! Total sky longwave upward flux (W/m2)
+      real(kind=rb), intent(out) :: uflx(ncol,nlay+1)         ! Total sky longwave upward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: dflx(:,:)         ! Total sky longwave downward flux (W/m2)
+      real(kind=rb), intent(out) :: dflx(ncol,nlay+1)         ! Total sky longwave downward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: hr(:,:)           ! Total sky longwave radiative heating rate (K/d)
+      real(kind=rb), intent(out) :: hr(ncol,nlay)           ! Total sky longwave radiative heating rate (K/d)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(out) :: uflxc(:,:)        ! Clear sky longwave upward flux (W/m2)
+      real(kind=rb), intent(out) :: uflxc(ncol,nlay+1)        ! Clear sky longwave upward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: dflxc(:,:)        ! Clear sky longwave downward flux (W/m2)
+      real(kind=rb), intent(out) :: dflxc(ncol,nlay+1)        ! Clear sky longwave downward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: hrc(:,:)          ! Clear sky longwave radiative heating rate (K/d)
+      real(kind=rb), intent(out) :: hrc(ncol,nlay)          ! Clear sky longwave radiative heating rate (K/d)
                                                       !    Dimensions: (ncol,nlay)
 
 ! ----- Optional Output -----
@@ -448,6 +450,7 @@
 ! In a GCM this call should be placed in the model initialization
 ! area, since this has to be called only once.  
 !      call rrtmg_lw_ini(cpdair)
+
 
 !  This is the main longitude/column loop within RRTMG.
       do iplon = 1, ncol
@@ -745,6 +748,7 @@
  
 !  Set surface temperature.
       tbound = tsfc(iplon)
+
 
 !  Install input GCM arrays into RRTMG_LW arrays for pressure, temperature,
 !  and molecular amounts.  

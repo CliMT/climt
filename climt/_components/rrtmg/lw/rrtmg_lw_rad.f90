@@ -88,7 +88,7 @@
              taucmcl ,ciwpmcl ,clwpmcl ,reicmcl ,relqmcl , &
              tauaer  , &
              uflx    ,dflx    ,hr      ,uflxc   ,dflxc,  hrc, &
-             duflx_dt,duflxc_dt ) bind(c, name='rrtm_longwave')
+             duflx_dt,duflxc_dt ) bind(c, name='rrtmg_longwave')
 
 ! -------- Description --------
 

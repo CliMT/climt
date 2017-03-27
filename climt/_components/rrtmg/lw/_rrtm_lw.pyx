@@ -11,10 +11,16 @@ cdef cnp.int32_t rrtm_liq_droplet_flag
 #Definitions of the functions we want to use within
 #CliMT: initialisation and radiative transfer
 cdef extern:
-    void rrtm_longwave_init(double *cp_d_air)
+    void rrtmg_longwave_init(double *cp_d_air)
 
 cdef extern:
-    void rrtm_longwave(cnp.int32_t *num_cols, cnp.int32_t *num_layers,
+    void rrtmg_set_constants(double *pi, double *grav, double *planck,
+                            double *boltz, double *clight, double *avogadro,
+                            double *loschmidt, double *gas_const,
+                            double *stef_boltz, double *secs_per_day)
+
+cdef extern:
+    void rrtmg_longwave(cnp.int32_t *num_cols, cnp.int32_t *num_layers,
                        cnp.int32_t *cld_overlap_method, cnp.int32_t *calculate_change_up_flux,
                        double *layer_pressure, double *interface_pressure,
                        double *layer_temp, double *interface_temp, double *surface_temp,
@@ -24,12 +30,12 @@ cdef extern:
                        double *surf_emissivity, cnp.int32_t *cloud_props_flag, cnp.int32_t *ice_props_flag,
                        cnp.int32_t *liq_droplet_flag, double *cloud_fraction,
                        double *cloud_tau, double *cloud_ice_path, double *cloud_liq_path,
-                       double *cloud_ice_eff_size, double *cloud_droplet_eff_radius, double
-                       *aerosol_tau,
+                       double *cloud_ice_eff_size, double *cloud_droplet_eff_radius, double *aerosol_tau,
                        double *upward_longwave_flux, double *downward_longwave_flux, 
                        double *longwave_heating_rate, double *up_lw_flux_clearsky,
                        double *down_lw_flux_clearsky, double *lw_heating_rate_clearsky,
                        double *duflx_dt, double *duflxc_dt)
+
 
 #Use random cloud overlap model as default.
 def initialise_rrtm_radiation(double cp_d_air, cnp.int32_t cloud_overlap_method=1,
@@ -37,13 +43,22 @@ def initialise_rrtm_radiation(double cp_d_air, cnp.int32_t cloud_overlap_method=
                               cnp.int32_t cloud_props_flag=0, cnp.int32_t ice_props_flag=0,
                               cnp.int32_t liq_droplet_flag=0):
 
-    rrtm_longwave_init(&cp_d_air)
+    rrtmg_longwave_init(&cp_d_air)
     
     rrtm_cloud_overlap_method = cloud_overlap_method
     rrtm_calculate_change_up_flux = calculate_change_up_flux
     rrtm_cloud_props_flag = cloud_props_flag
     rrtm_ice_props_flag = ice_props_flag
     rrtm_liq_droplet_flag = liq_droplet_flag
+
+def set_constants(double pi, double grav, double planck, double boltz,
+                  double clight, double avogadro, double loschmidt, double gas_const,
+                  double stef_boltz, double secs_per_day):
+
+    rrtmg_set_constants(&pi, &grav, &planck,
+                        &boltz, &clight, &avogadro,
+                        &loschmidt, &gas_const,
+                        &stef_boltz, &secs_per_day)
 
 def rrtm_calculate_longwave_fluxes(
     cnp.int32_t num_cols, cnp.int32_t num_layers,
@@ -63,12 +78,7 @@ def rrtm_calculate_longwave_fluxes(
     cnp.ndarray[cnp.double_t, ndim=2] cfc22_vmr,
     cnp.ndarray[cnp.double_t, ndim=2] ccl4_vmr,
     cnp.ndarray[cnp.double_t, ndim=2] surf_emissivity,
-    cnp.ndarray[cnp.double_t, ndim=3] cloud_fraction,
-    cnp.ndarray[cnp.double_t, ndim=3] cloud_tau,
-    cnp.ndarray[cnp.double_t, ndim=3] cloud_ice_path,
-    cnp.ndarray[cnp.double_t, ndim=3] cloud_liq_path,
-    cnp.ndarray[cnp.double_t, ndim=2] cloud_ice_eff_size,
-    cnp.ndarray[cnp.double_t, ndim=2] cloud_droplet_eff_radius,
+    cnp.ndarray[cnp.double_t, ndim=2] cloud_fraction,
     cnp.ndarray[cnp.double_t, ndim=3] aerosol_tau,
     cnp.ndarray[cnp.double_t, ndim=2] upward_longwave_flux,
     cnp.ndarray[cnp.double_t, ndim=2] downward_longwave_flux,
@@ -76,93 +86,69 @@ def rrtm_calculate_longwave_fluxes(
     cnp.ndarray[cnp.double_t, ndim=2] up_lw_flux_clearsky,
     cnp.ndarray[cnp.double_t, ndim=2] down_lw_flux_clearsky,
     cnp.ndarray[cnp.double_t, ndim=2] lw_heating_rate_clearsky,
+    cnp.ndarray[cnp.double_t, ndim=3] cloud_tau=None,
+    cnp.ndarray[cnp.double_t, ndim=2] cloud_ice_path=None,
+    cnp.ndarray[cnp.double_t, ndim=2] cloud_liq_path=None,
+    cnp.ndarray[cnp.double_t, ndim=2] cloud_ice_eff_size=None,
+    cnp.ndarray[cnp.double_t, ndim=2] cloud_droplet_eff_radius=None,
     cnp.ndarray[cnp.double_t, ndim=2] duflx_dt=None,
     cnp.ndarray[cnp.double_t, ndim=2] duflxc_dt=None):
 
     global rrtm_cloud_overlap_method, rrtm_calculate_change_up_flux,\
         rrtm_cloud_props_flag, rrtm_ice_props_flag, rrtm_liq_droplet_flag
 
-    if rrtm_calculate_change_up_flux:
-        rrtm_longwave(
-            &num_cols, &num_layers,
-            &rrtm_cloud_overlap_method,
-            &rrtm_calculate_change_up_flux,
-            <double *>&layer_pressure[0,0],
-            <double *>&interface_pressure[0,0],
-            <double *>&layer_temp[0,0],
-            <double *>&interface_temp[0,0],
-            <double *>&surface_temp[0],
-            <double *>&h2o_vmr[0,0],
-            <double *>&o3_vmr[0,0],
-            <double *>&co2_vmr[0,0],
-            <double *>&ch4_vmr[0,0],
-            <double *>&n2o_vmr[0,0],
-            <double *>&o2_vmr[0,0],
-            <double *>&cfc11_vmr[0,0],
-            <double *>&cfc12_vmr[0,0],
-            <double *>&cfc22_vmr[0,0],
-            <double *>&ccl4_vmr[0,0],
-            <double *>&surf_emissivity[0,0],
-            &rrtm_cloud_props_flag,
-            &rrtm_ice_props_flag,
-            &rrtm_liq_droplet_flag,
-            <double *>&cloud_fraction[0,0,0],
-            <double *>&cloud_tau[0,0,0],
-            <double *>&cloud_ice_path[0,0,0],
-            <double *>&cloud_liq_path[0,0,0],
-            <double *>&cloud_ice_eff_size[0,0],
-            <double *>&cloud_droplet_eff_radius[0,0],
-            <double *>&aerosol_tau[0,0,0],
-            <double *>&upward_longwave_flux[0,0],
-            <double *>&downward_longwave_flux[0,0],
-            <double *>&longwave_heating_rate[0,0],
-            <double *>&up_lw_flux_clearsky[0,0],
-            <double *>&down_lw_flux_clearsky[0,0],
-            <double *>&lw_heating_rate_clearsky[0,0],
-            <double *>&duflx_dt[0,0],
-            <double *>&duflxc_dt[0,0])
-
+    if rrtm_cloud_props_flag == 0:
+        cloud_ice_path = np.zeros((1,1))
+        cloud_liq_path = np.zeros((1,1))
+        cloud_ice_eff_size = np.zeros((1,1))
+        cloud_droplet_eff_radius = np.zeros((1,1))
     else:
-        rrtm_longwave(
-            &num_cols, &num_layers,
-            &rrtm_cloud_overlap_method,
-            &rrtm_calculate_change_up_flux,
-            <double *>&layer_pressure[0,0],
-            <double *>&interface_pressure[0,0],
-            <double *>&layer_temp[0,0],
-            <double *>&interface_temp[0,0],
-            <double *>&surface_temp[0],
-            <double *>&h2o_vmr[0,0],
-            <double *>&o3_vmr[0,0],
-            <double *>&co2_vmr[0,0],
-            <double *>&ch4_vmr[0,0],
-            <double *>&n2o_vmr[0,0],
-            <double *>&o2_vmr[0,0],
-            <double *>&cfc11_vmr[0,0],
-            <double *>&cfc12_vmr[0,0],
-            <double *>&cfc22_vmr[0,0],
-            <double *>&ccl4_vmr[0,0],
-            <double *>&surf_emissivity[0,0],
-            &rrtm_cloud_props_flag,
-            &rrtm_ice_props_flag,
-            &rrtm_liq_droplet_flag,
-            <double *>&cloud_fraction[0,0,0],
-            <double *>&cloud_tau[0,0,0],
-            <double *>&cloud_ice_path[0,0,0],
-            <double *>&cloud_liq_path[0,0,0],
-            <double *>&cloud_ice_eff_size[0,0],
-            <double *>&cloud_droplet_eff_radius[0,0],
-            <double *>&aerosol_tau[0,0,0],
-            <double *>&upward_longwave_flux[0,0],
-            <double *>&downward_longwave_flux[0,0],
-            <double *>&longwave_heating_rate[0,0],
-            <double *>&up_lw_flux_clearsky[0,0],
-            <double *>&down_lw_flux_clearsky[0,0],
-            <double *>&lw_heating_rate_clearsky[0,0],
-            <double *>0,
-            <double *>0)
+        cloud_tau = np.zeros((1,1,1))
+
+    if rrtm_calculate_change_up_flux == 0:
+        duflx_dt = np.zeros((1,1))
+        duflxc_dt = np.zeros((1,1))
+
+    rrtmg_longwave(
+        &num_cols, &num_layers,
+        &rrtm_cloud_overlap_method,
+        &rrtm_calculate_change_up_flux,
+        <double *>&layer_pressure[0,0],
+        <double *>&interface_pressure[0,0],
+        <double *>&layer_temp[0,0],
+        <double *>&interface_temp[0,0],
+        <double *>&surface_temp[0],
+        <double *>&h2o_vmr[0,0],
+        <double *>&o3_vmr[0,0],
+        <double *>&co2_vmr[0,0],
+        <double *>&ch4_vmr[0,0],
+        <double *>&n2o_vmr[0,0],
+        <double *>&o2_vmr[0,0],
+        <double *>&cfc11_vmr[0,0],
+        <double *>&cfc12_vmr[0,0],
+        <double *>&cfc22_vmr[0,0],
+        <double *>&ccl4_vmr[0,0],
+        <double *>&surf_emissivity[0,0],
+        &rrtm_cloud_props_flag,
+        &rrtm_ice_props_flag,
+        &rrtm_liq_droplet_flag,
+        <double *>&cloud_fraction[0,0],
+        <double *>&cloud_tau[0,0,0],
+        <double *>&cloud_ice_path[0,0],
+        <double *>&cloud_liq_path[0,0],
+        <double *>&cloud_ice_eff_size[0,0],
+        <double *>&cloud_droplet_eff_radius[0,0],
+        <double *>&aerosol_tau[0,0,0],
+        <double *>&upward_longwave_flux[0,0],
+        <double *>&downward_longwave_flux[0,0],
+        <double *>&longwave_heating_rate[0,0],
+        <double *>&up_lw_flux_clearsky[0,0],
+        <double *>&down_lw_flux_clearsky[0,0],
+        <double *>&lw_heating_rate_clearsky[0,0],
+        <double *>&duflx_dt[0,0],
+        <double *>&duflxc_dt[0,0])
 
     return (upward_longwave_flux, downward_longwave_flux,
             longwave_heating_rate, up_lw_flux_clearsky,
-            down_lw_flux_clearsky, lw_heating_rate_clearsky,
-            duflx_dt, duflxc_dt)
+            down_lw_flux_clearsky, lw_heating_rate_clearsky)
+            #TODO ignore for now duflx_dt, duflxc_dt)

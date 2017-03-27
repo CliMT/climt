@@ -3,7 +3,9 @@ from .held_suarez import HeldSuarez
 from .grid_scale_condensation import GridScaleCondensation
 from .berger_solar_insolation import BergerSolarInsolation
 from .simple_physics import SimplePhysics
+from .rrtmg import RRTMLongwave
 
 __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
-    HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics)
+    HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
+    RRTMLongwave)

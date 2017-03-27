@@ -34,19 +34,21 @@ module_list = [
 
 sources_list = [
 #    'rrtmg_lw_rad.f90',
-    'rrtmg_lw_rad.nomcica.f90',
     'rrtmg_lw_cldprop.f90',
     'rrtmg_lw_cldprmc.f90',
-    'rrtmg_lw_init.f90',
-    'rrtmg_lw_k_g.f90',
     'rrtmg_lw_rtrn.f90',
     'rrtmg_lw_rtrnmr.f90',
     'rrtmg_lw_rtrnmc.f90',
     'rrtmg_lw_setcoef.f90',
     'rrtmg_lw_taumol.f90',
+    'rrtmg_lw_rad.nomcica.f90',
     'mcica_random_numbers.f90',
+    'rrtmg_lw_init.f90',
     'mcica_subcol_gen_lw.f90']
 
+unoptimised_sources_list = [
+    'rrtmg_lw_k_g.f90',
+]
 object_file_list = []
 print('Compiling Modules')
 for module in module_list:
@@ -67,6 +69,17 @@ for source in sources_list:
     compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O3 -fPIC -fno-range-check'
     print(compilation_command)
     system(compilation_command)
+
+print('Compiling k coefficient tables')
+for source in unoptimised_sources_list:
+
+    output_file = source[:-3]+'o'
+    object_file_list.append(output_file)
+
+    compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O0 -fPIC -fno-range-check'
+    print(compilation_command)
+    system(compilation_command)
+
 
 
 link_args_list = object_file_list + ['-lgfortran']

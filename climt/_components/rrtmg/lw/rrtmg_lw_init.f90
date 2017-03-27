@@ -229,27 +229,27 @@
 
 ! Fundamental physical constants from NIST 2002
 
-      grav = 9.8066_rb                        ! Acceleration of gravity
+!      grav = 9.8066_rb                        ! Acceleration of gravity
                                               ! (m s-2)
-      planck = 6.62606876e-27_rb              ! Planck constant
+!      planck = 6.62606876e-27_rb              ! Planck constant
                                               ! (ergs s; g cm2 s-1)
-      boltz = 1.3806503e-16_rb                ! Boltzmann constant
+!      boltz = 1.3806503e-16_rb                ! Boltzmann constant
                                               ! (ergs K-1; g cm2 s-2 K-1)
-      clight = 2.99792458e+10_rb              ! Speed of light in a vacuum  
+!      clight = 2.99792458e+10_rb              ! Speed of light in a vacuum  
                                               ! (cm s-1)
-      avogad = 6.02214199e+23_rb              ! Avogadro constant
+!      avogad = 6.02214199e+23_rb              ! Avogadro constant
                                               ! (mol-1)
-      alosmt = 2.6867775e+19_rb               ! Loschmidt constant
+!      alosmt = 2.6867775e+19_rb               ! Loschmidt constant
                                               ! (cm-3)
-      gascon = 8.31447200e+07_rb              ! Molar gas constant
+!      gascon = 8.31447200e+07_rb              ! Molar gas constant
                                               ! (ergs mol-1 K-1)
-      radcn1 = 1.191042722e-12_rb             ! First radiation constant
+!      radcn1 = 1.191042722e-12_rb             ! First radiation constant
                                               ! (W cm2 sr-1)
-      radcn2 = 1.4387752_rb                   ! Second radiation constant
+!      radcn2 = 1.4387752_rb                   ! Second radiation constant
                                               ! (cm K)
-      sbcnst = 5.670400e-04_rb                ! Stefan-Boltzmann constant
+!      sbcnst = 5.670400e-04_rb                ! Stefan-Boltzmann constant
                                               ! (W cm-2 K-4)
-      secdy = 8.6400e4_rb                     ! Number of seconds per day
+!      secdy = 8.6400e4_rb                     ! Number of seconds per day
                                               ! (s d-1)
 !
 !     units are generally cgs

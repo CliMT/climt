@@ -144,4 +144,4 @@ class GridScaleCondensation(Implicit):
                 new_q, dims=dims_3d,
                 attrs=state['specific_humidity'].attrs).squeeze(),
         }
-        return diagnostics, new_state
+        return new_state, diagnostics

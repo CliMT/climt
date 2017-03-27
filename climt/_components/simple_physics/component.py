@@ -19,15 +19,15 @@ class SimplePhysics(Implicit):
     inputs = (
         'air_temperature', 'air_pressure', 'air_pressure_on_interface_levels',
         'surface_pressure', 'surface_temperature', 'specific_humidity',
-        'northward_wind', 'eastward_wind', 'latitude'
+        'northward_wind', 'eastward_wind'
     )
 
-    diagnostic_outputs = ()
+    diagnostics = ()
 
-    tendency_outputs = (
+    outputs = (
         'air_temperature', 'air_pressure', 'air_pressure_on_interface_levels',
         'surface_pressure', 'surface_temperature', 'specific_humidity',
-        'northward_wind', 'eastward_wind', 'latitude'
+        'northward_wind', 'eastward_wind'
     )
 
     def __init__(
@@ -71,25 +71,25 @@ class SimplePhysics(Implicit):
                 If False, an internally generated surface temperature is used.
                 Default value is True.
 
-            gravitational_acceleration (float): value of acceleration due to gravity.
+            gravitational_acceleration (float): value of acceleration due to gravity in $m s^{-1}$.
                 Default value from climt.default_constants is used if None.
 
-            gas_constant_dry_air (float): The gas constant of dry air.
+            gas_constant_dry_air (float): The gas constant of dry air in $J {K^-1} kg^{-1}$.
                 Default value from climt.default_constants is used if None.
 
-            specific_heat_dry_air (float): The specific heat of dry air.
+            specific_heat_dry_air (float): The specific heat of dry air in $J {K^-1} kg^{-1}$.
                 Default value from climt.default_constants is used if None.
 
-            latent_heat_condensation (float): The latent heat of condensation of the condensible.
+            latent_heat_condensation (float): The latent heat of condensation of the condensible in $J kg^{-1}$.
                 Default value from climt.default_constants (for water vapor) is used if None.
 
-            gas_constant_condensible (float): The gas constant of the condensible substance.
+            gas_constant_condensible (float): The gas constant of the condensible substance in $J {K^-1} kg^{-1}$.
                 Default value from climt.default_constants (for water vapor) is used if None.
 
-            planetary_radius (float): The radius of the planet.
+            planetary_radius (float): The radius of the planet in $m$.
                 Default value from climt.default_constants (for Earth) is used if None.
 
-            planetary_rotation_rate (float): The rotation rate of the planet.
+            planetary_rotation_rate (float): The rotation rate of the planet in $s^{-1}$.
                 Default value from climt.default_constants (for Earth) is used if None.
 
 
@@ -198,4 +198,4 @@ class SimplePhysics(Implicit):
         }
 
 
-        return {}, new_state
+        return new_state, {}
