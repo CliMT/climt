@@ -66,6 +66,7 @@ state['air_temperature_on_interface_levels'].values = get_interface_values(
 print(state['specific_humidity'])
 state['specific_humidity'].values[:,:,:17] = 10.
 print(state['specific_humidity'])
+'''
 #format: p_mid, t_mid, p_int, t_int
 tp_profiles = np.loadtxt('tp_profiles').transpose()
 #format: h2o, co2, o3
@@ -81,7 +82,7 @@ state['air_temperature_on_interface_levels'].values[0,0,0] = 300.
 state['specific_humidity'].values[0,0,:] = mol_profiles[0,:]*(18.02/28.964)*1000
 state['carbon_dioxide_mixing_ratio'].values[0,0,:] = mol_profiles[1,:]
 state['ozone_mixing_ratio'].values[0,0,:] = mol_profiles[2,:]
-
+'''
 
 for i in range(8000):
     
