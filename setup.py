@@ -39,9 +39,11 @@ ext_modules = [
 fortran_ext = {'simple_physics': 'climt/_components/simple_physics',
                'rrtmg_longwave': 'climt/_components/rrtmg/lw'}
 
+dir_path = os.getenv('PWD','')
+
 for module in fortran_ext.keys():
     mycwd = os.getcwd()
-    os.chdir(fortran_ext[module])
+    os.chdir(os.path.join(dir_path, fortran_ext[module]))
     build_process = subprocess.call(['python','setup.py','build_ext','--inplace'])
     os.chdir(mycwd)
 
