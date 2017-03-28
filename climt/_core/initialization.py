@@ -11,7 +11,7 @@ def init_mid_level_pressures(array_dims, quantity_description):
     single_column = p_surf*spacing
     single_column = single_column[np.newaxis, np.newaxis, :]
     
-    return single_column*np.ones(array_dims)
+    return single_column*np.ones(array_dims, order='F')
 
 def init_interface_level_pressures(array_dims, quantity_description):
 
@@ -25,7 +25,7 @@ def init_interface_level_pressures(array_dims, quantity_description):
     interface[0] = p_surf
     interface[-1] = 0.0005*p_surf
 
-    return interface*np.ones(array_dims)
+    return interface*np.ones(array_dims, order='F')
 
 _quantity_descriptions = {
     'air_pressure': {
@@ -272,7 +272,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         set_dimension_names(y='latitude')
     else:
         y_coordinate = DataArray(
-            x['values'], dims=('y',), attrs={'units': y['units'], 'label': y['label']})
+            y['values'], dims=('y',), attrs={'units': y['units'], 'label': y['label']})
 
         output_state[y['label']] = y_coordinate
         set_dimension_names(y=y['label'])

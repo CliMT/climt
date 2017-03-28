@@ -310,12 +310,12 @@ class RRTMLongwave(Prognostic):
                                     ['x', 'y', 'z', 'num_longwave_bands'])
 
 
-        up_flux = np.zeros(T.shape, order='FORTRAN')
-        down_flux = np.zeros(T.shape, order='FORTRAN')
-        heating_rate = np.zeros(T.shape, order='FORTRAN')
-        up_flux_clear = np.zeros(T.shape, order='FORTRAN')
-        down_flux_clear = np.zeros(T.shape, order='FORTRAN')
-        heating_rate_clear = np.zeros(T.shape, order='FORTRAN')
+        up_flux = np.zeros(Tint.shape, order='F')
+        down_flux = np.zeros(Tint.shape, order='F')
+        heating_rate = np.zeros(T.shape, order='F')
+        up_flux_clear = np.zeros(Tint.shape, order='F')
+        down_flux_clear = np.zeros(Tint.shape, order='F')
+        heating_rate_clear = np.zeros(T.shape, order='F')
 
         #TODO add dflx_dt as well
         for lon in range(T.shape[0]):
@@ -379,6 +379,7 @@ class RRTMLongwave(Prognostic):
                                                         ClLWP[lon,:],
                                                         ClIceSize,
                                                         ClDropSize)
+
 
         dims_mid = combine_dimensions([state['air_temperature']],['x','y','z'])
         dims_int = combine_dimensions([state['air_temperature_on_interface_levels']],['x','y','z'])
