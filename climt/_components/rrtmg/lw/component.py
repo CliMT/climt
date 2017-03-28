@@ -14,31 +14,44 @@ class RRTMLongwave(Prognostic):
     longwave radiation (i.e, emission from the earth's surface).
     """
 
-    inputs = (
-        'air_pressure', 'air_pressure_on_interface_levels',
-        'air_temperature', 'air_temperature_on_interface_levels',
-        'surface_temperature', 'specific_humidity',
-        'ozone_mixing_ratio', 'carbon_dioxide_mixing_ratio',
-        'methane_mixing_ratio', 'nitrous_oxide_mixing_ratio',
-        'oxygen_mixing_ratio', 'cfc11_mixing_ratio',
-        'cfc12_mixing_ratio', 'cfc22_mixing_ratio',
-        'ccl4_mixing_ratio', 'surface_emissivity',
-        'cloud_fraction', 'cloud_optical_depth',
-        'cloud_ice_water_path', 'cloud_liquid_water_path',
-        'cloud_ice_particle_size', 'cloud_water_droplet_radius',
-        'aerosol_optical_depth'
-    )
+    inputs = {
+        'air_pressure': 'mbar',
+        'air_pressure_on_interface_levels': 'mbar',
+        'air_temperature': 'degK',
+        'air_temperature_on_interface_levels': 'degK',
+        'surface_temperature': 'degK',
+        'specific_humidity': 'g/g',
+        'ozone_mixing_ratio': 'dimensionless',
+        'carbon_dioxide_mixing_ratio': 'dimensionless',
+        'methane_mixing_ratio': 'dimensionless',
+        'nitrous_oxide_mixing_ratio': 'dimensionless',
+        'oxygen_mixing_ratio': 'dimensionless',
+        'cfc11_mixing_ratio': 'dimensionless',
+        'cfc12_mixing_ratio': 'dimensionless',
+        'cfc22_mixing_ratio': 'dimensionless',
+        'ccl4_mixing_ratio': 'dimensionless',
+        'surface_emissivity': 'dimensionless',
+        'cloud_fraction': 'dimensionless',
+        'cloud_optical_depth': 'dimensionless',
+        'cloud_ice_water_path': 'g m^-2',
+        'cloud_liquid_water_path': 'g m^-2',
+        'cloud_ice_particle_size': 'micrometer',
+        'cloud_water_droplet_radius': 'micrometer',
+        'aerosol_optical_depth': 'dimensionless'
+    }
 
-    tendencies = (
-        'longwave_heating_rate'
-    )
+    tendencies = {
+        'longwave_heating_rate': 'K day^-1'
+    }
 
-    diagnostics = (
-        'upward_longwave_flux', 'downward_longwave_flux',
-        'upward_longwave_flux_clearsky', 'downward_longwave_flux_clearsky',
-        'longwave_heating_rate_clearsky',
+    diagnostics = {
+        'upward_longwave_flux': 'W m^-2',
+        'downward_longwave_flux': 'W m^-2',
+        'upward_longwave_flux_clearsky': 'W m^-2',
+        'downward_longwave_flux_clearsky': 'W m^-2',
+        'longwave_heating_rate_clearsky': 'K day^-1',
         #TODO Need to add those final two quantities from the code
-    )
+    }
 
     '''
     RRTM without MCICA requires certain arrays on spectral bands
@@ -199,12 +212,11 @@ class RRTMLongwave(Prognostic):
             'heat_capacity_of_dry_air_at_constant_pressure', specific_heat_dry_air)
 
         if self._cloud_optics == 0:#Cloud optical depth directly input
-            self.inputs = tuple(set(self.inputs).difference(['cloud_ice_water_path',
-                                                             'cloud_liquid_water_path',
-                                                             'cloud_ice_particle_size',
-                                                             'cloud_water_droplet_radius']))
+            for input_quantity in ['cloud_ice_water_path', 'cloud_liquid_water_path',
+                           'cloud_ice_particle_size', 'cloud_water_droplet_radius']:
+                self.inputs.pop(input_quantity)
         else:
-            self.inputs = tuple(set(self.inputs).difference(['cloud_optical_depth']))
+            self.inputs.pop('cloud_optical_depth')
 
 
         _rrtm_lw.set_constants(
