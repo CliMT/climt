@@ -5,10 +5,11 @@ import numpy as np
 
 pint_units = UnitRegistry()
 
+
 def mass_to_volume_mixing_ratio(
-    mass_mixing_ratio,
-    molecular_weight=None,
-    molecular_weight_air=28.964):
+        mass_mixing_ratio,
+        molecular_weight=None,
+        molecular_weight_air=28.964):
     """
     Converts from mass mixing ratio (mass per unit mass) to volume
     mixing ratio (volume per unit volume)
@@ -39,10 +40,11 @@ def mass_to_volume_mixing_ratio(
 
     volume_mixing_ratio = mass_mixing_ratio_with_units*molecular_weight_air/molecular_weight
 
-    volume_mixing_ratio = DataArray(volume_mixing_ratio.to_base_units(), 
+    volume_mixing_ratio = DataArray(volume_mixing_ratio.to_base_units(),
                                     dims=dims, attrs={'units': str(volume_mixing_ratio.units)})
 
     return volume_mixing_ratio
+
 
 def get_input_arrays_from_state(component, state, memory_layout='fortran'):
     """
@@ -104,6 +106,7 @@ def get_input_arrays_from_state(component, state, memory_layout='fortran'):
 
     return array_dict
 
+
 def get_dimensions_for(component, quantity_name):
 
     if hasattr(component, 'quantity_descriptions'):
@@ -113,9 +116,10 @@ def get_dimensions_for(component, quantity_name):
     if quantity_name in _quantity_descriptions:
         return _quantity_descriptions[quantity_name]['dims']
 
-    #Should never come here.
+    # Should never come here.
     raise IndexError(
         '{} not described either by the component or by CliMT!'.format(quantity_name))
+
 
 def get_array_from_state(state,
                          quantity_name,

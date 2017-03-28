@@ -4,7 +4,6 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation)
 import numpy as np
 from datetime import timedelta
-import sympl
 
 pressure_axis = np.array(
     [1e5, 9e4, 8e4, 7e4, 5e4, 3e4, 1e4, 8e3, 4e3, 1e3, 7e2, 4e2, 1e2,
@@ -22,12 +21,14 @@ def get_interface_pressures(p, ps):
     interface_pressures[:, :, 0] = ps[:, :]
     return interface_pressures
 
+
 state = {
     'air_temperature': DataArray(
         np.ones((1, 1, len(pressure_axis)))*250.,
         dims=('x', 'y', 'mid_levels'),
         attrs={'units': 'degK'}),
 }
+
 constant_state = {
     'surface_temperature': DataArray(
         np.ones((1, 1))*274., dims=('x', 'y'), attrs={'units': 'degK'}),
@@ -65,11 +66,13 @@ def plot_function(fig, state):
     ax.set_yscale('log')
     ax.set_ylim(1e5, 100.)
 
+
 monitor = PlotFunctionMonitor(plot_function)
 diagnostic = Frierson06LongwaveOpticalDepth()
 radiation = GrayLongwaveRadiation()
 time_stepper = AdamsBashforth([radiation])
 timestep = timedelta(hours=4)
+
 for i in range(6*7*4*10):
     print(i)
     state.update(diagnostic(state))

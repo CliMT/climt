@@ -2,16 +2,18 @@ from sympl import (DataArray, set_dimension_names,
                    ensure_no_shared_keys)
 import numpy as np
 
+
 def init_mid_level_pressures(array_dims, quantity_description):
-    #We assume the vertical level is the last dimension
+    # We assume the vertical level is the last dimension
     vert_levels = array_dims[-1]
 
     p_surf = quantity_description['surface_pressure']['init_value']
     spacing = np.linspace(0.995, 0.001, vert_levels)
     single_column = p_surf*spacing
     single_column = single_column[np.newaxis, np.newaxis, :]
-    
+
     return single_column*np.ones(array_dims, order='F')
+
 
 def init_interface_level_pressures(array_dims, quantity_description):
 
@@ -19,13 +21,14 @@ def init_interface_level_pressures(array_dims, quantity_description):
     p_surf = quantity_description['surface_pressure']['init_value']
     spacing = np.linspace(0.995, 0.001, vert_levels-1)
     midlevel = p_surf*spacing
-    
+
     interface = np.zeros(vert_levels)
     interface[1:-1] = 0.5*(midlevel[:-1] + midlevel[1:])
     interface[0] = p_surf
     interface[-1] = 0.0005*p_surf
 
     return interface*np.ones(array_dims, order='F')
+
 
 _quantity_descriptions = {
     'air_pressure': {
@@ -200,6 +203,7 @@ _quantity_descriptions = {
     },
 }
 
+
 def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     """
     Returns a state dictionary with the required arrays to run a model
@@ -245,7 +249,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         default_state (dict): A state dictionary containing the requested
             quantities using the provided coordinate state.
     """
-    
+
     if len(component_list) == 0:
         raise ValueError('Component list must contain at least one component')
 
@@ -253,7 +257,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     if len(x.keys()) == 0:
         x_coordinate = DataArray(
-            np.zeros((1,)), dims=('x',), attrs={'units':'degrees_north', 'label': 'longitude'})
+            np.zeros((1,)), dims=('x',), attrs={'units': 'degrees_north', 'label': 'longitude'})
 
         output_state['longitude'] = x_coordinate
         set_dimension_names(x='longitude')
@@ -266,7 +270,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     if len(y.keys()) == 0:
         y_coordinate = DataArray(
-            np.zeros((1,)), dims=('y',), attrs={'units':'degrees_east', 'label': 'latitude'})
+            np.zeros((1,)), dims=('y',), attrs={'units': 'degrees_east', 'label': 'latitude'})
 
         output_state['latitude'] = y_coordinate
         set_dimension_names(y='latitude')
@@ -287,7 +291,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
             z['values'], dims=('mid_levels',), attrs={'units': z['units'], 'label': z['label']})
 
         output_state[z['label']] = z_coordinate
-        #set_dimension_names(z=z['label'])
+        # set_dimension_names(z=z['label'])
 
     quantity_list = set()
     temporary_description = _quantity_descriptions.copy()
@@ -306,23 +310,23 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
                     component.extra_dimensions[dimension], dims=(dimension,))
 
         if hasattr(component, 'quantity_descriptions'):
-            ensure_no_shared_keys(additional_descriptions, 
+            ensure_no_shared_keys(additional_descriptions,
                                   component.quantity_descriptions)
             additional_descriptions.update(component.quantity_descriptions)
 
     temporary_description.update(additional_descriptions)
     for name in quantity_list:
         output_state[name] = get_default_values(
-                                name, x_coordinate, y_coordinate,
-                                z_coordinate, temporary_description,
-                                additional_dimensions)
+            name, x_coordinate, y_coordinate,
+            z_coordinate, temporary_description,
+            additional_dimensions)
 
     ensure_no_shared_keys(input_state, output_state)
     output_state.update(input_state)
     return output_state
 
 
-def get_default_values(quantity_name, x, y, z, 
+def get_default_values(quantity_name, x, y, z,
                        quantity_description, additional_dimensions={}):
     """
     Returns default values for individual quantities.
@@ -345,7 +349,6 @@ def get_default_values(quantity_name, x, y, z,
         that are not x,y,z (used for spectral bands in radiative codes, for example).
 
     """
-
 
     description = quantity_description[quantity_name]
 
@@ -372,4 +375,4 @@ def get_default_values(quantity_name, x, y, z,
     else:
         raise ValueError('Malformed description for quantity {}'.format(quantity_name))
 
-    return DataArray(quantity_array, dims= quantity_dims, attrs={'units': description['units']})
+    return DataArray(quantity_array, dims=quantity_dims, attrs={'units': description['units']})

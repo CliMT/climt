@@ -1,7 +1,6 @@
 import pytest
 import abc
 import os
-os.environ['NUMBA_DISABLE_JIT'] = '1'
 from glob import glob
 import xarray as xr
 import numpy as np
@@ -13,6 +12,7 @@ from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
 )
 from datetime import datetime, timedelta
+os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
     'lev', 'interface_levels', 'mid_levels', 'full_levels']
@@ -425,6 +425,7 @@ class TestBergerSolarInsolationDifferentTime(ComponentBase):
                 np.linspace(-180., 180., num=ny),
                 dims=['lat'], attrs={'units': 'degrees_north'}),
         }
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

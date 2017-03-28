@@ -33,7 +33,7 @@ module_list = [
     'rrlw_wvn.f90']
 
 sources_list = [
-#    'rrtmg_lw_rad.f90',
+    # 'rrtmg_lw_rad.f90',
     'rrtmg_lw_cldprop.f90',
     'rrtmg_lw_cldprmc.f90',
     'rrtmg_lw_rtrn.f90',
@@ -80,8 +80,6 @@ for source in unoptimised_sources_list:
     print(compilation_command)
     system(compilation_command)
 
-
-
 link_args_list = object_file_list + ['-lgfortran']
 
 ext_modules = [
@@ -92,7 +90,7 @@ ext_modules = [
         # other compile args for gcc
         extra_compile_args=['-fPIC', '-O3', '-lgfortran'],
         # other files to link to
-        extra_link_args= link_args_list)]
+        extra_link_args=link_args_list)]
 
 setup(name='_rrtm_lw',
       cmdclass={'build_ext': build_ext},

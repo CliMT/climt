@@ -3,7 +3,7 @@ from sympl import DataArray
 from sympl import replace_none_with_default
 from sympl import get_numpy_array
 from sympl import combine_dimensions
-from  . import _simple_physics as phys
+from . import _simple_physics as phys
 
 
 class SimplePhysics(Implicit):
@@ -178,7 +178,6 @@ class SimplePhysics(Implicit):
              Pint, q, Ps, Ts,
              lats, timestep.seconds)
 
-
         new_state = {
             'eastward_wind': DataArray(
                 u_out, dims=dims_mid, attrs=state['eastward_wind'].attrs
@@ -196,6 +195,5 @@ class SimplePhysics(Implicit):
                 precip_out, dims=dims_surf, attrs={'units': 'm s^-1'}
             ).squeeze(),
         }
-
 
         return new_state, {}

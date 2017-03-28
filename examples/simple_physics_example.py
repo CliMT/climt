@@ -1,6 +1,5 @@
 from sympl import (
-    DataArray, AdamsBashforth,
-    PlotFunctionMonitor)
+    DataArray, PlotFunctionMonitor)
 from climt import SimplePhysics
 import numpy as np
 from datetime import timedelta
@@ -20,6 +19,7 @@ def get_interface_pressures(p, ps):
     interface_pressures[:, :, 1:-1] = 0.5*(p[:, :, 1:] + p[:, :, :-1])
     interface_pressures[:, :, 0] = ps[:, :]
     return interface_pressures
+
 
 state = {
     'air_temperature': DataArray(
@@ -69,16 +69,18 @@ def plot_function(fig, state):
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(
         state['air_temperature'].values.flatten(),
-        state['air_pressure'].values.flatten(),'-o')
+        state['air_pressure'].values.flatten(), '-o')
     ax.axes.invert_yaxis()
-    #print(state['eastward_wind'].values.flatten())
-    #print(state['air_pressure'].values.flatten())
-    #ax.set_yscale('log')
+    # print(state['eastward_wind'].values.flatten())
+    # print(state['air_pressure'].values.flatten())
+    # ax.set_yscale('log')
     ax.set_ylim(1e5, 100.)
+
 
 monitor = PlotFunctionMonitor(plot_function)
 simple_physics = SimplePhysics()
 timestep = timedelta(hours=1)
+
 for i in range(200):
     print(i)
     new_state, diagnostics = simple_physics(state, timestep)

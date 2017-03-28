@@ -8,6 +8,7 @@ from . import _rrtm_lw
 import numpy as np
 from numpy import pi as PI
 
+
 class RRTMLongwave(Prognostic):
     """
     Interface to the Rapid Radiative Transfer Model (RRTM) for
@@ -50,7 +51,7 @@ class RRTMLongwave(Prognostic):
         'upward_longwave_flux_clearsky': 'W m^-2',
         'downward_longwave_flux_clearsky': 'W m^-2',
         'longwave_heating_rate_clearsky': 'K day^-1',
-        #TODO Need to add those final two quantities from the code
+        # TODO Need to add those final two quantities from the code
     }
 
     '''
@@ -66,7 +67,7 @@ class RRTMLongwave(Prognostic):
         },
 
         'cloud_optical_depth': {
-            'dims': ['x','num_longwave_bands', 'y', 'mid_levels'],
+            'dims': ['x', 'num_longwave_bands', 'y', 'mid_levels'],
             'units': 'dimensionless',
             'init_value': 0.
         },
@@ -79,22 +80,22 @@ class RRTMLongwave(Prognostic):
     }
 
     def __init__(
-        self,
-        calculate_change_up_flux=0,
-        cloud_overlap_method=1,
-        cloud_optical_properties=0,
-        cloud_ice_properties=0,
-        cloud_liquid_water_properties=0,
-        gravitational_acceleration=None,
-        planck_constant=None,
-        boltzmann_constant=None,
-        speed_of_light=None,
-        avogadro_constant=None,
-        loschmidt_constant=None,
-        universal_gas_constant=None,
-        stefan_boltzmann_constant=None,
-        seconds_per_day=None,
-        specific_heat_dry_air=None):
+            self,
+            calculate_change_up_flux=0,
+            cloud_overlap_method=1,
+            cloud_optical_properties=0,
+            cloud_ice_properties=0,
+            cloud_liquid_water_properties=0,
+            gravitational_acceleration=None,
+            planck_constant=None,
+            boltzmann_constant=None,
+            speed_of_light=None,
+            avogadro_constant=None,
+            loschmidt_constant=None,
+            universal_gas_constant=None,
+            stefan_boltzmann_constant=None,
+            seconds_per_day=None,
+            specific_heat_dry_air=None):
 
         """
 
@@ -110,7 +111,7 @@ class RRTMLongwave(Prognostic):
         1 = Random
         2 = Maximum/Random
         3 = Maximum.
-            
+
         Default value is 1, corresponding to random cloud overlap.
 
         cloud_optical_properties (int): Choose how cloud optical properties are
@@ -120,7 +121,7 @@ class RRTMLongwave(Prognostic):
             clouds are treated together, cloud absorptivity is a constant value (0.060241)
         2 = Cloud fraction and cloud physical properties are input, ice and liquid
             clouds are treated separately
-            
+
         Default value is 0.
 
         cloud_ice_properties (int): set bounds on ice particle size.
@@ -130,7 +131,7 @@ class RRTMLongwave(Prognostic):
             Manual, 1996)
         3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron (Fu, 1996)
             dge = 1.0315* effective radius
-            
+
         Default value is 0.
 
         cloud_liquid_water_properties (int): set treatment of cloud liquid water.
@@ -161,7 +162,7 @@ class RRTMLongwave(Prognostic):
                 Default value from climt.default_constants is used if None.
 
         stefan_boltzmann_constant (float): value of the Stefan-Boltzmann constant
-                in $W m^{-2} K^{-4}$. Default value from climt.default_constants is 
+                in $W m^{-2} K^{-4}$. Default value from climt.default_constants is
                 used if None.
 
         seconds_per_day (float): number of seconds per day.
@@ -211,13 +212,12 @@ class RRTMLongwave(Prognostic):
         self._Cpd = replace_none_with_default(
             'heat_capacity_of_dry_air_at_constant_pressure', specific_heat_dry_air)
 
-        if self._cloud_optics == 0:#Cloud optical depth directly input
+        if self._cloud_optics == 0:  # Cloud optical depth directly input
             for input_quantity in ['cloud_ice_water_path', 'cloud_liquid_water_path',
-                           'cloud_ice_particle_size', 'cloud_water_droplet_radius']:
+                                   'cloud_ice_particle_size', 'cloud_water_droplet_radius']:
                 self.inputs.pop(input_quantity)
         else:
             self.inputs.pop('cloud_optical_depth')
-
 
         _rrtm_lw.set_constants(
             PI, self._g,
@@ -229,8 +229,8 @@ class RRTMLongwave(Prognostic):
             self._R,
             self._stef_boltz,
             self._secs_per_day)
-    
-        #TODO Add all other flags as well
+
+        # TODO Add all other flags as well
         _rrtm_lw.initialise_rrtm_radiation(
             self._Cpd,
             self._cloud_overlap,
@@ -255,12 +255,12 @@ class RRTMLongwave(Prognostic):
         """
 
         P = get_numpy_array(state['air_pressure'].to_units('mbar'), ['x', 'y', 'z'])
-        
+
         Pint = get_numpy_array(state['air_pressure_on_interface_levels'].to_units('mbar'),
                                ['x', 'y', 'z'])
 
         T = get_numpy_array(state['air_temperature'].to_units('degK'), ['x', 'y', 'z'])
-        
+
         Tint = get_numpy_array(state['air_temperature_on_interface_levels'].to_units('degK'),
                                ['x', 'y', 'z'])
 
@@ -302,9 +302,9 @@ class RRTMLongwave(Prognostic):
         ClFrac = get_numpy_array(state['cloud_fraction'].to_units('dimensionless'),
                                  ['x', 'y', 'z'])
 
-        if self._cloud_optics == 0:#Optical depth is part of input
+        if self._cloud_optics == 0:  # Optical depth is part of input
             ClTau = get_numpy_array(state['cloud_optical_depth'].to_units('dimensionless'),
-                                    ['x','num_longwave_bands', 'y', 'z'])
+                                    ['x', 'num_longwave_bands', 'y', 'z'])
         else:
             ClIWP = get_numpy_array(state['cloud_ice_water_path'].to_units('g m^-2'),
                                     ['x', 'y', 'z'])
@@ -313,14 +313,13 @@ class RRTMLongwave(Prognostic):
                                     ['x', 'y', 'z'])
 
             ClIceSize = get_numpy_array(state['ice_particle_size'].to_units('micrometer'),
-                                    ['x', 'y', 'z'])
+                                        ['x', 'y', 'z'])
 
             ClDropSize = get_numpy_array(state['cloud_droplet_radius'].to_units('micrometer'),
-                                    ['x', 'y', 'z'])
+                                         ['x', 'y', 'z'])
 
         AerTau = get_numpy_array(state['aerosol_optical_depth'].to_units('dimensionless'),
-                                    ['x', 'y', 'z', 'num_longwave_bands'])
-
+                                 ['x', 'y', 'z', 'num_longwave_bands'])
 
         up_flux = np.zeros(Tint.shape, order='F')
         down_flux = np.zeros(Tint.shape, order='F')
@@ -329,72 +328,71 @@ class RRTMLongwave(Prognostic):
         down_flux_clear = np.zeros(Tint.shape, order='F')
         heating_rate_clear = np.zeros(T.shape, order='F')
 
-        #TODO add dflx_dt as well
+        # TODO add dflx_dt as well
         for lon in range(T.shape[0]):
             if self._cloud_optics == 0:
                 _rrtm_lw.rrtm_calculate_longwave_fluxes(T.shape[1],
                                                         T.shape[2],
-                                                        P[lon,:],
-                                                        Pint[lon,:],
-                                                        T[lon,:],
-                                                        Tint[lon,:],
-                                                        Ts[lon,:],
-                                                        Q[lon,:],
-                                                        O3[lon,:],
-                                                        CO2[lon,:],
-                                                        CH4[lon,:],
-                                                        N2O[lon,:],
-                                                        O2[lon,:],
-                                                        CFC11[lon,:],
-                                                        CFC12[lon,:],
-                                                        CFC22[lon,:],
-                                                        CCL4[lon,:],
-                                                        Emiss[lon,:],
-                                                        ClFrac[lon,:],
-                                                        AerTau[lon,:],
-                                                        up_flux[lon,:],
-                                                        down_flux[lon,:],
-                                                        heating_rate[lon,:],
-                                                        up_flux_clear[lon,:],
-                                                        down_flux_clear[lon,:],
-                                                        heating_rate_clear[lon,:],
-                                                        ClTau[lon,:])
+                                                        P[lon, :],
+                                                        Pint[lon, :],
+                                                        T[lon, :],
+                                                        Tint[lon, :],
+                                                        Ts[lon, :],
+                                                        Q[lon, :],
+                                                        O3[lon, :],
+                                                        CO2[lon, :],
+                                                        CH4[lon, :],
+                                                        N2O[lon, :],
+                                                        O2[lon, :],
+                                                        CFC11[lon, :],
+                                                        CFC12[lon, :],
+                                                        CFC22[lon, :],
+                                                        CCL4[lon, :],
+                                                        Emiss[lon, :],
+                                                        ClFrac[lon, :],
+                                                        AerTau[lon, :],
+                                                        up_flux[lon, :],
+                                                        down_flux[lon, :],
+                                                        heating_rate[lon, :],
+                                                        up_flux_clear[lon, :],
+                                                        down_flux_clear[lon, :],
+                                                        heating_rate_clear[lon, :],
+                                                        ClTau[lon, :])
             else:
                 _rrtm_lw.rrtm_calculate_longwave_fluxes(T.shape[1],
                                                         T.shape[2],
-                                                        P[lon,:],
-                                                        Pint[lon,:],
-                                                        T[lon,:],
-                                                        Tint[lon,:],
-                                                        Ts[lon,:],
-                                                        Q[lon,:],
-                                                        O3[lon,:],
-                                                        CO2[lon,:],
-                                                        CH4[lon,:],
-                                                        N2O[lon,:],
-                                                        O2[lon,:],
-                                                        CFC11[lon,:],
-                                                        CFC12[lon,:],
-                                                        CFC22[lon,:],
-                                                        CCL4[lon,:],
-                                                        Emiss[lon,:],
-                                                        ClFrac[lon,:],
-                                                        AerTau[lon,:],
-                                                        up_flux[lon,:],
-                                                        down_flux[lon,:],
-                                                        heating_rate[lon,:],
-                                                        up_flux_clear[lon,:],
-                                                        down_flux_clear[lon,:],
-                                                        heating_rate_clear[lon,:],
+                                                        P[lon, :],
+                                                        Pint[lon, :],
+                                                        T[lon, :],
+                                                        Tint[lon, :],
+                                                        Ts[lon, :],
+                                                        Q[lon, :],
+                                                        O3[lon, :],
+                                                        CO2[lon, :],
+                                                        CH4[lon, :],
+                                                        N2O[lon, :],
+                                                        O2[lon, :],
+                                                        CFC11[lon, :],
+                                                        CFC12[lon, :],
+                                                        CFC22[lon, :],
+                                                        CCL4[lon, :],
+                                                        Emiss[lon, :],
+                                                        ClFrac[lon, :],
+                                                        AerTau[lon, :],
+                                                        up_flux[lon, :],
+                                                        down_flux[lon, :],
+                                                        heating_rate[lon, :],
+                                                        up_flux_clear[lon, :],
+                                                        down_flux_clear[lon, :],
+                                                        heating_rate_clear[lon, :],
                                                         0,
-                                                        ClIWP[lon,:],
-                                                        ClLWP[lon,:],
+                                                        ClIWP[lon, :],
+                                                        ClLWP[lon, :],
                                                         ClIceSize,
                                                         ClDropSize)
 
-
-        dims_mid = combine_dimensions([state['air_temperature']],['x','y','z'])
-        dims_int = combine_dimensions([state['air_temperature_on_interface_levels']],['x','y','z'])
+        dims_mid = combine_dimensions([state['air_temperature']], ['x', 'y', 'z'])
+        # dims_int = combine_dimensions([state['air_temperature_on_interface_levels']], ['x', 'y', 'z'])
 
         tendencies = {
             'air_temperature': DataArray(
@@ -403,5 +401,4 @@ class RRTMLongwave(Prognostic):
 
         diagnostics = {}
 
-        return  tendencies, diagnostics
-
+        return tendencies, diagnostics
