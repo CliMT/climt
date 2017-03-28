@@ -97,17 +97,17 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
 !
 ! Input arguments - MODEL DEPENDENT
 !
-   integer, intent(in)  :: pcols        ! Set number of atmospheric columns       
-   integer, intent(in)  :: pver         ! Set number of model levels
+   integer(c_int), intent(in)  :: pcols        ! Set number of atmospheric columns       
+   integer(c_int), intent(in)  :: pver         ! Set number of model levels
    real(r8), intent(in) :: dtime        ! Set model physics timestep
    real(r8), intent(in) :: lat(pcols)   ! Latitude 
-   integer, intent(in)  :: test         ! Test number
+   integer(c_int), intent(in)  :: test         ! Test number
 
 !JOY adding new input variables
-    integer, intent(in) :: do_lsc       ! Switch for large scale condensation
-    integer, intent(in) :: do_pbl       ! Switch for simple boundary layer
-    integer, intent(in) :: do_surf_flux ! Switch for surface fluxes
-    integer, intent(in) :: use_ts_ext   ! Switch to use externally specified Tsurf
+    integer(c_int), intent(in) :: do_lsc       ! Switch for large scale condensation
+    integer(c_int), intent(in) :: do_pbl       ! Switch for simple boundary layer
+    integer(c_int), intent(in) :: do_surf_flux ! Switch for surface fluxes
+    integer(c_int), intent(in) :: use_ts_ext   ! Switch to use externally specified Tsurf
     real(r8), intent(in):: ts(pcols)    ! Externally specified Tsurf
 !
 ! Input/Output arguments 
