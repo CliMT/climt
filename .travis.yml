@@ -12,7 +12,7 @@ env:
   - TOXENV=py27
 
 before_install:
-  - sudo apt-get install gfortran-4.8
+  - sudo apt-get install gfortran
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
