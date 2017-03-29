@@ -5,17 +5,17 @@ import numpy as np
 
 
 @jit(nopython=True)
-def bolton_q_sat(T, p, Rd, Rh20):
+def bolton_q_sat(T, p, Rd, Rh2O):
     es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
-    epsilon = Rd/Rh20
+    epsilon = Rd/Rh2O
     return epsilon*es/(p - (1 - epsilon)*es)
 
 
 @jit(nopython=True)
-def bolton_dqsat_dT(T, Lv, Rh20, q_sat):
+def bolton_dqsat_dT(T, Lv, Rh2O, q_sat):
     """Uses the assumptions of equation 12 in Reed and Jablonowski, 2012. In
     particular, assumes d(qsat)/dT is approximately epsilon/p*d(es)/dT"""
-    return Lv*q_sat/(Rh20*T**2)
+    return Lv*q_sat/(Rh2O*T**2)
 
 
 class GridScaleCondensation(Implicit):
@@ -69,7 +69,7 @@ class GridScaleCondensation(Implicit):
             latent_heat_of_vaporization_of_water)
         self._Rd = replace_none_with_default('gas_constant_of_dry_air',
                                              gas_constant_of_dry_air)
-        self._Rh20 = replace_none_with_default('gas_constant_of_water_vapor',
+        self._Rh2O = replace_none_with_default('gas_constant_of_water_vapor',
                                                gas_constant_of_water_vapor)
         self._g = replace_none_with_default('gravitational_acceleration',
                                             gravitational_acceleration)
@@ -110,20 +110,20 @@ class GridScaleCondensation(Implicit):
         p_interface = get_numpy_array(
             state['air_pressure_on_interface_levels'].to_units('Pa'),
             out_dims=('x', 'y', 'z'))
-        q_sat = self._q_sat(T, p, self._Rd, self._Rh20)
+        q_sat = self._q_sat(T, p, self._Rd.values, self._Rh2O.values)
         saturated = q > q_sat
         dqsat_dT = self._dqsat_dT(
-            T[saturated], self._Lv, self._Rh20, q_sat[saturated])
+            T[saturated], self._Lv.values, self._Rh2O.values, q_sat[saturated])
         condensed_q = np.zeros_like(q)
         condensed_q[saturated] = (
             q[saturated] - q_sat[saturated])/(
-            1 + self._Lv/self._Cpd * dqsat_dT)
+            1 + self._Lv.values/self._Cpd.values * dqsat_dT)
         new_q = q.copy()
         new_T = T.copy()
         new_q[saturated] -= condensed_q[saturated]
-        new_T[saturated] += self._Lv/self._Cpd * condensed_q[saturated]
+        new_T[saturated] += self._Lv.values/self._Cpd.values * condensed_q[saturated]
         mass = (p_interface[:, :, 1:] - p_interface[:, :, :-1])/(
-            self._g*self._rhow)
+            self._g.values*self._rhow.values)
         precipitation = np.sum(condensed_q * mass, axis=2)
 
         dims_3d = combine_dimensions(

@@ -257,26 +257,26 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     if len(x.keys()) == 0:
         x_coordinate = DataArray(
-            np.zeros((1,)), dims=('x',), attrs={'units': 'degrees_north', 'label': 'longitude'})
+            np.zeros((1,)), dims=('longitude',), attrs={'units': 'degrees_east', 'label': 'longitude'})
 
         output_state['longitude'] = x_coordinate
         set_dimension_names(x='longitude')
     else:
         x_coordinate = DataArray(
-            x['values'], dims=('x',), attrs={'units': x['units'], 'label': x['label']})
+            x['values'], dims=(x['label'],), attrs={'units': x['units'], 'label': x['label']})
 
         output_state[x['label']] = x_coordinate
         set_dimension_names(x=x['label'])
 
     if len(y.keys()) == 0:
         y_coordinate = DataArray(
-            np.zeros((1,)), dims=('y',), attrs={'units': 'degrees_east', 'label': 'latitude'})
+            np.zeros((1,)), dims=('latitude',), attrs={'units': 'degrees_north', 'label': 'latitude'})
 
         output_state['latitude'] = y_coordinate
         set_dimension_names(y='latitude')
     else:
         y_coordinate = DataArray(
-            y['values'], dims=('y',), attrs={'units': y['units'], 'label': y['label']})
+            y['values'], dims=(y['label'],), attrs={'units': y['units'], 'label': y['label']})
 
         output_state[y['label']] = y_coordinate
         set_dimension_names(y=y['label'])

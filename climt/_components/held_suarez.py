@@ -1,6 +1,7 @@
 from sympl import (
     Prognostic, DataArray, replace_none_with_default, combine_dimensions,
     get_numpy_array)
+from climt import get_input_arrays_from_state
 import numpy as np
 
 
@@ -27,33 +28,36 @@ class HeldSuarez(Prognostic):
             doi: 10.1175/1520-0477(1994)075<1825:APFTIO>2.0.CO;2.
     """
 
-    inputs = None  # defined at initialization
-    tendencies = ('eastward_wind', 'northward_wind', 'air_temperature')
+    inputs = {
+        'eastward_wind': 'm s^-1',
+        'northward_wind': 'm s^-1',
+        'air_temperature': 'degK',
+        'air_pressure': 'Pa',
+        'surface_pressure': 'Pa'}
+
+    tendencies = {
+        'eastward_wind': 'm s^-1',
+        'northward_wind': 'm s^-1',
+        'air_temperature': 'degK'}
+
     diagnostics = ()
 
-    def __init__(self, latitude=None, air_pressure=None, sigma=None,
+    def __init__(self,
                  sigma_boundary_layer_top=0.7,
-                 k_f=1/86400., k_a=1/40./86400., k_s=1/4./86400.,
-                 equator_pole_temperature_difference=60, delta_theta_z=10,
-                 reference_pressure=None, gas_constant_of_dry_air=None,
+                 k_f=1/86400.,
+                 k_a=1/40./86400.,
+                 k_s=1/4./86400.,
+                 equator_pole_temperature_difference=60,
+                 delta_theta_z=10,
+                 reference_pressure=None,
+                 gas_constant_of_dry_air=None,
                  heat_capacity_of_dry_air_at_constant_pressure=None,
-                 planetary_rotation_rate=None, gravitational_acceleration=None,
+                 planetary_rotation_rate=None,
+                 gravitational_acceleration=None,
                  planetary_radius=None):
         """
 
         Args:
-            latitude (DataArray): The latitude coordinate. Passing this in at
-                initialization makes it so that this object uses that value
-                instead of any value that might be present in the state.
-            air_pressure (DataArray): The air pressure coordinate. Passing this in at
-                initialization makes it so that this object uses that value
-                instead of any value that might be present in the state. Do not
-                pass this in if pressure is not a constant coordinate.
-            sigma (DataArray): The sigma (air_pressure/surface_pressure) coordinate.
-                Passing this in at
-                initialization makes it so that this object uses that value
-                instead of any value that might be present in the state.
-                Do not pass this in if sigma is not a constant coordinate.
             sigma_boundary_layer_top (float): The height of the boundary
                 layer top in sigma coordinates. Corresponds to $\sigma_b$
                 in Held and Suarez, 1994. Default is 0.7.
@@ -94,29 +98,40 @@ class HeldSuarez(Prognostic):
         self._k_s = k_s
         self._delta_T_y = equator_pole_temperature_difference
         self._delta_theta_z = delta_theta_z
+
         self._p0 = replace_none_with_default(
             'reference_pressure', reference_pressure)
+
         self._Cpd = replace_none_with_default(
             'heat_capacity_of_dry_air_at_constant_pressure',
             heat_capacity_of_dry_air_at_constant_pressure)
+
         self._R_d = replace_none_with_default(
             'gas_constant_of_dry_air', gas_constant_of_dry_air)
+
         self._kappa = self._R_d/self._Cpd
+
         self._Omega = replace_none_with_default(
             'planetary_rotation_rate', planetary_rotation_rate)
+
         self._g = replace_none_with_default(
             'gravitational_acceleration', gravitational_acceleration)
+
         self._r_planet = replace_none_with_default(
             'planetary_radius', planetary_radius)
+
+        '''
         # cache computed profiles if grid coordinates are given
         if air_pressure is not None and latitude is not None:
             self._Teq = self._get_Teq(latitude, air_pressure)
         else:
             self._Teq = None
+
         if latitude is not None and sigma is not None:
             self._k_t = self._get_k_t(latitude, sigma)
         else:
             self._k_t = None
+
         if sigma is not None:
             self._k_v = self._get_k_v(sigma)
         else:
@@ -129,6 +144,7 @@ class HeldSuarez(Prognostic):
         if air_pressure is None:
             self.inputs.append('air_pressure')
         self.inputs = tuple(self.inputs)
+        '''
 
     def __call__(self, state):
         """
@@ -145,64 +161,69 @@ class HeldSuarez(Prognostic):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        if self._Teq is None:
-            Teq = self._get_Teq(state['latitude'], state['air_pressure'])
-        else:
-            Teq = self._Teq
-        if self._k_t is None:
-            k_t = self._get_k_t(state['latitude'], state['sigma'])
-        else:
-            k_t = self._k_t
-        if self._k_v is None:
-            k_v = self._get_k_v(state['sigma'])
-        else:
-            k_v = self._k_v
-        u = get_numpy_array(
-            state['eastward_wind'].to_units('m s^-1'), out_dims=('x', 'y', 'z'))
-        v = get_numpy_array(
-            state['northward_wind'].to_units('m s^-1'), out_dims=('x', 'y', 'z'))
-        T = get_numpy_array(
-            state['air_temperature'].to_units('degK'), out_dims=('x', 'y', 'z'))
+
+        if 'latitude' not in state:
+            raise IndexError('state must contain a quantity labeled "latitude"')
+
+        sigma = state['air_pressure']/state['surface_pressure']
+        sigma.attrs['units'] = ''
+
+        Teq = self._get_Teq(state['latitude'], state['air_pressure'])
+        k_t = self._get_k_t(state['latitude'], sigma)
+        k_v = self._get_k_v(sigma)
+
+        input_arrays = get_input_arrays_from_state(self, state)
 
         tendencies = {
             'eastward_wind': DataArray(
-                - k_v.values * u,
+                - k_v.values * input_arrays['eastward_wind'],
                 dims=combine_dimensions(
                     [k_v, state['eastward_wind']], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'm s^-2'}).squeeze(),
+
             'northward_wind': DataArray(
-                - k_v.values * v,
+                - k_v.values * input_arrays['northward_wind'],
                 dims=combine_dimensions(
                     [k_v, state['northward_wind']], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'm s^-2'}).squeeze(),
+
             'air_temperature': DataArray(
-                - k_t.values * (T - Teq.values),
+                - k_t.values * (input_arrays['air_temperature'] - Teq.values),
                 dims=combine_dimensions(
                     [k_t, state['air_temperature']], out_dims=('x', 'y', 'z')),
                 attrs={'units': 'K s^-1'}).squeeze()
         }
+
         return tendencies, {}
 
     def _get_Teq(self, latitude, air_pressure):
+
         out_dims = combine_dimensions(
             [latitude, air_pressure], out_dims=('x', 'y', 'z'))
+
         latitude = get_numpy_array(
             latitude.to_units('degrees_N'), out_dims=('x', 'y', 'z'))
+
         air_pressure = get_numpy_array(
             air_pressure.to_units('Pa'), out_dims=('x', 'y', 'z'))
+
         return DataArray(np.maximum(
             200,
             (315 - self._delta_T_y*np.sin(latitude)**2 -
-             self._delta_theta_z*np.log(air_pressure/self._p0)*np.cos(latitude)**2
-             ) * (air_pressure/self._p0)**self._kappa),
+             self._delta_theta_z*np.log(air_pressure/self._p0.values)*np.cos(latitude)**2
+             ) * (air_pressure/self._p0.values)**self._kappa.values),
             dims=out_dims,
             attrs={'units': 'degK'})
 
     def _get_k_t(self, latitude, sigma):
+
         out_dims = combine_dimensions([latitude, sigma], out_dims=('x', 'y', 'z'))
+
         latitude = get_numpy_array(
             latitude.to_units('degrees_N'), out_dims=('x', 'y', 'z'))
-        sigma = get_numpy_array(sigma.to_units(''), out_dims=('x', 'y', 'z'))
+
+        sigma = get_numpy_array(sigma, out_dims=('x', 'y', 'z'))
+
         return DataArray(
             self._k_a +
             (self._k_s - self._k_a) *
@@ -212,8 +233,11 @@ class HeldSuarez(Prognostic):
             attrs={'units': 's^-1'})
 
     def _get_k_v(self, sigma):
+
         out_dims = combine_dimensions([sigma], out_dims=('x', 'y', 'z'))
+
         sigma = get_numpy_array(sigma.to_units(''), out_dims=('x', 'y', 'z'))
+
         return DataArray(
             self._k_f * np.maximum(
                 0,

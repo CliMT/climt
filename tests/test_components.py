@@ -8,6 +8,7 @@ from climt import (
     HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation)
+import climt
 from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
 )
@@ -15,8 +16,8 @@ from datetime import datetime, timedelta
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
-    'lev', 'interface_levels', 'mid_levels', 'full_levels']
-set_dimension_names(x='lon', y='lat', z=vertical_dimension_names)
+    'mid_levels', 'interface_levels', 'mid_levels', 'full_levels']
+set_dimension_names(x='longitude', y='latitude', z=vertical_dimension_names)
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
@@ -221,20 +222,21 @@ class TestHeldSuarez(ComponentBase):
         random = np.random.RandomState(0)
         return {
             'latitude': DataArray(
-                random.randn(3), dims=['lat'], attrs={'units': 'degrees_N'}),
+                random.randn(3), dims=['latitude'], attrs={'units': 'degrees_N'}),
             'air_pressure': DataArray(
-                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'hPa'},),
-            'sigma': DataArray(
-                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}),
+            'surface_pressure': DataArray(
+                random.rand(2, 3), dims=['longitude', 'latitude'],
+                attrs={'units': 'hPa'},),
             'air_temperature': DataArray(
-                270. + random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                270. + random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'degK'}),
             'eastward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'm/s'}),
             'northward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'm/s'}),
         }
 
@@ -249,52 +251,30 @@ class TestHeldSuarezCachedCoordinates(ComponentBase):
         return {
             'latitude': DataArray(
                 np.linspace(-90, 90, num=3),
-                dims=['lat'], attrs={'units': 'degrees_N'}),
+                dims=['latitude'], attrs={'units': 'degrees_N'}),
             'air_pressure': DataArray(
-                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'hPa'},),
-            'sigma': DataArray(
-                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}),
+            'surface_pressure': DataArray(
+                random.rand(2, 3), dims=['longitude', 'latitude'],
+                attrs={'units': 'hPa'},),
             'air_temperature': DataArray(
-                270. + random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                270. + random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'degK'}),
             'eastward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'm/s'}),
             'northward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['lon', 'lat', 'lev'],
+                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'm/s'}),
         }
 
     def get_component_instance(self, state_modification_func=lambda x: x):
-        random = np.random.RandomState(0)
-        state = state_modification_func({
-            'latitude': DataArray(
-                np.linspace(-90, 90, num=3),
-                dims=['lat'], attrs={'units': 'degrees_N'}),
-            'air_pressure': DataArray(
-                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
-                attrs={'units': 'hPa'},),
-            'sigma': DataArray(
-                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''})
-        })
-        return HeldSuarez(
-            latitude=state['latitude'],
-            air_pressure=state['air_pressure'],
-            sigma=state['sigma'])
+        return HeldSuarez()
 
     def test_1d_output_matches_cached_output(self):
         state = state_3d_to_1d(self.get_3d_input_state())
-        random = np.random.RandomState(0)
-        component = HeldSuarez(
-            latitude=DataArray(
-                np.linspace(-90, 90, num=3),
-                dims=['lat'], attrs={'units': 'degrees_N'})[0],
-            air_pressure=DataArray(
-                random.rand(2, 3, 6), dims=['lon', 'lat', 'lev'],
-                attrs={'units': 'hPa'},)[0, 0, :],
-            sigma=DataArray(
-                np.linspace(0., 1., num=6), dims=['lev'], attrs={'units': ''}))
+        component = self.get_component_instance()
         output = component(state)
         cached_output = self.get_cached_output()
         if cached_output is None:
@@ -316,7 +296,7 @@ class TestFrierson06LongwaveOpticalDepth(ComponentBase):
         state = {
             'latitude': DataArray(
                 np.linspace(-90, 90, num=10),
-                dims=['lat'], attrs={'units': 'degrees_N'}),
+                dims=['latitude'], attrs={'units': 'degrees_N'}),
             'sigma_on_interface_levels': DataArray(
                 np.linspace(0., 1., num=6),
                 dims=['interface_levels'], attrs={'units': ''}),
@@ -382,10 +362,10 @@ class TestGridScaleCondensation(ComponentBase):
             'air_pressure': p,
             'air_temperature': DataArray(
                 270. + random.randn(nx, ny, nz),
-                dims=['lon', 'lat', 'mid_levels'], attrs={'units': 'degK'}),
+                dims=['longitude', 'latitude', 'mid_levels'], attrs={'units': 'degK'}),
             'specific_humidity': DataArray(
                 random.rand(nx, ny, nz)*15.,
-                dims=['lon', 'lat', 'mid_levels'], attrs={'units': 'kg/kg'}),
+                dims=['longitude', 'latitude', 'mid_levels'], attrs={'units': 'kg/kg'}),
             'air_pressure_on_interface_levels': p_interface,
         }
 
@@ -402,10 +382,10 @@ class TestBergerSolarInsolation(ComponentBase):
             'time': datetime(2016, 12, 20, 6),
             'longitude': DataArray(
                 np.linspace(-90, 90, nx, endpoint=False),
-                dims=['lon'], attrs={'units': 'degree_E'}),
+                dims=['longitude'], attrs={'units': 'degree_E'}),
             'latitude': DataArray(
                 np.linspace(-180., 180., num=ny),
-                dims=['lat'], attrs={'units': 'degrees_north'}),
+                dims=['latitude'], attrs={'units': 'degrees_north'}),
         }
 
 
@@ -420,10 +400,10 @@ class TestBergerSolarInsolationDifferentTime(ComponentBase):
             'time': datetime(1916, 12, 20, 6),
             'longitude': DataArray(
                 np.linspace(-90, 90, nx, endpoint=False),
-                dims=['lon'], attrs={'units': 'degree_E'}),
+                dims=['longitude'], attrs={'units': 'degree_E'}),
             'latitude': DataArray(
                 np.linspace(-180., 180., num=ny),
-                dims=['lat'], attrs={'units': 'degrees_north'}),
+                dims=['latitude'], attrs={'units': 'degrees_north'}),
         }
 
 
