@@ -204,7 +204,7 @@ def compare_outputs(current, cached):
 def compare_one_state_pair(current, cached):
     for key in current.keys():
         try:
-            assert np.all(current[key].values == cached[key].values)
+            assert np.all(np.isclose(current[key].values, cached[key].values))
             for attr in current[key].attrs:
                 assert current[key].attrs[attr] == cached[key].attrs[attr]
             for attr in cached[key].attrs:
