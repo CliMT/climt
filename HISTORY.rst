@@ -2,7 +2,8 @@
 History
 =======
 
-1.0.0 (2016-11-26)
+0.? (2017-03-27)
 ------------------
 
-* First release on PyPI.
+* Added RRTMG Longwave, Simple Physics
+* Added helper functions to reduce boilerplate code in components
