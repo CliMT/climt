@@ -30,6 +30,20 @@ def init_interface_level_pressures(array_dims, quantity_description):
     return interface*np.ones(array_dims, order='F')
 
 
+def init_interface_level_sigma(array_dims, quantity_description):
+
+    vert_levels = array_dims[-1]
+    spacing = np.linspace(0.995, 0.001, vert_levels-1)
+    midlevel = spacing
+
+    interface = np.zeros(vert_levels)
+    interface[1:-1] = 0.5*(midlevel[:-1] + midlevel[1:])
+    interface[0] = 1.
+    interface[-1] = 0.0005
+
+    return interface*np.ones(array_dims, order='F')
+
+
 _quantity_descriptions = {
     'air_pressure': {
         'dims': ['x', 'y', 'mid_levels'],
@@ -40,6 +54,11 @@ _quantity_descriptions = {
         'dims': ['x', 'y', 'interface_levels'],
         'units': 'Pa',
         'init_func': init_interface_level_pressures
+    },
+    'sigma_on_interface_levels': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'dimensionless',
+        'init_func': init_interface_level_sigma
     },
     'surface_pressure': {
         'dims': ['x', 'y'],

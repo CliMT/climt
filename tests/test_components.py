@@ -290,6 +290,33 @@ class TestHeldSuarezCachedCoordinates(ComponentBase):
                 compare_outputs(output, tuple(cached_output_1d))
 
 
+def test_hs_without_latitude():
+
+    hs = HeldSuarez()
+
+    random = np.random.RandomState(0)
+    input_state = {
+        'air_pressure': DataArray(
+            random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
+            attrs={'units': 'hPa'},),
+        'surface_pressure': DataArray(
+            random.rand(2, 3), dims=['longitude', 'latitude'],
+            attrs={'units': 'hPa'},),
+        'air_temperature': DataArray(
+            270. + random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
+            attrs={'units': 'degK'}),
+        'eastward_wind': DataArray(
+            random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
+            attrs={'units': 'm/s'}),
+        'northward_wind': DataArray(
+            random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
+            attrs={'units': 'm/s'})}
+
+    with pytest.raises(IndexError) as excinfo:
+        hs(input_state)
+    assert 'quantity labeled' in str(excinfo.value)
+
+
 class TestFrierson06LongwaveOpticalDepth(ComponentBase):
 
     def get_3d_input_state(self):
@@ -405,6 +432,53 @@ class TestBergerSolarInsolationDifferentTime(ComponentBase):
                 np.linspace(-180., 180., num=ny),
                 dims=['latitude'], attrs={'units': 'degrees_north'}),
         }
+
+
+class TestBergerSolarInsolationWithSolarConstant(ComponentBase):
+
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return BergerSolarInsolation()
+
+    def get_3d_input_state(self):
+        nx = 5
+        ny = 10
+        return {
+            'time': datetime(2016, 12, 20, 6),
+            'longitude': DataArray(
+                np.linspace(-90, 90, nx, endpoint=False),
+                dims=['longitude'], attrs={'units': 'degree_E'}),
+            'latitude': DataArray(
+                np.linspace(-180., 180., num=ny),
+                dims=['latitude'], attrs={'units': 'degrees_north'}),
+            'solar_constant': DataArray(
+                1364.*np.ones(1),
+                dims=[''], attrs={'units': 'W m^-2'}),
+
+        }
+
+
+def test_berger_insolation_with_bad_solar_constant():
+
+    berger = BergerSolarInsolation()
+    nx = 5
+    ny = 10
+    input_state = {
+        'time': datetime(2016, 12, 20, 6),
+        'longitude': DataArray(
+            np.linspace(-90, 90, nx, endpoint=False),
+            dims=['longitude'], attrs={'units': 'degree_E'}),
+        'latitude': DataArray(
+            np.linspace(-180., 180., num=ny),
+            dims=['latitude'], attrs={'units': 'degrees_north'}),
+        'solar_constant': DataArray(
+            1364.*np.ones((2)),
+            dims=['latitude'], attrs={'units': 'W m^-2'}),
+
+    }
+
+    with pytest.raises(ValueError) as excinfo:
+        berger(input_state)
+    assert 'Solar constant should' in str(excinfo.value)
 
 
 class TestSimplePhysics(ComponentBase):

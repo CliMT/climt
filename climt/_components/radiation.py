@@ -16,7 +16,6 @@ class GrayLongwaveRadiation(Prognostic):
 
     def __init__(
             self,
-            longwave_optical_depth_on_interface_levels=None,
             stefan_boltzmann=None,
             gravitational_acceleration=None,
             heat_capacity_of_dry_air_at_constant_pressure=None):
@@ -37,12 +36,6 @@ class GrayLongwaveRadiation(Prognostic):
                 Default taken from climt.default_constants.
         """
 
-        if longwave_optical_depth_on_interface_levels is not None:
-            self._optical_depth = get_numpy_array(
-                longwave_optical_depth_on_interface_levels .to_units(''),
-                out_dims=('x', 'y', 'z'))
-        else:
-            self._optical_depth = None
         self._stefan_boltzmann = replace_none_with_default(
             'stefan_boltzmann_constant', stefan_boltzmann)
         self._g = replace_none_with_default(
@@ -66,12 +59,9 @@ class GrayLongwaveRadiation(Prognostic):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        if self._optical_depth is None:
-            tau = get_numpy_array(state[
-                'longwave_optical_depth_on_interface_levels'].to_units(''),
-                out_dims=('x', 'y', 'z'))
-        else:
-            tau = self._optical_depth
+        tau = get_numpy_array(state[
+            'longwave_optical_depth_on_interface_levels'].to_units(''),
+            out_dims=('x', 'y', 'z'))
         T = get_numpy_array(
             state['air_temperature'].to_units('degK'), out_dims=('x', 'y', 'z'))
         p_interface = get_numpy_array(
@@ -113,13 +103,11 @@ class GrayLongwaveRadiation(Prognostic):
 
 class Frierson06LongwaveOpticalDepth(Diagnostic):
 
-    inputs = None  # determined by instance
+    inputs = ('sigma_on_interface_levels',)
     diagnostics = ('longwave_optical_depth_on_interface_levels',)
 
     def __init__(
             self,
-            latitude=None,
-            sigma_on_interface_levels=None,
             linear_optical_depth_parameter=0.1,
             longwave_optical_depth_at_equator=6,
             longwave_optical_depth_at_poles=1.5):
@@ -143,31 +131,9 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 at the poles.
                 Default is 1.5 as in Frierson et al., 2006.
         """
-        self._latitude = latitude
-        self._sigma_on_interface_levels = sigma_on_interface_levels
         self._fl = linear_optical_depth_parameter
         self._tau0e = longwave_optical_depth_at_equator
         self._tau0p = longwave_optical_depth_at_poles
-        self._latitude = latitude
-        self._sigma_on_interface_levels = sigma_on_interface_levels
-        inputs = []
-        if latitude is None:
-            inputs.append('latitude')
-        if sigma_on_interface_levels is None:
-            inputs.append('sigma_on_interface_levels')
-        self.inputs = tuple(inputs)
-        if (self._latitude is not None and
-                self._sigma_on_interface_levels is not None):
-            self._tau = DataArray(
-                get_frierson_06_tau(
-                    self._latitude, self._sigma_on_interface_levels,
-                    self._tau0e, self._tau0p, self._fl),
-                dims=combine_dimensions(
-                    [self._latitude, self._sigma_on_interface_levels],
-                    out_dims=('x', 'y', 'z')),
-                attrs={'units': ''}).squeeze()
-        else:
-            self._tau = None
 
     def __call__(self, state):
         """
@@ -184,28 +150,22 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        if self._latitude is None:
-            lat = get_numpy_array(
-                state['latitude'].to_units('degrees_north'),
-                out_dims=('x', 'y', 'z'))
-        else:
-            lat = self._latitude
-        if self._sigma_on_interface_levels is None:
-            sigma_interface = get_numpy_array(
-                state['sigma_on_interface_levels'].to_units(''),
-                out_dims=('x', 'y', 'z'))
-        else:
-            sigma_interface = self._sigma_on_interface_levels
-        if self._tau is None:
-            tau = DataArray(
-                get_frierson_06_tau(
-                    lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
-                dims=combine_dimensions(
-                    [state['latitude'], state['sigma_on_interface_levels']],
-                    out_dims=('x', 'y', 'z')),
-                attrs={'units': ''}).squeeze()
-        else:
-            tau = self._tau
+        lat = get_numpy_array(
+            state['latitude'].to_units('degrees_north'),
+            out_dims=('x', 'y', 'z'))
+
+        sigma_interface = get_numpy_array(
+            state['sigma_on_interface_levels'].to_units(''),
+            out_dims=('x', 'y', 'z'))
+
+        tau = DataArray(
+            get_frierson_06_tau(
+                lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
+            dims=combine_dimensions(
+                [state['latitude'], state['sigma_on_interface_levels']],
+                out_dims=('x', 'y', 'z')),
+            attrs={'units': ''}).squeeze()
+
         return {
             'longwave_optical_depth_on_interface_levels': tau,
         }
