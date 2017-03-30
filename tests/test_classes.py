@@ -37,6 +37,7 @@ class MockPrognosticWithExtraQuantities(Prognostic):
     inputs = {
         'air_temperature': 'degK',
         'oxygen_mixing_ratio': 'millimole/mole',
+        'some_quantity': 'dimensionless'
     }
 
     quantity_descriptions = {

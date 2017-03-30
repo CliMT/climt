@@ -306,6 +306,9 @@ class RRTMLongwave(Prognostic):
         ClFrac = get_numpy_array(state['cloud_fraction'].to_units('dimensionless'),
                                  ['x', 'y', 'z'])
 
+        AerTau = get_numpy_array(state['aerosol_optical_depth'].to_units('dimensionless'),
+                                 ['x', 'y', 'z', 'num_longwave_bands'])
+
         if self._cloud_optics == 0:  # Optical depth is part of input
             ClTau = get_numpy_array(state['cloud_optical_depth'].to_units('dimensionless'),
                                     ['x', 'num_longwave_bands', 'y', 'z'])
@@ -316,14 +319,13 @@ class RRTMLongwave(Prognostic):
             ClLWP = get_numpy_array(state['cloud_liquid_water_path'].to_units('g m^-2'),
                                     ['x', 'y', 'z'])
 
-            ClIceSize = get_numpy_array(state['ice_particle_size'].to_units('micrometer'),
+            ClIceSize = get_numpy_array(state['cloud_ice_particle_size'].to_units('micrometer'),
                                         ['x', 'y', 'z'])
 
-            ClDropSize = get_numpy_array(state['cloud_droplet_radius'].to_units('micrometer'),
+            ClDropSize = get_numpy_array(state['cloud_water_droplet_radius'].to_units('micrometer'),
                                          ['x', 'y', 'z'])
+            ClTau = AerTau
 
-        AerTau = get_numpy_array(state['aerosol_optical_depth'].to_units('dimensionless'),
-                                 ['x', 'y', 'z', 'num_longwave_bands'])
 
         up_flux = np.zeros(Tint.shape, order='F')
         down_flux = np.zeros(Tint.shape, order='F')
@@ -389,11 +391,11 @@ class RRTMLongwave(Prognostic):
                                                         up_flux_clear[lon, :],
                                                         down_flux_clear[lon, :],
                                                         heating_rate_clear[lon, :],
-                                                        0,
+                                                        ClTau[lon, :],
                                                         ClIWP[lon, :],
                                                         ClLWP[lon, :],
-                                                        ClIceSize,
-                                                        ClDropSize)
+                                                        ClIceSize[lon, :],
+                                                        ClDropSize[lon, :])
 
         dims_mid = combine_dimensions([state['air_temperature']], ['x', 'y', 'z'])
         # dims_int = combine_dimensions([state['air_temperature_on_interface_levels']], ['x', 'y', 'z'])

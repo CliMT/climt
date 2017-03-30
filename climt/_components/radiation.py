@@ -212,19 +212,6 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
 
 
 @jit(nopython=True)
-def get_interface_pressures(p, ps):
-    """Given 3D pressure on model mid levels (cell centers) and the 2D surface
-    pressure, return the 3D pressure on model interface levels (cell interfaces).
-    If the z-dimension of p is length K, the returned p_interface will have a
-    z-dimension of length K+1."""
-    interface_pressures = np.zeros(
-        (p.shape[0], p.shape[1], p.shape[2]+1), dtype=np.float32)
-    interface_pressures[:, :, 1:-1] = 0.5*(p[:, :, 1:] + p[:, :, :-1])
-    interface_pressures[:, :, 0] = ps[:, :, 0]
-    return interface_pressures
-
-
-@jit(nopython=True)
 def integrate_upward_longwave(T, T_surface, tau, sigma):
     """
     Args:

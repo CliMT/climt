@@ -441,5 +441,22 @@ class TestRRTMLongwave(ComponentBase):
         assert True
 
 
+class TestRRTMLongwaveWithClouds(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return RRTMLongwave(cloud_optical_properties=1)
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

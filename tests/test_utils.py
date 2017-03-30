@@ -68,6 +68,14 @@ def test_inputs_is_not_dict():
     assert 'with dict-like' in str(excinfo.value)
 
 
+def test_c_memory_layout():
+
+    dummy = MockPrognostic()
+    state = get_default_state([dummy])
+
+    get_input_arrays_from_state(dummy, state, memory_layout='c')
+
+
 def test_wrong_memory_layout():
 
     dummy = MockPrognostic()
@@ -76,6 +84,17 @@ def test_wrong_memory_layout():
     with pytest.raises(ValueError) as excinfo:
         get_input_arrays_from_state(dummy, state, memory_layout='abcd')
     assert 'memory_layout' in str(excinfo.value)
+
+
+def test_unknown_quantity_in_component():
+
+    dummy = MockPrognostic()
+    state = get_default_state([dummy])
+    state.pop('air_temperature')
+
+    with pytest.raises(IndexError) as excinfo:
+        get_input_arrays_from_state(dummy, state, memory_layout='c')
+    assert 'does not contain' in str(excinfo.value)
 
 
 if __name__ == '__main__':
