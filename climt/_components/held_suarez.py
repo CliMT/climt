@@ -92,6 +92,7 @@ class HeldSuarez(Prognostic):
             planetary_radius (float): Value in m.
                 Default is taken from climt.default_constants.
         """
+
         self._sigma_b = sigma_boundary_layer_top
         self._k_f = k_f
         self._k_a = k_a

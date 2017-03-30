@@ -36,6 +36,7 @@ class GrayLongwaveRadiation(Prognostic):
                 dry air at constnat pressure in $J kg^{-1} K^{-1}$.
                 Default taken from climt.default_constants.
         """
+
         if longwave_optical_depth_on_interface_levels is not None:
             self._optical_depth = get_numpy_array(
                 longwave_optical_depth_on_interface_levels .to_units(''),

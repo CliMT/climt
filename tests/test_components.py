@@ -7,7 +7,7 @@ import numpy as np
 from climt import (
     HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
-    BergerSolarInsolation)
+    BergerSolarInsolation, SimplePhysics, RRTMLongwave)
 import climt
 from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
-    'mid_levels', 'interface_levels', 'mid_levels', 'full_levels']
+    'interface_levels', 'mid_levels', 'full_levels']
 set_dimension_names(x='longitude', y='latitude', z=vertical_dimension_names)
 
 cache_folder = os.path.join(
@@ -406,6 +406,38 @@ class TestBergerSolarInsolationDifferentTime(ComponentBase):
                 dims=['latitude'], attrs={'units': 'degrees_north'}),
         }
 
+
+class TestSimplePhysics(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return SimplePhysics()
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0,2,4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+class TestRRTMLongwave(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return RRTMLongwave()
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0,2,4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
 
 if __name__ == '__main__':
     pytest.main([__file__])

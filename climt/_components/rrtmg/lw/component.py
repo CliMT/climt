@@ -172,6 +172,7 @@ class RRTMLongwave(Prognostic):
                 Default value from climt.default_constants is used if None.
         """
 
+
         self._calc_dflxdt = calculate_change_up_flux
 
         self._cloud_overlap = cloud_overlap_method
@@ -215,9 +216,13 @@ class RRTMLongwave(Prognostic):
         if self._cloud_optics == 0:  # Cloud optical depth directly input
             for input_quantity in ['cloud_ice_water_path', 'cloud_liquid_water_path',
                                    'cloud_ice_particle_size', 'cloud_water_droplet_radius']:
-                self.inputs.pop(input_quantity)
+                copy_inputs = self.inputs.copy()
+                copy_inputs.pop(input_quantity)
+                self.inputs = copy_inputs
         else:
-            self.inputs.pop('cloud_optical_depth')
+            copy_inputs = self.inputs.copy()
+            copy_inputs.pop('cloud_optical_depth')
+            self.inputs = copy_inputs
 
         _rrtm_lw.set_constants(
             PI, self._g,

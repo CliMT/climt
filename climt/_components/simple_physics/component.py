@@ -176,7 +176,7 @@ class SimplePhysics(Implicit):
          q_out, precip_out) = phys.get_new_state(
              U, V, T, P,
              Pint, q, Ps, Ts,
-             lats, timestep.seconds)
+             lats, float(timestep.seconds))
 
         new_state = {
             'eastward_wind': DataArray(
