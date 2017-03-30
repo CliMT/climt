@@ -16,4 +16,4 @@ scipy==0.19.0
 numpy>=0.10
 git+git://github.com/mcgibbon/sympl@master
 cython==0.25.2
-coveralls
+coveralls==1.1
