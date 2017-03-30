@@ -326,7 +326,6 @@ class RRTMLongwave(Prognostic):
                                          ['x', 'y', 'z'])
             ClTau = AerTau
 
-
         up_flux = np.zeros(Tint.shape, order='F')
         down_flux = np.zeros(Tint.shape, order='F')
         heating_rate = np.zeros(T.shape, order='F')
