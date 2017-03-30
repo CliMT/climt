@@ -1,2 +1,2 @@
 ignore:
-    - climt/**/setup.py
+    - "climt/**/setup.py"
