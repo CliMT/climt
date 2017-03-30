@@ -11,7 +11,7 @@ PyYAML==3.12
 pytest==3.0.7
 pytest-cov==2.4.0
 mock==2.0.0
-xarray==0.8.2
+xarray==0.9.1
 scipy
 numpy>=0.10
 git+git://github.com/mcgibbon/sympl@master
