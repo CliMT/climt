@@ -172,7 +172,6 @@ class RRTMLongwave(Prognostic):
                 Default value from climt.default_constants is used if None.
         """
 
-
         self._calc_dflxdt = calculate_change_up_flux
 
         self._cloud_overlap = cloud_overlap_method
