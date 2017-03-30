@@ -6,7 +6,9 @@ from climt import (
 from sympl import DataArray
 import numpy as np
 import pytest
-from .test_classes import MockPrognostic, MockPrognosticWithExtraQuantities
+from .test_classes import (MockPrognostic,
+                           MockPrognosticWithExtraQuantities,
+                           MockPrognosticWithExtraQuantitiesNotDefined)
 
 
 def test_mol_weight_not_passed():
@@ -107,6 +109,17 @@ def test_get_class_defined_quantity():
 
     assert np.all(
         state['sigma_on_interface_levels'].values == input_arrays['sigma_on_interface_levels'])
+
+
+def test_get_undefined_array():
+
+    dummy = MockPrognosticWithExtraQuantities()
+    state = get_default_state([dummy])
+    dummy = MockPrognosticWithExtraQuantitiesNotDefined()
+
+    with pytest.raises(IndexError) as excinfo:
+        get_input_arrays_from_state(dummy, state)
+    assert 'not described' in str(excinfo.value)
 
 
 if __name__ == '__main__':

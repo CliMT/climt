@@ -56,6 +56,22 @@ class MockPrognosticWithExtraQuantities(Prognostic):
         return
 
 
+class MockPrognosticWithExtraQuantitiesNotDefined(Prognostic):
+
+    inputs = {
+        'air_temperature': 'degK',
+        'oxygen_mixing_ratio': 'millimole/mole',
+        'some_quantity': 'dimensionless',
+        'sigma_on_interface_levels': 'dimensionless'
+    }
+
+    def __init__(self):
+        return
+
+    def __call__(self, state):
+        return
+
+
 class MockPrognosticWithMalformedExtraQuantities(Prognostic):
 
     inputs = {
