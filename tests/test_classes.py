@@ -37,7 +37,8 @@ class MockPrognosticWithExtraQuantities(Prognostic):
     inputs = {
         'air_temperature': 'degK',
         'oxygen_mixing_ratio': 'millimole/mole',
-        'some_quantity': 'dimensionless'
+        'some_quantity': 'dimensionless',
+        'sigma_on_interface_levels': 'dimensionless'
     }
 
     quantity_descriptions = {
@@ -45,6 +46,28 @@ class MockPrognosticWithExtraQuantities(Prognostic):
             'dims': ['x', 'y', 'mid_levels'],
             'units': 'dimensionless',
             'init_value': 1.
+        }
+    }
+
+    def __init__(self):
+        return
+
+    def __call__(self, state):
+        return
+
+
+class MockPrognosticWithMalformedExtraQuantities(Prognostic):
+
+    inputs = {
+        'air_temperature': 'degK',
+        'oxygen_mixing_ratio': 'millimole/mole',
+        'some_quantity': 'dimensionless',
+    }
+
+    quantity_descriptions = {
+        'some_quantity': {
+            'dims': ['x', 'y', 'mid_levels'],
+            'units': 'dimensionless',
         }
     }
 

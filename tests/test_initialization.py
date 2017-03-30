@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 from .test_classes import (MockPrognostic,
                            MockPrognosticWithExtraDimensions,
-                           MockPrognosticWithExtraQuantities)
+                           MockPrognosticWithExtraQuantities,
+                           MockPrognosticWithMalformedExtraQuantities)
 
 
 def test_no_components():
@@ -125,6 +126,15 @@ def test_with_extra_quantities():
 
     for quantity in state.keys():
         assert quantity in required_quantities
+
+
+def test_with_malformed_extra_quantity():
+
+    dummy = MockPrognosticWithMalformedExtraQuantities()
+
+    with pytest.raises(ValueError) as excinfo:
+        get_default_state([dummy])
+    assert 'Malformed' in str(excinfo.value)
 
 
 if __name__ == '__main__':

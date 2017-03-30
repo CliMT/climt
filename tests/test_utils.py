@@ -6,7 +6,7 @@ from climt import (
 from sympl import DataArray
 import numpy as np
 import pytest
-from .test_classes import MockPrognostic
+from .test_classes import MockPrognostic, MockPrognosticWithExtraQuantities
 
 
 def test_mol_weight_not_passed():
@@ -71,7 +71,9 @@ def test_inputs_is_not_dict():
 def test_c_memory_layout():
 
     dummy = MockPrognostic()
-    state = get_default_state([dummy])
+    state = get_default_state([dummy], x=dict(label='longitude',
+                                              values=np.arange(10),
+                                              units='degrees_east'))
 
     get_input_arrays_from_state(dummy, state, memory_layout='c')
 
@@ -95,6 +97,16 @@ def test_unknown_quantity_in_component():
     with pytest.raises(IndexError) as excinfo:
         get_input_arrays_from_state(dummy, state, memory_layout='c')
     assert 'does not contain' in str(excinfo.value)
+
+
+def test_get_class_defined_quantity():
+
+    dummy = MockPrognosticWithExtraQuantities()
+    state = get_default_state([dummy])
+    input_arrays = get_input_arrays_from_state(dummy, state)
+
+    assert np.all(
+        state['sigma_on_interface_levels'].values == input_arrays['sigma_on_interface_levels'])
 
 
 if __name__ == '__main__':
