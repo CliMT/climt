@@ -40,8 +40,10 @@ def mass_to_volume_mixing_ratio(
 
     volume_mixing_ratio = mass_mixing_ratio_with_units*molecular_weight_air/molecular_weight
 
-    volume_mixing_ratio = DataArray(volume_mixing_ratio.to_base_units(),
-                                    dims=dims, attrs={'units': str(volume_mixing_ratio.units)})
+    volume_mixing_ratio = volume_mixing_ratio.to_base_units()
+    volume_mixing_ratio = DataArray(volume_mixing_ratio,
+                                    dims=dims,
+                                    attrs={'units': str(volume_mixing_ratio.units)})
 
     return volume_mixing_ratio
 
@@ -71,11 +73,6 @@ def get_input_arrays_from_state(component, state, memory_layout='fortran'):
         to the input quantities specified in ``component``. The returned arrays will
         be in the units specified in ``component.inputs``.
     """
-
-    if not hasattr(component, 'inputs'):
-        raise IndexError(
-            'The component does not have the "inputs" attribute. \
-            This is quite unusual! Contact the developers.')
 
     if not isinstance(component.inputs, dict):
         raise NotImplementedError(
