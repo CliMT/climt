@@ -4,9 +4,12 @@ from sympl import (Prognostic,
                    get_numpy_array,
                    combine_dimensions)
 import climt
-from . import _rrtm_lw
 import numpy as np
 from numpy import pi as PI
+try:
+    from . import _rrtm_lw
+except:
+    print('Import failed. RRTMG Longwave will not be available!')
 
 
 class RRTMLongwave(Prognostic):

@@ -3,7 +3,10 @@ from sympl import DataArray
 from sympl import replace_none_with_default
 from sympl import get_numpy_array
 from sympl import combine_dimensions
-from . import _simple_physics as phys
+try:
+    from . import _simple_physics as phys
+except:
+    print('Import failed. Simple Physics will not be available!')
 
 
 class SimplePhysics(Implicit):
