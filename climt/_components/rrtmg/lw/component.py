@@ -57,10 +57,10 @@ class RRTMLongwave(Prognostic):
         # TODO Need to add those final two quantities from the code
     }
 
+    extra_dimensions = {'num_longwave_bands': np.arange(16)}
     '''
     RRTM without MCICA requires certain arrays on spectral bands
     '''
-    extra_dimensions = {'num_longwave_bands': np.arange(16)}
 
     quantity_descriptions = {
         'surface_emissivity': {
@@ -105,43 +105,43 @@ class RRTMLongwave(Prognostic):
         Args:
 
         calculate_change_up_flux (int): calculate derivative of flux change with respect to
-        surface temperature alone. Can be used to adjust fluxes in between radiation calls
-        only due to change of surface temperature. Default value is 0, meaning this quantity
-        is not calculated.
+            surface temperature alone. Can be used to adjust fluxes in between radiation calls
+            only due to change of surface temperature. Default value is 0, meaning this quantity
+            is not calculated.
 
         cloud_overlap_method (int): Choose the method to do overlap with:
-        0 = Clear only (no clouds)
-        1 = Random
-        2 = Maximum/Random
-        3 = Maximum.
+            0 = Clear only (no clouds)
+            1 = Random
+            2 = Maximum/Random
+            3 = Maximum.
 
-        Default value is 1, corresponding to random cloud overlap.
+            Default value is 1, corresponding to random cloud overlap.
 
         cloud_optical_properties (int): Choose how cloud optical properties are
-        calculated.
-        0 = Both cloud fraction and cloud optical depth are input directly
-        1 = Cloud fraction and cloud physical properties are input, ice and liquid
-            clouds are treated together, cloud absorptivity is a constant value (0.060241)
-        2 = Cloud fraction and cloud physical properties are input, ice and liquid
-            clouds are treated separately
+            calculated.
+            0 = Both cloud fraction and cloud optical depth are input directly
+            1 = Cloud fraction and cloud physical properties are input, ice and liquid
+                clouds are treated together, cloud absorptivity is a constant value (0.060241)
+            2 = Cloud fraction and cloud physical properties are input, ice and liquid
+                clouds are treated separately
 
-        Default value is 0.
+            Default value is 0.
 
         cloud_ice_properties (int): set bounds on ice particle size.
-        0 = ice particle has effective radius >= 10.0 micron (Ebert and Curry 1992)
-        1 = ice particle has effective radius between 13.0 and 130.0 micron (Ebert and Curry 1992)
-        2 = ice particle has effective radius between 5.0 and 131.0 micron (Key, Streamer Ref.
-            Manual, 1996)
-        3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron (Fu, 1996)
-            dge = 1.0315* effective radius
+            0 = ice particle has effective radius >= 10.0 micron (Ebert and Curry 1992)
+            1 = ice particle has effective radius between 13.0 and 130.0 micron (Ebert and Curry 1992)
+            2 = ice particle has effective radius between 5.0 and 131.0 micron (Key, Streamer Ref.
+                Manual, 1996)
+            3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron (Fu, 1996)
+                dge = 1.0315* effective radius
 
-        Default value is 0.
+            Default value is 0.
 
         cloud_liquid_water_properties (int): set treatment of cloud liquid water.
-        0 = use radius independent absorption coefficient
-        1 = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
+            0 = use radius independent absorption coefficient
+            1 = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
 
-        Default value is 0.
+            Default value is 0.
 
         gravitational_acceleration (float): value of acceleration due to gravity in
                 $m s^{-1}$. Default value from climt.default_constants is used if None.
@@ -251,12 +251,12 @@ class RRTMLongwave(Prognostic):
         Returns radiative heating tendencies and longwave flux diagnostics.
 
         Args:
-            state (dict) : The model state dictionary
+            state (dict): The model state dictionary
 
         Returns:
-            tendencies (dict) : The longwave heating tendency
+            tendencies (dict): The longwave heating tendency
 
-            diagnostics (dict) : The upward/downward longwave fluxes for cloudy and clear
+            diagnostics (dict): The upward/downward longwave fluxes for cloudy and clear
                                 sky conditions.
 
         """
