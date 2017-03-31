@@ -14,7 +14,6 @@ sympl.set_dimension_names(z=['interface_levels', 'mid_levels'])
 __all__ = (
     sympl, get_default_state, mass_to_volume_mixing_ratio, get_input_arrays_from_state,
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
-    GridScaleCondensation, BergerSolarInsolation,
-        SimplePhysics, RRTMLongwave)
+    GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMLongwave)
 
 __version__ = '0.9'
