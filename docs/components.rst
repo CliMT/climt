@@ -11,4 +11,4 @@ Radiation
 
 .. autoclass:: RRTMLongwave
 
-    :members:
+    :members: __init__, __call__
