@@ -128,11 +128,10 @@ class RRTMLongwave(Prognostic):
             Default value is 0.
 
         cloud_ice_properties (int): set bounds on ice particle size.
-            0 = ice particle has effective radius >= 10.0 micron (Ebert and Curry 1992)
-            1 = ice particle has effective radius between 13.0 and 130.0 micron (Ebert and Curry 1992)
-            2 = ice particle has effective radius between 5.0 and 131.0 micron (Key, Streamer Ref.
-                Manual, 1996)
-            3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron (Fu, 1996)
+            0 = ice particle has effective radius >= 10.0 micron [Ebert and Curry 1992]_
+            1 = ice particle has effective radius between 13.0 and 130.0 micron [Ebert and Curry 1992]_
+            2 = ice particle has effective radius between 5.0 and 131.0 micron [Key, Streamer Ref. Manual, 1996]_
+            3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron [Fu, 1996]_
                 dge = 1.0315* effective radius
 
             Default value is 0.
@@ -173,6 +172,10 @@ class RRTMLongwave(Prognostic):
 
         specific_heat_dry_air (float): The specific heat of dry air in $J {K^-1} kg^{-1}$.
                 Default value from climt.default_constants is used if None.
+
+        .. _[Ebert and Curry 1992]:: http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
+        .. _[Key, Streamer Ref. Manual, 1996]:: https://stratus.ssec.wisc.edu/streamer/userman.pdf
+        .. _[Fu, 1996]:: http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
         """
 
         self._calc_dflxdt = calculate_change_up_flux
