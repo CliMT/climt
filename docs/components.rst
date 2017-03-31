@@ -13,3 +13,4 @@ Radiation
     :toctree: generated/
 
     RRTMLongwave
+    RRTMLongwave.__call__
