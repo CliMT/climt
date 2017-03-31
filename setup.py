@@ -50,7 +50,7 @@ for module in fortran_ext.keys():
 
 setup(
     name='climt',
-    version='1.0.0',
+    version='0.9',
     description='CliMT is a Toolkit for building Earth system models in Python.',
     long_description=readme + '\n\n' + history,
     author="Rodrigo Caballero",
