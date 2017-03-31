@@ -173,9 +173,15 @@ class RRTMLongwave(Prognostic):
         specific_heat_dry_air (float): The specific heat of dry air in $J {K^-1} kg^{-1}$.
                 Default value from climt.default_constants is used if None.
 
-        .. _[Ebert and Curry 1992]: http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
-        .. _[Key, Streamer Ref. Manual, 1996]: https://stratus.ssec.wisc.edu/streamer/userman.pdf
-        .. _[Fu, 1996]: http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
+        .. _[Ebert and Curry 1992]:
+            http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
+
+        .. _[Key, Streamer Ref. Manual, 1996]:
+            https://stratus.ssec.wisc.edu/streamer/userman.pdf
+
+        .. _[Fu, 1996]:
+            http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
+
         """
 
         self._calc_dflxdt = calculate_change_up_flux

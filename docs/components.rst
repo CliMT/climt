@@ -9,8 +9,6 @@ This page documents the different components available through CliMT.
 Radiation
 ---------
 
-.. autosummary::
-    :toctree: generated/
+.. autoclass:: RRTMLongwave
 
-    RRTMLongwave
-    RRTMLongwave.__call__
+    :members:
