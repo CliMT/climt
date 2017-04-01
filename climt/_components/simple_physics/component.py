@@ -11,7 +11,7 @@ except:
 
 class SimplePhysics(Implicit):
     """
-    Interface to the simple physics package
+    Interface to the simple physics package.
 
     Reed and Jablonowski 2012:
     title = {Idealized tropical cyclone simulations of intermediate complexity: a test case for {AGCMs}}
@@ -50,51 +50,63 @@ class SimplePhysics(Implicit):
         """
 
         Args:
-            simulate_cyclone (bool): Option indicating whether the package must
+
+            simulate_cyclone (bool):
+                Option indicating whether the package must
                 simulate a tropical cyclone. This was the original test case this
                 physics package was used for.
                 Default value is False.
 
-            large_scale_condensation (bool): Option indicating whether the package
+            large_scale_condensation (bool):
+                Option indicating whether the package
                 must add moisture and heating tendencies due to large scale condensation.
                 Default value is True.
 
-            boundary_layer (bool): Option indicating whether the package must simulate
+            boundary_layer (bool):
+                Option indicating whether the package must simulate
                 a simple boundary layer. **It is recommended that this option remain True
                 unless another boundary layer component is being used**.
                 Default value is True.
 
-            surface_fluxes (bool): Option indicating whether the package must calculate
+            surface_fluxes (bool):
+                Option indicating whether the package must calculate
                 surface fluxes. **It is recommended that this option remain True unless the
                 fluxes are being calculated by another component**.
                 Default value is True.
 
-            use_external_surface_temperature (bool): Option indicating whether the package
+            use_external_surface_temperature (bool):
+                Option indicating whether the package
                 must use surface temperature available in the model state.
                 If False, an internally generated surface temperature is used.
                 Default value is True.
 
-            gravitational_acceleration (float): value of acceleration due to gravity in $m s^{-1}$.
+            gravitational_acceleration (float):
+                value of acceleration due to gravity in :math:`m s^{-1}`.
                 Default value from climt.default_constants is used if None.
 
-            gas_constant_dry_air (float): The gas constant of dry air in $J {K^-1} kg^{-1}$.
+            gas_constant_dry_air (float):
+                The gas constant of dry air in :math:`J K^{-1} kg^{-1}`.
                 Default value from climt.default_constants is used if None.
 
-            specific_heat_dry_air (float): The specific heat of dry air in $J {K^-1} kg^{-1}$.
+            specific_heat_dry_air (float):
+                The specific heat of dry air in :math:`J K^{-1} kg^{-1}`.
                 Default value from climt.default_constants is used if None.
 
-            latent_heat_condensation (float): The latent heat of condensation of the condensible in $J kg^{-1}$.
+            latent_heat_condensation (float):
+                The latent heat of condensation of the condensible in :math:`J kg^{-1}`.
                 Default value from climt.default_constants (for water vapor) is used if None.
 
-            gas_constant_condensible (float): The gas constant of the condensible substance in $J {K^-1} kg^{-1}$.
+            gas_constant_condensible (float):
+                The gas constant of the condensible substance in :math:`J {K^-1} kg^{-1}`.
                 Default value from climt.default_constants (for water vapor) is used if None.
 
-            planetary_radius (float): The radius of the planet in $m$.
+            planetary_radius (float):
+                The radius of the planet in :math:`m`.
                 Default value from climt.default_constants (for Earth) is used if None.
 
-            planetary_rotation_rate (float): The rotation rate of the planet in $s^{-1}$.
+            planetary_rotation_rate (float):
+                The rotation rate of the planet in :math:`s^{-1}`.
                 Default value from climt.default_constants (for Earth) is used if None.
-
 
         """
 
@@ -139,7 +151,7 @@ class SimplePhysics(Implicit):
 
     def __call__(self, state, timestep):
         '''
-        Returns the tendencies for a simplified moist physics simulation.
+        Calculate surface and boundary layer tendencies.
 
         Args:
             state (dict) : The model state dictionary
@@ -147,9 +159,10 @@ class SimplePhysics(Implicit):
             timestep (float) : The model timestep
 
         Returns:
-            state (dict) : The updated model state.
+            state (dict), diagnostics(dict) :
 
-            diagnostics (dict) : empty for this component (No diagnostics)
+            * The updated model state.
+            * Empty for this component (No diagnostics)
         '''
 
         U = get_numpy_array(state['eastward_wind'].to_units('m/s'), ['x', 'y', 'z'])

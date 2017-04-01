@@ -23,17 +23,17 @@ class GrayLongwaveRadiation(Prognostic):
 
         Args:
             longwave_optical_depth_on_interface_levels (DataArray): The optical
-                depth $\tau$ of the atmosphere, with the lowest values at the
+                depth :math:`\\tau` of the atmosphere, with the lowest values at the
                 surface.
-            stefan_boltzmann: Stefan-Boltzmann constant $\sigma$ in
-                $W m^{-2} K^{-4}$.
-                Default taken from climt.default_constants.
+            stefan_boltzmann: Stefan-Boltzmann constant :math:`\sigma` in
+                :math:`W m^{-2} K^{-4}`.
+                Default taken from :code:`sympl.default_constants`.
             gravitational_acceleration: Gravitational acceleration in
-                $m s^{-2}$.
-                Default taken from climt.default_constants.
+                :math:`m s^{-2}`.
+                Default taken from :code:`sympl.default_constants`.
             heat_capacity_of_dry_air_at_constant_pressure: Heat capacity of
-                dry air at constnat pressure in $J kg^{-1} K^{-1}$.
-                Default taken from climt.default_constants.
+                dry air at constnat pressure in :math:`J kg^{-1} K^{-1}`.
+                Default taken from :code:`sympl.default_constants`.
         """
 
         self._stefan_boltzmann = replace_none_with_default(
@@ -46,18 +46,22 @@ class GrayLongwaveRadiation(Prognostic):
 
     def __call__(self, state):
         """
-        Gets tendencies and diagnostics from the passed model state.
+        Get heating tendencies and longwave fluxes.
 
         Args:
+
             state (dict): A model state dictionary.
 
         Returns:
-            tendencies (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the time derivative of those
-                quantities in units/second at the time of the input state.
-            diagnostics (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the value of those quantities
-                at the time of the input state.
+
+            tendencies (dict), diagnostics (dict):
+
+                * A dictionary whose keys are strings indicating
+                  state quantities and values are the time derivative of those
+                  quantities in units/second at the time of the input state.
+                * A dictionary whose keys are strings indicating
+                  state quantities and values are the value of those quantities
+                  at the time of the input state.
         """
         tau = get_numpy_array(state[
             'longwave_optical_depth_on_interface_levels'].to_units(''),
@@ -113,23 +117,24 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
             longwave_optical_depth_at_poles=1.5):
         """
         Args:
-            latitude (DataArray, optional): The constant latitude coordinate to
-                use for calculations. If given, latitude in state is not used.
-            sigma_on_interface_levels (DataArray, optional): The constant sigma
-                vertical coordinate to use for calculations. If given, its
-                value is ignored in input states, so only provide it if the
-                model is using constant sigma coordinates.
-            linear_optical_depth_parameter (float, optional): The constant $f_l$ which
-                determines how much of the variation of $\tau$ with pressure
+
+            linear_optical_depth_parameter (float, optional): The constant :math:`f_l` which
+                determines how much of the variation of :math:`\\tau` with pressure
                 is linear rather than quartic.
-                $\tau = \tau_0 [f_l \frac{p}{p_s} + (1 - f_l) (\frac{p}{p_s})^4]$
-                Default is 0.1 as in Frierson et al., 2006.
-            longwave_optical_depth_at_equator (float, optional): The value of $\tau_0$
+                :math:`\\tau = \\tau_0 [f_l \\frac{p}{p_s} + (1 - f_l) (\\frac{p}{p_s})^4]`
+                Default is 0.1 as in `[Frierson et al., 2006]`_.
+
+            longwave_optical_depth_at_equator (float, optional): The value of :math:`\\tau_0`
                 at the equator.
-                Default is 6 as in Frierson et al. 2006.
-            longwave_optical_depth_at_poles (float, optional): The value of $\tau_0$
+                Default is 6 as in `[Frierson et al., 2006]`_.
+
+            longwave_optical_depth_at_poles (float, optional): The value of :math:`\\tau_0`
                 at the poles.
-                Default is 1.5 as in Frierson et al., 2006.
+                Default is 1.5 as in `[Frierson et al., 2006]`_.
+
+        .. _[Frierson et al., 2006]:
+            http://journals.ametsoc.org/doi/abs/10.1175/JAS3753.1
+
         """
         self._fl = linear_optical_depth_parameter
         self._tau0e = longwave_optical_depth_at_equator
@@ -137,7 +142,7 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
 
     def __call__(self, state):
         """
-        Gets tendencies and diagnostics from the passed model state.
+        Calculate longwave optical depth from input state.
 
         Args:
             state (dict): A model state dictionary.

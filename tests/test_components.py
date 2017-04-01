@@ -7,7 +7,7 @@ import numpy as np
 from climt import (
     HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
-    BergerSolarInsolation, SimplePhysics, RRTMLongwave)
+    BergerSolarInsolation, SimplePhysics, RRTMGLongwave)
 import climt
 from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
@@ -498,9 +498,9 @@ class TestSimplePhysics(ComponentBase):
         assert True
 
 
-class TestRRTMLongwave(ComponentBase):
+class TestRRTMGLongwave(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
-        return RRTMLongwave()
+        return RRTMGLongwave()
 
     def get_3d_input_state(self):
 
@@ -515,9 +515,9 @@ class TestRRTMLongwave(ComponentBase):
         assert True
 
 
-class TestRRTMLongwaveWithClouds(ComponentBase):
+class TestRRTMGLongwaveWithClouds(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
-        return RRTMLongwave(cloud_optical_properties=1)
+        return RRTMGLongwave(cloud_optical_properties=1)
 
     def get_3d_input_state(self):
 

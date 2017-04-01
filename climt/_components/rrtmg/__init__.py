@@ -1,3 +1,3 @@
-from .lw import RRTMLongwave
+from .lw import RRTMGLongwave
 
-__all__ = (RRTMLongwave)
+__all__ = (RRTMGLongwave)

@@ -9,12 +9,13 @@ Contents:
    readme
    installation
    component_types
-   components
    naming
    memory_management
    contributing
    authors
    history
+   components
+   utilities
 
 Indices and tables
 ==================

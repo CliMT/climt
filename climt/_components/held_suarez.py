@@ -7,25 +7,23 @@ import numpy as np
 
 class HeldSuarez(Prognostic):
     """
+    Provide the Held-Suarez forcing.
+
     Produces the forcings proposed by Held and Suarez for the intercomparison
     of dynamical cores of AGCMs. Relaxes the temperature field to a zonally
     symmetric equilibrium state, and uses Rayleigh damping of low-level winds
     to represent boundary-layer friction. Details can be found in
-    Held and Suarez (1994).
-
-    Attributes:
-        inputs (tuple of str): The quantities required in the state when the
-            object is called.
-        tendencies (tuple of str): The quantities for which tendencies are
-            returned when the object is called.
-        diagnostics (tuple of str): The diagnostic quantities returned when
-            the object is called.
+    `[Held and Suarez (1994)]`_.
 
     References:
-        Held, I. and M. Suarez, 1994: A Proposal for the Intercomparison of the
+        Held, I. and M. Suarez, 1994:
+            A Proposal for the Intercomparison of the
             Dynamical Cores of Atmospheric General Circulation Models.
             Bull. Amer. Meteor. Soc., 75, 1825-1830,
             doi: 10.1175/1520-0477(1994)075<1825:APFTIO>2.0.CO;2.
+
+    .. _[Held and Suarez (1994)]:
+        http://journals.ametsoc.org/doi/pdf/10.1175/1520-0477(1994)075%3C1825%3AAPFTIO%3E2.0.CO%3B2
     """
 
     inputs = {
@@ -61,36 +59,57 @@ class HeldSuarez(Prognostic):
             sigma_boundary_layer_top (float): The height of the boundary
                 layer top in sigma coordinates. Corresponds to $\sigma_b$
                 in Held and Suarez, 1994. Default is 0.7.
-            k_f (float): Velocity damping coefficient at the surface in s^{-1}.
-                Default is $1 day^{-1}$.
-            k_a (float): Parameter used in defining vertical profile of the
-                temperature damping in $s^{-1}$, as outlined in
+
+            k_f (float):
+                Velocity damping coefficient at the surface in :math:`s^{-1}`.
+                Default is :math:`1\ day^{-1}`.
+
+            k_a (float):
+                Parameter used in defining vertical profile of the
+                temperature damping in :math:`s^{-1}`, as outlined in
                 Held and Suarez, 1994.
-                Default is $1/40 day^{-1}$
-            k_s (float): Parameter used in defining vertical profile of the
-                temperature damping in $s^{-1}$, as outlined in
+                Default is :math:`1/40\ day^{-1}`.
+
+            k_s (float):
+                Parameter used in defining vertical profile of the
+                temperature damping in :math:`s^{-1}`, as outlined in
                 Held and Suarez, 1994.
-                Default is $1/40 day^{-1}$
-            equator_pole_temperature_difference (float): Equator to pole
+                Default is :math:`1/4\ day^{-1}`.
+
+            equator_pole_temperature_difference (float):
+                Equator to pole
                 temperature difference, in K.
                 Default is 60K.
-            delta_theta_z (float): Parameter used in defining the equilibrium
+
+            delta_theta_z (float):
+                Parameter used in defining the equilibrium
                 temperature profile as outlined in Held and Suarez, 1994, in K.
                 Default is 10K.
-            reference_pressure (float): Parameter used to define the
+
+            reference_pressure (float):
+                Parameter used to define the
                 equilibrium temperature profile, roughly equal to the surface
-                pressure, in Pa. Default value is $10^5$ Pa.
-            gas_constant_of_dry_air (float): Value in $J kg^{-1} K^{-1}$.
-                Default is taken from climt.default_constants.
-            heat_capacity_of_dry_air_at_constant_pressure: Value in
-                $J kg^{-1} K^{-1}$.
-                Default is taken from climt.default_constants.
-            planetary_rotation_rate (float) Value in $s^{-1}$.
-                Default is taken from climt.default_constants.
-            gravitational_acceleration (float): Value in $m s^{-2}$.
-                Default is taken from climt.default_constants.
-            planetary_radius (float): Value in m.
-                Default is taken from climt.default_constants.
+                pressure, in Pa. Default value is :math:`10^5` Pa.
+
+            gas_constant_of_dry_air (float):
+                Value in :math:`J kg^{-1} K^{-1}`.
+                Default is taken from :code:`sympl.default_constants`.
+
+            heat_capacity_of_dry_air_at_constant_pressure:
+                Value in  :math:`J kg^{-1} K^{-1}`.
+                Default is taken from :code:`sympl.default_constants`.
+
+            planetary_rotation_rate (float)
+                Value in :math:`s^{-1}`.
+                Default is taken from :code:`sympl.default_constants`.
+
+            gravitational_acceleration (float):
+                Value in :math:`m s^{-2}`.
+                Default is taken from :code:`sympl.default_constants`.
+
+            planetary_radius (float):
+                Value in :math:`m`.
+                Default is taken from :code:`sympl.default_constants`.
         """
 
         self._sigma_b = sigma_boundary_layer_top
@@ -149,18 +168,24 @@ class HeldSuarez(Prognostic):
 
     def __call__(self, state):
         """
-        Gets tendencies and diagnostics from the passed model state.
+        Get the Held-Suarez forcing tendencies
 
         Args:
             state (dict): A model state dictionary.
 
         Returns:
-            tendencies (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the time derivative of those
-                quantities in units/second at the time of the input state.
-            diagnostics (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the value of those quantities
-                at the time of the input state.
+            tendencies (dict), diagnostics (dict):
+
+            * A dictionary whose keys are strings indicating
+              state quantities and values are the time derivative of those
+              quantities in units/second at the time of the input state.
+            * A dictionary whose keys are strings indicating
+              state quantities and values are the value of those quantities
+              at the time of the input state.
+
+        Raises:
+            IndexError:
+                if the input state does not contain the key :code:`latitude`.
         """
 
         if 'latitude' not in state:

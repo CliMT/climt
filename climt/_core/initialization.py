@@ -70,11 +70,6 @@ _quantity_descriptions = {
         'units': 'degK',
         'init_value': 290.
     },
-    'air_temperature_on_interface_levels': {
-        'dims': ['x', 'y', 'interface_levels'],
-        'units': 'degK',
-        'init_value': 290.
-    },
     'surface_temperature': {
         'dims': ['x', 'y'],
         'units': 'degK',
@@ -226,8 +221,8 @@ _quantity_descriptions = {
 def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     """
     Returns a state dictionary with the required arrays to run a model
-    which comprises of components in ``component_list``. If coordinate
-    values in ``x``,``y`` and ``z`` are not provided, a single column
+    which comprises of components in `component_list`. If coordinate
+    values in `x`,`y` and `z` are not provided, a single column
     centered at 0 degrees south, 0 degrees east of 30 levels is used.
 
     Args:
@@ -239,25 +234,25 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
             function will attempt to determine required inputs from the series
             of _components.
 
-        x (dict,optional): A dictionary containing keys ``label``, ``values``,
-            and ``units``. ``label`` refers to the name the coordinate axis will assume.
-            ``values`` refers to the array of coordinate values. ``units`` refers to the
+        x (dict,optional): A dictionary containing keys `label`, `values`,
+            and `units`. `label` refers to the name the coordinate axis will assume.
+            `values` refers to the array of coordinate values. `units` refers to the
             units of the coordinate values.
-            If ``x`` is an empty dictionary, a single default value of 0 degrees longitude
+            If `x` is an empty dictionary, a single default value of 0 degrees longitude
             is used.
 
-        y (dict,optional): A dictionary containing keys ``label``, ``values``,
-            and ``units``. ``label`` refers to the name the coordinate axis will assume.
-            ``values`` refers to the array of coordinate values. ``units`` refers to the
+        y (dict,optional): A dictionary containing keys `label`, `values`,
+            and `units`. `label` refers to the name the coordinate axis will assume.
+            `values` refers to the array of coordinate values. `units` refers to the
             units of the coordinate values.
-            If ``y`` is an empty dictionary, a single default value of 0 degrees latitude
+            If `y` is an empty dictionary, a single default value of 0 degrees latitude
             is used.
 
-        z (dict,optional): A dictionary containing keys ``label``, ``values``,
-            and ``units``. ``label`` refers to the name the coordinate axis will assume.
-            ``values`` refers to the array of coordinate values. ``units`` refers to the
+        z (dict,optional): A dictionary containing keys `label`, `values`,
+            and `units`. `label` refers to the name the coordinate axis will assume.
+            `values` refers to the array of coordinate values. `units` refers to the
             units of the coordinate values.
-            If ``z`` is an empty dictionary, 30 levels of arbitrary units are used.
+            If `z` is an empty dictionary, 30 levels of arbitrary units are used.
 
         input_state (dict, optional): A dictionary containing some quantities that will
             also be added to the final output state. Must not contain any quantities that
@@ -352,14 +347,14 @@ def get_default_values(quantity_name, x, y, z,
 
     Args:
     quantity_name (string): string corresponding to a quantity in the pre-defined
-        dictionary of names in ``quantity_description``.
+        dictionary of names in `quantity_description`.
 
     x (DataArray): DataArray containing the definition of the x coordinates.
 
     y (DataArray): DataArray containing the definition of the y coordinates.
 
     z (DataArray): DataArray containing the definition of the mid-level z coordinates.
-        Quantities on interface levels will have a vertical dimension of size ``len(z)+1``.
+        Quantities on interface levels will have a vertical dimension of size `len(z)+1`.
 
     quantity_description (dict): Description of dimensions, units and default values of
         quantities to be used to create DataArrays.

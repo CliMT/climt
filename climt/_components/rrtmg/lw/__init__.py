@@ -1,3 +1,3 @@
-from .component import RRTMLongwave
+from .component import RRTMGLongwave
 
-__all__ = (RRTMLongwave)
+__all__ = (RRTMGLongwave)

@@ -3,7 +3,9 @@ from sympl import (Prognostic,
                    replace_none_with_default,
                    get_numpy_array,
                    combine_dimensions)
-import climt
+from ...._core import (
+    mass_to_volume_mixing_ratio, get_interface_values,
+    get_input_arrays_from_state)
 import numpy as np
 from numpy import pi as PI
 try:
@@ -12,17 +14,18 @@ except:
     print('Import failed. RRTMG Longwave will not be available!')
 
 
-class RRTMLongwave(Prognostic):
+class RRTMGLongwave(Prognostic):
     """
-    Interface to the Rapid Radiative Transfer Model (RRTM) for
-    longwave radiation (i.e, emission from the earth's surface).
+    The Rapid Radiative Transfer Model (RRTMG).
+
+    This module wraps RRTMG for longwave radiation
+    (i.e, emission from the earth's surface).
     """
 
     inputs = {
         'air_pressure': 'mbar',
         'air_pressure_on_interface_levels': 'mbar',
         'air_temperature': 'degK',
-        'air_temperature_on_interface_levels': 'degK',
         'surface_temperature': 'degK',
         'specific_humidity': 'g/g',
         'ozone_mixing_ratio': 'dimensionless',
@@ -104,73 +107,91 @@ class RRTMLongwave(Prognostic):
 
         Args:
 
-        calculate_change_up_flux (int): calculate derivative of flux change with respect to
-            surface temperature alone. Can be used to adjust fluxes in between radiation calls
-            only due to change of surface temperature. Default value is 0, meaning this quantity
-            is not calculated.
+            calculate_change_up_flux (int):
+                calculate derivative of flux change with respect to
+                surface temperature alone. Can be used to adjust fluxes in between radiation calls
+                only due to change of surface temperature. Default value is 0, meaning this quantity
+                is not calculated.
 
-        cloud_overlap_method (int): Choose the method to do overlap with:
-            0 = Clear only (no clouds)
-            1 = Random
-            2 = Maximum/Random
-            3 = Maximum.
+            cloud_overlap_method (int):
+                Choose the method to do overlap with:
 
-            Default value is 1, corresponding to random cloud overlap.
+                * 0 = Clear only (no clouds)
+                * 1 = Random
+                * 2 = Maximum/Random
+                * 3 = Maximum.
 
-        cloud_optical_properties (int): Choose how cloud optical properties are
-            calculated.
-            0 = Both cloud fraction and cloud optical depth are input directly
-            1 = Cloud fraction and cloud physical properties are input, ice and liquid
-                clouds are treated together, cloud absorptivity is a constant value (0.060241)
-            2 = Cloud fraction and cloud physical properties are input, ice and liquid
-                clouds are treated separately
+                Default value is 1, corresponding to random cloud overlap.
 
-            Default value is 0.
+            cloud_optical_properties (int):
+                Choose how cloud optical properties are calculated:
 
-        cloud_ice_properties (int): set bounds on ice particle size.
-            0 = ice particle has effective radius >= 10.0 micron [Ebert and Curry 1992]_
-            1 = ice particle has effective radius between 13.0 and 130.0 micron [Ebert and Curry 1992]_
-            2 = ice particle has effective radius between 5.0 and 131.0 micron [Key, Streamer Ref. Manual, 1996]_
-            3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron [Fu, 1996]_
-                dge = 1.0315* effective radius
+                * 0 = Both cloud fraction and cloud optical depth are input directly
+                * 1 = Cloud fraction and cloud physical properties are input, ice and liquid clouds are
+                  treated together, cloud absorptivity is a constant value (0.060241)
+                * 2 = Cloud fraction and cloud physical properties are input, ice and liquid
+                  clouds are treated separately
 
-            Default value is 0.
+                Default value is 0.
 
-        cloud_liquid_water_properties (int): set treatment of cloud liquid water.
-            0 = use radius independent absorption coefficient
-            1 = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
+            cloud_ice_properties (int):
+                set bounds on ice particle size.
 
-            Default value is 0.
+                * 0 = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
+                * 1 = ice particle has effective radius between 13.0 and 130.0 micron `[Ebert and Curry 1992]`_
+                * 2 = ice particle has effective radius between 5.0 and 131.0 micron `[Key, Streamer Ref. Manual, 1996]`_
+                * 3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron
+                  `[Fu, 1996]`_. (dge = 1.0315 * r_ec)
 
-        gravitational_acceleration (float): value of acceleration due to gravity in
-                $m s^{-1}$. Default value from climt.default_constants is used if None.
+                Default value is 0.
 
-        planck_constant (float): value of the planck constant in $J s$.
+            cloud_liquid_water_properties (int):
+                set treatment of cloud liquid water.
+
+                * 0 = use radius independent absorption coefficient
+                * 1 = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
+
+                Default value is 0.
+
+            gravitational_acceleration (float):
+                value of acceleration due to gravity in
+                :math:`m s^{-1}`. Default value from climt.default_constants is used if None.
+
+            planck_constant (float):
+                value of the planck constant in :math:`J s`.
                 Default value from climt.default_constants is used if None.
 
-        boltzmann_constant (float): value of the Boltzmann constant in $J {K^-1}$.
+            boltzmann_constant (float):
+                value of the Boltzmann constant in :math:`J K^{-1}`.
                 Default value from climt.default_constants is used if None.
 
-        speed_of_light (float): value of the speed of light in $m {s^-1}$.
+            speed_of_light (float):
+                value of the speed of light in :math:`m s^{-1}`.
                 Default value from climt.default_constants is used if None.
 
-        avogadro_constant (float): value of the Avogadro number.
+            avogadro_constant (float):
+                value of the Avogadro constant.
                 Default value from climt.default_constants is used if None.
 
-        loschmidt_constant (float): value of the Loschmidt constant.
+            loschmidt_constant (float):
+                value of the Loschmidt constant.
                 Default value from climt.default_constants is used if None.
 
-        universal_gas_constant (float): value of the gas constant in $J {K^-1} mol^{-1}$.
+            universal_gas_constant (float):
+                value of the gas constant in :math:`J K^{-1} mol^{-1}`.
                 Default value from climt.default_constants is used if None.
 
-        stefan_boltzmann_constant (float): value of the Stefan-Boltzmann constant
-                in $W m^{-2} K^{-4}$. Default value from climt.default_constants is
+            stefan_boltzmann_constant (float):
+                value of the Stefan-Boltzmann constant
+                in :math:`W m^{-2} K^{-4}`. Default value from climt.default_constants is
                 used if None.
 
-        seconds_per_day (float): number of seconds per day.
+            seconds_per_day (float):
+                number of seconds per day.
                 Default value from climt.default_constants (for earth) is used if None.
 
-        specific_heat_dry_air (float): The specific heat of dry air in $J {K^-1} kg^{-1}$.
+            specific_heat_dry_air (float):
+                The specific heat of dry air in :math:`J K^{-1} kg^{-1}`.
                 Default value from climt.default_constants is used if None.
 
         .. _[Ebert and Curry 1992]:
@@ -180,9 +201,9 @@ class RRTMLongwave(Prognostic):
             https://stratus.ssec.wisc.edu/streamer/userman.pdf
 
         .. _[Fu, 1996]:
-            http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
+             http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
 
-        """
+            """
 
         self._calc_dflxdt = calculate_change_up_flux
 
@@ -257,156 +278,108 @@ class RRTMLongwave(Prognostic):
 
     def __call__(self, state):
         """
-        Returns radiative heating tendencies and longwave flux diagnostics.
+        Get heating tendencies and longwave fluxes.
 
         Args:
-            state (dict): The model state dictionary
+
+            state (dict):
+                The model state dictionary.
 
         Returns:
-            tendencies (dict): The longwave heating tendency
 
-            diagnostics (dict): The upward/downward longwave fluxes for cloudy and clear
-                                sky conditions.
+            tendencies (dict), diagnostics (dict):
+
+                * The longwave heating tendency.
+                * The upward/downward longwave fluxes for cloudy and clear
+                  sky conditions.
 
         """
 
-        P = get_numpy_array(state['air_pressure'].to_units('mbar'), ['x', 'y', 'z'])
+        raw_arrays = get_input_arrays_from_state(self, state)
 
-        Pint = get_numpy_array(state['air_pressure_on_interface_levels'].to_units('mbar'),
-                               ['x', 'y', 'z'])
-
-        T = get_numpy_array(state['air_temperature'].to_units('degK'), ['x', 'y', 'z'])
-
-        Tint = get_numpy_array(state['air_temperature_on_interface_levels'].to_units('degK'),
-                               ['x', 'y', 'z'])
-
-        Ts = get_numpy_array(state['surface_temperature'].to_units('degK'), ['x', 'y'])
-
-        Q = climt.mass_to_volume_mixing_ratio(state['specific_humidity'].to_units('g/g'), 18.02)
+        Q = mass_to_volume_mixing_ratio(state['specific_humidity'].to_units('g/g'), 18.02)
         Q = get_numpy_array(Q, ['x', 'y', 'z'])
 
-        O3 = get_numpy_array(state['ozone_mixing_ratio'].to_units('dimensionless'),
-                             ['x', 'y', 'z'])
+        mid_level_shape = raw_arrays['air_temperature'].shape
+        int_level_shape = raw_arrays['air_pressure_on_interface_levels'].shape
 
-        CO2 = get_numpy_array(state['carbon_dioxide_mixing_ratio'].to_units('dimensionless'),
-                              ['x', 'y', 'z'])
+        Tint = get_interface_values(raw_arrays['air_temperature'],
+                                    raw_arrays['surface_temperature'],
+                                    raw_arrays['air_pressure'],
+                                    raw_arrays['air_pressure_on_interface_levels'])
 
-        CH4 = get_numpy_array(state['methane_mixing_ratio'].to_units('dimensionless'),
-                              ['x', 'y', 'z'])
+        up_flux = np.zeros(int_level_shape, order='F')
+        down_flux = np.zeros(int_level_shape, order='F')
+        up_flux_clear = np.zeros(int_level_shape, order='F')
+        down_flux_clear = np.zeros(int_level_shape, order='F')
 
-        N2O = get_numpy_array(state['nitrous_oxide_mixing_ratio'].to_units('dimensionless'),
-                              ['x', 'y', 'z'])
-
-        O2 = get_numpy_array(state['oxygen_mixing_ratio'].to_units('dimensionless'),
-                             ['x', 'y', 'z'])
-
-        CFC11 = get_numpy_array(state['cfc11_mixing_ratio'].to_units('dimensionless'),
-                                ['x', 'y', 'z'])
-
-        CFC12 = get_numpy_array(state['cfc12_mixing_ratio'].to_units('dimensionless'),
-                                ['x', 'y', 'z'])
-
-        CFC22 = get_numpy_array(state['cfc22_mixing_ratio'].to_units('dimensionless'),
-                                ['x', 'y', 'z'])
-
-        CCL4 = get_numpy_array(state['ccl4_mixing_ratio'].to_units('dimensionless'),
-                               ['x', 'y', 'z'])
-
-        Emiss = get_numpy_array(state['surface_emissivity'].to_units('dimensionless'),
-                                ['x', 'y', 'num_longwave_bands'])
-
-        ClFrac = get_numpy_array(state['cloud_fraction'].to_units('dimensionless'),
-                                 ['x', 'y', 'z'])
-
-        AerTau = get_numpy_array(state['aerosol_optical_depth'].to_units('dimensionless'),
-                                 ['x', 'y', 'z', 'num_longwave_bands'])
-
-        if self._cloud_optics == 0:  # Optical depth is part of input
-            ClTau = get_numpy_array(state['cloud_optical_depth'].to_units('dimensionless'),
-                                    ['x', 'num_longwave_bands', 'y', 'z'])
-        else:
-            ClIWP = get_numpy_array(state['cloud_ice_water_path'].to_units('g m^-2'),
-                                    ['x', 'y', 'z'])
-
-            ClLWP = get_numpy_array(state['cloud_liquid_water_path'].to_units('g m^-2'),
-                                    ['x', 'y', 'z'])
-
-            ClIceSize = get_numpy_array(state['cloud_ice_particle_size'].to_units('micrometer'),
-                                        ['x', 'y', 'z'])
-
-            ClDropSize = get_numpy_array(state['cloud_water_droplet_radius'].to_units('micrometer'),
-                                         ['x', 'y', 'z'])
-            ClTau = AerTau
-
-        up_flux = np.zeros(Tint.shape, order='F')
-        down_flux = np.zeros(Tint.shape, order='F')
-        heating_rate = np.zeros(T.shape, order='F')
-        up_flux_clear = np.zeros(Tint.shape, order='F')
-        down_flux_clear = np.zeros(Tint.shape, order='F')
-        heating_rate_clear = np.zeros(T.shape, order='F')
+        heating_rate = np.zeros(mid_level_shape, order='F')
+        heating_rate_clear = np.zeros(mid_level_shape, order='F')
 
         # TODO add dflx_dt as well
-        for lon in range(T.shape[0]):
+        for lon in range(mid_level_shape[0]):
             if self._cloud_optics == 0:
-                _rrtm_lw.rrtm_calculate_longwave_fluxes(T.shape[1],
-                                                        T.shape[2],
-                                                        P[lon, :],
-                                                        Pint[lon, :],
-                                                        T[lon, :],
-                                                        Tint[lon, :],
-                                                        Ts[lon, :],
-                                                        Q[lon, :],
-                                                        O3[lon, :],
-                                                        CO2[lon, :],
-                                                        CH4[lon, :],
-                                                        N2O[lon, :],
-                                                        O2[lon, :],
-                                                        CFC11[lon, :],
-                                                        CFC12[lon, :],
-                                                        CFC22[lon, :],
-                                                        CCL4[lon, :],
-                                                        Emiss[lon, :],
-                                                        ClFrac[lon, :],
-                                                        AerTau[lon, :],
-                                                        up_flux[lon, :],
-                                                        down_flux[lon, :],
-                                                        heating_rate[lon, :],
-                                                        up_flux_clear[lon, :],
-                                                        down_flux_clear[lon, :],
-                                                        heating_rate_clear[lon, :],
-                                                        ClTau[lon, :])
+                _rrtm_lw.rrtm_calculate_longwave_fluxes(
+                    mid_level_shape[1],
+                    mid_level_shape[2],
+                    raw_arrays['air_pressure'][lon, :],
+                    raw_arrays['air_pressure_on_interface_levels'][lon, :],
+                    raw_arrays['air_temperature'][lon, :],
+                    Tint[lon, :],
+                    raw_arrays['surface_temperature'][lon, :],
+                    Q[lon, :],
+                    raw_arrays['ozone_mixing_ratio'][lon, :],
+                    raw_arrays['carbon_dioxide_mixing_ratio'][lon, :],
+                    raw_arrays['methane_mixing_ratio'][lon, :],
+                    raw_arrays['nitrous_oxide_mixing_ratio'][lon, :],
+                    raw_arrays['oxygen_mixing_ratio'][lon, :],
+                    raw_arrays['cfc11_mixing_ratio'][lon, :],
+                    raw_arrays['cfc12_mixing_ratio'][lon, :],
+                    raw_arrays['cfc22_mixing_ratio'][lon, :],
+                    raw_arrays['ccl4_mixing_ratio'][lon, :],
+                    raw_arrays['surface_emissivity'][lon, :],
+                    raw_arrays['cloud_fraction'][lon, :],
+                    raw_arrays['aerosol_optical_depth'][lon, :],
+                    up_flux[lon, :],
+                    down_flux[lon, :],
+                    heating_rate[lon, :],
+                    up_flux_clear[lon, :],
+                    down_flux_clear[lon, :],
+                    heating_rate_clear[lon, :],
+                    raw_arrays['cloud_optical_depth'][lon, :])
             else:
-                _rrtm_lw.rrtm_calculate_longwave_fluxes(T.shape[1],
-                                                        T.shape[2],
-                                                        P[lon, :],
-                                                        Pint[lon, :],
-                                                        T[lon, :],
-                                                        Tint[lon, :],
-                                                        Ts[lon, :],
-                                                        Q[lon, :],
-                                                        O3[lon, :],
-                                                        CO2[lon, :],
-                                                        CH4[lon, :],
-                                                        N2O[lon, :],
-                                                        O2[lon, :],
-                                                        CFC11[lon, :],
-                                                        CFC12[lon, :],
-                                                        CFC22[lon, :],
-                                                        CCL4[lon, :],
-                                                        Emiss[lon, :],
-                                                        ClFrac[lon, :],
-                                                        AerTau[lon, :],
-                                                        up_flux[lon, :],
-                                                        down_flux[lon, :],
-                                                        heating_rate[lon, :],
-                                                        up_flux_clear[lon, :],
-                                                        down_flux_clear[lon, :],
-                                                        heating_rate_clear[lon, :],
-                                                        ClTau[lon, :],
-                                                        ClIWP[lon, :],
-                                                        ClLWP[lon, :],
-                                                        ClIceSize[lon, :],
-                                                        ClDropSize[lon, :])
+                _rrtm_lw.rrtm_calculate_longwave_fluxes(
+                    mid_level_shape[1],
+                    mid_level_shape[2],
+                    raw_arrays['air_pressure'][lon, :],
+                    raw_arrays['air_pressure_on_interface_levels'][lon, :],
+                    raw_arrays['air_temperature'][lon, :],
+                    Tint[lon, :],
+                    raw_arrays['surface_temperature'][lon, :],
+                    Q[lon, :],
+                    raw_arrays['ozone_mixing_ratio'][lon, :],
+                    raw_arrays['carbon_dioxide_mixing_ratio'][lon, :],
+                    raw_arrays['methane_mixing_ratio'][lon, :],
+                    raw_arrays['nitrous_oxide_mixing_ratio'][lon, :],
+                    raw_arrays['oxygen_mixing_ratio'][lon, :],
+                    raw_arrays['cfc11_mixing_ratio'][lon, :],
+                    raw_arrays['cfc12_mixing_ratio'][lon, :],
+                    raw_arrays['cfc22_mixing_ratio'][lon, :],
+                    raw_arrays['ccl4_mixing_ratio'][lon, :],
+                    raw_arrays['surface_emissivity'][lon, :],
+                    raw_arrays['cloud_fraction'][lon, :],
+                    raw_arrays['aerosol_optical_depth'][lon, :],
+                    up_flux[lon, :],
+                    down_flux[lon, :],
+                    heating_rate[lon, :],
+                    up_flux_clear[lon, :],
+                    down_flux_clear[lon, :],
+                    heating_rate_clear[lon, :],
+                    raw_arrays['aerosol_optical_depth'][lon, :],  # Dummy argument
+                    raw_arrays['cloud_ice_water_path'][lon, :],
+                    raw_arrays['cloud_liquid_water_path'][lon, :],
+                    raw_arrays['cloud_ice_particle_size'][lon, :],
+                    raw_arrays['cloud_water_droplet_radius'][lon, :])
 
         dims_mid = combine_dimensions([state['air_temperature']], ['x', 'y', 'z'])
         # dims_int = combine_dimensions([state['air_temperature_on_interface_levels']], ['x', 'y', 'z'])
