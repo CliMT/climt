@@ -255,7 +255,8 @@
                                                       !               [dge = 1.0315 * r_ec]
       real(kind=rb), intent(in) :: reliq(ncol,nlay)         ! Cloud water drop effective radius (microns)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: taucld(nbndlw,ncol,nlay)      ! In-cloud optical depth
+      real(kind=rb), intent(in), optional :: taucld(nbndlw,ncol,nlay)
+                                                      ! In-cloud optical depth
                                                       !    Dimensions: (nbndlw,ncol,nlay)
 !      real(kind=rb), intent(in) :: ssacld(:,:,:)     ! In-cloud single scattering albedo
                                                       !    Dimensions: (nbndlw,ncol,nlay)

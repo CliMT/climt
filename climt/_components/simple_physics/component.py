@@ -21,7 +21,7 @@ class SimplePhysics(Implicit):
 
     inputs = (
         'air_temperature', 'air_pressure', 'air_pressure_on_interface_levels',
-        'surface_pressure', 'surface_temperature', 'specific_humidity',
+        'surface_air_pressure', 'surface_temperature', 'specific_humidity',
         'northward_wind', 'eastward_wind'
     )
 
@@ -29,7 +29,7 @@ class SimplePhysics(Implicit):
 
     outputs = (
         'air_temperature', 'air_pressure', 'air_pressure_on_interface_levels',
-        'surface_pressure', 'surface_temperature', 'specific_humidity',
+        'surface_air_pressure', 'surface_temperature', 'specific_humidity',
         'northward_wind', 'eastward_wind'
     )
 
@@ -173,7 +173,7 @@ class SimplePhysics(Implicit):
         q = get_numpy_array(state['specific_humidity'].to_units('kg/kg'), ['x', 'y', 'z'])
 
         Ts = get_numpy_array(state['surface_temperature'].to_units('degK'), ['x', 'y'])
-        Ps = get_numpy_array(state['surface_pressure'].to_units('Pa'), ['x', 'y'])
+        Ps = get_numpy_array(state['surface_air_pressure'].to_units('Pa'), ['x', 'y'])
         lats = state['latitude'].values
 
         dims_mid = combine_dimensions([
@@ -184,7 +184,7 @@ class SimplePhysics(Implicit):
             ['x', 'y', 'z'])
 
         dims_surf = combine_dimensions([
-            state['surface_pressure'],
+            state['surface_air_pressure'],
             state['surface_temperature']],
             ['x', 'y'])
 

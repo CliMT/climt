@@ -39,8 +39,8 @@ state['air_pressure_on_interface_levels'].values[0, 0, 1:] = tp_profiles[2, :]*1
 state['air_pressure_on_interface_levels'].values[0, 0, 0] = 101300.
 
 state['specific_humidity'].values[0, 0, :] = mol_profiles[0, :]*(18.02/28.964)*1000
-state['carbon_dioxide_mixing_ratio'].values[0, 0, :] = mol_profiles[1, :]
-state['ozone_mixing_ratio'].values[0, 0, :] = mol_profiles[2, :]
+state['mole_fraction_of_carbon_dioxide_in_air'].values[0, 0, :] = mol_profiles[1, :]
+state['mole_fraction_of_ozone_in_air'].values[0, 0, :] = mol_profiles[2, :]
 
 for i in range(8000):
 

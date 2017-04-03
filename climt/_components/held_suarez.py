@@ -1,7 +1,7 @@
 from sympl import (
     Prognostic, DataArray, replace_none_with_default, combine_dimensions,
     get_numpy_array)
-from climt import get_input_arrays_from_state
+from .._core import get_input_arrays_from_state
 import numpy as np
 
 
@@ -31,7 +31,7 @@ class HeldSuarez(Prognostic):
         'northward_wind': 'm s^-1',
         'air_temperature': 'degK',
         'air_pressure': 'Pa',
-        'surface_pressure': 'Pa'}
+        'surface_air_pressure': 'Pa'}
 
     tendencies = {
         'eastward_wind': 'm s^-1',
@@ -191,7 +191,7 @@ class HeldSuarez(Prognostic):
         if 'latitude' not in state:
             raise IndexError('state must contain a quantity labeled "latitude"')
 
-        sigma = state['air_pressure']/state['surface_pressure']
+        sigma = state['air_pressure']/state['surface_air_pressure']
         sigma.attrs['units'] = ''
 
         Teq = self._get_Teq(state['latitude'], state['air_pressure'])

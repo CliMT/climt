@@ -1,7 +1,8 @@
 from climt import (
     mass_to_volume_mixing_ratio,
     get_input_arrays_from_state,
-    get_default_state)
+    get_default_state,
+    get_interface_values)
 
 from sympl import DataArray
 import numpy as np
@@ -120,6 +121,29 @@ def test_get_undefined_array():
     with pytest.raises(IndexError) as excinfo:
         get_input_arrays_from_state(dummy, state)
     assert 'not described' in str(excinfo.value)
+
+
+def test_interface_levels():
+
+    mid_level_values = np.ones((1, 1, 10))
+    surface_value = np.ones((1, 1, 1))
+
+    pressure_mid_level = np.linspace(0.995, 0.001, 10)[None, None, :]
+    surface_pressure = 1.
+
+    pressure_interface_level = np.zeros((1, 1, 11))
+
+    pressure_interface_level[:, :, 1:-1] = (
+        pressure_mid_level[:, :, 1::] + pressure_mid_level[:, :, :-1])/2.
+
+    pressure_interface_level[:, :, 0] = surface_pressure
+    pressure_interface_level[:, :, -1] = 0.0005
+
+    interface_values = get_interface_values(
+        mid_level_values, surface_value,
+        pressure_mid_level, pressure_interface_level)
+
+    assert np.all(interface_values == np.ones((1, 1, 11)))
 
 
 if __name__ == '__main__':

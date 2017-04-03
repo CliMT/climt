@@ -226,7 +226,7 @@ class TestHeldSuarez(ComponentBase):
             'air_pressure': DataArray(
                 random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'hPa'},),
-            'surface_pressure': DataArray(
+            'surface_air_pressure': DataArray(
                 random.rand(2, 3), dims=['longitude', 'latitude'],
                 attrs={'units': 'hPa'},),
             'air_temperature': DataArray(
@@ -255,7 +255,7 @@ class TestHeldSuarezCachedCoordinates(ComponentBase):
             'air_pressure': DataArray(
                 random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
                 attrs={'units': 'hPa'},),
-            'surface_pressure': DataArray(
+            'surface_air_pressure': DataArray(
                 random.rand(2, 3), dims=['longitude', 'latitude'],
                 attrs={'units': 'hPa'},),
             'air_temperature': DataArray(
@@ -299,7 +299,7 @@ def test_hs_without_latitude():
         'air_pressure': DataArray(
             random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
             attrs={'units': 'hPa'},),
-        'surface_pressure': DataArray(
+        'surface_air_pressure': DataArray(
             random.rand(2, 3), dims=['longitude', 'latitude'],
             attrs={'units': 'hPa'},),
         'air_temperature': DataArray(

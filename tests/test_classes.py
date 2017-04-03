@@ -6,7 +6,7 @@ class MockPrognostic(Prognostic):
 
     inputs = {
         'air_temperature': 'degK',
-        'oxygen_mixing_ratio': 'millimole/mole',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
     }
 
     def __init__(self):
@@ -20,7 +20,7 @@ class MockPrognosticWithExtraDimensions(Prognostic):
 
     inputs = {
         'air_temperature': 'degK',
-        'oxygen_mixing_ratio': 'millimole/mole',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
     }
 
     extra_dimensions = {'some_other_dimension': np.arange(10)}
@@ -36,7 +36,7 @@ class MockPrognosticWithExtraQuantities(Prognostic):
 
     inputs = {
         'air_temperature': 'degK',
-        'oxygen_mixing_ratio': 'millimole/mole',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'some_quantity': 'dimensionless',
         'sigma_on_interface_levels': 'dimensionless'
     }
@@ -60,7 +60,7 @@ class MockPrognosticWithExtraQuantitiesNotDefined(Prognostic):
 
     inputs = {
         'air_temperature': 'degK',
-        'oxygen_mixing_ratio': 'millimole/mole',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'some_quantity': 'dimensionless',
         'sigma_on_interface_levels': 'dimensionless'
     }
@@ -76,7 +76,7 @@ class MockPrognosticWithMalformedExtraQuantities(Prognostic):
 
     inputs = {
         'air_temperature': 'degK',
-        'oxygen_mixing_ratio': 'millimole/mole',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'some_quantity': 'dimensionless',
     }
 

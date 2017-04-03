@@ -28,23 +28,23 @@ class RRTMGLongwave(Prognostic):
         'air_temperature': 'degK',
         'surface_temperature': 'degK',
         'specific_humidity': 'g/g',
-        'ozone_mixing_ratio': 'dimensionless',
-        'carbon_dioxide_mixing_ratio': 'dimensionless',
-        'methane_mixing_ratio': 'dimensionless',
-        'nitrous_oxide_mixing_ratio': 'dimensionless',
-        'oxygen_mixing_ratio': 'dimensionless',
-        'cfc11_mixing_ratio': 'dimensionless',
-        'cfc12_mixing_ratio': 'dimensionless',
-        'cfc22_mixing_ratio': 'dimensionless',
-        'ccl4_mixing_ratio': 'dimensionless',
-        'surface_emissivity': 'dimensionless',
-        'cloud_fraction': 'dimensionless',
-        'cloud_optical_depth': 'dimensionless',
-        'cloud_ice_water_path': 'g m^-2',
-        'cloud_liquid_water_path': 'g m^-2',
+        'mole_fraction_of_ozone_in_air': 'dimensionless',
+        'mole_fraction_of_carbon_dioxide_in_air': 'dimensionless',
+        'mole_fraction_of_methane_in_air': 'dimensionless',
+        'mole_fraction_of_nitrous_oxide_in_air': 'dimensionless',
+        'mole_fraction_of_oxygen_in_air': 'dimensionless',
+        'mole_fraction_of_cfc11_in_air': 'dimensionless',
+        'mole_fraction_of_cfc12_in_air': 'dimensionless',
+        'mole_fraction_of_cfc22_in_air': 'dimensionless',
+        'mole_fraction_of_carbon_tetrachloride_in_air': 'dimensionless',
+        'surface_longwave_emissivity': 'dimensionless',
+        'cloud_area_fraction_in_atmosphere_layer': 'dimensionless',
+        'atmosphere_optical_thickness_due_to_cloud': 'dimensionless',
+        'mass_content_of_cloud_ice_in_atmosphere_layer': 'g m^-2',
+        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'g m^-2',
         'cloud_ice_particle_size': 'micrometer',
         'cloud_water_droplet_radius': 'micrometer',
-        'aerosol_optical_depth': 'dimensionless'
+        'atmosphere_optical_thickness_due_to_aerosol': 'dimensionless'
     }
 
     tendencies = {
@@ -52,11 +52,11 @@ class RRTMGLongwave(Prognostic):
     }
 
     diagnostics = {
-        'upward_longwave_flux': 'W m^-2',
-        'downward_longwave_flux': 'W m^-2',
-        'upward_longwave_flux_clearsky': 'W m^-2',
-        'downward_longwave_flux_clearsky': 'W m^-2',
-        'longwave_heating_rate_clearsky': 'K day^-1',
+        'upwelling_longwave_flux_in_air': 'W m^-2',
+        'downwelling_longwave_flux_in_air': 'W m^-2',
+        'upwelling_longwave_flux_in_air_assuming_clear_sky': 'W m^-2',
+        'downwelling_longwave_flux_in_air_assuming_clear_sky': 'W m^-2',
+        'longwave_heating_rate_assuming_clear_sky': 'K day^-1',
         # TODO Need to add those final two quantities from the code
     }
 
@@ -66,19 +66,19 @@ class RRTMGLongwave(Prognostic):
     '''
 
     quantity_descriptions = {
-        'surface_emissivity': {
+        'surface_longwave_emissivity': {
             'dims': ['x', 'y', 'num_longwave_bands'],
             'units': 'dimensionless',
             'init_value': 1.
         },
 
-        'cloud_optical_depth': {
+        'atmosphere_optical_thickness_due_to_cloud': {
             'dims': ['x', 'num_longwave_bands', 'y', 'mid_levels'],
             'units': 'dimensionless',
             'init_value': 0.
         },
 
-        'aerosol_optical_depth': {
+        'atmosphere_optical_thickness_due_to_aerosol': {
             'dims': ['x', 'y', 'mid_levels', 'num_longwave_bands'],
             'units': 'dimensionless',
             'init_value': 0.
@@ -246,14 +246,16 @@ class RRTMGLongwave(Prognostic):
             'heat_capacity_of_dry_air_at_constant_pressure', specific_heat_dry_air)
 
         if self._cloud_optics == 0:  # Cloud optical depth directly input
-            for input_quantity in ['cloud_ice_water_path', 'cloud_liquid_water_path',
-                                   'cloud_ice_particle_size', 'cloud_water_droplet_radius']:
+            for input_quantity in ['mass_content_of_cloud_ice_in_atmosphere_layer',
+                                   'mass_content_of_cloud_liquid_water_in_atmosphere_layer',
+                                   'cloud_ice_particle_size',
+                                   'cloud_water_droplet_radius']:
                 copy_inputs = self.inputs.copy()
                 copy_inputs.pop(input_quantity)
                 self.inputs = copy_inputs
         else:
             copy_inputs = self.inputs.copy()
-            copy_inputs.pop('cloud_optical_depth')
+            copy_inputs.pop('atmosphere_optical_thickness_due_to_cloud')
             self.inputs = copy_inputs
 
         _rrtm_lw.set_constants(
@@ -328,25 +330,25 @@ class RRTMGLongwave(Prognostic):
                     Tint[lon, :],
                     raw_arrays['surface_temperature'][lon, :],
                     Q[lon, :],
-                    raw_arrays['ozone_mixing_ratio'][lon, :],
-                    raw_arrays['carbon_dioxide_mixing_ratio'][lon, :],
-                    raw_arrays['methane_mixing_ratio'][lon, :],
-                    raw_arrays['nitrous_oxide_mixing_ratio'][lon, :],
-                    raw_arrays['oxygen_mixing_ratio'][lon, :],
-                    raw_arrays['cfc11_mixing_ratio'][lon, :],
-                    raw_arrays['cfc12_mixing_ratio'][lon, :],
-                    raw_arrays['cfc22_mixing_ratio'][lon, :],
-                    raw_arrays['ccl4_mixing_ratio'][lon, :],
-                    raw_arrays['surface_emissivity'][lon, :],
-                    raw_arrays['cloud_fraction'][lon, :],
-                    raw_arrays['aerosol_optical_depth'][lon, :],
+                    raw_arrays['mole_fraction_of_ozone_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_carbon_dioxide_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_methane_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_nitrous_oxide_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_oxygen_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_cfc11_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_cfc12_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_cfc22_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_carbon_tetrachloride_in_air'][lon, :],
+                    raw_arrays['surface_longwave_emissivity'][lon, :],
+                    raw_arrays['cloud_area_fraction_in_atmosphere_layer'][lon, :],
+                    raw_arrays['atmosphere_optical_thickness_due_to_aerosol'][lon, :],
                     up_flux[lon, :],
                     down_flux[lon, :],
                     heating_rate[lon, :],
                     up_flux_clear[lon, :],
                     down_flux_clear[lon, :],
                     heating_rate_clear[lon, :],
-                    raw_arrays['cloud_optical_depth'][lon, :])
+                    raw_arrays['atmosphere_optical_thickness_due_to_cloud'][lon, :])
             else:
                 _rrtm_lw.rrtm_calculate_longwave_fluxes(
                     mid_level_shape[1],
@@ -357,27 +359,27 @@ class RRTMGLongwave(Prognostic):
                     Tint[lon, :],
                     raw_arrays['surface_temperature'][lon, :],
                     Q[lon, :],
-                    raw_arrays['ozone_mixing_ratio'][lon, :],
-                    raw_arrays['carbon_dioxide_mixing_ratio'][lon, :],
-                    raw_arrays['methane_mixing_ratio'][lon, :],
-                    raw_arrays['nitrous_oxide_mixing_ratio'][lon, :],
-                    raw_arrays['oxygen_mixing_ratio'][lon, :],
-                    raw_arrays['cfc11_mixing_ratio'][lon, :],
-                    raw_arrays['cfc12_mixing_ratio'][lon, :],
-                    raw_arrays['cfc22_mixing_ratio'][lon, :],
-                    raw_arrays['ccl4_mixing_ratio'][lon, :],
-                    raw_arrays['surface_emissivity'][lon, :],
-                    raw_arrays['cloud_fraction'][lon, :],
-                    raw_arrays['aerosol_optical_depth'][lon, :],
+                    raw_arrays['mole_fraction_of_ozone_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_carbon_dioxide_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_methane_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_nitrous_oxide_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_oxygen_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_cfc11_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_cfc12_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_cfc22_in_air'][lon, :],
+                    raw_arrays['mole_fraction_of_carbon_tetrachloride_in_air'][lon, :],
+                    raw_arrays['surface_longwave_emissivity'][lon, :],
+                    raw_arrays['cloud_area_fraction_in_atmosphere_layer'][lon, :],
+                    raw_arrays['atmosphere_optical_thickness_due_to_aerosol'][lon, :],
                     up_flux[lon, :],
                     down_flux[lon, :],
                     heating_rate[lon, :],
                     up_flux_clear[lon, :],
                     down_flux_clear[lon, :],
                     heating_rate_clear[lon, :],
-                    raw_arrays['aerosol_optical_depth'][lon, :],  # Dummy argument
-                    raw_arrays['cloud_ice_water_path'][lon, :],
-                    raw_arrays['cloud_liquid_water_path'][lon, :],
+                    raw_arrays['atmosphere_optical_thickness_due_to_aerosol'][lon, :],  # Dummy argument
+                    raw_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'][lon, :],
+                    raw_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'][lon, :],
                     raw_arrays['cloud_ice_particle_size'][lon, :],
                     raw_arrays['cloud_water_droplet_radius'][lon, :])
 

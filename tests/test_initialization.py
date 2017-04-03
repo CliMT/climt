@@ -32,12 +32,15 @@ def test_basic_case_for_two_inputs():
     required_quantities = list(dummy.inputs.keys())
     required_quantities.extend(['longitude',
                                'latitude',
-                                'mid_levels'])
+                                'mid_levels',
+                                'x_coordinate',
+                                'y_coordinate',
+                                'z_coordinate'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
 
-    assert state['oxygen_mixing_ratio'].dims == ('longitude', 'latitude', 'mid_levels')
+    assert state['mole_fraction_of_oxygen_in_air'].dims == ('longitude', 'latitude', 'mid_levels')
 
 
 def test_case_for_x_dim_defined():
@@ -50,7 +53,10 @@ def test_case_for_x_dim_defined():
     required_quantities = list(dummy.inputs.keys())
     required_quantities.extend(['along_shore',
                                'latitude',
-                                'mid_levels'])
+                                'mid_levels',
+                                'x_coordinate',
+                                'y_coordinate',
+                                'z_coordinate'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -68,7 +74,10 @@ def test_case_for_y_dim_defined():
     required_quantities = list(dummy.inputs.keys())
     required_quantities.extend(['longitude',
                                'along_shore',
-                                'mid_levels'])
+                                'mid_levels',
+                                'x_coordinate',
+                                'y_coordinate',
+                                'z_coordinate'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -86,7 +95,10 @@ def test_case_for_z_dim_defined():
     required_quantities = list(dummy.inputs.keys())
     required_quantities.extend(['longitude',
                                'latitude',
-                                'along_shore'])
+                                'along_shore',
+                                'x_coordinate',
+                                'y_coordinate',
+                                'z_coordinate'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -105,7 +117,10 @@ def test_with_extra_dimensions():
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
-                                'some_other_dimension'])
+                                'some_other_dimension',
+                                'x_coordinate',
+                                'y_coordinate',
+                                'z_coordinate'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -122,7 +137,10 @@ def test_with_extra_quantities():
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
-                                'some_quantity'])
+                                'some_quantity',
+                                'x_coordinate',
+                                'y_coordinate',
+                                'z_coordinate'])
 
     for quantity in state.keys():
         assert quantity in required_quantities

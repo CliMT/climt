@@ -1,33 +1,24 @@
 from sympl import (
-    Implicit, DataArray, jit, replace_none_with_default,
+    Implicit, DataArray, replace_none_with_default,
     get_numpy_array, combine_dimensions)
+from .._core import bolton_q_sat, bolton_dqsat_dT
 import numpy as np
 
 
-@jit(nopython=True)
-def bolton_q_sat(T, p, Rd, Rh2O):
-    es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
-    epsilon = Rd/Rh2O
-    return epsilon*es/(p - (1 - epsilon)*es)
-
-
-@jit(nopython=True)
-def bolton_dqsat_dT(T, Lv, Rh2O, q_sat):
-    """Uses the assumptions of equation 12 in Reed and Jablonowski, 2012. In
-    particular, assumes d(qsat)/dT is approximately epsilon/p*d(es)/dT"""
-    return Lv*q_sat/(Rh2O*T**2)
-
-
 class GridScaleCondensation(Implicit):
-    """Condenses supersaturated water at the grid scale, assuming all
-    condensed water falls as precipitation."""
+    """
+    Calculate condensation due to supersaturation of water.
+
+    Condenses supersaturated water at the grid scale, assuming all
+    condensed water falls as precipitation.
+    """
 
     inputs = (
         'air_temperature', 'specific_humidity', 'air_pressure',
         'air_pressure_on_interface_levels',
     )
     diagnostic_outputs = (
-        'column_integrated_precipitation_rate',
+        'precipitation_amount',
     )
     tendency_outputs = (
         'air_temperature', 'specific_humidity',
@@ -43,22 +34,27 @@ class GridScaleCondensation(Implicit):
         """
 
         Args:
-            gas_constant_of_dry_air (float, optional): Value in
-                $J kg^{-1} K^{-1}$.
-                Default taken from climt.default_constants.
-            gas_constant_of_water_vapor (float, optional): Value in
-                $J kg^{-1} K^{-1}$.
-                Default taken from climt.default_constants.
+            gas_constant_of_dry_air (float, optional):
+                Value in  $J kg^{-1} K^{-1}$.
+                Default taken from :code:`sympl.default_constants`.
+
+            gas_constant_of_water_vapor (float, optional):
+                Value in $J kg^{-1} K^{-1}$.
+                Default taken from :code:`sympl.default_constants`.
+
             heat_capacity_of_dry_air_at_constant_pressure (float, optional):
                 Value in $J kg^{-1} K^{-1}$.
-                Default taken from climt.default_constants.
-            latent_heat_of_vaporization_of_water (float, optional): Value in
-                $J kg^{-1}$.
-                Default taken from climt.default_constants.
-            gravitational_acceleration (float, optional): Value in $m s^{-2}$.
-                Default taken from climt.default_constants.
-            density_of_liquid_water (float, optional): Value in $kg m^{-3}$.
-                Default taken from climt.default_constants.
+                Default taken from :code:`sympl.default_constants`.
+
+            latent_heat_of_vaporization_of_water (float, optional):
+                Value in $J kg^{-1}$.
+                Default taken from :code:`sympl.default_constants`.
+
+            gravitational_acceleration (float, optional):
+                Value in $m s^{-2}$. Default taken from :code:`sympl.default_constants`.
+
+            density_of_liquid_water (float, optional):
+                Value in $kg m^{-3}$. Default taken from :code:`sympl.default_constants`.
         """
 
         self._Cpd = replace_none_with_default(
