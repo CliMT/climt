@@ -5,6 +5,7 @@ History
 Latest
 ------
 
+* State arrays now have coordinates
 * Updated documentation
 * RTD finally working, phew!
 * Added RRTMG Longwave, Simple Physics
