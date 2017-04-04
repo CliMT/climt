@@ -215,6 +215,50 @@ def get_interface_values(
     return interface_values
 
 
+def create_output_arrays(component, attribute_list, state):
+    """
+    Create numpy arrays to use as output arrays.
+
+    Args:
+
+        component (Prognostic, Diagnostic, Implicit, TimeStepper):
+            The component for which the input arrays are required.
+
+        attribute_list (list):
+            The attributes (:code:`tendencies`, :code:`diagnostics`, :code:`outputs`) for which
+            the output arrays are desired.
+
+        state (dict):
+            The state dictionary.
+
+    Returns:
+
+        output_arrays (dict):
+            A dictionary whose keys are the names of the arrays and values
+            are numpy arrays of the correct shape.
+
+    """
+
+    quantity_list = set()
+    output_array = {}
+
+    for attribute in attribute_list:
+        quantities = getattr(component, attribute)
+
+        if not isinstance(quantities, dict):
+            raise ValueError("{} must be a dictionary".format(attribute))
+
+        quantity_list = quantity_list.union(set(quantities.keys()))
+
+    for quantity in quantity_list:
+
+        dims = get_dimensions_for(component, quantity)
+        array_dims = [state[dim].shape[0] for dim in dims]
+        output_array[quantity] = np.zeros(array_dims, order='F')
+
+    return output_array
+
+
 @jit(nopython=True)
 def bolton_q_sat(T, p, Rd, Rh2O):
     es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))

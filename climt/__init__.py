@@ -5,6 +5,7 @@ import sympl
 from ._core import (
     get_default_state, mass_to_volume_mixing_ratio,
     get_input_arrays_from_state, get_interface_values,
+    create_output_arrays,
     bolton_q_sat, bolton_dqsat_dT,
     ImplicitPrognostic)
 
@@ -16,7 +17,8 @@ sympl.set_dimension_names(z=['interface_levels', 'mid_levels'])
 
 __all__ = (
     get_default_state, mass_to_volume_mixing_ratio, get_input_arrays_from_state,
-    get_interface_values, bolton_q_sat, bolton_dqsat_dT,
+    get_interface_values, create_output_arrays,
+    bolton_q_sat, bolton_dqsat_dT,
     ImplicitPrognostic,
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave)

@@ -33,4 +33,4 @@ one_d_state['specific_humidity'].values[:, :, :17] = 10.
 tendencies, diagnostics = radiation(state)
 one_d_tend, one_d_diag = radiation(one_d_state)
 
-print(np.all(tendencies['air_temperature'][0,5,:] == one_d_tend['air_temperature'][0,0,:]))
+print(np.all(tendencies['air_temperature'][0, 5, :] == one_d_tend['air_temperature'][0, 0, :]))

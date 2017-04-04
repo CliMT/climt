@@ -33,9 +33,9 @@ def test_basic_case_for_two_inputs():
     required_quantities.extend(['longitude',
                                'latitude',
                                 'mid_levels',
-                                'x_coordinate',
-                                'y_coordinate',
-                                'z_coordinate'])
+                                'x',
+                                'y',
+                                'z'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -54,9 +54,9 @@ def test_case_for_x_dim_defined():
     required_quantities.extend(['along_shore',
                                'latitude',
                                 'mid_levels',
-                                'x_coordinate',
-                                'y_coordinate',
-                                'z_coordinate'])
+                                'x',
+                                'y',
+                                'z'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -75,9 +75,9 @@ def test_case_for_y_dim_defined():
     required_quantities.extend(['longitude',
                                'along_shore',
                                 'mid_levels',
-                                'x_coordinate',
-                                'y_coordinate',
-                                'z_coordinate'])
+                                'x',
+                                'y',
+                                'z'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -96,9 +96,9 @@ def test_case_for_z_dim_defined():
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
-                                'x_coordinate',
-                                'y_coordinate',
-                                'z_coordinate'])
+                                'x',
+                                'y',
+                                'z'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -118,9 +118,9 @@ def test_with_extra_dimensions():
                                'latitude',
                                 'along_shore',
                                 'some_other_dimension',
-                                'x_coordinate',
-                                'y_coordinate',
-                                'z_coordinate'])
+                                'x',
+                                'y',
+                                'z'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -138,9 +138,9 @@ def test_with_extra_quantities():
                                'latitude',
                                 'along_shore',
                                 'some_quantity',
-                                'x_coordinate',
-                                'y_coordinate',
-                                'z_coordinate'])
+                                'x',
+                                'y',
+                                'z'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -154,14 +154,16 @@ def test_with_malformed_extra_quantity():
         get_default_state([dummy])
     assert 'Malformed' in str(excinfo.value)
 
+
 def test_different_dimension_units():
 
     dummy = MockPrognostic()
     with pytest.raises(ValueError) as excinfo:
-        state = get_default_state([dummy], y=dict(
-            label='along_shore', values=np.ones((2,2)),
+        get_default_state([dummy], y=dict(
+            label='along_shore', values=np.ones((2, 2)),
             units='degrees_north'))
     assert 'must have the same shape' in str(excinfo.value)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

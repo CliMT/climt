@@ -44,6 +44,15 @@ def init_interface_level_sigma(array_dims, quantity_description):
     return interface*np.ones(array_dims, order='F')
 
 
+def init_mid_level_sigma(array_dims, quantity_description):
+
+    vert_levels = array_dims[-1]
+    spacing = np.linspace(0.995, 0.001, vert_levels)
+    midlevel = spacing
+
+    return midlevel*np.ones(array_dims, order='F')
+
+
 _quantity_descriptions = {
     'air_pressure': {
         'dims': ['x', 'y', 'mid_levels'],
@@ -54,6 +63,11 @@ _quantity_descriptions = {
         'dims': ['x', 'y', 'interface_levels'],
         'units': 'Pa',
         'init_func': init_interface_level_pressures
+    },
+    'sigma_levels': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'init_func': init_mid_level_sigma
     },
     'sigma_on_interface_levels': {
         'dims': ['x', 'y', 'interface_levels'],
@@ -219,6 +233,11 @@ _quantity_descriptions = {
         'dims': ['x', 'y'],
         'units': 'kg m^-2',
         'init_value': 0.
+    },
+    'convective_precipitation_amount': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-2',
+        'init_value': 0.
     }
 }
 
@@ -341,9 +360,9 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     set_dimension_names(
         z=list(set(['mid_levels', 'interface_levels']).union(z_coordinate_label)))
 
-    output_state['x_coordinate'] = x_coordinate
-    output_state['y_coordinate'] = y_coordinate
-    output_state['z_coordinate'] = z_coordinate
+    output_state['x'] = x_coordinate
+    output_state['y'] = y_coordinate
+    output_state['z'] = z_coordinate
 
     quantity_list = set()
     temporary_description = _quantity_descriptions.copy()
