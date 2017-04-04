@@ -56,7 +56,7 @@ for module in module_list:
     output_file = module[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = 'gfortran '+module+' -c -o '+output_file+' -O3 -fPIC -Wall'
+    compilation_command = 'gfortran '+module+' -c -o '+output_file+' -O3 -fPIC'
     print(compilation_command)
     system(compilation_command)
 
@@ -66,7 +66,7 @@ for source in sources_list:
     output_file = source[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O3 -Wall -fPIC -fno-range-check'
+    compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O3 -fPIC -fno-range-check'
     print(compilation_command)
     system(compilation_command)
 
@@ -76,7 +76,7 @@ for source in unoptimised_sources_list:
     output_file = source[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O0 -fPIC -Wall -fno-range-check'
+    compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O0 -fPIC -fno-range-check'
     print(compilation_command)
     system(compilation_command)
 

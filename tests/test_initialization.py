@@ -154,6 +154,14 @@ def test_with_malformed_extra_quantity():
         get_default_state([dummy])
     assert 'Malformed' in str(excinfo.value)
 
+def test_different_dimension_units():
+
+    dummy = MockPrognostic()
+    with pytest.raises(ValueError) as excinfo:
+        state = get_default_state([dummy], y=dict(
+            label='along_shore', values=np.ones((2,2)),
+            units='degrees_north'))
+    assert 'must have the same shape' in str(excinfo.value)
 
 if __name__ == '__main__':
     pytest.main([__file__])
