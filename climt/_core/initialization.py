@@ -225,10 +225,11 @@ _quantity_descriptions = {
 
 def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     """
-    Returns a state dictionary with the required arrays to run a model
-    which comprises of components in `component_list`. If coordinate
-    values in `x`,`y` and `z` are not provided, a single column
-    centered at 0 degrees south, 0 degrees east of 30 levels is used.
+    Return a state dictionary required to run the model.
+
+    The model comprises of components in :code:`component_list`. If coordinate
+    values in :code:`x`, :code:`y` and :code:`z` are not provided, a single column
+    centered at 0 degrees south, 0 degrees east, with 30 vertical levels is used.
 
     Args:
         component_list (iterable): The _components for which a default
@@ -239,25 +240,25 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
             function will attempt to determine required inputs from the series
             of _components.
 
-        x (dict,optional): A dictionary containing keys `label`, `values`,
-            and `units`. `label` refers to the name the coordinate axis will assume.
-            `values` refers to the array of coordinate values. `units` refers to the
+        x (dict,optional): A dictionary containing keys :code:`label`, :code:`values`,
+            and :code:`units`. :code:`label` refers to the name the coordinate axis will assume.
+            :code:`values` refers to the array of coordinate values. :code:`units` refers to the
             units of the coordinate values.
-            If `x` is an empty dictionary, a single default value of 0 degrees longitude
+            If :code:`x` is an empty dictionary, a single default value of 0 degrees longitude
             is used.
 
-        y (dict,optional): A dictionary containing keys `label`, `values`,
-            and `units`. `label` refers to the name the coordinate axis will assume.
-            `values` refers to the array of coordinate values. `units` refers to the
+        y (dict,optional): A dictionary containing keys :code:`label`, :code:`values`,
+            and :code:`units`. :code:`label` refers to the name the coordinate axis will assume.
+            :code:`values` refers to the array of coordinate values. :code:`units` refers to the
             units of the coordinate values.
-            If `y` is an empty dictionary, a single default value of 0 degrees latitude
+            If :code:`y` is an empty dictionary, a single default value of 0 degrees latitude
             is used.
 
-        z (dict,optional): A dictionary containing keys `label`, `values`,
-            and `units`. `label` refers to the name the coordinate axis will assume.
-            `values` refers to the array of coordinate values. `units` refers to the
+        z (dict,optional): A dictionary containing keys :code:`label`, :code:`values`,
+            and :code:`units`. :code:`label` refers to the name the coordinate axis will assume.
+            :code:`values` refers to the array of coordinate values. :code:`units` refers to the
             units of the coordinate values.
-            If `z` is an empty dictionary, 30 levels of arbitrary units are used.
+            If :code:`z` is an empty dictionary, 30 levels of arbitrary units are used.
 
         input_state (dict, optional): A dictionary containing some quantities that will
             also be added to the final output state. Must not contain any quantities that
@@ -265,8 +266,14 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
 
     Returns:
-        default_state (dict): A state dictionary containing the requested
+        default_state (dict):
+            A state dictionary containing the requested
             quantities using the provided coordinate state.
+
+    Raises:
+        ValueError:
+            if :code:`component_list` is empty or the shape of :code:`x['values']` and
+            :code:`y['values']` is not the same.
     """
 
     if len(component_list) == 0:
@@ -274,43 +281,65 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     output_state = {}
 
+    # Create 2D coordinate arrays
     if len(x.keys()) == 0:
-        x_coordinate = DataArray(
-            np.zeros((1,)), dims=('longitude',), attrs={'units': 'degrees_east', 'label': 'longitude'})
-
-        output_state['longitude'] = x_coordinate
-        set_dimension_names(x='longitude')
+        x_coordinate_values = np.zeros((1,))
+        x_coordinate_label = 'longitude'
+        x_coordinate_units = 'degrees_east'
     else:
-        x_coordinate = DataArray(
-            x['values'], dims=(x['label'],), attrs={'units': x['units'], 'label': x['label']})
-
-        output_state[x['label']] = x_coordinate
-        set_dimension_names(x=x['label'])
+        x_coordinate_values = x['values']
+        x_coordinate_label = x['label']
+        x_coordinate_units = x['units']
 
     if len(y.keys()) == 0:
-        y_coordinate = DataArray(
-            np.zeros((1,)), dims=('latitude',), attrs={'units': 'degrees_north', 'label': 'latitude'})
-
-        output_state['latitude'] = y_coordinate
-        set_dimension_names(y='latitude')
+        y_coordinate_values = np.zeros((1,))
+        y_coordinate_label = 'latitude'
+        y_coordinate_units = 'degrees_north'
     else:
-        y_coordinate = DataArray(
-            y['values'], dims=(y['label'],), attrs={'units': y['units'], 'label': y['label']})
-
-        output_state[y['label']] = y_coordinate
-        set_dimension_names(y=y['label'])
+        y_coordinate_values = y['values']
+        y_coordinate_label = y['label']
+        y_coordinate_units = y['units']
 
     if len(z.keys()) == 0:
-        z_coordinate = DataArray(
-            np.arange(30), dims=('mid_levels',), attrs={'units': '', 'label': 'mid_levels'})
-
-        output_state['mid_levels'] = z_coordinate
+        z_coordinate_values = np.arange(30)
+        z_coordinate_label = 'mid_levels'
+        z_coordinate_units = ''
     else:
-        z_coordinate = DataArray(
-            z['values'], dims=('mid_levels',), attrs={'units': z['units'], 'label': z['label']})
+        z_coordinate_values = z['values']
+        z_coordinate_label = z['label']
+        z_coordinate_units = z['units']
 
-        output_state[z['label']] = z_coordinate
-        # set_dimension_names(z=z['label'])
+    if not x_coordinate_values.ndim == y_coordinate_values.ndim:
+        raise ValueError('x and y coordinates must have the same shape')
+
+    # if x_coordinate_values.ndim is 1:
+    #    x_coordinate_values, y_coordinate_values = np.meshgrid(
+    #        x_coordinate_values, y_coordinate_values, indexing='ij')
+
+    x_coordinate = DataArray(
+        x_coordinate_values,
+        dims=('x_coordinate_label'),
+        attrs={'units': x_coordinate_units, 'label': x_coordinate_label})
+
+    output_state[x_coordinate_label] = x_coordinate
+    set_dimension_names(x=x_coordinate_label)
+
+    y_coordinate = DataArray(
+        y_coordinate_values,
+        dims=('y_coordinate_label'),
+        attrs={'units': y_coordinate_units, 'label': y_coordinate_label})
+
+    output_state[y_coordinate_label] = y_coordinate
+    set_dimension_names(y=y_coordinate_label)
+
+    z_coordinate = DataArray(
+        z_coordinate_values,
+        dims=('z_coordinate_label',),
+        attrs={'units': z_coordinate_units, 'label': z_coordinate_label})
+
+    output_state[z_coordinate_label] = z_coordinate
+    set_dimension_names(
+        z=list(set(['mid_levels', 'interface_levels']).union(z_coordinate_label)))
 
     output_state['x_coordinate'] = x_coordinate
     output_state['y_coordinate'] = y_coordinate
@@ -356,14 +385,14 @@ def get_default_values(quantity_name, x, y, z,
 
     Args:
     quantity_name (string): string corresponding to a quantity in the pre-defined
-        dictionary of names in `quantity_description`.
+        dictionary of names in :code:`quantity_description`.
 
     x (DataArray): DataArray containing the definition of the x coordinates.
 
     y (DataArray): DataArray containing the definition of the y coordinates.
 
     z (DataArray): DataArray containing the definition of the mid-level z coordinates.
-        Quantities on interface levels will have a vertical dimension of size `len(z)+1`.
+        Quantities on interface levels will have a vertical dimension of size :code:`len(z)+1`.
 
     quantity_description (dict): Description of dimensions, units and default values of
         quantities to be used to create DataArrays.
@@ -376,20 +405,30 @@ def get_default_values(quantity_name, x, y, z,
     description = quantity_description[quantity_name]
 
     dimension_length = {}
-    dimension_length['x'] = len(x.values)
-    dimension_length['y'] = len(y.values)
+    dimension_length['x'] = x.values.shape[0]
+    dimension_length['y'] = y.values.shape[0]
     dimension_length['mid_levels'] = len(z.values)
     dimension_length['interface_levels'] = dimension_length['mid_levels']+1
 
+    mid_level_coords = np.arange(dimension_length['mid_levels'])
+    int_level_coords = np.arange(dimension_length['interface_levels'])
+    full_coords = {}
+    full_coords['x'] = x
+    full_coords['y'] = y
+    full_coords['mid_levels'] = mid_level_coords
+    full_coords['interface_levels'] = int_level_coords
+
     for dimension in additional_dimensions.keys():
         dimension_length[dimension] = len(additional_dimensions[dimension])
+        full_coords[dimension] = additional_dimensions[dimension]
 
-    quantity_dims = description['dims']
+    quantity_dims = description['dims'].copy()
 
     array_dims = [dimension_length[dimension] for dimension in quantity_dims]
+    quantity_coords = [full_coords[dimension] for dimension in quantity_dims]
 
-    quantity_dims = [x.label if elem == 'x' else elem for elem in quantity_dims]
-    quantity_dims = [y.label if elem == 'y' else elem for elem in quantity_dims]
+    quantity_dims = [x.label if elem is 'x' else elem for elem in quantity_dims]
+    quantity_dims = [y.label if elem is 'y' else elem for elem in quantity_dims]
 
     if 'init_value' in description:
         quantity_array = np.ones(array_dims, order='F')*description['init_value']
@@ -398,4 +437,5 @@ def get_default_values(quantity_name, x, y, z,
     else:
         raise ValueError('Malformed description for quantity {}'.format(quantity_name))
 
-    return DataArray(quantity_array, dims=quantity_dims, attrs={'units': description['units']})
+    return DataArray(quantity_array, dims=quantity_dims,
+                     coords=quantity_coords, attrs={'units': description['units']})

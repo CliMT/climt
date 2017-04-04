@@ -15,6 +15,7 @@ Contents:
    authors
    history
    components
+   initialisation
    utilities
 
 Indices and tables
