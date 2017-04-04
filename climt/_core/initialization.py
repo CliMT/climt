@@ -422,7 +422,7 @@ def get_default_values(quantity_name, x, y, z,
         dimension_length[dimension] = len(additional_dimensions[dimension])
         full_coords[dimension] = additional_dimensions[dimension]
 
-    quantity_dims = description['dims'].copy()
+    quantity_dims = list(description['dims'])
 
     array_dims = [dimension_length[dimension] for dimension in quantity_dims]
     quantity_coords = [full_coords[dimension] for dimension in quantity_dims]
