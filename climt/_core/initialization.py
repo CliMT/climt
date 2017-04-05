@@ -375,10 +375,11 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         if hasattr(component, 'extra_dimensions'):
             ensure_no_shared_keys(additional_dimensions,
                                   component.extra_dimensions)
-            additional_dimensions.update(component.extra_dimensions)
+
             for dimension in component.extra_dimensions.keys():
                 output_state[dimension] = DataArray(
                     component.extra_dimensions[dimension], dims=(dimension,))
+                additional_dimensions[dimension] = output_state[dimension]
 
         if hasattr(component, 'quantity_descriptions'):
             ensure_no_shared_keys(additional_descriptions,
@@ -438,8 +439,8 @@ def get_default_values(quantity_name, x, y, z,
     full_coords['interface_levels'] = int_level_coords
 
     for dimension in additional_dimensions.keys():
-        dimension_length[dimension] = len(additional_dimensions[dimension])
-        full_coords[dimension] = additional_dimensions[dimension]
+        dimension_length[dimension] = additional_dimensions[dimension].shape[0]
+        full_coords[dimension] = additional_dimensions[dimension].values
 
     quantity_dims = list(description['dims'])
 

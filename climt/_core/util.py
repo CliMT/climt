@@ -1,6 +1,5 @@
 from pint import UnitRegistry
-from sympl import DataArray, get_numpy_array, jit
-from .initialization import _quantity_descriptions
+from sympl import DataArray, jit
 import numpy as np
 
 pint_units = UnitRegistry()
@@ -70,8 +69,8 @@ def get_interface_values(
 
     Given 3D values of a quantity on model mid levels (cell centers) and the 2D surface
     value, return the 3D values of that quantity on model full levels (cell interfaces).
-    If the z-dimension of :code:`mid_level_values` is length K, the returned array will have a
-    z-dimension of length K+1.
+    If the vertical dimension of :code:`mid_level_values` is length K, the returned array will have a
+    vertical dimension of length K+1.
 
     Routine borrowed from CESM (radiation.F90 in rrtmg folder)
 
@@ -82,14 +81,14 @@ def get_interface_values(
 
         surface_value (array):
             The value of the quantity at the surface. Must be in the
-            same units as `mid_level_values`
+            same units as :code:`mid_level_values`
 
         mid_level_pressure (array):
             Pressure values on mid-levels. Can be in any units.
 
         interface_level_pressure (array):
             Pressure values on interface levels. Must be in
-            in the same units as `mid_level_pressure`.
+            in the same units as :code:`mid_level_pressure`.
 
     Returns:
 
@@ -116,50 +115,6 @@ def get_interface_values(
     interface_values[:, :, -1] = mid_level_values[:, :, -1]
 
     return interface_values
-
-
-def create_output_arrays(component, attribute_list, state):
-    """
-    Create numpy arrays to use as output arrays.
-
-    Args:
-
-        component (Prognostic, Diagnostic, Implicit, TimeStepper):
-            The component for which the input arrays are required.
-
-        attribute_list (list):
-            The attributes (:code:`tendencies`, :code:`diagnostics`, :code:`outputs`) for which
-            the output arrays are desired.
-
-        state (dict):
-            The state dictionary.
-
-    Returns:
-
-        output_arrays (dict):
-            A dictionary whose keys are the names of the arrays and values
-            are numpy arrays of the correct shape.
-
-    """
-
-    quantity_list = set()
-    output_array = {}
-
-    for attribute in attribute_list:
-        quantities = getattr(component, attribute)
-
-        if not isinstance(quantities, dict):
-            raise ValueError("{} must be a dictionary".format(attribute))
-
-        quantity_list = quantity_list.union(set(quantities.keys()))
-
-    for quantity in quantity_list:
-
-        dims = get_dimensions_for(component, quantity)
-        array_dims = [state[dim].shape[0] for dim in dims]
-        output_array[quantity] = np.zeros(array_dims, order='F')
-
-    return output_array
 
 
 @jit(nopython=True)

@@ -68,7 +68,7 @@ def test_inputs_is_not_dict():
 
     with pytest.raises(NotImplementedError) as excinfo:
         get_numpy_arrays_from_state(dummy, 'inputs', state)
-    assert 'with dict-like' in str(excinfo.value)
+    assert 'with a dict-like' in str(excinfo.value)
 
 
 def test_c_memory_layout():

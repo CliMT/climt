@@ -34,11 +34,11 @@ class HeldSuarez(Prognostic):
         'surface_air_pressure': 'Pa'}
 
     tendencies = {
-        'eastward_wind': 'm s^-1',
-        'northward_wind': 'm s^-1',
-        'air_temperature': 'degK'}
+        'eastward_wind': 'm s^-2',
+        'northward_wind': 'm s^-2',
+        'air_temperature': 'degK s^-1'}
 
-    diagnostics = ()
+    diagnostics = {}
 
     def __init__(self,
                  sigma_boundary_layer_top=0.7,

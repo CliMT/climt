@@ -1,6 +1,5 @@
-from pint import UnitRegistry
-from sympl import DataArray, get_numpy_array, jit
-from .initialization import _quantity_descriptions
+from sympl import get_numpy_array
+from .initialization import _quantity_descriptions, get_default_values
 import numpy as np
 
 
@@ -17,8 +16,8 @@ def get_numpy_arrays_from_state(component, attribute, state, memory_layout='fort
 
         component (Prognostic, Diagnostic, Implicit, TimeStepper):
             The component for which the input arrays are required.
-            
-        attribute (basestring):
+
+        attribute (string):
             The attribute (:code:`inputs`, :code:`tendencies`, :code:`outputs` or
             :code:`diagnostics`) for which to return numpy arrays.
 
@@ -48,16 +47,7 @@ def get_numpy_arrays_from_state(component, attribute, state, memory_layout='fort
 
     """
 
-
-    if not hasattr(component, attribute):
-        raise IndexError(
-            'Component has no attribute called {}'.format(attribute))
-
-    quantities_to_extract = getattr(component, attribute)
-
-    if not isinstance(quantities_to_extract, dict):
-        raise NotImplementedError(
-            'This method will only work with components with dict-like "inputs" attribute')
+    quantities_to_extract = check_if_sane_and_return_attribute(component, attribute)
 
     if memory_layout not in ['fortran', 'c']:
         raise ValueError(
@@ -70,10 +60,11 @@ def get_numpy_arrays_from_state(component, attribute, state, memory_layout='fort
         dims = get_dimensions_for(component, quantity)
         units = quantities_to_extract[quantity]
 
-        new_array = get_array_from_state(state,
-                                           quantity,
-                                           units,
-                                           dims)
+        new_array = get_array_from_state(
+            state,
+            quantity,
+            units,
+            dims)
 
         if memory_layout is 'fortran' and not new_array.flags['FARRAY']:
             new_array = np.asfortranarray(new_array)
@@ -110,3 +101,85 @@ def get_array_from_state(state,
 
     return get_numpy_array(
         state[quantity_name].to_units(quantity_units), quantity_dims)
+
+
+def create_state_dict_for(component, attribute, state):
+    """
+    Create dictionaries to return to caller.
+
+    Use quantities in :code:`component.attribute` to create a
+    dictionary of DataArrays which is returned by the component
+    to the caller.
+
+    Args:
+
+        component (Prognostic, Implicit, Diagnostic, ImplicitPrognostic, TimeStepper):
+            component for which the output dictionary is required.
+
+        attribute (basestring):
+            The attribute of the component which should be used to create the
+            dictionary. Typically, one of :code:`inputs`, :code:`tendencies`, :code:`outputs` or
+            :code:`diagnostics`.
+
+        state (dict):
+            The state dictionary that was passed in to the component
+
+    Returns:
+
+        output_dict (dict):
+            The dictionary whose keys are labels from :code:`component.attribute` and
+            values are the appropriate DataArrays.
+
+    """
+
+    quantities_to_extract = check_if_sane_and_return_attribute(component, attribute)
+    # quantities_to_extract is a dictionary whose keys are quantity names
+    # and values are units produced by the code. Note that if this is a
+    # tendency term, the final units returned to the caller must be in per second,
+    # since the TimeStepper requires quantities in per seconds.
+
+    x_coord = state['x']
+    y_coord = state['y']
+    z_coord = state['z']
+
+    output_state = {}
+    for quantity in quantities_to_extract.keys():
+        description = {}
+        if quantity in _quantity_descriptions:
+            description[quantity] = _quantity_descriptions[quantity]
+
+        if hasattr(component, 'quantity_descriptions'):
+            if quantity in component.quantity_descriptions:
+                description[quantity] = component.quantity_descriptions[quantity]
+
+        additional_dimensions = {}
+        for dimension in description[quantity]['dims']:
+            if dimension not in ['x', 'y', 'mid_levels', 'interface_levels']:
+                additional_dimensions[dimension] = state[dimension]
+
+        # Set the units according to component's description, not global
+        # description
+        description[quantity]['units'] = quantities_to_extract[quantity]
+
+        output_state[quantity] = get_default_values(quantity,
+                                                    x_coord, y_coord, z_coord,
+                                                    description,
+                                                    additional_dimensions)
+
+    return output_state
+
+
+def check_if_sane_and_return_attribute(component, attribute):
+    """ Check if attribute exists and is a dict"""
+
+    if not hasattr(component, attribute):
+        raise IndexError(
+            'Component has no attribute called {}'.format(attribute))
+
+    quantities_to_extract = getattr(component, attribute)
+
+    if not isinstance(quantities_to_extract, dict):
+        raise NotImplementedError(
+            'This method will only work with components with a dict-like {} attribute'.format(attribute))
+
+    return quantities_to_extract

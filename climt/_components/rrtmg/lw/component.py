@@ -48,7 +48,7 @@ class RRTMGLongwave(Prognostic):
     }
 
     tendencies = {
-        'air_temperature': 'K day^-1'
+        'air_temperature': 'degK day^-1'
     }
 
     diagnostics = {

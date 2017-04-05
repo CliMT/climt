@@ -1,13 +1,19 @@
 .. currentmodule:: climt
 
-===============
-Utilities
+General Utilities
 ===============
 
 .. autosummary::
     :toctree: generated/
 
     mass_to_volume_mixing_ratio
-    get_input_arrays_from_state
     get_interface_values
-    create_output_arrays
+
+Array Handling Utilities
+========================
+
+.. autosummary::
+    :toctree: generated/
+
+    create_state_dict_for
+    get_numpy_arrays_from_state
