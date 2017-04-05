@@ -7,7 +7,8 @@ import pytest
 from .test_classes import (MockPrognostic,
                            MockPrognosticWithExtraDimensions,
                            MockPrognosticWithExtraQuantities,
-                           MockPrognosticWithMalformedExtraQuantities)
+                           MockPrognosticWithMalformedExtraQuantities,
+                           MockPrognosticWithExtraDimensionsAndSigmaLevels)
 
 
 def test_no_components():
@@ -109,6 +110,26 @@ def test_case_for_z_dim_defined():
 def test_with_extra_dimensions():
 
     dummy = MockPrognosticWithExtraDimensions()
+    state = get_default_state([dummy], z=dict(
+        label='along_shore', values=np.linspace(0, 10, 10),
+        units='degrees_east'))
+
+    required_quantities = list(dummy.inputs.keys())
+    required_quantities.extend(['longitude',
+                               'latitude',
+                                'along_shore',
+                                'some_other_dimension',
+                                'x',
+                                'y',
+                                'z'])
+
+    for quantity in state.keys():
+        assert quantity in required_quantities
+
+
+def test_with_extra_dimensions_and_sigma_levels():
+
+    dummy = MockPrognosticWithExtraDimensionsAndSigmaLevels()
     state = get_default_state([dummy], z=dict(
         label='along_shore', values=np.linspace(0, 10, 10),
         units='degrees_east'))
