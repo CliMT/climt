@@ -358,7 +358,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     output_state[z_coordinate_label] = z_coordinate
     set_dimension_names(
-        z=list(set(['mid_levels', 'interface_levels']).union(z_coordinate_label)))
+        z=list({'mid_levels', 'interface_levels'}.union(z_coordinate_label)))
 
     output_state['x'] = x_coordinate
     output_state['y'] = y_coordinate

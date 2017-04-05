@@ -1,7 +1,7 @@
 from sympl import (
     Prognostic, DataArray, replace_none_with_default, combine_dimensions,
     get_numpy_array)
-from .._core import get_input_arrays_from_state
+from .._core import get_numpy_arrays_from_state
 import numpy as np
 
 
@@ -198,7 +198,7 @@ class HeldSuarez(Prognostic):
         k_t = self._get_k_t(state['latitude'], sigma)
         k_v = self._get_k_v(sigma)
 
-        input_arrays = get_input_arrays_from_state(self, state)
+        input_arrays = get_numpy_arrays_from_state(self, 'inputs', state)
 
         tendencies = {
             'eastward_wind': DataArray(

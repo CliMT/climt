@@ -1,6 +1,6 @@
 from climt import (
     mass_to_volume_mixing_ratio,
-    get_input_arrays_from_state,
+    get_numpy_arrays_from_state,
     get_default_state,
     get_interface_values)
 
@@ -67,7 +67,7 @@ def test_inputs_is_not_dict():
     dummy.inputs = ('air_temperature', 'oxygen_mixing_ratio')
 
     with pytest.raises(NotImplementedError) as excinfo:
-        get_input_arrays_from_state(dummy, state)
+        get_numpy_arrays_from_state(dummy, 'inputs', state)
     assert 'with dict-like' in str(excinfo.value)
 
 
@@ -78,7 +78,7 @@ def test_c_memory_layout():
                                               values=np.arange(10),
                                               units='degrees_east'))
 
-    get_input_arrays_from_state(dummy, state, memory_layout='c')
+    get_numpy_arrays_from_state(dummy, 'inputs', state, memory_layout='c')
 
 
 def test_wrong_memory_layout():
@@ -87,7 +87,7 @@ def test_wrong_memory_layout():
     state = get_default_state([dummy])
 
     with pytest.raises(ValueError) as excinfo:
-        get_input_arrays_from_state(dummy, state, memory_layout='abcd')
+        get_numpy_arrays_from_state(dummy, 'inputs', state, memory_layout='abcd')
     assert 'memory_layout' in str(excinfo.value)
 
 
@@ -98,7 +98,7 @@ def test_unknown_quantity_in_component():
     state.pop('air_temperature')
 
     with pytest.raises(IndexError) as excinfo:
-        get_input_arrays_from_state(dummy, state, memory_layout='c')
+        get_numpy_arrays_from_state(dummy, 'inputs', state, memory_layout='c')
     assert 'does not contain' in str(excinfo.value)
 
 
@@ -106,7 +106,7 @@ def test_get_class_defined_quantity():
 
     dummy = MockPrognosticWithExtraQuantities()
     state = get_default_state([dummy])
-    input_arrays = get_input_arrays_from_state(dummy, state)
+    input_arrays = get_numpy_arrays_from_state(dummy, 'inputs', state)
 
     assert np.all(
         state['sigma_on_interface_levels'].values == input_arrays['sigma_on_interface_levels'])
@@ -119,8 +119,18 @@ def test_get_undefined_array():
     dummy = MockPrognosticWithExtraQuantitiesNotDefined()
 
     with pytest.raises(IndexError) as excinfo:
-        get_input_arrays_from_state(dummy, state)
+        get_numpy_arrays_from_state(dummy, 'inputs', state)
     assert 'not described' in str(excinfo.value)
+
+
+def test_unknown_attribute():
+
+    dummy = MockPrognosticWithExtraQuantities()
+    state = get_default_state([dummy])
+
+    with pytest.raises(IndexError) as excinfo:
+        get_numpy_arrays_from_state(dummy, 'random', state)
+    assert 'no attribute called' in str(excinfo.value)
 
 
 def test_interface_levels():

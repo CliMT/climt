@@ -5,7 +5,7 @@ from sympl import (Prognostic,
                    combine_dimensions)
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values,
-    get_input_arrays_from_state)
+    get_numpy_arrays_from_state)
 import numpy as np
 from numpy import pi as PI
 try:
@@ -48,7 +48,7 @@ class RRTMGLongwave(Prognostic):
     }
 
     tendencies = {
-        'air_temperature': 'K s^-1'
+        'air_temperature': 'K day^-1'
     }
 
     diagnostics = {
@@ -297,7 +297,7 @@ class RRTMGLongwave(Prognostic):
 
         """
 
-        raw_arrays = get_input_arrays_from_state(self, state)
+        raw_arrays = get_numpy_arrays_from_state(self, 'inputs', state)
 
         Q = mass_to_volume_mixing_ratio(state['specific_humidity'].to_units('g/g'), 18.02)
         Q = get_numpy_array(Q, ['x', 'y', 'z'])
