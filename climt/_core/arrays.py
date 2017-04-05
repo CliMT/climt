@@ -144,9 +144,7 @@ def create_state_dict_for(component, attribute, state):
 
     output_state = {}
     for quantity in quantities_to_extract.keys():
-        description = {}
-        if quantity in _quantity_descriptions:
-            description[quantity] = _quantity_descriptions[quantity]
+        description = _quantity_descriptions.copy()
 
         if hasattr(component, 'quantity_descriptions'):
             if quantity in component.quantity_descriptions:

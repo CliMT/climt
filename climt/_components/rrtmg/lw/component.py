@@ -56,7 +56,7 @@ class RRTMGLongwave(Prognostic):
         'downwelling_longwave_flux_in_air': 'W m^-2',
         'upwelling_longwave_flux_in_air_assuming_clear_sky': 'W m^-2',
         'downwelling_longwave_flux_in_air_assuming_clear_sky': 'W m^-2',
-        'longwave_heating_rate_assuming_clear_sky': 'K day^-1',
+        'longwave_heating_rate_assuming_clear_sky': 'degK day^-1',
         # TODO Need to add those final two quantities from the code
     }
 
@@ -139,7 +139,8 @@ class RRTMGLongwave(Prognostic):
 
                 * 0 = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
                 * 1 = ice particle has effective radius between 13.0 and 130.0 micron `[Ebert and Curry 1992]`_
-                * 2 = ice particle has effective radius between 5.0 and 131.0 micron `[Key, Streamer Ref. Manual, 1996]`_
+                * 2 = ice particle has effective radius between 5.0 and 131.0 micron
+                    `[Key, Streamer Ref. Manual, 1996]`_
                 * 3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron
                   `[Fu, 1996]`_. (dge = 1.0315 * r_ec)
 
