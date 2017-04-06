@@ -8,7 +8,8 @@ from .test_classes import (MockPrognostic,
                            MockPrognosticWithExtraDimensions,
                            MockPrognosticWithExtraQuantities,
                            MockPrognosticWithMalformedExtraQuantities,
-                           MockPrognosticWithExtraDimensionsAndSigmaLevels)
+                           MockPrognosticWithExtraDimensionsAndSigmaLevels,
+                           MockPrognosticWithExtraDimensionsIn2d)
 
 
 def test_no_components():
@@ -189,12 +190,20 @@ def test_different_dimension_units():
 def test_basic_2d_coordinates():
 
     dummy = MockPrognosticWithExtraQuantities
+    random_x_values = np.random.randn(3, 4)
+    random_y_values = np.random.randn(3, 4)
     state = get_default_state([dummy],
-                              x=dict(label='shore', values=np.random.randn(3, 4), units='km'),
-                              y=dict(label='latitude', values=np.random.randn(3, 4), units='degrees east'))
+                              x=dict(label='shore', values=random_x_values, units='km'),
+                              y=dict(label='latitude', values=random_y_values, units='degrees east'))
 
     assert state['x'].values.shape[0] == 3
-    assert state['y'].values.shape[0] == 4
+    assert state['x'].values.shape[1] == 4
+
+    assert state['y'].values.shape[0] == 3
+    assert state['y'].values.shape[1] == 4
+
+    assert np.all(state['x'].values == random_x_values)
+    assert np.all(state['y'].values == random_y_values)
 
     for quantity in dummy.inputs.keys():
         assert 'shore' in state[quantity].coords
@@ -213,6 +222,14 @@ def test_2d_coordinates_wrong_shape():
                           y=dict(label='latitude', values=np.random.randn(3, 3), units='degrees east'))
     assert '2d coordinates, they' in str(excinfo.value)
 
+
+def test_2d_coordinates_in_extra_dimensions():
+
+    dummy = MockPrognosticWithExtraDimensionsIn2d
+
+    with pytest.raises(NotImplementedError) as excinfo:
+        get_default_state([dummy])
+    assert  'not yet supported' in str(excinfo.value)
 
 if __name__ == '__main__':
     pytest.main([__file__])

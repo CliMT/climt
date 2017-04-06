@@ -32,6 +32,22 @@ class MockPrognosticWithExtraDimensions(Prognostic):
         return
 
 
+class MockPrognosticWithExtraDimensionsIn2d(Prognostic):
+
+    inputs = {
+        'air_temperature': 'degK',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
+    }
+
+    extra_dimensions = {'some_other_dimension': np.random.randn(10, 10  )}
+
+    def __init__(self):
+        return
+
+    def __call__(self, state):
+        return
+
+
 class MockPrognosticWithExtraDimensionsAndSigmaLevels(Prognostic):
 
     inputs = {

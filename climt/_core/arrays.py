@@ -1,5 +1,5 @@
 from sympl import get_numpy_array
-from .initialization import _quantity_descriptions, get_default_values
+from .initialization import quantity_descriptions, get_default_values
 import numpy as np
 
 
@@ -82,8 +82,8 @@ def get_dimensions_for(component, quantity_name):
         if quantity_name in component.quantity_descriptions:
             return component.quantity_descriptions[quantity_name]['dims']
 
-    if quantity_name in _quantity_descriptions:
-        return _quantity_descriptions[quantity_name]['dims']
+    if quantity_name in quantity_descriptions:
+        return quantity_descriptions[quantity_name]['dims']
 
     # Should never come here.
     raise IndexError(
@@ -138,13 +138,9 @@ def create_state_dict_for(component, attribute, state):
     # tendency term, the final units returned to the caller must be in per second,
     # since the TimeStepper requires quantities in per seconds.
 
-    x_coord = state['x']
-    y_coord = state['y']
-    z_coord = state['z']
-
     output_state = {}
     for quantity in quantities_to_extract.keys():
-        description = _quantity_descriptions.copy()
+        description = quantity_descriptions.copy()
 
         if hasattr(component, 'quantity_descriptions'):
             if quantity in component.quantity_descriptions:
@@ -159,10 +155,33 @@ def create_state_dict_for(component, attribute, state):
         # description
         description[quantity]['units'] = quantities_to_extract[quantity]
 
-        output_state[quantity] = get_default_values(quantity,
-                                                    x_coord, y_coord, z_coord,
-                                                    description,
-                                                    additional_dimensions)
+        using_2d_coordinates = False
+        x_coord = state['x']
+        y_coord = state['y']
+        z_coord = state['z']
+
+        if x_coord.ndim == 2:
+            assert y_coord.ndim == 2
+            using_2d_coordinates = True
+            x_coord = state['logical_x_coordinate']
+            y_coord = state['logical_y_coordinate']
+
+        quantity_data_array = get_default_values(quantity,
+                                                 x_coord, y_coord, z_coord,
+                                                 description,
+                                                 additional_dimensions)
+
+        if using_2d_coordinates:
+            physical_x = state['x']
+            physical_y = state['y']
+
+            quantity_data_array.coords[physical_x.label] = (
+                physical_x.dims, physical_x.values)
+
+            quantity_data_array.coords[physical_y.label] = (
+                physical_y.dims, physical_y.values)
+
+        output_state[quantity] = quantity_data_array
 
     return output_state
 

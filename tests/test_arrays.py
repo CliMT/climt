@@ -68,6 +68,23 @@ def test_get_outputs():
         assert quantity in diag
 
 
+def test_get_diagnostics_with_real_component_with_2d_coordinates():
+    dummy = RRTMGLongwave()
+    state = get_default_state([dummy],
+                              x=dict(label='shore', values=np.random.randn(2,2), units='km'),
+                              y=dict(label='latitude', values=np.random.randn(2,2), units='degrees east'))
+
+
+    diag = create_state_dict_for(dummy, 'diagnostics', state)
+
+    for quantity in dummy.diagnostics.keys():
+        assert quantity in diag
+        assert 'shore' in diag[quantity].coords
+        assert 'latitude' in diag[quantity].coords
+        assert diag[quantity].coords['shore'].ndim == 2
+        assert diag[quantity].coords['latitude'].ndim == 2
+
+
 def test_extracting_arrays_from_real_component():
     dummy = RRTMGLongwave()
     state = get_default_state([dummy])

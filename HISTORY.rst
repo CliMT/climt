@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* 2D coordinates are now supported for x,y in get_default_state
 * Replaced create_output_arrays() with a more general
   get_state_dict_for() and get_numpy_arrays_from_state()
   combination.

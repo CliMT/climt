@@ -53,7 +53,7 @@ def init_mid_level_sigma(array_dims, quantity_description):
     return midlevel*np.ones(array_dims, order='F')
 
 
-_quantity_descriptions = {
+quantity_descriptions = {
     'air_pressure': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'Pa',
@@ -332,29 +332,48 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         raise ValueError('x and y coordinates must have the same shape')
 
     use_2d_coordinate = False
-    x_physical_coordinate_values = None
-    x_physical_coordinate_label = None
-    x_physical_coordinate_units = None
-
-    y_physical_coordinate_values = None
-    y_physical_coordinate_label = None
-    y_physical_coordinate_units = None
+    two_dim_coord_dict = {}
 
     if x_coordinate_values.ndim == 2:
         if not x_coordinate_values.shape == y_coordinate_values.shape:
             raise ValueError(
                 'If x and y are 2d coordinates, they must have the same shape')
 
-        x_physical_coordinate_values = x_coordinate_values
-        x_physical_coordinate_label = x_coordinate_label
-        x_physical_coordinate_units = x_coordinate_units
+        two_dim_coord_dict[x_coordinate_label] = {}
+        two_dim_coord_dict[x_coordinate_label]['values'] = x_coordinate_values
+        two_dim_coord_dict[x_coordinate_label]['logical_dims'] = (
+            'logical_x_coordinate', 'logical_y_coordinate')
+        two_dim_coord_dict[x_coordinate_label]['units'] = x_coordinate_units
 
-        y_physical_coordinate_values = y_coordinate_values
-        y_physical_coordinate_label = y_coordinate_label
-        y_physical_coordinate_units = y_coordinate_units
+        two_dim_coord_dict[y_coordinate_label] = {}
+        two_dim_coord_dict[y_coordinate_label]['values'] = y_coordinate_values
+        two_dim_coord_dict[y_coordinate_label]['logical_dims'] = (
+            'logical_x_coordinate', 'logical_y_coordinate')
+        two_dim_coord_dict[y_coordinate_label]['units'] = y_coordinate_units
 
-        x_coordinate_values = np.arange(x_physical_coordinate_values.shape[0])
-        y_coordinate_values = np.arange(x_physical_coordinate_values.shape[1])
+        output_state['x'] = DataArray(
+            x_coordinate_values,
+            dims = two_dim_coord_dict[x_coordinate_label]['logical_dims'],
+            attrs= {
+                'units': two_dim_coord_dict[x_coordinate_label]['units'],
+                'label': x_coordinate_label
+            }
+        )
+
+        output_state['y'] = DataArray(
+            y_coordinate_values,
+            dims = two_dim_coord_dict[y_coordinate_label]['logical_dims'],
+            attrs= {
+                'units': two_dim_coord_dict[y_coordinate_label]['units'],
+                'label': y_coordinate_label
+            }
+        )
+
+        x_coordinate_values = np.arange(
+            two_dim_coord_dict[x_coordinate_label]['values'].shape[0])
+
+        y_coordinate_values = np.arange(
+            two_dim_coord_dict[x_coordinate_label]['values'].shape[1])
 
         x_coordinate_label = 'logical_x_coordinate'
         y_coordinate_label = 'logical_y_coordinate'
@@ -389,12 +408,14 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     set_dimension_names(
         z=list({'mid_levels', 'interface_levels'}.union(z_coordinate_label)))
 
-    output_state['x'] = x_coordinate
-    output_state['y'] = y_coordinate
+    if not use_2d_coordinate:
+        output_state['x'] = x_coordinate
+        output_state['y'] = y_coordinate
+
     output_state['z'] = z_coordinate
 
     quantity_list = set()
-    temporary_description = _quantity_descriptions.copy()
+    temporary_description = quantity_descriptions.copy()
     additional_dimensions = {}
     additional_descriptions = {}
 
@@ -406,6 +427,10 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
                                   component.extra_dimensions)
 
             for dimension in component.extra_dimensions.keys():
+                if component.extra_dimensions[dimension].ndim > 1:
+                    raise NotImplementedError(
+                        'Two dimensional coordinates in extra_dimensions not yet supported')
+
                 output_state[dimension] = DataArray(
                     component.extra_dimensions[dimension], dims=(dimension,))
                 additional_dimensions[dimension] = output_state[dimension]
@@ -424,15 +449,14 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
         if use_2d_coordinate:
 
-            output_state[name].coords[x_physical_coordinate_label] = (
-                (x_coordinate.label, y_coordinate.label), x_physical_coordinate_values)
+            for physical_dimension in two_dim_coord_dict.keys():
 
-            output_state[name][x_physical_coordinate_label].attrs['units'] = x_physical_coordinate_units
+                output_state[name].coords[physical_dimension] = (
+                    two_dim_coord_dict[physical_dimension]['logical_dims'],
+                    two_dim_coord_dict[physical_dimension]['values'])
 
-            output_state[name].coords[y_physical_coordinate_label] = (
-                (x_coordinate.label, y_coordinate.label), y_physical_coordinate_values)
-
-            output_state[name][y_physical_coordinate_label].attrs['units'] = y_physical_coordinate_units
+                output_state[name][physical_dimension].attrs['units'] = \
+                    two_dim_coord_dict[physical_dimension]['units']
 
     ensure_no_shared_keys(input_state, output_state)
     output_state.update(input_state)
