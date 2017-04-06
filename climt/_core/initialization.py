@@ -331,9 +331,38 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     if not x_coordinate_values.ndim == y_coordinate_values.ndim:
         raise ValueError('x and y coordinates must have the same shape')
 
-    # if x_coordinate_values.ndim is 1:
-    #    x_coordinate_values, y_coordinate_values = np.meshgrid(
-    #        x_coordinate_values, y_coordinate_values, indexing='ij')
+    use_2d_coordinate = False
+    x_physical_coordinate_values = None
+    x_physical_coordinate_label = None
+    x_physical_coordinate_units = None
+
+    y_physical_coordinate_values = None
+    y_physical_coordinate_label = None
+    y_physical_coordinate_units = None
+
+    if x_coordinate_values.ndim == 2:
+        if not x_coordinate_values.shape == y_coordinate_values.shape:
+            raise ValueError(
+                'If x and y are 2d coordinates, they must have the same shape')
+
+        x_physical_coordinate_values = x_coordinate_values
+        x_physical_coordinate_label = x_coordinate_label
+        x_physical_coordinate_units = x_coordinate_units
+
+        y_physical_coordinate_values = y_coordinate_values
+        y_physical_coordinate_label = y_coordinate_label
+        y_physical_coordinate_units = y_coordinate_units
+
+        x_coordinate_values = np.arange(x_physical_coordinate_values.shape[0])
+        y_coordinate_values = np.arange(x_physical_coordinate_values.shape[1])
+
+        x_coordinate_label = 'logical_x_coordinate'
+        y_coordinate_label = 'logical_y_coordinate'
+
+        x_coordinate_units = ''
+        y_coordinate_units = ''
+
+        use_2d_coordinate = True
 
     x_coordinate = DataArray(
         x_coordinate_values,
@@ -392,6 +421,18 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
             name, x_coordinate, y_coordinate,
             z_coordinate, temporary_description,
             additional_dimensions)
+
+        if use_2d_coordinate:
+
+            output_state[name].coords[x_physical_coordinate_label] = (
+                (x_coordinate.label, y_coordinate.label), x_physical_coordinate_values)
+
+            output_state[name][x_physical_coordinate_label].attrs['units'] = x_physical_coordinate_units
+
+            output_state[name].coords[y_physical_coordinate_label] = (
+                (x_coordinate.label, y_coordinate.label), y_physical_coordinate_values)
+
+            output_state[name][y_physical_coordinate_label].attrs['units'] = y_physical_coordinate_units
 
     ensure_no_shared_keys(input_state, output_state)
     output_state.update(input_state)

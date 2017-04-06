@@ -186,5 +186,33 @@ def test_different_dimension_units():
     assert 'must have the same shape' in str(excinfo.value)
 
 
+def test_basic_2d_coordinates():
+
+    dummy = MockPrognosticWithExtraQuantities
+    state = get_default_state([dummy],
+                              x=dict(label='shore', values=np.random.randn(3, 4), units='km'),
+                              y=dict(label='latitude', values=np.random.randn(3, 4), units='degrees east'))
+
+    assert state['x'].values.shape[0] == 3
+    assert state['y'].values.shape[0] == 4
+
+    for quantity in dummy.inputs.keys():
+        assert 'shore' in state[quantity].coords
+        assert 'latitude' in state[quantity].coords
+        assert state[quantity].coords['shore'].units is 'km'
+        assert state[quantity].coords['latitude'].units is 'degrees east'
+
+
+def test_2d_coordinates_wrong_shape():
+
+    dummy = MockPrognosticWithExtraQuantities
+
+    with pytest.raises(ValueError) as excinfo:
+        get_default_state([dummy],
+                          x=dict(label='shore', values=np.random.randn(3, 4), units='km'),
+                          y=dict(label='latitude', values=np.random.randn(3, 3), units='degrees east'))
+    assert '2d coordinates, they' in str(excinfo.value)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
