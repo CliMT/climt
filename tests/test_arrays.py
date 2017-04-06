@@ -71,9 +71,8 @@ def test_get_outputs():
 def test_get_diagnostics_with_real_component_with_2d_coordinates():
     dummy = RRTMGLongwave()
     state = get_default_state([dummy],
-                              x=dict(label='shore', values=np.random.randn(2,2), units='km'),
-                              y=dict(label='latitude', values=np.random.randn(2,2), units='degrees east'))
-
+                              x=dict(label='shore', values=np.random.randn(2, 2), units='km'),
+                              y=dict(label='latitude', values=np.random.randn(2, 2), units='degrees east'))
 
     diag = create_state_dict_for(dummy, 'diagnostics', state)
 

@@ -229,7 +229,8 @@ def test_2d_coordinates_in_extra_dimensions():
 
     with pytest.raises(NotImplementedError) as excinfo:
         get_default_state([dummy])
-    assert  'not yet supported' in str(excinfo.value)
+    assert 'not yet supported' in str(excinfo.value)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

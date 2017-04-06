@@ -353,8 +353,8 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
         output_state['x'] = DataArray(
             x_coordinate_values,
-            dims = two_dim_coord_dict[x_coordinate_label]['logical_dims'],
-            attrs= {
+            dims=two_dim_coord_dict[x_coordinate_label]['logical_dims'],
+            attrs={
                 'units': two_dim_coord_dict[x_coordinate_label]['units'],
                 'label': x_coordinate_label
             }
@@ -362,8 +362,8 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
         output_state['y'] = DataArray(
             y_coordinate_values,
-            dims = two_dim_coord_dict[y_coordinate_label]['logical_dims'],
-            attrs= {
+            dims=two_dim_coord_dict[y_coordinate_label]['logical_dims'],
+            attrs={
                 'units': two_dim_coord_dict[y_coordinate_label]['units'],
                 'label': y_coordinate_label
             }
