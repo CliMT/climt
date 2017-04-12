@@ -1,7 +1,7 @@
 from climt import (
     get_default_state)
 
-from sympl import SharedKeyException
+from sympl import SharedKeyError
 import numpy as np
 import pytest
 from .test_classes import (MockPrognostic,
@@ -10,7 +10,6 @@ from .test_classes import (MockPrognostic,
                            MockPrognosticWithMalformedExtraQuantities,
                            MockPrognosticWithExtraDimensionsAndSigmaLevels,
                            MockPrognosticWithExtraDimensionsIn2d)
-
 
 def test_no_components():
 
@@ -22,7 +21,7 @@ def test_no_components():
 def test_input_state_has_overlapping_keys():
 
     dummy = MockPrognostic()
-    with pytest.raises(SharedKeyException):
+    with pytest.raises(SharedKeyError):
         get_default_state([dummy], input_state={'air_temperature': 0})
 
 
