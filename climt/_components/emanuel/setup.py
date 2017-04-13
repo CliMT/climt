@@ -14,7 +14,7 @@ ldflags = os.getenv('LDFLAGS', '-lgfortran')
 cflags = os.getenv('CFLAGS', '-fPIC')
 
 # compile the fortran modules without linking
-fortran_mod_comp = fc+' convect43c.f90 -c -o emanuel_fortran.o'+fflags+' '+f_opt_flags
+fortran_mod_comp = fc+' convect43c.f90 -c -o emanuel_fortran.o '+fflags+' '+f_opt_flags
 print(fortran_mod_comp)
 system(fortran_mod_comp)
 
