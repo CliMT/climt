@@ -1,5 +1,4 @@
 from climt import (
-    create_state_dict_for, get_numpy_arrays_from_state,
     get_default_state, RRTMGLongwave
 )
 
@@ -10,7 +9,8 @@ from .test_classes import (
     MockPrognostic,
     MockPrognosticWithExtraQuantities,
     MockPrognosticWithExtraQuantitiesNotDefined,
-    MockPrognosticWithAllAttributes
+    MockPrognosticWithAllAttributes,
+    MockImplicitWithAllAttributes
 )
 
 
@@ -19,9 +19,9 @@ def test_get_diagnostics():
     dummy = MockPrognosticWithAllAttributes()
     state = get_default_state([dummy])
 
-    diag = create_state_dict_for(dummy, 'diagnostics', state)
+    diag = dummy.create_state_dict_for('_climt_diagnostics', state)
 
-    for quantity in dummy.diagnostics.keys():
+    for quantity in dummy.diagnostics:
         assert quantity in diag
 
 
@@ -29,9 +29,9 @@ def test_get_diagnostics_with_real_component():
     dummy = RRTMGLongwave()
     state = get_default_state([dummy])
 
-    diag = create_state_dict_for(dummy, 'diagnostics', state)
+    diag = dummy.create_state_dict_for('_climt_diagnostics', state)
 
-    for quantity in dummy.diagnostics.keys():
+    for quantity in dummy._climt_diagnostics:
         assert quantity in diag
 
 
@@ -39,9 +39,9 @@ def test_get_inputs_with_real_component():
     dummy = RRTMGLongwave()
     state = get_default_state([dummy])
 
-    diag = create_state_dict_for(dummy, 'inputs', state)
+    diag = dummy.create_state_dict_for('_climt_inputs', state)
 
-    for quantity in dummy.inputs.keys():
+    for quantity in dummy._climt_inputs:
         assert quantity in diag
         assert diag[quantity].dims == state[quantity].dims
 
@@ -51,20 +51,20 @@ def test_get_tendencies():
     dummy = MockPrognosticWithAllAttributes()
     state = get_default_state([dummy])
 
-    diag = create_state_dict_for(dummy, 'tendencies', state)
+    diag = dummy.create_state_dict_for('_climt_tendencies', state)
 
-    for quantity in dummy.tendencies.keys():
+    for quantity in dummy.tendencies:
         assert quantity in diag
 
 
 def test_get_outputs():
 
-    dummy = MockPrognosticWithAllAttributes()
+    dummy = MockImplicitWithAllAttributes()
     state = get_default_state([dummy])
 
-    diag = create_state_dict_for(dummy, 'outputs', state)
+    diag = dummy.create_state_dict_for('_climt_outputs', state)
 
-    for quantity in dummy.outputs.keys():
+    for quantity in dummy.outputs:
         assert quantity in diag
 
 
@@ -74,9 +74,9 @@ def test_get_diagnostics_with_real_component_with_2d_coordinates():
                               x=dict(label='shore', values=np.random.randn(2, 2), units='km'),
                               y=dict(label='latitude', values=np.random.randn(2, 2), units='degrees east'))
 
-    diag = create_state_dict_for(dummy, 'diagnostics', state)
+    diag = dummy.create_state_dict_for('_climt_diagnostics', state)
 
-    for quantity in dummy.diagnostics.keys():
+    for quantity in dummy.diagnostics:
         assert quantity in diag
         assert 'shore' in diag[quantity].coords
         assert 'latitude' in diag[quantity].coords
@@ -88,10 +88,10 @@ def test_extracting_arrays_from_real_component():
     dummy = RRTMGLongwave()
     state = get_default_state([dummy])
 
-    arrays = get_numpy_arrays_from_state(dummy, 'inputs', state)
+    arrays = dummy.get_numpy_arrays_from_state('_climt_inputs', state)
 
-    for quantity in dummy.inputs.keys():
-        units = dummy.inputs[quantity]
+    for quantity in dummy.inputs:
+        units = dummy._climt_inputs[quantity]
         state_values = state[quantity].to_units(units).values
         assert np.all(arrays[quantity] == state_values)
 
@@ -100,10 +100,10 @@ def test_inputs_is_not_dict():
 
     dummy = MockPrognostic()
     state = get_default_state([dummy])
-    dummy.inputs = ('air_temperature', 'oxygen_mixing_ratio')
+    dummy._climt_inputs = ('air_temperature', 'oxygen_mixing_ratio')
 
     with pytest.raises(NotImplementedError) as excinfo:
-        get_numpy_arrays_from_state(dummy, 'inputs', state)
+        dummy.get_numpy_arrays_from_state('_climt_inputs', state)
     assert 'with a dict-like' in str(excinfo.value)
 
 
@@ -114,7 +114,7 @@ def test_c_memory_layout():
                                               values=np.arange(10),
                                               units='degrees_east'))
 
-    get_numpy_arrays_from_state(dummy, 'inputs', state, memory_layout='c')
+    dummy.get_numpy_arrays_from_state('_climt_inputs', state, memory_layout='c')
 
 
 def test_wrong_memory_layout():
@@ -123,7 +123,7 @@ def test_wrong_memory_layout():
     state = get_default_state([dummy])
 
     with pytest.raises(ValueError) as excinfo:
-        get_numpy_arrays_from_state(dummy, 'inputs', state, memory_layout='abcd')
+        dummy.get_numpy_arrays_from_state('_climt_inputs', state, memory_layout='abcd')
     assert 'memory_layout' in str(excinfo.value)
 
 
@@ -134,7 +134,7 @@ def test_unknown_quantity_in_component():
     state.pop('air_temperature')
 
     with pytest.raises(IndexError) as excinfo:
-        get_numpy_arrays_from_state(dummy, 'inputs', state, memory_layout='c')
+        dummy.get_numpy_arrays_from_state('_climt_inputs', state, memory_layout='c')
     assert 'does not contain' in str(excinfo.value)
 
 
@@ -142,7 +142,7 @@ def test_get_class_defined_quantity():
 
     dummy = MockPrognosticWithExtraQuantities()
     state = get_default_state([dummy])
-    input_arrays = get_numpy_arrays_from_state(dummy, 'inputs', state)
+    input_arrays = dummy.get_numpy_arrays_from_state('_climt_inputs', state)
 
     assert np.all(
         state['sigma_on_interface_levels'].values == input_arrays['sigma_on_interface_levels'])
@@ -155,7 +155,7 @@ def test_get_undefined_array():
     dummy = MockPrognosticWithExtraQuantitiesNotDefined()
 
     with pytest.raises(IndexError) as excinfo:
-        get_numpy_arrays_from_state(dummy, 'inputs', state)
+        dummy.get_numpy_arrays_from_state('_climt_inputs', state)
     assert 'not described' in str(excinfo.value)
 
 
@@ -165,5 +165,5 @@ def test_unknown_attribute():
     state = get_default_state([dummy])
 
     with pytest.raises(IndexError) as excinfo:
-        get_numpy_arrays_from_state(dummy, 'random', state)
+        dummy.get_numpy_arrays_from_state('random', state)
     assert 'no attribute called' in str(excinfo.value)

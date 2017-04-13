@@ -1,10 +1,10 @@
-from sympl import Prognostic
+from climt import ClimtPrognostic, ClimtImplicit
 import numpy as np
 
 
-class MockPrognostic(Prognostic):
+class MockPrognostic(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
     }
@@ -16,9 +16,9 @@ class MockPrognostic(Prognostic):
         return
 
 
-class MockPrognosticWithExtraDimensions(Prognostic):
+class MockPrognosticWithExtraDimensions(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
     }
@@ -32,9 +32,9 @@ class MockPrognosticWithExtraDimensions(Prognostic):
         return
 
 
-class MockPrognosticWithExtraDimensionsIn2d(Prognostic):
+class MockPrognosticWithExtraDimensionsIn2d(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
     }
@@ -48,9 +48,9 @@ class MockPrognosticWithExtraDimensionsIn2d(Prognostic):
         return
 
 
-class MockPrognosticWithExtraDimensionsAndSigmaLevels(Prognostic):
+class MockPrognosticWithExtraDimensionsAndSigmaLevels(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'sigma_levels': ''
@@ -65,9 +65,9 @@ class MockPrognosticWithExtraDimensionsAndSigmaLevels(Prognostic):
         return
 
 
-class MockPrognosticWithExtraQuantities(Prognostic):
+class MockPrognosticWithExtraQuantities(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'some_quantity': 'dimensionless',
@@ -78,7 +78,7 @@ class MockPrognosticWithExtraQuantities(Prognostic):
         'some_quantity': {
             'dims': ['x', 'y', 'mid_levels'],
             'units': 'dimensionless',
-            'init_value': 1.
+            'default_value': 1.
         }
     }
 
@@ -89,9 +89,9 @@ class MockPrognosticWithExtraQuantities(Prognostic):
         return
 
 
-class MockPrognosticWithExtraQuantitiesNotDefined(Prognostic):
+class MockPrognosticWithExtraQuantitiesNotDefined(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'some_quantity': 'dimensionless',
@@ -105,9 +105,9 @@ class MockPrognosticWithExtraQuantitiesNotDefined(Prognostic):
         return
 
 
-class MockPrognosticWithMalformedExtraQuantities(Prognostic):
+class MockPrognosticWithMalformedExtraQuantities(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'some_quantity': 'dimensionless',
@@ -127,25 +127,25 @@ class MockPrognosticWithMalformedExtraQuantities(Prognostic):
         return
 
 
-class MockPrognosticWithAllAttributes(Prognostic):
+class MockPrognosticWithAllAttributes(ClimtPrognostic):
 
-    inputs = {
+    _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
         'some_quantity': 'dimensionless',
     }
 
-    tendencies = {
+    _climt_tendencies = {
         'air_temperature': 'degK s^-1',
         'some_quantity': 's^-1'
     }
 
-    diagnostics = {
+    _climt_diagnostics = {
         'air_pressure': 'Pa',
         'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'kg m^-2'
     }
 
-    outputs = {
+    _climt_outputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',
     }
@@ -154,7 +154,39 @@ class MockPrognosticWithAllAttributes(Prognostic):
         'some_quantity': {
             'dims': ['x', 'y', 'mid_levels'],
             'units': 'dimensionless',
-            'init_value': 1.
+            'default_value': 1.
+        }
+    }
+
+    def __init__(self):
+        return
+
+    def __call__(self, state):
+        return
+
+
+class MockImplicitWithAllAttributes(ClimtImplicit):
+    _climt_inputs = {
+        'air_temperature': 'degK',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
+        'some_quantity': 'dimensionless',
+    }
+
+    _climt_diagnostics = {
+        'air_pressure': 'Pa',
+        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'kg m^-2'
+    }
+
+    _climt_outputs = {
+        'air_temperature': 'degK',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
+    }
+
+    quantity_descriptions = {
+        'some_quantity': {
+            'dims': ['x', 'y', 'mid_levels'],
+            'units': 'dimensionless',
+            'default_value': 1.
         }
     }
 

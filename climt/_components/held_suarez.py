@@ -1,11 +1,11 @@
 from sympl import (
-    Prognostic, DataArray, replace_none_with_default, combine_dimensions,
+    DataArray, replace_none_with_default, combine_dimensions,
     get_numpy_array)
-from .._core import get_numpy_arrays_from_state
+from climt import ClimtPrognostic
 import numpy as np
 
 
-class HeldSuarez(Prognostic):
+class HeldSuarez(ClimtPrognostic):
     """
     Provide the Held-Suarez forcing.
 
@@ -26,19 +26,19 @@ class HeldSuarez(Prognostic):
         http://journals.ametsoc.org/doi/pdf/10.1175/1520-0477(1994)075%3C1825%3AAPFTIO%3E2.0.CO%3B2
     """
 
-    inputs = {
+    _climt_inputs = {
         'eastward_wind': 'm s^-1',
         'northward_wind': 'm s^-1',
         'air_temperature': 'degK',
         'air_pressure': 'Pa',
         'surface_air_pressure': 'Pa'}
 
-    tendencies = {
+    _climt_tendencies = {
         'eastward_wind': 'm s^-2',
         'northward_wind': 'm s^-2',
         'air_temperature': 'degK s^-1'}
 
-    diagnostics = {}
+    _climt_diagnostics = {}
 
     def __init__(self,
                  sigma_boundary_layer_top=0.7,
@@ -198,7 +198,7 @@ class HeldSuarez(Prognostic):
         k_t = self._get_k_t(state['latitude'], sigma)
         k_v = self._get_k_v(sigma)
 
-        input_arrays = get_numpy_arrays_from_state(self, 'inputs', state)
+        input_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
 
         tendencies = {
             'eastward_wind': DataArray(
@@ -228,10 +228,10 @@ class HeldSuarez(Prognostic):
             [latitude, air_pressure], out_dims=('x', 'y', 'z'))
 
         latitude = get_numpy_array(
-            latitude.to_units('degrees_N'), out_dims=('x', 'y', 'z'))
+            latitude.to_units('degrees_N'), out_dims=['x', 'y', 'z'])
 
         air_pressure = get_numpy_array(
-            air_pressure.to_units('Pa'), out_dims=('x', 'y', 'z'))
+            air_pressure.to_units('Pa'), out_dims=['x', 'y', 'z'])
 
         return DataArray(np.maximum(
             200,

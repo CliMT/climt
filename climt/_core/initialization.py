@@ -1,13 +1,15 @@
 from sympl import (DataArray, set_dimension_names,
                    ensure_no_shared_keys)
 import numpy as np
+import copy
+from datetime import datetime
 
 
 def init_mid_level_pressures(array_dims, quantity_description):
     # We assume the vertical level is the last dimension
     vert_levels = array_dims[-1]
 
-    p_surf = quantity_description['surface_air_pressure']['init_value']
+    p_surf = quantity_description['surface_air_pressure']['default_value']
     spacing = np.linspace(0.995, 0.001, vert_levels)
     single_column = p_surf*spacing
     single_column = single_column[np.newaxis, np.newaxis, :]
@@ -18,7 +20,7 @@ def init_mid_level_pressures(array_dims, quantity_description):
 def init_interface_level_pressures(array_dims, quantity_description):
 
     vert_levels = array_dims[-1]
-    p_surf = quantity_description['surface_air_pressure']['init_value']
+    p_surf = quantity_description['surface_air_pressure']['default_value']
     spacing = np.linspace(0.995, 0.001, vert_levels-1)
     midlevel = p_surf*spacing
 
@@ -53,7 +55,7 @@ def init_mid_level_sigma(array_dims, quantity_description):
     return midlevel*np.ones(array_dims, order='F')
 
 
-quantity_descriptions = {
+climt_quantity_descriptions = {
     'air_pressure': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'Pa',
@@ -77,167 +79,232 @@ quantity_descriptions = {
     'surface_air_pressure': {
         'dims': ['x', 'y'],
         'units': 'Pa',
-        'init_value': 1.e5
+        'default_value': 1.e5
     },
     'air_temperature': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'degK',
-        'init_value': 290.
+        'default_value': 290.
     },
     'surface_temperature': {
         'dims': ['x', 'y'],
         'units': 'degK',
-        'init_value': 300.
+        'default_value': 300.
     },
     'northward_wind': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'm s^-1',
-        'init_value': 0.
+        'default_value': 0.
     },
     'eastward_wind': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'm s^-1',
-        'init_value': 0.
+        'default_value': 0.
     },
     'surface_longwave_emissivity': {
         'dims': ['x', 'y'],
         'units': 'dimensionless',
-        'init_value': 1.
+        'default_value': 1.
     },
     'specific_humidity': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'g/kg',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mole_fraction_of_ozone_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mole_fraction_of_carbon_dioxide_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 330e-6
+        'default_value': 330e-6
     },
     'mole_fraction_of_methane_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mole_fraction_of_nitrous_oxide_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mole_fraction_of_oxygen_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.21
+        'default_value': 0.21
     },
     'mole_fraction_of_nitrogen_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.78
+        'default_value': 0.78
     },
     'mole_fraction_of_hydrogen_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 500e-9
+        'default_value': 500e-9
     },
     'mole_fraction_of_cfc11_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mole_fraction_of_cfc12_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mole_fraction_of_cfc22_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mole_fraction_of_carbon_tetrachloride_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'init_value': 0.
+        'default_value': 0.
     },
     'cloud_area_fraction_in_atmosphere_layer': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'dimensionless',
-        'init_value': 0.
+        'default_value': 0.
     },
-    'atmosphere_optical_thickness_due_to_aerosol': {
+    'shortwave_optical_thickness_due_to_aerosol': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'dimensionless',
-        'init_value': 0.
+        'default_value': 0.
+    },
+    'longwave_optical_thickness_due_to_aerosol': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'default_value': 0.
     },
     'mass_content_of_cloud_ice_in_atmosphere_layer': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'kg m^-2',
-        'init_value': 0.
+        'default_value': 0.
     },
     'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'kg m^-2',
-        'init_value': 0.
+        'default_value': 0.
     },
     'cloud_ice_particle_size': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'micrometer',
-        'init_value': 20.
+        'default_value': 20.
     },
     'cloud_water_droplet_radius': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'micrometer',
-        'init_value': 10.
+        'default_value': 10.
     },
-    'atmosphere_optical_thickness_due_to_cloud': {
+    'longwave_optical_thickness_due_to_cloud': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'dimensionless',
-        'init_value': 0.
+        'default_value': 0.
+    },
+    'shortwave_optical_thickness_due_to_cloud': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'default_value': 0.
     },
     'longwave_heating_rate': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'K day^-1',
-        'init_value': 0.
+        'default_value': 0.
     },
     'longwave_heating_rate_assuming_clear_sky': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'K day^-1',
-        'init_value': 0.
+        'default_value': 0.
     },
     'upwelling_longwave_flux_in_air': {
         'dims': ['x', 'y', 'interface_levels'],
         'units': 'W m^-2',
-        'init_value': 0.
+        'default_value': 0.
     },
     'upwelling_longwave_flux_in_air_assuming_clear_sky': {
         'dims': ['x', 'y', 'interface_levels'],
         'units': 'W m^-2',
-        'init_value': 0.
+        'default_value': 0.
     },
     'downwelling_longwave_flux_in_air': {
         'dims': ['x', 'y', 'interface_levels'],
         'units': 'W m^-2',
-        'init_value': 0.
+        'default_value': 0.
     },
     'downwelling_longwave_flux_in_air_assuming_clear_sky': {
         'dims': ['x', 'y', 'interface_levels'],
         'units': 'W m^-2',
-        'init_value': 0.
+        'default_value': 0.
+    },
+    'shortwave_heating_rate': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
+    'shortwave_heating_rate_assuming_clear_sky': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
+    'upwelling_shortwave_flux_in_air': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'upwelling_shortwave_flux_in_air_assuming_clear_sky': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'downwelling_shortwave_flux_in_air': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'downwelling_shortwave_flux_in_air_assuming_clear_sky': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
     },
     'precipitation_amount': {
         'dims': ['x', 'y'],
         'units': 'kg m^-2',
-        'init_value': 0.
+        'default_value': 0.
     },
     'convective_precipitation_amount': {
         'dims': ['x', 'y'],
         'units': 'kg m^-2',
-        'init_value': 0.
+        'default_value': 0.
+    },
+    'precipitation_rate': {
+        'dims': ['x', 'y'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
+    'convective_precipitation_rate': {
+        'dims': ['x', 'y'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
+    'atmosphere_convective_mass_flux': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-2 s^-1',
+        'default_value': 0.
+    },
+    'atmosphere_convective_available_potential_energy': {
+        'dims': ['x', 'y'],
+        'units': 'J kg^-1',
+        'default_value': 0.
+    },
+    'zenith_angle': {
+        'dims': ['x', 'y'],
+        'units': 'radians',
+        'default_value': 0.
     }
 }
 
@@ -415,7 +482,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     output_state['z'] = z_coordinate
 
     quantity_list = set()
-    temporary_description = quantity_descriptions.copy()
+    temporary_description = copy.deepcopy(climt_quantity_descriptions)
     additional_dimensions = {}
     additional_descriptions = {}
 
@@ -460,6 +527,8 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     ensure_no_shared_keys(input_state, output_state)
     output_state.update(input_state)
+    if 'time' not in input_state:
+        output_state['time'] = datetime(1, 1, 1)
     return output_state
 
 
@@ -515,12 +584,14 @@ def get_default_values(quantity_name, x, y, z,
     quantity_dims = [x.label if elem is 'x' else elem for elem in quantity_dims]
     quantity_dims = [y.label if elem is 'y' else elem for elem in quantity_dims]
 
-    if 'init_value' in description:
-        quantity_array = np.ones(array_dims, order='F')*description['init_value']
+    if 'default_value' in description:
+        quantity_array = np.ones(array_dims, order='F')*description['default_value']
     elif 'init_func' in description:
         quantity_array = description['init_func'](array_dims, quantity_description)
     else:
-        raise ValueError('Malformed description for quantity {}'.format(quantity_name))
+        raise ValueError(
+            'Malformed description for quantity {}:\
+            must contain default_value or init_func'.format(quantity_name))
 
     return DataArray(quantity_array, dims=quantity_dims,
                      coords=quantity_coords, attrs={'units': description['units']})

@@ -1,7 +1,7 @@
 from climt import (
     get_default_state)
 
-from sympl import SharedKeyException
+from sympl import SharedKeyError
 import numpy as np
 import pytest
 from .test_classes import (MockPrognostic,
@@ -22,7 +22,7 @@ def test_no_components():
 def test_input_state_has_overlapping_keys():
 
     dummy = MockPrognostic()
-    with pytest.raises(SharedKeyException):
+    with pytest.raises(SharedKeyError):
         get_default_state([dummy], input_state={'air_temperature': 0})
 
 
@@ -31,13 +31,13 @@ def test_basic_case_for_two_inputs():
     dummy = MockPrognostic()
     state = get_default_state([dummy])
 
-    required_quantities = list(dummy.inputs.keys())
+    required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'mid_levels',
                                 'x',
                                 'y',
-                                'z'])
+                                'z', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -52,13 +52,13 @@ def test_case_for_x_dim_defined():
         label='along_shore', values=np.linspace(0, 10, 10),
         units='degrees_east'))
 
-    required_quantities = list(dummy.inputs.keys())
+    required_quantities = list(dummy.inputs)
     required_quantities.extend(['along_shore',
                                'latitude',
                                 'mid_levels',
                                 'x',
                                 'y',
-                                'z'])
+                                'z', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -73,13 +73,13 @@ def test_case_for_y_dim_defined():
         label='along_shore', values=np.linspace(0, 10, 10),
         units='degrees_north'))
 
-    required_quantities = list(dummy.inputs.keys())
+    required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'along_shore',
                                 'mid_levels',
                                 'x',
                                 'y',
-                                'z'])
+                                'z', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -94,13 +94,13 @@ def test_case_for_z_dim_defined():
         label='along_shore', values=np.linspace(0, 10, 10),
         units='degrees_east'))
 
-    required_quantities = list(dummy.inputs.keys())
+    required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
                                 'x',
                                 'y',
-                                'z'])
+                                'z', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -115,14 +115,14 @@ def test_with_extra_dimensions():
         label='along_shore', values=np.linspace(0, 10, 10),
         units='degrees_east'))
 
-    required_quantities = list(dummy.inputs.keys())
+    required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
                                 'some_other_dimension',
                                 'x',
                                 'y',
-                                'z'])
+                                'z', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -135,14 +135,14 @@ def test_with_extra_dimensions_and_sigma_levels():
         label='along_shore', values=np.linspace(0, 10, 10),
         units='degrees_east'))
 
-    required_quantities = list(dummy.inputs.keys())
+    required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
                                 'some_other_dimension',
                                 'x',
                                 'y',
-                                'z'])
+                                'z', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -155,14 +155,14 @@ def test_with_extra_quantities():
         label='along_shore', values=np.linspace(0, 10, 10),
         units='degrees_east'))
 
-    required_quantities = list(dummy.inputs.keys())
+    required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
                                 'some_quantity',
                                 'x',
                                 'y',
-                                'z'])
+                                'z', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -189,7 +189,7 @@ def test_different_dimension_units():
 
 def test_basic_2d_coordinates():
 
-    dummy = MockPrognosticWithExtraQuantities
+    dummy = MockPrognosticWithExtraQuantities()
     random_x_values = np.random.randn(3, 4)
     random_y_values = np.random.randn(3, 4)
     state = get_default_state([dummy],
@@ -205,7 +205,7 @@ def test_basic_2d_coordinates():
     assert np.all(state['x'].values == random_x_values)
     assert np.all(state['y'].values == random_y_values)
 
-    for quantity in dummy.inputs.keys():
+    for quantity in dummy.inputs:
         assert 'shore' in state[quantity].coords
         assert 'latitude' in state[quantity].coords
         assert state[quantity].coords['shore'].units is 'km'
@@ -214,7 +214,7 @@ def test_basic_2d_coordinates():
 
 def test_2d_coordinates_wrong_shape():
 
-    dummy = MockPrognosticWithExtraQuantities
+    dummy = MockPrognosticWithExtraQuantities()
 
     with pytest.raises(ValueError) as excinfo:
         get_default_state([dummy],
@@ -225,7 +225,7 @@ def test_2d_coordinates_wrong_shape():
 
 def test_2d_coordinates_in_extra_dimensions():
 
-    dummy = MockPrognosticWithExtraDimensionsIn2d
+    dummy = MockPrognosticWithExtraDimensionsIn2d()
 
     with pytest.raises(NotImplementedError) as excinfo:
         get_default_state([dummy])

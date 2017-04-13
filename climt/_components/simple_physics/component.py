@@ -5,7 +5,7 @@ from sympl import get_numpy_array
 from sympl import combine_dimensions
 try:
     from . import _simple_physics as phys
-except:
+except ImportError:
     print('Import failed. Simple Physics will not be available!')
 
 

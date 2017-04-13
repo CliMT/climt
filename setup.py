@@ -36,10 +36,21 @@ ext_modules = [
         ['climt/_components/_berger_solar_insolation.pyx'])
 ]
 
-fortran_ext = {'simple_physics': 'climt/_components/simple_physics',
-               'rrtmg_longwave': 'climt/_components/rrtmg/lw'}
+fortran_ext = {
+    'simple_physics': 'climt/_components/simple_physics',
+    'rrtmg_longwave': 'climt/_components/rrtmg/lw',
+    'rrtmg_shortwave': 'climt/_components/rrtmg/sw',
+    'emanuel_convection': 'climt/_components/emanuel',
+}
 
 dir_path = os.getenv('PWD', '')
+
+os.environ['FC'] = 'gfortran '
+os.environ['FFLAGS'] = ' -fPIC -fno-range-check'
+os.environ['CFLAGS'] = '-fPIC'
+os.environ['CLIMT_OPTIMIZE'] = ' -O3'
+os.environ['CLIMT_NO_OPTIMIZE'] = ' -O0'
+os.environ['LDFLAGS'] = '-lgfortran'
 
 for module in fortran_ext.keys():
     mycwd = os.getcwd()

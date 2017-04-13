@@ -1,8 +1,348 @@
-from sympl import Prognostic
+import abc
+from sympl import Implicit, Diagnostic, Prognostic
 from datetime import timedelta
+from sympl import get_numpy_array
+from .initialization import climt_quantity_descriptions, get_default_values
+import numpy as np
+import copy
 
 
-class ImplicitPrognostic(Prognostic):
+class ArrayHandler(object):
+    """
+    Provide array handling functionality.
+
+    This class provides methods to move back and forth from
+    the :py:class:`~sympl.DataArray` and :py:class:`~numpy.array`
+    representations of data in CliMT. The former is useful for human
+    interaction, while the latter is required to pass onto cython or
+    fortran extensions.
+
+    Methods:
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def get_numpy_arrays_from_state(self, attribute, state, memory_layout='fortran'):
+        """
+
+        Extract required inputs as numpy arrays from state.
+
+        Returns arrays with dimensions (x,y,z) in the same order as specified in
+        :code:`component` (first priority) or :code:`_quantity_descriptions` in
+        :code:`initialization.py` (second priority).
+
+        Args:
+
+            attribute (string):
+                The attribute (:code:`inputs`, :code:`tendencies`, :code:`outputs` or
+                :code:`diagnostics`) for which to return numpy arrays.
+
+            state (dict):
+                The state dictionary.
+
+            memory_layout (string, optional):
+                String which is either :code:`'fortran'` or :code:`'c'`. This specifies
+                the memory layout which the component expects the arrays in. If the arrays
+                in :code:`state` are not in this memory layout and/or not memory aligned,
+                a copy will be made.
+
+        Returns:
+
+            array_dict (dict):
+                dictionary whose values are numpy arrays corresponding
+                to the input quantities specified in :code:`component`. The returned arrays will
+                be in the units specified in :code:`attribute`.
+
+        Raises:
+
+            NotImplementedError:
+                If the component's :code:`inputs` attribute is not a dictionary.
+
+            ValueError:
+                If the :code:`memory_layout` argument is neither "fortran" nor "c".
+
+        """
+
+        quantities_to_extract = self.check_if_sane_and_return_attribute(attribute)
+
+        if memory_layout not in ['fortran', 'c']:
+            raise ValueError(
+                'memory_layout can be either fortran or c')
+
+        array_dict = {}
+
+        for quantity in quantities_to_extract.keys():
+
+            dims = self.get_dimensions_for(quantity)
+            units = quantities_to_extract[quantity]
+
+            new_array = get_array_from_state(
+                state,
+                quantity,
+                units,
+                dims)
+
+            if memory_layout is 'fortran' and not new_array.flags['FARRAY']:
+                new_array = np.asfortranarray(new_array)
+            elif memory_layout is 'c' and not new_array.flags['CARRAY']:
+                new_array = np.ascontiguousarray(new_array)
+
+            array_dict[quantity] = new_array
+
+        return array_dict
+
+    def get_dimensions_for(self, quantity_name):
+
+        if hasattr(self, 'quantity_descriptions'):
+            if quantity_name in self.quantity_descriptions:
+                return self.quantity_descriptions[quantity_name]['dims']
+
+        if quantity_name in climt_quantity_descriptions:
+            return climt_quantity_descriptions[quantity_name]['dims']
+
+        # Should never come here.
+        raise IndexError(
+            '{} not described either by the component or by CliMT!'.format(quantity_name))
+
+    def create_state_dict_for(self, attribute, state):
+        """
+        Create dictionaries to return to caller.
+
+        Use quantities in :code:`component.attribute` to create a
+        dictionary of DataArrays which is returned by the component
+        to the caller.
+
+        Args:
+
+            self (Prognostic, Implicit, Diagnostic, ImplicitPrognostic, TimeStepper):
+                component for which the output dictionary is required.
+
+            attribute (basestring):
+                The attribute of the component which should be used to create the
+                dictionary. Typically, one of :code:`inputs`, :code:`tendencies`, :code:`outputs` or
+                :code:`diagnostics`.
+
+            state (dict):
+                The state dictionary that was passed in to the component
+
+        Returns:
+
+            output_dict (dict):
+                The dictionary whose keys are labels from :code:`component.attribute` and
+                values are the appropriate DataArrays.
+
+        """
+
+        quantities_to_extract = self.check_if_sane_and_return_attribute(attribute)
+        # quantities_to_extract is a dictionary whose keys are quantity names
+        # and values are units produced by the code. Note that if this is a
+        # tendency term, the final units returned to the caller must be in per second,
+        # since the TimeStepper requires quantities in per seconds.
+
+        output_state = {}
+        for quantity in quantities_to_extract.keys():
+            description = copy.deepcopy(climt_quantity_descriptions)
+
+            if hasattr(self, 'quantity_descriptions'):
+                if quantity in self.quantity_descriptions:
+                    description[quantity] = self.quantity_descriptions[quantity]
+
+            additional_dimensions = {}
+            for dimension in description[quantity]['dims']:
+                if dimension not in ['x', 'y', 'mid_levels', 'interface_levels']:
+                    additional_dimensions[dimension] = state[dimension]
+
+            # Set the units according to component's description, not global
+            # description
+            description[quantity]['units'] = quantities_to_extract[quantity]
+
+            using_2d_coordinates = False
+            x_coord = state['x']
+            y_coord = state['y']
+            z_coord = state['z']
+
+            if x_coord.ndim == 2:
+                assert y_coord.ndim == 2
+                using_2d_coordinates = True
+                x_coord = state['logical_x_coordinate']
+                y_coord = state['logical_y_coordinate']
+
+            quantity_data_array = get_default_values(quantity,
+                                                     x_coord, y_coord, z_coord,
+                                                     description,
+                                                     additional_dimensions)
+
+            if using_2d_coordinates:
+                physical_x = state['x']
+                physical_y = state['y']
+
+                quantity_data_array.coords[physical_x.label] = (
+                    physical_x.dims, physical_x.values)
+
+                quantity_data_array.coords[physical_y.label] = (
+                    physical_y.dims, physical_y.values)
+
+            output_state[quantity] = quantity_data_array
+
+        return output_state
+
+    def check_if_sane_and_return_attribute(self, attribute):
+        """
+        Check if attribute exists and is a dict
+
+        Args:
+            attribute (string):
+                one of the attributes of the component.
+        """
+
+        if not hasattr(self, attribute):
+            raise IndexError(
+                'Component has no attribute called {}'.format(attribute))
+
+        quantities_to_extract = getattr(self, attribute)
+
+        if not isinstance(quantities_to_extract, dict):
+            raise NotImplementedError(
+                'This method will only work with components with a dict-like {} attribute'.format(attribute))
+
+        return quantities_to_extract
+
+
+def get_array_from_state(state,
+                         quantity_name,
+                         quantity_units,
+                         quantity_dims):
+
+    if quantity_name not in state:
+        raise IndexError(
+            'The input state does not contain {}'.format(quantity_name))
+
+    return get_numpy_array(
+        state[quantity_name].to_units(quantity_units), quantity_dims)
+
+
+class ClimtPrognostic(ArrayHandler, Prognostic):
+    """
+    The base class to use for all CliMT Prognostics.
+
+    It inherits from :py:class:`~sympl.Prognostic`, and adds a few methods that
+    make array and state dictionary creation easier.
+
+    Attributes:
+
+        _climt_inputs (dict):
+            The inputs expected by the component. The keys are the
+            names of the quantities (preferably in CF convention),
+            and the values are the units in which the component requires
+            the quantity.
+
+        _climt_tendencies (dict):
+            The tendencies that are returned by the component. The units
+            here are actually to tell CliMT about the units which are returned
+            by the compiled extensions, if any. The developer **must** convert tendencies
+            to (quantity)/second before returning them when the object is called.
+
+        _climt_diagnostics (dict):
+            The diagnostics that are returned by the component.
+
+    """
+
+    _climt_inputs = {}
+
+    _climt_tendencies = {}
+
+    _climt_diagnostics = {}
+
+    @property
+    def inputs(self):
+        return tuple(self._climt_inputs.keys())
+
+    @property
+    def tendencies(self):
+        return tuple(self._climt_tendencies.keys())
+
+    @property
+    def diagnostics(self):
+        return tuple(self._climt_diagnostics.keys())
+
+
+class ClimtDiagnostic(ArrayHandler, Diagnostic):
+    """
+    The base class to use for all CliMT Diagnostics.
+
+    It inherits from :py:class:`~sympl.Diagnostic`, and adds a few methods that
+    make array and state dictionary creation easier.
+
+    Attributes:
+
+        _climt_inputs (dict):
+            The inputs expected by the component. The keys are the
+            names of the quantities (preferably in CF convention),
+            and the values are the units in which the component requires
+            the quantity.
+
+        _climt_diagnostics (dict):
+            The diagnostics that are returned by the component.
+
+    """
+
+    _climt_inputs = {}
+
+    _climt_tendencies = {}
+
+    @property
+    def inputs(self):
+        return tuple(self._climt_inputs.keys())
+
+    @property
+    def diagnostics(self):
+        return tuple(self._climt_diagnostics.keys())
+
+
+class ClimtImplicit(ArrayHandler, Implicit):
+    """
+    The base class to use for all CliMT Implicits.
+
+    It inherits from :py:class:`~sympl.Implicit`, and adds a few methods that
+    make array and state dictionary creation easier.
+
+    Attributes:
+
+        _climt_inputs (dict):
+            The inputs expected by the component. The keys are the
+            names of the quantities (preferably in CF convention),
+            and the values are the units in which the component requires
+            the quantity.
+
+        _climt_outputs (dict):
+            The outputs returned by the component. These are new values
+            of the state variables.
+
+        _climt_diagnostics (dict):
+            The diagnostics that are returned by the component.
+
+    """
+
+    _climt_inputs = {}
+
+    _climt_outputs = {}
+
+    _climt_diagnostics = {}
+
+    @property
+    def inputs(self):
+        return tuple(self._climt_inputs.keys())
+
+    @property
+    def outputs(self):
+        return tuple(self._climt_outputs.keys())
+
+    @property
+    def diagnostics(self):
+        return tuple(self._climt_diagnostics.keys())
+
+
+class ClimtImplicitPrognostic(ClimtPrognostic):
     """
     The base class used mainly for convection schemes.
 

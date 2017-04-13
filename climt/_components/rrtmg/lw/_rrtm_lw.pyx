@@ -31,7 +31,7 @@ cdef extern:
                        cnp.int32_t *liq_droplet_flag, double *cloud_fraction,
                        double *cloud_tau, double *cloud_ice_path, double *cloud_liq_path,
                        double *cloud_ice_eff_size, double *cloud_droplet_eff_radius, double *aerosol_tau,
-                       double *upward_longwave_flux, double *downward_longwave_flux, 
+                       double *upward_longwave_flux, double *downward_longwave_flux,
                        double *longwave_heating_rate, double *up_lw_flux_clearsky,
                        double *down_lw_flux_clearsky, double *lw_heating_rate_clearsky,
                        double *duflx_dt, double *duflxc_dt)
@@ -44,7 +44,7 @@ def initialise_rrtm_radiation(double cp_d_air, cnp.int32_t cloud_overlap_method=
                               cnp.int32_t liq_droplet_flag=0):
 
     rrtmg_longwave_init(&cp_d_air)
-    
+
     rrtm_cloud_overlap_method = cloud_overlap_method
     rrtm_calculate_change_up_flux = calculate_change_up_flux
     rrtm_cloud_props_flag = cloud_props_flag
@@ -96,14 +96,6 @@ def rrtm_calculate_longwave_fluxes(
 
     global rrtm_cloud_overlap_method, rrtm_calculate_change_up_flux,\
         rrtm_cloud_props_flag, rrtm_ice_props_flag, rrtm_liq_droplet_flag
-
-    if rrtm_cloud_props_flag == 0:
-        cloud_ice_path = np.zeros((1,1))
-        cloud_liq_path = np.zeros((1,1))
-        cloud_ice_eff_size = np.zeros((1,1))
-        cloud_droplet_eff_radius = np.zeros((1,1))
-    else:
-        cloud_tau = np.zeros((1,1,1))
 
     if rrtm_calculate_change_up_flux == 0:
         duflx_dt = np.zeros((1,1))

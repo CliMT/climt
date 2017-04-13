@@ -2,7 +2,7 @@ from sympl import Diagnostic, replace_none_with_default, DataArray
 import xarray as xr
 try:
     from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
-except:
+except ImportError:
     print('Import failed. Insolation will not be available!')
 
 

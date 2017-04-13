@@ -42,7 +42,7 @@ state = {
 constant_state = {
     'surface_temperature': DataArray(
         np.ones((1, 1))*274., dims=('x', 'y'), attrs={'units': 'degK'}),
-    'surface_pressure': DataArray(
+    'surface_air_pressure': DataArray(
         np.ones((1, 1))*1e5, dims=('x', 'y'), attrs={'units': 'Pa'}),
     'air_pressure': DataArray(
         pressure_axis[None, None, :], dims=('x', 'y', 'mid_levels'),
@@ -52,9 +52,9 @@ constant_state = {
 }
 interface_pressures = get_interface_pressures(
     constant_state['air_pressure'].values,
-    constant_state['surface_pressure'].values)
+    constant_state['surface_air_pressure'].values)
 interface_sigma = (
-    interface_pressures/constant_state['surface_pressure'].values[:, :, None])
+    interface_pressures/constant_state['surface_air_pressure'].values[:, :, None])
 constant_state['air_pressure_on_interface_levels'] = DataArray(
     interface_pressures, dims=('x', 'y', 'interface_levels'),
     attrs={'units': 'Pa'})

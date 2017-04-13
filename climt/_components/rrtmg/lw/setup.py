@@ -3,6 +3,7 @@ from Cython.Distutils import build_ext
 # This line only needed if building with NumPy in Cython file.
 from numpy import get_include
 from os import system
+import os
 
 # compile the fortran modules without linking
 module_list = [
@@ -50,13 +51,21 @@ unoptimised_sources_list = [
     'rrtmg_lw_k_g.f90',
 ]
 object_file_list = []
+
+fc = os.getenv('FC', 'gfortran ')
+fflags = os.getenv('FFLAGS', ' -fPIC -fno-range-check ')
+cflags = os.getenv('CFLAGS', '-fPIC')
+f_opt_flags = os.getenv('CLIMT_OPTIMIZE_FLAG', '-O3')
+f_no_opt_flags = os.getenv('CLIMT_NO_OPTIMIZE_FLAG', ' -O0 ')
+ldflags = os.getenv('LDFLAGS', '-lgfortran')
+
 print('Compiling Modules')
 for module in module_list:
 
     output_file = module[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = 'gfortran '+module+' -c -o '+output_file+' -O3 -fPIC'
+    compilation_command = fc+module+' -c -o '+output_file+' '+f_opt_flags+fflags
     print(compilation_command)
     system(compilation_command)
 
@@ -66,7 +75,7 @@ for source in sources_list:
     output_file = source[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O3 -fPIC -fno-range-check'
+    compilation_command = fc+source+' -c -o '+output_file+f_opt_flags+fflags
     print(compilation_command)
     system(compilation_command)
 
@@ -76,11 +85,11 @@ for source in unoptimised_sources_list:
     output_file = source[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = 'gfortran '+source+' -c -o '+output_file+' -O0 -fPIC -fno-range-check'
+    compilation_command = fc+source+' -c -o '+output_file+f_no_opt_flags+fflags
     print(compilation_command)
     system(compilation_command)
 
-link_args_list = object_file_list + ['-lgfortran']
+link_args_list = object_file_list + [ldflags]
 
 ext_modules = [
     Extension(  # module name:
@@ -88,7 +97,7 @@ ext_modules = [
         # source file:
         ['_rrtm_lw.pyx'],
         # other compile args for gcc
-        extra_compile_args=['-fPIC', '-O3', '-lgfortran'],
+        extra_compile_args=[cflags, f_opt_flags, ldflags],
         # other files to link to
         extra_link_args=link_args_list)]
 
