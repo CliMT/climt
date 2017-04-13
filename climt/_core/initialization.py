@@ -1,4 +1,4 @@
-from sympl import (DataArray, set_dimension_names,
+from sympl import (DataArray, add_direction_names,
                    ensure_no_shared_keys)
 import numpy as np
 import copy
@@ -456,7 +456,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         attrs={'units': x_coordinate_units, 'label': x_coordinate_label})
 
     output_state[x_coordinate_label] = x_coordinate
-    set_dimension_names(x=x_coordinate_label)
+    add_direction_names(x=x_coordinate_label)
 
     y_coordinate = DataArray(
         y_coordinate_values,
@@ -464,7 +464,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         attrs={'units': y_coordinate_units, 'label': y_coordinate_label})
 
     output_state[y_coordinate_label] = y_coordinate
-    set_dimension_names(y=y_coordinate_label)
+    add_direction_names(y=y_coordinate_label)
 
     z_coordinate = DataArray(
         z_coordinate_values,
@@ -472,8 +472,8 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         attrs={'units': z_coordinate_units, 'label': z_coordinate_label})
 
     output_state[z_coordinate_label] = z_coordinate
-    set_dimension_names(
-        z=list({'mid_levels', 'interface_levels'}.union(z_coordinate_label)))
+    add_direction_names(
+        z=z_coordinate_label)
 
     if not use_2d_coordinate:
         output_state['x'] = x_coordinate

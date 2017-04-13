@@ -14,7 +14,7 @@ from ._components import (
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
     EmanuelConvection)
 
-sympl.set_dimension_names(z=['interface_levels', 'mid_levels'])
+sympl.add_direction_names(z=['interface_levels', 'mid_levels'])
 
 __all__ = (
     get_default_state, mass_to_volume_mixing_ratio,
