@@ -65,7 +65,7 @@ for module in module_list:
     output_file = module[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = fc+module+' -c -o '+output_file+f_opt_flags+fflags
+    compilation_command = fc+module+' -c -o '+output_file+' '+f_opt_flags+fflags
     print(compilation_command)
     system(compilation_command)
 
@@ -85,7 +85,7 @@ for source in unoptimised_sources_list:
     output_file = source[:-3]+'o'
     object_file_list.append(output_file)
 
-    compilation_command = fc+source+' -c -o '+output_file+f_no_opt_flags+fflags
+    compilation_command = fc+source+' -c -o '+output_file+' '+f_no_opt_flags+fflags
     print(compilation_command)
     system(compilation_command)
 
