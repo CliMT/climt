@@ -1,7 +1,10 @@
 from ..._core import ClimtImplicitPrognostic, bolton_q_sat
 from sympl import replace_none_with_default
 import numpy as np
-from . import _emanuel_convection
+try:
+    from . import _emanuel_convection
+except ImportError:
+    print("Import failed. Emanuel Convection will not be available!")
 
 
 class EmanuelConvection(ClimtImplicitPrognostic):
