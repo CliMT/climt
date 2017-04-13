@@ -11,7 +11,6 @@ from .test_classes import (MockPrognostic,
                            MockPrognosticWithExtraDimensionsAndSigmaLevels,
                            MockPrognosticWithExtraDimensionsIn2d)
 
-
 def test_no_components():
 
     with pytest.raises(ValueError) as excinfo:
