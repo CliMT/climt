@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from ..._core import ClimtImplicitPrognostic, bolton_q_sat
 from sympl import replace_none_with_default
 import numpy as np
