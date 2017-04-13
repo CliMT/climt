@@ -20,7 +20,7 @@ system(fortran_mod_comp)
 
 ext_modules = [Extension(
     # module name:
-    '_emanuel_convection_new',
+    '_emanuel_convection',
     # source file:
     ['_emanuel_convection.pyx'],
     # other compile args for gcc
@@ -28,7 +28,7 @@ ext_modules = [Extension(
     # other files to link to
     extra_link_args=['emanuel_fortran.o', ldflags])]
 
-setup(name='_emanuel_convection_new',
+setup(name='_emanuel_convection',
       cmdclass={'build_ext': build_ext},
       # Needed if building with NumPy.
       # This includes the NumPy headers when compiling.
