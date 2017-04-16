@@ -479,7 +479,7 @@ MODULE emanuel
 !  ***                          ARE REASONABLE                         ***
 !  ***      Skip convection if HM increases monotonically upward       ***
 !
-        !print *, NK
+        !print *, 'level of max moist static energy: ', NK
         !print *, T
         !print *, 'Tmax: ', T(NK), 'Qmax: ', Q(NK)
         !print *, IHMIN, NL
@@ -499,6 +499,7 @@ MODULE emanuel
         PLCL=P(NK)*(RH**CHI)
         !print *, 'Q: ', Q(NK), 'QS: ', QS(NK)
         !print *, 'RH: ', RH, 'CHI: ', CHI
+        !print *, 'P(NK): ', P(NK)
         !print *, 'PLCL is: ', PLCL
         IF(PLCL.LT.200.0.OR.PLCL.GE.2000.0)THEN
          IFLAG=2

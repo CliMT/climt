@@ -17,13 +17,25 @@ real(r8) zvir                        ! Constant for virtual temp. calc. =(rh2o/r
 real(r8) a                           ! Reference Earth's Radius (m)
 real(r8) omega                       ! Reference rotation rate of the Earth (s^-1)
 real(r8) pi                          ! pi
+real(r8) pbltop                      ! Top of boundary layer
+real(r8) pblconst                    ! Constant for the calculation of the decay of diffusivity
+real(r8) rhow                        ! Density of Liquid Water
+real(r8) C                           ! Drag coefficient for sensible heat and evaporation
+real(r8) Cd0                         ! Constant for calculating Cd from Smith and Vogl 2008
+real(r8) Cd1                         ! Constant for calculating Cd from Smith and Vogl 2008
+real(r8) Cm                          ! Constant for calculating Cd from Smith and Vogl 2008
 contains
 
-subroutine set_physical_constants_func(g, cpd, r_air, latent_heat, r_cond, radius, rotation) bind(c,name='set_fortran_constants')
+subroutine set_physical_constants_func(g, cpd, r_air, latent_heat, r_cond,&
+        radius, rotation, density_cond, top_pbl, pbl_decay,&
+        drag_coeff_sens_lat, Cd0_ext, Cd1_ext, Cm_ext) bind(c,name='set_fortran_constants')
 !----
 ! This subroutine sets all the physical constants needed by simple physics
 !----
     real(r8), intent(in) :: g, cpd, r_air, latent_heat, r_cond, radius, rotation
+    real(r8), intent(in) :: density_cond, top_pbl, pbl_decay,&
+        drag_coeff_sens_lat, Cd0_ext, Cd1_ext, Cm_ext
+
     gravit = g
     rair = r_air
     cpair = cpd
@@ -35,13 +47,21 @@ subroutine set_physical_constants_func(g, cpd, r_air, latent_heat, r_cond, radiu
     epsilo = rair/rh2o                    ! Ratio of gas constant for dry air to that for vapor
     zvir   = (rh2o/rair) - 1._r8          ! Constant for virtual temp. calc. =(rh2o/rair) - 1 is approx. 0.608
 
-    
+    pbltop = top_pbl
+    pblconst = pbl_decay
+    rhow = density_cond
+    C = drag_coeff_sens_lat
+    Cd0 = Cd0_ext
+    Cd1 = Cd1_ext
+    Cm = Cm_ext
+
 end subroutine set_physical_constants_func
 
 subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint, &
         pdel, rpdel, ps, precl, test,&
         do_lsc, do_pbl, do_surf_flux,&
-        use_ts_ext, ts) bind(c,name='simple_physics')
+        use_ts_ext, ts, use_qsurf_ext, qsurf,&
+        sens_ht_flux, lat_ht_flux) bind(c,name='simple_physics')
     !JOY adding new variables
 !----------------------------------------------------------------------- 
 ! 
@@ -109,6 +129,8 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
     integer(c_int), intent(in) :: do_surf_flux ! Switch for surface fluxes
     integer(c_int), intent(in) :: use_ts_ext   ! Switch to use externally specified Tsurf
     real(r8), intent(in):: ts(pcols)    ! Externally specified Tsurf
+    integer(c_int), intent(in) :: use_qsurf_ext   ! Switch to use externally specified Qsurf
+    real(r8), intent(in):: qsurf(pcols)    ! Externally specified Qsurf
 !
 ! Input/Output arguments 
 !
@@ -128,6 +150,8 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
 ! Output arguments 
 !
    real(r8), intent(out) :: precl(pcols)         ! Precipitation rate (m_water / s)
+   real(r8), intent(out) :: sens_ht_flux(pcols)   !JOY (W/m^2)
+   real(r8), intent(out) :: lat_ht_flux(pcols)     !JOY (W/m^2)
 
 !
 !---------------------------Local workspace-----------------------------
@@ -148,13 +172,8 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
    real(r8) SST_tc                      ! Sea Surface Temperature for tropical cyclone test
    real(r8) T0                          ! Control temp for calculation of qsat
    real(r8) e0                          ! Saturation vapor pressure at T0 for calculation of qsat
-   real(r8) rhow                        ! Density of Liquid Water
    real(r8) p0                          ! Constant for calculation of potential temperature
-   real(r8) Cd0                         ! Constant for calculating Cd from Smith and Vogl 2008
-   real(r8) Cd1                         ! Constant for calculating Cd from Smith and Vogl 2008
-   real(r8) Cm                          ! Constant for calculating Cd from Smith and Vogl 2008
    real(r8) v20                         ! Threshold wind speed for calculating Cd from Smith and Vogl 2008
-   real(r8) C                           ! Drag coefficient for sensible heat and evaporation
    real(r8) T00                         ! Horizontal mean T at surface for moist baro test
    real(r8) u0                          ! Zonal wind constant for moist baro test
    real(r8) latw                        ! halfwidth for  for baro test
@@ -183,8 +202,6 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
    real(r8) rho                         ! Density at lower/upper interface
    real(r8) za(pcols)                   ! Heights at midpoints of first model level
    real(r8) dlnpint                     ! Used for calculation of heights
-   real(r8) pbltop                      ! Top of boundary layer
-   real(r8) pblconst                    ! Constant for the calculation of the decay of diffusivity 
    real(r8) CA(pcols,pver)              ! Matrix Coefficents for PBL Scheme 
    real(r8) CC(pcols,pver)              ! Matrix Coefficents for PBL Scheme 
    real(r8) CE(pcols,pver+1)            ! Matrix Coefficents for PBL Scheme
@@ -207,32 +224,29 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
 ! Physical Constants - MAY BE MODEL DEPENDENT 
 !
 !===============================================================================
-   gravit = 9.80616_r8                   ! Gravity (9.80616 m/s^2)
-   rair   = 287.0_r8                     ! Gas constant for dry air: 287 J/(kg K)
-   cpair  = 1.0045e3_r8                  ! Specific heat of dry air: here we use 1004.5 J/(kg K)
-   latvap = 2.5e6_r8                     ! Latent heat of vaporization (J/kg)
-   rh2o   = 461.5_r8                     ! Gas constant for water vapor: 461.5 J/(kg K)
-   a      = 6371220.0_r8                 ! Reference Earth's Radius (m)
-   omega  = 7.29212d-5                   ! Reference rotation rate of the Earth (s^-1)
-   pi     = 4._r8*atan(1._r8)            ! pi
+   !gravit = 9.80616_r8                   ! Gravity (9.80616 m/s^2)
+   !rair   = 287.0_r8                     ! Gas constant for dry air: 287 J/(kg K)
+   !cpair  = 1.0045e3_r8                  ! Specific heat of dry air: here we use 1004.5 J/(kg K)
+   !latvap = 2.5e6_r8                     ! Latent heat of vaporization (J/kg)
+   !rh2o   = 461.5_r8                     ! Gas constant for water vapor: 461.5 J/(kg K)
+   !a      = 6371220.0_r8                 ! Reference Earth's Radius (m)
+   !omega  = 7.29212d-5                   ! Reference rotation rate of the Earth (s^-1)
+   !pi     = 4._r8*atan(1._r8)            ! pi
 
 !===============================================================================
 !
 ! Local Constants for Simple Physics
 !
 !===============================================================================
-      C        = 0.0011_r8      ! From Smith and Vogl 2008
+      !C        = 0.0011_r8      ! From Smith and Vogl 2008
       SST_tc   = 302.15_r8      ! Constant Value for SST for tropical cyclone test
       T0       = 273.16_r8      ! control temp for calculation of qsat
       e0       = 610.78_r8      ! saturation vapor pressure at T0 for calculation of qsat
-      rhow     = 1000.0_r8      ! Density of Liquid Water 
-      Cd0      = 0.0007_r8      ! Constant for Cd calc. Smith and Vogl 2008
-      Cd1      = 0.000065_r8    ! Constant for Cd calc. Smith and Vogl 2008
-      Cm       = 0.002_r8       ! Constant for Cd calc. Smith and Vogl 2008
+      !Cd0      = 0.0007_r8      ! Constant for Cd calc. Smith and Vogl 2008
+      !Cd1      = 0.000065_r8    ! Constant for Cd calc. Smith and Vogl 2008
+      !Cm       = 0.002_r8       ! Constant for Cd calc. Smith and Vogl 2008
       v20      = 20.0_r8        ! Threshold wind speed for calculating Cd from Smith and Vogl 2008
       p0       = 100000.0_r8    ! Constant for potential temp calculation
-      pbltop   = 85000._r8      ! Top of boundary layer
-      pblconst = 20000._r8      ! Constant for the calculation of the decay of diffusivity
       T00      = 288.0_r8         ! Horizontal mean T at surface for moist baro test
       u0       = 35.0_r8          ! Zonal wind constant for moist baro test
       latw     = 2.0_r8*pi/9.0_r8 ! Halfwidth for  for baro test
@@ -399,16 +413,30 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
         end do
 
         do i=1,pcols
+            
+            !JOY Add calculation of sensible heat flux
+            rho = ps(i)/(rair*Tsurf(i))
+            sens_ht_flux(i) = cpair*rho*C*wind(i)*(Tsurf(i) - t(i, pver))
+            
             dtdt(i,pver) = dtdt(i,pver) +((t(i,pver)+C*wind(i)*Tsurf(i)*dtime/za(i)) &
-                            /(1._r8+C*wind(i)*dtime/za(i))-t(i,pver))/dtime 
+                            /(1._r8+C*wind(i)*dtime/za(i))-t(i,pver))/dtime
+            
             t(i,pver)   = (t(i,pver)+C*wind(i)*Tsurf(i)*dtime/za(i)) &
                             /(1._r8+C*wind(i)*dtime/za(i))
         end do
 
         do i=1,pcols
-            qsats = epsilo*e0/ps(i)*exp(-latvap/rh2o*((1._r8/Tsurf(i))-1._r8/T0))  
-            ! saturation specific humidity at the surface
+            if (use_qsurf_ext == 1) then
+                qsats = qsurf(i)
+            else
+                qsats = epsilo*e0/ps(i)*exp(-latvap/rh2o*((1._r8/Tsurf(i))-1._r8/T0))
+                ! saturation specific humidity at the surface
+            end if
 
+            !JOY Add calculation of latent heat flux
+            rho = ps(i)/(rair*Tsurf(i))
+            lat_ht_flux(i) = latvap*rho*C*wind(i)*(qsats - q(i, pver))
+            
             dqdt(i,pver) = dqdt(i,pver) +((q(i,pver)+C*wind(i)*qsats*dtime/za(i)) &
                             /(1._r8+C*wind(i)*dtime/za(i))-q(i,pver))/dtime
             q(i,pver) = (q(i,pver)+C*wind(i)*qsats*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))

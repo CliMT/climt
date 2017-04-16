@@ -5,8 +5,9 @@ from .berger_solar_insolation import BergerSolarInsolation
 from .simple_physics import SimplePhysics
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .emanuel import EmanuelConvection
+from .slab_surface import SlabSurface
 
 __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
     HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
-    RRTMGLongwave, RRTMGShortwave, EmanuelConvection)
+    RRTMGLongwave, RRTMGShortwave, EmanuelConvection, SlabSurface)

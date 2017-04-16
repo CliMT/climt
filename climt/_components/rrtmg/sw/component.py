@@ -81,19 +81,19 @@ class RRTMGShortwave(ClimtPrognostic):
         'cloud_asymmetry_parameter': {
             'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
             'units': 'dimensionless',
-            'default_value': 0.
+            'default_value': 0.85
         },
 
         'cloud_forward_scattering_fraction': {
             'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
             'units': 'dimensionless',
-            'default_value': 0.5
+            'default_value': 0.8
         },
 
         'single_scattering_albedo_due_to_cloud': {
             'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
             'units': 'dimensionless',
-            'default_value': 0.5
+            'default_value': 0.9
         },
 
         'shortwave_optical_thickness_due_to_aerosol': {
@@ -160,9 +160,9 @@ class RRTMGShortwave(ClimtPrognostic):
     def __init__(
             self,
             cloud_overlap_method=1,
-            cloud_optical_properties=0,
-            cloud_ice_properties=0,
-            cloud_liquid_water_properties=0,
+            cloud_optical_properties=2,
+            cloud_ice_properties=1,
+            cloud_liquid_water_properties=1,
             solar_variability_method=0,
             solar_constant=0.,
             facular_sunspot_amplitude=np.ones(2),
@@ -210,7 +210,7 @@ class RRTMGShortwave(ClimtPrognostic):
                 * 0 = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
                 * 1 = ice particle has effective radius between 13.0 and 130.0 micron `[Ebert and Curry 1992]`_
                 * 2 = ice particle has effective radius between 5.0 and 131.0 micron
-                    `[Key, Streamer Ref. Manual, 1996]`_
+                  `[Key, Streamer Ref. Manual, 1996]`_
                 * 3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron
                   `[Fu, 1996]`_. (dge = 1.0315 * r_ec)
 
@@ -228,32 +228,33 @@ class RRTMGShortwave(ClimtPrognostic):
                 set the solar variability model used by RRTMG.
 
                 * solar_variability_method = -1:
+
                     * If :code:`solar_constant = 0`: No solar variability and no solar cycle
-                        with a solar constant of 1368.22 :math:`W m^{-2}`.
+                      with a solar constant of 1368.22 :math:`W m^{-2}`.
                     * If :code:`solar_constant != 0`: Solar variability defined by setting
-                        non-zero scale factors in :code:`solar_variability_by_band`.
+                      non-zero scale factors in :code:`solar_variability_by_band`.
 
                 * solar_variability_method = 0:
+
                     * If :code:`solar_constant = 0`: No solar variability and no solar cycle
-                        with a solar constant of 1360.85 :math:`W m^{-2}`, with facular and
-                        sunspot effects fixed to the mean of solar cycles 13-24.
+                      with a solar constant of 1360.85 :math:`W m^{-2}`, with facular and
+                      sunspot effects fixed to the mean of solar cycles 13-24.
                     * If :code:`solar_constant != 0`: No solar variability and no solar cycle.
 
                 * solar_variability_method = 1: Solar variability using the NRLSSI2 solar model
-                    with solar cycle contribution determined by :code:`solar_cycle_fraction` in
-                    the model state, and facular and sunspot adjustment scale factors specified
-                    in :code:`facular_sunspot_amplitude`.
+                  with solar cycle contribution determined by :code:`solar_cycle_fraction` in
+                  the model state, and facular and sunspot adjustment scale factors specified
+                  in :code:`facular_sunspot_amplitude`.
 
                 * solar_variability_method = 2: Solar variability using the NRLSSI2 solar model
-                    using solar cycle determined by direct specification of **Mg** (facular)
-                    and **SB** (sunspot) indices provided in :code:`facular_sunspot_amplitude`.
-                    :code:`solar_constant` is ignored.
+                  using solar cycle determined by direct specification of **Mg** (facular)
+                  and **SB** (sunspot) indices provided in :code:`facular_sunspot_amplitude`.
+                  :code:`solar_constant` is ignored.
 
                 * solar_variability_method = 3:
-                    * If :code:`solar_constant = 0`: No solar variability and no solar cycle
-                        with a solar constant of 1360.85 :math:`W m^{-2}`.
-                    * If :code:`solar_constant != 0`: NRLSSI2 variability defined by setting
-                        scale factors in :code:`solar_variability_by_band`.
+                 * If :code:`solar_constant = 0`: No solar variability and no solar cycle
+                   with a solar constant of 1360.85 :math:`W m^{-2}`.
+                 * If :code:`solar_constant != 0`: scale factors in :code:`solar_variability_by_band`.
 
             solar_constant (float):
                 Solar constant -- solar irradiance averaged over a solar cycle -- in units of
@@ -269,8 +270,8 @@ class RRTMGShortwave(ClimtPrognostic):
                 Type of aerosol inputs to RRTMG.
 
                 * 0: No Aerosol.
-                * 6: ECMWF method. Requires aerosol optical depth at 55 micron as the
-                    state quantity :code:`aerosol_optical_depth_at_55_micron`.
+                * 6 -- ECMWF method. Requires aerosol optical depth at 55 micron as the
+                  state quantity :code:`aerosol_optical_depth_at_55_micron`.
                 * 10: Input all aerosol optical properties.
 
             gravitational_acceleration (float):

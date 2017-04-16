@@ -43,6 +43,9 @@ def initialise_rrtm_radiation(double cp_d_air, cnp.int32_t cloud_overlap_method=
                               cnp.int32_t cloud_props_flag=0, cnp.int32_t ice_props_flag=0,
                               cnp.int32_t liq_droplet_flag=0):
 
+    global rrtm_cloud_overlap_method, rrtm_calculate_change_up_flux,\
+        rrtm_cloud_props_flag, rrtm_ice_props_flag, rrtm_liq_droplet_flag
+
     rrtmg_longwave_init(&cp_d_air)
 
     rrtm_cloud_overlap_method = cloud_overlap_method

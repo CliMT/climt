@@ -108,7 +108,12 @@ climt_quantity_descriptions = {
     },
     'specific_humidity': {
         'dims': ['x', 'y', 'mid_levels'],
-        'units': 'g/kg',
+        'units': 'g/g',
+        'default_value': 0.
+    },
+    'surface_specific_humidity': {
+        'dims': ['x', 'y'],
+        'units': 'g/g',
         'default_value': 0.
     },
     'mole_fraction_of_ozone_in_air': {
@@ -271,6 +276,16 @@ climt_quantity_descriptions = {
         'units': 'W m^-2',
         'default_value': 0.
     },
+    'surface_upward_sensible_heat_flux': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'surface_upward_latent_heat_flux': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
     'precipitation_amount': {
         'dims': ['x', 'y'],
         'units': 'kg m^-2',
@@ -291,6 +306,11 @@ climt_quantity_descriptions = {
         'units': 'm s^-1',
         'default_value': 0.
     },
+    'stratiform_precipitation_rate': {
+        'dims': ['x', 'y'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
     'atmosphere_convective_mass_flux': {
         'dims': ['x', 'y'],
         'units': 'kg m^-2 s^-1',
@@ -301,11 +321,37 @@ climt_quantity_descriptions = {
         'units': 'J kg^-1',
         'default_value': 0.
     },
+    'convective_heating_rate': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
     'zenith_angle': {
         'dims': ['x', 'y'],
         'units': 'radians',
         'default_value': 0.
-    }
+    },
+    'land_ice_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 0.
+    },
+    'sea_ice_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 0.
+    },
+    'surface_snow_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 0.
+    },
+    'area_type': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 'sea',
+        'dtype': 'a100'
+    },
 }
 
 
@@ -452,7 +498,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     x_coordinate = DataArray(
         x_coordinate_values,
-        dims=('x_coordinate_label'),
+        dims=(x_coordinate_label),
         attrs={'units': x_coordinate_units, 'label': x_coordinate_label})
 
     output_state[x_coordinate_label] = x_coordinate
@@ -460,7 +506,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     y_coordinate = DataArray(
         y_coordinate_values,
-        dims=('y_coordinate_label'),
+        dims=(y_coordinate_label),
         attrs={'units': y_coordinate_units, 'label': y_coordinate_label})
 
     output_state[y_coordinate_label] = y_coordinate
@@ -468,7 +514,7 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     z_coordinate = DataArray(
         z_coordinate_values,
-        dims=('z_coordinate_label',),
+        dims=(z_coordinate_label,),
         attrs={'units': z_coordinate_units, 'label': z_coordinate_label})
 
     output_state[z_coordinate_label] = z_coordinate
@@ -509,6 +555,10 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     temporary_description.update(additional_descriptions)
     for name in quantity_list:
+
+        if name in output_state.keys():
+            continue
+
         output_state[name] = get_default_values(
             name, x_coordinate, y_coordinate,
             z_coordinate, temporary_description,
@@ -584,8 +634,17 @@ def get_default_values(quantity_name, x, y, z,
     quantity_dims = [x.label if elem is 'x' else elem for elem in quantity_dims]
     quantity_dims = [y.label if elem is 'y' else elem for elem in quantity_dims]
 
+    if 'dtype' in description:
+        dtype = description['dtype']
+    else:
+        dtype = 'float64'
+
     if 'default_value' in description:
-        quantity_array = np.ones(array_dims, order='F')*description['default_value']
+        if dtype == 'a100':
+            quantity_array = np.ones(array_dims, dtype=dtype)
+            quantity_array[:] = description['default_value']
+        else:
+            quantity_array = np.ones(array_dims, order='F', dtype=dtype)*description['default_value']
     elif 'init_func' in description:
         quantity_array = description['init_func'](array_dims, quantity_description)
     else:

@@ -41,7 +41,9 @@ state = {
 }
 constant_state = {
     'surface_temperature': DataArray(
-        np.ones((1, 1))*274., dims=('x', 'y'), attrs={'units': 'degK'}),
+        np.ones((1, 1))*300., dims=('x', 'y'), attrs={'units': 'degK'}),
+    'surface_specific_humidity': DataArray(
+        np.ones((1, 1)) * 0.01, dims=('x', 'y'), attrs={'units': 'g/g'}),
     'surface_air_pressure': DataArray(
         np.ones((1, 1))*1e5, dims=('x', 'y'), attrs={'units': 'Pa'}),
     'air_pressure': DataArray(
@@ -68,7 +70,7 @@ state.update(constant_state)
 def plot_function(fig, state):
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(
-        state['air_temperature'].values.flatten(),
+        state['specific_humidity'].values.flatten(),
         state['air_pressure'].values.flatten(), '-o')
     ax.axes.invert_yaxis()
     # print(state['eastward_wind'].values.flatten())
@@ -78,13 +80,15 @@ def plot_function(fig, state):
 
 
 monitor = PlotFunctionMonitor(plot_function)
-simple_physics = SimplePhysics()
+simple_physics = SimplePhysics(use_external_surface_specific_humidity=False)
 timestep = timedelta(hours=1)
 
-for i in range(200):
-    print(i)
+for i in range(600):
+    #print(i)
+
     new_state, diagnostics = simple_physics(state, timestep)
+    print('SH Flux:', diagnostics['surface_upward_sensible_heat_flux'].values.item())
+    print('LH Flux:', diagnostics['surface_upward_latent_heat_flux'].values.item())
     state.update(diagnostics)
-    new_state.update(constant_state)
     monitor.store(state)
-    state = new_state
+    state.update(new_state)

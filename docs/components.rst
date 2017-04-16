@@ -15,12 +15,23 @@ Radiation
     RRTMGLongwave
     RRTMGLongwave.__call__
 
+    RRTMGShortwave
+    RRTMGShortwave.__call__
+
     GrayLongwaveRadiation
     GrayLongwaveRadiation.__call__
 
     Frierson06LongwaveOpticalDepth
     Frierson06LongwaveOpticalDepth.__call__
 
+Convection
+----------
+
+.. autosummary::
+    :toctree: generated/
+
+    EmanuelConvection
+    EmanuelConvection.__call__
 Surface Processes
 -----------------
 

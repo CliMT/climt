@@ -21,7 +21,6 @@ class EmanuelConvection(ClimtImplicitPrognostic):
     _climt_inputs = {
         'air_temperature': 'degK',
         'specific_humidity': 'g/g',
-        'saturation_specific_humidity': 'g/g',
         'eastward_wind': 'm s^-1',
         'northward_wind': 'm s^-1',
         'air_pressure': 'mbar',
@@ -36,12 +35,39 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         'convective_downdraft_temperature_scale': 'degK',
         'convective_downdraft_specific_humidity_scale': 'g/g',
         'atmosphere_convective_mass_flux': 'kg m^-2 s^-1',
-        'atmosphere_convective_available_potential_energy': 'J kg^-1'
+        'atmosphere_convective_available_potential_energy': 'J kg^-1',
+        'convective_heating_rate': 'degK s^-1'
     }
 
     _climt_tendencies = {
         'air_temperature': 'degK s^-1',
         'specific_humidity': 'g g^-1 s^-1',
+        'eastward_wind': 'm s^-2',
+        'northward_wind': 'm s^-2',
+    }
+
+    quantity_descriptions = {
+        'convective_state': {
+            'dims': ['x', 'y'],
+            'units': 'dimensionless',
+            'default_value': 0,
+            'dtype': np.int32
+        },
+        'convective_downdraft_velocity_scale': {
+            'dims': ['x', 'y'],
+            'units': 'm s^-1',
+            'default_value': 0
+        },
+        'convective_downdraft_specific_humidity_scale': {
+            'dims': ['x', 'y'],
+            'units': 'g/g',
+            'default_value': 0
+        },
+        'convective_downdraft_temperature_scale': {
+            'dims': ['x', 'y'],
+            'units': 'degK',
+            'default_value': 0
+        },
     }
 
     def __init__(self,
@@ -288,26 +314,21 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         tend_dict = self.create_state_dict_for('_climt_tendencies', state)
         diag_dict = self.create_state_dict_for('_climt_diagnostics', state)
 
-        # TODO this should happen at the array handling level itself
-        diag_dict['convective_state'].values = np.array(
-            diag_dict['convective_state'].shape, dtype=np.int32_t, order='F')
-
         q_sat = np.asfortranarray(bolton_q_sat(
             raw_arrays['air_temperature'],
-            raw_arrays['air_pressure'],
-            self._Cpd, self._Cpv))
+            raw_arrays['air_pressure']*100,
+            self._Cpd.values.item(), self._Cpv.values.item()))
 
         tend_arrays = self.get_numpy_arrays_from_state('_climt_tendencies', tend_dict)
         diag_arrays = self.get_numpy_arrays_from_state('_climt_diagnostics', diag_dict)
 
         for lon in range(num_lons):
-
             _emanuel_convection.convect(
                 num_levs,
                 num_cols,
                 max_conv_level,
                 self._ntracers,
-                self.current_time_step,
+                self.current_time_step.total_seconds(),
                 raw_arrays['air_temperature'][lon, :],
                 raw_arrays['specific_humidity'][lon, :],
                 q_sat[lon, :],
@@ -328,4 +349,6 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                 tend_arrays['northward_wind'][lon, :],
             )
 
+            diag_dict['convective_heating_rate'].values[:] = tend_dict['air_temperature'].values
+            diag_dict['atmosphere_convective_mass_flux'].values[:] = raw_arrays['atmosphere_convective_mass_flux']
             return tend_dict, diag_dict
