@@ -192,6 +192,7 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
    real(r8) tmp                         ! Temporary
    real(r8) qsat                        ! Saturation vapor pressure
    real(r8) qsats                       ! Saturation vapor pressure of SST
+   real(r8) esats                       !JOY Saturation vapor pressure of surface
 
 ! Variables for Boundary Layer Calculation
 
@@ -429,7 +430,19 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
             if (use_qsurf_ext == 1) then
                 qsats = qsurf(i)
             else
-                qsats = epsilo*e0/ps(i)*exp(-latvap/rh2o*((1._r8/Tsurf(i))-1._r8/T0))
+                if (Tsurf(i) > 271) then
+                    !Over ocean
+                    esats = (1.0007 + 3.46e-8*ps(i))*611.21*exp(17.966*(Tsurf(i) - 273.)/(247.15 + (Tsurf(i)- 273.)))
+                    qsats = epsilo*esats/(ps(i) - 0.378*esats)
+                    !print *, 'Over water: ', qsats
+                    !qsats = epsilo*e0/ps(i)*exp(-latvap/rh2o*((1._r8/Tsurf(i))-1._r8/T0))
+                    !print *, 'Over water: ', qsats
+                else
+                    !Over ice
+                    esats = (1.0003 + 4.18e-8*ps(i))*611.15*exp(22.452*(Tsurf(i) - 273.)/(272.5 + (Tsurf(i)- 273.)))
+                    qsats = epsilo*esats/(ps(i) - 0.378*esats)
+                    !print *, 'Over ice: ', qsats
+                end if
                 ! saturation specific humidity at the surface
             end if
 
