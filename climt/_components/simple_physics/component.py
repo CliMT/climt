@@ -256,11 +256,6 @@ class SimplePhysics(ClimtImplicit):
             state['northward_wind']],
             ['x', 'y', 'z'])
 
-        dims_surf = combine_dimensions([
-            state['surface_air_pressure'],
-            state['surface_temperature']],
-            ['x', 'y'])
-
         (t_out, u_out, v_out,
          q_out, precip_out,
          sensible_heat_flux, latent_heat_flux) = phys.get_new_state(

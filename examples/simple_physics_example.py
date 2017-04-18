@@ -84,7 +84,7 @@ simple_physics = SimplePhysics(use_external_surface_specific_humidity=False)
 timestep = timedelta(hours=1)
 
 for i in range(600):
-    #print(i)
+    # print(i)
 
     new_state, diagnostics = simple_physics(state, timestep)
     print('SH Flux:', diagnostics['surface_upward_sensible_heat_flux'].values.item())

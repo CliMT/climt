@@ -6,6 +6,7 @@ import numpy as np
 from datetime import timedelta
 
 from climt import EmanuelConvection, RRTMGShortwave, RRTMGLongwave, SlabSurface
+# import time
 
 
 def get_interface_pressures(p, ps):
@@ -18,6 +19,7 @@ def get_interface_pressures(p, ps):
     interface_pressures[:, :, 1:-1] = 0.5*(p[:, :, 1:] + p[:, :, :-1])
     interface_pressures[:, :, 0] = ps[:, :]
     return interface_pressures
+
 
 def plot_function(fig, state):
     ax = fig.add_subplot(2, 2, 1)
@@ -44,8 +46,11 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 3)
     ax.plot(
-        state['eastward_wind'].values.flatten(),
-        state['air_pressure'].to_units('mbar').values.flatten(), '-o')
+        state['upwelling_longwave_flux_in_air'].values.flatten(),
+        state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
+    ax.plot(
+        state['downwelling_longwave_flux_in_air'].values.flatten(),
+        state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
     ax.axes.invert_yaxis()
     # ax.set_ylim(1e5, 100.)
     ax = fig.add_subplot(2, 2, 4)
@@ -57,6 +62,7 @@ def plot_function(fig, state):
         net_flux.values.flatten(),
         state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
     ax.axes.invert_yaxis()
+
 
 monitor = PlotFunctionMonitor(plot_function)
 
@@ -71,30 +77,32 @@ timestep = timedelta(minutes=5)
 state = get_default_state([simple_physics, convection,
                            radiation_lw, radiation_sw, slab])
 
-state['air_temperature'].values[:] = 250
+state['air_temperature'].values[:] = 270
 state['surface_albedo_for_direct_shortwave'].values[:] = 0.5
 state['surface_albedo_for_direct_near_infrared'].values[:] = 0.5
 state['surface_albedo_for_diffuse_shortwave'].values[:] = 0.5
 
 state['mole_fraction_of_ozone_in_air'].values[0, 0, :] = np.load('ozone_profile.npy')
 
-state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=18)] = 0.02
-state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=18)] = 1.
+state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
+state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 1.
+state['zenith_angle'].values[:] = np.pi/2.2
+state['surface_temperature'].values[:] = 260.
+state['depth_slab_surface'].values[:] = 1.
 
 equilibrium_value = DataArray(
-        np.ones((1, 1, len(state['air_pressure'])))*10.,
-        dims=('x', 'y', 'mid_levels'),
-        attrs={'units': 'm s^-1'})
+    np.ones((1, 1, len(state['air_pressure'])))*10.,
+    dims=('x', 'y', 'mid_levels'),
+    attrs={'units': 'm s^-1'})
 
 tau = DataArray(
-    np.array(2.), dims = [], attrs={'units': 'hour'})
+    np.array(2.), dims=[], attrs={'units': 'hour'})
 
 relaxation = RelaxationPrognostic('eastward_wind', equilibrium_value, tau)
 time_stepper = AdamsBashforth([relaxation, convection, radiation_lw, radiation_sw, slab])
 
-import time
 for i in range(60000):
-    #print(i)
+    # print(i)
     # print('before:', state['atmosphere_convective_mass_flux'].values)
     print(state['surface_temperature'].values)
     convection.current_time_step = timestep
@@ -107,7 +115,7 @@ for i in range(60000):
     # print('SH Flux:', diagnostics['surface_upward_sensible_heat_flux'].values.item())
     # print('LH Flux:', diagnostics['surface_upward_latent_heat_flux'].values.item())
     state.update(diagnostics)
-    if i%3 == 0:
+    if i % 20 == 0:
         monitor.store(state)
     state.update(new_state)
     state['eastward_wind'].values[:] = 6.

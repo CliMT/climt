@@ -25,7 +25,7 @@ class ArrayHandler(object):
     def get_numpy_arrays_from_state(self, attribute, state, memory_layout='fortran'):
         """
 
-        Extract required inputs as numpy arrays from state.
+        Extract inputs as numpy arrays from state.
 
         Returns arrays with dimensions (x,y,z) in the same order as specified in
         :code:`component` (first priority) or :code:`_quantity_descriptions` in

@@ -13,7 +13,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
     The Emanuel convection scheme from `[Emanuel and Živković-Rothman]`_
 
     .. _[Emanuel and Živković-Rothman]:
-        http://journals.ametsoc.org/doi/abs/10.1175/1520-0469(1999)056%3C1766%3ADAEOAC%3E2.0.CO%3B2
+            http://journals.ametsoc.org/doi/abs/10.1175/1520-0469(1999)056%3C1766%3ADAEOAC%3E2.0.CO%3B2
 
     """
 

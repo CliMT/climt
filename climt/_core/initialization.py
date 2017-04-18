@@ -3,6 +3,7 @@ from sympl import (DataArray, add_direction_names,
 import numpy as np
 import copy
 from datetime import datetime
+from scipy.interpolate import CubicSpline
 
 
 def init_mid_level_pressures(array_dims, quantity_description):
@@ -286,6 +287,16 @@ climt_quantity_descriptions = {
         'units': 'W m^-2',
         'default_value': 0.
     },
+    'upward_heat_flux_at_ground_level_in_soil': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'heat_flux_into_sea_water_due_to_sea_ice': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
     'precipitation_amount': {
         'dims': ['x', 'y'],
         'units': 'kg m^-2',
@@ -352,6 +363,13 @@ climt_quantity_descriptions = {
         'default_value': 'sea',
         'dtype': 'a100'
     },
+    'snow_ice_temperature': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': CubicSpline(
+            np.linspace(0, 50, 50), 270.*np.ones(50)),
+        'dtype': object
+    }
 }
 
 
@@ -640,7 +658,7 @@ def get_default_values(quantity_name, x, y, z,
         dtype = 'float64'
 
     if 'default_value' in description:
-        if dtype == 'a100':
+        if dtype in ['a100', object]:
             quantity_array = np.ones(array_dims, dtype=dtype)
             quantity_array[:] = description['default_value']
         else:

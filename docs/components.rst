@@ -6,6 +6,21 @@ Components
 
 This page documents the different components available through CliMT.
 
+Base Components
+----------------
+
+.. autosummary::
+    :toctree: generated/
+
+    ClimtPrognostic
+
+    ClimtDiagnostic
+
+    ClimtImplicit
+
+    ClimtImplicitPrognostic
+
+
 Radiation
 ---------
 
@@ -32,6 +47,7 @@ Convection
 
     EmanuelConvection
     EmanuelConvection.__call__
+
 Surface Processes
 -----------------
 
@@ -40,6 +56,18 @@ Surface Processes
 
     SimplePhysics
     SimplePhysics.__call__
+
+    SlabSurface
+    SlabSurface.__call__
+
+Ice and Snow
+------------
+
+.. autosummary::
+    :toctree: generated/
+
+    IceSheet
+    IceSheet.__call__
 
 Test Cases
 -----------
