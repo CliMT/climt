@@ -17,7 +17,7 @@ class RRTMGShortwave(ClimtPrognostic):
 
     This module wraps RRTMG for shortwave radiation
     (i.e, emission from the sun).
-    
+
     """
 
     _climt_inputs = {
