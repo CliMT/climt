@@ -1,4 +1,5 @@
 from climt._core.climt_components import ClimtPrognostic
+import numpy as np
 
 
 class SlabSurface(ClimtPrognostic):
@@ -22,13 +23,16 @@ class SlabSurface(ClimtPrognostic):
         'upward_heat_flux_at_ground_level_in_soil': 'W m^-2',
         'heat_flux_into_sea_water_due_to_sea_ice': 'W m^-2',
         'area_type': 'dimensionless',
-        'snow_ice_temperature': 'dimensionless'
+        'snow_ice_temperature': 'dimensionless',
+        'ocean_mixed_layer_thickness': 'm',
+        'soil_thermal_capacity': 'J kg^-1 degK^-1',
+        'sea_water_density': 'kg m^-3',
     }
 
     _climt_tendencies = {
         'surface_temperature': 'degK s^-1',
-        'sea_surface_temperature': 'degK s^-1',
-        'soil_surface_temperature': 'degK s^-1',
+        # 'sea_surface_temperature': 'degK s^-1',
+        # 'soil_surface_temperature': 'degK s^-1',
     }
 
     _climt_diagnostics = {}
@@ -103,7 +107,22 @@ class SlabSurface(ClimtPrognostic):
                          raw_arrays['surface_upward_latent_heat_flux'])
 
         # TODO get separate tendencies for sea and land surface
-        # area_type = raw_arrays['area_type'].astype(str)
+        area_type = raw_arrays['area_type'].astype(str)
+
+        land_mask = np.logical_or(area_type == 'land', area_type == 'land_ice')
+        sea_mask = np.logical_or(area_type == 'sea', area_type == 'sea_ice')
+        land_ice_mask = area_type == 'land_ice'
+        sea_ice_mask = area_type == 'sea_ice'
+
+        net_heat_flux[land_ice_mask] = -raw_arrays['upward_heat_flux_at_ground_level_in_soil'][land_ice_mask]
+
+        net_heat_flux[sea_ice_mask] = raw_arrays['heat_flux_into_sea_water_due_to_sea_ice'][sea_ice_mask]
+
+        raw_arrays['density_surface_material'][sea_mask] = raw_arrays['sea_water_density'][sea_mask]
+
+        raw_arrays['surface_thermal_capacity'][land_mask] = raw_arrays['soil_thermal_capacity'][land_mask]
+
+        raw_arrays['depth_slab_surface'][sea_mask] = raw_arrays['ocean_mixed_layer_thickness'][sea_mask]
 
         mass_surface_slab = raw_arrays['density_surface_material']*raw_arrays['depth_slab_surface']
         heat_capacity_surface = mass_surface_slab*raw_arrays['surface_thermal_capacity']

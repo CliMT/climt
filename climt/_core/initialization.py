@@ -92,6 +92,16 @@ climt_quantity_descriptions = {
         'units': 'degK',
         'default_value': 300.
     },
+    'sea_surface_temperature': {
+        'dims': ['x', 'y'],
+        'units': 'degK',
+        'default_value': 300.
+    },
+    'soil_surface_temperature': {
+        'dims': ['x', 'y'],
+        'units': 'degK',
+        'default_value': 300.
+    },
     'northward_wind': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'm s^-1',
@@ -357,6 +367,16 @@ climt_quantity_descriptions = {
         'units': 'm',
         'default_value': 0.
     },
+    'ocean_mixed_layer_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 50.
+    },
+    'soil_thermal_capacity': {
+        'dims': ['x', 'y'],
+        'units': 'J kg^-1 degK^-1',
+        'default_value': 2000.
+    },
     'area_type': {
         'dims': ['x', 'y'],
         'units': 'dimensionless',
@@ -369,7 +389,12 @@ climt_quantity_descriptions = {
         'default_value': CubicSpline(
             np.linspace(0, 50, 50), 270.*np.ones(50)),
         'dtype': object
-    }
+    },
+    'sea_water_density': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-3',
+        'default_value': 4.1813e3
+    },
 }
 
 

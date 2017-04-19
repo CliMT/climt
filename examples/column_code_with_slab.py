@@ -89,6 +89,7 @@ state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8)
 state['zenith_angle'].values[:] = np.pi/2.2
 state['surface_temperature'].values[:] = 260.
 state['depth_slab_surface'].values[:] = 1.
+state['area_type'].values[:] = 'land'
 
 equilibrium_value = DataArray(
     np.ones((1, 1, len(state['air_pressure'])))*10.,
