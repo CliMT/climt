@@ -11,7 +11,7 @@ def init_mid_level_pressures(array_dims, quantity_description):
     vert_levels = array_dims[-1]
 
     p_surf = quantity_description['surface_air_pressure']['default_value']
-    spacing = np.linspace(0.995, 0.001, vert_levels)
+    spacing = np.linspace(0.998, 0.001, vert_levels)
     single_column = p_surf*spacing
     single_column = single_column[np.newaxis, np.newaxis, :]
 
@@ -22,7 +22,7 @@ def init_interface_level_pressures(array_dims, quantity_description):
 
     vert_levels = array_dims[-1]
     p_surf = quantity_description['surface_air_pressure']['default_value']
-    spacing = np.linspace(0.995, 0.001, vert_levels-1)
+    spacing = np.linspace(0.998, 0.001, vert_levels-1)
     midlevel = p_surf*spacing
 
     interface = np.zeros(vert_levels)
@@ -36,7 +36,7 @@ def init_interface_level_pressures(array_dims, quantity_description):
 def init_interface_level_sigma(array_dims, quantity_description):
 
     vert_levels = array_dims[-1]
-    spacing = np.linspace(0.995, 0.001, vert_levels-1)
+    spacing = np.linspace(0.998, 0.001, vert_levels-1)
     midlevel = spacing
 
     interface = np.zeros(vert_levels)
@@ -50,7 +50,7 @@ def init_interface_level_sigma(array_dims, quantity_description):
 def init_mid_level_sigma(array_dims, quantity_description):
 
     vert_levels = array_dims[-1]
-    spacing = np.linspace(0.995, 0.001, vert_levels)
+    spacing = np.linspace(0.998, 0.001, vert_levels)
     midlevel = spacing
 
     return midlevel*np.ones(array_dims, order='F')
@@ -80,7 +80,7 @@ climt_quantity_descriptions = {
     'surface_air_pressure': {
         'dims': ['x', 'y'],
         'units': 'Pa',
-        'default_value': 1.e5
+        'default_value': 1.0132e5
     },
     'air_temperature': {
         'dims': ['x', 'y', 'mid_levels'],
@@ -317,6 +317,11 @@ climt_quantity_descriptions = {
         'units': 'kg m^-2',
         'default_value': 0.
     },
+    'stratiform_precipitation_amount': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-2',
+        'default_value': 0.
+    },
     'precipitation_rate': {
         'dims': ['x', 'y'],
         'units': 'm s^-1',
@@ -394,6 +399,55 @@ climt_quantity_descriptions = {
         'dims': ['x', 'y'],
         'units': 'kg m^-3',
         'default_value': 4.1813e3
+    },
+    'surface_albedo_for_direct_shortwave': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+
+    'surface_albedo_for_diffuse_shortwave': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+
+    'surface_albedo_for_direct_near_infrared': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+
+    'surface_albedo_for_diffuse_near_infrared': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+    'soil_type': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 'clay',
+        'dtype': 'a100'
+    },
+    'surface_roughness_length': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.0002,
+    },
+    'surface_drag_coefficient_for_heat_in_air': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.0012,
+    },
+    'surface_drag_coefficient_for_momentum_in_air': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.0012,
+    },
+    'soil_temperature': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'degK',
+        'default_value': 274.,
     },
 }
 

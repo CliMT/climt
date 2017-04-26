@@ -132,30 +132,6 @@ class RRTMGShortwave(ClimtPrognostic):
             'units': 'dimensionless',
             'default_value': 1.0
         },
-
-        'surface_albedo_for_direct_shortwave': {
-            'dims': ['x', 'y'],
-            'units': 'dimensionless',
-            'default_value': 0.06
-        },
-
-        'surface_albedo_for_diffuse_shortwave': {
-            'dims': ['x', 'y'],
-            'units': 'dimensionless',
-            'default_value': 0.06
-        },
-
-        'surface_albedo_for_direct_near_infrared': {
-            'dims': ['x', 'y'],
-            'units': 'dimensionless',
-            'default_value': 0.06
-        },
-
-        'surface_albedo_for_diffuse_near_infrared': {
-            'dims': ['x', 'y'],
-            'units': 'dimensionless',
-            'default_value': 0.06
-        },
     }
 
     def __init__(
