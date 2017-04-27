@@ -123,7 +123,6 @@ def surface_q_sat(surf_temp, surf_press, Rd, Rv):
     below_freezing = np.logical_not(above_freezing)
 
     sat_vap_press = np.zeros(surf_temp.shape)
-    sat_spec_hum = np.zeros(surf_temp.shape)
 
     eps = Rd/Rv
 
@@ -133,7 +132,7 @@ def surface_q_sat(surf_temp, surf_press, Rd, Rv):
 
     sat_vap_press[below_freezing] = \
         (1.0003 + 4.18e-8*surf_press[below_freezing])*611.15*np.exp(
-            22.452*(surf_temp[below_freezing] - 273.)/(272.5 + (surf_temp[below_freezing]- 273.)))
+            22.452*(surf_temp[below_freezing] - 273.)/(272.5 + (surf_temp[below_freezing] - 273.)))
 
     return eps*sat_vap_press/(surf_press - (1 - eps)*sat_vap_press)
 
