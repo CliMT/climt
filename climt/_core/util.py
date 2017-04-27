@@ -117,6 +117,27 @@ def get_interface_values(
     return interface_values
 
 
+def surface_q_sat(surf_temp, surf_press, Rd, Rv):
+
+    above_freezing = surf_temp > 273
+    below_freezing = np.logical_not(above_freezing)
+
+    sat_vap_press = np.zeros(surf_temp.shape)
+    sat_spec_hum = np.zeros(surf_temp.shape)
+
+    eps = Rd/Rv
+
+    sat_vap_press[above_freezing] =\
+        (1.0007 + 3.46e-8*surf_press[above_freezing])*611.21*np.exp(
+            17.966*(surf_temp[above_freezing] - 273.)/(247.15 + (surf_temp[above_freezing] - 273.)))
+
+    sat_vap_press[below_freezing] = \
+        (1.0003 + 4.18e-8*surf_press[below_freezing])*611.15*np.exp(
+            22.452*(surf_temp[below_freezing] - 273.)/(272.5 + (surf_temp[below_freezing]- 273.)))
+
+    return eps*sat_vap_press/(surf_press - (1 - eps)*sat_vap_press)
+
+
 @jit(nopython=True)
 def bolton_q_sat(T, p, Rd, Rh2O):
     es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
