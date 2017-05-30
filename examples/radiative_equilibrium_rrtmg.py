@@ -35,17 +35,15 @@ state['air_pressure'].values[0, 0, :] = tp_profiles['air_pressure']
 state['air_temperature'].values[0, 0, :] = tp_profiles['air_temperature']
 state['air_pressure_on_interface_levels'].values[0, 0, :] = tp_profiles['interface_pressures']
 
-#state['specific_humidity'].values[0, 0, :] = mol_profiles['specific_humidity']
+# state['specific_humidity'].values[0, 0, :] = mol_profiles['specific_humidity']
 state['mole_fraction_of_carbon_dioxide_in_air'].values[0, 0, :] = mol_profiles['carbon_dioxide']
 state['mole_fraction_of_ozone_in_air'].values[0, 0, :] = mol_profiles['ozone']
 
-import time
 for i in range(8000):
 
     # print(i)
     diagnostics, new_state = time_stepper.__call__(state, timestep)
     state.update(diagnostics)
-    if i % 1 == 0:
+    if i % 200 == 0:
         monitor.store(state)
-    time.sleep(1)
     state = new_state
