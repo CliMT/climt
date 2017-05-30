@@ -472,6 +472,7 @@ class RRTMGShortwave(ClimtPrognostic):
                 raw_arrays['cloud_ice_particle_size'][lon, :],
                 raw_arrays['cloud_water_droplet_radius'][lon, :])
 
+            tend_arrays['air_temperature'][lon, :, -1] = 0
         # dims_mid = combine_dimensions([state['air_temperature']], ['x', 'y', 'z'])
         # dims_int = combine_dimensions([state['air_temperature_on_interface_levels']], ['x', 'y', 'z'])
 
@@ -482,6 +483,6 @@ class RRTMGShortwave(ClimtPrognostic):
         #
         # diagnostics = {}
 
-        diag_dict['shortwave_heating_rate'].values = tend_dict['air_temperature'].values
+        diag_dict['shortwave_heating_rate'].values[:] = tend_dict['air_temperature'].values
 
         return tend_dict, diag_dict
