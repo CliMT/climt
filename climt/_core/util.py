@@ -117,7 +117,7 @@ def get_interface_values(
     return interface_values
 
 
-def surface_q_sat(surf_temp, surf_press, Rd, Rv):
+def calculate_q_sat(surf_temp, surf_press, Rd, Rv):
 
     above_freezing = surf_temp > 273
     below_freezing = np.logical_not(above_freezing)
