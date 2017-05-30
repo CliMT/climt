@@ -84,12 +84,12 @@ state['surface_albedo_for_diffuse_shortwave'].values[:] = 0.5
 
 state['mole_fraction_of_ozone_in_air'].values[0, 0, :] = np.load('ozone_profile.npy')
 
-state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
-state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 1.
+#state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
+#state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 1.
 state['zenith_angle'].values[:] = np.pi/2.2
-state['surface_temperature'].values[:] = 260.
-state['depth_slab_surface'].values[:] = 1.
-state['area_type'].values[:] = 'land'
+state['surface_temperature'].values[:] = 300.
+state['depth_slab_surface'].values[:] = 10.
+state['area_type'].values[:] = 'sea'
 
 equilibrium_value = DataArray(
     np.ones((1, 1, len(state['air_pressure'])))*10.,
