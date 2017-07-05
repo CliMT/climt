@@ -6,7 +6,7 @@ from ...._core import (
 import numpy as np
 from numpy import pi as PI
 try:
-    from . import _rrtm_lw
+    from . import _rrtmg_lw
 except ImportError:
     print('Import failed. RRTMG Longwave will not be available!')
 
@@ -257,7 +257,7 @@ class RRTMGLongwave(ClimtPrognostic):
         #     copy_inputs.pop('longwave_optical_thickness_due_to_cloud')
         #     self._climt_inputs = copy_inputs
 
-        _rrtm_lw.set_constants(
+        _rrtmg_lw.set_constants(
             PI, self._g,
             self._planck,
             self._boltzmann,
@@ -269,7 +269,7 @@ class RRTMGLongwave(ClimtPrognostic):
             self._secs_per_day)
 
         # TODO Add all other flags as well
-        _rrtm_lw.initialise_rrtm_radiation(
+        _rrtmg_lw.initialise_rrtm_radiation(
             self._Cpd,
             self._cloud_overlap,
             self._calc_dflxdt,
@@ -327,7 +327,7 @@ class RRTMGLongwave(ClimtPrognostic):
 
         # TODO add dflx_dt as well
         for lon in range(mid_level_shape[0]):
-                _rrtm_lw.rrtm_calculate_longwave_fluxes(
+                _rrtmg_lw.rrtm_calculate_longwave_fluxes(
                     mid_level_shape[1],
                     mid_level_shape[2],
                     raw_arrays['air_pressure'][lon, :],

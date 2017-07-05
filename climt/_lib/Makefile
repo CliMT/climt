@@ -1,0 +1,106 @@
+FFTW_DIR = fftw-3.3.6-pl2
+SHT_DIR = shtns-2.7-r557
+BLAS_DIR = OpenBLAS-0.2.19
+GFS_DIR = GFS
+SIM_PHYS_DIR = simple_physics
+EMAN_DIR = emanuel
+RRTMG_LW_DIR = rrtmg_lw
+RRTMG_SW_DIR = rrtmg_sw
+
+FFTW_GZ = fftw-3.3.6-pl2.tar.gz
+SHT_GZ = shtns-2.7-r557.tar.gz
+BLAS_GZ = OpenBLAS-0.2.19.tar.gz
+
+BASE_DIR = $(PWD)
+LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
+
+CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
+LDFLAGS = "-L$(LIB_DIR)"
+
+all: fftw_lib sht_lib blas_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib
+
+# FFTW3 Configuration
+
+.configured_fftw:
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ); fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --enable-openmp --enable-avx --enable-avx2 && touch ../.configured_fftw
+
+$(CLIMT_ARCH)/libfftw3_omp.a: .configured_fftw
+	cd $(FFTW_DIR); make install; cp ../lib/libfftw3_omp.a $(LIB_DIR)
+
+$(CLIMT_ARCH)/libfftw3.a: .configured_fftw
+	cp lib/libfftw3.a $(LIB_DIR)
+
+fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
+
+
+# SHTNS Configuration
+
+.configured_sht:
+	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ); fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp && touch ../.configured_sht
+
+$(CLIMT_ARCH)/libshtns_omp.a: .configured_sht
+	cd $(SHT_DIR); make install; cp ../lib/libshtns_omp.a $(LIB_DIR)
+
+sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
+
+# BLAS Configuration
+
+blas_lib: $(CLIMT_ARCH)/libopenblas.a
+
+$(CLIMT_ARCH)/libopenblas.a:
+	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ); fi; cd $(BLAS_DIR); make NO_SHARED=1 NO_LAPACK=0; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install; cp ../lib/libopenblas.a $(LIB_DIR)
+
+# GFS Configuration
+
+gfs_lib: $(CLIMT_ARCH)/libgfs_dycore.a
+
+$(CLIMT_ARCH)/libgfs_dycore.a:
+	cd $(GFS_DIR); make python_lib; cp libgfs_dycore.a $(LIB_DIR)
+
+# Simple Physics Configuration
+
+simple_physics_lib: $(CLIMT_ARCH)/libsimple_physics.a
+
+$(CLIMT_ARCH)/libsimple_physics.a:
+	cd $(SIM_PHYS_DIR); make; cp libsimple_physics.a $(LIB_DIR)
+
+# Emanuel Convection Configuration
+
+emanuel_lib: $(CLIMT_ARCH)/libemanuel.a
+
+$(CLIMT_ARCH)/libemanuel.a:
+	cd $(EMAN_DIR); make; cp libemanuel.a $(LIB_DIR)
+
+# RRTMG LW Configuration
+
+rrtmg_lw_lib: $(CLIMT_ARCH)/librrtmg_lw.a
+
+$(CLIMT_ARCH)/librrtmg_lw.a:
+	cd $(RRTMG_LW_DIR); make; cp librrtmg_lw.a $(LIB_DIR)
+
+# RRTMG SW Configuration
+
+rrtmg_sw_lib: $(CLIMT_ARCH)/librrtmg_sw.a
+
+$(CLIMT_ARCH)/librrtmg_sw.a:
+	cd $(RRTMG_SW_DIR); make; cp librrtmg_sw.a $(LIB_DIR)
+
+
+clean:
+	if [ -d $(FFTW_DIR) ]; then rm -Rf $(FFTW_DIR); fi
+	if [ -d $(SHT_DIR) ]; then rm -Rf $(SHT_DIR); fi
+	if [ -d $(BLAS_DIR) ]; then rm -Rf $(BLAS_DIR); fi
+	if [ -e  .configured_fftw ]; then rm .configured_fftw; fi
+	if [ -e  .configured_sht ]; then rm .configured_sht; fi
+	cd $(GFS_DIR); make clean
+	cd $(SIM_PHYS_DIR); make clean
+	cd $(EMAN_DIR); make clean
+	cd $(RRTMG_LW_DIR); make clean
+	cd $(RRTMG_SW_DIR); make clean
+
+clean_libs:
+	if [ -d  include ]; then rm -Rf include; fi
+	if [ -d  share ]; then rm -Rf share; fi
+	if [ -d  bin ]; then rm -Rf bin; fi
+	if [ -d  lib ]; then rm -Rf lib; fi
+	rm $(LIB_DIR)/*.a

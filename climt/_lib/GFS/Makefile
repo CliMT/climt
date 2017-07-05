@@ -24,13 +24,13 @@ OBJS=	 params.o \
 all: $(python_lib)
 
 python_lib : $(OBJS)
-	ar rcs libgfsDycore.a $(OBJS) 
+	ar rcs libgfs_dycore.a $(OBJS) 
 
 force_look:
 	true
 
 clean: force_look
-	rm -f $(OBJS) *.mod *genmod* libgfsDycore.a
+	rm -f $(OBJS) *.mod *genmod* libgfs_dycore.a
 	ln -fs phy_init_stub.f90 phy_init.f90
 	ln -fs phy_data_stub.f90 phy_data.f90
 	ln -fs phy_finalize_stub.f90 phy_finalize.f90

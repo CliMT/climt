@@ -6,7 +6,7 @@ from ...._core import (
 import numpy as np
 from numpy import pi as numpy_pi
 try:
-    from . import _rrtm_sw
+    from . import _rrtmg_sw
 except ImportError:
     print('Import failed. RRTMG Shortwave will not be available!')
 
@@ -351,7 +351,7 @@ class RRTMGShortwave(ClimtPrognostic):
         self._Cpd = replace_none_with_default(
             'heat_capacity_of_dry_air_at_constant_pressure', specific_heat_dry_air)
 
-        _rrtm_sw.set_constants(
+        _rrtmg_sw.set_constants(
             numpy_pi, self._g,
             self._planck,
             self._boltzmann,
@@ -362,7 +362,7 @@ class RRTMGShortwave(ClimtPrognostic):
             self._stef_boltz,
             self._secs_per_day)
 
-        _rrtm_sw.initialise_rrtm_radiation(
+        _rrtmg_sw.initialise_rrtm_radiation(
             self._Cpd,
             self._solar_const,
             self._fac_sunspot_coeff,
@@ -430,7 +430,7 @@ class RRTMGShortwave(ClimtPrognostic):
 
         for lon in range(mid_level_shape[0]):
 
-            _rrtm_sw.rrtm_calculate_shortwave_fluxes(
+            _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
                 mid_level_shape[1],
                 mid_level_shape[2],
                 day_of_year,
