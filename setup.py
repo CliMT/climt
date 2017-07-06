@@ -43,7 +43,7 @@ libraries = ['m', 'gfortran']
 compiled_base_dir = 'climt/_lib/'
 
 if operating_system == 'Linux':
-    libraries += 'rt'
+    libraries.append('rt')
 
 dir_path = os.getcwd()
 compiled_path = os.path.join(dir_path, compiled_base_dir)
