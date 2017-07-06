@@ -39,11 +39,14 @@ test_requirements = [
 operating_system = platform.system()
 
 libraries = ['m', 'gfortran']
+default_link_args = []
 
 compiled_base_dir = 'climt/_lib/'
 
 if operating_system == 'Linux':
-    libraries.append('rt')
+    libraries = ['m', 'gfortran', 'rt']
+    default_link_args = ['-lgfortran']
+
 
 dir_path = os.getcwd()
 compiled_path = os.path.join(dir_path, compiled_base_dir)
@@ -111,7 +114,7 @@ ext_modules = [
         library_dirs=[lib_path],
         extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
                          lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
-                         lib_path+'/libfftw3.a', lib_path+'/libopenblas.a']),
+                         lib_path+'/libfftw3.a', lib_path+'/libopenblas.a'] + default_link_args),
 
     Extension(
         'climt._components.simple_physics._simple_physics',
@@ -119,7 +122,7 @@ ext_modules = [
         libraries=libraries,
         include_dirs=include_dirs,
         library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/libsimple_physics.a']),
+        extra_link_args=[lib_path+'/libsimple_physics.a'] + default_link_args),
 
     Extension(
         'climt._components.emanuel._emanuel_convection',
@@ -127,7 +130,7 @@ ext_modules = [
         libraries=libraries,
         include_dirs=include_dirs,
         library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/libemanuel.a']),
+        extra_link_args=[lib_path+'/libemanuel.a'] + default_link_args),
 
     Extension(
         'climt._components.rrtmg.lw._rrtmg_lw',
@@ -135,7 +138,7 @@ ext_modules = [
         libraries=libraries,
         include_dirs=include_dirs,
         library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/librrtmg_lw.a']),
+        extra_link_args=[lib_path+'/librrtmg_lw.a'] + default_link_args),
 
     Extension(
         'climt._components.rrtmg.sw._rrtmg_sw',
@@ -143,33 +146,9 @@ ext_modules = [
         libraries=libraries,
         include_dirs=include_dirs,
         library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/librrtmg_sw.a']),
+        extra_link_args=[lib_path+'/librrtmg_sw.a'] + default_link_args),
 
 ]
-
-'''
-fortran_ext = {
-    'simple_physics': 'climt/_components/simple_physics',
-    'rrtmg_longwave': 'climt/_components/rrtmg/lw',
-    'rrtmg_shortwave': 'climt/_components/rrtmg/sw',
-    'emanuel_convection': 'climt/_components/emanuel',
-}
-
-dir_path = os.getenv('PWD', '')
-
-# os.environ['FC'] = 'gfortran'
-# os.environ['FFLAGS'] = '-fPIC -fno-range-check'
-# os.environ['CFLAGS'] = '-fPIC'
-# os.environ['CLIMT_OPTIMIZE'] = ' -O3'
-# os.environ['CLIMT_NO_OPTIMIZE'] = ' -O0'
-# os.environ['LDFLAGS'] = '-lgfortran'
-
-for module in fortran_ext.keys():
-    mycwd = os.getcwd()
-    os.chdir(os.path.join(dir_path, fortran_ext[module]))
-    build_process = subprocess.call(['python', 'setup.py', 'build_ext', '--inplace'])
-    os.chdir(mycwd)
-'''
 
 setup(
     name='climt',
