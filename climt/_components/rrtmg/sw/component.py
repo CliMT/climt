@@ -145,7 +145,7 @@ class RRTMGShortwave(ClimtPrognostic):
             facular_sunspot_amplitude=np.ones(2),
             solar_variability_by_band=np.ones(16),
             aerosol_type=0,
-            gravitational_acceleration=None,
+            acceleration_gravity=None,
             planck_constant=None,
             boltzmann_constant=None,
             speed_of_light=None,
@@ -251,46 +251,46 @@ class RRTMGShortwave(ClimtPrognostic):
                   state quantity :code:`aerosol_optical_depth_at_55_micron`.
                 * 10: Input all aerosol optical properties.
 
-            gravitational_acceleration (float):
+            acceleration_gravity (float):
                 value of acceleration due to gravity in
-                :math:`m s^{-1}`. Default value from climt.default_constants is used if None.
+                :math:`m s^{-1}`. Default value from :code:`sympl.default.constants` is used if None.
 
             planck_constant (float):
                 value of the planck constant in :math:`J s`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             boltzmann_constant (float):
                 value of the Boltzmann constant in :math:`J K^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             speed_of_light (float):
                 value of the speed of light in :math:`m s^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             avogadro_constant (float):
                 value of the Avogadro constant.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             loschmidt_constant (float):
                 value of the Loschmidt constant.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             universal_gas_constant (float):
                 value of the gas constant in :math:`J K^{-1} mol^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             stefan_boltzmann_constant (float):
                 value of the Stefan-Boltzmann constant
-                in :math:`W m^{-2} K^{-4}`. Default value from climt.default_constants is
+                in :math:`W m^{-2} K^{-4}`. Default value from :code:`sympl.default.constants` is
                 used if None.
 
             seconds_per_day (float):
                 number of seconds per day.
-                Default value from climt.default_constants (for earth) is used if None.
+                Default value from :code:`sympl.default.constants` (for earth) is used if None.
 
             specific_heat_dry_air (float):
                 The specific heat of dry air in :math:`J K^{-1} kg^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
@@ -322,7 +322,7 @@ class RRTMGShortwave(ClimtPrognostic):
         self._aerosol_type = aerosol_type
 
         self._g = replace_none_with_default(
-            'gravitational_acceleration', gravitational_acceleration)
+            'gravitational_acceleration', acceleration_gravity)
 
         self._planck = replace_none_with_default(
             'planck_constant', planck_constant).to_units('erg s')
