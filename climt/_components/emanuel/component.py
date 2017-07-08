@@ -90,7 +90,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                  reference_mass_flux_timescale=300.,
                  number_of_tracers=0,
                  specific_heat_dry_air=None,
-                 specific_heat_condensible=None,
+                 specific_heat_condensible=1.8460e+3,
                  specific_enthalpy_condensible=2500.,
                  gas_constant_condensible=None,
                  gas_constant_dry_air=None,
@@ -250,7 +250,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
             specific_heat_dry_air)
 
         self._Cpv = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
+            'heat_capacity_of_water_vapor_at_constant_pressure',
             specific_heat_condensible)
 
         self._Rair = replace_none_with_default(
