@@ -1,5 +1,5 @@
 import abc
-from sympl import Implicit, Diagnostic, Prognostic
+from sympl import Implicit, Diagnostic, Prognostic, TimeStepper, PrognosticComposite
 from datetime import timedelta
 from sympl import get_numpy_array
 from .initialization import climt_quantity_descriptions, get_default_values
@@ -354,6 +354,86 @@ class ClimtImplicitPrognostic(ClimtPrognostic):
     decomposing convection schemes into multiple components?), **this class might eventually
     be deprecated.**
 
+    Attributes:
+
+        current_time_step (timedelta): The current time step selected for the model. This
+            should be updated on every iteration if the time step is not a constant.
+
     """
 
     current_time_step = timedelta(seconds=100.)
+
+
+class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
+    """
+    The base class to use for spectral dynamical cores.
+
+    Spectral Dynamical cores usually step the model in spectral space, and therefore
+    the tendencies are required in spectral space as well. Therefore, spectral dycores
+    cannot be simple :code:`Implicit` objects. :code:`SpectralDynamicalCore` objects should
+    take in an initial state, convert it to spectral space, and provide future state in
+    grid space. These objects need to perform the following steps:
+        * take in a list of components which provide tendencies
+        * create grid space quantities from the native spectral format
+        * take in tendency terms in grid space
+        * convert tendency terms to spectral space
+        * step state forward
+
+    Attributes:
+
+        _climt_inputs (list): A list of quantities that the model steps forward
+            by default -- like zonal_wind, etc.
+
+        prognostics (list):
+            A property that is set to a list of prognostics which
+            constitute the "physics" for the dynamical core.
+
+        _climt_inputs (dict):
+            A list of quantities that the model steps forward
+            by default -- like zonal_wind, etc.
+
+        _climt_diagnostics (dict):
+            The diagnostics that are returned by the dynamical core itself.
+
+        inputs (tuple of str):
+            The quantities required by the dynamical core when it is called.
+
+        outputs (tuple of str):
+            The quantities which are updated in the returned state.
+
+        diagnostics (tuple of str):
+            The quantities, calculated based on the input state (not new state),
+            which can be used to diagnose behaviour of the model.
+
+    """
+
+    _climt_inputs = {}
+
+    _climt_outputs = {}
+
+    _climt_diagnostics = {}
+
+
+    _implicit_quantities = {}
+
+    _prognostic = []
+
+    @property
+    def prognostics(self):
+        return self._prognostic
+
+    @prognostics.setter
+    def set_prognostics(self, prognostic_list):
+        self._prognostic = PrognosticComposite(*prognostic_list)
+
+    @property
+    def inputs(self):
+        return set(self._prognostic.inputs).union(set(self._climt_inputs.keys()))
+
+    @property
+    def outputs(self):
+        return set(self._prognostic.tendencies)
+
+    @property
+    def diagnostics(self):
+        return set(self._prognostic.diagnostics).union(set(self._climt_diagnostics.keys()))
