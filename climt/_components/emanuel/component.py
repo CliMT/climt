@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..._core import ClimtImplicitPrognostic, bolton_q_sat
-from sympl import replace_none_with_default
+from sympl import replace_none_with_default, DataArray
 import numpy as np
 try:
     from . import _emanuel_convection
@@ -241,6 +241,10 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         self._alpha = mass_flux_relaxation_rate
         self._mf_timescale = reference_mass_flux_timescale
         self._ntracers = number_of_tracers
+
+        if specific_heat_condensible is not None:
+            specific_heat_condensible = DataArray(
+                specific_heat_condensible, attrs={'units': 'J kg^-1 K^-1'})
 
         self._g = replace_none_with_default(
             'gravitational_acceleration', acceleration_gravity)

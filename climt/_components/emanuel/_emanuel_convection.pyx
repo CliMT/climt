@@ -112,7 +112,7 @@ def convect(
     cnp.double_t[::1, :] du,
     cnp.double_t[::1, :] dv,
     cnp.double_t[::1, :, :] dtracers=None,
-    cnp.double_t[::1, :, :] tracers = None):
+    cnp.double_t[::1, :, :] tracers=None):
 
 
     global initialised
