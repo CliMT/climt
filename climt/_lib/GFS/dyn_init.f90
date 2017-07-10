@@ -22,7 +22,7 @@ module dyn_init
  use shtns, only: shtns_init, spectogrd, grdtospec, getgrad, getvrtdivspec, lap, lats, lons
  use spectral_data, only: vrtspec,divspec,virtempspec,tracerspec,topospec,lnpsspec,&
                           disspec,diff_prof,dmp_prof,init_specdata
- use pressure_data, only: ak,bk,ck,dbk,bkl,sl,psg,prs,pk,dpk,init_pressdata,calc_pressdata
+ use pressure_data, only: ak,bk,ck,dbk,bkl,sl,si,psg,prs,pk,dpk,calc_pressdata
  use grid_data, only: init_griddata, dphisdx, dphisdy, phis, ug, vg, virtempg, &
  tracerg,lnpsg,dlnpdtg
 ! JOY removing stochastic routines 
@@ -31,6 +31,7 @@ module dyn_init
                      omega => con_omega, grav => con_g, pi => con_pi, &
                      fv => con_fvirt
  use semimp_data, only: init_semimpdata
+ use iso_c_binding
 
 
  implicit none
@@ -44,7 +45,7 @@ module dyn_init
 
  contains
  !JOY subroutine to set topography from arbitrary array
- subroutine set_topography(surf_geop) bind(c, name='gfsSetTopography')
+ subroutine set_topography(surf_geop) bind(c, name='gfs_set_topography')
 
     real(r_kind), intent(in), dimension(nlons,nlats) :: surf_geop
 
@@ -54,7 +55,7 @@ module dyn_init
 
  end subroutine set_topography
 
- subroutine init_dyn() bind(c, name='gfsInitDynamics')
+ subroutine init_dyn() bind(c, name='gfs_init_dynamics')
     integer k
     ! allocate arrays
     ! JOY data array inits will be done from python
@@ -64,20 +65,15 @@ module dyn_init
     
     
     ! initialize spherical harmonic lib
-    print *,'Initialising shtns'
+    !print *,'Initialising shtns'
     call shtns_init(nlons,nlats,ntrunc,nthreads=1,polar_opt=polar_opt)
-    ! read spectral initial conditions
-    ! JOY remove routines which read initial conditions from file
-    !call readin_sig(initfile,vrtspec,divspec,virtempspec,tracerspec,lnpsspec,topospec,sighead)
-    ! initialize pressure arrays.
-    call init_pressdata()
-    ! convert to ln(ps) in Pa.
-    print *,'calling spectogrd'
-    print *, 'Grid size', nlats, nlons, ntrunc
-    print *, shape(lnpsspec)
-    call spectogrd(lnpsspec, psg)
-    psg = 1000.*exp(psg) ! convert to Pa
-    call grdtospec(log(psg), lnpsspec) ! back to spectral.
+        ! convert to ln(ps) in Pa.
+    !print *,'calling spectogrd'
+    !print *, 'Grid size', nlats, nlons, ntrunc
+    !print *, shape(lnpsspec)
+    !call spectogrd(lnpsspec, psg)
+    !psg = 1000.*exp(psg) ! convert to Pa
+    !call grdtospec(log(psg), lnpsspec) ! back to spectral.
     !JOY adding read from namelist to eliminate using sigio to read ak,bk
     ak = (/ 200.00000000,566.898010,1290.53296,2210.97900&
     ,3376.51611,4844.03613,6678.60791,8913.76660,&
@@ -97,52 +93,34 @@ module dyn_init
             0.988725841,1.00000000 /)
 
 
-!    open(1021,file='gfs_namelist',form='formatted');
-!    read(1021,dynamics_list);
-!    close(1021);
-
-! JOY adding to remove dependency on sigio
-!    if (sighead%idvc == 2) then ! hybrid coordinate
-!       do k=1,nlevs+1
-!          ak(k) = sighead%vcoord(nlevs+2-k,1)
-!          bk(k) = sighead%vcoord(nlevs+2-k,2)
-!       enddo
-
     do k=1,nlevs
        dbk(k) = bk(k+1)-bk(k)
        bkl(k) = 0.5*(bk(k+1)+bk(k))
        ck(k)  = ak(k+1)*bk(k)-ak(k)*bk(k+1)
     enddo
+         ! compute sigma coordinate quantities (bottom to top).
+    do k=1,nlevs+1
+        si(nlevs+2-k)= ak(k)/101300.0+bk(k) ! si are now sigmas
+    enddo
+    do k=1,nlevs
+        sl(k) = 0.5*(si(k)+si(k+1))
+         !sl(k) = ((si(k)**(rk+1.) - si(k+1)**(rk+1.))/&
+         !        ((rk+1.)*(si(k)-si(k+1))))**(1./rk)
+    enddo
 
-! JOY adding to remove dependency on sigio
-!    else
-!       print *,'unknown vertical coordinate type',sighead%idvc
-!       stop
-!    end if
-
-!    print *,'ak',ak
-!    print *,'bk',bk
-    ! dcmip test case or
-    ! held-suarez test case
-    ! (over-ride initial conditions read from file).
-    !if (dcmip >= 0 .and. tstart .le. tiny(tstart)) then
-    !   call dcmip_ics(dcmip,dry)
-    !endif
-    if (heldsuarez .and. tstart .le. tiny(tstart)) then
-       call heldsuarez_ics()
-    endif
-    ! print out max/min values of phis,ps
-    call spectogrd(grav*topospec, phis)
-    print *,'min/max surface geopotential',minval(phis),maxval(phis)
-    call spectogrd(lnpsspec, psg)
-    psg = exp(psg) 
-    print *,'min/max sfc pressure (hPa)',minval(psg/100.),maxval(psg/100.)
+    !call spectogrd(grav*topospec, phis)
+    !print *,'min/max surface geopotential',minval(phis),maxval(phis)
+    !call spectogrd(lnpsspec, psg)
+    !psg = exp(psg) 
+    !print *,'min/max sfc pressure (hPa)',minval(psg/100.),maxval(psg/100.)
     ! initialize model interface and level pressures, related variables. 
-    call calc_pressdata(lnpsg)
+    !call calc_pressdata(lnpsg)
     ! compute gradient of surface orography
-    call getgrad(grav*topospec, dphisdx, dphisdy, rerth)
+    !call getgrad(grav*topospec, dphisdx, dphisdy, rerth)
     ! hyper-diffusion operator (plus rayleigh damping in upper stratosphere)
+
     call setdampspec(ndiss,efold,hdif_fac,hdif_fac2,fshk,disspec,diff_prof,dmp_prof)
+    
     ! initialize arrays for semi-implicit adjustments.
     if (.not. explicit) call init_semimpdata()
     ! initialize stochastic data.

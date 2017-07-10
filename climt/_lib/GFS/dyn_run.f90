@@ -64,7 +64,7 @@ subroutine gfs_uv_to_vrtdiv(ug1,vg1,vrtg1,divg1) bind(c,name='gfs_uv_to_vrtdiv')
 end subroutine gfs_uv_to_vrtdiv
 
 !JOY adding wrapper functions to convert to and from spectral/grid arrays
- subroutine gfsConvertToGrid() bind(c,name='gfsConvertToGrid')
+ subroutine gfsConvertToGrid() bind(c,name='gfs_convert_to_grid')
 
 ! JOY adding dummy variables for wrapper functions. Not efficient to allocate
 ! these variables every time, but it is the cleanest way.
@@ -83,12 +83,13 @@ end subroutine gfs_uv_to_vrtdiv
 
  end subroutine gfsConvertToGrid
 
- subroutine gfsConvertToSpec() bind(c,name='gfsConvertToSpec')
+ subroutine gfsConvertToSpec() bind(c,name='gfs_convert_to_spectral')
 
     integer i,k
+
 !$omp parallel do private(k,i) schedule(dynamic)
     do k=1,nlevs
-    
+   
         call getvrtdivspec(ug(:,:,k),vg(:,:,k),vrtspec(:,k),divspec(:,k),rerth)
         call grdtospec(virtempg(:,:,k),virtempspec(:,k))
 
@@ -96,7 +97,7 @@ end subroutine gfs_uv_to_vrtdiv
             call grdtospec(tracerg(:,:,k,i),tracerspec(:,k,i))
         enddo
     enddo
-!$omp end parallel do 
+!$omp end parallel do
     call grdtospec(lnpsg,lnpsspec)
 
  end subroutine
@@ -209,13 +210,12 @@ end subroutine gfs_uv_to_vrtdiv
       pmoist = 0.
       if (.not. dry) then
          ntrac_use = ntrac
-         if (dcmip > 0) ntrac_use = 1
+         !if (dcmip > 0) ntrac_use = 1
          do k=1,nlevs
             do nt=1,ntrac_use
                pmoist = pmoist + sum(areawts*dpk(:,:,nlevs-k+1)*tracerg(:,:,k,nt))
             enddo
          enddo
-      print *, (pmoist);
       endif
       pdry = sum(areawts*psg) - pmoist
       if (pdryini .eq. 0) then

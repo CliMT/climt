@@ -4,13 +4,14 @@ from .util import (
     bolton_q_sat, bolton_dqsat_dT, calculate_q_sat)
 from .initialization import get_default_state, climt_quantity_descriptions
 from .climt_components import (
-    ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic
+    ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic,
+    ClimtSpectralDynamicalCore
 )
 
 __all__ = (
     mass_to_volume_mixing_ratio, get_default_state,
     get_interface_values, climt_quantity_descriptions,
-    bolton_q_sat, bolton_dqsat_dT,
-    ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic,
-    calculate_q_sat
+    bolton_q_sat, bolton_dqsat_dT, calculate_q_sat,
+    ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit,
+    ClimtDiagnostic, ClimtSpectralDynamicalCore,
 )

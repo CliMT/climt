@@ -112,6 +112,21 @@ climt_quantity_descriptions = {
         'units': 'm s^-1',
         'default_value': 0.
     },
+    'divergence_of_wind': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 's^-1',
+        'default_value': 0.
+    },
+    'atmosphere_relative_vorticity': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 's^-1',
+        'default_value': 0.
+    },
+    'surface_geopotential': {
+        'dims': ['x', 'y'],
+        'units': 'm^2 s^-2',
+        'default_value': 0.
+    },
     'surface_longwave_emissivity': {
         'dims': ['x', 'y'],
         'units': 'dimensionless',

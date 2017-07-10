@@ -3,7 +3,6 @@ include Makefile.conf
 .SUFFIXES: .o .f90 .F90
 
 OBJS=	 params.o \
-	 init.o\
 	 kinds.o\
 	 dyn_init.o\
 	 dyn_run.o\
@@ -20,6 +19,7 @@ OBJS=	 params.o \
          phy_init.o\
 	 phy_finalize.o\
 	 shtns.o
+	 #init.o\
 
 all: $(python_lib)
 

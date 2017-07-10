@@ -8,9 +8,7 @@ module phy_init
 
  contains
 
- subroutine init_phy() bind(c,name='gfsInitPhysics')
-   print *, 'Initialising physics'
-   call init_phydata()
+ subroutine init_phy() bind(c,name='gfs_init_physics')
  end subroutine init_phy
 
 end module phy_init

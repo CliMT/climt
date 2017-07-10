@@ -6,7 +6,7 @@ module run_mod
 
 use kinds, only: r_kind,r_double
 use params, only: ndimspec, nlevs, ntmax, tstart, dt, nlons, nlats, nlevs,&
-  fhzer,ntrac,ntrunc,ntout, explicit, adiabatic, ntrac, iau,&
+  fhzer,ntrac,ntrunc,ntout, explicit, adiabatic, ntrac, &
   massfix,gfsio_out, sigio_out, sfcinitfile, ntdfi, shum, svc, sppt,&
   addnoise, addnoise_vfilt,addnoise_kenorm, addnoise_lscale, addnoise_dissfact,&
   addnoise_vrtonly
@@ -26,15 +26,23 @@ use grid_data, only: ug,vg,dlnpsdt
 use physcons, only: rerth => con_rerth
 
 use iso_c_binding
+implicit none
 private
 
 real(r_double) :: t
 bind(c) :: t
-public :: run,takeOneStep, t
+public :: take_one_step, t
 
 contains
 
-subroutine takeOneStep() bind(c,name='gfsTakeOneStep')
+subroutine set_model_time(py_time) bind(c, name='gfs_set_model_time')
+    real(r_double), intent(in):: py_time
+    t = py_time
+    print *, 'model time is now: ', t
+end subroutine
+
+
+subroutine take_one_step() bind(c,name='gfs_take_one_step')
 
     integer nt,ntstart
     real(r_kind) fh,pstendmean,spdmax
@@ -46,8 +54,8 @@ subroutine takeOneStep() bind(c,name='gfsTakeOneStep')
     t1 = count*1.d0/count_rate
     ! advance solution with RK
     call advance(t)
-    t = t + dt ! absolute forecast time.
     fh = t/3600.
+    t = t + dt ! absolute forecast time.
     call system_clock(count, count_rate, count_max)
     t2 = count*1.d0/count_rate
     spdmax = maxval(sqrt(ug**2+vg**2)) ! max wind speed
@@ -58,8 +66,7 @@ subroutine takeOneStep() bind(c,name='gfsTakeOneStep')
         8998 format('t = ',f0.3,' hrs, spdmax = ',f7.3,', min/max ps = ',f7.2,'/',f7.2,', pstend = ',f0.3,', cpu time = ',f0.3)
     endif
 
-
-end subroutine takeOneStep
+end subroutine take_one_step
 
 subroutine advance(t)
     ! advance model state to next time step using 3-stage 2nd-order additive
@@ -110,25 +117,11 @@ subroutine advance(t)
       dtracerspecdt_orig,&
       tracerspec_orig,dtracerspecdt1,dtracerspecdt2
   complex(r_kind) :: rhs(nlevs)
-  complex(r_kind), allocatable, dimension(:,:) :: dvrtspecdt_iau,ddivspecdt_iau,dvirtempspecdt_iau
-  complex(r_kind), allocatable, dimension(:,:,:) :: dtracerspecdt_iau
-  complex(r_kind), allocatable, dimension(:)  :: dlnpsspecdt_iau
   integer nt, k, n
   logical :: profile = .false. ! print out timing stats
   integer(8) count, count_rate, count_max
   real(8) t1,t2,t0,t4
 
-  ! if iau, allocate space for iau tendencies.
-! JOY remove Incremental Analysis Unit (IAU) forcing                          
-!  if (iau) then
-!     if (.not. init_iauialized) call init_iau()
-!     allocate(dvrtspecdt_iau(ndimspec,nlevs))
-!     allocate(ddivspecdt_iau(ndimspec,nlevs))
-!     allocate(dvirtempspecdt_iau(ndimspec,nlevs))
-!     allocate(dtracerspecdt_iau(ndimspec,nlevs,ntrac))
-!     allocate(dlnpsspecdt_iau(ndimspec))
-!     call getiauforcing(dvrtspecdt_iau,ddivspecdt_iau,dvirtempspecdt_iau,dtracerspecdt_iau,dlnpsspecdt_iau,t)
-!  endif
 
   ! save original fields.
 !$omp workshare
@@ -141,28 +134,6 @@ subroutine advance(t)
   call system_clock(count, count_rate, count_max)
   t0 = count*1.d0/count_rate
 
-  ! compute random patters for stochastic physics to be used this timestep.
-  ! JOY removing code which calls patterngenerator_advance
-!  if (svc > tiny(svc)) then
-!     call patterngenerator_advance(spec_svc,rpattern_svc)
-!     call spectogrd(spec_svc,grd_svc)
-!  endif
-!  if (sppt > tiny(sppt)) then
-!     call patterngenerator_advance(spec_sppt,rpattern_sppt)
-!     call spectogrd(spec_sppt,grd_sppt)
-     ! logit transform to prevent changing the sign of tendencies.
-!     grd_sppt = (2./(1.+exp(grd_sppt)))-1.
-!  endif
-!  if (shum > tiny(shum)) then
-!     call patterngenerator_advance(spec_shum,rpattern_shum)
-!     call spectogrd(spec_shum,grd_shum)
-!  endif
-  ! additive noise perturbation.
-!  if (addnoise > tiny(addnoise)) then
-!     do k=1,nlevs
-!        call patterngenerator_advance(specpsi_addnoise(:,k),rpattern_addnoise)
-!     enddo
-!  endif
 
   ! stage 1
   ! compute dynamics tendencies.
@@ -171,19 +142,7 @@ subroutine advance(t)
   call getdyntend(dvrtspecdt_orig,ddivspecdt_orig,dvirtempspecdt_orig,dtracerspecdt_orig,dlnpsspecdt_orig,1)
   call system_clock(count, count_rate, count_max)
   t2 = count*1.d0/count_rate
-  ! add IAU contribution (constant over RK sub-steps).
-  if (iau) then
-!$omp workshare
-     dvrtspecdt_orig = dvrtspecdt_orig + dvrtspecdt_iau
-     ddivspecdt_orig = ddivspecdt_orig + ddivspecdt_iau
-     dvirtempspecdt_orig = dvirtempspecdt_orig + dvirtempspecdt_iau
-     dtracerspecdt_orig = dtracerspecdt_orig + dtracerspecdt_iau
-     dlnpsspecdt_orig = dlnpsspecdt_orig + dlnpsspecdt_iau
-!$omp end workshare
-  endif
-  !if (profile) print *,'time in getdyntend (stage 1) =',t2-t1
-  !print *, dt, a21, aa21
-  ! update vorticity and tracers (always explicit)
+
 !$omp workshare
   vrtspec=vrtspec_orig+a21*dt*dvrtspecdt_orig
   tracerspec=tracerspec_orig+a21*dt*dtracerspecdt_orig
@@ -233,16 +192,7 @@ subroutine advance(t)
   call system_clock(count, count_rate, count_max)
   t2 = count*1.d0/count_rate
   !if (profile) print *,'time in getdyntend (stage 2) =',t2-t1
-  ! add IAU contribution (constant over RK sub-steps).
-  if (iau) then
-!$omp workshare
-     dvrtspecdt1 = dvrtspecdt1 + dvrtspecdt_iau
-     ddivspecdt1 = ddivspecdt1 + ddivspecdt_iau
-     dvirtempspecdt1 = dvirtempspecdt1 + dvirtempspecdt_iau
-     dtracerspecdt1 = dtracerspecdt1 + dtracerspecdt_iau
-     dlnpsspecdt1 = dlnpsspecdt1 + dlnpsspecdt_iau
-!$omp end workshare
-  endif
+
   ! update vorticity and tracers (always explicit)
 !$omp workshare
   vrtspec=vrtspec_orig+dt*(a31*dvrtspecdt_orig+a32*dvrtspecdt1)
@@ -299,16 +249,7 @@ subroutine advance(t)
   call system_clock(count, count_rate, count_max)
   t2 = count*1.d0/count_rate
   !if (profile) print *,'time in getdyntend (stage 3) =',t2-t1
-  ! add IAU contribution (constant over RK sub-steps).
-  if (iau) then
-!$omp workshare
-     dvrtspecdt2 = dvrtspecdt2 + dvrtspecdt_iau
-     ddivspecdt2 = ddivspecdt2 + ddivspecdt_iau
-     dvirtempspecdt2 = dvirtempspecdt2 + dvirtempspecdt_iau
-     dtracerspecdt2 = dtracerspecdt2 + dtracerspecdt_iau
-     dlnpsspecdt2 = dlnpsspecdt2 + dlnpsspecdt_iau
-!$omp end workshare
-  endif
+
   ! final update of vorticity and tracers (always explicit)
 !$omp workshare
   vrtspec=vrtspec_orig+dt*(b1*dvrtspecdt_orig+b2*dvrtspecdt1+b3*dvrtspecdt2)
@@ -428,200 +369,6 @@ subroutine advance(t)
      end if
   end if
 
-  ! free-up temporary storage.
-  if (iau) then
-     deallocate(dvrtspecdt_iau)
-     deallocate(ddivspecdt_iau)
-     deallocate(dvirtempspecdt_iau)
-     deallocate(dtracerspecdt_iau)
-     deallocate(dlnpsspecdt_iau)
-  endif
-
 end subroutine advance
-
-subroutine set_dfi_wts(dfi_wts)
- ! set Lanczos filter weights for digital filter 
- real(r_kind), intent(out) :: dfi_wts(0:2*ntdfi)
- real(r_kind) totsum,sx,wx
- integer kstep
- dfi_wts = 1.
- totsum = 0.
- do kstep=0,2*ntdfi
-    sx     = acos(-1.)*(kstep-ntdfi)/ntdfi
-    wx     = acos(-1.)*(kstep-ntdfi)/(ntdfi+1)
-    if (kstep .NE. ntdfi) then
-       dfi_wts(kstep) = sin(wx)/wx*sin(sx)/sx
-    endif
-    totsum = totsum + dfi_wts(kstep)
- enddo
- dfi_wts = dfi_wts/totsum
- print *,'lanczos dfi wts:'
- do kstep=0,2*ntdfi
-    print *,kstep-ntdfi,dfi_wts(kstep)
- enddo
-end subroutine set_dfi_wts
-
-subroutine run()
-  use omp_lib, only: omp_get_num_threads, omp_get_thread_num
-  implicit none
-  integer nt,ntstart,my_id
-  real(r_kind) fh,fha,pstendmean,spdmax
-  real(r_double) ta,t
-  real(8) t1,t2
-  real(r_kind), dimension(nlons,nlats) :: pstend
-  complex(r_kind), dimension(:,:), allocatable :: &
-  vrtspec_dfi,divspec_dfi,virtempspec_dfi
-  complex(r_kind), dimension(:,:,:), allocatable :: tracerspec_dfi
-  complex(r_kind), dimension(:), allocatable :: lnpsspec_dfi
-  real(r_kind), dimension(:), allocatable :: dfi_wts
-  integer(8) count, count_rate, count_max
-  character(len=500) filename,filename_save
-
-!$omp parallel
-  my_id = omp_get_thread_num()
-  if (my_id .eq. 0) print *,'running with',omp_get_num_threads(),' threads'
-!$omp end parallel
-
-  t = tstart
-  ta = 0.
-  ntstart = 1
-
-  !JOY not doing the DFI loop
-  ! digital filter loop.
-!  if (ntdfi > 0) then
-!     print *,'in dfi time step loop...'
-     ! allocate work space
-!     allocate(vrtspec_dfi(ndimspec,nlevs),divspec_dfi(ndimspec,nlevs))
- !    allocate(virtempspec_dfi(ndimspec,nlevs),lnpsspec_dfi(ndimspec))
- !    allocate(tracerspec_dfi(ndimspec,nlevs,ntrac),dfi_wts(0:2*ntdfi))
-     ! compute dfi weights
-!     call set_dfi_wts(dfi_wts)
-     ! intialize weighted time averages.
-!!$omp workshare
-!     vrtspec_dfi = dfi_wts(0)*vrtspec
-!     divspec_dfi = dfi_wts(0)*divspec
-!     virtempspec_dfi = dfi_wts(0)*virtempspec
-!     tracerspec_dfi = dfi_wts(0)*tracerspec
-!!$omp end workshare
-!     lnpsspec_dfi = dfi_wts(0)*lnpsspec
-!     do nt=1,2*ntdfi
-!        call system_clock(count, count_rate, count_max)
-!        t1 = count*1.d0/count_rate
-!        call advance(t)
-!        t = t + dt ! absolute forecast time.
-!        ta = ta + dt ! absolute forecast time.
-!        fh = t/3600.
-!!$omp workshare
-!        vrtspec_dfi = vrtspec_dfi + dfi_wts(nt)*vrtspec
-!        divspec_dfi = divspec_dfi + dfi_wts(nt)*divspec
-!        virtempspec_dfi = virtempspec_dfi + dfi_wts(nt)*virtempspec
-!        tracerspec_dfi = tracerspec_dfi + dfi_wts(nt)*tracerspec
-!!$omp end workshare
-!        lnpsspec_dfi = lnpsspec_dfi + dfi_wts(nt)*lnpsspec
-!        call system_clock(count, count_rate, count_max)
-!        t2 = count*1.d0/count_rate
-!        spdmax = maxval(sqrt(ug**2+vg**2)) ! max wind speed
-!        pstend = (36.*psg*dlnpsdt)**2 ! ps tend variance (mb/hr)**2
-!        pstendmean = sqrt(sum(pstend*areawts))
-!        write(6,8998) fh,spdmax,minval(psg/100.),maxval(psg/100.),pstendmean,t2-t1
-        ! write out surface and flux data in middle of dfi window.
-!        if (nt .eq. ntdfi) then
-!           write(filename_save,9000) nint(fh)
-!           print *,'writing to ',trim(filename_save),' fh=',fh
-!           call wrtout_sfc(fh,filename_save)
-!           write(filename,9001) nint(fh)
-!           print *,'writing to ',trim(filename),' fh=',fh
-!           call wrtout_flx(fh,ta,filename)
-!        ! write first time step output
-!        else if (nt .eq. 1) then
-!           if (sigio_out) then
-!              write(filename,8999) nint(fh)
-!              print *,'writing to ',trim(filename),' fh=',fh
-!              call wrtout_sig(fh,filename)
-!           endif
-!           write(filename,9000) nint(fh)
-!           print *,'writing to ',trim(filename),' fh=',fh
-!           call wrtout_sfc(fh,filename)
-!           write(filename,9001) nint(fh)
-!           print *,'writing to ',trim(filename),' fh=',fh
-!           call wrtout_flx(fh,ta,filename)
-!           if (gfsio_out) then
-!              write(filename,9002) nint(fh)
-!              print *,'writing to ',trim(filename),' fh=',fh
-!              call wrtout_gfsgrb(fh,filename)
-!           endif
-!        end if
-!     enddo
-!     print *,'done with dfi loop, resetting fields and restarting...'
-!     ! reset model state to weighted time average.
-!     vrtspec = vrtspec_dfi; divspec = divspec_dfi; virtempspec = virtempspec_dfi
-!     lnpsspec = lnpsspec_dfi; tracerspec = tracerspec_dfi
-!     ! deallocate work space.
-!     deallocate(vrtspec_dfi,divspec_dfi,virtempspec_dfi,lnpsspec_dfi,tracerspec_dfi,dfi_wts)
-!     ! reset surface data to values at middle of window (also zeros flux arrays).
-!     sfcinitfile = filename_save; call init_phydata(); ta = 0.
-     ! reset time.
-!     t = tstart + ntdfi*dt; ntstart = ntdfi+1
-     ! write out spectral data after dfi.
-!     fh = t/3600.
-!     if (sigio_out) then
-!        write(filename,8999) nint(fh)
-!        print *,'writing to ',trim(filename),' fh=',fh
-!        call wrtout_sig(fh,filename)
-!     endif
-!     ! write out gaussian grid data after DFI
-!     if (gfsio_out) then
-!        write(filename,9002) nint(fh)
-!        print *,'writing to ',trim(filename),' fh=',fh
-!        call wrtout_gfsgrb(fh,filename)
-!     endif
-!  endif
-
-  ! main time step loop
-  do nt=ntstart,ntmax
-     call system_clock(count, count_rate, count_max)
-     t1 = count*1.d0/count_rate
-     ! advance solution with RK
-     call advance(t)
-     t = t + dt ! absolute forecast time.
-     ta = ta + dt ! time in accumulaton interval.
-     fh = t/3600.
-     fha = ta/3600.
-     call system_clock(count, count_rate, count_max)
-     t2 = count*1.d0/count_rate
-     spdmax = maxval(sqrt(ug**2+vg**2)) ! max wind speed
-     pstend = (36.*psg*dlnpsdt)**2 ! ps tend variance (mb/hr)**2
-     pstendmean = sqrt(sum(pstend*areawts))
-     write(6,8998) fh,spdmax,minval(psg/100.),maxval(psg/100.),pstendmean,t2-t1
-8998 format('t = ',f0.3,' hrs, spdmax = ',f7.3,', min/max ps = ',f7.2,'/',f7.2,', pstend = ',f0.3,', cpu time = ',f0.3)
-     ! write out data at specified intervals.
-     ! data always written at first time step.
-!     if (nt .eq. 1 .or. (ntout .ne. 0 .and. mod(nt,ntout) .eq. 0)) then
-!        if (sigio_out) then
-!           write(filename,8999) nint(fh)
-!8999       format('SIG.F',i0.2) ! at least three digits used
-!           print *,'writing to ',trim(filename),' fh=',fh
-!           call wrtout_sig(fh,filename)
-!        endif    
-!        ! write out boundary and flux files if using gfs physics.
-!        write(filename,9000) nint(fh)
-!9000    format('SFC.F',i0.2) ! at least three digits used
-!        print *,'writing to ',trim(filename),' fh=',fh
-!        call wrtout_sfc(fh,filename)
-!        write(filename,9001) nint(fh)
-!9001    format('FLX.F',i0.2) ! at least three digits used
-!        print *,'writing to ',trim(filename),' fh=',fh
-!        call wrtout_flx(fh,ta,filename)
-!        if (gfsio_out) then
-!           write(filename,9002) nint(fh)
-!9002       format('GFS.F',i0.2) ! at least three digits used
-!           print *,'writing to ',trim(filename),' fh=',fh
-!           call wrtout_gfsgrb(fh,filename)
-!        endif
-!     end if
-     if (abs(fha-fhzer) .lt. 1.e-5) ta=0. ! reset accum time.
-  enddo
-
-end subroutine run
 
 end module run_mod

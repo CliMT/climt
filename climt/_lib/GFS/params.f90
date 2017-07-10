@@ -11,9 +11,9 @@ use iso_c_binding, only: c_double,c_int,c_bool
  implicit none
  private
 
- public :: read_namelist,initfile,sfcinitfile,fhmax,dt,ntmax,ndimspec,nlons,nlats,&
+ public :: initfile,sfcinitfile,dt,ntmax,ndimspec,nlons,nlats,&
  tstart,ndiss,efold,nlevs,ntrunc,dry,explicit,heldsuarez,dcmip,&
- ntout,fhdfi,fhout,fhzer,idate_start,adiabatic,hdif_fac,hdif_fac2,fshk,ntrac,ntoz,ntclw,&
+ ntout,fhdfi,fhzer,idate_start,adiabatic,hdif_fac,hdif_fac2,fshk,ntrac,ntoz,ntclw,&
  pdryini,massfix,timestepsperhr,ncw,taustratdamp,polar_opt,ntdfi,gfsio_out,sigio_out,&
 ! gfs phys parameters.
  nmtvr,fhlwr,fhswr,ictm,isol,ico2,iaer,ialb,iems,isubc_sw,isubc_lw,&
@@ -38,15 +38,15 @@ use iso_c_binding, only: c_double,c_int,c_bool
 
  character(len=500) :: initfile ! init cond filename
  character(len=500) :: sfcinitfile ! surface init cond filename
- integer(c_int)     :: fhmax ! hours to run
- integer(c_int)     :: fhout ! interval for IO
+! integer(c_int)     :: fhmax ! hours to run
+! integer(c_int)     :: fhout ! interval for IO
  integer            :: fhzer ! interval to zero accumulated arrays
 ! half window length (hrs) for digital filter launch (=0 mean no dfi)
  integer            :: fhdfi=0
  real(c_double)     :: deltim=0    ! namelist input time step (secs)
 
  real(c_double)     :: dt    ! time step (secs) (=deltim or 3600/timestepsperhr)
- bind(c) :: fhmax,fhout
+! bind(c) :: fhmax,fhout
  bind(c) :: deltim,dt
 
  real(c_double) :: pdryini ! initial dry ps
@@ -205,144 +205,36 @@ use iso_c_binding, only: c_double,c_int,c_bool
  integer :: ntracin = 0 
  bind(c) :: ntracin
 
- namelist/nam_mrf/initfile,sfcinitfile,fhmax,&
- massfix,deltim,dry,efold,ndiss,dcmip,heldsuarez,explicit,fhdfi,&
- fhout,fhzer,adiabatic,hdif_fac,hdif_fac2,fshk,ntoz,ntclw,taustratdamp,&
- fhlwr,fhswr,ictm,isol,ico2,iaer,ialb,iems,isubc_sw,isubc_lw,polar_opt,&
- iovr_sw,iovr_lw,newsas,ras,sashal,num_p3d,num_p2d,crick_proof,ccnorm,&
- norad_precip,crtrh,cdmbgwd,ccwf,dlqf,ctei_rm,psautco,prautco,evpco,wminco,flgmin,&
- old_monin,cnvgwd,mom4ice,shal_cnv,cal_pre,trans_trac,nst_fcst,moist_adj,mstrat,&
- pre_rad,bkgd_vdif_m,bkgd_vdif_h,bkgd_vdif_s,timestepsperhr,gloopb_filter,&
- vcamp,svc,svc_tau,svc_lscale,iseed_svc,sppt_tau,sppt,sppt_lscale,iseed_sppt,&
- ngptc,clipsupersat,shum,shum_tau,shum_lscale,iseed_shum,&
- gfsio_out,sigio_out,iau,iaufiles_fg,iaufiles_anl,iaufhrs,iau_delthrs,&
- addnoise,addnoise_tau,addnoise_lscale,addnoise_vfilt,iseed_addnoise,&
- addnoise_kenorm, addnoise_dissfact,addnoise_vrtonly,&
- nlons,nlats,nlevs,ntrunc,tstart,ntrac,idate_start,pdryini,ntracin
- !JOY added last line to bypass reading sanl.dat
+contains
 
- contains
+    subroutine set_dry_pressure(py_pdryini)bind(c, name='gfs_set_dry_pressure')
 
- subroutine read_namelist() bind(c,name='gfsReadNamelist')
-   integer lu,iret
-   logical idealized
-   real(r_kind) tmax
-   initfile=""
-   sfcinitfile=""
-   fhmax = 0
-   fhout = 0
-   fhzer = 0
-   iaufhrs = -1
-   iaufiles_fg = ''
-   iaufiles_anl = ''
-   open(912,file='gfs_namelist',form='formatted')
-   read(912,nam_mrf)
-   close(912)
-   !JOY prevent writing out whole namelist to stdout 
-   !print *,'namelist nam_mrf:'
-   !write(6, nam_mrf)
-   print *, 'Read from namelist: ',nlats,nlons,ntrunc,dry,adiabatic
-   !if (initfile == "") then
-   !   print *,'initfile must be specified in namelist'
-   !   stop
-   !endif
-   if (fhmax == 0) then
-      print *,'fhmax must be specified in namelist'
-      stop
-   endif
-   if (fhmax == 0) then
-      print *,'fhout must be specified in namelist'
-      stop
-   endif
-   if (deltim == 0) then
-      if (timestepsperhr < 0) then
-         print *,'deltim or timestepsperhr must be specified in namelist'
-         stop
-      else
-         dt = 3600./timestepsperhr
-      endif
-   else
-      dt=deltim
-      timestepsperhr = nint(3600./dt)
-   endif
-   print *,'time step = ',dt,' seconds'
-   if (abs(3600.-dt*timestepsperhr) > 1.e-10) then
-      print *,'1 hour must be an integer number of timesteps'
-      stop
-   endif
-   lu = 7
-   !JOY modified to make sigio redundant
-!   call sigio_sropen(lu,trim(initfile),iret)
-!   if (iret .ne. 0) then
-!      print *,'error opening ',trim(initfile),iret
-!      stop
-!   endif
-!   call sigio_srhead(lu,sighead,iret)
-!   if (iret .ne. 0) then
-!      print *,'error reading header from ',trim(initfile),iret
-!      stop
-!   else
-!      nlons = sighead%lonb
-!      nlats = sighead%latb
-!      nlevs = sighead%levs
-!      ntrunc = sighead%jcap
-!      tstart = sighead%fhour*3600.
-!      ntracin = sighead%ntrac
-!      idate_start = sighead%idate
-      ! dry ps for mass fixer (if zero, compute in dyn_run)
-!      pdryini = sighead%pdryini*1000. ! convert to Pa from cb
-      ! if pdryini is unrealistic, don't use it.
-      if (pdryini .gt. 1.e5) then
-          print *,'unrealistic pdryini in file ',pdryini,' resetting..'
-          pdryini = 0.
-       end if
-      print *,'nlons,nlats,nlevs,ntrunc,ntrac=',nlons,nlats,nlevs,ntrunc,ntrac
-      print *,'tstart=',tstart,' secs'
-      print *,'pdryini=',pdryini
-!      print *,'idate_start=',idate_start
-!   endif 
-   tmax = fhmax*3600. 
-   ntmax = nint((tmax-tstart)/dt)
-   ntout = fhout*timestepsperhr
-   ntdfi = fhdfi*timestepsperhr
-   print *,'output every ',ntout,' time steps'
-   if (ntdfi > 0) print *,'digital filter half-window length',fhdfi,' hrs'
-   idealized = dcmip >= 0 .or. heldsuarez
-   if (dcmip >= 0 .and. heldsuarez) then
-      print *,'conflicting namelist options'
-      print *,'heldsuarez and dcmip both cannot be .true.'
-      stop
-   endif
-   if (.not. idealized .and. (mod(ntdfi,int(fhswr*timestepsperhr)) .ne. 0 .or. &
-       mod(ntdfi,int(fhlwr*timestepsperhr)) .ne. 0)) then
-      print *,'middle of dfi window must be on a radiation time step'
-      stop
-   endif
-   !if (dcmip >= 0) print *,'running dcmip test...'
-   if (heldsuarez) then
-     print *,'running held-suarez test..'
-     !dry = .true.
-   endif
-   
-   !JOY don't allow code to control dry/moist or num tracers. It should 
-   ! be done at the python level
+        real(c_double), intent(in):: py_pdryini
 
-   !if (dcmip .eq. 41) dry = .true. ! dry baroclinic wave
-   !if (dcmip .eq. 42) dry = .false. ! dry baroclinic wave
-   !if (dcmip/10 .eq. 5) dry = .false. ! tropical cyclone
-   !JOY removing sigio dependency
-   !call sigio_sclose(lu,iret)
-   !if (dry) ntrac=0
-   !if (dcmip/10 .eq. 4) ntrac=3 ! passive tracers.
-   !if (dcmip    .eq. 51) ntrac=1 ! no passive tracers.
-   !if (.not. idealized .and. ntrac .ne. ntracin) then
-   !  print *,ntracin,' tracers in input file, expecting',ntrac
-   !  stop
-   !endif
-   ndimspec = (ntrunc+1)*(ntrunc+2)/2
-   !if (iau) then
-   !  print *,'IAU forcing on'
-   !endif
- end subroutine read_namelist
+        pdryini = py_pdryini
 
+    end subroutine
+
+    subroutine gfs_set_time_step(py_dt)bind(c, name='gfs_set_time_step')
+
+        real(c_double), intent(in):: py_dt
+
+        dt = py_dt
+        deltim = py_dt
+
+    end subroutine
+
+    subroutine gfs_set_model_dimensions(py_nlats, py_nlons, py_nlevs, py_ntrunc,&
+                    py_ndimspec, py_ntrac)bind(c,name='gfs_set_model_dimensions')
+
+        integer(c_int), intent(in):: py_nlats, py_nlons, py_nlevs, py_ntrunc, py_ndimspec, py_ntrac
+
+        nlats = py_nlats
+        nlons = py_nlons
+        nlevs = py_nlevs
+        ntrunc = py_ntrunc
+        ndimspec = py_ndimspec
+        ntrac = py_ntrac
+
+    end subroutine
 end module params

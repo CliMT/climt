@@ -54,7 +54,7 @@ $(CLIMT_ARCH)/libopenblas.a:
 
 gfs_lib: $(CLIMT_ARCH)/libgfs_dycore.a
 
-$(CLIMT_ARCH)/libgfs_dycore.a:
+$(CLIMT_ARCH)/libgfs_dycore.a: $(GFS_DIR)/*.f90
 	cd $(GFS_DIR); make python_lib; cp libgfs_dycore.a $(LIB_DIR)
 
 # Simple Physics Configuration

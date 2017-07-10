@@ -1,3 +1,3 @@
-from .test import GFS
+from .component import GfsDynamicalCore
 
-__all__ = (GFS)
+__all__ = (GfsDynamicalCore)

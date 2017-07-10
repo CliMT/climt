@@ -40,7 +40,7 @@
 
  contains
 
- subroutine gfsRegisterPhysicsCallback(callback) bind(c,name='gfsRegisterPhysicsCallback')
+ subroutine gfsRegisterPhysicsCallback(callback) bind(c,name='gfs_register_physics_callback')
 
     type(c_funptr), intent(in), value :: callback
 
@@ -77,7 +77,7 @@
 
  end subroutine getphytend
 
- subroutine calculate_heldsuarez(vrtg, divg, virtempg, prs, psg, tracerg, t, dt) bind(c, name='calculate_tendencies')
+ subroutine calculate_heldsuarez(vrtg, divg, virtempg, prs, psg, tracerg, t, dt) bind(c, name='gfs_calculate_tendencies')
 
      real(r_kind), intent(in), dimension(nlons,nlats,nlevs) :: vrtg, divg, virtempg, prs
      real(r_kind), intent(in), dimension(nlons,nlats) :: psg 
@@ -141,7 +141,7 @@
 
 end subroutine calculate_heldsuarez
 
-subroutine set_tendencies(dvrtgdt,ddivgdt,dvirtempgdt,dlnpsgdt,dtracergdt) bind(c, name='set_tendencies')
+subroutine set_tendencies(dvrtgdt,ddivgdt,dvirtempgdt,dlnpsgdt,dtracergdt) bind(c, name='gfs_set_tendencies')
 
     real(r_kind), intent(in), dimension(nlons,nlats,nlevs) :: &
         dvrtgdt,ddivgdt,dvirtempgdt

@@ -15,7 +15,7 @@ module grid_data
 ! (nlons,nlons,nlevs) arrays (bottom to top unless otherwise noted)
 ! they are transformed to the grid from spectral space in subroutine
 ! getdyntend in module dyn_run.
-! ug: zonal wind 
+! ug: zonal wind
 ! vg: meridional wind
 ! vrtg: vorticity
 ! divg: divergence
@@ -29,70 +29,58 @@ module grid_data
  real(r_kind), pointer, public, dimension(:,:) :: &
  dlnpsdt,lnpsg,dlnpdst,dphisdx,dphisdy,phis
 
- !public :: init_griddata, destroy_griddata
- !real(r_kind), allocatable, public, dimension(:,:,:) :: ug,vg,vrtg,divg,&
- !virtempg,etadot,dlnpdtg
- !real(r_kind), allocatable, public, dimension(:,:,:,:) :: tracerg
-
- !real(r_kind), allocatable, public, dimension(:,:) :: &
- !dlnpsdt,lnpsg,dlnpdst,dphisdx,dphisdy,phis
  contains
- subroutine init_griddata(pyUg, pyVg, pyVrtg, pyDivg, pyVirtTempg, &
-         pyTracerg, pyDlnpdtg, pyEtaDotg, pyLnPsg, pyPhis, &
-         pyDPhisdx, pyDPhisdy, pyDlnpsdt) bind(c,name='initialiseGridArrays')
 
-    real(c_double), target, intent(inout) :: pyUg(nlons,nlats,nlevs), &
-    pyVg(nlons,nlats,nlevs),pyVrtg(nlons,nlats,nlevs),pyDivg(nlons,nlats,nlevs),&
-    pyVirtTempg(nlons,nlats,nlevs),pyDlnpdtg(nlons,nlats,nlevs)
+     subroutine assign_grid_arrays(py_ug, py_vg, py_virt_tempg, py_lnpsg, &
+             py_tracerg, py_vortg, py_divg) bind(c, name='gfs_assign_grid_arrays')
 
-    real(c_double), target, intent(inout) :: pyEtaDotg(nlons,nlats,nlevs+1),&
-    pyTracerg(nlons,nlats,nlevs,ntrac)
+         real(c_double), target, intent(inout):: py_ug(nlons, nlats, nlevs)
+         real(c_double), target, intent(inout):: py_vg(nlons, nlats, nlevs)
+         real(c_double), target, intent(inout):: py_virt_tempg(nlons, nlats, nlevs)
+         real(c_double), target, intent(inout):: py_vortg(nlons, nlats, nlevs)
+         real(c_double), target, intent(inout):: py_divg(nlons, nlats, nlevs)
 
-    real(c_double), target, intent(inout) :: pyLnPsg(nlons,nlats), &
-    pyPhis(nlons,nlats), pyDPhisdx(nlons,nlats), pyDPhisdy(nlons,nlats), &
-    pyDlnpsdt(nlons,nlats)
+         real(c_double), target, intent(inout):: py_lnpsg(nlons, nlats)
+         real(c_double), target, intent(inout):: py_tracerg(nlons, nlats, nlevs, ntrac)
 
-    print *, 'Initialising grid data'
+         ug => py_ug
+         vg => py_vg
+         vrtg => py_vortg
+         divg => py_divg
+         virtempg => py_virt_tempg
+         tracerg => py_tracerg
+         lnpsg => py_lnpsg
 
-    print *, shape(pyUg), shape(pyDlnpdtg);
-    ug => pyUg
-    vg => pyVg
-    vrtg => pyVrtg
-    divg => pyDivg
-    virtempg => pyVirtTempg
-    tracerg => pyTracerg
-    dlnpdtg => pyDlnpdtg
-    etadot => pyEtaDotg
-    lnpsg => pyLnPsg
-    phis => pyPhis
-    dphisdy => pyDPhisdy
-    dphisdx => pyDPhisdx
-    dlnpsdt => pyDlnpsdt
-    print *, shape(ug), shape(dlnpdtg);
- end subroutine init_griddata
- subroutine destroy_griddata()
-    print *, 'Deallocating grid data'
-    nullify(ug,vg,vrtg,divg,virtempg,dlnpdtg,etadot)
-    nullify(tracerg)
-    nullify(lnpsg,phis,dphisdx,dphisdy,dlnpsdt)
- end subroutine destroy_griddata
+     end subroutine
 
-end module grid_data
+     subroutine init_griddata(pyDlnpdtg, pyEtaDotg, pyPhis, &
+             pyDPhisdx, pyDPhisdy, pyDlnpsdt) bind(c,name='gfs_initialise_grid_arrays')
 
-!    allocate(ug(nlons,nlats,nlevs))
-!    allocate(vg(nlons,nlats,nlevs))
-!    allocate(vrtg(nlons,nlats,nlevs))
-!    allocate(divg(nlons,nlats,nlevs))
-!    allocate(virtempg(nlons,nlats,nlevs))
-!    allocate(tracerg(nlons,nlats,nlevs,ntrac))
-!    allocate(dlnpdtg(nlons,nlats,nlevs))
-!    allocate(etadot(nlons,nlats,nlevs+1))
-!    allocate(lnpsg(nlons,nlats))
-!    allocate(phis(nlons,nlats))
-!    allocate(dphisdy(nlons,nlats))
-!    allocate(dphisdx(nlons,nlats))
-!    allocate(dlnpsdt(nlons,nlats))
-!    deallocate(ug,vg,vrtg,divg,virtempg,dlnpdtg,etadot)
-!    deallocate(tracerg)
-!    deallocate(lnpsg,phis,dphisdx,dphisdy,dlnpsdt)
-!
+         real(c_double), target, intent(inout) :: pyDlnpdtg(nlons, nlats, nlevs)
+
+         real(c_double), target, intent(inout) :: pyEtaDotg(nlons,nlats,nlevs+1)
+
+         real(c_double), target, intent(inout) :: pyPhis(nlons,nlats), pyDPhisdx(nlons,nlats), &
+             pyDPhisdy(nlons,nlats), pyDlnpsdt(nlons,nlats)
+
+         !print *, 'Initialising grid data'
+
+         print *,  shape(pyDlnpdtg);
+         dlnpdtg => pyDlnpdtg
+         etadot => pyEtaDotg
+         phis => pyPhis
+         dphisdy => pyDPhisdy
+         dphisdx => pyDPhisdx
+         dlnpsdt => pyDlnpsdt
+         !print *, shape(dlnpdtg);
+         print *, ' Done Initialising grid data'
+     end subroutine init_griddata
+     
+     subroutine destroy_griddata()
+         !print *, 'Deallocating grid data'
+         nullify(ug,vg,vrtg,divg,virtempg,dlnpdtg,etadot)
+         nullify(tracerg)
+         nullify(lnpsg,phis,dphisdx,dphisdy,dlnpsdt)
+     end subroutine destroy_griddata
+
+ end module grid_data

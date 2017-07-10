@@ -4,7 +4,7 @@ private
 public :: finalize
 contains
 
-subroutine finalize() bind(c,name='gfsFinalise');
+subroutine finalize() bind(c,name='gfs_finalise');
   use dyn_finalize ,only: finalize_dyn
   use phy_finalize ,only: finalize_phy
   !JOY this was not being called at all

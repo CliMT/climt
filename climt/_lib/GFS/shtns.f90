@@ -90,7 +90,7 @@
       contains
 
       subroutine get_lon_lat(longitudes, latitudes) &
-              bind(c,name='get_lon_lat')
+              bind(c,name='gfs_get_lon_lat')
 
       real(r_double), intent(out), dimension(current_nlon,current_nlat)&
                 :: longitudes, latitudes
@@ -132,6 +132,7 @@
       print *, 'In set_size', ntrunc
       call shtns_set_size(ntrunc,ntrunc,1,SHT_ORTHONORMAL+SHT_NO_CS_PHASE)
       print *, 'In precompute'
+      print *, nlat, nlon
       call shtns_precompute(SHT_GAUSS_FLY,SHT_PHI_CONTIGUOUS,popt,nlat,nlon)
       call shtns_calc_nlm(nlm,ntrunc,ntrunc,1)
       current_nlat = nlat

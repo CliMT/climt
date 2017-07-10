@@ -416,7 +416,7 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
 
     _implicit_quantities = {}
 
-    _prognostic = []
+    _prognostic = None
 
     @property
     def prognostics(self):
@@ -428,11 +428,14 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
 
     @property
     def inputs(self):
-        return set(self._prognostic.inputs).union(set(self._climt_inputs.keys()))
+        if self._prognostic is not None:
+            return set(self._prognostic.inputs).union(set(self._climt_inputs.keys()))
+        else:
+            return set(self._climt_inputs.keys())
 
     @property
     def outputs(self):
-        return set(self._prognostic.tendencies)
+        return set(self._climt_outputs.keys())
 
     @property
     def diagnostics(self):
