@@ -94,8 +94,6 @@
         con_fvirt = con_rv/con_rd-1.
         con_eps = con_rd/con_rv
 
-
-
     end subroutine
 
 end module physcons

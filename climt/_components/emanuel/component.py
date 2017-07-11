@@ -90,13 +90,13 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                  reference_mass_flux_timescale=300.,
                  number_of_tracers=0,
                  specific_heat_dry_air=None,
-                 specific_heat_condensible=1.8460e+3,
+                 specific_heat_condensible=None,
                  specific_enthalpy_condensible=2500.,
                  gas_constant_condensible=None,
                  gas_constant_dry_air=None,
                  latent_heat_condensation=None,
                  acceleration_gravity=None,
-                 density_condensed_phase=1000.):
+                 density_condensed_phase=None):
         """
 
         Args:

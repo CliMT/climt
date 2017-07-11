@@ -8,9 +8,10 @@ from .emanuel import EmanuelConvection
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
 from .gfs import GfsDynamicalCore
+from .dcmip import DcmipInitialConditions
 
 __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
     HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
     RRTMGLongwave, RRTMGShortwave, EmanuelConvection, SlabSurface, IceSheet,
-    GfsDynamicalCore)
+    GfsDynamicalCore, DcmipInitialConditions)

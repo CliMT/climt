@@ -413,9 +413,6 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
 
     _climt_diagnostics = {}
 
-
-    _implicit_quantities = {}
-
     _prognostic = None
 
     @property

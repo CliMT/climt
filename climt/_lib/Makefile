@@ -6,6 +6,7 @@ SIM_PHYS_DIR = simple_physics
 EMAN_DIR = emanuel
 RRTMG_LW_DIR = rrtmg_lw
 RRTMG_SW_DIR = rrtmg_sw
+DCMIP_DIR=dcmip
 
 FFTW_GZ = fftw-3.3.6-pl2.tar.gz
 SHT_GZ = shtns-2.7-r557.tar.gz
@@ -17,7 +18,7 @@ LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
 LDFLAGS = "-L$(LIB_DIR)"
 
-all: fftw_lib sht_lib blas_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib
+all: fftw_lib sht_lib blas_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
 
 # FFTW3 Configuration
 
@@ -85,6 +86,14 @@ rrtmg_sw_lib: $(CLIMT_ARCH)/librrtmg_sw.a
 $(CLIMT_ARCH)/librrtmg_sw.a:
 	cd $(RRTMG_SW_DIR); make; cp librrtmg_sw.a $(LIB_DIR)
 
+# DCMIP Configuration
+
+libdcmip: $(CLIMT_ARCH)/libdcmip.a
+
+$(CLIMT_ARCH)/libdcmip.a:
+	cd $(DCMIP_DIR); make; cp libdcmip.a $(LIB_DIR)
+
+
 
 clean:
 	if [ -d $(FFTW_DIR) ]; then rm -Rf $(FFTW_DIR); fi
@@ -97,6 +106,7 @@ clean:
 	cd $(EMAN_DIR); make clean
 	cd $(RRTMG_LW_DIR); make clean
 	cd $(RRTMG_SW_DIR); make clean
+	cd $(DCMIP_DIR); make clean
 
 clean_libs:
 	if [ -d  include ]; then rm -Rf include; fi

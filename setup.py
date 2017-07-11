@@ -41,7 +41,7 @@ operating_system = platform.system()
 libraries = ['m', 'gfortran']
 default_link_args = []
 
-compiled_base_dir = 'climt/_lib/'
+compiled_base_dir = 'climt/_lib'
 
 if operating_system == 'Linux':
     libraries = ['m', 'gfortran', 'rt']
@@ -147,6 +147,14 @@ ext_modules = [
         include_dirs=include_dirs,
         library_dirs=[lib_path],
         extra_link_args=[lib_path+'/librrtmg_sw.a'] + default_link_args),
+
+    Extension(
+        'climt._components.dcmip._dcmip',
+        sources=['climt/_components/dcmip/dcmip.pyx'],
+        libraries=libraries,
+        include_dirs=include_dirs,
+        library_dirs=[lib_path],
+        extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),
 
 ]
 

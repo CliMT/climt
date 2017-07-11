@@ -85,6 +85,7 @@ end subroutine gfs_uv_to_vrtdiv
 
  subroutine gfsConvertToSpec() bind(c,name='gfs_convert_to_spectral')
 
+
     integer i,k
 
 !$omp parallel do private(k,i) schedule(dynamic)

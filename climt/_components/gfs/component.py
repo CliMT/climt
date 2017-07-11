@@ -1,6 +1,6 @@
 from __future__ import division
 from ..._core import ClimtSpectralDynamicalCore
-from sympl import replace_none_with_default, DataArray, PrognosticComposite
+from sympl import replace_none_with_default, DataArray
 import numpy as np
 try:
     from . import _gfs_dynamics
@@ -63,14 +63,13 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         }
     }
 
-
     def __init__(
             self,
             number_of_latitudes=94,
             number_of_longitudes=198,
             number_of_levels=28,
             number_of_tracers=0,
-            dry_pressure=1.e5,
+            dry_pressure=1.0132e5,
             time_step=1200.,
             planetary_radius=None,
             planetary_rotation_rate=None,
@@ -79,7 +78,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             gas_constant_condensible=None,
             acceleration_gravity=None,
             specific_heat_dry_air=None,
-            specific_heat_condensible=1.8460e+3):
+            specific_heat_condensible=None):
         """
         Initialise the GFS dynamical core.
 
@@ -231,11 +230,11 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         latitudes, longitudes, sigma, sigma_interface = _gfs_dynamics.init_model(self._dry_pressure)
 
         latitude = dict(label='latitude',
-                        values=np.degrees(latitudes[0,:]),
+                        values=np.degrees(latitudes[0, :]),
                         units='degrees_north')
 
         longitude = dict(label='longitude',
-                         values=np.degrees(longitudes[:,0]),
+                         values=np.degrees(longitudes[:, 0]),
                          units='degrees_east')
 
         sigma_levels = dict(label='sigma_levels',
@@ -252,7 +251,6 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
         # Random array to slice variables
         self.initialise_state_signature()
-
 
     def __call__(self, state):
         """ Step the dynamical core by one step
@@ -275,13 +273,13 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         t_virt = raw_input_arrays['air_temperature']*(
             1 + self._fvirt.values.item()*raw_input_arrays['specific_humidity'])
 
-        raw_input_arrays['gfs_tracers'][:,:,:,0] = raw_input_arrays['specific_humidity']
-        raw_input_arrays['gfs_tracers'][:,:,:,1] = \
-                raw_input_arrays['mole_fraction_of_ozone_in_air']
-        raw_input_arrays['gfs_tracers'][:,:,:,2] = \
-        raw_input_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer']
-        raw_input_arrays['gfs_tracers'][:,:,:,3] = \
-        raw_input_arrays['mass_content_of_cloud_ice_in_atmosphere_layer']
+        raw_input_arrays['gfs_tracers'][:, :, :, 0] = raw_input_arrays['specific_humidity']
+        raw_input_arrays['gfs_tracers'][:, :, :, 1] = \
+            raw_input_arrays['mole_fraction_of_ozone_in_air']
+        raw_input_arrays['gfs_tracers'][:, :, :, 2] = \
+            raw_input_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer']
+        raw_input_arrays['gfs_tracers'][:, :, :, 3] = \
+            raw_input_arrays['mass_content_of_cloud_ice_in_atmosphere_layer']
 
         _gfs_dynamics.assign_grid_arrays(
             raw_input_arrays['eastward_wind'],
@@ -304,18 +302,18 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             tendencies, diagnostics = self.prognostics(state)
 
         temp_tend, q_tend, u_tend, v_tend, ps_tend, tracer_tend = \
-                return_tendency_arrays_or_zeros(['air_temperature',
-                                                'specific_humidity',
-                                                'eastward_wind',
-                                                'northward_wind',
-                                                'surface_air_pressure',
-                                                'gfs_tracers'],
-                                               state, tendencies)
+            return_tendency_arrays_or_zeros(['air_temperature',
+                                             'specific_humidity',
+                                             'eastward_wind',
+                                             'northward_wind',
+                                             'surface_air_pressure',
+                                             'gfs_tracers'],
+                                            state, tendencies)
 
         # see Pg. 12 in gfsModelDoc.pdf
         virtual_temp_tend = temp_tend*(
             1 + self._fvirt.values.item()*raw_input_arrays['specific_humidity']) + \
-                self._fvirt.values.item()*t_virt*q_tend
+            self._fvirt.values.item()*t_virt*q_tend
 
         # dlnps/dt = (1/ps)*dps/dt
         lnps_tend = (1. / raw_input_arrays['surface_air_pressure'])*ps_tend
@@ -332,8 +330,6 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
         self.store_current_state_signature(raw_input_arrays)
 
-
-
     def initialise_state_signature(self):
 
         self._random_slice_x = np.random.randint(0, self._num_lons, size=(10, 10, 10))
@@ -344,26 +340,24 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self._hash_v = 1000
         self._hash_temp = 1000
 
-
     def calculate_state_signature(self, state_arr):
         """ Calculates hash signatures from state """
         random_u = state_arr['eastward_wind'][self._random_slice_x, self._random_slice_y,
-                                                 self._random_slice_z]
+                                              self._random_slice_z]
         random_u.flags.writeable = False
         hash_u = hash(random_u.data)
 
         random_v = state_arr['northward_wind'][self._random_slice_x, self._random_slice_y,
-                                                 self._random_slice_z]
+                                               self._random_slice_z]
         random_v.flags.writeable = False
         hash_v = hash(random_v.data)
 
         random_temp = state_arr['air_temperature'][self._random_slice_x, self._random_slice_y,
-                                                 self._random_slice_z]
+                                                   self._random_slice_z]
         random_temp.flags.writeable = False
         hash_temp = hash(random_temp.data)
 
         return hash_u, hash_v, hash_temp
-
 
     def state_is_modified_externally(self, state_arr):
         """ Function to check if grid space arrays have been modified outside the dynamical core """
@@ -379,7 +373,6 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         else:
             return False
 
-
     def store_current_state_signature(self, output_arr):
         """ Store state signature for comparison during next time step """
 
@@ -388,7 +381,6 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self._hash_u = hash_u
         self._hash_v = hash_v
         self._hash_temp = hash_temp
-
 
 
 def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):
@@ -403,4 +395,3 @@ def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):
             raise IndexError("{} not found in input state or tendencies".format(quantity))
 
     return tendency_list
-
