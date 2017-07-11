@@ -15,10 +15,10 @@ env:
 
 before_install:
   - sudo apt-get install gfortran
-  - sudo pip install -U cython
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
+  - pip install -r requirements_dev.txt
   - pip install -U tox
 
 # command to run tests, e.g. python setup.py test
@@ -40,5 +40,5 @@ deploy:
 notifications:
   email:
     recipients:
-      - mcgibbon@uw.edu
       - joy.monteiro@misu.su.se
+        #- mcgibbon@uw.edu
