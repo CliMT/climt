@@ -2,6 +2,7 @@ from __future__ import division
 from ..._core import ClimtSpectralDynamicalCore
 from sympl import replace_none_with_default, DataArray
 import numpy as np
+import sys
 try:
     from . import _gfs_dynamics
 except ImportError:
@@ -352,18 +353,28 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         """ Calculates hash signatures from state """
         random_u = state_arr['eastward_wind'][self._random_slice_x, self._random_slice_y,
                                               self._random_slice_z]
-        random_u.flags.writeable = False
-        hash_u = hash(random_u.data)
+
+        if sys.version_info > (3,0):
+            hash_u = hash(random_u.data.tobytes())
+        else:
+            random_u.flags.writeable = False
+            hash_u = hash(random_u.data)
 
         random_v = state_arr['northward_wind'][self._random_slice_x, self._random_slice_y,
                                                self._random_slice_z]
-        random_v.flags.writeable = False
-        hash_v = hash(random_v.data)
+        if sys.version_info > (3,0):
+            hash_v = hash(random_v.data.tobytes())
+        else:
+            random_v.flags.writeable = False
+            hash_v = hash(random_v.data)
 
         random_temp = state_arr['air_temperature'][self._random_slice_x, self._random_slice_y,
                                                    self._random_slice_z]
-        random_temp.flags.writeable = False
-        hash_temp = hash(random_temp.data)
+        if sys.version_info > (3,0):
+            hash_temp = hash(random_temp.data.tobytes())
+        else:
+            random_temp.flags.writeable = False
+            hash_temp = hash(random_temp.data)
 
         return hash_u, hash_v, hash_temp
 
