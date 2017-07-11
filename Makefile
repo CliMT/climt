@@ -42,6 +42,13 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
+clean-cython: ## remove Cython generated files
+	find . -name '*.so' -exec rm -f {} +
+	cd climt/_components; find . -name '*.c' -exec rm -f {} +; cd ../..
+
+clean-libs: ## remove compiled libraries in _lib
+	cd climt/_lib; make clean; cd ../..
+
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
 	rm -f .coverage

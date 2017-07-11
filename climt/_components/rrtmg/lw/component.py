@@ -1,12 +1,11 @@
-from sympl import (replace_none_with_default,
-                   get_numpy_array)
+from sympl import replace_none_with_default, get_numpy_array
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values,
     ClimtPrognostic)
 import numpy as np
 from numpy import pi as PI
 try:
-    from . import _rrtm_lw
+    from . import _rrtmg_lw
 except ImportError:
     print('Import failed. RRTMG Longwave will not be available!')
 
@@ -90,7 +89,7 @@ class RRTMGLongwave(ClimtPrognostic):
             cloud_optical_properties=2,
             cloud_ice_properties=1,
             cloud_liquid_water_properties=1,
-            gravitational_acceleration=None,
+            acceleration_gravity=None,
             planck_constant=None,
             boltzmann_constant=None,
             speed_of_light=None,
@@ -152,46 +151,46 @@ class RRTMGLongwave(ClimtPrognostic):
 
                 Default value is 0.
 
-            gravitational_acceleration (float):
+            acceleration_gravity (float):
                 value of acceleration due to gravity in
-                :math:`m s^{-1}`. Default value from climt.default_constants is used if None.
+                :math:`m s^{-1}`. Default value from :code:`sympl.default.constants` is used if None.
 
             planck_constant (float):
                 value of the planck constant in :math:`J s`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             boltzmann_constant (float):
                 value of the Boltzmann constant in :math:`J K^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             speed_of_light (float):
                 value of the speed of light in :math:`m s^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             avogadro_constant (float):
                 value of the Avogadro constant.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             loschmidt_constant (float):
                 value of the Loschmidt constant.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             universal_gas_constant (float):
                 value of the gas constant in :math:`J K^{-1} mol^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             stefan_boltzmann_constant (float):
                 value of the Stefan-Boltzmann constant
-                in :math:`W m^{-2} K^{-4}`. Default value from climt.default_constants is
+                in :math:`W m^{-2} K^{-4}`. Default value from :code:`sympl.default.constants` is
                 used if None.
 
             seconds_per_day (float):
                 number of seconds per day.
-                Default value from climt.default_constants (for earth) is used if None.
+                Default value from :code:`sympl.default.constants` (for earth) is used if None.
 
             specific_heat_dry_air (float):
                 The specific heat of dry air in :math:`J K^{-1} kg^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
@@ -215,7 +214,7 @@ class RRTMGLongwave(ClimtPrognostic):
         self._liq_props = cloud_liquid_water_properties
 
         self._g = replace_none_with_default(
-            'gravitational_acceleration', gravitational_acceleration)
+            'gravitational_acceleration', acceleration_gravity)
 
         self._planck = replace_none_with_default(
             'planck_constant', planck_constant).to_units('erg s')
@@ -257,7 +256,7 @@ class RRTMGLongwave(ClimtPrognostic):
         #     copy_inputs.pop('longwave_optical_thickness_due_to_cloud')
         #     self._climt_inputs = copy_inputs
 
-        _rrtm_lw.set_constants(
+        _rrtmg_lw.set_constants(
             PI, self._g,
             self._planck,
             self._boltzmann,
@@ -269,7 +268,7 @@ class RRTMGLongwave(ClimtPrognostic):
             self._secs_per_day)
 
         # TODO Add all other flags as well
-        _rrtm_lw.initialise_rrtm_radiation(
+        _rrtmg_lw.initialise_rrtm_radiation(
             self._Cpd,
             self._cloud_overlap,
             self._calc_dflxdt,
@@ -297,9 +296,8 @@ class RRTMGLongwave(ClimtPrognostic):
         """
 
         raw_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
-
-        Q = mass_to_volume_mixing_ratio(state['specific_humidity'].to_units('g/g'), 18.02)
-        Q = get_numpy_array(Q, ['x', 'y', 'z'])
+        Q = get_numpy_array(state['specific_humidity'].to_units('g/g'), ['x', 'y', 'z'])
+        Q = mass_to_volume_mixing_ratio(Q, 18.02)
 
         mid_level_shape = raw_arrays['air_temperature'].shape
         # int_level_shape = raw_arrays['air_pressure_on_interface_levels'].shape
@@ -327,7 +325,7 @@ class RRTMGLongwave(ClimtPrognostic):
 
         # TODO add dflx_dt as well
         for lon in range(mid_level_shape[0]):
-                _rrtm_lw.rrtm_calculate_longwave_fluxes(
+                _rrtmg_lw.rrtm_calculate_longwave_fluxes(
                     mid_level_shape[1],
                     mid_level_shape[2],
                     raw_arrays['air_pressure'][lon, :],

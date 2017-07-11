@@ -5,9 +5,13 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
+prune climt/_lib/lib
+prune climt/_lib/share
+prune climt/_lib/include
 
 recursive-include tests *
+recursive-include climt *.py *.so *.dylib 
+recursive-exclude climt *.pyc *.mod *.o *.c *.a
 recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
 
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif

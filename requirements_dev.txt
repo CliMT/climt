@@ -15,5 +15,5 @@ xarray==0.8.2
 scipy>=0.18.1
 numpy>=0.10
 git+git://github.com/mcgibbon/sympl@master
-cython
+cython>=0.25
 coveralls
