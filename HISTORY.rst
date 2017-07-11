@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* Added DCMIP initial conditions, test 4 tried out.
 * Dynamical core integrated now.
 * BIG change in the build system. Tests pass on Mac as well
 * Arrays can now have arbitrary dtype (to use qualitative, string, quantities)
