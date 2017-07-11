@@ -395,8 +395,8 @@ class RRTMGShortwave(ClimtPrognostic):
 
         raw_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
 
-        Q = mass_to_volume_mixing_ratio(state['specific_humidity'].to_units('g/g'), 18.02)
-        Q = get_numpy_array(Q, ['x', 'y', 'z'])
+        Q = get_numpy_array(state['specific_humidity'].to_units('g/g'), ['x', 'y', 'z'])
+        Q = mass_to_volume_mixing_ratio(Q, 18.02)
 
         mid_level_shape = raw_arrays['air_temperature'].shape
         # int_level_shape = raw_arrays['air_pressure_on_interface_levels'].shape
