@@ -118,10 +118,10 @@ def convect(
     global initialised
 
     if dtracers is None:
-        dtracers = np.zeros((1,1,1))
+        dtracers = np.zeros((nlats,1,1))
 
     if tracers is None:
-        tracers = np.zeros((1,1,1))
+        tracers = np.zeros((nlats,1,1))
 
     if initialised == 0:
         raise ValueError('Emanuel scheme not initialised.')

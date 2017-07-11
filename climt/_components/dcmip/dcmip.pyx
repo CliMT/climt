@@ -65,7 +65,7 @@ def get_baroclinic_wave_ics(press, lon, lat, perturb=False, moist_sim=False):
 
     add_perturbation = 0
 
-    if 'perturb':
+    if perturb is True:
         add_perturbation = 1
 
     #Scale factor, not used in code, but present in argument list!
@@ -140,4 +140,4 @@ def get_tropical_cyclone_ics(press, lon, lat, **kwargs):
                 surf_geop[i,j] = phis
                 surf_pressure[i,j] = ps
 
-    return zonal_vel, merid_vel, temperature, vapour, surf_geop, surf_pressure
+    return zonal_vel, merid_vel, temperature, vapour, surf_pressure, surf_geop

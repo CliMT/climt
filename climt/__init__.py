@@ -7,7 +7,8 @@ from ._core import (
     get_interface_values,
     climt_quantity_descriptions,
     bolton_q_sat, bolton_dqsat_dT,
-    ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic)
+    ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic,
+    ClimtSpectralDynamicalCore)
 
 from ._components import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
@@ -22,6 +23,7 @@ __all__ = (
     get_interface_values,
     bolton_q_sat, bolton_dqsat_dT, climt_quantity_descriptions,
     ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic,
+    ClimtSpectralDynamicalCore,
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
     EmanuelConvection, SlabSurface, IceSheet, GfsDynamicalCore, DcmipInitialConditions)
