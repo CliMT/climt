@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* Dynamical core integrated now.
 * BIG change in the build system. Tests pass on Mac as well
 * Arrays can now have arbitrary dtype (to use qualitative, string, quantities)
 * Added Emanuel Convection, surface energy balance model and ice sheet energy balance
