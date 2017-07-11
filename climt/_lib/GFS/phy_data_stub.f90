@@ -33,7 +33,7 @@ module phy_data
          complex(c_double), target, intent(inout):: py_spec_tracer_tend(ndimspec, nlevs, ntrac)
          complex(c_double), target, intent(inout):: py_spec_lnps_tend(ndimspec)
 
-         print *, 'Initialising physics'
+         !print *, 'Initialising physics'
          spectral_vort_tend => py_spec_vort_tend
          spectral_div_tend => py_spec_div_tend
          spectral_virtemp_tend => py_spec_theta_tend

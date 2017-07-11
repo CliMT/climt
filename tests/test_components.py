@@ -8,7 +8,8 @@ from climt import (
     HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
-    RRTMGShortwave)
+    RRTMGShortwave, SlabSurface, EmanuelConvection,
+    DcmipInitialConditions, GfsDynamicalCore, ClimtSpectralDynamicalCore)
 import climt
 from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
@@ -65,7 +66,10 @@ def transpose_state(state, dims=None):
 
 def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
-    if isinstance(component, (Implicit, TimeStepper)):
+
+    if isinstance(component, ClimtSpectralDynamicalCore):
+        return component(state)
+    elif isinstance(component, (Implicit, TimeStepper)):
         return component(state, timestep=timestep)
     else:
         return component(state)
@@ -543,6 +547,107 @@ class TestRRTMGShortwave(ComponentBase):
         state = climt.get_default_state(
             [component],
             y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+class TestSlabSurface(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return SlabSurface()
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+class TestEmanuel(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        emanuel = EmanuelConvection()
+        emanuel.current_time_step = timedelta(seconds=300)
+        return emanuel
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+class TestDcmip(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return DcmipInitialConditions()
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+def testDcmipOptions():
+
+    dcmip = DcmipInitialConditions()
+
+    state = climt.get_default_state([dcmip],
+                                    y=dict(label='latitude',
+                                           values=np.linspace(0, 60, 20),
+                                           units='degrees_north'))
+
+    dry_state = dcmip(state)
+    moist_state = dcmip(state, moist_simulation=True)
+    not_perturbed_state = dcmip(state, add_perturbation=False)
+
+    tropical_cyclone_state = dcmip(state, type_of_output='tropical_cyclone',
+                                   moist_simulation=True)
+
+    assert not np.all(np.isclose(dry_state['specific_humidity'].values,
+                                 moist_state['specific_humidity'].values))
+
+    assert not np.all(np.isclose(dry_state['eastward_wind'].values,
+                                 not_perturbed_state['eastward_wind'].values))
+
+    assert np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
+                             np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
+
+
+class TestGfsDycore(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return GfsDynamicalCore(number_of_longitudes=68,
+                                number_of_latitudes=32)
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component], x=component.grid_definition['x'],
+            y=component.grid_definition['y'], z=component.grid_definition['z'])
+
+        dcmip = climt.DcmipInitialConditions()
+        out = dcmip(state, add_perturbation=True)
+        state.update(out)
 
         return state
 

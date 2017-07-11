@@ -39,19 +39,20 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         'eastward_wind': 'm s^-1',
         'northward_wind': 'm s^-1',
         'air_temperature': 'degK',
+        'air_pressure': 'Pa',
+        'air_pressure_on_interface_levels': 'Pa',
         'surface_air_pressure': 'Pa',
         'specific_humidity': 'g kg^-1',
+        'surface_geopotential': 'm^2 s^-2',
+        'atmosphere_relative_vorticity': 's^-1',
+        'divergence_of_wind': 's^-1',
         'mole_fraction_of_ozone_in_air': 'dimensionless',
         'mass_content_of_cloud_ice_in_atmosphere_layer': 'g m^-2',
         'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'g m^-2',
     }
 
     _climt_diagnostics = {
-        'air_pressure': 'Pa',
-        'air_pressure_on_interface_levels': 'Pa',
-        'downward_air_velocity': 'm s^-1',
-        'atmosphere_relative_vorticity': 's^-1',
-        'divergence_of_wind': 's^-1',
+        # 'downward_air_velocity': 'm s^-1',
     }
 
     extra_dimensions = {'tracer_number': np.arange(4)}
@@ -274,6 +275,8 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
         raw_input_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
 
+        output_dict = self.create_state_dict_for('_climt_outputs', state)
+
         update_spectral_arrays = False
         if self.state_is_modified_externally(raw_input_arrays):
             update_spectral_arrays = True
@@ -317,7 +320,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
                                              'northward_wind',
                                              'surface_air_pressure',
                                              'gfs_tracers'],
-                                            state, tendencies)
+                                            raw_input_arrays, tendencies)
 
         # see Pg. 12 in gfsModelDoc.pdf
         virtual_temp_tend = temp_tend*(
@@ -339,6 +342,11 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
         self.store_current_state_signature(raw_input_arrays)
 
+        for quantity in self._climt_outputs.keys():
+            output_dict[quantity].values[:] = raw_input_arrays[quantity]
+
+        return {}, output_dict
+
     def initialise_state_signature(self):
 
         self._random_slice_x = np.random.randint(0, self._num_lons, size=(10, 10, 10))
@@ -348,6 +356,8 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self._hash_u = 1000
         self._hash_v = 1000
         self._hash_temp = 1000
+        self._hash_press = 1000
+        self._hash_surf_press = 1000
 
     def calculate_state_signature(self, state_arr):
         """ Calculates hash signatures from state """
@@ -376,30 +386,55 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             random_temp.flags.writeable = False
             hash_temp = hash(random_temp.data)
 
-        return hash_u, hash_v, hash_temp
+        random_pressure = state_arr['air_pressure'][self._random_slice_x, self._random_slice_y,
+                                                    self._random_slice_z]
+        if sys.version_info > (3, 0):
+            hash_press = hash(random_pressure.data.tobytes())
+        else:
+            random_pressure.flags.writeable = False
+            hash_press = hash(random_pressure.data)
+
+        random_ps = state_arr['surface_air_pressure'][self._random_slice_x, self._random_slice_y]
+
+        if sys.version_info > (3, 0):
+            hash_ps = hash(random_ps.data.tobytes())
+        else:
+            random_ps.flags.writeable = False
+            hash_ps = hash(random_ps.data)
+
+        return hash_u, hash_v, hash_temp, hash_press, hash_ps
 
     def state_is_modified_externally(self, state_arr):
         """ Function to check if grid space arrays have been modified outside the dynamical core """
 
-        hash_u, hash_v, hash_temp = self.calculate_state_signature(state_arr)
+        hash_u, hash_v, hash_temp, hash_press, hash_ps = self.calculate_state_signature(state_arr)
 
-        if (hash_u != self._hash_u) or (hash_v != self._hash_v) or (hash_temp != self._hash_temp):
-            print('State modified, setting spectral arrays')
-            self._hash_u = hash_u
-            self._hash_v = hash_v
-            self._hash_temp = hash_temp
-            return True
+        if (
+            (hash_u != self._hash_u) or
+            (hash_v != self._hash_v) or
+            (hash_press != self._hash_press) or
+            (hash_ps != self._hash_surf_press) or
+           (hash_temp != self._hash_temp)):
+                print('State modified, setting spectral arrays')
+                self._hash_u = hash_u
+                self._hash_v = hash_v
+                self._hash_temp = hash_temp
+                self._hash_surf_press = hash_ps
+                self._hash_press = hash_press
+                return True
         else:
             return False
 
     def store_current_state_signature(self, output_arr):
         """ Store state signature for comparison during next time step """
 
-        hash_u, hash_v, hash_temp = self.calculate_state_signature(output_arr)
+        hash_u, hash_v, hash_temp, hash_press, hash_ps = self.calculate_state_signature(output_arr)
 
         self._hash_u = hash_u
         self._hash_v = hash_v
         self._hash_temp = hash_temp
+        self._hash_surf_press = hash_ps
+        self._hash_press = hash_press
 
 
 def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):

@@ -129,10 +129,10 @@
       endif
       call shtns_destroy()
       call shtns_use_threads(0) ! JOY auto compute number of openmp threads.
-      print *, 'In set_size', ntrunc
+      !print *, 'In set_size', ntrunc
       call shtns_set_size(ntrunc,ntrunc,1,SHT_ORTHONORMAL+SHT_NO_CS_PHASE)
-      print *, 'In precompute'
-      print *, nlat, nlon
+      !print *, 'In precompute'
+      !print *, nlat, nlon
       call shtns_precompute(SHT_GAUSS_FLY,SHT_PHI_CONTIGUOUS,popt,nlat,nlon)
       call shtns_calc_nlm(nlm,ntrunc,ntrunc,1)
       current_nlat = nlat

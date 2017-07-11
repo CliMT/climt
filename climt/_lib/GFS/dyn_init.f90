@@ -319,7 +319,7 @@ module dyn_init
          efold = 1./(hdif_fac2*3.E15/(RERTH**4)*(80.*81.)**2)
       end if
       efold = 2.*efold ! mysterious factor 2 in deldifs.f
-      print *,'ndiss,efold =',ndiss,efold
+      !print *,'ndiss,efold =',ndiss,efold
    end if
    if (fshk .le. 0) then
       ! factor to multiply diffusion per scale height.
@@ -332,12 +332,12 @@ module dyn_init
                       ! ABOVE BEGINNING SIGMA LEVEL FOR RAYLEIGH DAMPING
    dmp_prof = 0.
    diff_prof = sl**(log(1./fshk))
-   print *,'profiles for diffusion and linear damping:'
-   print *,'(level, sigma, diffusion enhancment, linear drag coeff)'
-   do k=1,nlevs
-      if (sl(k) .lt. slrd0) dmp_prof(k)=dmp_prof1*log(slrd0/sl(k))
-      print *,k,sl(k),diff_prof(k),dmp_prof(k)
-   enddo
+   !print *,'profiles for diffusion and linear damping:'
+   !print *,'(level, sigma, diffusion enhancment, linear drag coeff)'
+   !do k=1,nlevs
+   !   if (sl(k) .lt. slrd0) dmp_prof(k)=dmp_prof1*log(slrd0/sl(k))
+   !   print *,k,sl(k),diff_prof(k),dmp_prof(k)
+   !enddo
    disspec(:) = -(1./efold)*(lap(:)/minval(lap))**(ndiss/2)
    return
  end subroutine setdampspec

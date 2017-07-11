@@ -38,7 +38,7 @@ contains
 subroutine set_model_time(py_time) bind(c, name='gfs_set_model_time')
     real(r_double), intent(in):: py_time
     t = py_time
-    print *, 'model time is now: ', t
+    !print *, 'model time is now: ', t
 end subroutine
 
 
@@ -58,13 +58,13 @@ subroutine take_one_step() bind(c,name='gfs_take_one_step')
     t = t + dt ! absolute forecast time.
     call system_clock(count, count_rate, count_max)
     t2 = count*1.d0/count_rate
-    spdmax = maxval(sqrt(ug**2+vg**2)) ! max wind speed
-    pstend = (36.*psg*dlnpsdt)**2 ! ps tend variance (mb/hr)**2
-    pstendmean = sqrt(sum(pstend*areawts))
-    if (modulo(fh, 10.) .eq. 0.) then
-        write(6,8998) fh,spdmax,minval(psg/100.),maxval(psg/100.),pstendmean,t2-t1
-        8998 format('t = ',f0.3,' hrs, spdmax = ',f7.3,', min/max ps = ',f7.2,'/',f7.2,', pstend = ',f0.3,', cpu time = ',f0.3)
-    endif
+    !spdmax = maxval(sqrt(ug**2+vg**2)) ! max wind speed
+    !pstend = (36.*psg*dlnpsdt)**2 ! ps tend variance (mb/hr)**2
+    !pstendmean = sqrt(sum(pstend*areawts))
+    !if (modulo(fh, 10.) .eq. 0.) then
+    !    write(6,8998) fh,spdmax,minval(psg/100.),maxval(psg/100.),pstendmean,t2-t1
+    !    8998 format('t = ',f0.3,' hrs, spdmax = ',f7.3,', min/max ps = ',f7.2,'/',f7.2,', pstend = ',f0.3,', cpu time = ',f0.3)
+    !endif
 
 end subroutine take_one_step
 

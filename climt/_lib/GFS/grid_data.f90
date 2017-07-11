@@ -65,7 +65,7 @@ module grid_data
 
          !print *, 'Initialising grid data'
 
-         print *,  shape(pyDlnpdtg);
+         !print *,  shape(pyDlnpdtg);
          dlnpdtg => pyDlnpdtg
          etadot => pyEtaDotg
          phis => pyPhis
@@ -73,7 +73,7 @@ module grid_data
          dphisdx => pyDPhisdx
          dlnpsdt => pyDlnpsdt
          !print *, shape(dlnpdtg);
-         print *, ' Done Initialising grid data'
+         !print *, ' Done Initialising grid data'
      end subroutine init_griddata
      
      subroutine destroy_griddata()
