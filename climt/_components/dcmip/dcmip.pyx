@@ -37,38 +37,36 @@ cdef double u, v, t, phis, ps, q
 cdef double dummy, X
 cdef int dummy_int, zcoords
 
-def get_baroclinic_wave_ics(press, lon, lat, **kwargs):
+def get_baroclinic_wave_ics(press, lon, lat, perturb=False, moist_sim=False):
     '''
     Provides the initial conditions to run the DCMIP baroclinic
     wave test
 
     '''
 
-    global longitude, latitude, pressure, moist, zcoords, add_perturbation
+    global longitude, latitude, pressure, moist, zcoords, add_perturbation, moist
 
     num_lons, num_lats, num_levs = press.shape
 
     zonal_vel = np.zeros(press.shape, dtype=np.double, order='F')
     merid_vel = np.zeros(press.shape, dtype=np.double, order='F')
     temperature = np.zeros(press.shape, dtype=np.double, order='F')
+    specific_humidity = np.zeros(press.shape, dtype=np.double, order='F')
     surf_geop = np.zeros((num_lons,num_lats), dtype=np.double, order='F')
     surf_pressure = np.zeros((num_lons,num_lats), dtype=np.double, order='F')
 
     # This makes the code evaluate eta using the pressure.
     zcoords = 0
 
-    if 'moist' in kwargs:
-        moist = kwargs['moist']
+    if moist_sim:
+        moist = 1
     else:
         moist = 0
 
     add_perturbation = 0
 
-    if 'perturb' in kwargs:
-        if kwargs['perturb'] is True:
-            add_perturbation = 1
-
-
+    if 'perturb':
+        add_perturbation = 1
 
     #Scale factor, not used in code, but present in argument list!
     X = 1.
@@ -88,15 +86,16 @@ def get_baroclinic_wave_ics(press, lon, lat, **kwargs):
                                     &u, &v,\
                                     &dummy, &t,\
                                     &phis, &ps,\
-                                    &dummy, &dummy,\
+                                    &dummy, &q,\
                                     &dummy, &dummy, &add_perturbation)
                 zonal_vel[i,j,k] = u
                 merid_vel[i,j,k] = v
                 temperature[i,j,k] = t
+                specific_humidity[i,j,k] = q
                 surf_geop[i,j] = phis
                 surf_pressure[i,j] = ps
 
-    return zonal_vel, merid_vel, temperature, surf_pressure, surf_geop
+    return zonal_vel, merid_vel, temperature, specific_humidity, surf_pressure, surf_geop
 
 def get_tropical_cyclone_ics(press, lon, lat, **kwargs):
     '''

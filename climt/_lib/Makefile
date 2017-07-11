@@ -62,35 +62,35 @@ $(CLIMT_ARCH)/libgfs_dycore.a: $(GFS_DIR)/*.f90
 
 simple_physics_lib: $(CLIMT_ARCH)/libsimple_physics.a
 
-$(CLIMT_ARCH)/libsimple_physics.a:
+$(CLIMT_ARCH)/libsimple_physics.a: $(SIM_PHYS_DIR)/*.f90
 	cd $(SIM_PHYS_DIR); make; cp libsimple_physics.a $(LIB_DIR)
 
 # Emanuel Convection Configuration
 
 emanuel_lib: $(CLIMT_ARCH)/libemanuel.a
 
-$(CLIMT_ARCH)/libemanuel.a:
+$(CLIMT_ARCH)/libemanuel.a: $(EMAN_DIR)/*.f90
 	cd $(EMAN_DIR); make; cp libemanuel.a $(LIB_DIR)
 
 # RRTMG LW Configuration
 
 rrtmg_lw_lib: $(CLIMT_ARCH)/librrtmg_lw.a
 
-$(CLIMT_ARCH)/librrtmg_lw.a:
+$(CLIMT_ARCH)/librrtmg_lw.a: $(RRTMG_LW_DIR)/*.f90
 	cd $(RRTMG_LW_DIR); make; cp librrtmg_lw.a $(LIB_DIR)
 
 # RRTMG SW Configuration
 
 rrtmg_sw_lib: $(CLIMT_ARCH)/librrtmg_sw.a
 
-$(CLIMT_ARCH)/librrtmg_sw.a:
+$(CLIMT_ARCH)/librrtmg_sw.a: $(RRTMG_SW_DIR)/*.f90
 	cd $(RRTMG_SW_DIR); make; cp librrtmg_sw.a $(LIB_DIR)
 
 # DCMIP Configuration
 
 libdcmip: $(CLIMT_ARCH)/libdcmip.a
 
-$(CLIMT_ARCH)/libdcmip.a:
+$(CLIMT_ARCH)/libdcmip.a: $(DCMIP_DIR)/*.f90
 	cd $(DCMIP_DIR); make; cp libdcmip.a $(LIB_DIR)
 
 

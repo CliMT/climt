@@ -7,13 +7,13 @@ MODULE dcmip_initial_conditions_test_4
   !  tracers (Jablonowski and Williamson, QJ 2006).
   !
   !  Options:
-  !   moist    1 for the moist baroclinic instability 
+  !   moist    1 for the moist baroclinic instability
   !            0 for the dry baroclinic instability test
   !       X    scale factor of the Earth
   !
-  !  Given a point specified by: 
-  !     lon    longitude (radians) 
-  !     lat    latitude (radians) 
+  !  Given a point specified by:
+  !     lon    longitude (radians)
+  !     lat    latitude (radians)
   !     p/z    pressure (Pa)/height (m)
   ! zcoords    1 if z is specified, 0 if p is specified
   !
@@ -41,8 +41,8 @@ MODULE dcmip_initial_conditions_test_4
   !             (1) correction of a typo (removal of 1/a) in the dthetadphi equation
   !             (2) initialization of q2 with the absolute value of EPV
   !           version 3 (v3), July/20/2012
-  !            - newly added if construct prevents division by zero in relative vorticity (zeta) 
-  !              calculation in case the perturbation center point, its antipode, or the north or 
+  !            - newly added if construct prevents division by zero in relative vorticity (zeta)
+  !              calculation in case the perturbation center point, its antipode, or the north or
   !              south poles are part of the computational grid
   !=======================================================================
 !JOY added required module for c binding
@@ -72,7 +72,7 @@ MODULE dcmip_initial_conditions_test_4
 
 !-----------------------------------------------------------------------
 ! steady-state and baroclinic wave tuning parameter
-!----------------------------------------------------------------------- 
+!-----------------------------------------------------------------------
   REAL(8), PARAMETER ::                            &
        eta_tropo  = 0.2d0     ,                    & ! tropopause level
        u0         = 35.d0     ,                    & ! 35 m/s
@@ -87,18 +87,18 @@ MODULE dcmip_initial_conditions_test_4
        delta_T                = 480000.d0,         & ! in K, for T mean calculation
        gamma                  = 0.005d0,           & ! lapse rate
        !
-       perturbation_latitude_tracer = 55.d0,       &        
+       perturbation_latitude_tracer = 55.d0,       &
        a_omega                = a*omega,           &
        exponent               = Rd*gamma/g,        &
        q0                     = 0.021d0,           & ! maximum specific humidity in kg/kg
        lat_hw                 = 2.d0*pi/9.d0,      & ! halfwidth for q: 40 degrees in radians
-       p_hw                   = 34000.d0             ! halfwidth for q: 34000 Pa   
+       p_hw                   = 34000.d0             ! halfwidth for q: 34000 Pa
 
 CONTAINS
 !JOY added bind to subroutine, new variable to switch perturbation on/off
 SUBROUTINE test4_baroclinic_wave (moist,X,lon,lat,p,z,zcoords,u,v,w,t,phis,ps,rho,q,q1,q2,do_perturb)&
         bind(c,name='dcmipBaroclinicWave')
- 
+
     IMPLICIT NONE
 
 !-----------------------------------------------------------------------
@@ -112,7 +112,7 @@ SUBROUTINE test4_baroclinic_wave (moist,X,lon,lat,p,z,zcoords,u,v,w,t,phis,ps,rh
                 z,          & ! Height (m)
                 X             ! Scale factor, not used in this version since unscaled EPV is selected
 
-    REAL(8), INTENT(INOUT) :: p        ! Pressure  (Pa)                
+    REAL(8), INTENT(INOUT) :: p        ! Pressure  (Pa)
 
     INTEGER, INTENT(IN) :: zcoords     ! 0 or 1 see below
 
@@ -132,7 +132,7 @@ SUBROUTINE test4_baroclinic_wave (moist,X,lon,lat,p,z,zcoords,u,v,w,t,phis,ps,rh
 
     REAL(8) :: eta
 
-    LOGICAL :: add_perturbation !JOY bool for pertubation
+    LOGICAL :: add_perturbation !JOY bool for perturbation
 
 !-------------------------------------------------------
 !JOY Should we perturb?
@@ -174,7 +174,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 !-----------------------------------------------------------------------
 !    initialize surface geopotential
 !-----------------------------------------------------------------------
-    phis = surface_geopotential(lon,lat)  
+    phis = surface_geopotential(lon,lat)
 
 !-----------------------------------------------------------------------
 !    initialize density from ideal gas law, t is the virtual temperature in the moist case
@@ -203,7 +203,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 !
 !   The absolute value of Ertel's potential vorticity
 !   is selected to avoid the negative EPV values in the
-!   Southern Hemisphere. Such negative values might interfere with positive-definite 
+!   Southern Hemisphere. Such negative values might interfere with positive-definite
 !   constraints in the tracer advection algorithm.
 
   end subroutine test4_baroclinic_wave
@@ -228,7 +228,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
   REAL(8) FUNCTION t_mean(eta)
     IMPLICIT NONE
     REAL(8), INTENT(IN) :: eta
-    
+
     if (eta .ge. eta_tropo) then
       t_mean = T0*eta**exponent       ! mean temperature at each level
     else
@@ -239,14 +239,14 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
 
 !***********************************************************************************************
-! Temperature deviation from the horizontal mean 
+! Temperature deviation from the horizontal mean
 !***********************************************************************************************
   REAL(8) FUNCTION t_deviation(lon,lat,eta)
     IMPLICIT NONE
     REAL(8), INTENT(IN) :: eta, lon, lat
     REAL(8)             :: factor, phi_vertical
 
-    factor       = eta*pi*u0/Rd             
+    factor       = eta*pi*u0/Rd
     phi_vertical = (eta - eta0) * 0.5d0*pi
 
     t_deviation = factor * 1.5d0 * SIN(phi_vertical) * (cos(phi_vertical))**0.5d0 *                &
@@ -259,7 +259,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
 !**************************************************************************
 ! Surface geopotential
-!**************************************************************************  
+!**************************************************************************
   REAL(8) FUNCTION surface_geopotential(lon,lat)
     IMPLICIT NONE
     REAL(8), INTENT(IN) :: lon, lat
@@ -274,7 +274,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
 !**************************************************************************
 ! 3D geopotential
-!**************************************************************************  
+!**************************************************************************
   REAL(8) FUNCTION geopotential(lon,lat,eta)
     IMPLICIT NONE
     REAL(8), INTENT(IN) :: lon, lat, eta
@@ -291,7 +291,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
 !**************************************************************************
 ! mean geopotential
-!**************************************************************************  
+!**************************************************************************
   REAL(8) FUNCTION horiz_mean_geopotential(eta)
     IMPLICIT NONE
     REAL(8), INTENT(IN) :: eta
@@ -307,7 +307,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
         - 10.d0/3.d0 * eta_tropo**2 * eta**3               &
         + 5.d0/4.d0 * eta_tropo * eta**4                   &
         - 1.d0/5.d0 * eta**5)
- 
+
       horiz_mean_geopotential = horiz_mean_geopotential - delta_phi
     end if
 
@@ -315,7 +315,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
 !********************************************************************
 ! u wind component
-!********************************************************************  
+!********************************************************************
   REAL(8) FUNCTION u_wind(lon,lat,eta,lperturb)
     IMPLICIT NONE
     REAL(8), INTENT(IN) :: lon,lat,eta
@@ -341,7 +341,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
        sin_tmp = SIN(perturb_lat)*SIN(lat)
        cos_tmp = COS(perturb_lat)*COS(lat)
-                  
+
        r = ACOS( sin_tmp + cos_tmp*COS(lon-perturb_lon) )         ! great circle distance without radius 'a'
        u_perturb = perturbation_amplitude*EXP(- (r*radius)**2 )   ! perturbation_amplitude determines strength
        u_wind    = u_perturb + u_wind                             ! perturbation + unperturbed u wind
@@ -354,7 +354,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
 !********************************************************************
 ! v wind component
-!********************************************************************  
+!********************************************************************
   REAL(8) FUNCTION v_wind(lon,lat,eta,lperturb)
     IMPLICIT NONE
     REAL(8), INTENT(IN) :: lon,lat,eta
@@ -396,7 +396,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
 
 !********************************************************************
 ! Tracers
-!********************************************************************  
+!********************************************************************
 !-----------------------------------------------------------------------
 ! Potential temperature
 !-----------------------------------------------------------------------
@@ -444,7 +444,7 @@ u = u_wind(lon,lat,eta,add_perturbation)
     ! great circle distance without radius 'a'
     K  = SIN(perturb_lat)*SIN(lat) + COS(perturb_lat)*COS(lat)*COS(lon-perturb_lon)
     DK = SIN(perturb_lat)*COS(lat) - COS(perturb_lat)*SIN(lat)*COS(lon-perturb_lon)
-    r  = ACOS(K)         
+    r  = ACOS(K)
 
     ! relative vorticity
 
