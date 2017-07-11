@@ -64,7 +64,7 @@ class IceSheet(ClimtImplicit):
                 The vertical resolution of the model in :math:`m`.
 
             maximum_snow_ice_height(float):
-                The maximum combined height of snow and ice handled by the model
+                The maximum combined height of snow and ice handled by the model in :math:`m`.
 
             thermal_conductivity_of_ice (float, optional):
                 The thermal conductivity of ice in :math:`W m^{-1} K^{-1}`.
@@ -186,7 +186,7 @@ class IceSheet(ClimtImplicit):
                         total_height = input_arrays['surface_snow_thickness'][lon, lat]
                         soil_surface_temperature = input_arrays['soil_surface_temperature'][lon, lat]
                     if total_height > self._max_height:
-                        raise ValueError("Total height exceeds maximum value of {}".format(self._max_height))
+                        raise ValueError("Total height exceeds maximum value of {} m.".format(self._max_height))
 
                     if total_height < 1e-8:  # Some epsilon
                         continue
