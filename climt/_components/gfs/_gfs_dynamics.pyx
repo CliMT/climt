@@ -55,7 +55,7 @@ cdef extern:
 
 # Function to init dynamics
 cdef extern:
-    void gfs_init_dynamics()
+    void gfs_init_dynamics(int *num_damp_levs)
 
 # Function to init physics
 cdef extern:
@@ -323,7 +323,7 @@ def set_model_grid(int nlats, int nlons,
     init_grid_arrays(nlons, nlats, nlevs, ntracers)
 
 # Initialise dynamics and physics
-def init_model(double dry_pressure):
+def init_model(double dry_pressure, int num_damp_levels):
 
     global __latitudes, __longitudes
     # Now that the arrays are initialised, call dynamics and physics init
@@ -331,7 +331,7 @@ def init_model(double dry_pressure):
 
     gfs_set_dry_pressure(&dry_pressure)
     gfs_set_model_time(&zero_model_time)
-    gfs_init_dynamics()
+    gfs_init_dynamics(&num_damp_levels)
     gfs_get_lon_lat(<double *>&__longitudes[0,0], <double *>&__latitudes[0,0])
     longitudes = np.asarray(__longitudes)
     latitudes = np.asarray(__latitudes)

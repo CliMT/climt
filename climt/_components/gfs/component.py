@@ -69,6 +69,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             number_of_longitudes=198,
             number_of_levels=28,
             number_of_tracers=0,
+            number_of_damped_levels=0,
             dry_pressure=1.0132e5,
             time_step=1200.,
             planetary_radius=None,
@@ -106,6 +107,9 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
                 :code:`gfs_tracers` and dimensions are
                 :code:`(number_of_longitudes, number_of_latitudes, number_of_levels,
                 number_of_tracers)`.
+
+            number_of_damped_levels (int, optional):
+                The number of levels from the model top which are Rayleigh damped.
 
             dry_pressure (float, optional):
                 The dry pressure decides the mass of the dry atmosphere, to be used by the
@@ -191,12 +195,15 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         assert number_of_levels > 0
         assert number_of_latitudes > 0
         assert number_of_longitudes > 0
+        assert number_of_damped_levels >= 0
 
         self._num_lats = number_of_latitudes
 
         self._num_lons = number_of_longitudes
 
         self._num_levs = number_of_levels
+
+        self._damping_levels = number_of_damped_levels
 
         # 4 tracers at least for water vapour, ozone and liquid and solid cloud condensate
         self._num_tracers = number_of_tracers + 4
@@ -227,7 +234,8 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
                                      self._spectral_dim,
                                      self._num_tracers)
 
-        latitudes, longitudes, sigma, sigma_interface = _gfs_dynamics.init_model(self._dry_pressure)
+        latitudes, longitudes, sigma, sigma_interface = _gfs_dynamics.init_model(self._dry_pressure,
+                                                                                 self._damping_levels)
 
         latitude = dict(label='latitude',
                         values=np.degrees(latitudes[0, :]),

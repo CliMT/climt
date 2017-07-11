@@ -43,6 +43,7 @@ module dyn_init
  !public :: init_dyn, wrtout_sig, readin_sig
  public :: init_dyn
 
+ real(r_kind) :: slrd0=0
  contains
  !JOY subroutine to set topography from arbitrary array
  subroutine set_topography(surf_geop) bind(c, name='gfs_set_topography')
@@ -55,14 +56,14 @@ module dyn_init
 
  end subroutine set_topography
 
- subroutine init_dyn() bind(c, name='gfs_init_dynamics')
+ subroutine init_dyn(py_damping_level) bind(c, name='gfs_init_dynamics')
     integer k
     ! allocate arrays
     ! JOY data array inits will be done from python
 
     !call init_specdata()
     !call init_griddata()
-    
+    integer, intent(in):: py_damping_level
     
     ! initialize spherical harmonic lib
     !print *,'Initialising shtns'
@@ -107,6 +108,8 @@ module dyn_init
          !sl(k) = ((si(k)**(rk+1.) - si(k+1)**(rk+1.))/&
          !        ((rk+1.)*(si(k)-si(k+1))))**(1./rk)
     enddo
+
+    slrd0 = si(nlevs+1 - py_damping_level)
 
     !call spectogrd(grav*topospec, phis)
     !print *,'min/max surface geopotential',minval(phis),maxval(phis)
@@ -303,7 +306,7 @@ module dyn_init
    real(r_kind), intent(out),dimension(ndimspec) :: disspec
    real(r_kind), dimension(nlevs),intent(out) :: diff_prof,dmp_prof
    integer k
-   real(r_kind) slrd0,dmp_prof1
+   real(r_kind) dmp_prof1
    ! if ndiss=0, use default value of 8
    if (ndiss == 0) ndiss = 8
    ! if efold <= 0, use GFS defaults.
@@ -324,7 +327,7 @@ module dyn_init
       if (ntrunc > 170) fshk = 2.2*hdif_fac
       if (ntrunc == 126) fshk = 1.5*hdif_fac
    end if
-   slrd0=0.00        ! SIGMA LEVEL AT WHICH TO BEGIN RAYLEIGH MOMTUM DAMPING
+   !slrd0=0.00        ! SIGMA LEVEL AT WHICH TO BEGIN RAYLEIGH MOMTUM DAMPING
    dmp_prof1=1./taustratdamp ! RECIPROCAL OF TIME SCALE PER SCALE HEIGHT
                       ! ABOVE BEGINNING SIGMA LEVEL FOR RAYLEIGH DAMPING
    dmp_prof = 0.
