@@ -18,3 +18,7 @@ Latest
 * RTD finally working, phew!
 * Added RRTMG Longwave, Simple Physics
 * Added helper functions to reduce boilerplate code in components
+
+Breaking Changes
+----------------
+* mass_to_volume_mixing_ratio now uses numpy arrays instead of DataArrays.
