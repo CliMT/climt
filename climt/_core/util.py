@@ -1,5 +1,5 @@
 from pint import UnitRegistry
-from sympl import DataArray, jit
+from sympl import jit
 import numpy as np
 
 pint_units = UnitRegistry()
@@ -17,13 +17,11 @@ def mass_to_volume_mixing_ratio(
 
     Args:
 
-        mass_mixing_ratio (DataArray):
-            The quantity to be transformed. It
-            must be a DataArray with the units attribute correctly set (i.e, to
-            something like 'g/kg' or 'kg/kg').
+        mass_mixing_ratio (array):
+            The quantity to be transformed in units of :math:`g/g`.
 
         molecular_weight (float):
-            The molecular weight of the gas in grams/mole.
+            The molecular weight of the gas in :math:`g/mol`.
 
         molecular_weight_air (float,optional):
             The molecular weight of dry air.
@@ -32,7 +30,7 @@ def mass_to_volume_mixing_ratio(
 
     Returns:
 
-        volume_mixing_ratio (DataArray):
+        volume_mixing_ratio (array):
             The volume mixing ratio of the gas.
 
     Raises:
@@ -45,16 +43,7 @@ def mass_to_volume_mixing_ratio(
     if molecular_weight is None:
         raise ValueError('The molecular weight must be provided')
 
-    mass_mixing_ratio_with_units = mass_mixing_ratio.values*pint_units(mass_mixing_ratio.units)
-
-    dims = mass_mixing_ratio.dims
-
-    volume_mixing_ratio = mass_mixing_ratio_with_units*molecular_weight_air/molecular_weight
-
-    volume_mixing_ratio = volume_mixing_ratio.to_base_units()
-    volume_mixing_ratio = DataArray(volume_mixing_ratio,
-                                    dims=dims,
-                                    attrs={'units': str(volume_mixing_ratio.units)})
+    volume_mixing_ratio = mass_mixing_ratio*molecular_weight_air/molecular_weight
 
     return volume_mixing_ratio
 

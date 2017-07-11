@@ -1,0 +1,19 @@
+#intel fortran 
+FC            = ifort
+OMPFLAG       = -openmp
+FREEFLAG      = -FR
+AUTOFLAG      = -auto
+#AUTOFLAG      =  -openmp
+FFLAGS        = -O3 -xHost -convert big_endian  
+DEBUGFLAGS    = -warn all -implicitnone -traceback 
+#DEBUGFLAGS    = 
+EXEC          = ../bin/gfs
+LDFLAGS       = -openmp -mkl=sequential 
+# jet
+LIBS          = -L/pan2/projects/gfsenkf/whitaker/lib -lshtns -lfftw3 libgfs/libgfs.a w3lib/libw3.a
+# zeus
+LIBS          = -L/scratch1/portfolios/BMC/fim/whitaker/lib -lshtns-icc -L/scratch1/portfolios/BMC/fim/whitaker/intel/lib -lfftw3 libgfs/libgfs.a w3lib/libw3.a
+# mac
+#LIBS          = -L/Users/$(USER)/lib -lshtns -L/opt/local/lib -lfftw3 libgfs/libgfs.a w3lib/libw3.a
+CFLAGS  = -O2 -DLINUX
+CC      = gcc

@@ -4,6 +4,9 @@ History
 
 Latest
 ------
+* Added DCMIP initial conditions, test 4 tried out.
+* Dynamical core integrated now.
+* BIG change in the build system. Tests pass on Mac as well
 * Arrays can now have arbitrary dtype (to use qualitative, string, quantities)
 * Added Emanuel Convection, surface energy balance model and ice sheet energy balance
 * 2D coordinates are now supported for horizontal coordinates
@@ -15,3 +18,7 @@ Latest
 * RTD finally working, phew!
 * Added RRTMG Longwave, Simple Physics
 * Added helper functions to reduce boilerplate code in components
+
+Breaking Changes
+----------------
+* mass_to_volume_mixing_ratio now uses numpy arrays instead of DataArrays.

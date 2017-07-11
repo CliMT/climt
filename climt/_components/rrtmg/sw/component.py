@@ -6,7 +6,7 @@ from ...._core import (
 import numpy as np
 from numpy import pi as numpy_pi
 try:
-    from . import _rrtm_sw
+    from . import _rrtmg_sw
 except ImportError:
     print('Import failed. RRTMG Shortwave will not be available!')
 
@@ -145,7 +145,7 @@ class RRTMGShortwave(ClimtPrognostic):
             facular_sunspot_amplitude=np.ones(2),
             solar_variability_by_band=np.ones(16),
             aerosol_type=0,
-            gravitational_acceleration=None,
+            acceleration_gravity=None,
             planck_constant=None,
             boltzmann_constant=None,
             speed_of_light=None,
@@ -251,46 +251,46 @@ class RRTMGShortwave(ClimtPrognostic):
                   state quantity :code:`aerosol_optical_depth_at_55_micron`.
                 * 10: Input all aerosol optical properties.
 
-            gravitational_acceleration (float):
+            acceleration_gravity (float):
                 value of acceleration due to gravity in
-                :math:`m s^{-1}`. Default value from climt.default_constants is used if None.
+                :math:`m s^{-1}`. Default value from :code:`sympl.default.constants` is used if None.
 
             planck_constant (float):
                 value of the planck constant in :math:`J s`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             boltzmann_constant (float):
                 value of the Boltzmann constant in :math:`J K^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             speed_of_light (float):
                 value of the speed of light in :math:`m s^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             avogadro_constant (float):
                 value of the Avogadro constant.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             loschmidt_constant (float):
                 value of the Loschmidt constant.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             universal_gas_constant (float):
                 value of the gas constant in :math:`J K^{-1} mol^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
             stefan_boltzmann_constant (float):
                 value of the Stefan-Boltzmann constant
-                in :math:`W m^{-2} K^{-4}`. Default value from climt.default_constants is
+                in :math:`W m^{-2} K^{-4}`. Default value from :code:`sympl.default.constants` is
                 used if None.
 
             seconds_per_day (float):
                 number of seconds per day.
-                Default value from climt.default_constants (for earth) is used if None.
+                Default value from :code:`sympl.default.constants` (for earth) is used if None.
 
             specific_heat_dry_air (float):
                 The specific heat of dry air in :math:`J K^{-1} kg^{-1}`.
-                Default value from climt.default_constants is used if None.
+                Default value from :code:`sympl.default.constants` is used if None.
 
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
@@ -322,7 +322,7 @@ class RRTMGShortwave(ClimtPrognostic):
         self._aerosol_type = aerosol_type
 
         self._g = replace_none_with_default(
-            'gravitational_acceleration', gravitational_acceleration)
+            'gravitational_acceleration', acceleration_gravity)
 
         self._planck = replace_none_with_default(
             'planck_constant', planck_constant).to_units('erg s')
@@ -351,7 +351,7 @@ class RRTMGShortwave(ClimtPrognostic):
         self._Cpd = replace_none_with_default(
             'heat_capacity_of_dry_air_at_constant_pressure', specific_heat_dry_air)
 
-        _rrtm_sw.set_constants(
+        _rrtmg_sw.set_constants(
             numpy_pi, self._g,
             self._planck,
             self._boltzmann,
@@ -362,7 +362,7 @@ class RRTMGShortwave(ClimtPrognostic):
             self._stef_boltz,
             self._secs_per_day)
 
-        _rrtm_sw.initialise_rrtm_radiation(
+        _rrtmg_sw.initialise_rrtm_radiation(
             self._Cpd,
             self._solar_const,
             self._fac_sunspot_coeff,
@@ -395,8 +395,8 @@ class RRTMGShortwave(ClimtPrognostic):
 
         raw_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
 
-        Q = mass_to_volume_mixing_ratio(state['specific_humidity'].to_units('g/g'), 18.02)
-        Q = get_numpy_array(Q, ['x', 'y', 'z'])
+        Q = get_numpy_array(state['specific_humidity'].to_units('g/g'), ['x', 'y', 'z'])
+        Q = mass_to_volume_mixing_ratio(Q, 18.02)
 
         mid_level_shape = raw_arrays['air_temperature'].shape
         # int_level_shape = raw_arrays['air_pressure_on_interface_levels'].shape
@@ -430,7 +430,7 @@ class RRTMGShortwave(ClimtPrognostic):
 
         for lon in range(mid_level_shape[0]):
 
-            _rrtm_sw.rrtm_calculate_shortwave_fluxes(
+            _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
                 mid_level_shape[1],
                 mid_level_shape[2],
                 day_of_year,
