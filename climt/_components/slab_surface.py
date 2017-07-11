@@ -131,5 +131,7 @@ class SlabSurface(ClimtPrognostic):
         diag_dict = self.create_state_dict_for('_climt_diagnostics', state)
 
         tend_dict['surface_temperature'].values[:] = net_heat_flux/heat_capacity_surface
+        tend_dict['surface_temperature'].values[land_ice_mask] = 0
+        tend_dict['surface_temperature'].values[sea_ice_mask] = 0
 
         return tend_dict, diag_dict
