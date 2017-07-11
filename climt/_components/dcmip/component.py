@@ -2,7 +2,7 @@ from ..._core import ClimtDiagnostic
 import numpy as np
 
 try:
-    import _dcmip
+    from . import _dcmip
 except ImportError:
     print('Import Failed. DCMIP initial conditions will not be available!')
 
