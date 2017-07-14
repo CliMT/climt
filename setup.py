@@ -69,6 +69,9 @@ os.environ['CFLAGS'] = '-fPIC'
 # Create a custom build class to build libraries, and patch cython extensions
 def build_libraries():
 
+    if os.environ.get('READTHEDOCS') == 'True':
+        return
+
     curr_dir = os.getcwd()
     os.chdir(compiled_path)
     os.environ['PWD'] = compiled_path
@@ -101,62 +104,64 @@ class climt_bdist_wheel(native_bdist_wheel):
 
 
 # Define extensions to be built
-ext_modules = [
-    Extension(
-        'climt._components._berger_solar_insolation',
-        ['climt/_components/_berger_solar_insolation.pyx']),
+if os.environ.get('READTHEDOCS') == 'True':
+    ext_modules = []
+else:
+    ext_modules = [
+        Extension(
+            'climt._components._berger_solar_insolation',
+            ['climt/_components/_berger_solar_insolation.pyx']),
 
-    Extension(
-        'climt._components.gfs._gfs_dynamics',
-        sources=['climt/_components/gfs/_gfs_dynamics.pyx'],
-        libraries=libraries,
-        include_dirs=include_dirs,
-        library_dirs=[lib_path],
-        extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
-                         lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
-                         lib_path+'/libfftw3.a', lib_path+'/libopenblas.a'] + default_link_args),
+        Extension(
+            'climt._components.gfs._gfs_dynamics',
+            sources=['climt/_components/gfs/_gfs_dynamics.pyx'],
+            libraries=libraries,
+            include_dirs=include_dirs,
+            library_dirs=[lib_path],
+            extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
+                             lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
+                             lib_path+'/libfftw3.a', lib_path+'/libopenblas.a'] + default_link_args),
 
-    Extension(
-        'climt._components.simple_physics._simple_physics',
-        sources=['climt/_components/simple_physics/_simple_physics.pyx'],
-        libraries=libraries,
-        include_dirs=include_dirs,
-        library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/libsimple_physics.a'] + default_link_args),
+        Extension(
+            'climt._components.simple_physics._simple_physics',
+            sources=['climt/_components/simple_physics/_simple_physics.pyx'],
+            libraries=libraries,
+            include_dirs=include_dirs,
+            library_dirs=[lib_path],
+            extra_link_args=[lib_path+'/libsimple_physics.a'] + default_link_args),
 
-    Extension(
-        'climt._components.emanuel._emanuel_convection',
-        sources=['climt/_components/emanuel/_emanuel_convection.pyx'],
-        libraries=libraries,
-        include_dirs=include_dirs,
-        library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/libemanuel.a'] + default_link_args),
+        Extension(
+            'climt._components.emanuel._emanuel_convection',
+            sources=['climt/_components/emanuel/_emanuel_convection.pyx'],
+            libraries=libraries,
+            include_dirs=include_dirs,
+            extra_compile_args=['-fopenmp'],
+            library_dirs=[lib_path],
+            extra_link_args=['-fopenmp', lib_path+'/libemanuel.a'] + default_link_args),
 
-    Extension(
-        'climt._components.rrtmg.lw._rrtmg_lw',
-        sources=['climt/_components/rrtmg/lw/_rrtm_lw.pyx'],
-        libraries=libraries,
-        include_dirs=include_dirs,
-        library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/librrtmg_lw.a'] + default_link_args),
+        Extension(
+            'climt._components.rrtmg.lw._rrtmg_lw',
+            sources=['climt/_components/rrtmg/lw/_rrtm_lw.pyx'],
+            libraries=libraries,
+            include_dirs=include_dirs,
+            library_dirs=[lib_path],
+            extra_link_args=[lib_path+'/librrtmg_lw.a'] + default_link_args),
 
-    Extension(
-        'climt._components.rrtmg.sw._rrtmg_sw',
-        sources=['climt/_components/rrtmg/sw/_rrtm_sw.pyx'],
-        libraries=libraries,
-        include_dirs=include_dirs,
-        library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/librrtmg_sw.a'] + default_link_args),
+        Extension(
+            'climt._components.rrtmg.sw._rrtmg_sw',
+            sources=['climt/_components/rrtmg/sw/_rrtm_sw.pyx'],
+            libraries=libraries,
+            include_dirs=include_dirs,
+            library_dirs=[lib_path],
+            extra_link_args=[lib_path+'/librrtmg_sw.a'] + default_link_args),
 
-    Extension(
-        'climt._components.dcmip._dcmip',
-        sources=['climt/_components/dcmip/dcmip.pyx'],
-        libraries=libraries,
-        include_dirs=include_dirs,
-        library_dirs=[lib_path],
-        extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),
-
-]
+        Extension(
+            'climt._components.dcmip._dcmip',
+            sources=['climt/_components/dcmip/dcmip.pyx'],
+            libraries=libraries,
+            include_dirs=include_dirs,
+            library_dirs=[lib_path],
+            extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),]
 
 setup(
     name='climt',
