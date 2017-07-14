@@ -20,8 +20,8 @@ def plot_function(fig, state):
 
 monitor = PlotFunctionMonitor(plot_function)
 
-dycore = climt.GfsDynamicalCore(number_of_longitudes=96,
-                                number_of_latitudes=44,
+dycore = climt.GfsDynamicalCore(number_of_longitudes=196,
+                                number_of_latitudes=98,
                                 dry_pressure=1e5)
 held_suarez = climt.HeldSuarez()
 

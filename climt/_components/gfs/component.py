@@ -190,7 +190,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             'heat_capacity_of_water_vapor_at_constant_pressure',
             specific_heat_condensible)
 
-        self._fvirt =  (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
+        self._fvirt = (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
 
         # Sanity Checks
         assert number_of_tracers >= 0
