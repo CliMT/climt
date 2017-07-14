@@ -20,6 +20,16 @@ Base Components
 
     ClimtImplicitPrognostic
 
+    ClimtSpectralDynamicalCore
+
+Dynamics
+---------
+
+.. autosummary::
+    :toctree: generated/
+
+    GfsDynamicalCore
+    GfsDynamicalCore.__call__
 
 Radiation
 ---------
@@ -78,3 +88,5 @@ Test Cases
     HeldSuarez
     HeldSuarez.__call__
 
+    DcmipInitialConditions
+    DcmipInitialConditions.__call__

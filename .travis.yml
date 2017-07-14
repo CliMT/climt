@@ -28,7 +28,7 @@ script: travis_wait 20 tox -e ${TOXENV}
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
-  user: Twine
+  user: joy.merwin
   password:
     secure: PLEASE_REPLACE_ME
   on:

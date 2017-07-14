@@ -91,11 +91,11 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
                 The desired number of latitudes for the model. Note that
                 not all combinations of latitudes and longitudes are
                 acceptable. In particular, the number of latitudes must be
-                :math:`\leq (number_of_longitudes)/2 - 2`.
+                :math:`\leq (longitudes)/2`.
 
             number_of_longitudes (int, optional):
                 The desired number of longitudes. The resolution of the model in `Txx`
-                notation is approximately :math:`xx = number_of_longitudes/3`. So, 192
+                notation is approximately :math:`xx = longitudes/3`. So, 192
                 longitudes is T64, etc.,
 
             number_of_levels (int, optional):
@@ -190,7 +190,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             'heat_capacity_of_water_vapor_at_constant_pressure',
             specific_heat_condensible)
 
-        self._fvirt = self._Rd/self._Rv - 1
+        self._fvirt =  (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
 
         # Sanity Checks
         assert number_of_tracers >= 0
@@ -236,8 +236,12 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
                                      self._spectral_dim,
                                      self._num_tracers)
 
+        print('Initialising dynamical core, this could take some time...')
+
         latitudes, longitudes, sigma, sigma_interface = _gfs_dynamics.init_model(self._dry_pressure,
                                                                                  self._damping_levels)
+
+        print('Done!')
 
         latitude = dict(label='latitude',
                         values=np.degrees(latitudes[0, :]),
@@ -340,10 +344,13 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         _gfs_dynamics.convert_to_grid()
         _gfs_dynamics.calculate_pressure()
 
+        raw_input_arrays['air_temperature'][:] = t_virt/(
+            1 + self._fvirt.values.item()*raw_input_arrays['specific_humidity'])
+
         self.store_current_state_signature(raw_input_arrays)
 
         for quantity in self._climt_outputs.keys():
-            output_dict[quantity].values[:] = raw_input_arrays[quantity]
+                output_dict[quantity].values[:] = raw_input_arrays[quantity]
 
         return {}, output_dict
 

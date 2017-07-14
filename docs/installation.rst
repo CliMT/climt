@@ -44,8 +44,10 @@ Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
 
+    $ pip install -r requirements_dev.txt
     $ python setup.py install
 
+Both commands may require the use of *sudo*.
 
 .. _Github repo: https://github.com/CliMT/climt
 .. _tarball: https://github.com/CliMT/climt/tarball/master

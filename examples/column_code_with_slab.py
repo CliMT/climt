@@ -46,10 +46,10 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 3)
     ax.plot(
-        state['upwelling_longwave_flux_in_air'].values.flatten(),
+        state['upwelling_shortwave_flux_in_air'].values.flatten(),
         state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
     ax.plot(
-        state['downwelling_longwave_flux_in_air'].values.flatten(),
+        state['downwelling_shortwave_flux_in_air'].values.flatten(),
         state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
     ax.axes.invert_yaxis()
     # ax.set_ylim(1e5, 100.)

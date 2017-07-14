@@ -235,8 +235,8 @@ class HeldSuarez(ClimtPrognostic):
 
         return DataArray(np.maximum(
             200,
-            (315 - self._delta_T_y*np.sin(latitude)**2 -
-             self._delta_theta_z*np.log(air_pressure/self._p0.values)*np.cos(latitude)**2
+            (315 - self._delta_T_y*np.sin(np.radians(latitude))**2 -
+             self._delta_theta_z*np.log(air_pressure/self._p0.values)*np.cos(np.radians(latitude))**2
              ) * (air_pressure/self._p0.values)**self._kappa.values),
             dims=out_dims,
             attrs={'units': 'degK'})
@@ -254,7 +254,7 @@ class HeldSuarez(ClimtPrognostic):
             self._k_a +
             (self._k_s - self._k_a) *
             np.maximum(0, (sigma - self._sigma_b)/(1 - self._sigma_b)) *
-            np.cos(latitude)**4,
+            np.cos(np.radians(latitude))**4,
             dims=out_dims,
             attrs={'units': 's^-1'})
 

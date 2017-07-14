@@ -420,7 +420,7 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
         return self._prognostic
 
     @prognostics.setter
-    def set_prognostics(self, prognostic_list):
+    def prognostics(self, prognostic_list):
         self._prognostic = PrognosticComposite(*prognostic_list)
 
     @property
