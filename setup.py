@@ -161,7 +161,8 @@ else:
             libraries=libraries,
             include_dirs=include_dirs,
             library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),]
+            extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),
+    ]
 
 setup(
     name='climt',
