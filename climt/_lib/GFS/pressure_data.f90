@@ -83,7 +83,7 @@ module pressure_data
 
 
      subroutine destroy_pressdata()
-         print *, 'Deallocating pressure data'
+         !print *, 'Deallocating pressure data'
          nullify(ak,bk,ck,dbk,si,sl,bkl)
          nullify(alfa,rlnp,dpk)
          !JOY these are just pointers, no deallocation needed
