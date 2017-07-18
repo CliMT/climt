@@ -7,11 +7,11 @@ CliMT
     :target: https://pypi.python.org/pypi/climt
     :alt: PyPI
 
-.. image:: https://img.shields.io/travis/CliMT/climt-future.svg
+.. image:: https://img.shields.io/travis/CliMT/climt.svg
     :target: https://travis-ci.org/CliMT/climt
     :alt: Continuous Integration
 
-.. image:: https://img.shields.io/codecov/c/github/CliMT/climt-future.svg
+.. image:: https://img.shields.io/codecov/c/github/CliMT/climt.svg
     :target: https://travis-ci.org/CliMT/climt
     :alt: Coverage
 
