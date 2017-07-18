@@ -468,6 +468,7 @@ MODULE emanuel
 !  ***  static energy that has the maximum value of moist static energy ***
 !
         AHMAX=0.0
+        NK=0
         DO 42 I=MINORIG,IHMIN
          IF(HM(I).GT.AHMAX)THEN
           NK=I
