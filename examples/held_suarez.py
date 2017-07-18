@@ -20,13 +20,14 @@ def plot_function(fig, state):
 
 monitor = PlotFunctionMonitor(plot_function)
 
-dycore = climt.GfsDynamicalCore(number_of_longitudes=196,
-                                number_of_latitudes=98,
+dycore = climt.GfsDynamicalCore(number_of_longitudes=128,
+                                number_of_latitudes=64,
                                 dry_pressure=1e5)
 held_suarez = climt.HeldSuarez()
 
 my_state = climt.get_default_state([dycore], x=dycore.grid_definition['x'],
-                                   y=dycore.grid_definition['y'], z=dycore.grid_definition['z'])
+                                   y=dycore.grid_definition['y'],
+                                   z=dycore.grid_definition['mid_levels'])
 
 my_state['eastward_wind'].values[:] = np.random.randn(*my_state['eastward_wind'].shape)
 
