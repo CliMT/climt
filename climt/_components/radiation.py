@@ -11,7 +11,7 @@ class GrayLongwaveRadiation(Prognostic):
         'air_pressure_on_interface_levels', 'surface_temperature')
     diagnostics = (
         'downwelling_longwave_flux_in_air', 'upwelling_longwave_flux_in_air',
-        'net_longwave_flux_in_air')
+        'net_longwave_flux_in_air', 'longwave_heating_rate')
     tendencies = ('air_temperature',)
 
     def __init__(
@@ -86,6 +86,13 @@ class GrayLongwaveRadiation(Prognostic):
             [state['air_pressure_on_interface_levels'],
              state['surface_temperature']],
             out_dims=('x', 'y', 'z'))
+
+        tendencies = {
+            'air_temperature': DataArray(
+                lw_temperature_tendency, dims=dims_mid,
+                attrs={'units': 'K s^-1'}).squeeze()
+        }
+
         diagnostics = {
             'downwelling_longwave_flux_in_air': DataArray(
                 downward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
@@ -96,12 +103,9 @@ class GrayLongwaveRadiation(Prognostic):
             'net_longwave_flux_in_air': DataArray(
                 net_lw_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
             ).squeeze(),
+            'longwave_heating_rate': tendencies['air_temperature'].copy().to_units('degK/day'),
         }
-        tendencies = {
-            'air_temperature': DataArray(
-                lw_temperature_tendency, dims=dims_mid,
-                attrs={'units': 'K s^-1'}).squeeze()
-        }
+
         return tendencies, diagnostics
 
 
