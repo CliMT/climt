@@ -17,19 +17,17 @@ dycore = climt.GfsDynamicalCore(number_of_longitudes=198,
 dcmip = climt.DcmipInitialConditions()
 
 my_state = climt.get_default_state([dycore], x=dycore.grid_definition['x'],
-                                   y=dycore.grid_definition['y'], z=dycore.grid_definition['z'])
+                                   y=dycore.grid_definition['y'],
+                                   z=dycore.grid_definition['mid_levels'])
 
 my_state['surface_air_pressure'].values[:] = 1e5
 dycore(my_state)
 
 out = dcmip(my_state, add_perturbation=True)
-print(out['surface_air_pressure'])
 
 my_state.update(out)
 
-u_ic = out['eastward_wind'].mean(dim='longitude').values.copy()
-
 for i in range(1000):
     diag, output = dycore(my_state)
-    monitor.store(my_state)
+    monitor.store(output)
     my_state.update(output)
