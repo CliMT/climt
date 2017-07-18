@@ -34,7 +34,7 @@ cdef cnp.int32_t num_cols, num_levs, initialised
 cdef double time_step
 cdef cnp.int32_t cyclone, lsc, pbl, lhf, ext_ts, use_ext_qsurf
 
-def set_physical_constants(double grav, double cpd, double r_air, double latent_heat, 
+def set_physical_constants(double grav, double cpd, double r_air, double latent_heat,
                            double r_cond, double radius, double rotation,
                            double rho_cond, double pbltop, double pbldecay,
                            double drag_latent_sens, double drag_base_mom,
@@ -94,7 +94,7 @@ def get_new_state(cnp.ndarray[cnp.double_t, ndim=3] u_ext,
 
     '''
 
-    if not initialised: 
+    if not initialised:
         print 'Module not initialised'
         return
 

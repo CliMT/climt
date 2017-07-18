@@ -3,6 +3,7 @@ from sympl import replace_none_with_default
 from sympl import get_numpy_array
 from sympl import combine_dimensions
 from climt import ClimtImplicit
+import numpy as np
 try:
     from . import _simple_physics as phys
 except ImportError:
@@ -248,6 +249,11 @@ class SimplePhysics(ClimtImplicit):
         Ts = get_numpy_array(state['surface_temperature'].to_units('degK'), ['x', 'y'])
         Ps = get_numpy_array(state['surface_air_pressure'].to_units('Pa'), ['x', 'y'])
         lats = get_numpy_array(state['latitude'].to_units('degrees_north'), ['x', 'y'])
+
+        if lats.shape[0] == 1:  # 1-d array only
+            num_longitudes = Ts.shape[0]
+            lat_list = [lats[0, :] for i in range(num_longitudes)]
+            lats = np.asfortranarray(np.stack(lat_list, axis=0))
 
         dims_mid = combine_dimensions([
             state['surface_temperature'],
