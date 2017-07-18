@@ -1,5 +1,7 @@
 cimport numpy as cnp
 import numpy as np
+cimport cython
+from cython.parallel import prange
 
 '''
 Code signatures for the emanuel convection fortran code
@@ -21,7 +23,7 @@ cdef extern:
         double *lat_heat, double *grav, double *density_water,
         double *reference_mass_flux_timescale)
 
-cdef extern:
+cdef extern nogil:
     void emanuel_convection(double *temp, double *q, double *qs,
                             double *u, double *v,
                             double *pmid, double *pint,
@@ -86,72 +88,76 @@ def init_emanuel_convection(
 
     initialised = 1
 
-
+@cython.boundscheck(False)
 def convect(
     cnp.int32_t nlevs,
+    cnp.int32_t nlons,
     cnp.int32_t nlats,
     cnp.int32_t max_conv_lev,
     cnp.int32_t num_tracers,
     double dt,
-    cnp.double_t[::1, :] temp,
-    cnp.double_t[::1, :] q,
-    cnp.double_t[::1, :] qs,
-    cnp.double_t[::1, :] u,
-    cnp.double_t[::1, :] v,
-    cnp.double_t[::1, :] pmid,
-    cnp.double_t[::1, :] pint,
-    cnp.int32_t[::1] conv_state,
-    cnp.double_t[::1] precip,
-    cnp.double_t[::1] downdraft_vel_scale,
-    cnp.double_t[::1] downdraft_temp_scale,
-    cnp.double_t[::1] downdraft_q_scale,
-    cnp.double_t[::1] cloud_base_mass_flux,
-    cnp.double_t[::1] cape,
-    cnp.double_t[::1, :] dtemp,
-    cnp.double_t[::1, :] dq,
-    cnp.double_t[::1, :] du,
-    cnp.double_t[::1, :] dv,
-    cnp.double_t[::1, :, :] dtracers=None,
-    cnp.double_t[::1, :, :] tracers=None):
+    cnp.double_t[::1, :, :] temp,
+    cnp.double_t[::1, :, :] q,
+    cnp.double_t[::1, :, :] qs,
+    cnp.double_t[::1, :, :] u,
+    cnp.double_t[::1, :, :] v,
+    cnp.double_t[::1, :, :] pmid,
+    cnp.double_t[::1, :, :] pint,
+    cnp.int32_t[::1, :] conv_state,
+    cnp.double_t[::1, :] precip,
+    cnp.double_t[::1, :] downdraft_vel_scale,
+    cnp.double_t[::1, :] downdraft_temp_scale,
+    cnp.double_t[::1, :] downdraft_q_scale,
+    cnp.double_t[::1, :] cloud_base_mass_flux,
+    cnp.double_t[::1, :] cape,
+    cnp.double_t[::1, :, :] dtemp,
+    cnp.double_t[::1, :, :] dq,
+    cnp.double_t[::1, :, :] du,
+    cnp.double_t[::1, :, :] dv,
+    cnp.double_t[::1, :, :, :] dtracers=None,
+    cnp.double_t[::1, :, :, :] tracers=None):
 
 
     global initialised
+    cdef Py_ssize_t lat, lon
 
     if dtracers is None:
-        dtracers = np.zeros((nlats,1,1))
+        dtracers = np.zeros((nlons, nlats, nlevs, 1), order='F')
 
     if tracers is None:
-        tracers = np.zeros((nlats,1,1))
+        tracers = np.zeros((nlons, nlats, nlevs, 1), order='F')
 
     if initialised == 0:
         raise ValueError('Emanuel scheme not initialised.')
 
-    for lat in range(nlats):
+    for lon in range(nlons):
+        for lat in range(nlats):
+        # for lat in prange(nlats, nogil=True):
 
-        # Call fortran code
-        emanuel_convection(
-            <double *>&temp[lat, 0],
-            <double *>&q[lat, 0],
-            <double *>&qs[lat, 0],
-            <double *>&u[lat, 0],
-            <double *>&v[lat, 0],
-            <double *>&pmid[lat, 0],
-            <double *>&pint[lat, 0],
+            # Call fortran code
+            emanuel_convection(
+                <double *>&temp[lon, lat, 0],
+                <double *>&q[lon, lat, 0],
+                <double *>&qs[lon, lat, 0],
+                <double *>&u[lon, lat, 0],
+                <double *>&v[lon, lat, 0],
+                <double *>&pmid[lon, lat, 0],
+                <double *>&pint[lon, lat, 0],
 
-            &nlevs, &max_conv_lev, &num_tracers,
-            &dt, 
+                &nlevs, &max_conv_lev, &num_tracers,
+                &dt,
 
-            <cnp.int32_t *>&conv_state[lat],
-            <double *>&dtemp[lat, 0],
-            <double *>&dq[lat, 0],
-            <double *>&du[lat, 0],
-            <double *>&dv[lat, 0],
+                <cnp.int32_t *>&conv_state[lon, lat],
+                <double *>&dtemp[lon, lat, 0],
+                <double *>&dq[lon, lat, 0],
+                <double *>&du[lon, lat, 0],
+                <double *>&dv[lon, lat, 0],
 
-            <double *>&precip[lat],
-            <double *>&downdraft_vel_scale[lat],
-            <double *>&downdraft_temp_scale[lat],
-            <double *>&downdraft_q_scale[lat],
-            <double *>&cloud_base_mass_flux[lat],
-            <double *>&cape[lat],
-            <double *>&dtracers[lat, 0, 0],
-            <double *>&tracers[lat, 0, 0])
+                <double *>&precip[lon, lat],
+                <double *>&downdraft_vel_scale[lon, lat],
+                <double *>&downdraft_temp_scale[lon, lat],
+                <double *>&downdraft_q_scale[lon, lat],
+                <double *>&cloud_base_mass_flux[lon, lat],
+                <double *>&cape[lon, lat],
+                <double *>&dtracers[lon, lat, 0, 0],
+                <double *>&tracers[lon, lat, 0, 0])

@@ -326,33 +326,32 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         tend_arrays = self.get_numpy_arrays_from_state('_climt_tendencies', tend_dict)
         diag_arrays = self.get_numpy_arrays_from_state('_climt_diagnostics', diag_dict)
 
-        for lon in range(num_lons):
-            _emanuel_convection.convect(
-                num_levs,
-                num_cols,
-                max_conv_level,
-                self._ntracers,
-                self.current_time_step.total_seconds(),
-                raw_arrays['air_temperature'][lon, :],
-                raw_arrays['specific_humidity'][lon, :],
-                q_sat[lon, :],
-                raw_arrays['eastward_wind'][lon, :],
-                raw_arrays['northward_wind'][lon, :],
-                raw_arrays['air_pressure'][lon, :],
-                raw_arrays['air_pressure_on_interface_levels'][lon, :],
-                diag_arrays['convective_state'][lon, :],
-                diag_arrays['convective_precipitation_rate'][lon, :],
-                diag_arrays['convective_downdraft_velocity_scale'][lon, :],
-                diag_arrays['convective_downdraft_temperature_scale'][lon, :],
-                diag_arrays['convective_downdraft_specific_humidity_scale'][lon, :],
-                raw_arrays['atmosphere_convective_mass_flux'][lon, :],
-                diag_arrays['atmosphere_convective_available_potential_energy'][lon, :],
-                tend_arrays['air_temperature'][lon, :],
-                tend_arrays['specific_humidity'][lon, :],
-                tend_arrays['eastward_wind'][lon, :],
-                tend_arrays['northward_wind'][lon, :],
-            )
+        _emanuel_convection.convect(
+            num_levs,
+            num_lons,
+            num_cols,
+            max_conv_level,
+            self._ntracers,
+            self.current_time_step.total_seconds(),
+            raw_arrays['air_temperature'],
+            raw_arrays['specific_humidity'],
+            q_sat,
+            raw_arrays['eastward_wind'],
+            raw_arrays['northward_wind'],
+            raw_arrays['air_pressure'],
+            raw_arrays['air_pressure_on_interface_levels'],
+            diag_arrays['convective_state'],
+            diag_arrays['convective_precipitation_rate'],
+            diag_arrays['convective_downdraft_velocity_scale'],
+            diag_arrays['convective_downdraft_temperature_scale'],
+            diag_arrays['convective_downdraft_specific_humidity_scale'],
+            raw_arrays['atmosphere_convective_mass_flux'],
+            diag_arrays['atmosphere_convective_available_potential_energy'],
+            tend_arrays['air_temperature'],
+            tend_arrays['specific_humidity'],
+            tend_arrays['eastward_wind'],
+            tend_arrays['northward_wind'])
 
-            diag_dict['convective_heating_rate'].values[:] = tend_dict['air_temperature'].values
-            diag_dict['atmosphere_convective_mass_flux'].values[:] = raw_arrays['atmosphere_convective_mass_flux']
-            return tend_dict, diag_dict
+        diag_dict['convective_heating_rate'].values[:] = tend_dict['air_temperature'].values
+        diag_dict['atmosphere_convective_mass_flux'].values[:] = raw_arrays['atmosphere_convective_mass_flux']
+        return tend_dict, diag_dict
