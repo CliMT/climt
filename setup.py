@@ -157,7 +157,7 @@ else:
 
         Extension(
             'climt._components.dcmip._dcmip',
-            sources=['climt/_components/dcmip/dcmip.pyx'],
+            sources=['climt/_components/dcmip/_dcmip.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
             library_dirs=[lib_path],
