@@ -1,15 +1,15 @@
       module shtns
- 
+
 ! fortran95 interface to the SHTNS library
 ! (http://users.isterre.fr/nschaeff/SHTns/index.html).
 ! this version hardwired for gaussian grids.
- 
+
 ! The available routines are:
 
 ! SUBROUTINE GRDTOSPEC(datagrid,dataspec):
 ! converts input gridded data array (datagrid) to complex spectral
 ! coefficients (dataspec).
- 
+
 ! SUBROUTINE SPECTOGRD(dataspec,datagrid):
 ! converts input spectral coefficient array (dataspec) to a grid (datagrid).
 
@@ -20,7 +20,7 @@
 
 ! SUBROUTINE GETVRTDIVSPEC(ugrid,vgrid,vrtspec,divspec,rsphere):
 ! given input gridded winds (ugrid,vgrid) calculates spectral coefficients
-! of vorticity and divergence (vrtspec,divspec). rsphere is the radius of 
+! of vorticity and divergence (vrtspec,divspec). rsphere is the radius of
 ! the sphere.
 
 ! SUBROUTINE GETGRAD(dataspec,gradx,grady,rsphere):
@@ -29,11 +29,11 @@
 
 ! SUBROUTINE SHTNS_CLEANUP():
 ! Garbage collection. Deallocates all memory.
-! Call this when you are done with the module to free up memory. 
+! Call this when you are done with the module to free up memory.
 
 ! SUBROUTINE SHTNS_INIT(NLONS,NLATS,NTRUNC):
 ! initialize transform machinery for a given grid and spectral
-! truncation.  Called automatically by other routines if 
+! truncation.  Called automatically by other routines if
 ! grid (as described by input arrays) changes.
 
 ! module data:
@@ -47,14 +47,14 @@
 ! lap: lapacian operator (-n*(n+1))
 ! invlap: inverse of laplacian operator.
 
-! All of these routines use triangular truncation. 
+! All of these routines use triangular truncation.
 ! The spherical harmonic coefficients are normalized using an
 ! 'orthonormalized' norm
 ! (http://en.wikipedia.org/wiki/Spherical_harmonics#Conventions).
 
       use kinds, only: r_kind, default_real, r_double
-      implicit none 
-      private 
+      implicit none
+      private
       public :: shtns_init,grdtospec,spectogrd,getuv,getvrtdivspec,&
                 getgrad,shtns_destroy,get_lon_lat
       public :: gauwts, lats, lons, nlm, degree, order, lap, invlap,&
@@ -75,19 +75,43 @@
       INTEGER, PARAMETER :: SHT_REG_POLES=5
       INTEGER, PARAMETER :: SHT_GAUSS_FLY=6
       REAL(r_double), PARAMETER :: SHT_DEFAULT_POLAR_OPT=1.d-10
-      INTEGER, SAVE      :: current_nlon = -1  
-      INTEGER, SAVE      :: current_nlat = -1  
-      INTEGER, SAVE      :: current_ntrunc = -1  
+      INTEGER, SAVE      :: current_nlon = -1
+      INTEGER, SAVE      :: current_nlat = -1
+      INTEGER, SAVE      :: current_ntrunc = -1
       INTEGER            :: nlm
 ! arrays allocated when nlon or nlat or ntrunc change.
-      REAL(r_kind), DIMENSION(:), ALLOCATABLE :: lap, invlap, gauwts
-      REAL(r_kind), DIMENSION(:,:), ALLOCATABLE :: lats
-      REAL(r_kind), DIMENSION(:,:), ALLOCATABLE :: lons, areawts
-      INTEGER, DIMENSION(:), ALLOCATABLE :: degree, order
+      REAL(r_kind), DIMENSION(:), pointer :: lap, invlap, gauwts
+      REAL(r_kind), DIMENSION(:,:), pointer :: lats
+      REAL(r_kind), DIMENSION(:,:), pointer :: lons, areawts
+      INTEGER, DIMENSION(:), pointer :: degree, order
       real(r_double) :: popt ! polar optimization thresh
       integer :: nth ! number of threads to use
 
       contains
+
+      subroutine sht_assign_arrays(py_lap, py_invlap, py_gauwts,&
+              py_lons, py_lats, py_areawts, py_degree,&
+              py_order, py_nlons, py_nlats, py_nlm)&
+              bind(c, name='gfs_assign_sht_arrays')
+
+          REAL(r_kind), DIMENSION(py_nlm), target :: py_lap, py_invlap
+          REAL(r_kind), DIMENSION(py_nlats), target :: py_gauwts
+          REAL(r_kind), DIMENSION(py_nlons,py_nlats), target :: py_lats
+          REAL(r_kind), DIMENSION(py_nlons,py_nlats), target :: py_lons
+          REAL(r_kind), DIMENSION(py_nlons,py_nlats), target :: py_areawts
+          INTEGER, DIMENSION(py_nlm), target :: py_degree, py_order
+          integer, intent(in) :: py_nlons, py_nlats, py_nlm
+
+          lap => py_lap
+          invlap => py_invlap
+          gauwts => py_gauwts
+          lats => py_lats
+          lons => py_lons
+          areawts => py_areawts
+          degree => py_degree
+          order => py_order
+
+      end subroutine sht_assign_arrays
 
       subroutine get_lon_lat(longitudes, latitudes) &
               bind(c,name='gfs_get_lon_lat')
@@ -95,17 +119,17 @@
       real(r_double), intent(out), dimension(current_nlon,current_nlat)&
                 :: longitudes, latitudes
 
-      if(allocated(lats)) then
-          latitudes(:,:) = lats(:,:)
-      else
-          print *, 'latitudes not allocated'
-      endif
+      !if(allocated(lats)) then
+      !    latitudes(:,:) = lats(:,:)
+      !else
+      !    print *, 'latitudes not allocated'
+      !endif
 
-      if(allocated(lons)) then
-          longitudes(:,:) = lons(:,:)
-      else
-          print *, 'longitudes not allocated'
-      endif
+      !if(allocated(lons)) then
+      !    longitudes(:,:) = lons(:,:)
+      !else
+      !    print *, 'longitudes not allocated'
+      !endif
 
       end subroutine get_lon_lat
 
@@ -142,9 +166,9 @@
          print *,'error: nlm not what expected',nlm,ntrunc
          stop
       endif
-      if (.not. allocated(lats)) allocate(lats(nlon,nlat))
-      if (.not. allocated(gauwts)) allocate(gauwts(nlat))
-      if (.not. allocated(lons)) allocate(lons(nlon,nlat))
+      !if (.not. allocated(lats)) allocate(lats(nlon,nlat))
+      !if (.not. allocated(gauwts)) allocate(gauwts(nlat))
+      !if (.not. allocated(lons)) allocate(lons(nlon,nlat))
       allocate(lats1(nlat))
       allocate(gauwts1(nlat/2))
       call shtns_cos_array(lats1)
@@ -157,7 +181,7 @@
          gauwts(j) = gauwts1(j)
          gauwts(nlat-j+1) = gauwts1(j)
       enddo
-      allocate(areawts(nlon,nlat))
+      !allocate(areawts(nlon,nlat))
       do i=1,nlon
          areawts(i,:) = gauwts(:)
       enddo
@@ -169,12 +193,12 @@
       enddo
       enddo
       deallocate(lats1,gauwts1)
-      if (.not. allocated(degree)) allocate(degree(nlm))
-      if (.not. allocated(order)) allocate(order(nlm))
+      !if (.not. allocated(degree)) allocate(degree(nlm))
+      !if (.not. allocated(order)) allocate(order(nlm))
       degree = (/((n,n=m,ntrunc),m=0,ntrunc)/)
       order = (/((m,n=m,ntrunc),m=0,ntrunc)/)
-      if (.not. allocated(lap)) allocate(lap(nlm))
-      if (.not. allocated(invlap)) allocate(invlap(nlm))
+      !if (.not. allocated(lap)) allocate(lap(nlm))
+      !if (.not. allocated(invlap)) allocate(invlap(nlm))
       lap = -degree*(degree+1.0)
       invlap = 0
       invlap(2:) = 1./lap(2:)
@@ -183,14 +207,15 @@
       subroutine shtns_destroy()
 ! deallocate arrays.
       call shtns_reset()
-      if (allocated(lats)) deallocate(lats)
-      if (allocated(gauwts)) deallocate(gauwts)
-      if (allocated(areawts)) deallocate(areawts)
-      if (allocated(lons)) deallocate(lons)
-      if (allocated(degree)) deallocate(degree)
-      if (allocated(order)) deallocate(order)
-      if (allocated(lap)) deallocate(lap)
-      if (allocated(invlap)) deallocate(invlap)
+      !if (allocated(lats)) deallocate(lats)
+      !if (allocated(gauwts)) deallocate(gauwts)
+      !if (allocated(areawts)) deallocate(areawts)
+      !if (allocated(lons)) deallocate(lons)
+      !if (allocated(degree)) deallocate(degree)
+      !if (allocated(order)) deallocate(order)
+      !if (allocated(lap)) deallocate(lap)
+      !if (allocated(invlap)) deallocate(invlap)
+      !nullify(lats,gauwts,areawts,lons,degree,order,lap,invlap)
       end subroutine shtns_destroy
 
       subroutine grdtospec(datagrid,dataspec)
@@ -227,7 +252,7 @@
       end subroutine grdtospec
 
       subroutine spectogrd(dataspec,datagrid)
-! converts complex spectral coefficients (dataspec) to 
+! converts complex spectral coefficients (dataspec) to
 ! gridded data array (datagrid).
       real(r_kind), dimension(:,:), intent(out) :: datagrid
       complex(r_kind), dimension(:), intent(in) :: dataspec
@@ -370,7 +395,7 @@
          deallocate(ugrid_tmp,vgrid_tmp,vrtspec_tmp,divspec_tmp)
       else
          allocate(vrtspec(nlm))
-         vrtspec = 0.     
+         vrtspec = 0.
          call shtns_sphtor_to_spat(vrtspec,divspec,ugrid,vgrid)
          deallocate(vrtspec)
       endif

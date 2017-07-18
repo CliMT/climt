@@ -56,7 +56,7 @@ module dyn_init
 
  end subroutine set_topography
 
- subroutine init_dyn(py_damping_level) bind(c, name='gfs_init_dynamics')
+ subroutine init_dyn(py_damping_level, py_taustratdamp) bind(c, name='gfs_init_dynamics')
     integer k
     ! allocate arrays
     ! JOY data array inits will be done from python
@@ -64,6 +64,7 @@ module dyn_init
     !call init_specdata()
     !call init_griddata()
     integer, intent(in):: py_damping_level
+    real(c_double), intent(in):: py_taustratdamp
     
     ! initialize spherical harmonic lib
     !print *,'Initialising shtns'
@@ -110,6 +111,7 @@ module dyn_init
     enddo
 
     slrd0 = si(nlevs+1 - py_damping_level)
+    taustratdamp = py_taustratdamp
 
     !call spectogrd(grav*topospec, phis)
     !print *,'min/max surface geopotential',minval(phis),maxval(phis)
