@@ -56,42 +56,42 @@ $(CLIMT_ARCH)/libopenblas.a:
 gfs_lib: $(CLIMT_ARCH)/libgfs_dycore.a
 
 $(CLIMT_ARCH)/libgfs_dycore.a: $(GFS_DIR)/*.f90
-	cd $(GFS_DIR); make python_lib; cp libgfs_dycore.a $(LIB_DIR)
+	cd $(GFS_DIR); make python_lib; cp libgfs_dycore.a $(LIB_DIR); touch ../../_components/gfs/_gfs_dynamics.pyx
 
 # Simple Physics Configuration
 
 simple_physics_lib: $(CLIMT_ARCH)/libsimple_physics.a
 
 $(CLIMT_ARCH)/libsimple_physics.a: $(SIM_PHYS_DIR)/*.f90
-	cd $(SIM_PHYS_DIR); make; cp libsimple_physics.a $(LIB_DIR)
+	cd $(SIM_PHYS_DIR); make; cp libsimple_physics.a $(LIB_DIR); touch ../../_components/simple_physics/_simple_physics.pyx
 
 # Emanuel Convection Configuration
 
 emanuel_lib: $(CLIMT_ARCH)/libemanuel.a
 
 $(CLIMT_ARCH)/libemanuel.a: $(EMAN_DIR)/*.f90
-	cd $(EMAN_DIR); make; cp libemanuel.a $(LIB_DIR)
+	cd $(EMAN_DIR); make; cp libemanuel.a $(LIB_DIR); touch ../../_components/emanuel/_emanuel_convection.pyx
 
 # RRTMG LW Configuration
 
 rrtmg_lw_lib: $(CLIMT_ARCH)/librrtmg_lw.a
 
 $(CLIMT_ARCH)/librrtmg_lw.a: $(RRTMG_LW_DIR)/*.f90
-	cd $(RRTMG_LW_DIR); make; cp librrtmg_lw.a $(LIB_DIR)
+	cd $(RRTMG_LW_DIR); make; cp librrtmg_lw.a $(LIB_DIR); touch ../../_components/rrtmg/lw/_rrtmg_lw.pyx
 
 # RRTMG SW Configuration
 
 rrtmg_sw_lib: $(CLIMT_ARCH)/librrtmg_sw.a
 
 $(CLIMT_ARCH)/librrtmg_sw.a: $(RRTMG_SW_DIR)/*.f90
-	cd $(RRTMG_SW_DIR); make; cp librrtmg_sw.a $(LIB_DIR)
+	cd $(RRTMG_SW_DIR); make; cp librrtmg_sw.a $(LIB_DIR); touch ../../_components/rrtmg/sw/_rrtmg_sw.pyx
 
 # DCMIP Configuration
 
 libdcmip: $(CLIMT_ARCH)/libdcmip.a
 
 $(CLIMT_ARCH)/libdcmip.a: $(DCMIP_DIR)/*.f90
-	cd $(DCMIP_DIR); make; cp libdcmip.a $(LIB_DIR)
+	cd $(DCMIP_DIR); make; cp libdcmip.a $(LIB_DIR); touch ../../_components/dcmip/_dcmip.pyx
 
 
 
