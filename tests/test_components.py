@@ -643,7 +643,7 @@ class TestGfsDycore(ComponentBase):
         component = self.get_component_instance()
         state = climt.get_default_state(
             [component], x=component.grid_definition['x'],
-            y=component.grid_definition['y'], z=component.grid_definition['z'])
+            y=component.grid_definition['y'], z=component.grid_definition['mid_levels'])
 
         dcmip = climt.DcmipInitialConditions()
         out = dcmip(state, add_perturbation=True)

@@ -40,4 +40,4 @@ notifications:
   email:
     recipients:
       - joy.monteiro@misu.su.se
-        #- mcgibbon@uw.edu
+      - mcgibbon@uw.edu
