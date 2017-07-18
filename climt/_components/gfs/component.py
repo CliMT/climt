@@ -14,6 +14,9 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
     Climt interface to the GFS dynamical core. The GFS
     code is available on `github`_.
 
+    :attribute area_weights: Weights used for calculating area averages.
+    :attribute gauss_weights: Unnormalised weights used for calculating integrals along longitude.
+
     .. _github:
        https://github.com/jswhit/gfs-dycore
     """
@@ -25,7 +28,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         'surface_air_pressure': 'Pa',
         'air_pressure': 'Pa',
         'air_pressure_on_interface_levels': 'Pa',
-        'specific_humidity': 'g kg^-1',
+        'specific_humidity': 'g/g',
         'surface_geopotential': 'm^2 s^-2',
         'atmosphere_relative_vorticity': 's^-1',
         'divergence_of_wind': 's^-1',
@@ -42,13 +45,13 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         'air_pressure': 'Pa',
         'air_pressure_on_interface_levels': 'Pa',
         'surface_air_pressure': 'Pa',
-        'specific_humidity': 'g kg^-1',
-        'surface_geopotential': 'm^2 s^-2',
+        'specific_humidity': 'g/g',
         'atmosphere_relative_vorticity': 's^-1',
         'divergence_of_wind': 's^-1',
         'mole_fraction_of_ozone_in_air': 'dimensionless',
         'mass_content_of_cloud_ice_in_atmosphere_layer': 'g m^-2',
         'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'g m^-2',
+        'gfs_tracers': 'dimensionless',
     }
 
     _climt_diagnostics = {
@@ -72,6 +75,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             number_of_levels=28,
             number_of_tracers=0,
             number_of_damped_levels=0,
+            damping_timescale=2.*86400,
             dry_pressure=1.0132e5,
             time_step=1200.,
             planetary_radius=None,
@@ -112,6 +116,9 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
             number_of_damped_levels (int, optional):
                 The number of levels from the model top which are Rayleigh damped.
+
+            damping_timescale (float, optional):
+                The damping timescale in :math:`s` to use for top-of-model Rayleigh damping.
 
             dry_pressure (float, optional):
                 The dry pressure decides the mass of the dry atmosphere, to be used by the
@@ -206,6 +213,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self._num_levs = number_of_levels
 
         self._damping_levels = number_of_damped_levels
+        self._tau_damping = damping_timescale
 
         # 4 tracers at least for water vapour, ozone and liquid and solid cloud condensate
         self._num_tracers = number_of_tracers + 4
@@ -238,10 +246,27 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
         print('Initialising dynamical core, this could take some time...')
 
-        latitudes, longitudes, sigma, sigma_interface = _gfs_dynamics.init_model(self._dry_pressure,
-                                                                                 self._damping_levels)
+        gaussian_weights, area_weights, latitudes, longitudes, sigma, sigma_interface = \
+            _gfs_dynamics.init_model(self._dry_pressure,
+                                     self._damping_levels,
+                                     self._tau_damping)
 
         print('Done!')
+
+        self.gauss_weights = DataArray(gaussian_weights,
+                                       name='gauss_weights',
+                                       dims=['latitude'],
+                                       coords=[np.degrees(latitudes[0, :])],
+                                       attrs=dict(
+                                           units='dimensionless'))
+
+        self.area_weights = DataArray(area_weights,
+                                      name='area_weights',
+                                      dims=['longitude', 'latitude'],
+                                      coords=[np.degrees(longitudes[:, 0]),
+                                              np.degrees(latitudes[0, :])],
+                                      attrs=dict(
+                                          units='dimensionless'))
 
         latitude = dict(label='latitude',
                         values=np.degrees(latitudes[0, :]),
@@ -260,7 +285,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
                                 units='dimensionless')
 
         self.grid_definition = dict(y=latitude, x=longitude,
-                                    z=sigma_levels,
+                                    mid_levels=sigma_levels,
                                     interface_levels=sigma_int_levels)
 
         # Random array to slice variables
@@ -280,36 +305,45 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         raw_input_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
 
         output_dict = self.create_state_dict_for('_climt_outputs', state)
+        raw_output_arrays = self.get_numpy_arrays_from_state('_climt_outputs', output_dict)
+
+        mylist = ['air_pressure']
+        # mylist = self.outputs
+
+        for quantity in mylist:
+            raw_output_arrays[quantity][:] = raw_input_arrays[quantity][:]
 
         update_spectral_arrays = False
         if self.state_is_modified_externally(raw_input_arrays):
+            for quantity in self._climt_outputs.keys():
+                raw_output_arrays[quantity][:] = raw_input_arrays[quantity][:]
             update_spectral_arrays = True
 
         lnsp = np.log(raw_input_arrays['surface_air_pressure'])
         t_virt = raw_input_arrays['air_temperature']*(
             1 + self._fvirt.values.item()*raw_input_arrays['specific_humidity'])
 
-        raw_input_arrays['gfs_tracers'][:, :, :, 0] = raw_input_arrays['specific_humidity']
-        raw_input_arrays['gfs_tracers'][:, :, :, 1] = \
+        raw_output_arrays['gfs_tracers'][:, :, :, 0] = raw_input_arrays['specific_humidity']
+        raw_output_arrays['gfs_tracers'][:, :, :, 1] = \
             raw_input_arrays['mole_fraction_of_ozone_in_air']
-        raw_input_arrays['gfs_tracers'][:, :, :, 2] = \
+        raw_output_arrays['gfs_tracers'][:, :, :, 2] = \
             raw_input_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer']
-        raw_input_arrays['gfs_tracers'][:, :, :, 3] = \
+        raw_output_arrays['gfs_tracers'][:, :, :, 3] = \
             raw_input_arrays['mass_content_of_cloud_ice_in_atmosphere_layer']
 
         _gfs_dynamics.assign_grid_arrays(
-            raw_input_arrays['eastward_wind'],
-            raw_input_arrays['northward_wind'],
+            raw_output_arrays['eastward_wind'],
+            raw_output_arrays['northward_wind'],
             t_virt,
             lnsp,
-            raw_input_arrays['gfs_tracers'],
-            raw_input_arrays['atmosphere_relative_vorticity'],
-            raw_input_arrays['divergence_of_wind'])
+            raw_output_arrays['gfs_tracers'],
+            raw_output_arrays['atmosphere_relative_vorticity'],
+            raw_output_arrays['divergence_of_wind'])
 
         _gfs_dynamics.assign_pressure_arrays(
-            raw_input_arrays['surface_air_pressure'],
-            raw_input_arrays['air_pressure'],
-            raw_input_arrays['air_pressure_on_interface_levels'])
+            raw_output_arrays['surface_air_pressure'],
+            raw_output_arrays['air_pressure'],
+            raw_output_arrays['air_pressure_on_interface_levels'])
 
         _gfs_dynamics.set_topography(raw_input_arrays['surface_geopotential'])
 
@@ -344,13 +378,24 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         _gfs_dynamics.convert_to_grid()
         _gfs_dynamics.calculate_pressure()
 
-        raw_input_arrays['air_temperature'][:] = t_virt/(
-            1 + self._fvirt.values.item()*raw_input_arrays['specific_humidity'])
+        raw_output_arrays['air_temperature'][:] = t_virt/(
+            1 + self._fvirt.values.item()*raw_output_arrays['specific_humidity'])
 
-        self.store_current_state_signature(raw_input_arrays)
+        raw_output_arrays['specific_humidity'] = raw_output_arrays['gfs_tracers'][:, :, :, 0]
 
-        for quantity in self._climt_outputs.keys():
-                output_dict[quantity].values[:] = raw_input_arrays[quantity]
+        raw_output_arrays['mole_fraction_of_ozone_in_air'] = \
+            raw_output_arrays['gfs_tracers'][:, :, :, 1]
+
+        raw_output_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'] = \
+            raw_output_arrays['gfs_tracers'][:, :, :, 2]
+
+        raw_output_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'] = \
+            raw_output_arrays['gfs_tracers'][:, :, :, 3]
+
+        self.store_current_state_signature(raw_output_arrays)
+
+        for quantity in mylist:
+            raw_input_arrays[quantity][:] = raw_output_arrays[quantity][:]
 
         return {}, output_dict
 
@@ -442,6 +487,12 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self._hash_temp = hash_temp
         self._hash_surf_press = hash_ps
         self._hash_press = hash_press
+
+    def __del__(self):
+        """ call shutdown in fortran code """
+        print("Cleaning up dynamical core...")
+        _gfs_dynamics.shut_down_model()
+        print("Done!")
 
 
 def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):

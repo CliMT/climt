@@ -55,7 +55,7 @@ cdef extern:
 
 # Function to init dynamics
 cdef extern:
-    void gfs_init_dynamics(int *num_damp_levs)
+    void gfs_init_dynamics(int *num_damp_levs, double *tau_damping)
 
 # Function to init physics
 cdef extern:
@@ -188,6 +188,13 @@ cdef extern:
         double *pyTref, double *pyPkref, double *pyDpkref,
         double *pyAlfaref, double *pySvhyb, double *pyTorhyb)
 
+cdef extern:
+    void gfs_assign_sht_arrays(
+        double *pyLap, double *pyInvLap, double *pyGaussWeights,
+        double *pyLons, double *pyLats, double *pyAreaWeights,
+        int *pyDegree, int *pyOrder, int *pyNlons, int *pyNlats,
+        int *pyNlm)
+
 cdef void testFunc():
     print 'a'
 
@@ -232,10 +239,17 @@ cdef cnp.complex128_t[:] pyLnPsSpecTend
 # Temporary arrays for setting tendency terms
 cdef cnp.double_t[::1,:,:] tempVrtTend, tempDivTend, tempVirtTempTend, tempUTend,tempVTend
 cdef cnp.double_t[::1,:,:,:] tempTracerTend
-cdef cnp.double_t[::1,:] tempLnpsTend, __latitudes, __longitudes
+cdef cnp.double_t[::1,:] tempLnpsTend
+
+# Shtns arrays
+cdef cnp.double_t[::1, :] pyLats, pyLons, pyAreaWeights
+cdef cnp.double_t[::1] pyLap, pyInvLap, pyGaussWeights
+cdef cnp.int_t[::1] pyDegree, pyOrder
+
 
 # Grid size
 #cdef public int numLats, numLons, numTrunc, numLevs, spectralDim, numTracers
+cdef int nlm
 
 # Model state
 cdef int modelIsInitialised, physicsEnabled
@@ -262,8 +276,22 @@ def set_model_grid(int nlats, int nlons,
             pyAlfaref, pySvhyb, pyTorhyb,\
             pyAk, pyBk, pyCk, pySi, pySl, pyDbk,\
             pyBkl, pyAlfa, pyRlnp, pyDpk,\
-            __latitudes, __longitudes
+            pyLap, pyInvLap, pyGaussWeights, pyLats, pyLons, pyAreaWeights,\
+            pyDegree, pyOrder, nlm
 
+
+    nlm = int((ntrunc+1)*(ntrunc+2)/2)
+
+    pyLap = np.zeros(nlm, dtype=np.double, order='F')
+    pyInvLap = np.zeros(nlm, dtype=np.double, order='F')
+    pyGaussWeights = np.zeros(nlats, dtype=np.double, order='F')
+
+    pyDegree = np.zeros(nlm, dtype=np.int, order='F')
+    pyOrder = np.zeros(nlm, dtype=np.int, order='F')
+
+    pyLats = np.zeros((nlons, nlats), dtype=np.double, order='F')
+    pyLons = np.zeros((nlons, nlats), dtype=np.double, order='F')
+    pyAreaWeights = np.zeros((nlons, nlats), dtype=np.double, order='F')
 
     pyDmhyb = np.zeros((nlevs, nlevs, ntrunc+1, 3),
                        dtype=np.double, order='F')
@@ -289,9 +317,6 @@ def set_model_grid(int nlats, int nlons,
     pyAlfa = np.zeros((nlons, nlats, nlevs), dtype=np.double, order='F')
     pyRlnp = np.zeros((nlons, nlats, nlevs), dtype=np.double, order='F')
     pyDpk = np.zeros((nlons, nlats, nlevs), dtype=np.double, order='F')
-
-    __latitudes = np.zeros((nlons, nlats), dtype=np.double, order='F')
-    __longitudes = np.zeros((nlons, nlats), dtype=np.double, order='F')
 
     gfs_set_model_dimensions(&nlats, &nlons, &nlevs, &ntrunc,
                              &ndimspec, &ntracers)
@@ -319,26 +344,38 @@ def set_model_grid(int nlats, int nlons,
         <double *>&pyRlnp[0,0,0],
         <double *>&pyDpk[0,0,0])
 
+    gfs_assign_sht_arrays(
+        <double *>&pyLap[0],
+        <double *>&pyInvLap[0],
+        <double *>&pyGaussWeights[0],
+        <double *>&pyLons[0, 0],
+        <double *>&pyLats[0, 0],
+        <double *>&pyAreaWeights[0, 0],
+        <int *>&pyDegree[0],
+        <int *>&pyOrder[0],
+        &nlons, &nlats, &nlm)
+
     init_spectral_arrays(ndimspec, nlevs, ntracers)
     init_grid_arrays(nlons, nlats, nlevs, ntracers)
 
 # Initialise dynamics and physics
-def init_model(double dry_pressure, int num_damp_levels):
+def init_model(double dry_pressure, int num_damp_levels, double tau_damping):
 
-    global __latitudes, __longitudes
     # Now that the arrays are initialised, call dynamics and physics init
 
 
     gfs_set_dry_pressure(&dry_pressure)
     gfs_set_model_time(&zero_model_time)
-    gfs_init_dynamics(&num_damp_levels)
-    gfs_get_lon_lat(<double *>&__longitudes[0,0], <double *>&__latitudes[0,0])
-    longitudes = np.asarray(__longitudes)
-    latitudes = np.asarray(__latitudes)
-    sigma_levels = np.asarray(pySl)
-    sigma_inteface_levels = np.asarray(pySi)
+    gfs_init_dynamics(&num_damp_levels, &tau_damping)
+    #gfs_get_lon_lat(<double *>&__longitudes[0,0], <double *>&__latitudes[0,0])
+    longitudes = np.ascontiguousarray(pyLons).copy()
+    latitudes = np.ascontiguousarray(pyLats).copy()
+    area_weights = np.ascontiguousarray(pyAreaWeights).copy()
+    gaussian_weights = np.ascontiguousarray(pyGaussWeights).copy()
+    sigma_levels = np.ascontiguousarray(pySl).copy()
+    sigma_inteface_levels = np.ascontiguousarray(pySi).copy()
 
-    return latitudes, longitudes, sigma_levels, sigma_inteface_levels
+    return gaussian_weights, area_weights, latitudes, longitudes, sigma_levels, sigma_inteface_levels
 
 
 
@@ -662,10 +699,7 @@ def set_time_step(double time_step):
 
     gfs_set_time_step(&time_step)
 
-def shutDownModel():
+def shut_down_model():
     #Remember to set time to zero!
     gfs_finalise()
     gfs_set_model_time(&zero_model_time)
-
-def __dealloc__():
-    shutDownModel()
