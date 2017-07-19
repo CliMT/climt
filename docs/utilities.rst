@@ -1,7 +1,7 @@
 .. currentmodule:: climt
 
 General Utilities
-===============
+==================
 
 .. autosummary::
     :toctree: generated/

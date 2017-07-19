@@ -6,11 +6,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   readme
+   introduction
    installation
+   quickstart
+   interaction
    component_types
-   naming
-   memory_management
    contributing
    authors
    history

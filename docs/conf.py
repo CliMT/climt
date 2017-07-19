@@ -45,7 +45,9 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.napoleon',
               'sphinx.ext.autosummary',
-              'sphinx.ext.mathjax']
+              'sphinx.ext.mathjax',
+              'IPython.sphinxext.ipython_console_highlighting',
+              'IPython.sphinxext.ipython_directive']
 
 autosummary_generate = True
 

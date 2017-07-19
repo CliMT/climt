@@ -1,3 +1,4 @@
+.. _component_list:
 .. currentmodule:: climt
 
 ==========
