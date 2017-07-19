@@ -17,10 +17,10 @@ class GridScaleCondensation(Implicit):
         'air_temperature', 'specific_humidity', 'air_pressure',
         'air_pressure_on_interface_levels',
     )
-    diagnostic_outputs = (
+    diagnostics = (
         'precipitation_amount',
     )
-    tendency_outputs = (
+    outputs = (
         'air_temperature', 'specific_humidity',
     )
 

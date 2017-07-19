@@ -6,7 +6,7 @@ from datetime import datetime
 from scipy.interpolate import CubicSpline
 
 
-def init_mid_level_pressures(array_dims, quantity_description):
+def init_mid_level_pressures(array_dims, quantity_description, initial_state):
     # We assume the vertical level is the last dimension
     vert_levels = array_dims[-1]
 
@@ -18,7 +18,7 @@ def init_mid_level_pressures(array_dims, quantity_description):
     return single_column*np.ones(array_dims, order='F')
 
 
-def init_interface_level_pressures(array_dims, quantity_description):
+def init_interface_level_pressures(array_dims, quantity_description, initial_state):
 
     vert_levels = array_dims[-1]
     p_surf = quantity_description['surface_air_pressure']['default_value']
@@ -33,7 +33,7 @@ def init_interface_level_pressures(array_dims, quantity_description):
     return interface*np.ones(array_dims, order='F')
 
 
-def init_interface_level_sigma(array_dims, quantity_description):
+def init_interface_level_sigma(array_dims, quantity_description, initial_state):
 
     vert_levels = array_dims[-1]
     spacing = np.linspace(0.998, 0.001, vert_levels-1)
@@ -47,7 +47,7 @@ def init_interface_level_sigma(array_dims, quantity_description):
     return interface*np.ones(array_dims, order='F')
 
 
-def init_mid_level_sigma(array_dims, quantity_description):
+def init_mid_level_sigma(array_dims, quantity_description, initial_state):
 
     vert_levels = array_dims[-1]
     spacing = np.linspace(0.998, 0.001, vert_levels)
@@ -56,7 +56,7 @@ def init_mid_level_sigma(array_dims, quantity_description):
     return midlevel*np.ones(array_dims, order='F')
 
 
-def init_interface_level_tau_longwave(array_dims, quantity_description):
+def init_interface_level_tau_longwave(array_dims, quantity_description, initial_state):
 
     vert_levels = array_dims[-1]
     spacing = np.linspace(0.998, 0.001, vert_levels-1)
@@ -487,13 +487,16 @@ climt_quantity_descriptions = {
 }
 
 
-def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
+def get_default_state(component_list,
+                      x={}, y={}, mid_levels={}, interface_levels={},
+                      initial_state={}):
     """
     Return a state dictionary required to run the model.
 
     The model comprises of components in :code:`component_list`. If coordinate
-    values in :code:`x`, :code:`y` and :code:`z` are not provided, a single column
-    centered at 0 degrees south, 0 degrees east, with 30 vertical levels is used.
+    values in :code:`x`, :code:`y`, :code:`mid_levels` and :code:`interface_levels`
+    are not provided, a single column
+    centered at 0 degrees south, 0 degrees east, with 30 vertical levels is returned.
 
     Args:
         component_list (iterable): The _components for which a default
@@ -518,13 +521,19 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
             If :code:`y` is an empty dictionary, a single default value of 0 degrees latitude
             is used.
 
-        z (dict,optional): A dictionary containing keys :code:`label`, :code:`values`,
+        mid_levels (dict,optional): A dictionary containing keys :code:`label`, :code:`values`,
             and :code:`units`. :code:`label` refers to the name the coordinate axis will assume.
             :code:`values` refers to the array of coordinate values. :code:`units` refers to the
             units of the coordinate values.
-            If :code:`z` is an empty dictionary, 30 levels of arbitrary units are used.
+            If :code:`mid_levels` is an empty dictionary, 30 levels of arbitrary units are used.
 
-        input_state (dict, optional): A dictionary containing some quantities that will
+        interface_levels (dict,optional): A dictionary containing keys :code:`label`, :code:`values`,
+            and :code:`units`. :code:`label` refers to the name the coordinate axis will assume.
+            :code:`values` refers to the array of coordinate values. :code:`units` refers to the
+            units of the coordinate values.
+            If :code:`interface_levels` is an empty dictionary, 31 levels of arbitrary units are used.
+
+       initial_state (dict, optional): A dictionary containing some quantities that will
             also be added to the final output state. Must not contain any quantities that
             the output state will overwrite.
 
@@ -536,12 +545,21 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
     Raises:
         ValueError:
-            if :code:`component_list` is empty or the shape of :code:`x['values']` and
-            :code:`y['values']` is not the same.
+            if any of the following conditions are satisfied:
+
+                * if :code:`component_list` is empty
+                * if the shape of :code:`x['values']` and :code:`y['values']` is not the same
+                * if only one of :code:`mid_levels` or :code:`interface_levels` is specified
+                * if vertical coordinates are not one dimensional
+                * if length of :code:`mid_levels['values']` is not one less than length
+                  of :code:`interface['values']`
     """
 
     if len(component_list) == 0:
         raise ValueError('Component list must contain at least one component')
+
+    if (mid_levels.keys() == 0) != (interface_levels.keys() == 0):
+        raise ValueError('Both mid and interface levels must be specified')
 
     output_state = {}
 
@@ -564,17 +582,37 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
         y_coordinate_label = y['label']
         y_coordinate_units = y['units']
 
-    if len(z.keys()) == 0:
-        z_coordinate_values = np.arange(30)
-        z_coordinate_label = 'mid_levels'
-        z_coordinate_units = ''
+    if len(mid_levels.keys()) == 0:
+        mid_levels_coordinate_values = np.arange(30)
+        mid_levels_coordinate_label = 'mid_levels'
+        mid_levels_coordinate_units = ''
     else:
-        z_coordinate_values = z['values']
-        z_coordinate_label = z['label']
-        z_coordinate_units = z['units']
+        mid_levels_coordinate_values = mid_levels['values']
+        mid_levels_coordinate_label = mid_levels['label']
+        mid_levels_coordinate_units = mid_levels['units']
+
+    if len(interface_levels.keys()) == 0:
+        interface_levels_coordinate_values = np.arange(31)
+        interface_levels_coordinate_label = 'interface_levels'
+        interface_levels_coordinate_units = ''
+    else:
+        interface_levels_coordinate_values = interface_levels['values']
+        interface_levels_coordinate_label = interface_levels['label']
+        interface_levels_coordinate_units = interface_levels['units']
 
     if not x_coordinate_values.ndim == y_coordinate_values.ndim:
         raise ValueError('x and y coordinates must have the same shape')
+
+    if mid_levels_coordinate_values.ndim > 1:
+        raise ValueError(
+            'vertical coordinate mid_levels must be one dimensional.')
+
+    if interface_levels_coordinate_values.ndim > 1:
+        raise ValueError(
+            'vertical coordinate interface_levels must be one dimensional.')
+
+    if len(mid_levels_coordinate_values) != len(interface_levels_coordinate_values)-1:
+        raise ValueError('Interface levels must have one value more than mid levels')
 
     use_2d_coordinate = False
     two_dim_coord_dict = {}
@@ -644,20 +682,31 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
     output_state[y_coordinate_label] = y_coordinate
     add_direction_names(y=y_coordinate_label)
 
-    z_coordinate = DataArray(
-        z_coordinate_values,
-        dims=(z_coordinate_label,),
-        attrs={'units': z_coordinate_units, 'label': z_coordinate_label})
+    mid_levels_coordinate = DataArray(
+        mid_levels_coordinate_values,
+        dims=(mid_levels_coordinate_label,),
+        attrs={'units': mid_levels_coordinate_units,
+               'label': mid_levels_coordinate_label})
 
-    output_state[z_coordinate_label] = z_coordinate
+    output_state[mid_levels_coordinate_label] = mid_levels_coordinate
+    output_state['mid_levels'] = mid_levels_coordinate
     add_direction_names(
-        z=z_coordinate_label)
+        z=mid_levels_coordinate_label)
+
+    interface_levels_coordinate = DataArray(
+        interface_levels_coordinate_values,
+        dims=(interface_levels_coordinate_label,),
+        attrs={'units': interface_levels_coordinate_units,
+               'label': interface_levels_coordinate_label})
+
+    output_state[interface_levels_coordinate_label] = interface_levels_coordinate
+    output_state['interface_levels'] = interface_levels_coordinate
+    add_direction_names(
+        z=interface_levels_coordinate_label)
 
     if not use_2d_coordinate:
         output_state['x'] = x_coordinate
         output_state['y'] = y_coordinate
-
-    output_state['z'] = z_coordinate
 
     quantity_list = set()
     temporary_description = copy.deepcopy(climt_quantity_descriptions)
@@ -693,7 +742,10 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
 
         output_state[name] = get_default_values(
             name, x_coordinate, y_coordinate,
-            z_coordinate, temporary_description,
+            mid_levels_coordinate,
+            interface_levels_coordinate,
+            initial_state,
+            temporary_description,
             additional_dimensions)
 
         if use_2d_coordinate:
@@ -707,15 +759,15 @@ def get_default_state(component_list, x={}, y={}, z={}, input_state={}):
                 output_state[name][physical_dimension].attrs['units'] = \
                     two_dim_coord_dict[physical_dimension]['units']
 
-    ensure_no_shared_keys(input_state, output_state)
-    output_state.update(input_state)
-    if 'time' not in input_state:
+    ensure_no_shared_keys(initial_state, output_state)
+    output_state.update(initial_state)
+    if 'time' not in initial_state:
         output_state['time'] = datetime(1, 1, 1)
     return output_state
 
 
-def get_default_values(quantity_name, x, y, z,
-                       quantity_description, additional_dimensions={}):
+def get_default_values(quantity_name, x, y, mid_levels, interface_levels,
+                       initial_state, quantity_description, additional_dimensions={}):
     """
     Returns default values for individual quantities.
 
@@ -743,8 +795,8 @@ def get_default_values(quantity_name, x, y, z,
     dimension_length = {}
     dimension_length['x'] = x.values.shape[0]
     dimension_length['y'] = y.values.shape[0]
-    dimension_length['mid_levels'] = len(z.values)
-    dimension_length['interface_levels'] = dimension_length['mid_levels']+1
+    dimension_length['mid_levels'] = len(mid_levels.values)
+    dimension_length['interface_levels'] = len(interface_levels.values)
 
     mid_level_coords = np.arange(dimension_length['mid_levels'])
     int_level_coords = np.arange(dimension_length['interface_levels'])
@@ -778,7 +830,7 @@ def get_default_values(quantity_name, x, y, z,
         else:
             quantity_array = np.ones(array_dims, order='F', dtype=dtype)*description['default_value']
     elif 'init_func' in description:
-        quantity_array = description['init_func'](array_dims, quantity_description)
+        quantity_array = description['init_func'](array_dims, quantity_description, initial_state)
     else:
         raise ValueError(
             'Malformed description for quantity {}:\

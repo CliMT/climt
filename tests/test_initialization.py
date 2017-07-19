@@ -23,7 +23,36 @@ def test_input_state_has_overlapping_keys():
 
     dummy = MockPrognostic()
     with pytest.raises(SharedKeyError):
-        get_default_state([dummy], input_state={'air_temperature': 0})
+        get_default_state([dummy], initial_state={'air_temperature': 0})
+
+
+def test_only_mid_levels_specified():
+
+    dummy = MockPrognostic()
+    with pytest.raises(ValueError):
+        get_default_state([dummy], mid_levels=dict(
+            label='vert_coord', values=np.linspace(0, 10, 10),
+            units='kilometer'))
+
+
+def test_only_int_levels_specified():
+
+    dummy = MockPrognostic()
+    with pytest.raises(ValueError):
+        get_default_state([dummy], interface_levels=dict(
+            label='vert_coord', values=np.linspace(0, 10, 10),
+            units='kilometer'))
+
+
+def test_mid_int_levels_not_consistent():
+
+    dummy = MockPrognostic()
+    with pytest.raises(ValueError):
+        get_default_state([dummy], interface_levels=dict(
+            label='vert_coord', values=np.linspace(0, 10, 10),
+            units='kilometer'), mid_levels=dict(
+            label='vert_coord', values=np.linspace(0, 10, 11),
+            units='kilometer'))
 
 
 def test_basic_case_for_two_inputs():
@@ -37,7 +66,7 @@ def test_basic_case_for_two_inputs():
                                 'mid_levels',
                                 'x',
                                 'y',
-                                'z', 'time'])
+                                'interface_levels', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -58,7 +87,7 @@ def test_case_for_x_dim_defined():
                                 'mid_levels',
                                 'x',
                                 'y',
-                                'z', 'time'])
+                                'interface_levels', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -79,7 +108,7 @@ def test_case_for_y_dim_defined():
                                 'mid_levels',
                                 'x',
                                 'y',
-                                'z', 'time'])
+                                'interface_levels', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -90,17 +119,24 @@ def test_case_for_y_dim_defined():
 def test_case_for_z_dim_defined():
 
     dummy = MockPrognostic()
-    state = get_default_state([dummy], z=dict(
-        label='along_shore', values=np.linspace(0, 10, 10),
-        units='degrees_east'))
+    state = get_default_state([dummy],
+                              mid_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 10, 10),
+                                  units='degrees_east'),
+                              interface_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 11, 11),
+                                  units='degrees_east'))
 
     required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
+                                'mid_levels',
                                 'x',
                                 'y',
-                                'z', 'time'])
+                                'interface_levels', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -111,18 +147,25 @@ def test_case_for_z_dim_defined():
 def test_with_extra_dimensions():
 
     dummy = MockPrognosticWithExtraDimensions()
-    state = get_default_state([dummy], z=dict(
-        label='along_shore', values=np.linspace(0, 10, 10),
-        units='degrees_east'))
+    state = get_default_state([dummy],
+                              mid_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 10, 10),
+                                  units='degrees_east'),
+                              interface_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 11, 11),
+                                  units='degrees_east'))
 
     required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
                                 'some_other_dimension',
+                                'mid_levels',
                                 'x',
                                 'y',
-                                'z', 'time'])
+                                'interface_levels', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -131,18 +174,25 @@ def test_with_extra_dimensions():
 def test_with_extra_dimensions_and_sigma_levels():
 
     dummy = MockPrognosticWithExtraDimensionsAndSigmaLevels()
-    state = get_default_state([dummy], z=dict(
-        label='along_shore', values=np.linspace(0, 10, 10),
-        units='degrees_east'))
+    state = get_default_state([dummy],
+                              mid_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 10, 10),
+                                  units='degrees_east'),
+                              interface_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 11, 11),
+                                  units='degrees_east'))
 
     required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
                                 'some_other_dimension',
+                                'mid_levels',
                                 'x',
                                 'y',
-                                'z', 'time'])
+                                'interface_levels', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities
@@ -151,18 +201,25 @@ def test_with_extra_dimensions_and_sigma_levels():
 def test_with_extra_quantities():
 
     dummy = MockPrognosticWithExtraQuantities()
-    state = get_default_state([dummy], z=dict(
-        label='along_shore', values=np.linspace(0, 10, 10),
-        units='degrees_east'))
+    state = get_default_state([dummy],
+                              mid_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 10, 10),
+                                  units='degrees_east'),
+                              interface_levels=dict(
+                                  label='along_shore',
+                                  values=np.linspace(0, 11, 11),
+                                  units='degrees_east'))
 
     required_quantities = list(dummy.inputs)
     required_quantities.extend(['longitude',
                                'latitude',
                                 'along_shore',
                                 'some_quantity',
+                                'mid_levels',
                                 'x',
                                 'y',
-                                'z', 'time'])
+                                'interface_levels', 'time'])
 
     for quantity in state.keys():
         assert quantity in required_quantities

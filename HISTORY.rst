@@ -21,4 +21,6 @@ Latest
 
 Breaking Changes
 ----------------
+* get_default_state now accepts mid_levels and interface_levels instead of z
+  to specify vertical coordinates.
 * mass_to_volume_mixing_ratio now uses numpy arrays instead of DataArrays.

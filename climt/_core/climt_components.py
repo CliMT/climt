@@ -159,7 +159,8 @@ class ArrayHandler(object):
             using_2d_coordinates = False
             x_coord = state['x']
             y_coord = state['y']
-            z_coord = state['z']
+            mid_level_coord = state['mid_levels']
+            interface_level_coord = state['interface_levels']
 
             if x_coord.ndim == 2:
                 assert y_coord.ndim == 2
@@ -168,7 +169,10 @@ class ArrayHandler(object):
                 y_coord = state['logical_y_coordinate']
 
             quantity_data_array = get_default_values(quantity,
-                                                     x_coord, y_coord, z_coord,
+                                                     x_coord, y_coord,
+                                                     mid_level_coord,
+                                                     interface_level_coord,
+                                                     None,
                                                      description,
                                                      additional_dimensions)
 
