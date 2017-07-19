@@ -1,6 +1,7 @@
 from climt import (
     mass_to_volume_mixing_ratio,
-    get_interface_values)
+    get_interface_values,
+    calculate_q_sat)
 
 from sympl import DataArray
 import numpy as np
@@ -75,6 +76,26 @@ def test_interface_levels():
         pressure_mid_level, pressure_interface_level)
 
     assert np.all(interface_values == np.ones((1, 1, 11)))
+
+
+def test_qsat():
+
+    surf_temp = 290*np.random.randn(10, 10)
+    surf_temp[surf_temp < 260] = 260
+    surf_temp[surf_temp > 280] = 280
+
+    qsat_at_280 = 0.0062856560708380816
+    qsat_at_260 = 0.0012408979354134003
+
+    surf_press = 1e5*np.ones(surf_temp.shape)
+
+    Rd = 287.058  # J/kg/K
+    Rv = 461.5  # J/kg/K
+
+    qsat = calculate_q_sat(surf_temp, surf_press, Rd, Rv)
+
+    assert np.all(qsat[surf_temp == 280] == qsat_at_280)
+    assert np.all(qsat[surf_temp == 260] == qsat_at_260)
 
 
 if __name__ == '__main__':

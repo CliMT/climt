@@ -352,26 +352,8 @@ class TestGrayLongwaveRadiation(ComponentBase):
         return GrayLongwaveRadiation()
 
     def get_3d_input_state(self):
-        random = np.random.RandomState(1)
-        nx, ny, nz = 4, 4, 10
-        state = {
-            'longwave_optical_depth_on_interface_levels': DataArray(
-                (np.linspace(0, 6, nz+1)[None, None, :] *
-                 (1 + 0.1*random.randn(nx, ny))[:, :, None]),
-                dims=['x', 'y', 'interface_levels'], attrs={'units': ''},
-            ),
-            'air_temperature': DataArray(
-                5*random.randn(nx, ny, nz) + 270.,
-                dims=['x', 'y', 'mid_levels'], attrs={'units': 'degK'},
-            ),
-            'air_pressure_on_interface_levels': DataArray(
-                np.linspace(1e5, 0, nz+1),
-                dims=['interface_levels'], attrs={'units': 'Pa'},
-            ),
-            'surface_temperature': DataArray(
-                5 * random.randn(nx, ny) + 270.,
-                dims=['x', 'y'], attrs={'units': 'degK'},
-            )}
+        component = self.get_component_instance()
+        state = climt.get_default_state([component])
         return state
 
 

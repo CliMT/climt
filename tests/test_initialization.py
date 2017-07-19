@@ -44,6 +44,32 @@ def test_only_int_levels_specified():
             units='kilometer'))
 
 
+def test_mid_level_2d():
+
+    dummy = MockPrognostic()
+    with pytest.raises(ValueError):
+        get_default_state([dummy], mid_levels=dict(
+            label='vert_coord', values=np.random.randn(4, 4),
+            units='kilometer'), interface_levels=dict(
+                label='vert_coord', values=np.linspace(0, 10, 10),
+                units='kilometer'))
+
+
+def test_int_level_2d():
+
+    dummy = MockPrognostic()
+    with pytest.raises(ValueError):
+        get_default_state([dummy],
+                          interface_levels=dict(
+                              label='vert_coord',
+                              values=np.random.randn(4, 4),
+                              units='kilometer'),
+                          mid_levels=dict(
+                              label='vert_coord',
+                              values=np.linspace(0, 10, 10),
+                              units='kilometer'))
+
+
 def test_mid_int_levels_not_consistent():
 
     dummy = MockPrognostic()

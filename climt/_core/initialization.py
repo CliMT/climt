@@ -558,7 +558,7 @@ def get_default_state(component_list,
     if len(component_list) == 0:
         raise ValueError('Component list must contain at least one component')
 
-    if (mid_levels.keys() == 0) != (interface_levels.keys() == 0):
+    if (len(mid_levels.keys()) == 0) != (len(interface_levels.keys()) == 0):
         raise ValueError('Both mid and interface levels must be specified')
 
     output_state = {}
