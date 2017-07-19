@@ -13,7 +13,7 @@ before_install:
 install:
 - pip install -r requirements_dev.txt
 - pip install -U tox
-script: travis_wait 20 tox -e ${TOXENV}
+script: tox -e ${TOXENV}
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
