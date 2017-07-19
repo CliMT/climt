@@ -27,7 +27,8 @@ held_suarez = climt.HeldSuarez()
 
 my_state = climt.get_default_state([dycore], x=dycore.grid_definition['x'],
                                    y=dycore.grid_definition['y'],
-                                   z=dycore.grid_definition['mid_levels'])
+                                   mid_levels=dycore.grid_definition['mid_levels'],
+                                   interface_levels=dycore.grid_definition['interface_levels'])
 
 my_state['eastward_wind'].values[:] = np.random.randn(*my_state['eastward_wind'].shape)
 
