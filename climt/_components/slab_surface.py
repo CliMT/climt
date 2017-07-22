@@ -18,12 +18,12 @@ class SlabSurface(ClimtPrognostic):
         'surface_upward_latent_heat_flux': 'W m^-2',
         'surface_upward_sensible_heat_flux': 'W m^-2',
         'surface_thermal_capacity': 'J kg^-1 degK^-1',
-        'depth_slab_surface': 'm',
         'density_surface_material': 'kg m^-3',
         'upward_heat_flux_at_ground_level_in_soil': 'W m^-2',
         'heat_flux_into_sea_water_due_to_sea_ice': 'W m^-2',
         'area_type': 'dimensionless',
         'snow_ice_temperature': 'dimensionless',
+        'soil_layer_thickness': 'm',
         'ocean_mixed_layer_thickness': 'm',
         'soil_thermal_capacity': 'J kg^-1 degK^-1',
         'sea_water_density': 'kg m^-3',
@@ -35,7 +35,9 @@ class SlabSurface(ClimtPrognostic):
         # 'soil_surface_temperature': 'degK s^-1',
     }
 
-    _climt_diagnostics = {}
+    _climt_diagnostics = {
+        'depth_slab_surface': 'm',
+    }
 
     quantity_descriptions = {
         'surface_thermal_capacity': {
@@ -98,6 +100,7 @@ class SlabSurface(ClimtPrognostic):
         """
 
         raw_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
+        diag_dict = self.create_state_dict_for('_climt_diagnostics', state)
 
         net_heat_flux = (raw_arrays['downwelling_shortwave_flux_in_air'][:, :, 0] +
                          raw_arrays['downwelling_longwave_flux_in_air'][:, :, 0] -
@@ -122,13 +125,17 @@ class SlabSurface(ClimtPrognostic):
 
         raw_arrays['surface_thermal_capacity'][land_mask] = raw_arrays['soil_thermal_capacity'][land_mask]
 
-        raw_arrays['depth_slab_surface'][sea_mask] = raw_arrays['ocean_mixed_layer_thickness'][sea_mask]
+        diag_dict['depth_slab_surface'].values[sea_mask] =\
+            raw_arrays['ocean_mixed_layer_thickness'][sea_mask]
 
-        mass_surface_slab = raw_arrays['density_surface_material']*raw_arrays['depth_slab_surface']
+        diag_dict['depth_slab_surface'].values[land_mask] =\
+            raw_arrays['soil_layer_thickness'][land_mask]
+
+        mass_surface_slab = raw_arrays['density_surface_material'] *\
+            diag_dict['depth_slab_surface'].values
         heat_capacity_surface = mass_surface_slab*raw_arrays['surface_thermal_capacity']
 
         tend_dict = self.create_state_dict_for('_climt_tendencies', state)
-        diag_dict = self.create_state_dict_for('_climt_diagnostics', state)
 
         tend_dict['surface_temperature'].values[:] = net_heat_flux/heat_capacity_surface
         tend_dict['surface_temperature'].values[land_ice_mask] = 0
