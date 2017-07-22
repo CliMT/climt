@@ -4,7 +4,7 @@ History
 
 Latest
 ------
-* moist GCM with grey radiation works!
+* Held-Suarez and moist GCM with grey radiation work!
 * Added DCMIP initial conditions, test 4 tried out.
 * Dynamical core integrated now.
 * BIG change in the build system. Tests pass on Mac as well
