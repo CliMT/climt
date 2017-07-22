@@ -27,8 +27,8 @@ def plot_function(fig, state):
         state['convective_heating_rate'].to_units('degK day^-1').values.flatten(),
         state['air_pressure'].to_units('mbar').values.flatten(), '-o')
     ax.plot(
-        state['longwave_heating_rate'].values.flatten(),
-        state['air_pressure'].to_units('mbar').values.flatten(), '-o')
+       state['longwave_heating_rate'].values.flatten(),
+       state['air_pressure'].to_units('mbar').values.flatten(), '-o')
     ax.plot(
         state['shortwave_heating_rate'].values.flatten(),
         state['air_pressure'].to_units('mbar').values.flatten(), '-o')
@@ -65,6 +65,7 @@ def plot_function(fig, state):
 
 
 monitor = PlotFunctionMonitor(plot_function)
+timestep = timedelta(minutes=5)
 
 convection = EmanuelConvection()
 radiation_sw = RRTMGShortwave()
@@ -72,7 +73,8 @@ radiation_lw = RRTMGLongwave()
 slab = SlabSurface()
 simple_physics = SimplePhysics(use_external_surface_specific_humidity=False)
 
-timestep = timedelta(minutes=5)
+convection.current_time_step = timestep
+
 
 state = get_default_state([simple_physics, convection,
                            radiation_lw, radiation_sw, slab])
@@ -114,7 +116,7 @@ for i in range(60000):
     # print('after: ', diagnostics['atmosphere_convective_mass_flux'].values)
     # print(diagnostics['convective_state'].values)
     state.update(diagnostics)
-    new_state, diagnostics = simple_physics(state, timestep)
+    diagnostics, new_state = simple_physics(state, timestep)
     # print(diagnostics['stratiform_precipitation_rate'].to_units('mm day^-1').values)
     # print('SH Flux:', diagnostics['surface_upward_sensible_heat_flux'].values.item())
     # print('LH Flux:', diagnostics['surface_upward_latent_heat_flux'].values.item())
