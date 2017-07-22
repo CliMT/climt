@@ -1,5 +1,7 @@
 import abc
-from sympl import Implicit, Diagnostic, Prognostic, TimeStepper, PrognosticComposite
+from sympl import (Implicit, Diagnostic, Prognostic,
+                   TimeStepper, PrognosticComposite,
+                   UpdateFrequencyWrapper)
 from datetime import timedelta
 from sympl import get_numpy_array
 from .initialization import climt_quantity_descriptions, get_default_values
@@ -268,6 +270,22 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
     @property
     def diagnostics(self):
         return tuple(self._climt_diagnostics.keys())
+
+    def version_that_updates_every(self, update_time):
+        """
+        Returns component that updates once every :code:`update_time`.
+
+        Args:
+            update_time (timedelta):
+                The time difference between updates.
+
+        Returns:
+            component (UpdateFrequencyWrapper):
+                A "delayed" component.
+
+        """
+
+        return UpdateFrequencyWrapper(self, update_time)
 
 
 class ClimtDiagnostic(ArrayHandler, Diagnostic):

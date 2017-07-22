@@ -412,6 +412,11 @@ climt_quantity_descriptions = {
         'units': 'm',
         'default_value': 50.
     },
+    'soil_layer_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 50.
+    },
     'soil_thermal_capacity': {
         'dims': ['x', 'y'],
         'units': 'J kg^-1 degK^-1',
