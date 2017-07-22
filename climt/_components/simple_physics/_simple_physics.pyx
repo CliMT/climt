@@ -103,14 +103,14 @@ def get_new_state(cnp.ndarray[cnp.double_t, ndim=3] u_ext,
     num_cols = 1
     num_levs = nlevs
 
-    u_ext = np.asfortranarray(u_ext[:, :, ::-1])
-    v_ext = np.asfortranarray(v_ext[:, :, ::-1])
-    q_ext = np.asfortranarray(q_ext[:, :, ::-1])
-    temp_ext = np.asfortranarray(temp_ext[:, :, ::-1])
-    p_ext = np.asfortranarray(p_ext[:, :, ::-1])
-    p_iface_ext = np.asfortranarray(p_iface_ext[:, :, ::-1])
+    u_ext = np.asfortranarray(u_ext[:, :, ::-1].transpose())
+    v_ext = np.asfortranarray(v_ext[:, :, ::-1].transpose())
+    q_ext = np.asfortranarray(q_ext[:, :, ::-1].transpose())
+    temp_ext = np.asfortranarray(temp_ext[:, :, ::-1].transpose())
+    p_ext = np.asfortranarray(p_ext[:, :, ::-1].transpose())
+    p_iface_ext = np.asfortranarray(p_iface_ext[:, :, ::-1].transpose())
 
-    thickness = np.asfortranarray(p_iface_ext[:, :, 1::] - p_iface_ext[:, :, 0:-1])
+    thickness = np.asfortranarray(p_iface_ext[1::, :, :] - p_iface_ext[0:-1, :, :])
     inv_thickness = np.asfortranarray(1./thickness)
 
     precip_out = np.zeros((nlons, nlats), order='F')
@@ -123,11 +123,11 @@ def get_new_state(cnp.ndarray[cnp.double_t, ndim=3] u_ext,
                   q_ext, surf_press_ext, ts_ext, qsurf_ext, latitude_ext,
                   precip_out, sh_flx_out, lh_flx_out)
 
-    u_ext = np.asfortranarray(u_ext[:, :, ::-1])
-    v_ext = np.asfortranarray(v_ext[:, :, ::-1])
-    q_ext = np.asfortranarray(q_ext[:, :, ::-1])
-    temp_ext = np.asfortranarray(temp_ext[:, :, ::-1])
-    precip_out = np.asfortranarray(precip_out[:, ::-1])
+    u_ext = np.asfortranarray(u_ext[::-1, :, :].transpose())
+    v_ext = np.asfortranarray(v_ext[::-1, :, :].transpose())
+    q_ext = np.asfortranarray(q_ext[::-1, :, :].transpose())
+    temp_ext = np.asfortranarray(temp_ext[::-1, :, :].transpose())
+    precip_out = np.asfortranarray(precip_out)
     return temp_ext, u_ext, v_ext, q_ext, precip_out, sh_flx_out, lh_flx_out
 
 def do_simple_physics(
@@ -152,28 +152,41 @@ def do_simple_physics(
     cnp.double_t[::1, :] lh_flx_out):
 
     global lsc, pbl, lhf, ext_ts, cyclone, use_ext_qsurf
+    cdef cnp.int32_t cols = 1
+    cdef cnp.double_t[::1] cy_temp, cy_q, cy_u, cy_v,\
+            cy_p, cy_pint, cy_thick, cy_inv_thick
+
+    cy_temp = np.zeros(nlevs, order='F')
+    cy_q = np.zeros(nlevs, order='F')
+    cy_u = np.zeros(nlevs, order='F')
+    cy_v = np.zeros(nlevs, order='F')
+    cy_p = np.zeros(nlevs, order='F')
+    cy_pint = np.zeros(nlevs+1, order='F')
+    cy_thick = np.zeros(nlevs, order='F')
+    cytemp = np.zeros(nlevs, order='F')
 
     for lon in range(nlons):
-        #Call fortran code with these arguments
-        simple_physics(
-            &nlats, &nlevs,
-            &time_step,
-            &latitude_ext[lon, 0],
-            <double *>&temp_ext[lon, 0, 0],
-            <double *>&q_ext[lon, 0, 0],
-            <double *>&u_ext[lon, 0, 0],
-            <double *>&v_ext[lon, 0, 0],
-            <double *>&p_ext[lon, 0, 0],
-            <double *>&p_iface_ext[lon, 0, 0],
-            <double *>&thickness_ext[lon, 0, 0],
-            <double *>&inv_thickness_ext[lon, 0, 0],
-            &surf_press_ext[lon, 0],
-            &precip_out[lon, 0],
-            &cyclone,
-            &lsc, &pbl, &lhf,
-            &ext_ts,
-            &ts_ext[lon, 0],
-            &use_ext_qsurf,
-            &qsurf_ext[lon, 0],
-            &sh_flx_out[lon, 0],
-            &lh_flx_out[lon, 0])
+        for lat in range(nlats):
+           #Call fortran code with these arguments
+            simple_physics(
+                &cols, &nlevs,
+                &time_step,
+                &latitude_ext[lon, lat],
+                <double *>&temp_ext[0, lat, lon],
+                <double *>&q_ext[0, lat, lon],
+                <double *>&u_ext[0, lat, lon],
+                <double *>&v_ext[0, lat, lon],
+                <double *>&p_ext[0, lat, lon],
+                <double *>&p_iface_ext[0, lat, lon],
+                <double *>&thickness_ext[0, lat, lon],
+                <double *>&inv_thickness_ext[0, lat, lon],
+                &surf_press_ext[lon, lat],
+                &precip_out[lon, lat],
+                &cyclone,
+                &lsc, &pbl, &lhf,
+                &ext_ts,
+                &ts_ext[lon, lat],
+                &use_ext_qsurf,
+                &qsurf_ext[lon, lat],
+                &sh_flx_out[lon, lat],
+                &lh_flx_out[lon, lat])
