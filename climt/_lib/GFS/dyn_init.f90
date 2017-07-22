@@ -336,10 +336,10 @@ module dyn_init
    diff_prof = sl**(log(1./fshk))
    !print *,'profiles for diffusion and linear damping:'
    !print *,'(level, sigma, diffusion enhancment, linear drag coeff)'
-   !do k=1,nlevs
-   !   if (sl(k) .lt. slrd0) dmp_prof(k)=dmp_prof1*log(slrd0/sl(k))
+   do k=1,nlevs
+      if (sl(k) .lt. slrd0) dmp_prof(k)=dmp_prof1*log(slrd0/sl(k))
    !   print *,k,sl(k),diff_prof(k),dmp_prof(k)
-   !enddo
+   enddo
    disspec(:) = -(1./efold)*(lap(:)/minval(lap))**(ndiss/2)
    return
  end subroutine setdampspec

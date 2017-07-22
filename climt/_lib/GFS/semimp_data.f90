@@ -128,9 +128,9 @@ contains
     subroutine init_semimp_arrays(py_d_hyb_m, py_amhyb, py_bmhyb,&
         py_tref, py_pkref, py_dpkref, py_alfaref, py_svhyb, py_tor_hyb)bind(c, name='gfs_initialise_timestepper_arrays')
 
-    real(r_kind), target :: py_d_hyb_m(nlevs, nlevs, ntrunc+1, 3)
-    real(r_kind), target:: py_amhyb(nlevs, nlevs), py_bmhyb(nlevs, nlevs)
-    real(r_kind), target:: py_tref(nlevs), py_pkref(nlevs+1), py_dpkref(nlevs),&
+    real(c_double), target :: py_d_hyb_m(nlevs, nlevs, ntrunc+1, 3)
+    real(c_double), target:: py_amhyb(nlevs, nlevs), py_bmhyb(nlevs, nlevs)
+    real(c_double), target:: py_tref(nlevs), py_pkref(nlevs+1), py_dpkref(nlevs),&
         py_alfaref(nlevs), py_svhyb(nlevs), py_tor_hyb(nlevs)
 
     d_hyb_m => py_d_hyb_m

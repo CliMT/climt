@@ -38,13 +38,13 @@ clean: force_look
 
 
 .f90.o:
-	$(FC) $(FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS) $(OMPFLAG) -c $< 
+	$(FC) -Wall $(FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS) $(OMPFLAG) -c $<
 
 .F90.o:
-	$(FC) $(FFLAGS) $(DEBUGFLAGS)  $(SHAREFLAGS) $(OMPFLAG) -c $< 
+	$(FC) -Wall $(FFLAGS) $(DEBUGFLAGS)  $(SHAREFLAGS) $(OMPFLAG) -c $<
 
 .f.o:
-	$(FC) $(FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS)  $(OMPFLAG) -free -c $< 
+	$(FC) -Wall $(FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS)  $(OMPFLAG) -free -c $<
 
 %.o : %.mod
 
@@ -73,14 +73,14 @@ grid_data.o:  	grid_data.f90 kinds.o params.o
 pressure_data.o:  	pressure_data.f90 kinds.o params.o physcons.o grid_data.o
 
 dyn_init.o:  	dyn_init.f90 params.o shtns.o spectral_data.o pressure_data.o physcons.o grid_data.o semimp_data.o 
-		$(FC) $(FFLAGS) $(OMPFLAG) -c dyn_init.f90
+		$(FC) -Wall $(FFLAGS) $(OMPFLAG) -c dyn_init.f90
 
 phy_init.o:     phy_init.f90 phy_data.o
 
 phy_finalize.o:     phy_finalize.f90 
 
 phy_run.o:      phy_run.f90 pressure_data.o shtns.o spectral_data.o physcons.o kinds.o params.o grid_data.o 
-		$(FC) $(FFLAGS) $(OMPFLAG) -c phy_run.f90
+		$(FC) -Wall $(FFLAGS) $(OMPFLAG) -c phy_run.f90
 	        
 dyn_finalize.o:  dyn_finalize.f90 shtns.o spectral_data.o pressure_data.o grid_data.o 
 

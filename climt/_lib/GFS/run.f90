@@ -29,14 +29,14 @@ use iso_c_binding
 implicit none
 private
 
-real(r_double) :: t
+real(c_double) :: t
 bind(c) :: t
 public :: take_one_step, t
 
 contains
 
 subroutine set_model_time(py_time) bind(c, name='gfs_set_model_time')
-    real(r_double), intent(in):: py_time
+    real(c_double), intent(in):: py_time
     t = py_time
     !print *, 'model time is now: ', t
 end subroutine
@@ -44,10 +44,11 @@ end subroutine
 
 subroutine take_one_step() bind(c,name='gfs_take_one_step')
 
-    integer nt,ntstart
-    real(r_kind) fh,pstendmean,spdmax
+    !integer nt,ntstart
+    !real(r_kind) fh,pstendmean,spdmax
+    real(r_kind) fh
     real(8) t1,t2
-    real(r_kind), dimension(nlons,nlats) :: pstend
+    !real(r_kind), dimension(nlons,nlats) :: pstend
     integer(8) count, count_rate, count_max
 
     call system_clock(count, count_rate, count_max)
@@ -118,7 +119,7 @@ subroutine advance(t)
       tracerspec_orig,dtracerspecdt1,dtracerspecdt2
   complex(r_kind) :: rhs(nlevs)
   integer nt, k, n
-  logical :: profile = .false. ! print out timing stats
+  !logical :: profile = .false. ! print out timing stats
   integer(8) count, count_rate, count_max
   real(8) t1,t2,t0,t4
 

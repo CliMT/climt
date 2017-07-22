@@ -99,7 +99,7 @@ use iso_c_binding, only: c_double,c_int,c_bool
  ! amplitude of vertically varying part of hyper-diff (1 means no variation,
  ! zero gives GFS resolution dependent defaults)
  real(r_kind) :: fshk=0 
- integer :: ntrac=3 ! number of tracers (including specific humidity)
+ integer(c_int) :: ntrac=3 ! number of tracers (including specific humidity)
 
    
 !JOY bind the grid size variables   
@@ -202,7 +202,7 @@ use iso_c_binding, only: c_double,c_int,c_bool
  ! if dt not given, but timestepsperhr is, dt=3600/timestepsperhr
  real(r_double) :: timestepsperhr = -1
  !JOY added to remove sigio dependency
- integer :: ntracin = 0 
+ integer(c_int) :: ntracin = 0
  bind(c) :: ntracin
 
 contains

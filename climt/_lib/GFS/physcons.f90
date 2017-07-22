@@ -77,7 +77,7 @@
 
   contains
     subroutine set_physical_constants(radius, omega, R, Rd, Rv, g, Cp, C_cond)bind(c, name='gfs_set_constants')
-        real(r_kind), intent(in):: radius, omega, R, Rd, Rv, g, Cp, C_cond
+        real(c_double), intent(in):: radius, omega, R, Rd, Rv, g, Cp, C_cond
 
         con_rerth = radius
         con_omega = omega

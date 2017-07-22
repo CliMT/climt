@@ -24,6 +24,7 @@
  use physcons, only: rerth => con_rerth, rd => con_rd, cp => con_cp, &
                eps => con_eps, omega => con_omega, cvap => con_cvap, &
                grav => con_g, fv => con_fvirt, kappa => con_rocp
+ use iso_c_binding
  implicit none
  private
 
@@ -35,9 +36,9 @@
 !JOY adding subroutine to convert u,v grids to vrt,div grids
 subroutine gfs_uv_to_vrtdiv(ug1,vg1,vrtg1,divg1) bind(c,name='gfs_uv_to_vrtdiv')
 
-    real(r_kind), dimension(nlons,nlats,nlevs), intent(in) :: ug1, vg1
-    real(r_kind), dimension(nlons,nlats,nlevs), intent(out) :: vrtg1, divg1
-    complex(r_kind), dimension(:,:), allocatable :: vrtspec1, divspec1
+    real(c_double), dimension(nlons,nlats,nlevs), intent(in) :: ug1, vg1
+    real(c_double), dimension(nlons,nlats,nlevs), intent(out) :: vrtg1, divg1
+    complex(c_double), dimension(:,:), allocatable :: vrtspec1, divspec1
     integer k
 
     allocate(vrtspec1(ndimspec,nlevs),divspec1(ndimspec,nlevs))

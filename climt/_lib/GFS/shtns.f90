@@ -53,12 +53,14 @@
 ! (http://en.wikipedia.org/wiki/Spherical_harmonics#Conventions).
 
       use kinds, only: r_kind, default_real, r_double
+      use iso_c_binding
       implicit none
       private
       public :: shtns_init,grdtospec,spectogrd,getuv,getvrtdivspec,&
-                getgrad,shtns_destroy,get_lon_lat
+                getgrad,shtns_destroy
       public :: gauwts, lats, lons, nlm, degree, order, lap, invlap,&
-                current_nlon, current_nlat, current_ntrunc, areawts
+                current_nlon, current_nlat, current_ntrunc, areawts,&
+            print_bool
       INTEGER, PARAMETER :: SHT_NATIVE_LAYOUT=0
       INTEGER, PARAMETER :: SHT_THETA_CONTIGUOUS=256
       INTEGER, PARAMETER :: SHT_PHI_CONTIGUOUS=512
@@ -79,6 +81,7 @@
       INTEGER, SAVE      :: current_nlat = -1
       INTEGER, SAVE      :: current_ntrunc = -1
       INTEGER            :: nlm
+      INTEGER :: print_bool
 ! arrays allocated when nlon or nlat or ntrunc change.
       REAL(r_kind), DIMENSION(:), pointer :: lap, invlap, gauwts
       REAL(r_kind), DIMENSION(:,:), pointer :: lats
@@ -94,13 +97,13 @@
               py_order, py_nlons, py_nlats, py_nlm)&
               bind(c, name='gfs_assign_sht_arrays')
 
-          REAL(r_kind), DIMENSION(py_nlm), target :: py_lap, py_invlap
-          REAL(r_kind), DIMENSION(py_nlats), target :: py_gauwts
-          REAL(r_kind), DIMENSION(py_nlons,py_nlats), target :: py_lats
-          REAL(r_kind), DIMENSION(py_nlons,py_nlats), target :: py_lons
-          REAL(r_kind), DIMENSION(py_nlons,py_nlats), target :: py_areawts
-          INTEGER, DIMENSION(py_nlm), target :: py_degree, py_order
-          integer, intent(in) :: py_nlons, py_nlats, py_nlm
+          REAL(c_double), DIMENSION(py_nlm), target :: py_lap, py_invlap
+          REAL(c_double), DIMENSION(py_nlats), target :: py_gauwts
+          REAL(c_double), DIMENSION(py_nlons,py_nlats), target :: py_lats
+          REAL(c_double), DIMENSION(py_nlons,py_nlats), target :: py_lons
+          REAL(c_double), DIMENSION(py_nlons,py_nlats), target :: py_areawts
+          INTEGER(c_int), DIMENSION(py_nlm), target :: py_degree, py_order
+          integer(c_int), intent(in) :: py_nlons, py_nlats, py_nlm
 
           lap => py_lap
           invlap => py_invlap
@@ -113,11 +116,11 @@
 
       end subroutine sht_assign_arrays
 
-      subroutine get_lon_lat(longitudes, latitudes) &
-              bind(c,name='gfs_get_lon_lat')
+      !subroutine get_lon_lat(longitudes, latitudes) &
+      !        bind(c,name='gfs_get_lon_lat')
 
-      real(r_double), intent(out), dimension(current_nlon,current_nlat)&
-                :: longitudes, latitudes
+      !real(c_double), intent(out), dimension(current_nlon,current_nlat)&
+      !          :: longitudes, latitudes
 
       !if(allocated(lats)) then
       !    latitudes(:,:) = lats(:,:)
@@ -131,7 +134,7 @@
       !    print *, 'longitudes not allocated'
       !endif
 
-      end subroutine get_lon_lat
+      !end subroutine get_lon_lat
 
       subroutine shtns_init(nlon,nlat,ntrunc,nthreads,polar_opt)
 ! initialize library, allocate arrays.
@@ -141,6 +144,7 @@
       real(r_double), dimension(:), allocatable :: lats1,gauwts1
       real(r_double) pi
       integer m,n,i,j
+      print_bool = 0
       if (present(nthreads)) then
          nth = nthreads
       else
@@ -221,7 +225,7 @@
       subroutine grdtospec(datagrid,dataspec)
 ! converts gridded input array (datagrid) to complex spectral coefficients
 ! (dataspec).
-      real(r_kind), dimension(:,:), intent(in) :: datagrid
+      real(c_double), dimension(:,:), intent(in) :: datagrid
       complex(r_kind), dimension(:), intent(out) :: dataspec
       real(r_double), dimension(:,:), allocatable :: datagrid_tmp
       complex(r_double), dimension(:), allocatable :: dataspec_tmp
@@ -240,6 +244,12 @@
       if (default_real .ne. 2) then
          ! if inputs not double precision convert,
          ! then convert back.
+         !if (print_bool == 1) then
+         !   print *, datagrid(4,1:3)
+         !   print *, 'grdtospec not default_real: ', loc(datagrid)
+         !   print *, ''
+         !end if
+
          allocate(datagrid_tmp(nlon,nlat))
          allocate(dataspec_tmp(nlm))
          datagrid_tmp = datagrid

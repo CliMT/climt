@@ -43,7 +43,6 @@ module spectral_data
 
     real(c_double), target, intent(inout) :: pyDmpProf(nlevs), &
             pyDiffProf(nlevs), pyDissSpec(ndimspec)
-    integer :: i,j
 
     !print *, "initialising Spectral arrays"
     !print *, shape(pyVrtSpec), shape(pyTracerSpec)
