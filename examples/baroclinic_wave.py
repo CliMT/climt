@@ -29,6 +29,6 @@ out = dcmip(my_state, add_perturbation=True)
 my_state.update(out)
 
 for i in range(1000):
-    diag, output = dycore(my_state)
+    output, diag = dycore(my_state)
     monitor.store(output)
     my_state.update(output)
