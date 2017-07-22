@@ -26,7 +26,8 @@ requirements = [
     'pint>=0.7.0',
     'xarray>=0.8.0',
     'matplotlib',
-    'sympl',
+    'sympl>=0.2.1',
+    'cython>=0.25'
 ]
 
 test_requirements = [
@@ -135,9 +136,9 @@ else:
             sources=['climt/_components/emanuel/_emanuel_convection.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
-            extra_compile_args=['-fopenmp'],
+            extra_compile_args=[],
             library_dirs=[lib_path],
-            extra_link_args=['-fopenmp', lib_path+'/libemanuel.a'] + default_link_args),
+            extra_link_args=[lib_path+'/libemanuel.a'] + default_link_args),
 
         Extension(
             'climt._components.rrtmg.lw._rrtmg_lw',
