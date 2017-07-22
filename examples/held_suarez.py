@@ -35,7 +35,7 @@ my_state['eastward_wind'].values[:] = np.random.randn(*my_state['eastward_wind']
 dycore.prognostics = [held_suarez]
 
 for i in range(10000):
-    diag, output = dycore(my_state)
+    output, diag = dycore(my_state)
     if (i % 20 == 0):
         print(i, 'max. zonal wind: ', np.amax(my_state['eastward_wind'].values))
         monitor.store(my_state)
