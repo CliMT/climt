@@ -1,8 +1,33 @@
 from pint import UnitRegistry
-from sympl import jit
+from sympl import jit, DataArray
 import numpy as np
 
 pint_units = UnitRegistry()
+
+
+def numpy_version_of(state):
+    """
+    Return raw numpy arrays from state.
+
+    Args:
+        state (dict):
+            state dictionary containing DataArrays
+
+    Returns:
+        raw_arrays (dict):
+            dictionary containing the numpy arrays
+            underlying the DataArrays.
+    """
+
+    raw_arrays = {}
+
+    for quantity in state.keys():
+        if isinstance(state[quantity], DataArray):
+            raw_arrays[quantity] = state[quantity].values
+        elif isinstance(state[quantity], np.ndarray):
+            raw_arrays[quantity] = state[quantity]
+
+    return raw_arrays
 
 
 def mass_to_volume_mixing_ratio(
