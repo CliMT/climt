@@ -27,8 +27,8 @@ def plot_function(fig, state):
         state['convective_heating_rate'].to_units('degK day^-1').values.flatten(),
         state['air_pressure'].to_units('mbar').values.flatten(), '-o')
     ax.plot(
-       state['longwave_heating_rate'].values.flatten(),
-       state['air_pressure'].to_units('mbar').values.flatten(), '-o')
+        state['longwave_heating_rate'].values.flatten(),
+        state['air_pressure'].to_units('mbar').values.flatten(), '-o')
     ax.plot(
         state['shortwave_heating_rate'].values.flatten(),
         state['air_pressure'].to_units('mbar').values.flatten(), '-o')
