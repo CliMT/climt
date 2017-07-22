@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ..._core import ClimtImplicitPrognostic, bolton_q_sat
+from ..._core import ClimtImplicitPrognostic, bolton_q_sat, numpy_version_of
 from sympl import replace_none_with_default, DataArray
 import numpy as np
 try:
@@ -36,7 +36,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         'convective_downdraft_specific_humidity_scale': 'g/g',
         'atmosphere_convective_mass_flux': 'kg m^-2 s^-1',
         'atmosphere_convective_available_potential_energy': 'J kg^-1',
-        'convective_heating_rate': 'degK s^-1'
+        'convective_heating_rate': 'degK/day'
     }
 
     _climt_tendencies = {
@@ -145,7 +145,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
 
             convective_momentum_transfer_coefficient (float, optional):
                 Coefficient **between 0 and 1** governing momentum transport
-                by clouds.
+                by clouds. A value of 1 **shuts off** momentum transport.
 
             downdraft_surface_velocity_coefficient (float, optional):
                 Coefficient mulitplying the downdraft mass flux to calculate
@@ -323,8 +323,8 @@ class EmanuelConvection(ClimtImplicitPrognostic):
             raw_arrays['air_pressure']*100,
             self._Cpd.values.item(), self._Cpv.values.item()))
 
-        tend_arrays = self.get_numpy_arrays_from_state('_climt_tendencies', tend_dict)
-        diag_arrays = self.get_numpy_arrays_from_state('_climt_diagnostics', diag_dict)
+        tend_arrays = numpy_version_of(tend_dict)
+        diag_arrays = numpy_version_of(diag_dict)
 
         _emanuel_convection.convect(
             num_levs,
@@ -352,6 +352,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
             tend_arrays['eastward_wind'],
             tend_arrays['northward_wind'])
 
-        diag_dict['convective_heating_rate'].values[:] = tend_dict['air_temperature'].values
+        diag_dict['convective_heating_rate'].values[:] = \
+            tend_dict['air_temperature'].to_units('degK/day').values
         diag_dict['atmosphere_convective_mass_flux'].values[:] = raw_arrays['atmosphere_convective_mass_flux']
         return tend_dict, diag_dict

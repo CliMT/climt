@@ -120,12 +120,33 @@ def convect(
 
     global initialised
     cdef Py_ssize_t lat, lon
+    cdef cnp.double_t[::1] cy_temp, cy_q, cy_qs, cy_u,\
+            cy_v, cy_pmid, cy_pint, cy_dtemp, cy_dq,\
+            cy_du, cy_dv
+    cdef cnp.double_t[::1, :] cy_tracer, cy_dtracer
+
+
+    cy_temp = np.zeros(nlevs)
+    cy_q = np.zeros(nlevs)
+    cy_qs = np.zeros(nlevs)
+    cy_u = np.zeros(nlevs)
+    cy_v = np.zeros(nlevs)
+    cy_pmid = np.zeros(nlevs)
+    cy_pint = np.zeros(nlevs+1)
+    cy_dtemp = np.zeros(nlevs)
+    cy_dq = np.zeros(nlevs)
+    cy_du = np.zeros(nlevs)
+    cy_dv = np.zeros(nlevs)
+    cy_tracer = np.zeros((nlevs, num_tracers), order='F')
+    cy_dtracer = np.zeros((nlevs, num_tracers), order='F')
 
     if dtracers is None:
         dtracers = np.zeros((nlons, nlats, nlevs, 1), order='F')
+        cy_dtracer = np.zeros((nlevs, 1), order='F')
 
     if tracers is None:
         tracers = np.zeros((nlons, nlats, nlevs, 1), order='F')
+        cy_tracer = np.zeros((nlevs, 1), order='F')
 
     if initialised == 0:
         raise ValueError('Emanuel scheme not initialised.')
@@ -134,24 +155,33 @@ def convect(
         for lat in range(nlats):
         # for lat in prange(nlats, nogil=True):
 
+            cy_temp[:] = temp[lon, lat, :]
+            cy_q[:] = q[lon, lat, :]
+            cy_qs[:] = qs[lon, lat, :]
+            cy_u[:] = u[lon, lat, :]
+            cy_v[:] = v[lon, lat, :]
+            cy_pmid[:] = pmid[lon, lat, :]
+            cy_pint[:] = pint[lon, lat, :]
+            cy_tracer[:] = tracers[lon, lat, :, :]
+
             # Call fortran code
             emanuel_convection(
-                <double *>&temp[lon, lat, 0],
-                <double *>&q[lon, lat, 0],
-                <double *>&qs[lon, lat, 0],
-                <double *>&u[lon, lat, 0],
-                <double *>&v[lon, lat, 0],
-                <double *>&pmid[lon, lat, 0],
-                <double *>&pint[lon, lat, 0],
+                <double *>&cy_temp[0],
+                <double *>&cy_q[0],
+                <double *>&cy_qs[0],
+                <double *>&cy_u[0],
+                <double *>&cy_v[0],
+                <double *>&cy_pmid[0],
+                <double *>&cy_pint[0],
 
                 &nlevs, &max_conv_lev, &num_tracers,
                 &dt,
 
                 <cnp.int32_t *>&conv_state[lon, lat],
-                <double *>&dtemp[lon, lat, 0],
-                <double *>&dq[lon, lat, 0],
-                <double *>&du[lon, lat, 0],
-                <double *>&dv[lon, lat, 0],
+                <double *>&cy_dtemp[0],
+                <double *>&cy_dq[0],
+                <double *>&cy_du[0],
+                <double *>&cy_dv[0],
 
                 <double *>&precip[lon, lat],
                 <double *>&downdraft_vel_scale[lon, lat],
@@ -159,5 +189,11 @@ def convect(
                 <double *>&downdraft_q_scale[lon, lat],
                 <double *>&cloud_base_mass_flux[lon, lat],
                 <double *>&cape[lon, lat],
-                <double *>&dtracers[lon, lat, 0, 0],
-                <double *>&tracers[lon, lat, 0, 0])
+                <double *>&cy_tracer[0,0],
+                <double *>&cy_dtracer[0,0])
+
+            dtemp[lon, lat, :] = cy_dtemp[:]
+            dq[lon, lat, :] = cy_dq[:]
+            du[lon, lat, :] = cy_du[:]
+            dv[lon, lat, :] = cy_dv[:]
+            dtracers[lon, lat, :, :] = cy_dtracer[:, :]
