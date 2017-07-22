@@ -1,18 +1,25 @@
 from sympl import (
-    Prognostic, Diagnostic, DataArray, jit, replace_none_with_default,
+    Diagnostic, DataArray, jit, replace_none_with_default,
     combine_dimensions, get_numpy_array)
+from climt import ClimtPrognostic
 import numpy as np
 
 
-class GrayLongwaveRadiation(Prognostic):
+class GrayLongwaveRadiation(ClimtPrognostic):
 
-    inputs = (
-        'longwave_optical_depth_on_interface_levels', 'air_temperature',
-        'air_pressure_on_interface_levels', 'surface_temperature')
-    diagnostics = (
-        'downwelling_longwave_flux_in_air', 'upwelling_longwave_flux_in_air',
-        'net_longwave_flux_in_air', 'longwave_heating_rate')
-    tendencies = ('air_temperature',)
+    _climt_inputs = {
+        'longwave_optical_depth_on_interface_levels': 'dimensionless',
+        'air_temperature': 'degK',
+        'surface_temperature': 'degK',
+        'air_pressure': 'Pa',
+        'air_pressure_on_interface_levels': 'Pa'}
+
+    _climt_diagnostics = {
+        'downwelling_longwave_flux_in_air': 'W m^-2',
+        'upwelling_longwave_flux_in_air': 'W m^-2',
+        'longwave_heating_rate': 'degK/day'}
+
+    _climt_tendencies = {'air_temperature': 'degK/s'}
 
     def __init__(
             self,
@@ -78,33 +85,16 @@ class GrayLongwaveRadiation(Prognostic):
          lw_temperature_tendency, tau) = get_longwave_fluxes(
             T, p_interface, Ts, tau, self._stefan_boltzmann.values,
             self._g.values, self._Cpd.values)
-        dims_mid = combine_dimensions(
-            [state['surface_temperature'],
-             state['air_temperature']],
-            out_dims=('x', 'y', 'z'))
-        dims_interface = combine_dimensions(
-            [state['air_pressure_on_interface_levels'],
-             state['surface_temperature']],
-            out_dims=('x', 'y', 'z'))
 
-        tendencies = {
-            'air_temperature': DataArray(
-                lw_temperature_tendency, dims=dims_mid,
-                attrs={'units': 'K s^-1'}).squeeze()
-        }
+        tendencies = self.create_state_dict_for('_climt_tendencies', state)
+        tendencies['air_temperature'].values = lw_temperature_tendency
 
-        diagnostics = {
-            'downwelling_longwave_flux_in_air': DataArray(
-                downward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
-            ).squeeze(),
-            'upwelling_longwave_flux_in_air': DataArray(
-                upward_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
-            ).squeeze(),
-            'net_longwave_flux_in_air': DataArray(
-                net_lw_flux, dims=dims_interface, attrs={'units': 'W m^-2'}
-            ).squeeze(),
-            'longwave_heating_rate': tendencies['air_temperature'].copy().to_units('degK/day'),
-        }
+        diagnostics = self.create_state_dict_for('_climt_diagnostics', state)
+
+        diagnostics['downwelling_longwave_flux_in_air'].values = downward_flux
+        diagnostics['upwelling_longwave_flux_in_air'].values = upward_flux
+        diagnostics['longwave_heating_rate'].values = \
+            tendencies['air_temperature'].to_units('degK/day')
 
         return tendencies, diagnostics
 
