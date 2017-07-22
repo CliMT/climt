@@ -18,9 +18,9 @@ deploy:
   provider: pypi
   distributions: sdist bdist_wheel
   server: https://test.pypi.org/legacy/
-  user: Twine
+  user: joy.merwin
   password:
-    secure: PLEASE_REPLACE_ME
+    secure: 1wi2TpypmHwaF1ouioEDTTVtxpCTm3x3dHCembq0S91lk7dP81BrPM+IIO4oEmeVRynp3Urd0Xfi0aigtewRlZZsh+F/iTUCLHtA4iQJqvCscBf3b0oaX6xKkbV9N7VxtwtLnbqYu8UTEgKsaaQnQhCvZGi85esZ1kS8rF412zYkhUqRARP5qIuLn0haY5TF6GSaNnclf/Jh+AyeZ/B8fHKiYcpv6KEqqw6r9HehOVxTNhMQcvkkxdGsGnF4+T8Z8g3IDfwVyCZLCEqtGZpjJ2B1S3541hCkbwJ6kV/ulmyD3EbawxS0VP9Gp1rB+TbEifdpzgWXCGE9davRNhD6zzbgeL+eq/+YN0l4OAv96iR+MJvBt0gOiSAIAf+iZu6CodYVtZbo8UjLlcEd1/tAr4HoQHCFHWD89VZF9+a+6p+YiS4zqgNhbkiqdpgJllU1YKyez2VT+rulDLrt4db2oSlofjcE8iT6nhNFmsh1hWetyP5AqzTLq79hWSCoaZHQwnP9OFGicLIL4KJCN7Q0qRUHikqSdeuv0/ku2vxKM8UrPZIp+7iDpuK7zScYaTiul15XoXckNUH0IqWVxlXonfYR6pnhmwdwcPo7ZvDhtTYQft7zWdGHu+hvm5DRQeyKoOyRnxQgluP6bUmJSFw/5N2pC55f4SQ1PEhJkcbdvZQ=
   on:
     tags: false
     repo: CliMT/climt
