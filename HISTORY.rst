@@ -21,6 +21,8 @@ Latest
 
 Breaking Changes
 ----------------
+* changed order of outputs of GfsDynamicalCore and SimplePhysics to conform
+  to TimeStepper order of diagnostics, new_state
 * get_default_state now accepts mid_levels and interface_levels instead of z
   to specify vertical coordinates.
 * mass_to_volume_mixing_ratio now uses numpy arrays instead of DataArrays.
