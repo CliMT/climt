@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* moist GCM with grey radiation works!
 * Added DCMIP initial conditions, test 4 tried out.
 * Dynamical core integrated now.
 * BIG change in the build system. Tests pass on Mac as well
@@ -21,6 +22,7 @@ Latest
 
 Breaking Changes
 ----------------
+* SlabSurface no longer uses depth_slab_surface as input
 * changed order of outputs of GfsDynamicalCore and SimplePhysics to conform
   to TimeStepper order of diagnostics, new_state
 * get_default_state now accepts mid_levels and interface_levels instead of z
