@@ -100,6 +100,7 @@ cdef extern:
         double *pyVrtTend,
         double *pyDivTend,
         double *pyVirtTempTend,
+        double *pyQTend,
         double *pyLnpsTend,
         double *pyTracerTend)
 
@@ -493,6 +494,7 @@ def assign_tendencies(
     cnp.double_t[::1, :, :] u_tend,
     cnp.double_t[::1, :, :] v_tend,
     cnp.double_t[::1, :, :] virtemp_tend,
+    cnp.double_t[::1, :, :] q_tend,
     cnp.double_t[::1, :] lnps_tend,
     cnp.double_t[::1, :, :, :] tracer_tend):
 
@@ -508,6 +510,7 @@ def assign_tendencies(
         <double *>&tempVrtTend[0,0,0],
         <double *>&tempDivTend[0,0,0],
         <double *>&virtemp_tend[0,0,0],
+        <double *>&q_tend[0,0,0],
         <double *>&lnps_tend[0,0],
         <double *>&tracer_tend[0,0,0,0])
 

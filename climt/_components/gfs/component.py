@@ -1,8 +1,9 @@
 from __future__ import division
-from ..._core import ClimtSpectralDynamicalCore
+from ..._core import ClimtSpectralDynamicalCore, numpy_version_of
 from sympl import replace_none_with_default, DataArray
 import numpy as np
 import sys
+from datetime import timedelta
 try:
     from . import _gfs_dynamics
 except ImportError:
@@ -169,7 +170,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             specific_heat_condensible = DataArray(
                 specific_heat_condensible, attrs={'units': 'J kg^-1 K^-1'})
 
-        self._time_step = float(time_step)
+        self._time_step = timedelta(seconds=time_step)
 
         self._radius = replace_none_with_default(
             'planetary_radius', planetary_radius)
@@ -231,7 +232,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self._spectral_dim = int(
             (self._truncation + 1)*(self._truncation + 2)/2)
 
-        _gfs_dynamics.set_time_step(self._time_step)
+        _gfs_dynamics.set_time_step(self._time_step.total_seconds())
 
         _gfs_dynamics.set_constants(self._radius, self._omega,
                                     self._R, self._Rd, self._Rv,
@@ -298,14 +299,14 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             state (dict): The state dictionary.
 
         Returns:
-            diagnostics, new_state (dict):
+            new_state, diagnostics (dict):
                 The new state and associated diagnostics.
         """
 
         raw_input_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
 
         output_dict = self.create_state_dict_for('_climt_outputs', state)
-        raw_output_arrays = self.get_numpy_arrays_from_state('_climt_outputs', output_dict)
+        raw_output_arrays = numpy_version_of(output_dict)
 
         mylist = ['air_pressure']
         # mylist = self.outputs
@@ -330,6 +331,8 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             raw_input_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer']
         raw_output_arrays['gfs_tracers'][:, :, :, 3] = \
             raw_input_arrays['mass_content_of_cloud_ice_in_atmosphere_layer']
+        raw_output_arrays['air_pressure_on_interface_levels'][:] = \
+            np.asfortranarray(raw_input_arrays['air_pressure_on_interface_levels'][:, :, ::-1])
 
         _gfs_dynamics.assign_grid_arrays(
             raw_output_arrays['eastward_wind'],
@@ -348,17 +351,23 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         _gfs_dynamics.set_topography(raw_input_arrays['surface_geopotential'])
 
         tendencies = {}
+        diagnostics = {}
         if self.prognostics:
             tendencies, diagnostics = self.prognostics(state)
 
-        temp_tend, q_tend, u_tend, v_tend, ps_tend, tracer_tend = \
-            return_tendency_arrays_or_zeros(['air_temperature',
-                                             'specific_humidity',
-                                             'eastward_wind',
-                                             'northward_wind',
-                                             'surface_air_pressure',
-                                             'gfs_tracers'],
-                                            raw_input_arrays, tendencies)
+        (temp_tend, q_tend, u_tend, v_tend, ps_tend,
+         ozone_tend, cloud_water_tend, cloud_ice_tend, tracer_tend) = \
+            return_tendency_arrays_or_zeros(
+                ['air_temperature',
+                 'specific_humidity',
+                 'eastward_wind',
+                 'northward_wind',
+                 'surface_air_pressure',
+                 'mole_fraction_of_ozone_in_air',
+                 'mass_content_of_cloud_liquid_water_in_atmosphere_layer',
+                 'mass_content_of_cloud_ice_in_atmosphere_layer',
+                 'gfs_tracers'],
+                raw_input_arrays, tendencies)
 
         # see Pg. 12 in gfsModelDoc.pdf
         virtual_temp_tend = temp_tend*(
@@ -368,7 +377,12 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         # dlnps/dt = (1/ps)*dps/dt
         lnps_tend = (1. / raw_input_arrays['surface_air_pressure'])*ps_tend
 
-        _gfs_dynamics.assign_tendencies(u_tend, v_tend, virtual_temp_tend,
+        tracer_tend[:, :, :, 0] = q_tend
+        tracer_tend[:, :, :, 1] = ozone_tend
+        tracer_tend[:, :, :, 2] = cloud_water_tend
+        tracer_tend[:, :, :, 3] = cloud_ice_tend
+
+        _gfs_dynamics.assign_tendencies(u_tend, v_tend, virtual_temp_tend, q_tend,
                                         lnps_tend, tracer_tend)
 
         if update_spectral_arrays:
@@ -381,23 +395,35 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         raw_output_arrays['air_temperature'][:] = t_virt/(
             1 + self._fvirt.values.item()*raw_output_arrays['specific_humidity'])
 
-        raw_output_arrays['specific_humidity'] = raw_output_arrays['gfs_tracers'][:, :, :, 0]
+        raw_output_arrays['air_pressure_on_interface_levels'][:] = \
+            np.asfortranarray(raw_output_arrays['air_pressure_on_interface_levels'][:, :, ::-1])
 
-        raw_output_arrays['mole_fraction_of_ozone_in_air'] = \
+        raw_output_arrays['specific_humidity'][:] = raw_output_arrays['gfs_tracers'][:, :, :, 0]
+
+        raw_output_arrays['mole_fraction_of_ozone_in_air'][:] = \
             raw_output_arrays['gfs_tracers'][:, :, :, 1]
 
-        raw_output_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'] = \
+        raw_output_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'][:] = \
             raw_output_arrays['gfs_tracers'][:, :, :, 2]
 
-        raw_output_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'] = \
+        raw_output_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'][:] = \
             raw_output_arrays['gfs_tracers'][:, :, :, 3]
 
         self.store_current_state_signature(raw_output_arrays)
 
+        for quantity in tendencies.keys():
+            if quantity not in self._climt_outputs.keys():
+                # Step forward using Euler
+                output_dict[quantity] = state[quantity] + \
+                    tendencies[quantity].values*self._time_step.total_seconds()
+
+                for attrib in state[quantity].attrs:
+                    output_dict[quantity].attrs[attrib] = state[quantity].attrs[attrib]
+
         for quantity in mylist:
             raw_input_arrays[quantity][:] = raw_output_arrays[quantity][:]
 
-        return {}, output_dict
+        return output_dict, diagnostics
 
     def initialise_state_signature(self):
 
