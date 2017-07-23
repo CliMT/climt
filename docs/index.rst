@@ -10,11 +10,12 @@ Contents:
    installation
    quickstart
    interaction
+   realistic
    component_types
+   components
    contributing
    authors
    history
-   components
    initialisation
    utilities
 

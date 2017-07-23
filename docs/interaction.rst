@@ -116,7 +116,7 @@ all available components in CliMT in the section :ref:`component_list`.
 All components take some inputs from the model state, and return **outputs** or
 **tendencies** along with diagnostics (if any).
 
-Diagnostics are quantities computed while calcuating **outputs** or **tendencies**.
+Diagnostics are quantities computed while calculating **outputs** or **tendencies**.
 For example, a radiation component calculates heating rates. However, in the process
 of calculating these heating rates, it also calculates the radiative flux at each
 interface level.
