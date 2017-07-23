@@ -27,7 +27,8 @@ requirements = [
     'xarray>=0.8.0',
     'matplotlib',
     'sympl>=0.2.1',
-    'cython>=0.25'
+    'cython>=0.25',
+    'scipy>=0.18.1',
 ]
 
 test_requirements = [
