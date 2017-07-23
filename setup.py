@@ -15,7 +15,6 @@ import os
 import subprocess
 import platform
 import re
-import glob
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -43,15 +42,16 @@ def guess_compiler_name(env_name):
 
     search_string = ''
     if env_name == 'FC':
-        search_string = '/gfortran-\d$'
+        search_string = 'gfortran-\d$'
     if env_name == 'CC':
-        search_string = '/gcc-\d$'
+        search_string = 'gcc-\d$'
 
-    output = glob.glob('/usr/local/Cellar/gcc/**', recursive=True)
-    for line in output:
-        if re.search(search_string, line):
-            print('Using ', env_name, '= ', line)
-            os.environ[env_name] = line
+    for root, dirs, files in os.walk('/usr/local/Cellar/gcc/'):
+
+        for line in files:
+            if re.match(search_string, line):
+                print('Using ', env_name, '= ', line)
+                os.environ[env_name] = line
 
 operating_system = platform.system()
 
