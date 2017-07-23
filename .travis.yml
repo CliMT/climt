@@ -16,7 +16,6 @@ matrix:
         language: generic
         env:
           - TOXENV=py27
-          - HOME=/Users/travis/
 
 allow_failures:
   - os: osx

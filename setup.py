@@ -46,7 +46,7 @@ def guess_compiler_name(env_name):
     if env_name == 'CC':
         search_string = '/gcc-\d$'
 
-    output = subprocess.check_output(['brew', 'ls', 'gcc']).decode().split('\n')[1:]
+    output = subprocess.check_output(['brew', 'ls', 'gcc'], shell=True).decode().split('\n')[1:]
     for line in output:
         if re.search(search_string, line):
             print('Using ', env_name, '= ', line)
