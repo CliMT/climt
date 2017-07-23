@@ -15,6 +15,7 @@ import os
 import subprocess
 import platform
 import re
+import glob
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -46,7 +47,7 @@ def guess_compiler_name(env_name):
     if env_name == 'CC':
         search_string = '/gcc-\d$'
 
-    output = subprocess.check_output(['brew', 'ls', 'gcc'], shell=True).decode().split('\n')[1:]
+    output = glob.glob('/usr/local/Cellar/gcc/**', recursive=True)
     for line in output:
         if re.search(search_string, line):
             print('Using ', env_name, '= ', line)
