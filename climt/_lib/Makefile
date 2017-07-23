@@ -23,10 +23,10 @@ all: fftw_lib sht_lib blas_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_l
 # FFTW3 Configuration
 
 .configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --enable-openmp --enable-avx --enable-avx2 > log && touch ../.configured_fftw
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../.configured_fftw
 
 $(CLIMT_ARCH)/libfftw3_omp.a: .configured_fftw
-	cd $(FFTW_DIR); make install > log; cp ../lib/libfftw3_omp.a $(LIB_DIR)
+	cd $(FFTW_DIR); make install > log 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
 
 $(CLIMT_ARCH)/libfftw3.a: .configured_fftw
 	cp lib/libfftw3.a $(LIB_DIR)
@@ -37,10 +37,10 @@ fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
 # SHTNS Configuration
 
 .configured_sht:
-	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) > log; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp > log && touch ../.configured_sht
+	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) > log 2>&1; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp > log 2>&1 && touch ../.configured_sht
 
 $(CLIMT_ARCH)/libshtns_omp.a: .configured_sht
-	cd $(SHT_DIR); make install; cp ../lib/libshtns_omp.a $(LIB_DIR)
+	cd $(SHT_DIR); make install > log 2>&1; cp ../lib/libshtns_omp.a $(LIB_DIR)
 
 sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
 
@@ -49,7 +49,7 @@ sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
 blas_lib: $(CLIMT_ARCH)/libopenblas.a
 
 $(CLIMT_ARCH)/libopenblas.a:
-	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ) > log; fi; cd $(BLAS_DIR); make NO_SHARED=1 NO_LAPACK=0 >log 2>log; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install >log 2>log; cp ../lib/libopenblas.a $(LIB_DIR)
+	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ) > log 2>&1; fi; cd $(BLAS_DIR); make NO_SHARED=1 NO_LAPACK=0 >log 2>&1; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install >log 2>&1; cp ../lib/libopenblas.a $(LIB_DIR)
 
 # GFS Configuration
 
