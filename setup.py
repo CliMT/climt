@@ -26,7 +26,6 @@ requirements = [
     'numpy>=1.10',
     'pint>=0.7.0',
     'xarray>=0.8.0',
-    'matplotlib',
     'sympl>=0.2.1',
     'cython>=0.25'
 ]
