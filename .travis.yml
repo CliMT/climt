@@ -1,3 +1,4 @@
+os: linux
 dist: trusty
 sudo: required
 language: python
@@ -8,25 +9,37 @@ env:
 - TOXENV=py35
 - TOXENV=py34
 - TOXENV=py27
+
+matrix:
+    include:
+      - os: osx
+        language: generic
+        env: TOXENV=py27
+
+
+allow_failures:
+  - os: osx
+
 before_install:
-- sudo apt-get install gfortran
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc               ; fi
 install:
 - pip install -r requirements_dev.txt
 - pip install -U tox
 script: tox -e ${TOXENV}
+
 deploy:
   provider: pypi
-  distributions: sdist bdist_wheel
+  distributions: sdist
   server: https://test.pypi.org/legacy/
   user: joy.merwin
   password:
     secure: 1wi2TpypmHwaF1ouioEDTTVtxpCTm3x3dHCembq0S91lk7dP81BrPM+IIO4oEmeVRynp3Urd0Xfi0aigtewRlZZsh+F/iTUCLHtA4iQJqvCscBf3b0oaX6xKkbV9N7VxtwtLnbqYu8UTEgKsaaQnQhCvZGi85esZ1kS8rF412zYkhUqRARP5qIuLn0haY5TF6GSaNnclf/Jh+AyeZ/B8fHKiYcpv6KEqqw6r9HehOVxTNhMQcvkkxdGsGnF4+T8Z8g3IDfwVyCZLCEqtGZpjJ2B1S3541hCkbwJ6kV/ulmyD3EbawxS0VP9Gp1rB+TbEifdpzgWXCGE9davRNhD6zzbgeL+eq/+YN0l4OAv96iR+MJvBt0gOiSAIAf+iZu6CodYVtZbo8UjLlcEd1/tAr4HoQHCFHWD89VZF9+a+6p+YiS4zqgNhbkiqdpgJllU1YKyez2VT+rulDLrt4db2oSlofjcE8iT6nhNFmsh1hWetyP5AqzTLq79hWSCoaZHQwnP9OFGicLIL4KJCN7Q0qRUHikqSdeuv0/ku2vxKM8UrPZIp+7iDpuK7zScYaTiul15XoXckNUH0IqWVxlXonfYR6pnhmwdwcPo7ZvDhtTYQft7zWdGHu+hvm5DRQeyKoOyRnxQgluP6bUmJSFw/5N2pC55f4SQ1PEhJkcbdvZQ=
   on:
-    tags: false
+    tags: true
     repo: CliMT/climt
     condition: "$TOXENV == py27"
 notifications:
   email:
     recipients:
     - joy.monteiro@misu.su.se
-    - mcgibbon@uw.edu

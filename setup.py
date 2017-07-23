@@ -14,6 +14,7 @@ except ImportError:
 import os
 import subprocess
 import platform
+import re
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -37,6 +38,20 @@ test_requirements = [
 
 
 # Platform specific settings
+def guess_compiler_name(env_name):
+
+    search_string = ''
+    if env_name == 'FC':
+        search_string = '/gfortran-\d$'
+    if env_name == 'CC':
+        search_string = '/gcc-\d$'
+
+    output = subprocess.check_output(['brew', 'ls', 'gcc']).decode().split('\n')[1:]
+    for line in output:
+        if re.search(search_string, line):
+            print('Using ', env_name, '= ', line)
+            os.environ[env_name] = line
+
 operating_system = platform.system()
 
 libraries = ['m', 'gfortran']
@@ -58,10 +73,16 @@ include_dirs.append(inc_path)
 # Compile libraries
 
 if 'FC' not in os.environ:
-    os.environ['FC'] = 'gfortran'
+    if operating_system == 'Darwin':
+        guess_compiler_name('FC')
+    else:
+        os.environ['FC'] = 'gfortran'
 
 if 'CC' not in os.environ:
-    os.environ['CC'] = 'gcc'
+    if operating_system == 'Darwin':
+        guess_compiler_name('CC')
+    else:
+        os.environ['CC'] = 'gcc'
 
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
 os.environ['CFLAGS'] = '-fPIC'
