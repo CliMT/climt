@@ -16,7 +16,7 @@ install:
 script: tox -e ${TOXENV}
 deploy:
   provider: pypi
-  distributions: sdist bdist_wheel
+  distributions: sdist
   server: https://test.pypi.org/legacy/
   user: joy.merwin
   password:
