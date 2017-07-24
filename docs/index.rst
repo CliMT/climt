@@ -13,11 +13,11 @@ Contents:
    realistic
    component_types
    components
+   initialisation
+   utilities
    contributing
    authors
    history
-   initialisation
-   utilities
 
 Indices and tables
 ==================
