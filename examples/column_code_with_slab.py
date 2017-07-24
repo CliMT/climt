@@ -26,33 +26,29 @@ def plot_function(fig, state):
     ax.plot(
         state['convective_heating_rate'].to_units('degK day^-1').values.flatten(),
         state['air_pressure'].to_units('mbar').values.flatten(), '-o')
-    ax.plot(
-        state['longwave_heating_rate'].values.flatten(),
-        state['air_pressure'].to_units('mbar').values.flatten(), '-o')
-    ax.plot(
-        state['shortwave_heating_rate'].values.flatten(),
-        state['air_pressure'].to_units('mbar').values.flatten(), '-o')
+    ax.set_title('Conv. heating rate')
+
     ax.axes.invert_yaxis()
-    # print(state['eastward_wind'].values.flatten())
-    # print(state['air_pressure'].values.flatten())
-    # ax.set_yscale('log')
-    # ax.set_ylim(1e5, 100.)
     ax = fig.add_subplot(2, 2, 2)
     ax.plot(
         state['air_temperature'].values.flatten(),
         state['air_pressure'].to_units('mbar').values.flatten(), '-o')
+    ax.set_title('Air temperature')
     ax.axes.invert_yaxis()
-    # ax.set_ylim(1e5, 100.)
 
     ax = fig.add_subplot(2, 2, 3)
     ax.plot(
-        state['upwelling_shortwave_flux_in_air'].values.flatten(),
-        state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
+        state['longwave_heating_rate'].values.flatten(),
+        state['air_pressure'].to_units('mbar').values.flatten(), '-o',
+        label='LW')
     ax.plot(
-        state['downwelling_shortwave_flux_in_air'].values.flatten(),
-        state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
+        state['shortwave_heating_rate'].values.flatten(),
+        state['air_pressure'].to_units('mbar').values.flatten(), '-o',
+        label='SW')
+    ax.set_title('LW and SW Heating rates')
+    ax.legend()
     ax.axes.invert_yaxis()
-    # ax.set_ylim(1e5, 100.)
+
     ax = fig.add_subplot(2, 2, 4)
     net_flux = (state['upwelling_longwave_flux_in_air'] +
                 state['upwelling_shortwave_flux_in_air'] -
@@ -61,7 +57,9 @@ def plot_function(fig, state):
     ax.plot(
         net_flux.values.flatten(),
         state['air_pressure_on_interface_levels'].to_units('mbar').values.flatten(), '-o')
+    ax.set_title('Net Flux')
     ax.axes.invert_yaxis()
+    fig.tight_layout()
 
 
 monitor = PlotFunctionMonitor(plot_function)
@@ -93,7 +91,7 @@ state['mole_fraction_of_ozone_in_air'].values[0, 0, :] = np.load('ozone_profile.
 
 state['zenith_angle'].values[:] = np.pi/2.2
 state['surface_temperature'].values[:] = 300.
-state['depth_slab_surface'].values[:] = 10.
+state['ocean_mixed_layer_thickness'].values[:] = 10.
 state['area_type'].values[:] = 'sea'
 
 equilibrium_value = DataArray(
