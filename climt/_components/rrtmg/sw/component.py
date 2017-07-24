@@ -2,7 +2,7 @@ from sympl import (replace_none_with_default,
                    get_numpy_array)
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values,
-    ClimtPrognostic)
+    ClimtPrognostic, numpy_version_of)
 import numpy as np
 from numpy import pi as numpy_pi
 try:
@@ -399,20 +399,11 @@ class RRTMGShortwave(ClimtPrognostic):
         Q = mass_to_volume_mixing_ratio(Q, 18.02)
 
         mid_level_shape = raw_arrays['air_temperature'].shape
-        # int_level_shape = raw_arrays['air_pressure_on_interface_levels'].shape
 
         Tint = get_interface_values(raw_arrays['air_temperature'],
                                     raw_arrays['surface_temperature'],
                                     raw_arrays['air_pressure'],
                                     raw_arrays['air_pressure_on_interface_levels'])
-
-        # up_flux = np.zeros(int_level_shape, order='F')
-        # down_flux = np.zeros(int_level_shape, order='F')
-        # up_flux_clear = np.zeros(int_level_shape, order='F')
-        # down_flux_clear = np.zeros(int_level_shape, order='F')
-        #
-        # heating_rate = np.zeros(mid_level_shape, order='F')
-        # heating_rate_clear = np.zeros(mid_level_shape, order='F')
 
         diag_dict = self.create_state_dict_for('_climt_diagnostics', state)
 
@@ -420,7 +411,7 @@ class RRTMGShortwave(ClimtPrognostic):
 
         tend_dict = self.create_state_dict_for('_climt_tendencies', state)
 
-        tend_arrays = self.get_numpy_arrays_from_state('_climt_tendencies', tend_dict)
+        tend_arrays = numpy_version_of(tend_dict)
 
         model_time = state['time']
 
@@ -430,58 +421,72 @@ class RRTMGShortwave(ClimtPrognostic):
 
         for lon in range(mid_level_shape[0]):
 
+            raw_f_arrays = {}
+            diag_f_arrays = {}
+            tend_f_arrays = {}
+            for quantity in raw_arrays.keys():
+                if quantity not in ['flux_adjustment_for_earth_sun_distance',
+                                    'solar_cycle_fraction']:
+                    raw_f_arrays[quantity] = np.asfortranarray(raw_arrays[quantity][lon, :])
+                else:
+                    raw_f_arrays[quantity] = raw_arrays[quantity]
+            for quantity in diag_arrays.keys():
+                diag_f_arrays[quantity] = np.asfortranarray(diag_arrays[quantity][lon, :])
+            for quantity in tend_arrays.keys():
+                tend_f_arrays[quantity] = np.asfortranarray(tend_arrays[quantity][lon, :])
+
+            Tint_f = np.asfortranarray(Tint[lon, :])
+            Q_f = np.asfortranarray(Q[lon, :])
+            zenith_f = np.asfortranarray(cos_zenith_angle[lon, :])
+
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
                 mid_level_shape[1],
                 mid_level_shape[2],
                 day_of_year,
-                raw_arrays['solar_cycle_fraction'].item(),
-                raw_arrays['flux_adjustment_for_earth_sun_distance'].item(),
-                raw_arrays['air_pressure'][lon, :],
-                raw_arrays['air_pressure_on_interface_levels'][lon, :],
-                raw_arrays['air_temperature'][lon, :],
-                Tint[lon, :],
-                raw_arrays['surface_temperature'][lon, :],
-                Q[lon, :],
-                raw_arrays['mole_fraction_of_ozone_in_air'][lon, :],
-                raw_arrays['mole_fraction_of_carbon_dioxide_in_air'][lon, :],
-                raw_arrays['mole_fraction_of_methane_in_air'][lon, :],
-                raw_arrays['mole_fraction_of_nitrous_oxide_in_air'][lon, :],
-                raw_arrays['mole_fraction_of_oxygen_in_air'][lon, :],
-                raw_arrays['surface_albedo_for_direct_shortwave'][lon, :],
-                raw_arrays['surface_albedo_for_direct_near_infrared'][lon, :],
-                raw_arrays['surface_albedo_for_diffuse_shortwave'][lon, :],
-                raw_arrays['surface_albedo_for_diffuse_near_infrared'][lon, :],
-                cos_zenith_angle[lon, :],
-                raw_arrays['cloud_area_fraction_in_atmosphere_layer'][lon, :],
-                diag_arrays['upwelling_shortwave_flux_in_air'][lon, :],
-                diag_arrays['downwelling_shortwave_flux_in_air'][lon, :],
-                tend_arrays['air_temperature'][lon, :],
-                diag_arrays['upwelling_shortwave_flux_in_air_assuming_clear_sky'][lon, :],
-                diag_arrays['downwelling_shortwave_flux_in_air_assuming_clear_sky'][lon, :],
-                diag_arrays['shortwave_heating_rate_assuming_clear_sky'][lon, :],
-                raw_arrays['shortwave_optical_thickness_due_to_aerosol'][lon, :],
-                raw_arrays['single_scattering_albedo_due_to_aerosol'][lon, :],
-                raw_arrays['aerosol_asymmetry_parameter'][lon, :],
-                raw_arrays['aerosol_optical_depth_at_55_micron'][lon, :],
-                raw_arrays['shortwave_optical_thickness_due_to_cloud'][lon, :],
-                raw_arrays['single_scattering_albedo_due_to_cloud'][lon, :],
-                raw_arrays['cloud_asymmetry_parameter'][lon, :],
-                raw_arrays['cloud_forward_scattering_fraction'][lon, :],
-                raw_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'][lon, :],
-                raw_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'][lon, :],
-                raw_arrays['cloud_ice_particle_size'][lon, :],
-                raw_arrays['cloud_water_droplet_radius'][lon, :])
+                raw_f_arrays['solar_cycle_fraction'].item(),
+                raw_f_arrays['flux_adjustment_for_earth_sun_distance'].item(),
+                raw_f_arrays['air_pressure'],
+                raw_f_arrays['air_pressure_on_interface_levels'],
+                raw_f_arrays['air_temperature'],
+                Tint_f,
+                raw_f_arrays['surface_temperature'],
+                Q_f,
+                raw_f_arrays['mole_fraction_of_ozone_in_air'],
+                raw_f_arrays['mole_fraction_of_carbon_dioxide_in_air'],
+                raw_f_arrays['mole_fraction_of_methane_in_air'],
+                raw_f_arrays['mole_fraction_of_nitrous_oxide_in_air'],
+                raw_f_arrays['mole_fraction_of_oxygen_in_air'],
+                raw_f_arrays['surface_albedo_for_direct_shortwave'],
+                raw_f_arrays['surface_albedo_for_direct_near_infrared'],
+                raw_f_arrays['surface_albedo_for_diffuse_shortwave'],
+                raw_f_arrays['surface_albedo_for_diffuse_near_infrared'],
+                zenith_f,
+                raw_f_arrays['cloud_area_fraction_in_atmosphere_layer'],
+                diag_f_arrays['upwelling_shortwave_flux_in_air'],
+                diag_f_arrays['downwelling_shortwave_flux_in_air'],
+                tend_f_arrays['air_temperature'],
+                diag_f_arrays['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
+                diag_f_arrays['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
+                diag_f_arrays['shortwave_heating_rate_assuming_clear_sky'],
+                raw_f_arrays['shortwave_optical_thickness_due_to_aerosol'],
+                raw_f_arrays['single_scattering_albedo_due_to_aerosol'],
+                raw_f_arrays['aerosol_asymmetry_parameter'],
+                raw_f_arrays['aerosol_optical_depth_at_55_micron'],
+                raw_f_arrays['shortwave_optical_thickness_due_to_cloud'],
+                raw_f_arrays['single_scattering_albedo_due_to_cloud'],
+                raw_f_arrays['cloud_asymmetry_parameter'],
+                raw_f_arrays['cloud_forward_scattering_fraction'],
+                raw_f_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'],
+                raw_f_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+                raw_f_arrays['cloud_ice_particle_size'],
+                raw_f_arrays['cloud_water_droplet_radius'])
+
+            for quantity in diag_arrays.keys():
+                diag_arrays[quantity][lon, :] = diag_f_arrays[quantity]
+            for quantity in tend_arrays.keys():
+                tend_arrays[quantity][lon, :] = tend_f_arrays[quantity]
 
             tend_arrays['air_temperature'][lon, :, -1] = 0
-        # dims_mid = combine_dimensions([state['air_temperature']], ['x', 'y', 'z'])
-        # dims_int = combine_dimensions([state['air_temperature_on_interface_levels']], ['x', 'y', 'z'])
-
-        # tendencies = {
-        #     'air_temperature': DataArray(
-        #         heating_rate, dims=dims_mid, attrs={'units': 'K day^-1'}).to_units('K s^-1')
-        # }
-        #
-        # diagnostics = {}
 
         diag_dict['shortwave_heating_rate'].values[:] = tend_dict['air_temperature'].values
 
