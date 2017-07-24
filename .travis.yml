@@ -16,6 +16,7 @@ matrix:
         language: generic
         env:
           - TOXENV=py27
+          - OMP_NUM_THREADS=1
 
 allow_failures:
   - os: osx
