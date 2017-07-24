@@ -65,7 +65,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CliMT'
-copyright = u"2016, Rodrigo Caballero"
+copyright = u"2006-2017, Rodrigo Caballero"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
