@@ -17,7 +17,7 @@ matrix:
         env:
           - TOXENV=py27
           - OMP_NUM_THREADS=1
-        script: travis_wait 30 tox -e ${TOXENV}
+        script: travis_wait 45 tox -e ${TOXENV}
 
 allow_failures:
   - os: osx
