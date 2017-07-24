@@ -1,3 +1,4 @@
+os: linux
 dist: trusty
 sudo: required
 language: python
@@ -8,12 +9,28 @@ env:
 - TOXENV=py35
 - TOXENV=py34
 - TOXENV=py27
+
+matrix:
+    include:
+      - os: osx
+        language: generic
+        env:
+          - TOXENV=py27
+          - OMP_NUM_THREADS=1
+        script: travis_wait 45 tox -e ${TOXENV}
+
+allow_failures:
+  - os: osx
+
 before_install:
-- sudo apt-get install gfortran
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rvm get stable                 ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc               ; fi
 install:
 - pip install -r requirements_dev.txt
 - pip install -U tox
 script: tox -e ${TOXENV}
+
 deploy:
   provider: pypi
   distributions: sdist
@@ -28,4 +45,3 @@ notifications:
   email:
     recipients:
     - joy.monteiro@misu.su.se
-    - mcgibbon@uw.edu
