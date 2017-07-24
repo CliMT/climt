@@ -22,7 +22,7 @@ installed by:
     $ sudo pip install -U cython
     $ sudo pip install -U numpy
 
-use :code:`python3-dev` if you use Python 3.
+use :code:`pip3` and :code:`python3-dev` if you use Python 3.
 
 On Mac OSX, it is recommended that you use `anaconda`_ as your python distribution.
 This will eliminate the need to install cython, numpy and python-dev.
@@ -31,13 +31,6 @@ Once you have anaconda installed, you will need to do the following:
 .. code-block:: console
 
     $ brew install gcc
-
-The CliMT build script will try to make a (not very smart) guess of the name
-of the compiler that `Homebrew`_ installs. If you see the build failing, you
-will need to tell the CliMT which compiler to use by doing the following:
-
-.. code-block:: console
-
     $ export CC=gcc-x
     $ export FC=gfortran-x
 
