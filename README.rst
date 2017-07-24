@@ -47,6 +47,11 @@ https://sympl.readthedocs.io.
 * Free software: BSD license
 * Documentation: https://climt.readthedocs.io.
 
+Installation
+-------------
+
+The `documentation`_ has installations to install CliMT.
+
 
 Features
 --------
@@ -69,4 +74,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Sympl: https://github.com/mcgibbon/sympl
 .. _Pint: https://pint.readthedocs.io
 .. _xarray: http://xarray.pydata.org
-
+.. _documentation: http://climt.readthedocs.io/en/latest/installation.html
