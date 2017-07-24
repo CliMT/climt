@@ -19,12 +19,13 @@ installed by:
     $ sudo apt-get install gcc
     $ sudo apt-get install gfortran
     $ sudo apt-get install python-dev
-    $ sudo pip install cython
+    $ sudo pip install -U cython
+    $ sudo pip install -U numpy
 
 use :code:`python3-dev` if you use Python 3.
 
 On Mac OSX, it is recommended that you use `anaconda`_ as your python distribution.
-This will eliminate the need to install cython and the development files for python.
+This will eliminate the need to install cython, numpy and python-dev.
 Once you have anaconda installed, you will need to do the following:
 
 .. code-block:: console
@@ -38,8 +39,9 @@ will need to tell the CliMT which compiler to use by doing the following:
 .. code-block:: console
 
     $ export CC=gcc-x
+    $ export FC=gfortran-x
 
-Where :code:`gcc-x` is the name of the compiler that Homebrew installs.
+Where :code:`gcc-x,gfortran-x` are the names of the C,Fortran compilers that Homebrew installs.
 Exporting the name of the compiler is essential on Mac since the
 default compiler that ships with Mac (called :code:`gcc`, but is actually a
 different compiler) cannot
