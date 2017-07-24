@@ -63,7 +63,7 @@ the model forward in time:
         state.update(diagnostics)
         '''Update state quantities'''
         state.update(new_state)
-        '''Update mode time'''
+        '''Update model time'''
         state['time'] += model_time_step
         '''See if the maximum temperature is changing'''
         print(state['time'], ': ', state['air_temperature'].max().values)
