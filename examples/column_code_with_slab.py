@@ -6,7 +6,6 @@ import numpy as np
 from datetime import timedelta
 
 from climt import EmanuelConvection, RRTMGShortwave, RRTMGLongwave, SlabSurface
-# import time
 
 
 def get_interface_pressures(p, ps):
@@ -106,21 +105,13 @@ relaxation = RelaxationPrognostic('eastward_wind', equilibrium_value, tau)
 time_stepper = AdamsBashforth([relaxation, convection, radiation_lw, radiation_sw, slab])
 
 for i in range(60000):
-    # print(i)
-    # print('before:', state['atmosphere_convective_mass_flux'].values)
     print(state['surface_temperature'].values)
     convection.current_time_step = timestep
     diagnostics, state = time_stepper(state, timestep)
-    # print('after: ', diagnostics['atmosphere_convective_mass_flux'].values)
-    # print(diagnostics['convective_state'].values)
     state.update(diagnostics)
     diagnostics, new_state = simple_physics(state, timestep)
-    # print(diagnostics['stratiform_precipitation_rate'].to_units('mm day^-1').values)
-    # print('SH Flux:', diagnostics['surface_upward_sensible_heat_flux'].values.item())
-    # print('LH Flux:', diagnostics['surface_upward_latent_heat_flux'].values.item())
     state.update(diagnostics)
     if i % 20 == 0:
         monitor.store(state)
     state.update(new_state)
     state['eastward_wind'].values[:] = 6.
-    # time.sleep(0.4  )
