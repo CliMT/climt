@@ -10,17 +10,17 @@ env:
 - TOXENV=py34
 - TOXENV=py27
 
-matrix:
-    include:
-      - os: osx
-        language: generic
-        env:
-          - TOXENV=py27
-          - OMP_NUM_THREADS=1
-        script: travis_wait 45 tox -e ${TOXENV}
+  #matrix:
+  #  include:
+  #    - os: osx
+  #      language: generic
+  #      env:
+  #        - TOXENV=py27
+  #        - OMP_NUM_THREADS=1
+  #      script: travis_wait 45 tox -e ${TOXENV}
 
-allow_failures:
-  - os: osx
+  #allow_failures:
+  #- os: osx
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
