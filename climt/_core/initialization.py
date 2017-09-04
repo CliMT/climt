@@ -70,6 +70,7 @@ def init_interface_level_tau_longwave(array_dims, quantity_description, initial_
 
     return tau_longwave*np.ones(array_dims, order='F')
 
+
 def init_ozone(array_dims, quantity_description, initial_state):
 
     import pkg_resources
@@ -94,6 +95,7 @@ def init_ozone(array_dims, quantity_description, initial_state):
     init_array[:] = target_profile[np.newaxis, np.newaxis, :]
 
     return init_array
+
 
 climt_quantity_descriptions = {
     'air_pressure': {

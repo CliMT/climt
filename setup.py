@@ -53,6 +53,7 @@ def guess_compiler_name(env_name):
                 print('Using ', env_name, '= ', line)
                 os.environ[env_name] = line
 
+
 operating_system = platform.system()
 
 libraries = ['m', 'gfortran']

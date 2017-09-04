@@ -237,7 +237,7 @@ class IceSheet(ClimtImplicit):
                     new_temp = self.calculate_new_ice_temperature(
                         rho_snow_ice, heat_capacity_snow_ice,
                         kappa_snow_ice, temp_profile,
-                        time_step.total_seconds(), num_layers,
+                        timestep.total_seconds(), num_layers,
                         surface_temperature,
                         net_heat_flux[lon, lat],
                         soil_surface_temperature)
@@ -257,7 +257,7 @@ class IceSheet(ClimtImplicit):
                         # an impossible situation which means ice is above freezing point.
                         assert heat_flux_to_sea_water <= 0
 
-                        height_of_growing_ice = -(heat_flux_to_sea_water*time_step.total_seconds() /
+                        height_of_growing_ice = -(heat_flux_to_sea_water*timestep.total_seconds() /
                                                   (rho_snow_ice[0]*self._Lf))
 
                         output_arrays['sea_ice_thickness'][lon, lat] += height_of_growing_ice
@@ -280,8 +280,8 @@ class IceSheet(ClimtImplicit):
                         continue
 
                     # Energy balance at atmosphere surface
-                    heat_flux_to_atmosphere = ((new_temp[-1] - new_temp[-2])*
-                        (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/self._dz)
+                    heat_flux_to_atmosphere = ((new_temp[-1] - new_temp[-2]) *
+                                               (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/self._dz)
                     # print('heat_flux_to_atmosphere', heat_flux_to_atmosphere)
 
                     height_of_melting_ice = 0
@@ -289,7 +289,7 @@ class IceSheet(ClimtImplicit):
                     if check_melting:
                         energy_to_melt_ice = (net_heat_flux[lon, lat] + heat_flux_to_atmosphere)
 
-                        height_of_melting_ice = (energy_to_melt_ice*time_step.total_seconds() /
+                        height_of_melting_ice = (energy_to_melt_ice*timestep.total_seconds() /
                                                  (rho_snow_ice[-1]*self._Lf))
                         # print('height_of_melting_ice', height_of_melting_ice)
 
@@ -308,8 +308,9 @@ class IceSheet(ClimtImplicit):
                         np.linspace(0, total_height, num_layers), new_temp)
 
                     output_arrays['snow_ice_temperature'][lon, lat] = \
-                            diagnostic_arrays['snow_ice_temperature_poly'][lon, lat](
-                                np.linspace(0, total_height, self._output_levels))
+                        diagnostic_arrays['snow_ice_temperature_poly'][lon, lat](
+                            np.linspace(0, total_height, self._output_levels))
+
                     output_arrays['surface_temperature'][lon, lat] = new_temp[-1]
 
         # print()

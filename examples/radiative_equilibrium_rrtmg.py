@@ -43,12 +43,12 @@ time_stepper = AdamsBashforth([rad_sw, rad_lw])
 timestep = timedelta(hours=1)
 
 mid_levels = {'label': 'mid_level',
-                 'values': np.arange(60),
-                 'units': ''}
+              'values': np.arange(60),
+              'units': ''}
 
 int_levels = {'label': 'interface_level',
-                 'values': np.arange(61),
-                 'units': ''}
+              'values': np.arange(61),
+              'units': ''}
 state = get_default_state([rad_sw, rad_lw], mid_levels=mid_levels, interface_levels=int_levels)
 
 tp_profiles = np.load('thermodynamic_profiles.npz')
