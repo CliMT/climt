@@ -4,6 +4,10 @@ History
 
 Latest
 ------
+* Added snow-ice component
+
+v.0.9
+-------
 * Held-Suarez and moist GCM with grey radiation work!
 * Added DCMIP initial conditions, test 4 tried out.
 * Dynamical core integrated now.

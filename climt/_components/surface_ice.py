@@ -56,7 +56,7 @@ class IceSheet(ClimtImplicit):
     def __init__(self,
                  vertical_resolution=0.1,
                  maximum_snow_ice_height=10,
-                 number_vertical_levels=10,
+                 number_vertical_levels=30,
                  thermal_conductivity_of_ice=2.22,
                  thermal_conductivity_of_snow=0.2,
                  density_of_ice=916.7,
@@ -64,7 +64,7 @@ class IceSheet(ClimtImplicit):
                  specific_heat_of_ice=2108.,
                  specific_heat_of_snow=2108.,
                  latent_heat_of_fusion=333550.,
-                 melting_point_of_ice=271.):
+                 melting_point_of_ice=273.):
         """
 
         Args:
