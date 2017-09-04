@@ -136,7 +136,7 @@ class IceSheet(ClimtImplicit):
         self._temp_melt = replace_none_with_default(
             'melting_point_of_ice', melting_point_of_ice)
 
-    def __call__(self, state, time_step):
+    def __call__(self, state, timestep):
         """
         Calculate new ice sheet height.
 

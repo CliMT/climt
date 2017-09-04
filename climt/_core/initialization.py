@@ -75,6 +75,9 @@ def init_ozone(array_dims, quantity_description, initial_state):
     import pkg_resources
 
     init_array = np.ones(array_dims, order='F')
+    current_levels = np.linspace(0.998, 0.001, 30)[::-1]
+
+    target_levels = np.linspace(0.998, 0.001, array_dims[-1])[::-1]
 
     file_name = 'ozone_profile.npy'
     file_path = 'climt._data'
@@ -83,7 +86,12 @@ def init_ozone(array_dims, quantity_description, initial_state):
 
     profile = np.load(resource_path)
 
-    init_array[:] = profile[np.newaxis, np.newaxis, :]
+    target_profile = CubicSpline(current_levels, profile[::-1])(target_levels)[::-1]
+
+    if array_dims[-1] == 30:
+        target_profile = profile
+
+    init_array[:] = target_profile[np.newaxis, np.newaxis, :]
 
     return init_array
 

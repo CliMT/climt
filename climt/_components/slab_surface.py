@@ -22,7 +22,6 @@ class SlabSurface(ClimtPrognostic):
         'upward_heat_flux_at_ground_level_in_soil': 'W m^-2',
         'heat_flux_into_sea_water_due_to_sea_ice': 'W m^-2',
         'area_type': 'dimensionless',
-        'snow_ice_temperature': 'dimensionless',
         'soil_layer_thickness': 'm',
         'ocean_mixed_layer_thickness': 'm',
         'soil_thermal_capacity': 'J kg^-1 degK^-1',

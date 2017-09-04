@@ -9,7 +9,8 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GfsDynamicalCore, ClimtSpectralDynamicalCore)
+    DcmipInitialConditions, GfsDynamicalCore, ClimtSpectralDynamicalCore,
+    IceSheet)
 import climt
 from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
@@ -67,6 +68,10 @@ def transpose_state(state, dims=None):
 def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
 
+    if isinstance(component, IceSheet):
+        output, diag = component(state, timestep=timestep)
+        diag.pop('snow_ice_temperature_poly')
+        return output, diag
     if isinstance(component, ClimtSpectralDynamicalCore):
         return component(state)
     elif isinstance(component, (Implicit, TimeStepper)):
@@ -641,6 +646,24 @@ class TestGfsDycore(ComponentBase):
     def test_1d_output_matches_cached_output(self):
         assert True
 
+
+class TestIceSheet(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        ice = IceSheet()
+        return ice
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
 
 if __name__ == '__main__':
     pytest.main([__file__])
