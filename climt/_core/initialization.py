@@ -71,6 +71,32 @@ def init_interface_level_tau_longwave(array_dims, quantity_description, initial_
     return tau_longwave*np.ones(array_dims, order='F')
 
 
+def init_ozone(array_dims, quantity_description, initial_state):
+
+    import pkg_resources
+
+    init_array = np.ones(array_dims, order='F')
+    current_levels = np.linspace(0.998, 0.001, 30)[::-1]
+
+    target_levels = np.linspace(0.998, 0.001, array_dims[-1])[::-1]
+
+    file_name = 'ozone_profile.npy'
+    file_path = 'climt._data'
+
+    resource_path = pkg_resources.resource_filename(file_path, file_name)
+
+    profile = np.load(resource_path)
+
+    target_profile = CubicSpline(current_levels, profile[::-1])(target_levels)[::-1]
+
+    if array_dims[-1] == 30:
+        target_profile = profile
+
+    init_array[:] = target_profile[np.newaxis, np.newaxis, :]
+
+    return init_array
+
+
 climt_quantity_descriptions = {
     'air_pressure': {
         'dims': ['x', 'y', 'mid_levels'],
@@ -165,7 +191,7 @@ climt_quantity_descriptions = {
     'mole_fraction_of_ozone_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'mole/mole',
-        'default_value': 0.
+        'init_func': init_ozone
     },
     'mole_fraction_of_carbon_dioxide_in_air': {
         'dims': ['x', 'y', 'mid_levels'],
@@ -428,11 +454,11 @@ climt_quantity_descriptions = {
         'default_value': 'sea',
         'dtype': 'a100'
     },
-    'snow_ice_temperature': {
+    'snow_ice_temperature_poly': {
         'dims': ['x', 'y'],
         'units': 'dimensionless',
         'default_value': CubicSpline(
-            np.linspace(0, 50, 50), 270.*np.ones(50)),
+            np.linspace(0, 50, 50), 260.*np.ones(50)),
         'dtype': object
     },
     'sea_water_density': {

@@ -9,7 +9,8 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GfsDynamicalCore, ClimtSpectralDynamicalCore)
+    DcmipInitialConditions, GfsDynamicalCore, ClimtSpectralDynamicalCore,
+    IceSheet)
 import climt
 from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
@@ -67,6 +68,10 @@ def transpose_state(state, dims=None):
 def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
 
+    if isinstance(component, IceSheet):
+        output, diag = component(state, timestep=timestep)
+        diag.pop('snow_ice_temperature_poly')
+        return output, diag
     if isinstance(component, ClimtSpectralDynamicalCore):
         return component(state)
     elif isinstance(component, (Implicit, TimeStepper)):
@@ -488,6 +493,24 @@ class TestSimplePhysics(ComponentBase):
         assert True
 
 
+class TestSimplePhysicsPrognostic(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        component = SimplePhysics()
+        return component.get_prognostic_version(timedelta(minutes=10))
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
 class TestRRTMGLongwave(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         return RRTMGLongwave()
@@ -640,6 +663,112 @@ class TestGfsDycore(ComponentBase):
 
     def test_1d_output_matches_cached_output(self):
         assert True
+
+
+class TestIceSheet(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        ice = IceSheet()
+        return ice
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+class TestIceSheetSeaIce(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        ice = IceSheet()
+        return ice
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        state['area_type'][:] = 'sea_ice'
+        state['sea_ice_thickness'][:] = 4
+        state['surface_snow_thickness'][:] = 3
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+class TestIceSheetLandIce(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        ice = IceSheet()
+        return ice
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        state['area_type'][:] = 'land_ice'
+        state['land_ice_thickness'][:] = 4
+        state['surface_snow_thickness'][:] = 3
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+class TestIceSheetLand(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        ice = IceSheet()
+        return ice
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        state['area_type'][:] = 'land'
+        state['surface_snow_thickness'][:] = 3
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+def test_ice_sheet_too_high():
+
+    ice = IceSheet()
+
+    state = climt.get_default_state(
+        [ice],
+        x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
+        y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+    state['area_type'][:] = 'land_ice'
+    state['land_ice_thickness'][:] = 8
+    state['surface_snow_thickness'][:] = 3
+
+    with pytest.raises(ValueError) as excinfo:
+        ice(state, timedelta(seconds=100))
+
+    assert 'exceeds maximum value' in str(excinfo.value)
 
 
 if __name__ == '__main__':

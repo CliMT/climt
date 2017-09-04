@@ -44,4 +44,5 @@ deploy:
 notifications:
   email:
     recipients:
+    - mcgibbon@uw.edu
     - joy.monteiro@misu.su.se

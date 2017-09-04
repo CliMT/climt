@@ -77,6 +77,9 @@ Ice and Snow
 .. autosummary::
     :toctree: generated/
 
+    IceSheet
+    IceSheet.__call__
+
 Test Cases
 -----------
 
