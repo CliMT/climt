@@ -28,4 +28,4 @@ __all__ = (
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
     EmanuelConvection, SlabSurface, GfsDynamicalCore, DcmipInitialConditions, IceSheet)
 
-__version__ = '0.8.9'
+__version__ = '0.9.1'
