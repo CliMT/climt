@@ -6,6 +6,7 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 recursive-include climt/_lib/ *
+recursive-include climt/_data/ *
 recursive-include tests *
 recursive-include climt *.py *.so *.dylib
 
