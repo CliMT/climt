@@ -9,9 +9,10 @@ from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
 from .gfs import GfsDynamicalCore
 from .dcmip import DcmipInitialConditions
+from .second_best import SecondBEST
 
 __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
     HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
     RRTMGLongwave, RRTMGShortwave, EmanuelConvection, SlabSurface,
-    GfsDynamicalCore, DcmipInitialConditions, IceSheet)
+    GfsDynamicalCore, DcmipInitialConditions, IceSheet, SecondBEST)
