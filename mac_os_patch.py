@@ -37,7 +37,7 @@ def change_lib_command(lib_name, referenced_lib, referenced_lib_path):
 
 def get_dependencies(lib_name):
 
-    output = subprocess.check_output(['otool', '-L', lib_name], shell=True).decode().split('\n')[1:]
+    output = subprocess.check_output(['otool', '-L', lib_name], shell=False).decode().split('\n')[1:]
     output = [item.strip() for item in output]
     output.remove('')
     output = [item.split()[0] for item in output]
@@ -148,7 +148,7 @@ def modify_library(library_path):
         patch_dylib(library_path)
 
 
-lib_list = subprocess.check_output(['find', '.', '-name', "*.so"], shell=True).split()
+lib_list = subprocess.check_output(['find', '.', '-name', "*.so"], shell=False).split()
 
 lib_list = [element.decode() for element in lib_list]
 
