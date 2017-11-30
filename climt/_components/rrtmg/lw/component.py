@@ -368,7 +368,7 @@ class RRTMGLongwave(ClimtPrognostic):
             for quantity in tend_arrays.keys():
                 tend_arrays[quantity][lon, :] = tend_f_arrays[quantity]
 
-            tend_arrays['air_temperature'][lon, :, -1] = 0
+            #tend_arrays['air_temperature'][lon, :, -1] = 0
 
         diag_dict['longwave_heating_rate'].values = tend_dict['air_temperature'].values
 

@@ -165,7 +165,7 @@ else:
 
         Extension(
             'climt._components.rrtmg.lw._rrtmg_lw',
-            sources=['climt/_components/rrtmg/lw/_rrtm_lw.pyx'],
+            sources=['climt/_components/rrtmg/lw/_rrtmg_lw.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
             library_dirs=[lib_path],
@@ -173,7 +173,7 @@ else:
 
         Extension(
             'climt._components.rrtmg.sw._rrtmg_sw',
-            sources=['climt/_components/rrtmg/sw/_rrtm_sw.pyx'],
+            sources=['climt/_components/rrtmg/sw/_rrtmg_sw.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
             library_dirs=[lib_path],

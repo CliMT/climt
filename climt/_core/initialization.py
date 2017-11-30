@@ -92,6 +92,9 @@ def init_ozone(array_dims, quantity_description, initial_state):
     if array_dims[-1] == 30:
         target_profile = profile
 
+
+    target_profile[-1] /= 10
+
     init_array[:] = target_profile[np.newaxis, np.newaxis, :]
 
     return init_array
@@ -464,7 +467,7 @@ climt_quantity_descriptions = {
     'sea_water_density': {
         'dims': ['x', 'y'],
         'units': 'kg m^-3',
-        'default_value': 4.1813e3
+        'default_value': 1.029e3
     },
     'surface_albedo_for_direct_shortwave': {
         'dims': ['x', 'y'],

@@ -272,6 +272,8 @@ class SimplePhysics(ClimtImplicit):
              Pint, q, Ps, Ts, q_surface,
              lats, timestep.total_seconds())
 
+        latent_heat_flux[latent_heat_flux < 0] = 0
+
         if self._return_tend:
             t_out = (t_out - T)/timestep.total_seconds()
             u_out = (u_out - U)/timestep.total_seconds()
