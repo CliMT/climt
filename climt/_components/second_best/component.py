@@ -485,10 +485,11 @@ def calculate_heat_and_water_transport(area_type,
 
     # The conservation laws are given by Eqns. 9.1, 9.2, 9.3
 
-    K_t_soil = calculate_soil_thermal_conductivity(
-        soil_temp, Kt_air, Kt_liq, W_l, W_i, W_fc, X_v, Ra, Rv)
+    # K_t_soil = calculate_soil_thermal_conductivity(
+    #    soil_temp, Kt_air, Kt_liq, W_l, W_i, W_fc, X_v, Ra, Rv)
 
-    c_soil = calculate_soil_heat_capacity(W_l, W_i, C_l, C_i, X_v)
+    # c_soil = calculate_soil_heat_capacity(W_l, W_i, C_l, C_i, X_v)
+    print('test')
 
 
 def calculate_surface_fluxes(area_type,
