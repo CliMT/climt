@@ -8,11 +8,11 @@ env:
     global:
       - TWINE_USERNAME=joy.merwin
     matrix:
-      - TOXENV=cov
-      - TOXENV=flake8
-      - TOXENV=py35
-      - TOXENV=py34
-      - TOXENV=py27
+      - TOXENV=cov CLIMT_ARCH=Linux
+      - TOXENV=flake8 CLIMT_ARCH=Linux CIBW_SKIP=cp33-*
+      - TOXENV=py35 CLIMT_ARCH=Linux
+      - TOXENV=py34 CLIMT_ARCH=Linux
+      - TOXENV=py27 CLIMT_ARCH=Linux
 
   #matrix:
   #  include:
@@ -35,11 +35,11 @@ install:
 - python -m pip install -U tox
 script:
 - tox -e ${TOXENV}
-- git stash --all
-- python -m pip install cibuildwheel
-- cibuildwheel --output-dir wheelhouse
+- make clean
 - |
-  if [[ $TOXENV == py27 || $TOXENV == py34 ]]; then
+  if [[ $TOXENV == flake8 ]]; then
+        python -m pip install cibuildwheel
+        cibuildwheel --output-dir wheelhouse
         python -m pip install twine
         python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
   fi
