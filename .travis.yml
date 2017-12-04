@@ -31,20 +31,20 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rvm get stable                 ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc               ; fi
 install:
-- pip install -r requirements_dev.txt
-- pip install -U tox
+- python -m pip install -r requirements_dev.txt
+- python -m pip install -U tox
 script:
 - tox -e ${TOXENV}
-- pip install cibuildwheel
+- git stash --all
+- python -m pip install cibuildwheel
 - cibuildwheel --output-dir wheelhouse
 - |
   if [[ $TOXENV == py27 || $TOXENV == py34 ]]; then
-        pip install twine
+        python -m pip install twine
         python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
   fi
 
 deploy:
-  skip_cleanup: true
   provider: pypi
   distributions: sdist
   server: https://test.pypi.org/legacy/
