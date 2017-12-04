@@ -4,23 +4,27 @@
 from setuptools import setup, Extension
 from wheel.bdist_wheel import bdist_wheel as native_bdist_wheel
 import pip
+import os
+import subprocess
+import platform
+import re
 
 try:
     from Cython.Build.Distutils import build_ext as native_build_ext
 except ImportError:
+    print('Suitable Cython unavailable, installing...')
     pip.main(['install', 'cython'])
     from Cython.Build.Distutils import build_ext as native_build_ext
 
 try:
     import numpy as np
-    include_dirs = [np.get_include()]
 except ImportError:
-    include_dirs = []
+    print('Suitable numpy unavailable, installing...')
+    pip.main(['install', 'numpy'])
+    import numpy as np
 
-import os
-import subprocess
-import platform
-import re
+
+include_dirs = [np.get_include()]
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
