@@ -2,8 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, Extension
-from Cython.Build.Distutils import build_ext as native_build_ext
 from wheel.bdist_wheel import bdist_wheel as native_bdist_wheel
+import pip
+
+try:
+    from Cython.Build.Distutils import build_ext as native_build_ext
+except ImportError:
+    pip.main(['install', 'cython'])
+    from Cython.Build.Distutils import build_ext as native_build_ext
 
 try:
     import numpy as np
