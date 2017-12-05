@@ -1,4 +1,4 @@
-s: linux
+os: linux
 dist: trusty
 sudo: required
 services: docker
@@ -38,20 +38,19 @@ script:
 - tox -e ${TOXENV}
 
 jobs:
-    include:
-        - stage: deployment
-          script:
-            - make clean
-            - |
-                if [[ $TOXENV == flake8 ]]; then
-                    echo $CLIMT_ARCH
-                    echo $CIBW_SKIP
-                    echo $TWINE_USERNAME
-                    python -m pip install cibuildwheel
-                    cibuildwheel --output-dir wheelhouse
-                    python -m pip install twine
-                    python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
-               fi
+  include:
+    - stage: deployment
+      script:
+      - |
+           if [[ $TOXENV == flake8 ]]; then
+                echo $CLIMT_ARCH
+                echo $CIBW_SKIP
+                echo $TWINE_USERNAME
+                python -m pip install cibuildwheel
+                cibuildwheel --output-dir wheelhouse
+                python -m pip install twine
+                python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
+           fi
 
 deploy:
   provider: pypi
