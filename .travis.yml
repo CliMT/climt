@@ -7,13 +7,6 @@ python: 3.5
 env:
     global:
       - TWINE_USERNAME=joy.merwin
-    matrix:
-      - 
-      - TOXENV=cov CLIMT_ARCH=Linux
-      - TOXENV=py36 CLIMT_ARCH=Linux
-      - TOXENV=py35 CLIMT_ARCH=Linux
-      - TOXENV=py34 CLIMT_ARCH=Linux
-      - TOXENV=py27 CLIMT_ARCH=Linux
 
   #matrix:
   #  include:
@@ -34,13 +27,31 @@ before_install:
 install:
 - python -m pip install -r requirements_dev.txt
 - python -m pip install -U tox
-script:
-- tox -e ${TOXENV}
 
 jobs:
   include:
     - stage: light tests
       env: TOXENV=flake8 CLIMT_ARCH=Linux
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=cov CLIMT_ARCH=Linux
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=py36 CLIMT_ARCH=Linux
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=py35 CLIMT_ARCH=Linux
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=py34 CLIMT_ARCH=Linux
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=py27 CLIMT_ARCH=Linux
       script:
           - tox -e ${TOXENV}
     - stage: wheels
