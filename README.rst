@@ -15,7 +15,7 @@ CliMT
     :target: https://travis-ci.org/CliMT/climt
     :alt: Coverage
 
-.. image:: https://readthedocs.org/projects/climt/badge/?version=latest
+.. image:: https://readthedocs.org/projects/climt/badge/
     :target: https://climt.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
