@@ -7,9 +7,10 @@ python: 3.5
 env:
     global:
       - TWINE_USERNAME=joy.merwin
+      - CIBW_SKIP=cp33-* cp36-*
     matrix:
       - TOXENV=cov CLIMT_ARCH=Linux
-      - TOXENV=flake8 CLIMT_ARCH=Linux CIBW_SKIP=cp33-*
+      - TOXENV=flake8 CLIMT_ARCH=Linux
       - TOXENV=py35 CLIMT_ARCH=Linux
       - TOXENV=py34 CLIMT_ARCH=Linux
       - TOXENV=py27 CLIMT_ARCH=Linux
@@ -38,6 +39,9 @@ script:
 - make clean
 - |
   if [[ $TOXENV == flake8 ]]; then
+        echo $CLIMT_ARCH
+        echo $CIBW_SKIP
+        echo $TWINE_USERNAME
         python -m pip install cibuildwheel
         cibuildwheel --output-dir wheelhouse
         python -m pip install twine
