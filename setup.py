@@ -133,7 +133,7 @@ class climt_bdist_wheel(native_bdist_wheel):
 
     def run(self):
         self.run_command('build')
-        patch_cython_binary()
+        # patch_cython_binary()
         native_bdist_wheel.run(self)
 
 
