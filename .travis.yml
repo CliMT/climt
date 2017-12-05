@@ -7,13 +7,13 @@ python: 3.5
 env:
     global:
       - TWINE_USERNAME=joy.merwin
-      - CIBW_SKIP='cp33-* cp36-*'
+      - CIBW_SKIP='cp33-* cp36-* cp35-* cp34-* cp27u-*'
     matrix:
-      - TOXENV=cov CLIMT_ARCH=Linux
+      #- TOXENV=cov CLIMT_ARCH=Linux
       - TOXENV=flake8 CLIMT_ARCH=Linux
-      - TOXENV=py35 CLIMT_ARCH=Linux
-      - TOXENV=py34 CLIMT_ARCH=Linux
-      - TOXENV=py27 CLIMT_ARCH=Linux
+      #- TOXENV=py35 CLIMT_ARCH=Linux
+      #- TOXENV=py34 CLIMT_ARCH=Linux
+      #- TOXENV=py27 CLIMT_ARCH=Linux
 
   #matrix:
   #  include:
@@ -39,18 +39,13 @@ script:
 
 jobs:
   include:
-    - stage: deployment
+    - stage: deployment linux
+      env: CLIMT_ARCH=Linux
       script:
-      - |
-           if [[ $TOXENV == flake8 ]]; then
-                echo $CLIMT_ARCH
-                echo $CIBW_SKIP
-                echo $TWINE_USERNAME
-                python -m pip install cibuildwheel
-                cibuildwheel --output-dir wheelhouse
-                python -m pip install twine
-                python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
-           fi
+      - python -m pip install cibuildwheel
+      - cibuildwheel --output-dir wheelhouse
+      - python -m pip install twine
+      - python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
 
 deploy:
   provider: pypi
