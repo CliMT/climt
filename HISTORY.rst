@@ -5,6 +5,7 @@ History
 Latest
 ------
 * Added snow-ice component
+* Ozone profiles do not need to be specified externally
 
 v.0.9
 -------
@@ -26,6 +27,15 @@ v.0.9
 
 Breaking Changes
 ----------------
+
+Latest
+-------
+
+* Ozone profile has been modified
+* Heating rate for RRTMG top-of-atmosphere is no longer manually set to zero
+
+v.0.9
+------
 * SlabSurface no longer uses depth_slab_surface as input
 * changed order of outputs of GfsDynamicalCore and SimplePhysics to conform
   to TimeStepper order of diagnostics, new_state
