@@ -1,0 +1,38 @@
+environment:
+  matrix:
+    - PYTHON_VERSION: "3.4"
+
+platform:
+  - x64
+
+matrix:
+  fast_finish: false
+
+install:
+  - set PATH=C:\Miniconda-x64\Scripts
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
+  - activate python%PYTHON_VERSION%
+  - conda install -c msys2 m2w64-toolchain 
+  - pip install -r requirements_dev.txt
+  - python.exe setup.py install
+
+build: off
+
+test_script:
+  - pip install -U tox
+  - tox
+
+after_test:
+  # This step builds your wheels.
+  - python.exe setup.py bdist_wheel
+
+artifacts:
+  # bdist_wheel puts your built wheel in the dist directory
+  - path: dist\*.whl
+
+#on_success:
+#  You can use this step to upload your artifacts to a public website.
+#  See Appveyor's documentation for more details. Or you can simply
+#  access your wheels from the Appveyor "artifacts" tab for your build.
