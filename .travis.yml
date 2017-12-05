@@ -1,4 +1,4 @@
-os: linux
+s: linux
 dist: trusty
 sudo: required
 services: docker
@@ -7,7 +7,7 @@ python: 3.5
 env:
     global:
       - TWINE_USERNAME=joy.merwin
-      - CIBW_SKIP=cp33-* cp36-*
+      - CIBW_SKIP='cp33-* cp36-*'
     matrix:
       - TOXENV=cov CLIMT_ARCH=Linux
       - TOXENV=flake8 CLIMT_ARCH=Linux
