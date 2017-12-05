@@ -6,6 +6,7 @@ Latest
 ------
 * Added snow-ice component
 * Ozone profiles do not need to be specified externally
+* Now also tested on Python 3.6
 
 v.0.9
 -------
