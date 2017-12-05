@@ -46,7 +46,7 @@ jobs:
     - stage: big tests
       env: TOXENV=py35 CLIMT_ARCH=Linux
       install:
-          - source ~/virtalenv/python3.5/bin/activate
+          - source ~/virtualenv/python3.5/bin/activate
       script:
           - tox -e ${TOXENV}
     - stage: big tests
