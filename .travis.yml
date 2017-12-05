@@ -44,7 +44,7 @@ jobs:
       script:
           - tox -e ${TOXENV}
     - stage: big tests
-      env: TOXENV=py35 CLIMT_ARCH=Linux
+      env: TOXENV=py353 CLIMT_ARCH=Linux
       script:
           - tox -e ${TOXENV}
     - stage: big tests
