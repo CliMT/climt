@@ -36,17 +36,22 @@ install:
 - python -m pip install -U tox
 script:
 - tox -e ${TOXENV}
-- make clean
-- |
-  if [[ $TOXENV == flake8 ]]; then
-        echo $CLIMT_ARCH
-        echo $CIBW_SKIP
-        echo $TWINE_USERNAME
-        python -m pip install cibuildwheel
-        cibuildwheel --output-dir wheelhouse
-        python -m pip install twine
-        python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
-  fi
+
+jobs:
+    include:
+        - stage: deployment
+          script:
+            - make clean
+            - |
+                if [[ $TOXENV == flake8 ]]; then
+                    echo $CLIMT_ARCH
+                    echo $CIBW_SKIP
+                    echo $TWINE_USERNAME
+                    python -m pip install cibuildwheel
+                    cibuildwheel --output-dir wheelhouse
+                    python -m pip install twine
+                    python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
+               fi
 
 deploy:
   provider: pypi
