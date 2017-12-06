@@ -11,7 +11,7 @@ matrix:
 install:
   - set COMPILER_PATH=C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
-  - bash -lc "echo $PATH"
+  - bash -c "echo $PATH"
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - activate python%PYTHON_VERSION%
