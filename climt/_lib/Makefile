@@ -12,7 +12,7 @@ FFTW_GZ = fftw-3.3.6-pl2.tar.gz
 SHT_GZ = shtns-2.7-r557.tar.gz
 BLAS_GZ = OpenBLAS-0.2.19.tar.gz
 
-BASE_DIR = $(PWD)
+BASE_DIR = "$(PWD)"
 LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 
 CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
