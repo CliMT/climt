@@ -98,6 +98,8 @@ if 'CC' not in os.environ:
     else:
         os.environ['CC'] = 'gcc'
 
+print('Compilers: ', os.environ['CC'], os.environ['FC'])
+
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
 os.environ['CFLAGS'] = '-fPIC'
 
