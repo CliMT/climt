@@ -31,7 +31,7 @@ all: fftw_lib sht_lib blas_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_l
 	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../.configured_fftw; ls -a ..
 
 $(CLIMT_ARCH)/libfftw3_omp.a: .configured_fftw
-	cd $(FFTW_DIR); make install > log 2>&1 ; cp ../lib/libfftw3_omp.a $(LIB_DIR)
+	cd $(FFTW_DIR); make install ; cp ../lib/libfftw3_omp.a $(LIB_DIR)
 
 $(CLIMT_ARCH)/libfftw3.a: .configured_fftw
 	cp lib/libfftw3.a $(LIB_DIR)
