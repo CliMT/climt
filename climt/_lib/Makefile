@@ -17,7 +17,7 @@ BASE_DIR = $(PWD)
 WIN_MALLOC_FLAG = ""
 ifeq ($(CLIMT_ARCH),Windows)
 	BASE_DIR = $(subst \,/,$(PWD))
-	WIN_MALLOC_FLAG = "--with-our-malloc"
+	WIN_MALLOC_FLAG = --with-our-malloc
 endif
 
 LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
