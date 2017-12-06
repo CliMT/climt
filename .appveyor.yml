@@ -19,7 +19,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - activate python%PYTHON_VERSION%
-    #  - bash -lc "cd /c/projects/climt/; python setup.py build"
+  - bash -c "cd /c/projects/climt/; python setup.py build"
     #  - conda update -q conda
     #  - pip install -r requirements_dev.txt
     #  - python.exe setup.py install

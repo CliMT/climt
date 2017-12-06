@@ -89,18 +89,12 @@ include_dirs.append(inc_path)
 if 'FC' not in os.environ:
     if operating_system == 'Darwin':
         guess_compiler_name('FC')
-    elif (operating_system == 'Windows' and
-          os.environ['APPVEYOR'] == 'True'):
-        os.environ['FC'] = os.environ['COMPILER_PATH']+'\gfortran.exe'
     else:
         os.environ['FC'] = 'gfortran'
 
 if 'CC' not in os.environ:
     if operating_system == 'Darwin':
         guess_compiler_name('CC')
-    elif (operating_system == 'Windows' and
-          os.environ['APPVEYOR'] == 'True'):
-        os.environ['CC'] = os.environ['COMPILER_PATH']+'\gcc.exe'
     else:
         os.environ['CC'] = 'gcc'
 
