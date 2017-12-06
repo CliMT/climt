@@ -11,11 +11,10 @@ matrix:
 install:
   - set PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - activate python%PYTHON_VERSION%
-  - bash -li
-  - ls C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1
+  - bash -lc "ls C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1"
+    #  - conda update -q conda
     #  - pip install -r requirements_dev.txt
     #  - python.exe setup.py install
 
