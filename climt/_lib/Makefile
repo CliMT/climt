@@ -15,7 +15,7 @@ BLAS_GZ = OpenBLAS-0.2.19.tar.gz
 BASE_DIR = $(PWD)
 
 ifeq ($(CLIMT_ARCH),Windows)
-	BASE_DIR = $(subst \,\\,$(BASE_DIR))
+	BASE_DIR = $(subst \,\\,$(PWD))
 	LIB_DIR= $(BASE_DIR)\\$(CLIMT_ARCH)\\
 else
 	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
