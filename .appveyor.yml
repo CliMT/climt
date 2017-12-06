@@ -13,7 +13,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - activate python%PYTHON_VERSION%
-  - bash -lc "ls -la /c/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/"
+  - bash -lc "ls -la /c/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/bin/"
     #  - conda update -q conda
     #  - pip install -r requirements_dev.txt
     #  - python.exe setup.py install
