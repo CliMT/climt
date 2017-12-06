@@ -12,8 +12,13 @@ FFTW_GZ = fftw-3.3.6-pl2.tar.gz
 SHT_GZ = shtns-2.7-r557.tar.gz
 BLAS_GZ = OpenBLAS-0.2.19.tar.gz
 
-BASE_DIR = "$(PWD)"
-LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
+BASE_DIR = $(PWD)
+
+ifeq ($(CLIMT_ARCH), Windows)
+	LIB_DIR= $(BASE_DIR)\\$(CLIMT_ARCH)\\
+else
+	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
+endif
 
 CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
 LDFLAGS = "-L$(LIB_DIR)"
@@ -23,7 +28,7 @@ all: fftw_lib sht_lib blas_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_l
 # FFTW3 Configuration
 
 .configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../.configured_fftw
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../.configured_fftw; ls ..
 
 $(CLIMT_ARCH)/libfftw3_omp.a: .configured_fftw
 	cd $(FFTW_DIR); make install > log 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
