@@ -42,7 +42,7 @@ fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
 # SHTNS Configuration
 
 .configured_sht:
-	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) > log 2>&1; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp > log 2>&1 && touch ../.configured_sht
+	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) ; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp  && touch ../.configured_sht
 
 $(CLIMT_ARCH)/libshtns_omp.a: .configured_sht
 	cd $(SHT_DIR); make install > log 2>&1; cp ../lib/libshtns_omp.a $(LIB_DIR)
