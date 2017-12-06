@@ -91,7 +91,7 @@ if 'FC' not in os.environ:
         guess_compiler_name('FC')
     elif (operating_system == 'Windows' and
           os.environ['APPVEYOR'] == 'True'):
-        os.environ['CC'] = os.environ['COMPILER_PATH']+'/gfortran.exe'
+        os.environ['FC'] = os.environ['COMPILER_PATH']+'/gfortran.exe'
     else:
         os.environ['FC'] = 'gfortran'
 
