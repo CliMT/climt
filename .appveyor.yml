@@ -13,13 +13,8 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - activate python%PYTHON_VERSION%
-  - bash -lc "ls -ltrah /usr/bin/gcc"
-  - bash -lc "ls -ltrah /usr/bin/gfortran"
-  - bash -lc "which python"
-  - bash -lc "python --version"
-  - bash -lc "ls -la /c/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/bin/"
-  - bash -lc "ls -la /c/msys64/usr/bin/"
   - bash -lc "make --help"
+  - bash -lc "python setup.py build"
     #  - conda update -q conda
     #  - pip install -r requirements_dev.txt
     #  - python.exe setup.py install
