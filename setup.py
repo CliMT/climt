@@ -89,19 +89,25 @@ include_dirs.append(inc_path)
 if 'FC' not in os.environ:
     if operating_system == 'Darwin':
         guess_compiler_name('FC')
+    elif (operating_system == 'Windows' and
+          os.environ['APPVEYOR'] == 'True'):
+        os.environ['CC'] = os.environ['COMPILER_PATH']+'/gfortran.exe'
     else:
         os.environ['FC'] = 'gfortran'
 
 if 'CC' not in os.environ:
     if operating_system == 'Darwin':
         guess_compiler_name('CC')
+    elif (operating_system == 'Windows' and
+          os.environ['APPVEYOR'] == 'True'):
+        os.environ['CC'] = os.environ['COMPILER_PATH']+'/gcc.exe'
     else:
         os.environ['CC'] = 'gcc'
 
-print('Compilers: ', os.environ['CC'], os.environ['FC'])
-
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
 os.environ['CFLAGS'] = '-fPIC'
+
+print('Compilers: ', os.environ['CC'], os.environ['FC'])
 
 
 # Create a custom build class to build libraries, and patch cython extensions
