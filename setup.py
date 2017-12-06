@@ -113,7 +113,8 @@ def build_libraries():
     curr_dir = os.getcwd()
     os.chdir(compiled_path)
     os.environ['PWD'] = compiled_path
-    subprocess.call(['make', 'CLIMT_ARCH='+operating_system])
+    if subprocess.call(['make', 'CLIMT_ARCH='+operating_system]):
+        raise RuntimeError('Library build failed, exiting')
     os.chdir(curr_dir)
     os.environ['PWD'] = curr_dir
 
