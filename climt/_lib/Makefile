@@ -16,10 +16,9 @@ BASE_DIR = $(PWD)
 
 ifeq ($(CLIMT_ARCH),Windows)
 	BASE_DIR = $(subst \,\\,$(PWD))
-	LIB_DIR= $(BASE_DIR)\\$(CLIMT_ARCH)\\
-else
-	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 endif
+
+LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 
 CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
 LDFLAGS = "-L$(LIB_DIR)"
