@@ -9,7 +9,7 @@ matrix:
   fast_finish: false
 
 cache:
-  C:\projects\climt\climt\_lib\Windows\
+  C:\projects\climt\climt\_lib\
 
 install:
   - set COMPILER_PATH=C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin\\
@@ -17,8 +17,9 @@ install:
   - bash -c "echo $PATH"
   - bash -c "which gcc"
   - bash -c "which gfortran"
-  - bash -c "which make"
-  - bash -c "which libtool"
+  - bash -c "locate libgfortran"
+  - bash -c "locate libgfortranbegin"
+  - bash -c "ls /c/projects/climt/climt/_lib/Windows"
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - activate python%PYTHON_VERSION%
