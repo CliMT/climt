@@ -98,6 +98,11 @@ if 'CC' not in os.environ:
     else:
         os.environ['CC'] = 'gcc'
 
+if operating_system == 'Windows' and os.environ['APPVEYOR'] == 'True':
+    os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
+    os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
+    os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
+
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
 os.environ['CFLAGS'] = '-fPIC'
 
