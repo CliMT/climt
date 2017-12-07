@@ -102,8 +102,8 @@ if operating_system == 'Windows' and os.environ['APPVEYOR'] == 'True':
     os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
     os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
     os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
-    libraries = ['quadmath', 'm']
-    default_link_args = ['-l:libgfortran.a']
+    libraries = ['m']
+    default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a']
 
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
 os.environ['CFLAGS'] = '-fPIC'
