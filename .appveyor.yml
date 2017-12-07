@@ -15,8 +15,10 @@ install:
   - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
   - bash -c "echo $PATH"
-  - bash -c "which gcc"
-  - bash -c "which gfortran"
+  - bash -c "gcc --version"
+  - bash -c "gfortran --version"
+  - bash -c "x86_64-w64-mingw32-gfortran.exe --version"
+  - bash -c "x86_64-w64-mingw32-gcc.exe --version"
   - bash -c "which make"
   - bash -c "ls -l /c/projects/climt/climt/_lib/Windows"
   - bash -c "cp /c/msys64/mingw64/bin/x86_64-w64-mingw32-gcc-ar.exe /c/msys64/mingw64/bin/x86_64-w64-mingw32-ar.exe"
