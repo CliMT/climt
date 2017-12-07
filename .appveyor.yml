@@ -8,6 +8,9 @@ platform:
 matrix:
   fast_finish: false
 
+cache:
+  C:\climt\climt\_lib\Windows\
+
 install:
   - set COMPILER_PATH=C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
