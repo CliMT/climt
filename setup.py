@@ -77,6 +77,7 @@ if operating_system == 'Linux':
 
 if operating_system == 'Windows':
     compiled_base_dir = 'climt\\_lib'
+    default_link_args += ['-lgfortranbegin']
 
 dir_path = os.getcwd()
 compiled_path = os.path.join(dir_path, compiled_base_dir)
