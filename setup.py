@@ -157,6 +157,14 @@ else:
             ['climt/_components/_berger_solar_insolation.pyx']),
 
         Extension(
+            'climt._components.simple_physics._simple_physics',
+            sources=['climt/_components/simple_physics/_simple_physics.pyx'],
+            libraries=libraries,
+            include_dirs=include_dirs,
+            library_dirs=[lib_path],
+            extra_link_args=[lib_path+'/libsimple_physics.a'] + default_link_args),
+
+        Extension(
             'climt._components.gfs._gfs_dynamics',
             sources=['climt/_components/gfs/_gfs_dynamics.pyx'],
             libraries=libraries,
@@ -165,14 +173,6 @@ else:
             extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
                              lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
                              lib_path+'/libfftw3.a', lib_path+'/libopenblas.a'] + default_link_args),
-
-        Extension(
-            'climt._components.simple_physics._simple_physics',
-            sources=['climt/_components/simple_physics/_simple_physics.pyx'],
-            libraries=libraries,
-            include_dirs=include_dirs,
-            library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/libsimple_physics.a'] + default_link_args),
 
         Extension(
             'climt._components.emanuel._emanuel_convection',
