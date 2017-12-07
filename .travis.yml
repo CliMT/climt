@@ -85,7 +85,7 @@ jobs:
       env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp34-* cp27-* cp35-manylinux1_i686'
       script:
         - |
-            if [[ 1 == 1 ]]; then
+            if [[ $TRAVIS_TAG ]]; then
             python -m pip install cibuildwheel
             cibuildwheel --output-dir wheelhouse
             python -m pip install twine
