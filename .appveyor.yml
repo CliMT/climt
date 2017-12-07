@@ -29,13 +29,13 @@ install:
   - activate python%PYTHON_VERSION%
   - pip install -r requirements_dev.txt
   - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
-    #  - python.exe setup.py install
+  - bash -c "cd /c/projects/climt/; python setup.py install"
 
 build: off
 
-#test_script:
-#  - pip install -U tox
-#  - tox
+test_script:
+  - pip install -U tox
+  - tox
 
 #after_test:
   # This step builds your wheels.
