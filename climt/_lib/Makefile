@@ -26,7 +26,7 @@ CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
 LDFLAGS = "-L$(LIB_DIR)"
 
 #all: blas_lib fftw_lib sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
-all: simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
+all: simple_physics_lib
 
 # FFTW3 Configuration
 
