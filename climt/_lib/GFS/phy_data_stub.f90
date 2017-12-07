@@ -1,11 +1,11 @@
 module phy_data
-! stub
-! public subroutines:
-! init_phydata: allocate and populate arrays.
-! destroy_phydata: deallocate arrays.
  use kinds, only: r_kind,r_double
  use params, only: nlats,nlons,nlevs,ntrac,ndimspec
  use iso_c_binding
+ ! stub
+ ! public subroutines:
+ ! init_phydata: allocate and populate arrays.
+ ! destroy_phydata: deallocate arrays.
 
  implicit none
  private

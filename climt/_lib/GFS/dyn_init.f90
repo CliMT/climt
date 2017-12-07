@@ -163,7 +163,7 @@ module dyn_init
 
  subroutine twodtooned(data2,data1)
    real(r_kind), intent(in) :: data2(nlons,nlats)
-   real(4), intent(out) :: data1(nlons*nlats)
+   real(r_kind), intent(out) :: data1(nlons*nlats)
    integer i,j,n
    do n=1,nlons*nlats
       j = 1+(n-1)/nlons
