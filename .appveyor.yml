@@ -8,8 +8,8 @@ platform:
 matrix:
   fast_finish: false
 
-#cache:
-#    C:\projects\climt\climt\_lib\Windows
+cache:
+    C:\projects\climt\climt\_lib\Windows
 
 install:
   - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
@@ -25,10 +25,10 @@ install:
   - bash -c "ls -l /c/msys64/mingw64/bin"
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
+  - conda update -q conda
   - activate python%PYTHON_VERSION%
+  - pip install -r requirements_dev.txt
   - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
-    #  - conda update -q conda
-    #  - pip install -r requirements_dev.txt
     #  - python.exe setup.py install
 
 build: off
