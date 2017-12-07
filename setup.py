@@ -129,7 +129,7 @@ def patch_cython_binary():
 class climt_build_ext(native_build_ext):
 
     def run(self):
-        build_libraries()
+        #build_libraries()
         native_build_ext.run(self)
 
 
