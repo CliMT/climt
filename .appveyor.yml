@@ -19,6 +19,7 @@ install:
   - bash -c "which gfortran"
   - bash -c "which make"
   - bash -c "ls -l /c/projects/climt/climt/_lib/Windows"
+  - bash -c "cp /c/msys64/mingw64/bin/x86_64-w64-mingw32-gcc-ar.exe /c/msys64/mingw64/bin/x86_64-w64-mingw32-ar.exe"
   - bash -c "ls -l /c/msys64/mingw64/bin"
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
