@@ -9,7 +9,7 @@ matrix:
   fast_finish: false
 
 cache:
-    C:\projects\climt\climt\_lib\
+    C:\projects\climt\climt\_lib\Windows
 
 install:
   - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
