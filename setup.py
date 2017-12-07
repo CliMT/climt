@@ -77,7 +77,6 @@ if operating_system == 'Linux':
 
 if operating_system == 'Windows':
     compiled_base_dir = 'climt\\_lib'
-    default_link_args += ['-lgfortranbegin']
 
 dir_path = os.getcwd()
 compiled_path = os.path.join(dir_path, compiled_base_dir)
@@ -98,6 +97,10 @@ if 'CC' not in os.environ:
         guess_compiler_name('CC')
     else:
         os.environ['CC'] = 'gcc'
+
+if operating_system == 'Windows' and os.environ['APPVEYOR'] == 'True':
+    os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
+    os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
 
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
 os.environ['CFLAGS'] = '-fPIC'

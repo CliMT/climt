@@ -19,8 +19,6 @@ install:
   - bash -c "which gfortran"
   - bash -c "ls -l /c/projects/climt/climt/_lib/Windows"
   - bash -c "ls -l /c/msys64/mingw64/bin"
-  - bash -c "cd /c/mingw-w64; find .| grep libgfortran"
-  - bash -c "locate libgfortran"
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - activate python%PYTHON_VERSION%
