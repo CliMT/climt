@@ -18,7 +18,6 @@ install:
   - bash -c "which gcc"
   - bash -c "which gfortran"
   - bash -c "which make"
-  - bash -c "locate xys"
   - bash -c "ls -l /c/projects/climt/climt/_lib/Windows"
   - bash -c "ls -l /c/msys64/mingw64/bin"
   - conda config --set always_yes yes --set changeps1 no
