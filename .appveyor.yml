@@ -33,7 +33,7 @@ install:
   - conda update -q conda
   - activate python%PYTHON_VERSION%
   - pip install -r requirements_dev.txt
-  - pip install -U pip setuptools wheel
+  - conda upgrade pip setuptools wheel
 
 build_script:
   - bash -c "cd /c/projects/climt/; python setup.py bdist_wheel"
