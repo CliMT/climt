@@ -15,8 +15,10 @@ cache:
   - C:\Users\appveyor\AppData\Local\pip\ -> requirements_dev.txt
 
 install:
-  - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
+  - set COMPILER_PATH=C:\\Miniconda-x64\\Library\\mingw-w64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
+  - conda config --set always_yes yes --set changeps1 no
+  - conda install -c msys2 m2w64-gcc m2w64-gcc-fortran
   - bash -c "echo $PATH"
   - bash -c "printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg"
   - bash -c "ls $HOME; cat $HOME/pydistutils.cfg"
@@ -24,16 +26,17 @@ install:
   - bash -c "gfortran --version"
   - bash -c "x86_64-w64-mingw32-gfortran.exe --version"
   - bash -c "x86_64-w64-mingw32-gcc.exe --version"
+  - bash -c "which x86_64-w64-mingw32-gcc.exe"
   - bash -c "which make"
   - bash -c "ls -l /c/projects/climt/climt/_lib/Windows"
-  - bash -c "cp /c/msys64/mingw64/bin/x86_64-w64-mingw32-gcc-ar.exe /c/msys64/mingw64/bin/x86_64-w64-mingw32-ar.exe"
-  - bash -c "ls -l /c/msys64/mingw64/bin"
-  - conda config --set always_yes yes --set changeps1 no
+  - bash -c "cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe"
+  - bash -c "ls -l $COMPILER_PATH"
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - conda update -q conda
   - activate python%PYTHON_VERSION%
   - pip install -r requirements_dev.txt
   - conda upgrade pip setuptools wheel
+#  - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
 
 build_script:
   - bash -c "cd /c/projects/climt/; python setup.py bdist_wheel"
