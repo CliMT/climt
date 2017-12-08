@@ -34,7 +34,7 @@ install:
 
 build_script:
   - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
-  - bash -c "cd /c/projects/climt/; python setup.py install"
+  - bash -c "cd /c/projects/climt/; python setup.py develop"
 
 test_script:
   - pip install pytest
