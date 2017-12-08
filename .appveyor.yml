@@ -19,7 +19,6 @@ install:
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
   - conda install -c msys2 m2w64-gcc m2w64-gcc-fortran
-  - conda install libpython
   - bash -c "echo $PATH"
   - bash -c "printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg"
   - bash -c "ls $HOME; cat $HOME/pydistutils.cfg"
@@ -35,6 +34,7 @@ install:
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - conda update -q conda
   - activate python%PYTHON_VERSION%
+  - conda install libpython
   - pip install -r requirements_dev.txt
   - conda upgrade pip setuptools wheel
 #  - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
