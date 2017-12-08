@@ -18,6 +18,8 @@ install:
   - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
   - bash -c "echo $PATH"
+  - bash -c "printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg"
+  - bash -c "ls $HOME; cat $HOME/pydistutils.cfg"
   - bash -c "gcc --version"
   - bash -c "gfortran --version"
   - bash -c "x86_64-w64-mingw32-gfortran.exe --version"
@@ -27,20 +29,22 @@ install:
   - bash -c "cp /c/msys64/mingw64/bin/x86_64-w64-mingw32-gcc-ar.exe /c/msys64/mingw64/bin/x86_64-w64-mingw32-ar.exe"
   - bash -c "ls -l /c/msys64/mingw64/bin"
   - conda config --set always_yes yes --set changeps1 no
-  - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION%
+  - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION% 
   - conda update -q conda
   - activate python%PYTHON_VERSION%
   - pip install -r requirements_dev.txt
 
 build_script:
   - bash -c "cd /c/projects/climt/; python setup.py bdist_wheel"
+#  - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
 
 test_script:
-  - echo "done"
-#  - pip install -U pytest
+  - bash -c "cd /c/projects/climt; find . |grep _components"
+#  - pip install pytest
 #  - bash -c "cd /c/projects/climt; py.test"
 
-#after_test:
+after_test:
+  - bash -c "echo done!"
   # This step builds your wheels.
   #  - python.exe setup.py bdist_wheel
 
