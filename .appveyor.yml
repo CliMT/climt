@@ -19,7 +19,7 @@ install:
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
   - bash -c "echo $PATH"
   - bash -c "printf '[compiler]\nmingw32\n' > $HOME/pydistutils.cfg"
-  - bash -c "ls $HOME; cat pydistutils.cfg"
+  - bash -c "ls $HOME; cat $HOME/pydistutils.cfg"
   - bash -c "gcc --version"
   - bash -c "gfortran --version"
   - bash -c "x86_64-w64-mingw32-gfortran.exe --version"
