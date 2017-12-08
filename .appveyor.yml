@@ -11,7 +11,8 @@ matrix:
   fast_finish: false
 
 cache:
-    C:\projects\climt\climt\_lib\Windows
+  - C:\projects\climt\climt\_lib\Windows
+  - C:\Users\appveyor\AppData\Local\pip\ -> requirements_dev.txt
 
 install:
   - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
@@ -37,17 +38,19 @@ build_script:
 
 test_script:
   - pip install -U tox
-  - tox
+  - bash -c "cd /c/projects/climt; tox"
 
 #after_test:
   # This step builds your wheels.
-  # - python.exe setup.py bdist_wheel
+  #  - python.exe setup.py bdist_wheel
 
 #artifacts:
   # bdist_wheel puts your built wheel in the dist directory
-  #- path: dist\*.whl
+  #  - path: dist\*.whl
 
 #on_success:
 #  You can use this step to upload your artifacts to a public website.
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
+#  - pip install -U twine
+#  - python -m twine upload --repository-url https://test.pypi.org/legacy/ dist\*.whl
