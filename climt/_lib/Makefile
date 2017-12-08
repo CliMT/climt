@@ -29,13 +29,13 @@ all: blas_lib fftw_lib sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_l
 
 # FFTW3 Configuration
 
-.configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(WIN_MALLOC_FLAG) --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../.configured_fftw
+$(CLIMT_ARCH)/.configured_fftw:
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(WIN_MALLOC_FLAG) --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../$(CLIMT_ARCH)/.configured_fftw
 
-$(CLIMT_ARCH)/libfftw3_omp.a: .configured_fftw
+$(CLIMT_ARCH)/libfftw3_omp.a: $(CLIMT_ARCH)/.configured_fftw
 	cd $(FFTW_DIR); make install > log 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
 
-$(CLIMT_ARCH)/libfftw3.a: .configured_fftw
+$(CLIMT_ARCH)/libfftw3.a: $(CLIMT_ARCH)/.configured_fftw
 	cp lib/libfftw3.a $(LIB_DIR)
 
 fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
@@ -43,10 +43,10 @@ fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
 
 # SHTNS Configuration
 
-.configured_sht:
-	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) ; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp  && touch ../.configured_sht
+$(CLIMT_ARCH)/.configured_sht:
+	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) ; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp  && touch ../$(CLIMT_ARCH)/.configured_sht
 
-$(CLIMT_ARCH)/libshtns_omp.a: .configured_sht
+$(CLIMT_ARCH)/libshtns_omp.a: $(CLIMT_ARCH)/.configured_sht
 	cd $(SHT_DIR); make install > log 2>&1; cp ../lib/libshtns_omp.a $(LIB_DIR); ls -ltrh $(LIB_DIR)
 
 sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
@@ -106,8 +106,6 @@ clean:
 	if [ -d $(FFTW_DIR) ]; then rm -Rf $(FFTW_DIR); fi
 	if [ -d $(SHT_DIR) ]; then rm -Rf $(SHT_DIR); fi
 	if [ -d $(BLAS_DIR) ]; then rm -Rf $(BLAS_DIR); fi
-	if [ -e  .configured_fftw ]; then rm .configured_fftw; fi
-	if [ -e  .configured_sht ]; then rm .configured_sht; fi
 	cd $(GFS_DIR); make clean
 	cd $(SIM_PHYS_DIR); make clean
 	cd $(EMAN_DIR); make clean
@@ -121,3 +119,4 @@ clean_libs:
 	if [ -d  bin ]; then rm -Rf bin; fi
 	if [ -d  lib ]; then rm -Rf lib; fi
 	rm $(LIB_DIR)/*.a
+	rm $(LIB_DIR)/*.conf*
