@@ -1,3 +1,5 @@
+version: 0.9.1.{build}
+
 environment:
   matrix:
     - PYTHON_VERSION: "3.4"
@@ -28,14 +30,14 @@ install:
   - conda update -q conda
   - activate python%PYTHON_VERSION%
   - pip install -r requirements_dev.txt
+
+build_script:
   - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
   - bash -c "cd /c/projects/climt/; python setup.py install"
 
-build: off
-
-#test_script:
-#  - pip install -U tox
-#  - tox
+test_script:
+  - pip install -U tox
+  - tox
 
 #after_test:
   # This step builds your wheels.
