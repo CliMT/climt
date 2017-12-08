@@ -40,13 +40,13 @@ install:
 #  - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
 
 build_script:
-  - bash -c "cd /c/projects/climt/; python setup.py bdist_wheel"
+  - bash -c "cd /c/projects/climt/; python setup.py develop"
 #  - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
 
 test_script:
   - bash -c "cd /c/projects/climt; find . |grep _components"
-#  - pip install pytest
-#  - bash -c "cd /c/projects/climt; py.test"
+  - conda install pytest
+  - bash -c "cd /c/projects/climt; py.test"
 
 after_test:
   - bash -c "echo done!"
