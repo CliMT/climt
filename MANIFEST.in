@@ -17,6 +17,7 @@ prune climt/_lib/bin
 prune climt/_lib/Open*
 prune climt/_lib/fftw*
 prune climt/_lib/shtns*
+exclude climt/_lib/*.tar.gz
 exclude climt/_lib/.configured*
 exclude climt/_lib/log
 

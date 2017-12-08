@@ -16,6 +16,7 @@ from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
 )
 from datetime import datetime, timedelta
+import sys
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
@@ -641,6 +642,8 @@ def testDcmipOptions():
                              np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
 
 
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason='Avoid for now')
 class TestGfsDycore(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         return GfsDynamicalCore(number_of_longitudes=68,
