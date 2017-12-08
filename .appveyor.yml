@@ -37,8 +37,8 @@ build_script:
   - bash -c "cd /c/projects/climt/; python setup.py install"
 
 test_script:
-  - pip install -U tox
-  - bash -c "cd /c/projects/climt; tox"
+  - pip install -U pytest
+  - bash -c "cd /c/projects/climt; py.test"
 
 #after_test:
   # This step builds your wheels.
