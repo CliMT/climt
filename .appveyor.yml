@@ -39,8 +39,9 @@ build_script:
   - bash -c "cd /c/projects/climt/; python setup.py develop"
 
 test_script:
-  - pip install pytest
-  - bash -c "cd /c/projects/climt; py.test"
+  - bash -c "cd /c/projects/climt; find . |grep _components"
+#  - pip install pytest
+#  - bash -c "cd /c/projects/climt; py.test"
 
 after_test:
   - bash -c "echo done!"
