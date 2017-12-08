@@ -77,6 +77,7 @@ if operating_system == 'Linux':
 
 if operating_system == 'Windows':
     compiled_base_dir = 'climt\\_lib'
+    openmp_link_args = ['-lpthread']
 
 dir_path = os.getcwd()
 compiled_path = os.path.join(dir_path, compiled_base_dir)
@@ -191,7 +192,8 @@ else:
             library_dirs=[lib_path],
             extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
                              lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
-                             lib_path+'/libfftw3.a', lib_path+'/libopenblas.a'] + default_link_args),
+                             lib_path+'/libfftw3.a',
+                             lib_path+'/libopenblas.a'] + default_link_args + openmp_link_args),
 
         Extension(
             'climt._components.rrtmg.sw._rrtmg_sw',
