@@ -35,7 +35,8 @@ install:
 build_script:
   - bash -c "cd /c/projects/climt/; python setup.py bdist_wheel"
 
-#test_script:
+test_script:
+  - echo "done"
 #  - pip install -U pytest
 #  - bash -c "cd /c/projects/climt; py.test"
 
