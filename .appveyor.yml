@@ -2,7 +2,7 @@ version: 0.9.1.{build}
 
 environment:
   matrix:
-    - PYTHON_VERSION: "3.4"
+    - PYTHON_VERSION: "3.6"
 
 platform:
   - x64
