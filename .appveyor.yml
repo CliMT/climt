@@ -35,8 +35,8 @@ install:
   - pip install -r requirements_dev.txt
 
 build_script:
-  - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
   - bash -c "cd /c/projects/climt/; python setup.py develop"
+#  - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
 
 test_script:
   - bash -c "cd /c/projects/climt; find . |grep _components"
