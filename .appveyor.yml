@@ -11,7 +11,7 @@ matrix:
   fast_finish: false
 
 cache:
-  - C:\projects\climt\climt\_lib\Windows
+  - C:\projects\climt\climt\_lib\Windows -> .appveyor.yml
   - C:\Users\appveyor\AppData\Local\pip\ -> requirements_dev.txt
 
 install:
