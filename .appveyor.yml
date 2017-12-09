@@ -45,19 +45,19 @@ build_script:
 
 test_script:
   - bash -c "cd /c/projects/climt; find . |grep _components"
-  - conda install pytest
-  - bash -c "cd /c/projects/climt; py.test"
+#  - conda install pytest
+#  - bash -c "cd /c/projects/climt; py.test"
 
 after_test:
-  - bash -c "echo done!"
   # This step builds your wheels.
-  #  - python.exe setup.py bdist_wheel
+  - python.exe setup.py bdist_wheel
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory
   - path: dist\*.whl
   - path: climt\_lib\fftw-3.3.6-pl2\log*
   - path: climt\_lib\OpenBLAS-0.2.19\log*
+  - path: climt\_lib\Windows\*.a
 
 #on_success:
 #  You can use this step to upload your artifacts to a public website.
