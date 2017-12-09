@@ -642,32 +642,6 @@ def testDcmipOptions():
                              np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
 
 
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason='Avoid for now')
-class TestGfsDycore(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        return GfsDynamicalCore(number_of_longitudes=68,
-                                number_of_latitudes=32)
-
-    def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component], x=component.grid_definition['x'],
-            y=component.grid_definition['y'],
-            mid_levels=component.grid_definition['mid_levels'],
-            interface_levels=component.grid_definition['interface_levels'])
-
-        dcmip = climt.DcmipInitialConditions()
-        out = dcmip(state, add_perturbation=True)
-        state.update(out)
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        assert True
-
-
 class TestIceSheet(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         ice = IceSheet()
@@ -772,6 +746,32 @@ def test_ice_sheet_too_high():
         ice(state, timedelta(seconds=100))
 
     assert 'exceeds maximum value' in str(excinfo.value)
+
+
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason='Avoid for now')
+class TestGfsDycore(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return GfsDynamicalCore(number_of_longitudes=68,
+                                number_of_latitudes=32)
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component], x=component.grid_definition['x'],
+            y=component.grid_definition['y'],
+            mid_levels=component.grid_definition['mid_levels'],
+            interface_levels=component.grid_definition['interface_levels'])
+
+        dcmip = climt.DcmipInitialConditions()
+        out = dcmip(state, add_perturbation=True)
+        state.update(out)
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
 
 
 if __name__ == '__main__':
