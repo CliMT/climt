@@ -30,10 +30,10 @@ all: blas_lib fftw_lib sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_l
 # FFTW3 Configuration
 
 $(CLIMT_ARCH)/.configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(WIN_MALLOC_FLAG) --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../$(CLIMT_ARCH)/.configured_fftw
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(WIN_MALLOC_FLAG) --enable-openmp --enable-avx --enable-avx2 > log.config.fftw 2>&1 && touch ../$(CLIMT_ARCH)/.configured_fftw
 
 $(CLIMT_ARCH)/libfftw3_omp.a: $(CLIMT_ARCH)/.configured_fftw
-	cd $(FFTW_DIR); make install > log 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
+	cd $(FFTW_DIR); make install > log.install.fftw 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
 
 $(CLIMT_ARCH)/libfftw3.a: $(CLIMT_ARCH)/.configured_fftw
 	cp lib/libfftw3.a $(LIB_DIR)
@@ -56,7 +56,7 @@ sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
 blas_lib: $(CLIMT_ARCH)/libopenblas.a
 
 $(CLIMT_ARCH)/libopenblas.a:
-	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ) > log 2>&1; fi; cd $(BLAS_DIR); make NO_SHARED=1 NO_LAPACK=0 > log 2>&1 ; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install > log 2>&1 ; cp ../lib/libopenblas.a $(LIB_DIR)
+	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ) > log 2>&1; fi; cd $(BLAS_DIR); make NO_SHARED=1 NO_LAPACK=0 > log 2>&1 ; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install > log.install.blas 2>&1 ; cp ../lib/libopenblas.a $(LIB_DIR)
 
 # GFS Configuration
 
