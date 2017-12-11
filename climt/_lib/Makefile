@@ -15,17 +15,20 @@ BLAS_GZ = OpenBLAS-0.2.19.tar.gz
 BASE_DIR = $(PWD)
 
 WIN_MALLOC_FLAG = ""
-ifeq ($(CLIMT_ARCH),Windows)
-	BASE_DIR = $(subst \,/,$(PWD))
-	WIN_MALLOC_FLAG = --with-our-malloc
-endif
 
 LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
-
 CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
 LDFLAGS = "-L$(LIB_DIR)"
 
 all: blas_lib fftw_lib sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
+
+ifeq ($(CLIMT_ARCH),Windows)
+	BASE_DIR = $(subst \,/,$(PWD))
+	WIN_MALLOC_FLAG = --with-our-malloc
+	LDFLAGS = "-L$(LIB_DIR) -L$(COMPILER_PATH)../lib/"
+	all: fftw_lib sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
+endif
+
 
 # FFTW3 Configuration
 
