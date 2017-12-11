@@ -24,6 +24,7 @@ all: blas_lib fftw_lib sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_l
 
 ifeq ($(CLIMT_ARCH),Windows)
 	BASE_DIR = $(subst \,/,$(PWD))
+	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 	WIN_MALLOC_FLAG = --with-our-malloc
 	LDFLAGS = "-L$(LIB_DIR) -L$(COMPILER_PATH)../lib/"
 	all: fftw_lib sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
