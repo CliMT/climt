@@ -77,13 +77,14 @@ if operating_system == 'Linux':
 
 if operating_system == 'Windows':
     compiled_base_dir = 'climt\\_lib'
-    openmp_link_args = ['-lpthread']
 
 dir_path = os.getcwd()
 compiled_path = os.path.join(dir_path, compiled_base_dir)
 lib_path = os.path.join(compiled_path, operating_system+'/')
 inc_path = os.path.join(compiled_path, 'include')
 include_dirs.append(inc_path)
+openblas_path = lib_path+'/libopenblas.a'
+
 
 # Compile libraries
 
@@ -104,6 +105,7 @@ if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
     # os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
     # os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
     libraries = []
+    openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
 
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
@@ -189,11 +191,12 @@ else:
             sources=['climt/_components/gfs/_gfs_dynamics.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
+            extra_compile_args=['-fopenmp'],
             library_dirs=[lib_path],
             extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
                              lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
-                             lib_path+'/libfftw3.a',
-                             lib_path+'/libopenblas.a'] + default_link_args + openmp_link_args),
+                             lib_path+'/libfftw3.a', openblas_path] + default_link_args),
+                             # lib_path+'/libshtns_omp.a', openblas_path, os.environ['COMPILER_PATH']+'../lib/libfftw3.a'] + default_link_args),
 
         Extension(
             'climt._components.rrtmg.sw._rrtmg_sw',

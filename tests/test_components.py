@@ -748,8 +748,6 @@ def test_ice_sheet_too_high():
     assert 'exceeds maximum value' in str(excinfo.value)
 
 
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason='Avoid for now')
 class TestGfsDycore(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         return GfsDynamicalCore(number_of_longitudes=68,
