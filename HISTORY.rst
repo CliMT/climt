@@ -4,6 +4,8 @@ History
 
 Latest
 ------
+* Travis builds now use stages
+* Appveyor CI up and running
 * Pre-installation of cython and numpy no longer necessary for source builds
 * Added snow-ice component
 * Ozone profiles do not need to be specified externally
