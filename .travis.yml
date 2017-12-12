@@ -106,7 +106,7 @@ jobs:
         - |
             if [[ 1 == 1 ]]; then
             python -m pip install cibuildwheel
-            travis_wait 30 cibuildwheel --output-dir wheelhouse
+            travis_wait 50 cibuildwheel --output-dir wheelhouse
             python -m pip install twine
             python -m twine upload  --repository-url https://test.pypi.org/legacy/ wheelhouse/*.whl
             fi
