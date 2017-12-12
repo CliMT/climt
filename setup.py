@@ -70,7 +70,6 @@ libraries = ['m', 'gfortran']
 default_link_args = []
 
 compiled_base_dir = 'climt/_lib'
-openmp_link_args = []
 
 if operating_system == 'Linux':
     libraries = ['m', 'gfortran', 'rt']
