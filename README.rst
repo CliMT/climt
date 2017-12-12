@@ -11,6 +11,10 @@ CliMT
     :target: https://travis-ci.org/CliMT/climt
     :alt: Continuous Integration
 
+.. image:: https://ci.appveyor.com/api/projects/status/h9ayx22cxyfwh5rh?svg=true
+    :target: https://ci.appveyor.com/project/JoyMonteiro/climt
+    :alt: Continuous Integration
+
 .. image:: https://img.shields.io/codecov/c/github/CliMT/climt.svg
     :target: https://travis-ci.org/CliMT/climt
     :alt: Coverage
