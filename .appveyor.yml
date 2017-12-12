@@ -44,9 +44,9 @@ build_script:
 #  - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
 
 test_script:
-  - bash -c "cd /c/projects/climt; find . |grep _components"
-#  - conda install pytest
-#  - bash -c "cd /c/projects/climt; py.test"
+  - conda install pytest
+  - bash -c "cd /c/projects/climt; py.test"
+# - bash -c "cd /c/projects/climt; find . |grep _components"
 
 after_test:
   # This step builds your wheels.
