@@ -37,6 +37,7 @@ install:
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION%
   - conda update -q conda
   - activate python%PYTHON_VERSION%
+  - conda install pandas
   - conda install libpython
   - pip install -r requirements_dev.txt
   - conda upgrade pip setuptools wheel

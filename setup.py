@@ -68,6 +68,7 @@ operating_system = platform.system()
 
 libraries = ['m', 'gfortran']
 default_link_args = []
+default_compile_args = []
 
 compiled_base_dir = 'climt/_lib'
 
@@ -107,6 +108,7 @@ if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
     libraries = []
     openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
+    default_compile_args = ['-DMS_WIN64']
 
 os.environ['FFLAGS'] = '-fPIC -fno-range-check'
 os.environ['CFLAGS'] = '-fPIC'
@@ -166,6 +168,7 @@ else:
             sources=['climt/_components/simple_physics/_simple_physics.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
+            extra_compile_args=default_compile_args,
             library_dirs=[lib_path],
             extra_link_args=[lib_path+'/libsimple_physics.a'] + default_link_args),
 
@@ -174,7 +177,7 @@ else:
             sources=['climt/_components/emanuel/_emanuel_convection.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
-            extra_compile_args=[],
+            extra_compile_args=default_compile_args,
             library_dirs=[lib_path],
             extra_link_args=[lib_path+'/libemanuel.a'] + default_link_args),
 
@@ -183,6 +186,7 @@ else:
             sources=['climt/_components/rrtmg/lw/_rrtmg_lw.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
+            extra_compile_args=default_compile_args,
             library_dirs=[lib_path],
             extra_link_args=[lib_path+'/librrtmg_lw.a'] + default_link_args),
 
@@ -191,7 +195,7 @@ else:
             sources=['climt/_components/gfs/_gfs_dynamics.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
-            extra_compile_args=['-fopenmp'],
+            extra_compile_args=['-fopenmp'] + default_compile_args,
             library_dirs=[lib_path],
             extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
                              lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
@@ -203,6 +207,7 @@ else:
             sources=['climt/_components/rrtmg/sw/_rrtmg_sw.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
+            extra_compile_args=default_compile_args,
             library_dirs=[lib_path],
             extra_link_args=[lib_path+'/librrtmg_sw.a'] + default_link_args),
 
@@ -211,6 +216,7 @@ else:
             sources=['climt/_components/dcmip/_dcmip.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
+            extra_compile_args=default_compile_args,
             library_dirs=[lib_path],
             extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),
     ]
