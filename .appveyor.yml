@@ -63,5 +63,5 @@ on_success:
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
   - pip install -U twine
-  - bash -c "cd /c/projects/climt; if [[ 1 == 1 ]]; then python -m twine upload --repository-url https://test.pypi.org/legacy/ dist\*.whl; fi"
+  - bash -c "cd /c/projects/climt; if [[ 1 == 1 ]]; then python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*.whl; fi"
 #  - bash -c "cd /c/projects/climt; if [[ $APPVEYOR_REPO_TAG ]] then; do python -m twine upload --repository-url https://test.pypi.org/legacy/ dist\*.whl; done"
