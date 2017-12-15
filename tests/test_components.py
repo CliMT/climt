@@ -69,9 +69,9 @@ def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
 
     if isinstance(component, IceSheet):
-        output, diag = component(state, timestep=timestep)
-        diag.pop('snow_and_ice_temperature_spline')
-        return output, diag
+        output, diagnostics = component(state, timestep=timestep)
+        diagnostics.pop('snow_and_ice_temperature_spline')
+        return output, diagnostics
     if isinstance(component, ClimtSpectralDynamicalCore):
         return component(state)
     elif isinstance(component, (Implicit, TimeStepper)):
