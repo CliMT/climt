@@ -17,4 +17,4 @@ numpy>=0.10
 cython>=0.25
 ipython>=5.3.0
 coveralls
-git+git://github.com/JoyMonteiro/sympl
+git+git://github.com/JoyMonteiro/sympl.git
