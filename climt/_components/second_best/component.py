@@ -1,7 +1,5 @@
-from climt import ClimtImplicit
-from sympl import replace_none_with_default
+from ..._core import ClimtImplicit, get_constant, calculate_q_sat
 import numpy as np
-from ..._core import calculate_q_sat
 
 
 class SecondBEST(ClimtImplicit):
@@ -91,20 +89,9 @@ class SecondBEST(ClimtImplicit):
     }
 
     def __init__(self,
-                 acceleration_gravity=None,
                  von_karman_constant=0.4,
-                 specific_heat_dry_air=None,
-                 specific_heat_liquid_phase=None,
-                 specific_heat_solid_phase=2108.,
                  thermal_conductivity_dry_air=0.026,
                  thermal_conductivity_liquid_phase=0.57,
-                 gas_constant_dry_air=None,
-                 gas_constant_condensible=None,
-                 latent_heat_condensation=None,
-                 latent_heat_fusion=333550.,
-                 freezing_temperature_condensible=273.16,
-                 density_liquid_phase=1000.,
-                 density_solid_phase=916.7,
                  minimum_surf_wind=1,
                  depth_soil_layer=10.,
                  vertical_resolution=0.5,
@@ -173,59 +160,48 @@ class SecondBEST(ClimtImplicit):
                 horizontal grid.
         """
 
-        self._g = replace_none_with_default('acceleration_due_to_gravity',
-                                            acceleration_gravity)
+        self._g = get_constant(
+            'acceleration_due_to_gravity')
 
         self._von_karman = von_karman_constant
 
-        self._Cpd = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
-            specific_heat_dry_air)
+        self._Cpd = get_constant(
+            'heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._Rair = replace_none_with_default(
-            'gas_constant_of_dry_air',
-            gas_constant_dry_air)
+        self._Rair = get_constant(
+            'gas_constant_of_dry_air')
 
-        self._Rcond = replace_none_with_default(
-            'gas_constant_of_water_vapor',
-            gas_constant_condensible)
+        self._Rcond = get_constant(
+            'gas_constant_of_vapor_phase')
 
         self._Ummin = minimum_surf_wind
 
-        self._Lv = replace_none_with_default(
-            'latent_heat_of_vaporization_of_water',
-            latent_heat_condensation)
+        self._Lv = get_constant(
+            'latent_heat_of_condensation')
 
-        self._Lf = replace_none_with_default(
-            'latent_heat_of_fusion_of_ice', latent_heat_fusion)
+        self._Lf = get_constant(
+            'latent_heat_of_fusion')
 
-        self._rho_liquid_condensible = replace_none_with_default(
-            'density_of_liquid_water',
-            density_liquid_phase)
+        self._rho_liquid_condensible = get_constant(
+            'density_of_liquid_phase')
 
-        self._rho_solid_condensible = replace_none_with_default(
-            'density_of_ice',
-            density_solid_phase)
+        self._rho_solid_condensible = get_constant(
+            'density_of_solid_phase_as_ice')
 
-        self._Tf = replace_none_with_default(
-            'freezing_temperature_of_water',
-            freezing_temperature_condensible)
+        self._Tf = get_constant(
+            'freezing_temperature_of_liquid_phase')
 
-        self._Kt_air = replace_none_with_default(
-            'thermal_conductivity_of_dry_air',
-            thermal_conductivity_dry_air)
+        self._Kt_air = get_constant(
+            'thermal_conductivity_of_dry_air')
 
-        self._Kt_liq = replace_none_with_default(
-            'thermal_conductivity_of_water',
-            thermal_conductivity_liquid_phase)
+        self._Kt_liq = get_constant(
+            'thermal_conductivity_of_liquid_phase')
 
-        self._Cl = replace_none_with_default(
-            'specific_heat_of_water',
-            specific_heat_liquid_phase)
+        self._Cl = get_constant(
+            'heat_capacity_of_liquid_phase')
 
-        self._Ci = replace_none_with_default(
-            'specific_heat_of_ice',
-            specific_heat_solid_phase)
+        self._Ci = get_constant(
+            'heat_capacity_of_solid_phase_as_ice')
 
         self._lower_soil_temperature = mean_subsurface_temperature
 

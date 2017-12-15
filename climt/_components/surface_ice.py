@@ -1,5 +1,4 @@
-from climt import ClimtImplicit
-from sympl import replace_none_with_default
+from climt import ClimtImplicit, get_constant
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy import sparse
@@ -56,15 +55,7 @@ class IceSheet(ClimtImplicit):
     def __init__(self,
                  vertical_resolution=0.1,
                  maximum_snow_ice_height=10,
-                 number_vertical_levels=30,
-                 thermal_conductivity_of_ice=2.22,
-                 thermal_conductivity_of_snow=0.2,
-                 density_of_ice=916.7,
-                 density_of_snow=100.,
-                 specific_heat_of_ice=2108.,
-                 specific_heat_of_snow=2108.,
-                 latent_heat_of_fusion=333550.,
-                 melting_point_of_ice=273.):
+                 number_vertical_levels=30,):
         """
 
         Args:
@@ -77,29 +68,6 @@ class IceSheet(ClimtImplicit):
             number_vertical_levels(float):
                 The number of levels on which temperature must be output.
 
-            thermal_conductivity_of_ice (float, optional):
-                The thermal conductivity of ice in :math:`W m^{-1} K^{-1}`.
-
-            thermal_conductivity_of_snow (float, optional):
-                The thermal conductivity of ice in :math:`W m^{-1} K^{-1}`.
-
-            density_of_ice (float, optional):
-                The density of ice in :math:`kg m^{-3}`.
-
-            density_of_snow (float, optional):
-                The density of snow in :math:`kg m^{-3}`.
-
-            specific_heat_of_ice (float, optional):
-                The specific heat of ice in :math:`J kg^{-1}`.
-
-            specific_heat_of_snow (float, optional):
-                The specific heat of snow in :math:`J kg^{-1}`.
-
-            latent_heat_of_fusion (float, optional):
-                The latent heat of fusion of ice in :math:`J kg^{-1}`
-
-            melting_point_of_ice (float, optional):
-                The melting point of ice in :math:`degK`.
         """
 
         self._dz = vertical_resolution
@@ -112,29 +80,29 @@ class IceSheet(ClimtImplicit):
         self.quantity_descriptions['default_value'] = CubicSpline(
             np.linspace(0, maximum_snow_ice_height, 50), 271.*np.ones(50))
 
-        self._Kice = replace_none_with_default(
-            'thermal_conductivity_of_ice', thermal_conductivity_of_ice)
+        self._Kice = get_constant(
+            'thermal_conductivity_of_solid_phase_as_ice')
 
-        self._Ksnow = replace_none_with_default(
-            'thermal_conductivity_of_snow', thermal_conductivity_of_snow)
+        self._Ksnow = get_constant(
+            'thermal_conductivity_of_solid_phase_as_snow')
 
-        self._rho_ice = replace_none_with_default(
-            'density_of_ice', density_of_ice)
+        self._rho_ice = get_constant(
+            'density_of_solid_phase_as_ice')
 
-        self._C_ice = replace_none_with_default(
-            'specific_heat_of_ice', specific_heat_of_ice)
+        self._C_ice = get_constant(
+            'heat_capacity_of_solid_phase_as_ice')
 
-        self._rho_snow = replace_none_with_default(
-            'density_of_snow', density_of_snow)
+        self._rho_snow = get_constant(
+            'density_of_solid_phase_as_snow')
 
-        self._C_snow = replace_none_with_default(
-            'specific_heat_of_snow', specific_heat_of_snow)
+        self._C_snow = get_constant(
+            'heat_capacity_of_solid_phase_as_snow')
 
-        self._Lf = replace_none_with_default(
-            'latent_heat_of_fusion_of_ice', latent_heat_of_fusion)
+        self._Lf = get_constant(
+            'latent_heat_of_fusion')
 
-        self._temp_melt = replace_none_with_default(
-            'melting_point_of_ice', melting_point_of_ice)
+        self._temp_melt = get_constant(
+            'freezing_temperature_of_liquid_phase')
 
     def __call__(self, state, timestep):
         """
@@ -220,14 +188,14 @@ class IceSheet(ClimtImplicit):
                     # print('num_layers', num_layers)
 
                     # Create vertically varying profiles
-                    rho_snow_ice = self._rho_ice*np.ones(num_layers)
-                    rho_snow_ice[levels > snow_level] = self._rho_snow
+                    rho_snow_ice = self._rho_ice.values.item()*np.ones(num_layers)
+                    rho_snow_ice[levels > snow_level] = self._rho_snow.values.item()
 
-                    heat_capacity_snow_ice = self._C_ice*np.ones(num_layers)
-                    heat_capacity_snow_ice[levels > snow_level] = self._C_snow
+                    heat_capacity_snow_ice = self._C_ice.values.item()*np.ones(num_layers)
+                    heat_capacity_snow_ice[levels > snow_level] = self._C_snow.values.item()
 
-                    kappa_snow_ice = self._Kice*np.ones(num_layers)
-                    kappa_snow_ice[levels > snow_level] = self._Ksnow
+                    kappa_snow_ice = self._Kice.values.item()*np.ones(num_layers)
+                    kappa_snow_ice[levels > snow_level] = self._Ksnow.values.item()
 
                     check_melting = True
                     if surface_temperature < self._temp_melt:

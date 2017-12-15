@@ -1,7 +1,7 @@
 from sympl import (
-    DataArray, replace_none_with_default, combine_dimensions,
+    DataArray, combine_dimensions,
     get_numpy_array)
-from climt import ClimtPrognostic
+from .._core import ClimtPrognostic, get_constant
 import numpy as np
 
 
@@ -46,13 +46,7 @@ class HeldSuarez(ClimtPrognostic):
                  k_a=1/40./86400.,
                  k_s=1/4./86400.,
                  equator_pole_temperature_difference=60,
-                 delta_theta_z=10,
-                 reference_pressure=None,
-                 gas_constant_of_dry_air=None,
-                 heat_capacity_of_dry_air_at_constant_pressure=None,
-                 planetary_rotation_rate=None,
-                 gravitational_acceleration=None,
-                 planetary_radius=None):
+                 delta_theta_z=10):
         """
 
         Args:
@@ -86,30 +80,6 @@ class HeldSuarez(ClimtPrognostic):
                 temperature profile as outlined in Held and Suarez, 1994, in K.
                 Default is 10K.
 
-            reference_pressure (float):
-                Parameter used to define the
-                equilibrium temperature profile, roughly equal to the surface
-                pressure, in Pa. Default value is :math:`10^5` Pa.
-
-            gas_constant_of_dry_air (float):
-                Value in :math:`J kg^{-1} K^{-1}`.
-                Default is taken from :code:`sympl.default_constants`.
-
-            heat_capacity_of_dry_air_at_constant_pressure:
-                Value in  :math:`J kg^{-1} K^{-1}`.
-                Default is taken from :code:`sympl.default_constants`.
-
-            planetary_rotation_rate (float)
-                Value in :math:`s^{-1}`.
-                Default is taken from :code:`sympl.default_constants`.
-
-            gravitational_acceleration (float):
-                Value in :math:`m s^{-2}`.
-                Default is taken from :code:`sympl.default_constants`.
-
-            planetary_radius (float):
-                Value in :math:`m`.
-                Default is taken from :code:`sympl.default_constants`.
         """
 
         self._sigma_b = sigma_boundary_layer_top
@@ -119,26 +89,25 @@ class HeldSuarez(ClimtPrognostic):
         self._delta_T_y = equator_pole_temperature_difference
         self._delta_theta_z = delta_theta_z
 
-        self._p0 = replace_none_with_default(
-            'reference_pressure', reference_pressure)
+        self._p0 = get_constant(
+            'reference_pressure')
 
-        self._Cpd = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
-            heat_capacity_of_dry_air_at_constant_pressure)
+        self._Cpd = get_constant(
+            'heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._R_d = replace_none_with_default(
-            'gas_constant_of_dry_air', gas_constant_of_dry_air)
+        self._R_d = get_constant(
+            'gas_constant_of_dry_air')
 
         self._kappa = self._R_d/self._Cpd
 
-        self._Omega = replace_none_with_default(
-            'planetary_rotation_rate', planetary_rotation_rate)
+        self._Omega = get_constant(
+            'planetary_rotation_rate')
 
-        self._g = replace_none_with_default(
-            'gravitational_acceleration', gravitational_acceleration)
+        self._g = get_constant(
+            'gravitational_acceleration')
 
-        self._r_planet = replace_none_with_default(
-            'planetary_radius', planetary_radius)
+        self._r_planet = get_constant(
+            'planetary_radius')
 
         '''
         # cache computed profiles if grid coordinates are given
