@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* New constants handling functionality added
 * Travis builds now use stages
 * Appveyor CI up and running
 * Pre-installation of cython and numpy no longer necessary for source builds
@@ -11,7 +12,7 @@ Latest
 * Ozone profiles do not need to be specified externally
 * Now also tested on Python 3.6
 
-v.0.9
+v.0.9.1
 -------
 * Held-Suarez and moist GCM with grey radiation work!
 * Added DCMIP initial conditions, test 4 tried out.
@@ -37,6 +38,8 @@ Latest
 
 * Ozone profile has been modified
 * Heating rate for RRTMG top-of-atmosphere is no longer manually set to zero
+* Components no longer accept constants during initialisation. All constant handling
+  is done internally.
 
 v.0.9
 ------

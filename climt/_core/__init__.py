@@ -8,7 +8,7 @@ from .climt_components import (
     ClimtSpectralDynamicalCore
 )
 from .constants import (
-    climt_constants, add_constant_to_library, modify_constant_in_library,
+    climt_constants, add_constants_to_library, modify_constants_in_library,
     get_constant, _init_constant_library, list_available_constants)
 
 
@@ -20,6 +20,6 @@ __all__ = (
     bolton_q_sat, bolton_dqsat_dT, calculate_q_sat, numpy_version_of,
     ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit,
     ClimtDiagnostic, ClimtSpectralDynamicalCore,
-    climt_constants, add_constant_to_library, modify_constant_in_library,
+    climt_constants, add_constants_to_library, modify_constants_in_library,
     get_constant, list_available_constants
 )

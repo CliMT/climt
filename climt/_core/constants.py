@@ -153,7 +153,7 @@ def _init_constant_library():
         climt_constants['thermal_conductivity_of_liquid_water'])
 
 
-def add_constant_to_library(name, value, units):
+def add_constants_to_library(constant_descriptions):
     """
     Add new constants to the library.
 
@@ -172,20 +172,28 @@ def add_constant_to_library(name, value, units):
     climt_constants[name] = DataArray(value, attrs={'units': units})
 
 
-def modify_constant_in_library(name, value, units):
+def modify_constants_in_library(constant_descriptions):
     """
     Modify existing constants in the library.
 
     Args:
 
-        name (string):
-            name of the constant.
+        constant_descriptions (dict):
+            Dictionary containing the description of the constants.
+            The key should be the name of the constant, and the value
+            should be a dictionary containing the following keys:
 
-        value (object):
-            The value assigned.
-
-        units (string):
-            The units, e.g, m/s, J/kg.
+            * type: Type of constant. Is one of:
+                * :code:`'physical_constants'`,
+                * :code:`'chemical_constants'`,
+                * :code:`'planetary_constants'`,
+                * :code:`'atmospheric_constants'`,
+                * :code:`'oceanographic_constants'`,
+                * :code:`'stellar_constants'`,
+                * :code:`'condensible_constants'`,
+                * :code:`'miscellaneous_constants'`,
+            * value: The value assigned.
+            * units (string): The units of the value, e.g, m/s, J/kg.
 
     Raises:
 
