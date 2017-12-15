@@ -461,9 +461,9 @@ climt_quantity_descriptions = {
         'default_value': 'sea',
         'dtype': 'a100'
     },
-    'snow_ice_temperature_poly': {
+    'snow_and_ice_temperature_spline': {
         'dims': ['x', 'y'],
-        'units': 'dimensionless',
+        'units': 'degK',
         'default_value': CubicSpline(
             np.linspace(0, 50, 50), 260.*np.ones(50)),
         'dtype': object

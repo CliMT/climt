@@ -22,7 +22,7 @@ class IceSheet(ClimtImplicit):
         'surface_snow_thickness': 'm',
         'area_type': 'dimensionless',
         'surface_temperature': 'degK',
-        'snow_ice_temperature_poly': 'dimensionless',
+        'snow_and_ice_temperature_spline': 'degK',
         'sea_surface_temperature': 'degK',
         'soil_surface_temperature': 'degK'
     }
@@ -32,18 +32,18 @@ class IceSheet(ClimtImplicit):
         'sea_ice_thickness': 'm',
         'surface_snow_thickness': 'm',
         'surface_temperature': 'degK',
-        'snow_ice_temperature': 'degK',
+        'snow_and_ice_temperature': 'degK',
         'sea_surface_temperature': 'degK',
     }
 
     _climt_diagnostics = {
         'upward_heat_flux_at_ground_level_in_soil': 'W m^-2',
         'heat_flux_into_sea_water_due_to_sea_ice': 'W m^-2',
-        'snow_ice_temperature_poly': 'dimensionless',
+        'snow_and_ice_temperature_spline': 'degK',
     }
 
     quantity_descriptions = {
-        'snow_ice_temperature': {
+        'snow_and_ice_temperature': {
             'dims': ['x', 'y', 'ice_vertical_levels'],
             'units': 'degK',
             'default_value': 260.,
@@ -180,7 +180,7 @@ class IceSheet(ClimtImplicit):
 
                     # Create temperature profile from cubic spline
                     vertical_coordinates = np.linspace(0, total_height, num_layers)
-                    temp_profile = input_arrays['snow_ice_temperature_poly'][lon, lat](vertical_coordinates)
+                    temp_profile = input_arrays['snow_and_ice_temperature_spline'][lon, lat](vertical_coordinates)
 
                     snow_level = int((1 - snow_height_fraction)*num_layers)
                     levels = np.arange(num_layers)
@@ -202,7 +202,7 @@ class IceSheet(ClimtImplicit):
                         check_melting = False
 
                     # Calculate new temp_profile based using implicit method
-                    new_temp = self.calculate_new_ice_temperature(
+                    new_temperature = self.calculate_new_ice_temperature(
                         rho_snow_ice, heat_capacity_snow_ice,
                         kappa_snow_ice, temp_profile,
                         timestep.total_seconds(), num_layers,
@@ -218,7 +218,7 @@ class IceSheet(ClimtImplicit):
                     if area_type == 'sea_ice':
                         # TODO Add ocean heat flux parameterization
                         # At sea surface
-                        heat_flux_to_sea_water = (new_temp[1] - new_temp[0])*kappa_snow_ice[0]/self._dz
+                        heat_flux_to_sea_water = (new_temperature[1] - new_temperature[0])*kappa_snow_ice[0]/self._dz
                         # print('heat_flux_to_sea_water', heat_flux_to_sea_water)
 
                         # If heat_flux_to_sea_water is positive, flux of heat into water
@@ -236,7 +236,7 @@ class IceSheet(ClimtImplicit):
 
                     elif area_type in ['land_ice', 'land']:
                         # At land surface
-                        heat_flux_to_land = (new_temp[0] - new_temp[1]) * kappa_snow_ice[0] / self._dz
+                        heat_flux_to_land = (new_temperature[0] - new_temperature[1]) * kappa_snow_ice[0] / self._dz
                         # print('heat_flux_to_land', heat_flux_to_land)
 
                         diagnostic_arrays['upward_heat_flux_at_ground_level_in_soil'][lon, lat] \
@@ -248,7 +248,7 @@ class IceSheet(ClimtImplicit):
                         continue
 
                     # Energy balance at atmosphere surface
-                    heat_flux_to_atmosphere = ((new_temp[-1] - new_temp[-2]) *
+                    heat_flux_to_atmosphere = ((new_temperature[-1] - new_temperature[-2]) *
                                                (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/self._dz)
                     # print('heat_flux_to_atmosphere', heat_flux_to_atmosphere)
 
@@ -272,17 +272,15 @@ class IceSheet(ClimtImplicit):
 
                     total_height += (height_of_growing_ice + height_of_melting_ice)
 
-                    diagnostic_arrays['snow_ice_temperature_poly'][lon, lat] = CubicSpline(
-                        np.linspace(0, total_height, num_layers), new_temp)
+                    diagnostic_arrays['snow_and_ice_temperature_spline'][lon, lat] = CubicSpline(
+                        np.linspace(0, total_height, num_layers), new_temperature)
 
-                    output_arrays['snow_ice_temperature'][lon, lat] = \
-                        diagnostic_arrays['snow_ice_temperature_poly'][lon, lat](
+                    output_arrays['snow_and_ice_temperature'][lon, lat] = \
+                        diagnostic_arrays['snow_and_ice_temperature_spline'][lon, lat](
                             np.linspace(0, total_height, self._output_levels))
 
-                    output_arrays['surface_temperature'][lon, lat] = new_temp[-1]
+                    output_arrays['surface_temperature'][lon, lat] = new_temperature[-1]
 
-        # print()
-        # print()
         return output_dict, diagnostic_dict
 
     def calculate_new_ice_temperature(self, rho, specific_heat, kappa,

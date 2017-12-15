@@ -16,7 +16,6 @@ from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
 )
 from datetime import datetime, timedelta
-import sys
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
@@ -71,7 +70,7 @@ def call_with_timestep_if_needed(
 
     if isinstance(component, IceSheet):
         output, diag = component(state, timestep=timestep)
-        diag.pop('snow_ice_temperature_poly')
+        diag.pop('snow_and_ice_temperature_spline')
         return output, diag
     if isinstance(component, ClimtSpectralDynamicalCore):
         return component(state)
