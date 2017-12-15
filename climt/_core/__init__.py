@@ -7,6 +7,12 @@ from .climt_components import (
     ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic,
     ClimtSpectralDynamicalCore
 )
+from .constants import (
+    climt_constants, add_constant_to_library, modify_constant_in_library,
+    get_constant, _init_constant_library, list_available_constants)
+
+
+_init_constant_library()
 
 __all__ = (
     mass_to_volume_mixing_ratio, get_default_state,
@@ -14,4 +20,6 @@ __all__ = (
     bolton_q_sat, bolton_dqsat_dT, calculate_q_sat, numpy_version_of,
     ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit,
     ClimtDiagnostic, ClimtSpectralDynamicalCore,
+    climt_constants, add_constant_to_library, modify_constant_in_library,
+    get_constant, list_available_constants
 )

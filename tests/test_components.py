@@ -531,7 +531,24 @@ class TestRRTMGLongwave(ComponentBase):
 
 class TestRRTMGLongwaveWithClouds(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
-        return RRTMGLongwave(cloud_optical_properties=1)
+        return RRTMGLongwave(cloud_optical_properties='single_cloud_type')
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+class TestRRTMGLongwaveWithExternalInterfaceTemperature(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return RRTMGLongwave(calculate_interface_temperature=False)
 
     def get_3d_input_state(self):
 

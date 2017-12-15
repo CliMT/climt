@@ -22,7 +22,7 @@ example, we use more convenient names.
 
 DataArrays
 are a more human-friendly way of handling numerical arrays.
-DataArrays label the dimensions of an array provide
+DataArrays label the dimensions of an array and provide
 various mathematical functions which can be directly
 applied to arrays.
 
@@ -82,6 +82,29 @@ As you can see, :code:`air_temperature` has
     CliMT always names the vertical coordinate as :code:`mid_levels` or :code:`interface_levels`,
     however, the state dictionary will contain a key corresponding to the name
     of the vertical coordinate specified by the user.
+
+As mentioned previously, DataArrays are a user-friendly way of handling numerical or numpy
+arrays. The numpy array underlying any DataArray is easily accessed using the :code:`values`
+attribute:
+
+.. ipython:: python
+
+    type(state['air_temperature'].values)
+
+and can also be modified easily:
+
+.. ipython:: python
+
+    state['air_temperature'].values[:] = 291
+
+The right hand side can also be any numpy array, as long as it has the same dimensions as the
+current numpy array.
+
+.. note::
+
+    It is recommended to use the syntax :code:`...values[:] = ...` rather than :code:`...values =
+    ...`, as the former modifies the numpy array in-place. In either case, DataArrays check to
+    ensure the dimensions (or shape) of the new data matches with the current dimensions. 
 
 You can perform any of the functions `supported`_ by xarray on
 the model state quantities.

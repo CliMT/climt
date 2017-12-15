@@ -1,8 +1,7 @@
 from sympl import DataArray
-from sympl import replace_none_with_default
 from sympl import get_numpy_array
 from sympl import combine_dimensions
-from climt import ClimtImplicit, ClimtImplicitPrognostic
+from ..._core import ClimtImplicit, ClimtImplicitPrognostic, get_constant
 import numpy as np
 import copy
 try:
@@ -64,15 +63,7 @@ class SimplePhysics(ClimtImplicit):
             drag_coefficient_heat_fluxes=0.0011,
             base_momentum_drag_coefficient=0.0007,
             wind_dependent_momentum_drag_coefficient=0.000065,
-            maximum_momentum_drag_coefficient=0.002,
-            gravitational_acceleration=None,
-            gas_constant_dry_air=None,
-            specific_heat_dry_air=None,
-            latent_heat_condensation=None,
-            gas_constant_condensible=None,
-            planetary_radius=None,
-            planetary_rotation_rate=None,
-            density_condensed_phase=1000.):
+            maximum_momentum_drag_coefficient=0.002):
         """
 
         Args:
@@ -131,34 +122,6 @@ class SimplePhysics(ClimtImplicit):
             maximum_momentum_drag_coefficient (float):
                 This drag coefficient is used for surface wind speeds exceeding :math:`20 m/s`.
 
-            gravitational_acceleration (float):
-                value of acceleration due to gravity in :math:`m s^{-1}`.
-                Default value from climt.default_constants is used if None.
-
-            gas_constant_dry_air (float):
-                The gas constant of dry air in :math:`J K^{-1} kg^{-1}`.
-                Default value from climt.default_constants is used if None.
-
-            specific_heat_dry_air (float):
-                The specific heat of dry air in :math:`J K^{-1} kg^{-1}`.
-                Default value from climt.default_constants is used if None.
-
-            latent_heat_condensation (float):
-                The latent heat of condensation of the condensible in :math:`J kg^{-1}`.
-                Default value from climt.default_constants (for water vapor) is used if None.
-
-            gas_constant_condensible (float):
-                The gas constant of the condensible substance in :math:`J {K^-1} kg^{-1}`.
-                Default value from climt.default_constants (for water vapor) is used if None.
-
-            planetary_radius (float):
-                The radius of the planet in :math:`m`.
-                Default value from climt.default_constants (for Earth) is used if None.
-
-            planetary_rotation_rate (float):
-                The rotation rate of the planet in :math:`s^{-1}`.
-                Default value from climt.default_constants (for Earth) is used if None.
-
         """
 
         self._cyclone = simulate_cyclone
@@ -173,32 +136,26 @@ class SimplePhysics(ClimtImplicit):
                                  self._surface_flux, self._use_ext_ts,
                                  self._use_ext_qsurf)
 
-        self._g = replace_none_with_default(
-            'gravitational_acceleration', gravitational_acceleration)
+        self._g = get_constant(
+            'gravitational_acceleration')
 
-        self._Cpd = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
-            specific_heat_dry_air)
+        self._Cpd = get_constant(
+            'heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._Rair = replace_none_with_default(
-            'gas_constant_of_dry_air',
-            gas_constant_dry_air)
+        self._Rair = get_constant(
+            'gas_constant_of_dry_air')
 
-        self._Rcond = replace_none_with_default(
-            'gas_constant_of_water_vapor',
-            gas_constant_condensible)
+        self._Rcond = get_constant(
+            'gas_constant_of_vapor_phase')
 
-        self._radius = replace_none_with_default(
-            'planetary_radius',
-            planetary_radius)
+        self._radius = get_constant(
+            'planetary_radius')
 
-        self._Omega = replace_none_with_default(
-            'planetary_rotation_rate',
-            planetary_rotation_rate)
+        self._Omega = get_constant(
+            'planetary_rotation_rate')
 
-        self._Lv = replace_none_with_default(
-            'latent_heat_of_vaporization_of_water',
-            latent_heat_condensation)
+        self._Lv = get_constant(
+            'latent_heat_of_condensation')
 
         self._Ct = drag_coefficient_heat_fluxes
 
@@ -212,9 +169,8 @@ class SimplePhysics(ClimtImplicit):
 
         self._Cm = maximum_momentum_drag_coefficient
 
-        self._rho_condensible = replace_none_with_default(
-            'density_of_liquid_water',
-            density_condensed_phase)
+        self._rho_condensible = get_constant(
+            'density_of_liquid_water')
 
         phys.set_physical_constants(self._g, self._Cpd, self._Rair, self._Lv,
                                     self._Rcond, self._radius, self._Omega,

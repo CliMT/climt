@@ -135,6 +135,11 @@ climt_quantity_descriptions = {
         'units': 'degK',
         'default_value': 290.
     },
+    'air_temperature_on_interface_levels': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'degK',
+        'default_value': 290.
+    },
     'surface_temperature': {
         'dims': ['x', 'y'],
         'units': 'degK',

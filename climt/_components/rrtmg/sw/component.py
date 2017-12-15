@@ -1,8 +1,7 @@
-from sympl import (replace_none_with_default,
-                   get_numpy_array)
+from sympl import get_numpy_array
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values,
-    ClimtPrognostic, numpy_version_of)
+    ClimtPrognostic, numpy_version_of, get_constant)
 import numpy as np
 from numpy import pi as numpy_pi
 try:
@@ -72,6 +71,37 @@ class RRTMGShortwave(ClimtPrognostic):
     RRTM without MCICA requires certain arrays on spectral bands
     '''
 
+    __cloud_overlap_method_dict = {
+        'clear_only': 0,
+        'random': 1,
+        'maximum_random': 2,
+        'maximum': 3
+    }
+
+    __cloud_props_dict = {
+        'direct_input': 0,
+        'single_cloud_type': 1,
+        'liquid_and_ice_clouds': 2
+    }
+
+    __cloud_ice_props_dict = {
+        'ebert_curry_one': 0,
+        'ebert_curry_two': 1,
+        'key_streamer_manual': 2,
+        'fu': 3
+    }
+
+    __cloud_liquid_props_dict = {
+        'radius_independent_absorption': 0,
+        'radius_dependent_absorption': 1
+    }
+
+    __aerosol_input_dict = {
+        'no_aerosol': 0,
+        'ecmwf': 6,
+        'all_aerosol_properties': 10
+    }
+
     quantity_descriptions = {
         'shortwave_optical_thickness_due_to_cloud': {
             'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
@@ -136,25 +166,15 @@ class RRTMGShortwave(ClimtPrognostic):
 
     def __init__(
             self,
-            cloud_overlap_method=1,
-            cloud_optical_properties=2,
-            cloud_ice_properties=1,
-            cloud_liquid_water_properties=1,
+            cloud_overlap_method='random',
+            cloud_optical_properties='liquid_and_ice_clouds',
+            cloud_ice_properties='ebert_curry_two',
+            cloud_liquid_water_properties='radius_dependent_absorption',
             solar_variability_method=0,
-            solar_constant=0.,
+            use_internal_solar_constant=True,
             facular_sunspot_amplitude=np.ones(2),
             solar_variability_by_band=np.ones(16),
-            aerosol_type=0,
-            acceleration_gravity=None,
-            planck_constant=None,
-            boltzmann_constant=None,
-            speed_of_light=None,
-            avogadro_constant=None,
-            loschmidt_constant=None,
-            universal_gas_constant=None,
-            stefan_boltzmann_constant=None,
-            seconds_per_day=None,
-            specific_heat_dry_air=None):
+            aerosol_type='no_aerosol'):
 
         """
 
@@ -163,60 +183,55 @@ class RRTMGShortwave(ClimtPrognostic):
             cloud_overlap_method (int):
                 Choose the method to do overlap with:
 
-                * 0 = Clear only (no clouds)
-                * 1 = Random
-                * 2 = Maximum/Random
-                * 3 = Maximum.
+                * 'clear_only' = Clear only (no clouds)
+                * 'random' = Random
+                * 'maximum_random' = Maximum/Random
+                * 'maximum' = Maximum.
 
-                Default value is 1, corresponding to random cloud overlap.
-
-            cloud_optical_properties (int):
+            cloud_optical_properties (string):
                 Choose how cloud optical properties are calculated:
 
-                * 0 = Both cloud fraction and cloud optical depth are input directly
-                * 1 = Cloud fraction and cloud physical properties are input, ice and liquid clouds are
+                * :code:`direct_input` = Both cloud fraction and cloud optical depth are input directly
+                * :code:`single_cloud_type` = Cloud fraction and cloud physical properties are input, ice and liquid clouds are
                   treated together, cloud absorptivity is a constant value (0.060241)
-                * 2 = Cloud fraction and cloud physical properties are input, ice and liquid
+                  * :code:`liquid_and_ice_clouds` = Cloud fraction and cloud physical properties are input, ice and liquid
                   clouds are treated separately
 
-                Default value is 0.
-
-            cloud_ice_properties (int):
+            cloud_ice_properties (string):
                 set bounds on ice particle size.
 
-                * 0 = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
-                * 1 = ice particle has effective radius between 13.0 and 130.0 micron `[Ebert and Curry 1992]`_
-                * 2 = ice particle has effective radius between 5.0 and 131.0 micron
-                  `[Key, Streamer Ref. Manual, 1996]`_
-                * 3 = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron
+                * :code:`ebert_curry_one` = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
+                * :code:`ebert_curry_two` = ice particle has effective radius between 13.0 and 130.0 micron `[Ebert and Curry 1992]`_
+                * :code:`key_streamer_manual` = ice particle has effective radius between 5.0 and 131.0 micron
+                    `[Key, Streamer Ref. Manual, 1996]`_
+                * :code:`fu` = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron
                   `[Fu, 1996]`_. (dge = 1.0315 * r_ec)
 
                 Default value is 0.
 
-            cloud_liquid_water_properties (int):
+            cloud_liquid_water_properties (string):
                 set treatment of cloud liquid water.
 
-                * 0 = use radius independent absorption coefficient
-                * 1 = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
+                * :code:`radius_independent_absorption` = use radius independent absorption coefficient
+                * :code:`radius_dependent_absorption` = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
 
-                Default value is 0.
 
             solar_variability_method (int):
                 set the solar variability model used by RRTMG.
 
                 * solar_variability_method = -1:
 
-                    * If :code:`solar_constant = 0`: No solar variability and no solar cycle
+                    * If :code:`use_internal_solar_constant = True`: No solar variability and no solar cycle
                       with a solar constant of 1368.22 :math:`W m^{-2}`.
-                    * If :code:`solar_constant != 0`: Solar variability defined by setting
+                    * If :code:`use_internal_solar_constant = False`: Solar variability defined by setting
                       non-zero scale factors in :code:`solar_variability_by_band`.
 
                 * solar_variability_method = 0:
 
-                    * If :code:`solar_constant = 0`: No solar variability and no solar cycle
+                    * If :code:`use_internal_solar_constant = True`: No solar variability and no solar cycle
                       with a solar constant of 1360.85 :math:`W m^{-2}`, with facular and
                       sunspot effects fixed to the mean of solar cycles 13-24.
-                    * If :code:`solar_constant != 0`: No solar variability and no solar cycle.
+                    * If :code:`use_internal_solar_constant = False`: No solar variability and no solar cycle.
 
                 * solar_variability_method = 1: Solar variability using the NRLSSI2 solar model
                   with solar cycle contribution determined by :code:`solar_cycle_fraction` in
@@ -229,13 +244,12 @@ class RRTMGShortwave(ClimtPrognostic):
                   :code:`solar_constant` is ignored.
 
                 * solar_variability_method = 3:
-                 * If :code:`solar_constant = 0`: No solar variability and no solar cycle
+                 * If :code:`use_internal_solar_constant = True`: No solar variability and no solar cycle
                    with a solar constant of 1360.85 :math:`W m^{-2}`.
-                 * If :code:`solar_constant != 0`: scale factors in :code:`solar_variability_by_band`.
+                 * If :code:`use_internal_solar_constant = False`: scale factors in :code:`solar_variability_by_band`.
 
-            solar_constant (float):
-                Solar constant -- solar irradiance averaged over a solar cycle -- in units of
-                :code:`W m^{-2}`.
+            use_internal_solar_constant (bool):
+                If :code:`False`, the solar constant is taken from the constants library.
 
             facular_sunspot_amplitude (array of dimension 2):
                 Facular and Sunspot amplitude variability parameters, described previously.
@@ -243,54 +257,13 @@ class RRTMGShortwave(ClimtPrognostic):
             solar_variability_by_band (array of dimension 14 = number of spectral bands):
                 scale factors for solar variability in all spectral bands.
 
-            aerosol_type (int):
+            aerosol_type (string):
                 Type of aerosol inputs to RRTMG.
 
-                * 0: No Aerosol.
-                * 6 -- ECMWF method. Requires aerosol optical depth at 55 micron as the
+                * :code:`no_aerosol`: No Aerosol.
+                * :code:`ecmwf`: ECMWF method. Requires aerosol optical depth at 55 micron as the
                   state quantity :code:`aerosol_optical_depth_at_55_micron`.
-                * 10: Input all aerosol optical properties.
-
-            acceleration_gravity (float):
-                value of acceleration due to gravity in
-                :math:`m s^{-1}`. Default value from :code:`sympl.default.constants` is used if None.
-
-            planck_constant (float):
-                value of the planck constant in :math:`J s`.
-                Default value from :code:`sympl.default.constants` is used if None.
-
-            boltzmann_constant (float):
-                value of the Boltzmann constant in :math:`J K^{-1}`.
-                Default value from :code:`sympl.default.constants` is used if None.
-
-            speed_of_light (float):
-                value of the speed of light in :math:`m s^{-1}`.
-                Default value from :code:`sympl.default.constants` is used if None.
-
-            avogadro_constant (float):
-                value of the Avogadro constant.
-                Default value from :code:`sympl.default.constants` is used if None.
-
-            loschmidt_constant (float):
-                value of the Loschmidt constant.
-                Default value from :code:`sympl.default.constants` is used if None.
-
-            universal_gas_constant (float):
-                value of the gas constant in :math:`J K^{-1} mol^{-1}`.
-                Default value from :code:`sympl.default.constants` is used if None.
-
-            stefan_boltzmann_constant (float):
-                value of the Stefan-Boltzmann constant
-                in :math:`W m^{-2} K^{-4}`. Default value from :code:`sympl.default.constants` is
-                used if None.
-
-            seconds_per_day (float):
-                number of seconds per day.
-                Default value from :code:`sympl.default.constants` (for earth) is used if None.
-
-            specific_heat_dry_air (float):
-                The specific heat of dry air in :math:`J K^{-1} kg^{-1}`.
-                Default value from :code:`sympl.default.constants` is used if None.
+                * :code:`all_aerosol_properties`: Input all aerosol optical properties.
 
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
@@ -303,53 +276,57 @@ class RRTMGShortwave(ClimtPrognostic):
 
             """
 
-        self._cloud_overlap = cloud_overlap_method
+        self._cloud_overlap = self.__cloud_overlap_method_dict[cloud_overlap_method]
 
-        self._cloud_optics = cloud_optical_properties
+        self._cloud_optics = self.__cloud_props_dict[cloud_optical_properties]
 
-        self._ice_props = cloud_ice_properties
+        self._ice_props = self.__cloud_ice_props_dict[cloud_ice_properties]
 
-        self._liq_props = cloud_liquid_water_properties
+        self._liq_props = self.__cloud_liquid_props_dict[cloud_liquid_water_properties]
 
         self._solar_var_flag = solar_variability_method
-
-        self._solar_const = solar_constant
 
         self._fac_sunspot_coeff = facular_sunspot_amplitude
 
         self._solar_var_by_band = solar_variability_by_band
 
-        self._aerosol_type = aerosol_type
+        self._aerosol_type = self.__aerosol_input_dict[aerosol_type]
 
-        self._g = replace_none_with_default(
-            'gravitational_acceleration', acceleration_gravity)
+        if use_internal_solar_constant:
+            self._solar_const = 0
+        else:
+            self._solar_const = get_constant(
+                'stellar_irradiance')
 
-        self._planck = replace_none_with_default(
-            'planck_constant', planck_constant).to_units('erg s')
+        self._g = get_constant(
+            'gravitational_acceleration')
 
-        self._boltzmann = replace_none_with_default(
-            'boltzmann_constant', boltzmann_constant).to_units('erg K^-1')
+        self._planck = get_constant(
+            'planck_constant').to_units('erg s')
 
-        self._c = replace_none_with_default(
-            'speed_of_light', speed_of_light).to_units('cm s^-1')
+        self._boltzmann = get_constant(
+            'boltzmann_constant').to_units('erg K^-1')
 
-        self._Na = replace_none_with_default(
-            'avogadro_constant', avogadro_constant)
+        self._c = get_constant(
+            'speed_of_light').to_units('cm s^-1')
 
-        self._loschmidt = replace_none_with_default(
-            'loschmidt_constant', loschmidt_constant).to_units('cm^-3')
+        self._Na = get_constant(
+            'avogadro_constant')
 
-        self._R = replace_none_with_default(
-            'universal_gas_constant', universal_gas_constant).to_units('erg mol^-1 K^-1')
+        self._loschmidt = get_constant(
+            'loschmidt_constant').to_units('cm^-3')
 
-        self._stef_boltz = replace_none_with_default(
-            'stefan_boltzmann_constant', stefan_boltzmann_constant).to_units('W cm^-2 K^-4')
+        self._R = get_constant(
+            'universal_gas_constant').to_units('erg mol^-1 K^-1')
 
-        self._secs_per_day = replace_none_with_default(
-            'seconds_per_day', seconds_per_day)
+        self._stef_boltz = get_constant(
+            'stefan_boltzmann_constant').to_units('W cm^-2 K^-4')
 
-        self._Cpd = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure', specific_heat_dry_air)
+        self._secs_per_day = get_constant(
+            'seconds_per_day')
+
+        self._Cpd = get_constant(
+            'heat_capacity_of_dry_air_at_constant_pressure')
 
         _rrtmg_sw.set_constants(
             numpy_pi, self._g,
