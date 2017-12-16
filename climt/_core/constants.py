@@ -37,7 +37,7 @@ constant_categories = dict(
     atmospheric_constants=('heat_capacity_of_dry_air_at_constant_pressure',
                            'gas_constant_of_dry_air',
                            'thermal_conductivity_of_dry_air',
-                           'reference_pressure'),
+                           'reference_air_pressure'),
 
     stellar_constants=('stellar_irradiance',),
 

@@ -166,7 +166,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self.extra_dimensions['tracer_number'] = np.arange(self._num_tracers)
 
         self._dry_pressure = get_constant(
-            'reference_pressure')
+            'reference_air_pressure')
 
         # Cannot set to new value currently.
         if self._num_levs != 28:

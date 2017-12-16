@@ -90,7 +90,7 @@ class HeldSuarez(ClimtPrognostic):
         self._delta_theta_z = delta_theta_z
 
         self._p0 = get_constant(
-            'reference_pressure')
+            'reference_air_pressure')
 
         self._Cpd = get_constant(
             'heat_capacity_of_dry_air_at_constant_pressure')
