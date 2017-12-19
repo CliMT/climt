@@ -200,7 +200,8 @@ else:
             extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
                              lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
                              lib_path+'/libfftw3.a', openblas_path] + default_link_args),
-                             # lib_path+'/libshtns_omp.a', openblas_path, os.environ['COMPILER_PATH']+'../lib/libfftw3.a'] + default_link_args),
+
+        # lib_path+'/libshtns_omp.a', openblas_path, os.environ['COMPILER_PATH']+'../lib/libfftw3.a'] + default_link_args),
 
         Extension(
             'climt._components.rrtmg.sw._rrtmg_sw',
