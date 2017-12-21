@@ -278,7 +278,7 @@ class SimplePhysics(ClimtImplicit):
 
         """
 
-        new_self = copy.copy(self)
+        new_self = copy.deepcopy(self)
         new_self._return_tend = True
         return SimplePhysicsWithTendencies(new_self, model_time_step)
 
@@ -296,7 +296,7 @@ class SimplePhysicsWithTendencies(ClimtImplicitPrognostic):
         self._climt_inputs = simple_physics._climt_inputs
         self._climt_diagnostics = simple_physics._climt_diagnostics
         self._climt_tendencies = simple_physics._climt_outputs
-        self._climt_tendencies['air_temperature'] = 'degK/s'
+        self._climt_tendencies['air_temperature'] = 'degK s^-1'
         self._climt_tendencies['eastward_wind'] = 'm s^-2'
         self._climt_tendencies['northward_wind'] = 'm s^-2'
         self._climt_tendencies['specific_humidity'] = 'g g^-1 s^-1'

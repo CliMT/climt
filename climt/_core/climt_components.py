@@ -271,7 +271,7 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
     def diagnostics(self):
         return tuple(self._climt_diagnostics.keys())
 
-    def version_that_updates_every(self, update_time):
+    def piecewise_constant_version(self, update_time):
         """
         Returns component that updates once every :code:`update_time`.
 
@@ -281,7 +281,7 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
 
         Returns:
             component (UpdateFrequencyWrapper):
-                A "delayed" component.
+                A "piecewise constant" component.
 
         """
 
@@ -458,4 +458,7 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
 
     @property
     def diagnostics(self):
-        return set(self._prognostic.diagnostics).union(set(self._climt_diagnostics.keys()))
+        if self._prognostic is not None:
+            return set(self._prognostic.diagnostics).union(set(self._climt_diagnostics.keys()))
+        else:
+            return set(self._climt_diagnostics.keys())

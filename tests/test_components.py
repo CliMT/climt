@@ -615,6 +615,29 @@ class TestEmanuel(ComponentBase):
         assert True
 
 
+def test_various_init_parameters_emanuel():
+
+    with pytest.raises(ValueError) as excinfo:
+        EmanuelConvection(convective_momentum_transfer_coefficient=2)
+
+    assert 'Momentum transfer' in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        EmanuelConvection(downdraft_area_fraction=2)
+
+    assert 'Downdraft' in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        EmanuelConvection(precipitation_fraction_outside_cloud=-3)
+
+    assert 'Outside cloud' in str(excinfo.value)
+
+    with pytest.raises(NotImplementedError) as excinfo:
+        EmanuelConvection(number_of_tracers=2)
+
+    assert 'additional tracers' in str(excinfo.value)
+
+
 class TestDcmip(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         return DcmipInitialConditions()
@@ -632,7 +655,28 @@ class TestDcmip(ComponentBase):
         assert True
 
 
-def testDcmipOptions():
+def test_dcmip_validate_inputs():
+
+    dcmip = DcmipInitialConditions()
+
+    state = climt.get_default_state([dcmip],
+                                    y=dict(label='latitude',
+                                           values=np.linspace(0, 60, 20),
+                                           units='degrees_north'))
+
+    with pytest.raises(ValueError) as excinfo:
+        dcmip(state, type_of_output='abcd')
+
+    assert 'has to be one' in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        dcmip(state, type_of_output='tropical_cyclone',
+              moist_simulation=False)
+
+    assert 'must be True' in str(excinfo.value)
+
+
+def test_dcmip_options():
 
     dcmip = DcmipInitialConditions()
 
@@ -786,6 +830,74 @@ class TestGfsDycore(ComponentBase):
 
     def test_1d_output_matches_cached_output(self):
         assert True
+
+
+class TestGfsDycoreWithPrognostic(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        dycore = GfsDynamicalCore(number_of_longitudes=68,
+                                  number_of_latitudes=32)
+        radiation = RRTMGLongwave()
+        dycore.prognostics = [radiation]
+
+        return dycore
+
+    def get_3d_input_state(self):
+
+        prognostic = RRTMGLongwave()
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component, prognostic], x=component.grid_definition['x'],
+            y=component.grid_definition['y'],
+            mid_levels=component.grid_definition['mid_levels'],
+            interface_levels=component.grid_definition['interface_levels'])
+
+        dcmip = climt.DcmipInitialConditions()
+        out = dcmip(state, add_perturbation=True)
+        state.update(out)
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
+def tests_dycore_with_prognostic_attrs_are_sane():
+
+    dycore = GfsDynamicalCore(number_of_longitudes=68,
+                              number_of_latitudes=32)
+    radiation = RRTMGLongwave()
+    dycore.prognostics = [radiation]
+
+    for quantity in radiation.diagnostics:
+        assert quantity in dycore.diagnostics
+
+    for quantity in radiation.inputs:
+        assert quantity in dycore.inputs
+
+
+def test_piecewise_constant_component():
+
+    radiation = RRTMGLongwave()
+    radiation = radiation.piecewise_constant_version(timedelta(seconds=1000))
+
+    state = climt.get_default_state([radiation])
+
+    current_tendency, current_diagnostic = radiation(state)
+
+    # Perturb state
+    state['air_temperature'] += 3
+
+    new_tendency, new_diagnostic = radiation(state)
+
+    assert np.all(current_tendency['air_temperature'].values ==
+                  new_tendency['air_temperature'].values)
+
+    state['time'] += timedelta(seconds=1500)
+
+    new_tendency, new_diagnostic = radiation(state)
+
+    assert np.any(current_tendency['air_temperature'].values !=
+                  new_tendency['air_temperature'].values)
 
 
 if __name__ == '__main__':

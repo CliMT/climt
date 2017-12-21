@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* Added tests to increase coverage
 * New constants handling functionality added
 * Travis builds now use stages
 * Appveyor CI up and running
@@ -36,6 +37,8 @@ Breaking Changes
 Latest
 -------
 
+* method to obtain piecewise constant prognostic has been renamed to
+  :code:`piecewise_constant_version`
 * Ozone profile has been modified
 * Heating rate for RRTMG top-of-atmosphere is no longer manually set to zero
 * Components no longer accept constants during initialisation. All constant handling
