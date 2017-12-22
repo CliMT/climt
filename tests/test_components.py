@@ -884,7 +884,7 @@ class TestInstellation(ComponentBase):
         component = self.get_component_instance()
         state = climt.get_default_state(
             [component],
-            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
+            x=dict(label='longitude', values=np.linspace(0, 2, 4), units='degrees_east'),
             y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
 
         return state
