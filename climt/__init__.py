@@ -14,7 +14,7 @@ from ._components import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
     EmanuelConvection, SlabSurface, GfsDynamicalCore,
-    DcmipInitialConditions, IceSheet, SecondBEST)
+    DcmipInitialConditions, IceSheet, SecondBEST, Instellation)
 
 sympl.add_direction_names(z=['interface_levels', 'mid_levels'])
 
@@ -27,6 +27,6 @@ __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
     EmanuelConvection, SlabSurface, GfsDynamicalCore, DcmipInitialConditions, IceSheet,
-    SecondBEST)
+    SecondBEST, Instellation)
 
 __version__ = '0.9.1'

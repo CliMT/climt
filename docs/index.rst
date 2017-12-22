@@ -12,6 +12,7 @@ Contents:
    interaction
    realistic
    component_types
+   configuration
    components
    initialisation
    utilities
