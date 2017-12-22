@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* Added Instellation component to calculate zenith angle
 * Added tests to increase coverage
 * New constants handling functionality added
 * Travis builds now use stages
