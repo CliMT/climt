@@ -9,27 +9,28 @@ def plot_function(fig, state):
     ax = fig.add_subplot(1, 2, 1)
     ax.plot(
         state['shortwave_heating_rate'].values.flatten(),
-        state['air_pressure'].values.flatten(), '-o')
+        state['air_pressure'].values.flatten()/100, '-o', label='SW')
     ax.axes.invert_yaxis()
     ax.plot(
         state['longwave_heating_rate'].values.flatten(),
-        state['air_pressure'].values.flatten(), '-o')
+        state['air_pressure'].values.flatten()/100, '-o', label='LW')
     ax.axes.invert_yaxis()
     ax.set_title('Heating Rates')
     ax.grid()
     ax.set_xlabel('K/day')
     ax.set_ylabel('millibar')
+    ax.legend()
 
-    ax.set_yscale('log')
-    ax.set_ylim(1e5, 1.)
+    # ax.set_yscale('log')
+    ax.set_ylim(1e3, 10.)
     ax = fig.add_subplot(1, 2, 2)
     ax.plot(
         state['air_temperature'].values.flatten(),
-        state['air_pressure'].values.flatten(), '-o')
+        state['air_pressure'].values.flatten()/100, '-o')
     ax.axes.invert_yaxis()
 
-    ax.set_yscale('log')
-    ax.set_ylim(1e5, 1.)
+    # ax.set_yscale('log')
+    ax.set_ylim(1e3, 10.)
     ax.set_title('Temperature')
     ax.grid()
     ax.set_xlabel('K')
@@ -40,7 +41,7 @@ monitor = PlotFunctionMonitor(plot_function)
 rad_sw = RRTMGShortwave()
 rad_lw = RRTMGLongwave()
 time_stepper = AdamsBashforth([rad_sw, rad_lw])
-timestep = timedelta(hours=1)
+timestep = timedelta(hours=3)
 
 mid_levels = {'label': 'mid_level',
               'values': np.arange(60),
@@ -63,7 +64,7 @@ state['mole_fraction_of_carbon_dioxide_in_air'].values[0, 0, :] = mol_profiles['
 state['mole_fraction_of_ozone_in_air'].values[0, 0, :] = mol_profiles['ozone']
 
 
-for i in range(1000):
+for i in range(100000):
 
     # print(i)
     diagnostics, new_state = time_stepper(state, timestep)

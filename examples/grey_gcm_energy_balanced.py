@@ -6,22 +6,24 @@ import numpy as np
 
 def plot_function(fig, state):
 
-    fig.set_size_inches(10, 10)
-
     ax = fig.add_subplot(2, 2, 1)
     state['surface_temperature'].transpose().plot.contourf(ax=ax, levels=16)
+    ax.set_title('Surf. Temp')
 
     ax = fig.add_subplot(2, 2, 2)
     state['convective_heating_rate'].mean(dim='longitude').transpose().plot.contourf(
         ax=ax, levels=16)
+    ax.set_title('Conv. Heating Rate')
 
     ax = fig.add_subplot(2, 2, 3)
     state['eastward_wind'].mean(dim='longitude').transpose().plot.contourf(
         ax=ax, levels=16)
+    ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 4)
     state['air_temperature'].mean(dim='longitude').transpose().plot.contourf(
         ax=ax, levels=16)
+    ax.set_title('Temperature')
 
     fig.tight_layout()
 
