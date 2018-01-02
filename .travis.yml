@@ -25,8 +25,8 @@ allow_failures:
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; CLIMT_CONDA=Miniconda3-latest-Linux-x86_64.sh; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; CLIMT_CONDA=Miniconda3-latest-MacOSX-x86_64.sh; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CLIMT_CONDA=Miniconda3-latest-Linux-x86_64.sh; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CLIMT_CONDA=Miniconda3-latest-MacOSX-x86_64.sh; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -sSL https://rvm.io/mpapis.asc | gpg --import -; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rvm get stable                 ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update                    ; fi
