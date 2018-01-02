@@ -25,8 +25,6 @@ allow_failures:
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CLIMT_CONDA=Miniconda3-latest-Linux-x86_64.sh; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CLIMT_CONDA=Miniconda3-latest-MacOSX-x86_64.sh; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -sSL https://rvm.io/mpapis.asc | gpg --import -; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rvm get stable                 ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update                    ; fi
@@ -36,18 +34,6 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then virtualenv venv -p python3     ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate       ; fi
 install:
-- wget https://repo.continuum.io/miniconda/$CLIMT_CONDA -O miniconda.sh;
-- bash miniconda.sh -b -p $HOME/miniconda
-- export PATH="$HOME/miniconda/bin:$PATH"
-- hash -r
-- conda config --set always_yes yes --set changeps1 no
-- conda update -q conda
-  # Useful for debugging any issues with conda
-- conda info -a
-
-  # Replace dep1 dep2 ... with your dependencies
-- conda create -q -n test-environment python=$CLIMT_PY_VER pandas numpy scipy matplotlib virtualenv
-- source activate test-environment
 - python -m pip install -r requirements_dev.txt
 - python -m pip install -U tox
 
@@ -68,19 +54,19 @@ jobs:
       script:
           - tox -e ${TOXENV}
     - stage: big tests
-      env: TOXENV=py36 CLIMT_ARCH=Linux CLIMT_PY_VER=3.6
+      env: TOXENV=py36 CLIMT_ARCH=Linux
       script:
           - tox -e ${TOXENV}
     - stage: big tests
-      env: TOXENV=py35 CLIMT_ARCH=Linux CLIMT_PY_VER=3.5
+      python: 3.5
+      env: TOXENV=py35 CLIMT_ARCH=Linux       install:
+           - source ~/virtualenv/python3.5/bin/activate
+           - python -m pip install -r requirements_dev.txt
+           - python -m pip install -U tox
       script:
           - tox -e ${TOXENV}
     - stage: big tests
-      env: TOXENV=py34 CLIMT_ARCH=Linux CLIMT_PY_VER=3.4
-      script:
-          - tox -e ${TOXENV}
-    - stage: big tests
-      env: TOXENV=py27 CLIMT_ARCH=Linux CLIMT_PY_VER=2.7
+      env: TOXENV=py27 CLIMT_ARCH=Linux
       script:
           - tox -e ${TOXENV}
     - stage: wheels
@@ -92,16 +78,6 @@ jobs:
             cibuildwheel --output-dir wheelhouse
             python -m pip install twine
             python -m twine upload wheelhouse/*.whl
-          fi
-    - stage: wheels
-      env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp35-* cp27-* cp34-manylinux1_i686'
-      script:
-        - |
-          if [[ $TRAVIS_TAG ]]; then
-          python -m pip install cibuildwheel
-          cibuildwheel --output-dir wheelhouse
-          python -m pip install twine
-          python -m twine upload wheelhouse/*.whl
           fi
     - stage: wheels
       env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp34-* cp27-* cp35-manylinux1_i686'
