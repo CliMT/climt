@@ -7,7 +7,8 @@ class Instellation(ClimtDiagnostic):
     """
     Calculates the zenith angle and star-planet correction
     factor given orbital parameters. Currently useful only
-    for earth-sun system. Mostly stolen from pyorbital.
+    for earth-sun system. Used pyorbital for references to
+    formulae and code structure.
     """
 
     _climt_inputs = {
@@ -38,8 +39,8 @@ class Instellation(ClimtDiagnostic):
 
         zenith_angle = diag_dict['zenith_angle']
 
-        latitudes = state['latitude'].values
-        longitudes = state['longitude'].values
+        latitudes = np.deg2rad(state['latitude'].values)
+        longitudes = np.deg2rad(state['longitude'].values)
 
         lon_mesh, lat_mesh = np.meshgrid(longitudes, latitudes)
 
@@ -54,153 +55,153 @@ class Instellation(ClimtDiagnostic):
         return diag_dict
 
 
-def jdays2000(utc_time):
+def days_from_2000(model_time):
     """Get the days since year 2000.
     """
-    return _days(utc_time - datetime.datetime(2000, 1, 1, 12, 0))
+    return total_days(model_time - datetime.datetime(2000, 1, 1, 12, 0))
 
 
-def jdays(utc_time):
-    """Get the julian day of *utc_time*.
+def total_days(time_diff):
     """
-    return jdays2000(utc_time) + 2451545
-
-
-def _fdays(dt):
-    """Get the days (floating point) from *d_t*.
+    Total time in units of days
     """
-    return (dt.days +
-            (dt.seconds +
-             dt.microseconds / (1000000.0)) / (24 * 3600.0))
+    return (time_diff.days +
+            (time_diff.seconds +
+             time_diff.microseconds / (1000000.0)) / (24 * 3600.0))
 
 
-_vdays = np.vectorize(_fdays)
-
-
-def _days(dt):
-    """Get the days (floating point) from *d_t*.
+def greenwich_mean_sidereal_time(model_time):
     """
-    try:
-        return _fdays(dt)
-    except AttributeError:
-        return _vdays(dt)
+    Greenwich mean sidereal time, in radians.
 
-
-def gmst(utc_time):
-    """Greenwich mean sidereal utc_time, in radians.
-
-    As defined in the AIAA 2006 implementation:
-    http://www.celestrak.com/publications/AIAA/2006-6753/
+    Reference:
+        The AIAA 2006 implementation:
+            http://www.celestrak.com/publications/AIAA/2006-6753/
     """
-    ut1 = jdays2000(utc_time) / 36525.0
-    theta = 67310.54841 + ut1 * (876600 * 3600 + 8640184.812866 + ut1 *
-                                 (0.093104 - ut1 * 6.2 * 10e-6))
-    return np.deg2rad(theta / 240.0) % (2 * np.pi)
+    jul_centuries = days_from_2000(model_time) / 36525.0
+    theta = 67310.54841 + jul_centuries * (876600 * 3600 + 8640184.812866 + jul_centuries *
+                                           (0.093104 - jul_centuries * 6.2 * 10e-6))
+
+    theta_radians = np.deg2rad(theta / 240.0) % (2 * np.pi)
+
+    if theta_radians < 0:
+        theta_radians += 2*np.pi
+
+    return theta_radians
 
 
-def _lmst(utc_time, longitude):
-    """Local mean sidereal time, computed from *utc_time* and *longitude*.
-    In radians.
+def local_mean_sidereal_time(model_time, longitude):
     """
-    return gmst(utc_time) + longitude
-
-
-def sun_ecliptic_longitude(utc_time):
-    """Ecliptic longitude of the sun at *utc_time*.
+    Local mean sidereal time. requires longitude in radians.
+    Ref:
+        http://www.setileague.org/askdr/lmst.htm
     """
-    jdate = jdays2000(utc_time) / 36525.0
-    # mean anomaly, rad
-    m_a = np.deg2rad(357.52910 +
-                     35999.05030*jdate -
-                     0.0001559*jdate*jdate -
-                     0.00000048*jdate*jdate*jdate)
-    # mean longitude, deg
-    l_0 = 280.46645 + 36000.76983*jdate + 0.0003032*jdate*jdate
-    d_l = ((1.914600 - 0.004817*jdate - 0.000014*jdate*jdate)*np.sin(m_a) +
-           (0.019993 - 0.000101*jdate)*np.sin(2*m_a) + 0.000290*np.sin(3*m_a))
-    # true longitude, deg
-    l__ = l_0 + d_l
-    return np.deg2rad(l__)
+    return greenwich_mean_sidereal_time(model_time) + longitude
 
 
-def sun_ra_dec(utc_time):
-    """Right ascension and declination of the sun at *utc_time*.
+def sun_ecliptic_longitude(model_time):
     """
-    jdate = jdays2000(utc_time) / 36525.0
-    eps = np.deg2rad(23.0 + 26.0/60.0 + 21.448/3600.0 -
-                     (46.8150*jdate + 0.00059*jdate*jdate -
-                      0.001813*jdate*jdate*jdate) / 3600)
-    eclon = sun_ecliptic_longitude(utc_time)
-    x__ = np.cos(eclon)
-    y__ = np.cos(eps) * np.sin(eclon)
-    z__ = np.sin(eps) * np.sin(eclon)
-    r__ = np.sqrt(1.0 - z__ * z__)
+    Ecliptic longitude of the sun.
+
+    Reference:
+        http://www.geoastro.de/elevaz/basics/meeus.htm
+    """
+    julian_centuries = days_from_2000(model_time) / 36525.0
+
+    # mean anomaly calculation
+    mean_anomaly = np.deg2rad(357.52910 +
+                              35999.05030*julian_centuries -
+                              0.0001559*julian_centuries*julian_centuries -
+                              0.00000048*julian_centuries*julian_centuries*julian_centuries)
+
+    # mean longitude
+    mean_longitude = np.deg2rad(280.46645 +
+                                36000.76983*julian_centuries +
+                                0.0003032*(julian_centuries**2))
+
+    d_l = np.deg2rad((1.914600 - 0.004817*julian_centuries -
+                      0.000014*(julian_centuries**2))*np.sin(mean_anomaly) +
+                     (0.019993 - 0.000101*julian_centuries)*np.sin(2*mean_anomaly) +
+                     0.000290*np.sin(3*mean_anomaly))
+
+    # true longitude
+    return mean_longitude + d_l
+
+
+def obliquity_star(julian_centuries):
+    """
+    return obliquity of the sun
+    Use 5th order equation from
+    https://en.wikipedia.org/wiki/Ecliptic#Obliquity_of_the_ecliptic
+    """
+    return np.deg2rad(
+        23.0 + 26.0/60 + 21.406/3600.0 -
+        (46.836769*julian_centuries - 0.0001831*(julian_centuries**2) +
+         0.00200340*(julian_centuries**3) - 0.576e-6*(julian_centuries**4) -
+         4.34e-8*(julian_centuries**5))/3600.)
+
+
+def right_ascension_declination(model_time):
+    """
+    Right ascension and declination of the sun.
+    Ref:
+        http://www.geoastro.de/elevaz/basics/meeus.htm
+    """
+    julian_centuries = days_from_2000(model_time) / 36525.0
+    eps = obliquity_star(julian_centuries)
+
+    eclon = sun_ecliptic_longitude(model_time)
+    x = np.cos(eclon)
+    y = np.cos(eps) * np.sin(eclon)
+    z = np.sin(eps) * np.sin(eclon)
+    r = np.sqrt(1.0 - z * z)
     # sun declination
-    declination = np.arctan2(z__, r__)
+    declination = np.arctan2(z, r)
     # right ascension
-    right_ascension = 2 * np.arctan2(y__, (x__ + r__))
+    right_ascension = 2 * np.arctan2(y, (x + r))
     return right_ascension, declination
 
 
-def _local_hour_angle(utc_time, longitude, right_ascension):
-    """Hour angle at *utc_time* for the given *longitude* and
-    *right_ascension*
+def local_hour_angle(model_time, longitude, right_ascension):
+    """
+    Hour angle at model_time for the given longitude and right_ascension
     longitude in radians
+
+    Ref:
+        https://en.wikipedia.org/wiki/Hour_angle#Relation_with_the_right_ascension
     """
-    return _lmst(utc_time, longitude) - right_ascension
+    return local_mean_sidereal_time(model_time, longitude) - right_ascension
 
 
-def get_alt_az(utc_time, lon, lat):
-    """Return sun altitude and azimuth from *utc_time*, *lon*, and *lat*.
-    lon,lat in degrees
-    What is the unit of the returned angles and heights!? FIXME!
+def star_zenith_azimuth(model_time, lon, lat):
     """
-    lon = np.deg2rad(lon)
-    lat = np.deg2rad(lat)
+    Return star Zenith and azimuth
+    lon,lat in radians
+    Ref:
+        Azimuth:
+            https://en.wikipedia.org/wiki/Solar_azimuth_angle#Formulas
+        Zenith:
+            https://en.wikipedia.org/wiki/Solar_zenith_angle
 
-    ra_, dec = sun_ra_dec(utc_time)
-    h__ = _local_hour_angle(utc_time, lon, ra_)
-    return (np.arcsin(np.sin(lat)*np.sin(dec) +
-                      np.cos(lat) * np.cos(dec) * np.cos(h__)),
-            np.arctan2(-np.sin(h__), (np.cos(lat)*np.tan(dec) -
-                                      np.sin(lat)*np.cos(h__))))
-
-
-def cos_zen(utc_time, lon, lat):
-    """Cosine of the sun-zenith angle for *lon*, *lat* at *utc_time*.
-    utc_time: datetime.datetime instance of the UTC time
-    lon and lat in degrees.
     """
-    lon = np.deg2rad(lon)
-    lat = np.deg2rad(lat)
 
-    r_a, dec = sun_ra_dec(utc_time)
-    h__ = _local_hour_angle(utc_time, lon, r_a)
-    return (np.sin(lat)*np.sin(dec) + np.cos(lat) * np.cos(dec) * np.cos(h__))
+    ra, dec = right_ascension_declination(model_time)
+    h_angle = local_hour_angle(model_time, lon, ra)
+
+    zenith = np.arccos(np.sin(lat)*np.sin(dec) +
+                       np.cos(lat) * np.cos(dec) * np.cos(h_angle))
+
+    azimuth = np.arctan2(-np.sin(h_angle), (np.cos(lat)*np.tan(dec) -
+                                            np.sin(lat)*np.cos(h_angle)))
+
+    return zenith, azimuth
 
 
-def sun_zenith_angle(utc_time, lon, lat):
-    """Sun-zenith angle for *lon*, *lat* at *utc_time*.
-    lon,lat in degrees.
-    The angle returned is given in radians
+def sun_zenith_angle(model_time, lon, lat):
     """
-    return np.arccos(cos_zen(utc_time, lon, lat))
-
-
-def sun_earth_distance_correction(utc_time):
-    """Calculate the sun earth distance correction, relative to 1 AU.
+    Sun-zenith angle for lon, lat at model_time.
+    lon,lat in radians.
+    The angle returned is in radians
     """
-    year = 365.256363004
-    # This is computed from
-    # http://curious.astro.cornell.edu/question.php?number=582
-    # AU = 149597870700.0
-    # a = 149598261000.0
-    # theta = (jdays2000(utc_time) - 2) * (2 * np.pi) / year
-    # e = 0.01671123
-    # r = a*(1-e*e)/(1+e * np.cos(theta))
-    # corr_me = (r / AU) ** 2
-
-    # from known software.
-    corr = 1 - 0.0334 * np.cos(2 * np.pi * (jdays2000(utc_time) - 2) / year)
-
-    return corr
+    zenith, azimuth = star_zenith_azimuth(model_time, lon, lat)
+    return zenith

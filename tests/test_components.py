@@ -808,6 +808,26 @@ def test_ice_sheet_too_high():
     assert 'exceeds maximum value' in str(excinfo.value)
 
 
+class TestInstellation(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return Instellation()
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            x=dict(label='longitude', values=np.linspace(0, 360, 20), units='degrees_east'),
+            y=dict(label='latitude', values=np.linspace(-50, 50, 10), units='degrees_north'))
+
+        state['time'] += timedelta(days=100)
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        assert True
+
+
 class TestGfsDycore(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         return GfsDynamicalCore(number_of_longitudes=68,
@@ -873,24 +893,6 @@ def tests_dycore_with_prognostic_attrs_are_sane():
 
     for quantity in radiation.inputs:
         assert quantity in dycore.inputs
-
-
-class TestInstellation(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        return Instellation()
-
-    def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            x=dict(label='longitude', values=np.linspace(0, 2, 4), units='degrees_east'),
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        assert True
 
 
 def test_piecewise_constant_component():
