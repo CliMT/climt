@@ -55,10 +55,16 @@ jobs:
   include:
     - stage: light tests
       env: TOXENV=flake8 CLIMT_ARCH=Linux
+      install:
+          - python -m pip install -r requirements_dev.txt
+          - python -m pip install -U tox
       script:
           - tox -e ${TOXENV}
     - stage: big tests
       env: TOXENV=cov CLIMT_ARCH=Linux
+      install:
+          - python -m pip install -r requirements_dev.txt
+          - python -m pip install -U tox
       script:
           - tox -e ${TOXENV}
     - stage: big tests
