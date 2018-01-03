@@ -54,13 +54,13 @@ after_test:
   # This step builds your wheels.
   - python.exe setup.py bdist_wheel
 
-artifacts:
+# artifacts:
   # bdist_wheel puts your built wheel in the dist directory
-  - path: dist\*.whl
+  #  - path: dist\*.whl
 
 on_success:
 #  You can use this step to upload your artifacts to a public website.
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
   - pip install -U twine
-  - bash -c "cd /c/projects/climt; if [[ $APPVEYOR_REPO_TAG == true ]]; then python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*.whl; fi"
+  - bash -c "cd /c/projects/climt; if [[ $APPVEYOR_REPO_TAG == true ]]; then python -m twine upload  dist/*.whl; fi"
