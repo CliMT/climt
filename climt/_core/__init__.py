@@ -7,7 +7,7 @@ from .climt_components import (
     ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic,
     ClimtSpectralDynamicalCore
 )
-from .constants import constant_library, get_constant, remove_constant
+from .constants import constant_library, get_constant
 
 
 __all__ = (
@@ -16,5 +16,5 @@ __all__ = (
     bolton_q_sat, bolton_dqsat_dT, calculate_q_sat, numpy_version_of,
     ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit,
     ClimtDiagnostic, ClimtSpectralDynamicalCore,
-    constant_library, get_constant, remove_constant
+    constant_library, get_constant
 )

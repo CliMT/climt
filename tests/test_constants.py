@@ -1,5 +1,5 @@
 from climt import (
-    get_constant, remove_constant, constant_library)
+    get_constant, constant_library)
 
 from copy import deepcopy
 import pytest
@@ -122,33 +122,3 @@ def test_modify_constant_which_does_not_exist():
         constant_library.modify_constants_in_library(constant)
 
     assert 'does not exist' in str(excinfo.value)
-
-
-def test_remove_constant():
-
-    remove_constant('gravitational_acceleration')
-
-    assert 'gravitational_acceleration' not in constant_library.current_constants.keys()
-    assert 'gravitational_acceleration' not in constant_library.constant_categories['planetary_constants']
-
-    constant_library.reset_constant_library()
-    assert 'gravitational_acceleration' in constant_library.current_constants.keys()
-    assert 'gravitational_acceleration' in constant_library.constant_categories['planetary_constants']
-
-
-def test_remove_nonexistent_constant():
-
-    with pytest.raises(IndexError) as excinfo:
-        remove_constant('constant_one')
-
-    assert 'not present' in str(excinfo.value)
-
-
-def test_remove_constant_with_no_category():
-
-    constant_library.current_constants['abcd'] = {}
-
-    with pytest.raises(IndexError) as excinfo:
-        remove_constant('abcd')
-
-    assert 'not present in any category' in str(excinfo.value)

@@ -1,4 +1,5 @@
-from sympl import default_constants, DataArray
+from sympl import DataArray
+import sympl
 from copy import deepcopy
 
 constant_name_map = {
@@ -87,13 +88,14 @@ class ConstantLibrary(object):
         Initialise the constant library from sympl's :code:`default_constants`.
         """
 
-        self.current_constants = deepcopy(default_constants)
+        self._original_constants = deepcopy(sympl.default_constants)
+        self.current_constants = sympl.default_constants
 
         self.constant_categories = deepcopy(default_categories)
 
         for climt_name in constant_name_map.keys():
             self.current_constants[climt_name] = deepcopy(
-                default_constants[constant_name_map[climt_name]])
+                sympl.default_constants[constant_name_map[climt_name]])
 
     def reset_constant_library(self):
         """
@@ -101,6 +103,7 @@ class ConstantLibrary(object):
         during runtime.
         """
 
+        sympl.default_constants = self._original_constants
         self.init_constant_library()
 
     def _list_constants(self, constant_list):
@@ -279,25 +282,3 @@ def get_constant(name):
         raise IndexError("{} not present in the library!".format(name))
 
     return constant_library.current_constants[name]
-
-
-def remove_constant(name):
-    """
-    Delete constant from the library.
-
-        Args:
-
-            name(string):
-                The name of the constant to be deleted.
-
-        Raises:
-
-            IndexError: If the constant does not exist in the library.
-    """
-
-    if name not in constant_library.current_constants.keys():
-        raise IndexError("{} not present in the library!".format(name))
-
-    constant_library.current_constants.pop(name)
-    category = determine_constant_type(name)
-    constant_library.constant_categories[category].remove(name)
