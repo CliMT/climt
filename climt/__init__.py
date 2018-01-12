@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sympl
+from sympl import set_constant
 
 from ._core import (
     get_default_state, mass_to_volume_mixing_ratio,
@@ -20,7 +21,7 @@ sympl.add_direction_names(z=['interface_levels', 'mid_levels'])
 
 __all__ = (
     get_default_state, mass_to_volume_mixing_ratio, numpy_version_of,
-    get_interface_values, get_constant, constant_library,
+    get_interface_values, get_constant, constant_library, set_constant,
     bolton_q_sat, bolton_dqsat_dT, climt_quantity_descriptions, calculate_q_sat,
     ClimtImplicitPrognostic, ClimtPrognostic, ClimtImplicit, ClimtDiagnostic,
     ClimtSpectralDynamicalCore,
