@@ -14,6 +14,11 @@ Latest
 * Ozone profiles do not need to be specified externally
 * Now also tested on Python 3.6
 
+Breaking Changes
+----------------
+
+* API for constants setting changed to `set_constant_from_dict` and `add_constants_from_dict`
+
 v.0.9.1
 -------
 * Held-Suarez and moist GCM with grey radiation work!

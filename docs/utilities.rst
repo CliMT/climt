@@ -11,6 +11,6 @@ General Utilities
     get_constant
     climt.constant_library.reset_constant_library
     climt.constant_library.list_available_constants
-    climt.constant_library.add_constants_to_library
-    climt.constant_library.modify_constants_in_library
+    climt.constant_library.add_constants_from_dict
+    climt.constant_library.set_constants_from_dict
 
