@@ -378,14 +378,14 @@ def calculate_thermal_conductivity_of_vapor(soil_temp, Ra, Rv):
 
 
 def calculate_thermal_conductivity_of_soil(soil_temp,
-                                        Kt_air,
-                                        Kt_liq,
-                                        W_l,
-                                        W_i,
-                                        W_fc,
-                                        X_v,
-                                        Ra,
-                                        Rv):
+                                           Kt_air,
+                                           Kt_liq,
+                                           W_l,
+                                           W_i,
+                                           W_fc,
+                                           X_v,
+                                           Ra,
+                                           Rv):
 
     # NOTE: We use W_i instead of W_f as notation for ice as compared to
     # the BEST manual.
