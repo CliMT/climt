@@ -365,7 +365,7 @@ Psi0 = {
 }
 
 
-def calculate_thermal_conductivity_vapour(soil_temp, Ra, Rv):
+def calculate_thermal_conductivity_of_vapor(soil_temp, Ra, Rv):
 
     a1 = -88.4e6
     a2 = 0.698e6
@@ -377,7 +377,7 @@ def calculate_thermal_conductivity_vapour(soil_temp, Ra, Rv):
     return q_sat*(a1 + a2*soil_temp)/(soil_temp**3)
 
 
-def calculate_soil_thermal_conductivity(soil_temp,
+def calculate_thermal_conductivity_of_soil(soil_temp,
                                         Kt_air,
                                         Kt_liq,
                                         W_l,
@@ -390,7 +390,7 @@ def calculate_soil_thermal_conductivity(soil_temp,
     # NOTE: We use W_i instead of W_f as notation for ice as compared to
     # the BEST manual.
 
-    Kt_vap = calculate_thermal_conductivity_vapour(soil_temp, Ra, Rv)
+    Kt_vap = calculate_thermal_conductivity_of_vapor(soil_temp, Ra, Rv)
 
     # Eq. 9.14
     W_a = 0.01  # A constant in BEST
@@ -438,7 +438,7 @@ def calculate_soil_thermal_conductivity(soil_temp,
     return Kt_soil
 
 
-def calculate_soil_heat_capacity(W_l, W_i, C_l, C_i, X_v):
+def calculate_heat_capacity_of_soil(W_l, W_i, C_l, C_i, X_v):
 
     # Table 4, page A5.55
     C_m = 2.38e6

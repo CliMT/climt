@@ -42,7 +42,7 @@ monitor = PlotFunctionMonitor(plot_function)
 # netcdf_monitor = NetCDFMonitor('test_sw.nc', write_on_store=True,
 #                               store_names=fields_to_store)
 
-climt.constant_library.modify_constants_in_library({
+climt.constant_library.set_constants_from_dict({
     'stellar_irradiance': {'value': 200, 'units': 'W m^-2'}})
 
 # Create components

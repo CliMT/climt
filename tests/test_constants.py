@@ -24,7 +24,7 @@ def test_adding_one_constant():
     constant = {'constant_one':
                 sample_constants['constant_one']}
 
-    constant_library.add_constants_to_library(constant)
+    constant_library.add_constants_from_dict(constant)
 
     assert 'constant_one' in constant_library.current_constants.keys()
     assert 'constant_one' in constant_library.constant_categories['oceanographic_constants']
@@ -35,7 +35,7 @@ def test_resetting_library():
     constant = {'constant_two':
                 sample_constants['constant_two']}
 
-    constant_library.add_constants_to_library(constant)
+    constant_library.add_constants_from_dict(constant)
 
     constant_library.reset_constant_library()
 
@@ -45,7 +45,7 @@ def test_resetting_library():
 
 def test_adding_more_constants():
 
-    constant_library.add_constants_to_library(sample_constants)
+    constant_library.add_constants_from_dict(sample_constants)
 
     assert 'constant_one' in constant_library.current_constants.keys()
     assert 'constant_one' in constant_library.constant_categories['oceanographic_constants']
@@ -75,7 +75,7 @@ def test_modify_constant():
                                                'units': 'km s^-2',
                                                'type': 'physical_constants'}}
 
-    constant_library.modify_constants_in_library(constant)
+    constant_library.set_constants_from_dict(constant)
 
     gravity = get_constant('gravitational_acceleration')
 
@@ -97,7 +97,7 @@ def test_adding_existing_constant():
                                                'type': 'physical_constants'}}
 
     with pytest.raises(IndexError) as excinfo:
-        constant_library.add_constants_to_library(constant)
+        constant_library.add_constants_from_dict(constant)
 
     assert 'already present' in str(excinfo.value)
 
@@ -108,7 +108,7 @@ def test_adding_constant_with_wrong_type():
     constant['constant_one']['type'] = 'xyz'
 
     with pytest.raises(IndexError) as excinfo:
-        constant_library.add_constants_to_library(constant)
+        constant_library.add_constants_from_dict(constant)
 
     assert 'valid category' in str(excinfo.value)
 
@@ -119,6 +119,6 @@ def test_modify_constant_which_does_not_exist():
     constant['constant_one']['type'] = 'xyz'
 
     with pytest.raises(IndexError) as excinfo:
-        constant_library.modify_constants_in_library(constant)
+        constant_library.set_constants_from_dict(constant)
 
     assert 'does not exist' in str(excinfo.value)

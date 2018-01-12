@@ -154,7 +154,7 @@ class ConstantLibrary(object):
         self._list_constants(self.constant_categories["miscellaneous_constants"])
         print()
 
-    def add_constants_to_library(self, constant_descriptions):
+    def add_constants_from_dict(self, constant_descriptions):
         """
         Add new constants to the library.
 
@@ -203,7 +203,7 @@ class ConstantLibrary(object):
 
             self.current_constants[name] = DataArray(value, attrs={'units': units})
 
-    def modify_constants_in_library(self, constant_descriptions):
+    def set_constants_from_dict(self, constant_descriptions):
         """
         Modify existing constants in the library.
 
