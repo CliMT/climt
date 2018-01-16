@@ -4,6 +4,10 @@ from ...._core import (
     ClimtPrognostic, numpy_version_of, get_constant)
 import numpy as np
 from numpy import pi as numpy_pi
+from ..common import (
+    rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,
+    rrtmg_cloud_ice_props_dict, rrtmg_cloud_liquid_props_dict,
+    rrtmg_aerosol_input_dict)
 try:
     from . import _rrtmg_sw
 except ImportError:
@@ -71,37 +75,6 @@ class RRTMGShortwave(ClimtPrognostic):
     '''
     RRTM without MCICA requires certain arrays on spectral bands
     '''
-
-    __cloud_overlap_method_dict = {
-        'clear_only': 0,
-        'random': 1,
-        'maximum_random': 2,
-        'maximum': 3
-    }
-
-    __cloud_props_dict = {
-        'direct_input': 0,
-        'single_cloud_type': 1,
-        'liquid_and_ice_clouds': 2
-    }
-
-    __cloud_ice_props_dict = {
-        'ebert_curry_one': 0,
-        'ebert_curry_two': 1,
-        'key_streamer_manual': 2,
-        'fu': 3
-    }
-
-    __cloud_liquid_props_dict = {
-        'radius_independent_absorption': 0,
-        'radius_dependent_absorption': 1
-    }
-
-    __aerosol_input_dict = {
-        'no_aerosol': 0,
-        'ecmwf': 6,
-        'all_aerosol_properties': 10
-    }
 
     quantity_descriptions = {
         'shortwave_optical_thickness_due_to_cloud': {
@@ -277,13 +250,13 @@ class RRTMGShortwave(ClimtPrognostic):
 
             """
 
-        self._cloud_overlap = self.__cloud_overlap_method_dict[cloud_overlap_method]
+        self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method]
 
-        self._cloud_optics = self.__cloud_props_dict[cloud_optical_properties]
+        self._cloud_optics = rrtmg_cloud_props_dict[cloud_optical_properties]
 
-        self._ice_props = self.__cloud_ice_props_dict[cloud_ice_properties]
+        self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties]
 
-        self._liq_props = self.__cloud_liquid_props_dict[cloud_liquid_water_properties]
+        self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties]
 
         self._solar_var_flag = solar_variability_method
 
@@ -291,7 +264,7 @@ class RRTMGShortwave(ClimtPrognostic):
 
         self._solar_var_by_band = solar_variability_by_band
 
-        self._aerosol_type = self.__aerosol_input_dict[aerosol_type]
+        self._aerosol_type = rrtmg_aerosol_input_dict[aerosol_type]
 
         if use_solar_constant_from_fortran:
             self._solar_const = 0
