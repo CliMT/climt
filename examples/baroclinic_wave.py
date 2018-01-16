@@ -11,9 +11,9 @@ def plot_function(fig, state):
 
 monitor = PlotFunctionMonitor(plot_function)
 
+climt.set_constant('reference_air_pressure', value=1e5, units='Pa')
 dycore = climt.GFSDynamicalCore(number_of_longitudes=198,
-                                number_of_latitudes=94,
-                                dry_pressure=1e5)
+                                number_of_latitudes=94)
 dcmip = climt.DcmipInitialConditions()
 
 my_state = climt.get_default_state([dycore], x=dycore.grid_definition['x'],

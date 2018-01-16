@@ -338,23 +338,23 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
         _gfs_dynamics.convert_to_grid()
         _gfs_dynamics.calculate_pressure()
 
-        raw_output_arrays['specific_humidity'][:] = ensure_positive(
+        raw_output_arrays['specific_humidity'][:] = make_positive(
             raw_output_arrays['gfs_tracers'][:, :, :, 0])
 
         raw_output_arrays['air_temperature'][:] = t_virt/(
             1 + self._fvirt.values.item()*raw_output_arrays['specific_humidity'])
 
         raw_output_arrays['air_pressure_on_interface_levels'][:] = \
-            np.asfortranarray(raw_output_arrays['air_pressure_on_interface_levels'][:, :, ::-1])
+            raw_output_arrays['air_pressure_on_interface_levels'][:, :, ::-1]
 
         raw_output_arrays['mole_fraction_of_ozone_in_air'][:] = \
-            ensure_positive(raw_output_arrays['gfs_tracers'][:, :, :, 1])
+            make_positive(raw_output_arrays['gfs_tracers'][:, :, :, 1])
 
         raw_output_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'][:] = \
-            ensure_positive(raw_output_arrays['gfs_tracers'][:, :, :, 2])
+            make_positive(raw_output_arrays['gfs_tracers'][:, :, :, 2])
 
         raw_output_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'][:] = \
-            ensure_positive(raw_output_arrays['gfs_tracers'][:, :, :, 3])
+            make_positive(raw_output_arrays['gfs_tracers'][:, :, :, 3])
 
         self.store_current_state_signature(raw_output_arrays)
 
@@ -468,7 +468,7 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
         print("Done!")
 
 
-def ensure_positive(array):
+def make_positive(array):
 
     array[array < 0] = 0
     return array
