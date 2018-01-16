@@ -475,9 +475,9 @@ class ClimtTimeDifferenced(ClimtImplicitPrognostic):
         """
 
         self._implicit_component = implicit_component
-        self._climt_inputs = implicit_component._climt_inputs
-        self._climt_diagnostics = implicit_component._climt_diagnostics
-        self._climt_tendencies = implicit_component._climt_outputs
+        self._climt_inputs = copy.copy(implicit_component._climt_inputs)
+        self._climt_diagnostics = copy.copy(implicit_component._climt_diagnostics)
+        self._climt_tendencies = copy.copy(implicit_component._climt_outputs)
 
         for quantity in self._climt_tendencies:
             units = self._climt_tendencies[quantity]

@@ -496,7 +496,9 @@ class TestSimplePhysics(ComponentBase):
 class TestSimplePhysicsPrognostic(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         component = SimplePhysics()
-        return component.get_prognostic_version(timedelta(minutes=10))
+        component = component.prognostic_version()
+        component.current_time_step = timedelta(minutes=10)
+        return component
 
     def get_3d_input_state(self):
 
