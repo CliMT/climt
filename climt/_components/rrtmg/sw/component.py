@@ -146,8 +146,8 @@ class RRTMGShortwave(ClimtPrognostic):
             cloud_liquid_water_properties='radius_dependent_absorption',
             solar_variability_method=0,
             use_solar_constant_from_fortran=False,
-            facular_sunspot_amplitude=np.ones(2),
-            solar_variability_by_band=np.ones(16),
+            facular_sunspot_amplitude=None,
+            solar_variability_by_band=None,
             aerosol_type='no_aerosol'):
 
         """
@@ -260,9 +260,15 @@ class RRTMGShortwave(ClimtPrognostic):
 
         self._solar_var_flag = solar_variability_method
 
-        self._fac_sunspot_coeff = facular_sunspot_amplitude
+        if facular_sunspot_amplitude is None:
+            self._fac_sunspot_coeff = np.ones(2)
+        else:
+            self._fac_sunspot_coeff = facular_sunspot_amplitude
 
-        self._solar_var_by_band = solar_variability_by_band
+        if solar_variability_by_band is None:
+            self._solar_var_by_band = np.ones(16)
+        else:
+            self._solar_var_by_band = solar_variability_by_band
 
         self._aerosol_type = rrtmg_aerosol_input_dict[aerosol_type.lower()]
 
