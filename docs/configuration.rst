@@ -72,7 +72,8 @@ Currently, climt allows for two kinds of behavioural modification of components.
   and therefore, they do not play well with :py:mod:`climt.ClimtImplicit`
   components that step forward the model in grid space. Typically, this is handled by
   finite differencing the output of Implicit components and providing them as time tendencies.
-  `ClimtImplicit` components have a method which returns a component which provides the
+  :py:mod:`ClimtImplicit` components have a method :py:mod:`ClimtImplicit.get_prognostic_version` which 
+  returns a component which provides the
   time differenced tendencies. The time differencing is done using a first order scheme: dX/dt =
   (X_out - X_in)/timestep. See how this is practically used in the `Grey GCM`_.
 
