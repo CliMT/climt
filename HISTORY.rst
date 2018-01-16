@@ -22,6 +22,7 @@ Breaking Changes
 * `get_prognostic_version` method of `ClimtImplicit` renamed to `prognostic_version`, and
   no longer accepts timestep as an argument. The current timestep should be set in
   `ClimtImplicit.current_time_step` during each iteration.
+* `RRTMGShortwave` now uses sympl's solar constant by default instead of from fortran.
 
 v.0.9.1
 -------

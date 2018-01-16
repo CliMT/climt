@@ -172,7 +172,7 @@ class RRTMGShortwave(ClimtPrognostic):
             cloud_ice_properties='ebert_curry_two',
             cloud_liquid_water_properties='radius_dependent_absorption',
             solar_variability_method=0,
-            use_internal_solar_constant=True,
+            use_solar_constant_from_fortran=False,
             facular_sunspot_amplitude=np.ones(2),
             solar_variability_by_band=np.ones(16),
             aerosol_type='no_aerosol'):
@@ -249,7 +249,7 @@ class RRTMGShortwave(ClimtPrognostic):
                    with a solar constant of 1360.85 :math:`W m^{-2}`.
                  * If :code:`use_internal_solar_constant = False`: scale factors in :code:`solar_variability_by_band`.
 
-            use_internal_solar_constant (bool):
+            use_solar_constant_from_fortran (bool):
                 If :code:`False`, the solar constant is taken from the constants library.
 
             facular_sunspot_amplitude (array of dimension 2):
@@ -293,7 +293,7 @@ class RRTMGShortwave(ClimtPrognostic):
 
         self._aerosol_type = self.__aerosol_input_dict[aerosol_type]
 
-        if use_internal_solar_constant:
+        if use_solar_constant_from_fortran:
             self._solar_const = 0
         else:
             self._solar_const = get_constant(
