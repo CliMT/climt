@@ -1,3 +1,3 @@
-from .component import GfsDynamicalCore
+from .component import GFSDynamicalCore
 
-__all__ = (GfsDynamicalCore)
+__all__ = (GFSDynamicalCore)

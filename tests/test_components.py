@@ -9,7 +9,7 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GfsDynamicalCore, ClimtSpectralDynamicalCore,
+    DcmipInitialConditions, GFSDynamicalCore, ClimtSpectralDynamicalCore,
     IceSheet, Instellation)
 import climt
 from sympl import (
@@ -830,9 +830,9 @@ class TestInstellation(ComponentBase):
         assert True
 
 
-class TestGfsDycore(ComponentBase):
+class TestGFSDycore(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
-        return GfsDynamicalCore(number_of_longitudes=68,
+        return GFSDynamicalCore(number_of_longitudes=68,
                                 number_of_latitudes=32)
 
     def get_3d_input_state(self):
@@ -854,9 +854,9 @@ class TestGfsDycore(ComponentBase):
         assert True
 
 
-class TestGfsDycoreWithPrognostic(ComponentBase):
+class TestGFSDycoreWithPrognostic(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
-        dycore = GfsDynamicalCore(number_of_longitudes=68,
+        dycore = GFSDynamicalCore(number_of_longitudes=68,
                                   number_of_latitudes=32)
         radiation = RRTMGLongwave()
         dycore.prognostics = [radiation]
@@ -885,7 +885,7 @@ class TestGfsDycoreWithPrognostic(ComponentBase):
 
 def tests_dycore_with_prognostic_attrs_are_sane():
 
-    dycore = GfsDynamicalCore(number_of_longitudes=68,
+    dycore = GFSDynamicalCore(number_of_longitudes=68,
                               number_of_latitudes=32)
     radiation = RRTMGLongwave()
     dycore.prognostics = [radiation]

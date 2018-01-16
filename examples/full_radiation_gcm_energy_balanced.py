@@ -46,7 +46,7 @@ climt.constant_library.set_constants_from_dict({
     'stellar_irradiance': {'value': 200, 'units': 'W m^-2'}})
 
 # Create components
-dycore = climt.GfsDynamicalCore(number_of_longitudes=128,
+dycore = climt.GFSDynamicalCore(number_of_longitudes=128,
                                 number_of_latitudes=62,
                                 number_of_damped_levels=5,
                                 time_step=1200.)
@@ -57,7 +57,8 @@ convection = climt.EmanuelConvection(
     convective_momentum_transfer_coefficient=1)
 simple_physics = climt.SimplePhysics()
 
-simple_physics = simple_physics.get_prognostic_version(model_time_step)
+simple_physics = simple_physics.prognostic_version()
+simple_physics.current_time_step = model_time_step
 convection.current_time_step = model_time_step
 
 constant_duration = 10

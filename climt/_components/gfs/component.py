@@ -10,7 +10,7 @@ except ImportError:
     print("Import failed. GFS dynamical core will not be available!")
 
 
-class GfsDynamicalCore(ClimtSpectralDynamicalCore):
+class GFSDynamicalCore(ClimtSpectralDynamicalCore):
     """
     Climt interface to the GFS dynamical core. The GFS
     code is available on `github`_.

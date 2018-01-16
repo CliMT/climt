@@ -46,7 +46,7 @@ climt.constant_library.modify_constants_in_library({
     'stellar_irradiance': {'value': 1200, 'units': 'W m^-2'}})
 
 # Create components
-dycore = climt.GfsDynamicalCore(number_of_longitudes=128,
+dycore = climt.GFSDynamicalCore(number_of_longitudes=128,
                                 number_of_latitudes=62,
                                 number_of_damped_levels=5,
                                 time_step=1200.)

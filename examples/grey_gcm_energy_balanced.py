@@ -32,7 +32,7 @@ def plot_function(fig, state):
 monitor = PlotFunctionMonitor(plot_function)
 
 # Create components
-dycore = climt.GfsDynamicalCore(number_of_longitudes=128,
+dycore = climt.GFSDynamicalCore(number_of_longitudes=128,
                                 number_of_latitudes=64,
                                 number_of_damped_levels=5)
 
@@ -41,7 +41,8 @@ model_time_step = dycore._time_step
 convection = climt.EmanuelConvection(convective_momentum_transfer_coefficient=1)
 simple_physics = climt.SimplePhysics()
 
-simple_physics = simple_physics.get_prognostic_version(model_time_step)
+simple_physics = simple_physics.prognostic_version()
+simple_physics.current_time_step = model_time_step
 convection.current_time_step = model_time_step
 
 radiation = climt.GrayLongwaveRadiation()

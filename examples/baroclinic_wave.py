@@ -11,7 +11,7 @@ def plot_function(fig, state):
 
 monitor = PlotFunctionMonitor(plot_function)
 
-dycore = climt.GfsDynamicalCore(number_of_longitudes=198,
+dycore = climt.GFSDynamicalCore(number_of_longitudes=198,
                                 number_of_latitudes=94,
                                 dry_pressure=1e5)
 dcmip = climt.DcmipInitialConditions()

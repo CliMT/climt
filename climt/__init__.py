@@ -16,7 +16,7 @@ from ._core import (
 from ._components import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
-    EmanuelConvection, SlabSurface, GfsDynamicalCore,
+    EmanuelConvection, SlabSurface, GFSDynamicalCore,
     DcmipInitialConditions, IceSheet, SecondBEST, Instellation)
 
 
@@ -32,7 +32,7 @@ __all__ = (
     ClimtSpectralDynamicalCore,
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
-    EmanuelConvection, SlabSurface, GfsDynamicalCore, DcmipInitialConditions, IceSheet,
+    EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions, IceSheet,
     SecondBEST, Instellation)
 
 __version__ = '0.9.1'
