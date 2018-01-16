@@ -41,8 +41,6 @@ class GridScaleCondensation(Implicit):
             'gravitational_acceleration')
         self._rhow = get_constant(
             'density_of_liquid_phase')
-        self._q_sat = bolton_q_sat
-        self._dqsat_dT = bolton_dqsat_dT
 
     def __call__(self, state, timestep):
         """
@@ -76,10 +74,12 @@ class GridScaleCondensation(Implicit):
         p_interface = get_numpy_array(
             state['air_pressure_on_interface_levels'].to_units('Pa'),
             out_dims=('x', 'y', 'z'))
-        q_sat = self._q_sat(T, p, self._Rd.values, self._Rh2O.values)
+
+        q_sat = bolton_q_sat(T, p, self._Rd.values, self._Rh2O.values)
         saturated = q > q_sat
-        dqsat_dT = self._dqsat_dT(
+        dqsat_dT = bolton_dqsat_dT(
             T[saturated], self._Lv.values, self._Rh2O.values, q_sat[saturated])
+
         condensed_q = np.zeros_like(q)
         condensed_q[saturated] = (
             q[saturated] - q_sat[saturated])/(
