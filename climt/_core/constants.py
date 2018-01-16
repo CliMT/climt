@@ -81,9 +81,9 @@ class ConstantLibrary(object):
 
     def __init__(self):
 
-        self.init_constant_library()
+        self.__init_constant_library()
 
-    def init_constant_library(self):
+    def __init_constant_library(self):
         """
         Initialise the constant library from sympl's :code:`default_constants`.
         """
@@ -104,7 +104,7 @@ class ConstantLibrary(object):
         """
 
         sympl.default_constants = self._original_constants
-        self.init_constant_library()
+        self.__init_constant_library()
 
     def _list_constants(self, constant_list):
 
@@ -114,129 +114,142 @@ class ConstantLibrary(object):
                                      self.current_constants[quantity].units))
             print()
 
-    def list_available_constants(self):
-        """
-        List all constants currently available in the library, along
-        with the category to which they belong.
-
-        """
-
-        print('Physical Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories['physical_constants'])
-        print()
-        print('Chemical Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories["chemical_constants"])
-        print()
-        print('Planetary Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories["planetary_constants"])
-        print()
-        print('Stellar Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories["stellar_constants"])
-        print()
-        print('Atmospheric Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories["atmospheric_constants"])
-        print()
-        print('Condensible Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories["condensible_constants"])
-        print()
-        print('Oceanographic Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories["oceanographic_constants"])
-        print()
-        print('Miscellaneous Constants')
-        print('===========================')
-        self._list_constants(self.constant_categories["miscellaneous_constants"])
-        print()
-
-    def add_constants_from_dict(self, constant_descriptions):
-        """
-        Add new constants to the library.
-
-        Args:
-
-           constant_descriptions (dict):
-               Dictionary containing the description of the constants.
-               The key should be the name of the constant, and the value
-               should be a dictionary containing the following keys:
-
-               * type (string):
-                   Type of constant. Is one of:
-
-                       * :code:`'physical_constants'`,
-                       * :code:`'chemical_constants'`,
-                       * :code:`'planetary_constants'`,
-                       * :code:`'atmospheric_constants'`,
-                       * :code:`'oceanographic_constants'`,
-                       * :code:`'stellar_constants'`,
-                       * :code:`'condensible_constants'`,
-                       * :code:`'miscellaneous_constants'`,
-                       * value (float):
-                           The value assigned.
-               * units (string):
-                   The units of the value, e.g, m/s, J/kg.
-
-        Raises:
-
-           IndexError:
-               If the constant exists in the library or if the type
-               of constant is not valid.
-        """
-
-        for name in constant_descriptions.keys():
-
-            if name in self.current_constants.keys():
-                raise IndexError('{} already present in library.'.format(name))
-            value = constant_descriptions[name]['value']
-            units = constant_descriptions[name]['units']
-            type = constant_descriptions[name]['type']
-
-            if type not in self.constant_categories.keys():
-                raise IndexError('{} is not a valid category.'.format(type))
-
-            self.constant_categories[type] = self.constant_categories[type].union((name,))
-
-            self.current_constants[name] = DataArray(value, attrs={'units': units})
-
-    def set_constants_from_dict(self, constant_descriptions):
-        """
-        Modify existing constants in the library.
-
-        Args:
-
-           constant_descriptions (dict):
-               Dictionary containing the description of the constants.
-               The key should be the name of the constant, and the value
-               should be a dictionary containing the following keys:
-
-               * value (float):
-                   The value assigned.
-               * units (string):
-                   The units of the value, e.g, m/s, J/kg.
-
-        Raises:
-
-            IndexError: If the constant does not exist in the library.
-
-        """
-
-        for name in constant_descriptions.keys():
-
-            if name not in self.current_constants.keys():
-                raise IndexError('{} does not exist in library.'.format(
-                    name))
-            value = constant_descriptions[name]['value']
-            units = constant_descriptions[name]['units']
-
-            self.current_constants[name] = DataArray(value, attrs={'units': units})
-
 
 constant_library = ConstantLibrary()
+
+
+def list_available_constants():
+    """
+    List all constants currently available in the library, along
+    with the category to which they belong.
+
+    """
+
+    print('Physical Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories['physical_constants'])
+    print()
+    print('Chemical Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories["chemical_constants"])
+    print()
+    print('Planetary Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories["planetary_constants"])
+    print()
+    print('Stellar Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories["stellar_constants"])
+    print()
+    print('Atmospheric Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories["atmospheric_constants"])
+    print()
+    print('Condensible Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories["condensible_constants"])
+    print()
+    print('Oceanographic Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories["oceanographic_constants"])
+    print()
+    print('Miscellaneous Constants')
+    print('===========================')
+    constant_library._list_constants(constant_library.constant_categories["miscellaneous_constants"])
+    print()
+
+
+def add_constants_from_dict(constant_descriptions):
+    """
+    Add new constants to the library.
+
+    Args:
+
+        constant_descriptions (dict):
+            Dictionary containing the description of the constants.
+            The key should be the name of the constant, and the value
+            should be a dictionary containing the following keys:
+
+            * type (string):
+                Type of constant. Is one of:
+
+                    * :code:`'physical_constants'`,
+                    * :code:`'chemical_constants'`,
+                    * :code:`'planetary_constants'`,
+                    * :code:`'atmospheric_constants'`,
+                    * :code:`'oceanographic_constants'`,
+                    * :code:`'stellar_constants'`,
+                    * :code:`'condensible_constants'`,
+                    * :code:`'miscellaneous_constants'`,
+
+            * value (float):
+                The value assigned.
+
+            * units (string):
+                The units of the value, e.g, m/s, J/kg.
+
+    Raises:
+
+        IndexError:
+            If the constant exists in the library or if the type
+            of constant is not valid.
+    """
+
+    for name in constant_descriptions.keys():
+
+        if name in constant_library.current_constants.keys():
+            raise IndexError('{} already present in library.'.format(name))
+        value = constant_descriptions[name]['value']
+        units = constant_descriptions[name]['units']
+        type = constant_descriptions[name]['type']
+
+        if type not in constant_library.constant_categories.keys():
+            raise IndexError('{} is not a valid category.'.format(type))
+
+        constant_library.constant_categories[type] = constant_library.constant_categories[type].union((name,))
+
+        constant_library.current_constants[name] = DataArray(value, attrs={'units': units})
+
+
+def set_constants_from_dict(constant_descriptions):
+    """
+    Modify existing constants in the library.
+
+    Args:
+
+       constant_descriptions (dict):
+           Dictionary containing the description of the constants.
+           The key should be the name of the constant, and the value
+           should be a dictionary containing the following keys:
+
+           * value (float):
+               The value assigned.
+               * units (string):
+                   The units of the value, e.g, m/s, J/kg.
+
+    Raises:
+
+        IndexError: If the constant does not exist in the library.
+
+    """
+
+    for name in constant_descriptions.keys():
+
+        if name not in constant_library.current_constants.keys():
+            raise IndexError('{} does not exist in library.'.format(
+                name))
+        value = constant_descriptions[name]['value']
+        units = constant_descriptions[name]['units']
+
+        constant_library.current_constants[name] = DataArray(value, attrs={'units': units})
+
+
+def reset_constant_library():
+    """
+    Reset the library to default values.
+    """
+
+    constant_library.reset_constant_library()
 
 
 def determine_constant_type(name):
@@ -251,7 +264,7 @@ def determine_constant_type(name):
     Returns:
         constant_type (string):
             the type of the constant.
-    """
+            """
 
     for constant_type in constant_library.constant_categories.keys():
         if name in constant_library.constant_categories[constant_type]:
@@ -276,7 +289,7 @@ def get_constant(name):
         Raises:
 
             IndexError: If the constant does not exist in the library.
-    """
+            """
 
     if name not in constant_library.current_constants.keys():
         raise IndexError("{} not present in the library!".format(name))
