@@ -856,11 +856,6 @@ def get_default_values(quantity_name, x, y, mid_levels, interface_levels,
     quantity_dims = [x.label if elem is 'x' else elem for elem in quantity_dims]
     quantity_dims = [y.label if elem is 'y' else elem for elem in quantity_dims]
 
-    if len(quantity_dims) == 0:
-        array_dims = [1]
-        quantity_coords = None
-        quantity_dims = None
-
     if 'dtype' in description:
         dtype = description['dtype']
     else:

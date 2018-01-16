@@ -66,7 +66,8 @@ class RRTMGShortwave(ClimtPrognostic):
     }
 
     extra_dimensions = {'num_shortwave_bands': np.arange(14),
-                        'num_ecmwf_aerosols': np.arange(6)}
+                        'num_ecmwf_aerosols': np.arange(6),
+                        'scalar': np.arange(1)}
     '''
     RRTM without MCICA requires certain arrays on spectral bands
     '''
@@ -152,13 +153,13 @@ class RRTMGShortwave(ClimtPrognostic):
         },
 
         'solar_cycle_fraction': {
-            'dims': [],
+            'dims': ['scalar'],
             'units': 'dimensionless',
             'default_value': 0.0
         },
 
         'flux_adjustment_for_earth_sun_distance': {
-            'dims': [],
+            'dims': ['scalar'],
             'units': 'dimensionless',
             'default_value': 1.0
         },
