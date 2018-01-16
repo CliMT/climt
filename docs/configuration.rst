@@ -69,7 +69,7 @@ Currently, climt allows for two kinds of behavioural modification of components.
   See how this can be used practically in this `example`_.
 
 * Prognostic version: Spectral dynamical cores step the model forward in spectral space,
-  and therefore, they do not play well with :py:mod:`climt.ClimtImplicit` 
+  and therefore, they do not play well with :py:mod:`climt.ClimtImplicit`
   components that step forward the model in grid space. Typically, this is handled by
   finite differencing the output of Implicit components and providing them as time tendencies.
   `ClimtImplicit` components have a method which returns a component which provides the

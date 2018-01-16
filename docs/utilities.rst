@@ -11,8 +11,7 @@ General Utilities
     get_interface_values
     get_constant
     set_constant
-    climt.constant_library.reset_constant_library
-    climt.constant_library.list_available_constants
-    climt.constant_library.add_constants_from_dict
-    climt.constant_library.set_constants_from_dict
-
+    reset_constant_library
+    list_available_constants
+    add_constants_from_dict
+    set_constants_from_dict

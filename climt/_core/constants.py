@@ -224,7 +224,8 @@ def set_constants_from_dict(constant_descriptions):
 
            * value (float):
                The value assigned.
-               * units (string):
+
+           * units (string):
                    The units of the value, e.g, m/s, J/kg.
 
     Raises:
