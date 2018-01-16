@@ -4,7 +4,7 @@ from ...._core import (
     ClimtPrognostic, numpy_version_of, get_constant)
 import numpy as np
 from numpy import pi as numpy_pi
-from ..common import (
+from ..rrtmg_common import (
     rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,
     rrtmg_cloud_ice_props_dict, rrtmg_cloud_liquid_props_dict,
     rrtmg_aerosol_input_dict)
