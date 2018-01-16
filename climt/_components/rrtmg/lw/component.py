@@ -161,13 +161,13 @@ class RRTMGLongwave(ClimtPrognostic):
         else:
             self._calc_dflxdt = 0
 
-        self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method]
+        self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method.lower()]
 
-        self._cloud_optics = rrtmg_cloud_props_dict[cloud_optical_properties]
+        self._cloud_optics = rrtmg_cloud_props_dict[cloud_optical_properties.lower()]
 
-        self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties]
+        self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties.lower()]
 
-        self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties]
+        self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
 
         self._calc_Tint = calculate_interface_temperature
 
