@@ -400,8 +400,8 @@ class RRTMGShortwave(ClimtPrognostic):
                 mid_level_shape[1],
                 mid_level_shape[2],
                 day_of_year,
-                raw_f_arrays['solar_cycle_fraction'].item(),
-                raw_f_arrays['flux_adjustment_for_earth_sun_distance'].item(),
+                raw_f_arrays['solar_cycle_fraction'],
+                raw_f_arrays['flux_adjustment_for_earth_sun_distance'],
                 raw_f_arrays['air_pressure'],
                 raw_f_arrays['air_pressure_on_interface_levels'],
                 raw_f_arrays['air_temperature'],
@@ -442,8 +442,6 @@ class RRTMGShortwave(ClimtPrognostic):
                 diag_arrays[quantity][lon, :] = diag_f_arrays[quantity]
             for quantity in tend_arrays.keys():
                 tend_arrays[quantity][lon, :] = tend_f_arrays[quantity]
-
-            # tend_arrays['air_temperature'][lon, :, -1] = 0
 
         diag_dict['shortwave_heating_rate'].values[:] = tend_dict['air_temperature'].values
 

@@ -65,7 +65,7 @@ class IceSheet(ClimtImplicit):
             maximum_snow_ice_height(float):
                 The maximum combined height of snow and ice handled by the model in :math:`m`.
 
-            number_vertical_levels(float):
+            number_vertical_levels(int):
                 The number of levels on which temperature must be output.
 
         """
@@ -74,11 +74,8 @@ class IceSheet(ClimtImplicit):
 
         self._max_height = maximum_snow_ice_height
 
-        self._output_levels = number_vertical_levels
+        self._output_levels = int(number_vertical_levels)
         self.extra_dimensions['ice_vertical_levels'] = np.arange(self._output_levels)
-
-        self.quantity_descriptions['default_value'] = CubicSpline(
-            np.linspace(0, maximum_snow_ice_height, 50), 271.*np.ones(50))
 
         self._Kice = get_constant(
             'thermal_conductivity_of_solid_phase_as_ice')
@@ -173,7 +170,6 @@ class IceSheet(ClimtImplicit):
                     if total_height < 1e-8:  # Some epsilon
                         continue
 
-                    # print('total_height', total_height)
                     snow_height_fraction = input_arrays['surface_snow_thickness'][lon, lat] / total_height
 
                     num_layers = int(total_height / self._dz)
@@ -184,18 +180,16 @@ class IceSheet(ClimtImplicit):
 
                     snow_level = int((1 - snow_height_fraction)*num_layers)
                     levels = np.arange(num_layers)
-                    # print('snow_level', snow_level)
-                    # print('num_layers', num_layers)
 
                     # Create vertically varying profiles
-                    rho_snow_ice = self._rho_ice.values.item()*np.ones(num_layers)
-                    rho_snow_ice[levels > snow_level] = self._rho_snow.values.item()
+                    rho_snow_ice = self._rho_ice.values*np.ones(num_layers)
+                    rho_snow_ice[levels > snow_level] = self._rho_snow.values
 
-                    heat_capacity_snow_ice = self._C_ice.values.item()*np.ones(num_layers)
-                    heat_capacity_snow_ice[levels > snow_level] = self._C_snow.values.item()
+                    heat_capacity_snow_ice = self._C_ice.values*np.ones(num_layers)
+                    heat_capacity_snow_ice[levels > snow_level] = self._C_snow.values
 
-                    kappa_snow_ice = self._Kice.values.item()*np.ones(num_layers)
-                    kappa_snow_ice[levels > snow_level] = self._Ksnow.values.item()
+                    kappa_snow_ice = self._Kice.values*np.ones(num_layers)
+                    kappa_snow_ice[levels > snow_level] = self._Ksnow.values
 
                     check_melting = True
                     if surface_temperature < self._temp_melt:
@@ -210,16 +204,11 @@ class IceSheet(ClimtImplicit):
                         net_heat_flux[lon, lat],
                         soil_surface_temperature)
 
-                    # print('net_heat_flux', net_heat_flux[lon, lat])
-                    # print('SH', input_arrays['surface_upward_sensible_heat_flux'][lon, lat])
-                    # print('LH', input_arrays['surface_upward_latent_heat_flux'][lon, lat])
-
                     # Energy balance for lower surface of snow/ice
                     if area_type == 'sea_ice':
                         # TODO Add ocean heat flux parameterization
                         # At sea surface
                         heat_flux_to_sea_water = (new_temperature[1] - new_temperature[0])*kappa_snow_ice[0]/self._dz
-                        # print('heat_flux_to_sea_water', heat_flux_to_sea_water)
 
                         # If heat_flux_to_sea_water is positive, flux of heat into water
                         # an impossible situation which means ice is above freezing point.
@@ -232,12 +221,9 @@ class IceSheet(ClimtImplicit):
                         diagnostic_arrays['heat_flux_into_sea_water_due_to_sea_ice'][lon, lat]\
                             = heat_flux_to_sea_water
 
-                        # print('height_of_growing_ice', height_of_growing_ice)
-
                     elif area_type in ['land_ice', 'land']:
                         # At land surface
                         heat_flux_to_land = (new_temperature[0] - new_temperature[1]) * kappa_snow_ice[0] / self._dz
-                        # print('heat_flux_to_land', heat_flux_to_land)
 
                         diagnostic_arrays['upward_heat_flux_at_ground_level_in_soil'][lon, lat] \
                             = heat_flux_to_land
@@ -250,7 +236,6 @@ class IceSheet(ClimtImplicit):
                     # Energy balance at atmosphere surface
                     heat_flux_to_atmosphere = ((new_temperature[-1] - new_temperature[-2]) *
                                                (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/self._dz)
-                    # print('heat_flux_to_atmosphere', heat_flux_to_atmosphere)
 
                     height_of_melting_ice = 0
                     # Surface is melting
@@ -259,7 +244,6 @@ class IceSheet(ClimtImplicit):
 
                         height_of_melting_ice = (energy_to_melt_ice*timestep.total_seconds() /
                                                  (rho_snow_ice[-1]*self._Lf))
-                        # print('height_of_melting_ice', height_of_melting_ice)
 
                         if height_of_melting_ice > input_arrays['surface_snow_thickness'][lon, lat]:
 

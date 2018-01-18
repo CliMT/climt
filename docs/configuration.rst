@@ -46,9 +46,9 @@ However, the shape of arrays used by a model can be set while calling
 Physical Configuration
 ----------------------
 
-climt provides the :py:mod:`climt.constant_library` interface to set and reset constants
-required by various components. The constants are put into different categories (`boltzmann_constant`
-is a 'physical constant' whereas `planetary_rotation_rate` is a 'planetary constant', for example).
+climt provides an interface to set and reset constants
+required by various components. The constants are put into different categories (:py:data:`boltzmann_constant`
+is a 'physical constant' whereas :py:data:`planetary_rotation_rate` is a 'planetary constant', for example).
 
 The constants can be reset to their default values so that climt is in a known state at the end of
 a simulation. In the future, climt will provide a context manager to clean up modified constants
@@ -72,10 +72,13 @@ Currently, climt allows for two kinds of behavioural modification of components.
   and therefore, they do not play well with :py:mod:`climt.ClimtImplicit`
   components that step forward the model in grid space. Typically, this is handled by
   finite differencing the output of Implicit components and providing them as time tendencies.
-  :py:mod:`ClimtImplicit` components have a method :py:mod:`ClimtImplicit.get_prognostic_version` which 
+  :py:mod:`ClimtImplicit` components have a method :py:mod:`ClimtImplicit.prognostic_version` which 
   returns a component which provides the
-  time differenced tendencies. The time differencing is done using a first order scheme: dX/dt =
-  (X_out - X_in)/timestep. See how this is practically used in the `Grey GCM`_.
+  time differenced tendencies. The time differencing is done using a first order scheme:
+ 
+  :math:`\frac{dX}{dt} = (X_{out} - X_{in})/\delta t`.
+  
+  See how this is used in the `Grey GCM`_.
 
 .. note::
     We also plan to introduce a `ScaledComponent` which allows scaling inputs and outputs/tendencies

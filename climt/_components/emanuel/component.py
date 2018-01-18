@@ -269,7 +269,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         q_sat = np.asfortranarray(bolton_q_sat(
             raw_arrays['air_temperature'],
             raw_arrays['air_pressure']*100,
-            self._Cpd.values.item(), self._Cpv.values.item()))
+            self._Cpd.values, self._Cpv.values))
 
         tend_arrays = numpy_version_of(tend_dict)
         diag_arrays = numpy_version_of(diag_dict)
