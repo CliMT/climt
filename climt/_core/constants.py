@@ -108,7 +108,7 @@ class ConstantLibrary(object):
 
     def _list_constants(self, constant_list):
 
-        for quantity in constant_list:
+        for quantity in sorted(list(constant_list)):
             print("{}: {} {}".format(quantity,
                                      self.current_constants[quantity].values,
                                      self.current_constants[quantity].units))
