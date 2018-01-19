@@ -92,6 +92,8 @@ def init_ozone(array_dims, quantity_description, initial_state):
     if array_dims[-1] == 30:
         target_profile = profile
 
+    # Ensure ozone concentration at top of model is not excessive
+    # This is more in line with observations.
     target_profile[-1] /= 10
 
     init_array[:] = target_profile[np.newaxis, np.newaxis, :]
