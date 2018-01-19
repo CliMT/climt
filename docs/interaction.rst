@@ -13,18 +13,21 @@ Model State
 ------------
 
 The model state is a dictionary whose keys are names of
-quantities and values are `xarray`_ DataArrays. To ensure
+quantities and values are `sympl`_ DataArrays. The `sympl`_ DataArray is
+a thin wrapper over the `xarray`_ DataArray that makes it units aware. To ensure
 model scripts are readable not just by specialists, names
 of quantities use the descriptive `CF Convention`_. Only
 in the case where the CF Convention names are really
 unwieldy, like :code:`air_temperature_at_effective_cloud_top_defined_by_infrared_radiation` for
 example, we use more convenient names.
 
-DataArrays
-are a more human-friendly way of handling numerical arrays.
+DataArrays are a more human-friendly way of handling numerical arrays.
 DataArrays label the dimensions of an array and provide
 various mathematical functions which can be directly
-applied to arrays.
+applied to arrays. `sympl`_ DataArrays in addition allow conversion
+between units, a feature required to allow interoperability between
+components which expect inputs in different units.
+
 
 Let's create a 3-d model state to see how useful DataArrays are:
 
@@ -76,6 +79,14 @@ As you can see, :code:`air_temperature` has
 * coordinates of some_x_coord, some_y_coord and mid_levels
 * units of *degK*, which is the notation used in CliMT (and Sympl) for
   *degrees Kelvin*.
+
+It is also fairly easy to change units. The :py:func:`.to_units()` method can
+be used as below to return a DataArray with the equivalent temperature in degrees Farenheit:
+
+.. ipython:: python
+
+    state['air_temperature'].to_units('degF')
+
 
 .. note::
 
@@ -167,6 +178,8 @@ a tendency, then its units will be :code:`degK/s`.
 
 
 .. _xarray: http://xarray.pydata.org
+
+.. _sympl: http://sympl.readthedocs.io
 
 .. _supported: http://xarray.pydata.org/en/stable/computation.html
 

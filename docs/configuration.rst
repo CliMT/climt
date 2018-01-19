@@ -1,7 +1,7 @@
 .. highlight:: python
 
 =========================
-Configuring climt
+Configuring CliMT
 =========================
 
 A typical climate model allows the user the following
@@ -25,7 +25,7 @@ Climate models can be configured in many ways, including hard coded configuratio
 shell environment variables. These diverse ways of configuring a climate model make it difficult
 to keep track of all configurations and changes made.
 
-climt aims to keep all configuration in the main run script, but separated logically to ensure
+CliMT aims to keep all configuration in the main run script, but separated logically to ensure
 the script is still intuitive to read.
 
 Algorithmic Configuration
@@ -38,7 +38,7 @@ to the component while creating it. See, for example, the documentation for
 Memory/Array Configuration
 --------------------------
 
-climt does not yet support MPI, so there is no API yet to handle distributed arrays.
+CliMT does not yet support MPI, so there is no API yet to handle distributed arrays.
 However, the shape of arrays used by a model can be set while calling 
 :py:func:`climt.get_default_state`. See, for example, the configuration of arrays in a
 `GCM`_.
@@ -46,12 +46,12 @@ However, the shape of arrays used by a model can be set while calling
 Physical Configuration
 ----------------------
 
-climt provides an interface to set and reset constants
+CliMT provides an interface to set and reset constants
 required by various components. The constants are put into different categories (:py:data:`boltzmann_constant`
 is a 'physical constant' whereas :py:data:`planetary_rotation_rate` is a 'planetary constant', for example).
 
-The constants can be reset to their default values so that climt is in a known state at the end of
-a simulation. In the future, climt will provide a context manager to clean up modified constants
+The constants can be reset to their default values so that CliMT is in a known state at the end of
+a simulation. In the future, CliMT will provide a context manager to clean up modified constants
 at the end of a run.
 
 You can read more about this functionality in :ref:`utility_functions`.
@@ -59,7 +59,7 @@ You can read more about this functionality in :ref:`utility_functions`.
 Behavioural Configuration
 --------------------------
 
-Currently, climt allows for two kinds of behavioural modification of components.
+Currently, CliMT allows for two kinds of behavioural modification of components.
 
 * Piecewise constant output: Computationally expensive modules like radiative transfer
   are sometimes called only once every few timesteps, and the same values is used for

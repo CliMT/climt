@@ -362,7 +362,7 @@ class TestGrayLongwaveRadiation(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestGridScaleCondensation(ComponentBase):
@@ -490,7 +490,7 @@ class TestSimplePhysics(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestSimplePhysicsPrognostic(ComponentBase):
@@ -510,7 +510,7 @@ class TestSimplePhysicsPrognostic(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestRRTMGLongwave(ComponentBase):
@@ -527,7 +527,7 @@ class TestRRTMGLongwave(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestRRTMGLongwaveWithClouds(ComponentBase):
@@ -544,7 +544,7 @@ class TestRRTMGLongwaveWithClouds(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestRRTMGLongwaveWithExternalInterfaceTemperature(ComponentBase):
@@ -561,7 +561,7 @@ class TestRRTMGLongwaveWithExternalInterfaceTemperature(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestRRTMGShortwave(ComponentBase):
@@ -578,7 +578,7 @@ class TestRRTMGShortwave(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestSlabSurface(ComponentBase):
@@ -595,7 +595,7 @@ class TestSlabSurface(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestEmanuel(ComponentBase):
@@ -614,7 +614,7 @@ class TestEmanuel(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 def test_various_init_parameters_emanuel():
@@ -654,7 +654,7 @@ class TestDcmip(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 def test_dcmip_validate_inputs():
@@ -720,7 +720,7 @@ class TestIceSheet(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestIceSheetSeaIce(ComponentBase):
@@ -743,7 +743,7 @@ class TestIceSheetSeaIce(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestIceSheetLandIce(ComponentBase):
@@ -766,7 +766,7 @@ class TestIceSheetLandIce(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestIceSheetLand(ComponentBase):
@@ -788,7 +788,7 @@ class TestIceSheetLand(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 def test_ice_sheet_too_high():
@@ -827,7 +827,7 @@ class TestInstellation(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestGFSDycore(ComponentBase):
@@ -851,7 +851,7 @@ class TestGFSDycore(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestGFSDycoreWithPrognostic(ComponentBase):
@@ -880,7 +880,7 @@ class TestGFSDycoreWithPrognostic(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 def tests_dycore_with_prognostic_attrs_are_sane():

@@ -54,8 +54,15 @@ https://sympl.readthedocs.io.
 Installation
 -------------
 
-The `documentation`_ has installations to install CliMT.
+CliMT can be installed directly from the python package index using pip.
 
+    pip install climt
+
+should work on most systems. From version 0.9.2 onwards, this command will
+install binary wheels, eliminating the requirement of a compiler on your
+system.
+
+More detailed instructions are available in the `documentation`_.
 
 Features
 --------
