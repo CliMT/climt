@@ -116,9 +116,9 @@ class RRTMGLongwave(ClimtPrognostic):
                 Choose how cloud optical properties are calculated:
 
                 * :code:`direct_input` = Both cloud fraction and cloud optical depth are input directly
-                * :code:`single_cloud_type` = Cloud fraction and cloud physical properties are input, ice and liquid clouds are
-                  treated together, cloud absorptivity is a constant value (0.060241)
-                  * :code:`liquid_and_ice_clouds` = Cloud fraction and cloud physical properties are input, ice and liquid
+                * :code:`single_cloud_type` = Cloud fraction and cloud physical properties are input, ice
+                  and liquid clouds are treated together, cloud absorptivity is a constant value (0.060241)
+                * :code:`liquid_and_ice_clouds` = Cloud fraction and cloud physical properties are input, ice and liquid
                   clouds are treated separately
 
             cloud_ice_properties (string):
@@ -127,7 +127,7 @@ class RRTMGLongwave(ClimtPrognostic):
                 * :code:`ebert_curry_one` = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
                 * :code:`ebert_curry_two` = ice particle has effective radius between 13.0 and 130.0 micron `[Ebert and Curry 1992]`_
                 * :code:`key_streamer_manual` = ice particle has effective radius between 5.0 and 131.0 micron
-                    `[Key, Streamer Ref. Manual, 1996]`_
+                  `[Key, Streamer Ref. Manual, 1996]`_
                 * :code:`fu` = ice particle has generalised effective size (dge) between 5.0 and 140.0 micron
                   `[Fu, 1996]`_. (dge = 1.0315 * r_ec)
 

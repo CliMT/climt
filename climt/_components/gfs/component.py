@@ -100,7 +100,7 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
             number_of_tracers (int, optional):
                 The number of additional tracers to be used by the model. A minimum of
                 four tracers are used for specific humidity, ozone and liquid and solid cloud condensate.
-                This number indicates number of tracers beyond these three. These tracers
+                This number indicates number of tracers beyond these four. These tracers
                 will appear in the state dictionary in a :code:`DataArray` whose key is
                 :code:`gfs_tracers` and dimensions are
                 :code:`(number_of_longitudes, number_of_latitudes, number_of_levels,
