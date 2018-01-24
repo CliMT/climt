@@ -62,7 +62,7 @@ should work on most systems. From version 0.9.2 onwards, this command will
 install binary wheels, eliminating the requirement of a compiler on your
 system.
 
-More detailed instructions are available in the `documentation`_.
+Detailed instructions for Mac and Linux systems are available in the `documentation`_.
 
 Features
 --------
