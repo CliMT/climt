@@ -146,6 +146,7 @@ class RRTMGShortwave(ClimtPrognostic):
             cloud_liquid_water_properties='radius_dependent_absorption',
             solar_variability_method=0,
             use_solar_constant_from_fortran=False,
+            ignore_day_of_year=False,
             facular_sunspot_amplitude=None,
             solar_variability_by_band=None,
             aerosol_type='no_aerosol'):
@@ -196,17 +197,17 @@ class RRTMGShortwave(ClimtPrognostic):
 
                 * solar_variability_method = -1:
 
-                    * If :code:`use_internal_solar_constant = True`: No solar variability and no solar cycle
+                    * If :code:`use_solar_constant_from_fortran = True`: No solar variability and no solar cycle
                       with a solar constant of 1368.22 :math:`W m^{-2}`.
-                    * If :code:`use_internal_solar_constant = False`: Solar variability defined by setting
+                    * If :code:`use_solar_constant_from_fortran = False`: Solar variability defined by setting
                       non-zero scale factors in :code:`solar_variability_by_band`.
 
                 * solar_variability_method = 0:
 
-                    * If :code:`use_internal_solar_constant = True`: No solar variability and no solar cycle
+                    * If :code:`use_solar_constant_from_fortran = True`: No solar variability and no solar cycle
                       with a solar constant of 1360.85 :math:`W m^{-2}`, with facular and
                       sunspot effects fixed to the mean of solar cycles 13-24.
-                    * If :code:`use_internal_solar_constant = False`: No solar variability and no solar cycle.
+                    * If :code:`use_solar_constant_from_fortran = False`: No solar variability and no solar cycle.
 
                 * solar_variability_method = 1: Solar variability using the NRLSSI2 solar model
                   with solar cycle contribution determined by :code:`solar_cycle_fraction` in
@@ -224,7 +225,13 @@ class RRTMGShortwave(ClimtPrognostic):
                  * If :code:`use_internal_solar_constant = False`: scale factors in :code:`solar_variability_by_band`.
 
             use_solar_constant_from_fortran (bool):
-                If :code:`False`, the solar constant is taken from the constants library.
+                If :code:`False`, the solar constant is taken from the constants library. The default
+                value is :code:`False`.
+
+            ignore_day_of_year (bool):
+                If :code:`True`, the solar output does not vary by day of year (i.e, higher close to the
+                solstices and lesser close to the equinoxes). Default value is :code:`False`.
+
 
             facular_sunspot_amplitude (array of dimension 2):
                 Facular and Sunspot amplitude variability parameters, described previously.
@@ -260,6 +267,8 @@ class RRTMGShortwave(ClimtPrognostic):
         self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
 
         self._solar_var_flag = solar_variability_method
+
+        self._ignore_day_of_year = ignore_day_of_year
 
         if facular_sunspot_amplitude is None:
             self._fac_sunspot_coeff = np.ones(2)
@@ -373,7 +382,10 @@ class RRTMGShortwave(ClimtPrognostic):
 
         model_time = state['time']
 
-        day_of_year = model_time.timetuple().tm_yday
+        if self._ignore_day_of_year:
+            day_of_year = 0
+        else:
+            day_of_year = model_time.timetuple().tm_yday
 
         cos_zenith_angle = np.asfortranarray(np.cos(raw_arrays['zenith_angle']))
 
