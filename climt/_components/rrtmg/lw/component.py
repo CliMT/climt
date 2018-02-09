@@ -279,60 +279,61 @@ class RRTMGLongwave(ClimtPrognostic):
         tend_arrays = numpy_version_of(tend_dict)
 
         # TODO add dflx_dt as well
-        for lon in range(mid_level_shape[0]):
 
-            raw_f_arrays = {}
-            diag_f_arrays = {}
-            tend_f_arrays = {}
-            for quantity in raw_arrays.keys():
-                raw_f_arrays[quantity] = np.asfortranarray(raw_arrays[quantity][lon, :])
-            for quantity in diag_arrays.keys():
-                diag_f_arrays[quantity] = np.asfortranarray(diag_arrays[quantity][lon, :])
-            for quantity in tend_arrays.keys():
-                tend_f_arrays[quantity] = np.asfortranarray(tend_arrays[quantity][lon, :])
+        raw_f_arrays = {}
+        diag_f_arrays = {}
+        tend_f_arrays = {}
+        for quantity in raw_arrays.keys():
+            raw_f_arrays[quantity] = np.asfortranarray(raw_arrays[quantity].transpose())
 
-            Tint_f = np.asfortranarray(Tint[lon, :])
-            Q_f = np.asfortranarray(Q[lon, :])
+        for quantity in diag_arrays.keys():
+            diag_f_arrays[quantity] = np.asfortranarray(diag_arrays[quantity].transpose())
 
-            _rrtmg_lw.rrtm_calculate_longwave_fluxes(
-                mid_level_shape[1],
-                mid_level_shape[2],
-                raw_f_arrays['air_pressure'],
-                raw_f_arrays['air_pressure_on_interface_levels'],
-                raw_f_arrays['air_temperature'],
-                Tint_f,
-                raw_f_arrays['surface_temperature'],
-                Q_f,
-                raw_f_arrays['mole_fraction_of_ozone_in_air'],
-                raw_f_arrays['mole_fraction_of_carbon_dioxide_in_air'],
-                raw_f_arrays['mole_fraction_of_methane_in_air'],
-                raw_f_arrays['mole_fraction_of_nitrous_oxide_in_air'],
-                raw_f_arrays['mole_fraction_of_oxygen_in_air'],
-                raw_f_arrays['mole_fraction_of_cfc11_in_air'],
-                raw_f_arrays['mole_fraction_of_cfc12_in_air'],
-                raw_f_arrays['mole_fraction_of_cfc22_in_air'],
-                raw_f_arrays['mole_fraction_of_carbon_tetrachloride_in_air'],
-                raw_f_arrays['surface_longwave_emissivity'],
-                raw_f_arrays['cloud_area_fraction_in_atmosphere_layer'],
-                raw_f_arrays['longwave_optical_thickness_due_to_aerosol'],
-                diag_f_arrays['upwelling_longwave_flux_in_air'],
-                diag_f_arrays['downwelling_longwave_flux_in_air'],
-                tend_f_arrays['air_temperature'],
-                diag_f_arrays['upwelling_longwave_flux_in_air_assuming_clear_sky'],
-                diag_f_arrays['downwelling_longwave_flux_in_air_assuming_clear_sky'],
-                diag_f_arrays['longwave_heating_rate_assuming_clear_sky'],
-                raw_f_arrays['longwave_optical_thickness_due_to_cloud'],
-                raw_f_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'],
-                raw_f_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
-                raw_f_arrays['cloud_ice_particle_size'],
-                raw_f_arrays['cloud_water_droplet_radius'])
+        for quantity in tend_arrays.keys():
+            tend_f_arrays[quantity] = np.asfortranarray(tend_arrays[quantity].transpose())
 
-            for quantity in diag_arrays.keys():
-                diag_arrays[quantity][lon, :] = diag_f_arrays[quantity]
-            for quantity in tend_arrays.keys():
-                tend_arrays[quantity][lon, :] = tend_f_arrays[quantity]
+        Tint_f = np.asfortranarray(Tint.transpose())
+        Q_f = np.asfortranarray(Q.transpose())
 
-            # tend_arrays['air_temperature'][lon, :, -1] = 0
+        _rrtmg_lw.rrtm_calculate_longwave_fluxes(
+            mid_level_shape[0],
+            mid_level_shape[1],
+            mid_level_shape[2],
+            raw_f_arrays['air_pressure'],
+            raw_f_arrays['air_pressure_on_interface_levels'],
+            raw_f_arrays['air_temperature'],
+            Tint_f,
+            raw_f_arrays['surface_temperature'],
+            Q_f,
+            raw_f_arrays['mole_fraction_of_ozone_in_air'],
+            raw_f_arrays['mole_fraction_of_carbon_dioxide_in_air'],
+            raw_f_arrays['mole_fraction_of_methane_in_air'],
+            raw_f_arrays['mole_fraction_of_nitrous_oxide_in_air'],
+            raw_f_arrays['mole_fraction_of_oxygen_in_air'],
+            raw_f_arrays['mole_fraction_of_cfc11_in_air'],
+            raw_f_arrays['mole_fraction_of_cfc12_in_air'],
+            raw_f_arrays['mole_fraction_of_cfc22_in_air'],
+            raw_f_arrays['mole_fraction_of_carbon_tetrachloride_in_air'],
+            raw_f_arrays['surface_longwave_emissivity'],
+            raw_f_arrays['cloud_area_fraction_in_atmosphere_layer'],
+            raw_f_arrays['longwave_optical_thickness_due_to_aerosol'],
+            diag_f_arrays['upwelling_longwave_flux_in_air'],
+            diag_f_arrays['downwelling_longwave_flux_in_air'],
+            tend_f_arrays['air_temperature'],
+            diag_f_arrays['upwelling_longwave_flux_in_air_assuming_clear_sky'],
+            diag_f_arrays['downwelling_longwave_flux_in_air_assuming_clear_sky'],
+            diag_f_arrays['longwave_heating_rate_assuming_clear_sky'],
+            raw_f_arrays['longwave_optical_thickness_due_to_cloud'],
+            raw_f_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'],
+            raw_f_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+            raw_f_arrays['cloud_ice_particle_size'],
+            raw_f_arrays['cloud_water_droplet_radius'])
+
+        for quantity in diag_dict.keys():
+            diag_dict[quantity].values = diag_f_arrays[quantity].transpose()
+
+        for quantity in tend_dict.keys():
+            tend_dict[quantity].values = tend_f_arrays[quantity].transpose()
 
         diag_dict['longwave_heating_rate'].values = tend_dict['air_temperature'].values
 

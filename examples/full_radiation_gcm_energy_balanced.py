@@ -18,10 +18,10 @@ def plot_function(fig, state):
     ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 2)
-    state['convective_heating_rate'].mean(
+    state['shortwave_heating_rate'].mean(
         dim='longitude').transpose().plot.contourf(
         ax=ax, levels=16, robust=True)
-    ax.set_title('Conv. Heating Rate')
+    ax.set_title('SW. Heating Rate')
 
     ax = fig.add_subplot(2, 2, 4)
     state['air_temperature'].mean(dim='longitude').transpose().plot.contourf(
@@ -42,7 +42,7 @@ monitor = PlotFunctionMonitor(plot_function)
 # netcdf_monitor = NetCDFMonitor('test_sw.nc', write_on_store=True,
 #                               store_names=fields_to_store)
 
-climt.constant_library.set_constants_from_dict({
+climt.set_constants_from_dict({
     'stellar_irradiance': {'value': 200, 'units': 'W m^-2'}})
 
 # Create components
@@ -61,13 +61,13 @@ simple_physics = simple_physics.prognostic_version()
 simple_physics.current_time_step = model_time_step
 convection.current_time_step = model_time_step
 
-constant_duration = 10
+constant_duration = 6
 
 radiation_lw = climt.RRTMGLongwave()
 radiation_lw = radiation_lw.piecewise_constant_version(
     constant_duration*model_time_step)
 
-radiation_sw = climt.RRTMGShortwave(use_internal_solar_constant=False)
+radiation_sw = climt.RRTMGShortwave(use_solar_constant_from_fortran=False)
 radiation_sw = radiation_sw.piecewise_constant_version(
     constant_duration*model_time_step)
 
@@ -109,7 +109,7 @@ my_state['air_temperature'].values[:] = temp_profile[
 dycore.prognostics = [simple_physics, slab_surface, radiation_sw,
                       radiation_lw, convection]
 
-for i in range(50000):
+for i in range(500000):
     output, diag = dycore(my_state)
     my_state.update(output)
     my_state.update(diag)

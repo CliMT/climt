@@ -186,9 +186,9 @@ else:
             sources=['climt/_components/rrtmg/lw/_rrtmg_lw.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
-            extra_compile_args=default_compile_args,
+            extra_compile_args=default_compile_args + ['-fopenmp'],
             library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/librrtmg_lw.a'] + default_link_args),
+            extra_link_args=[lib_path+'/librrtmg_lw.a', '-fopenmp'] + default_link_args),
 
         Extension(
             'climt._components.gfs._gfs_dynamics',
@@ -208,9 +208,9 @@ else:
             sources=['climt/_components/rrtmg/sw/_rrtmg_sw.pyx'],
             libraries=libraries,
             include_dirs=include_dirs,
-            extra_compile_args=default_compile_args,
+            extra_compile_args=default_compile_args + ['-fopenmp'],
             library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/librrtmg_sw.a'] + default_link_args),
+            extra_link_args=[lib_path+'/librrtmg_sw.a', '-fopenmp'] + default_link_args),
 
         Extension(
             'climt._components.dcmip._dcmip',

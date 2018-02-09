@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* RRTMG LW and SW are now OpenMP parallel
 * Added Instellation component to calculate zenith angle
 * Added tests to increase coverage
 * New constants handling functionality added

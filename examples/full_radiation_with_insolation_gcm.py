@@ -42,7 +42,7 @@ def plot_function(fig, state):
 #                               store_names=fields_to_store)
 monitor = PlotFunctionMonitor(plot_function)
 
-climt.constant_library.modify_constants_in_library({
+climt.set_constants_from_dict({
     'stellar_irradiance': {'value': 1200, 'units': 'W m^-2'}})
 
 # Create components
