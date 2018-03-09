@@ -77,29 +77,21 @@ class IceSheet(ClimtImplicit):
         self._output_levels = int(number_vertical_levels)
         self.extra_dimensions['ice_vertical_levels'] = np.arange(self._output_levels)
 
-        self._Kice = get_constant(
-            'thermal_conductivity_of_solid_phase_as_ice')
+        self._Kice = get_constant('thermal_conductivity_of_solid_phase_as_ice')
 
-        self._Ksnow = get_constant(
-            'thermal_conductivity_of_solid_phase_as_snow')
+        self._Ksnow = get_constant('thermal_conductivity_of_solid_phase_as_snow')
 
-        self._rho_ice = get_constant(
-            'density_of_solid_phase_as_ice')
+        self._rho_ice = get_constant('density_of_solid_phase_as_ice')
 
-        self._C_ice = get_constant(
-            'heat_capacity_of_solid_phase_as_ice')
+        self._C_ice = get_constant('heat_capacity_of_solid_phase_as_ice')
 
-        self._rho_snow = get_constant(
-            'density_of_solid_phase_as_snow')
+        self._rho_snow = get_constant('density_of_solid_phase_as_snow')
 
-        self._C_snow = get_constant(
-            'heat_capacity_of_solid_phase_as_snow')
+        self._C_snow = get_constant('heat_capacity_of_solid_phase_as_snow')
 
-        self._Lf = get_constant(
-            'latent_heat_of_fusion')
+        self._Lf = get_constant('latent_heat_of_fusion')
 
-        self._temp_melt = get_constant(
-            'freezing_temperature_of_liquid_phase')
+        self._temp_melt = get_constant('freezing_temperature_of_liquid_phase')
 
     def __call__(self, state, timestep):
         """

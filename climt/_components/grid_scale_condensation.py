@@ -29,18 +29,12 @@ class GridScaleCondensation(Implicit):
         Initialise component.
         """
 
-        self._Cpd = get_constant(
-            'heat_capacity_of_dry_air_at_constant_pressure')
-        self._Lv = get_constant(
-            'latent_heat_of_condensation')
-        self._Rd = get_constant(
-            'gas_constant_of_dry_air')
-        self._Rh2O = get_constant(
-            'gas_constant_of_vapor_phase')
-        self._g = get_constant(
-            'gravitational_acceleration')
-        self._rhow = get_constant(
-            'density_of_liquid_phase')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
+        self._Lv = get_constant('latent_heat_of_condensation')
+        self._Rd = get_constant('gas_constant_of_dry_air')
+        self._Rh2O = get_constant('gas_constant_of_vapor_phase')
+        self._g = get_constant('gravitational_acceleration')
+        self._rhow = get_constant('density_of_liquid_phase')
 
     def __call__(self, state, timestep):
         """

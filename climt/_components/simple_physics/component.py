@@ -134,26 +134,19 @@ class SimplePhysics(ClimtImplicit):
                                  self._surface_flux, self._use_ext_ts,
                                  self._use_ext_qsurf)
 
-        self._g = get_constant(
-            'gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration')
 
-        self._Cpd = get_constant(
-            'heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._Rair = get_constant(
-            'gas_constant_of_dry_air')
+        self._Rair = get_constant('gas_constant_of_dry_air')
 
-        self._Rcond = get_constant(
-            'gas_constant_of_vapor_phase')
+        self._Rcond = get_constant('gas_constant_of_vapor_phase')
 
-        self._radius = get_constant(
-            'planetary_radius')
+        self._radius = get_constant('planetary_radius')
 
-        self._Omega = get_constant(
-            'planetary_rotation_rate')
+        self._Omega = get_constant('planetary_rotation_rate')
 
-        self._Lv = get_constant(
-            'latent_heat_of_condensation')
+        self._Lv = get_constant('latent_heat_of_condensation')
 
         self._Ct = drag_coefficient_heat_fluxes
 
@@ -167,8 +160,7 @@ class SimplePhysics(ClimtImplicit):
 
         self._Cm = maximum_momentum_drag_coefficient
 
-        self._rho_condensible = get_constant(
-            'density_of_liquid_water')
+        self._rho_condensible = get_constant('density_of_liquid_water')
 
         phys.set_physical_constants(self._g, self._Cpd, self._Rair, self._Lv,
                                     self._Rcond, self._radius, self._Omega,

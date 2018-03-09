@@ -89,25 +89,19 @@ class HeldSuarez(ClimtPrognostic):
         self._delta_T_y = equator_pole_temperature_difference
         self._delta_theta_z = delta_theta_z
 
-        self._p0 = get_constant(
-            'reference_air_pressure')
+        self._p0 = get_constant('reference_air_pressure')
 
-        self._Cpd = get_constant(
-            'heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._R_d = get_constant(
-            'gas_constant_of_dry_air')
+        self._R_d = get_constant('gas_constant_of_dry_air')
 
         self._kappa = self._R_d/self._Cpd
 
-        self._Omega = get_constant(
-            'planetary_rotation_rate')
+        self._Omega = get_constant('planetary_rotation_rate')
 
-        self._g = get_constant(
-            'gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration')
 
-        self._r_planet = get_constant(
-            'planetary_radius')
+        self._r_planet = get_constant('planetary_radius')
 
         '''
         # cache computed profiles if grid coordinates are given

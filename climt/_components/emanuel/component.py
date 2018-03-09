@@ -201,29 +201,21 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         self._mf_timescale = reference_mass_flux_timescale
         self._ntracers = number_of_tracers
 
-        self._g = get_constant(
-            'gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration')
 
-        self._Cpd = get_constant(
-            'heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._Cpv = get_constant(
-            'heat_capacity_of_vapor_phase')
+        self._Cpv = get_constant('heat_capacity_of_vapor_phase')
 
-        self._Rair = get_constant(
-            'gas_constant_of_dry_air')
+        self._Rair = get_constant('gas_constant_of_dry_air')
 
-        self._Rcond = get_constant(
-            'gas_constant_of_vapor_phase')
+        self._Rcond = get_constant('gas_constant_of_vapor_phase')
 
-        self._Lv = get_constant(
-            'latent_heat_of_condensation')
+        self._Lv = get_constant('latent_heat_of_condensation')
 
-        self._rho_condensible = get_constant(
-            'density_of_liquid_phase')
+        self._rho_condensible = get_constant('density_of_liquid_phase')
 
-        self._Cl = get_constant(
-            'specific_enthalpy_of_vapor_phase')
+        self._Cl = get_constant('specific_enthalpy_of_vapor_phase')
 
         _emanuel_convection.init_emanuel_convection(
             self._pbl, self._min_conv_layer,

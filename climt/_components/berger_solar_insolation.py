@@ -25,8 +25,7 @@ class BergerSolarInsolation(Diagnostic):
         Initialise insolation object
         """
         self._orbital_parameters = {}
-        self._solar_constant = get_constant(
-            'stellar_irradiance')
+        self._solar_constant = get_constant('stellar_irradiance')
 
     def __call__(self, state):
         """

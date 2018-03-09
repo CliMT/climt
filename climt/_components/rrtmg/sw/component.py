@@ -285,38 +285,27 @@ class RRTMGShortwave(ClimtPrognostic):
         if use_solar_constant_from_fortran:
             self._solar_const = 0
         else:
-            self._solar_const = get_constant(
-                'stellar_irradiance')
+            self._solar_const = get_constant('stellar_irradiance')
 
-        self._g = get_constant(
-            'gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration')
 
-        self._planck = get_constant(
-            'planck_constant').to_units('erg s')
+        self._planck = get_constant('planck_constant').to_units('erg s')
 
-        self._boltzmann = get_constant(
-            'boltzmann_constant').to_units('erg K^-1')
+        self._boltzmann = get_constant('boltzmann_constant').to_units('erg K^-1')
 
-        self._c = get_constant(
-            'speed_of_light').to_units('cm s^-1')
+        self._c = get_constant('speed_of_light').to_units('cm s^-1')
 
-        self._Na = get_constant(
-            'avogadro_constant')
+        self._Na = get_constant('avogadro_constant')
 
-        self._loschmidt = get_constant(
-            'loschmidt_constant').to_units('cm^-3')
+        self._loschmidt = get_constant('loschmidt_constant').to_units('cm^-3')
 
-        self._R = get_constant(
-            'universal_gas_constant').to_units('erg mol^-1 K^-1')
+        self._R = get_constant('universal_gas_constant').to_units('erg mol^-1 K^-1')
 
-        self._stef_boltz = get_constant(
-            'stefan_boltzmann_constant').to_units('W cm^-2 K^-4')
+        self._stef_boltz = get_constant('stefan_boltzmann_constant').to_units('W cm^-2 K^-4')
 
-        self._secs_per_day = get_constant(
-            'seconds_per_day')
+        self._secs_per_day = get_constant('seconds_per_day')
 
-        self._Cpd = get_constant(
-            'heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
         _rrtmg_sw.set_constants(
             numpy_pi, self._g,

@@ -28,12 +28,9 @@ class GrayLongwaveRadiation(ClimtPrognostic):
 
         """
 
-        self._stefan_boltzmann = get_constant(
-            'stefan_boltzmann_constant')
-        self._g = get_constant(
-            'gravitational_acceleration')
-        self._Cpd = get_constant(
-            'heat_capacity_of_dry_air_at_constant_pressure')
+        self._stefan_boltzmann = get_constant('stefan_boltzmann_constant')
+        self._g = get_constant('gravitational_acceleration')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
     def __call__(self, state):
         """
