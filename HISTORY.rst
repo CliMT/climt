@@ -4,6 +4,7 @@ History
 
 Latest
 ------
+* The gas constant for dry air in the Emanuel scheme is now renamed _Rdair
 * RRTMG LW and SW are now OpenMP parallel
 * Added Instellation component to calculate zenith angle
 * Added tests to increase coverage
