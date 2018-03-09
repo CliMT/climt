@@ -207,7 +207,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
 
         self._Cpv = get_constant('heat_capacity_of_vapor_phase')
 
-        self._Rair = get_constant('gas_constant_of_dry_air')
+        self._Rdair = get_constant('gas_constant_of_dry_air')
 
         self._Rcond = get_constant('gas_constant_of_vapor_phase')
 
@@ -228,7 +228,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
             self._con_mom_txfr, self._dtmax,
             self._beta, self._alpha, self._mf_damp,
             self._Cpd, self._Cpv, self._Cl,
-            self._Rcond, self._Rair,
+            self._Rcond, self._Rdair,
             self._Lv, self._g,
             self._rho_condensible, self._mf_timescale)
 
