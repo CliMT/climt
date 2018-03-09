@@ -31,8 +31,8 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask uninstall oclint     ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc               ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade python            ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then virtualenv venv -p python3     ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate       ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python3 -m venv climt_venv     ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source climt_venv/bin/activate ; fi
 
 install:
 - python -m pip install -r requirements_dev.txt
