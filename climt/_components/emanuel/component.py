@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from ..._core import ClimtImplicitPrognostic, bolton_q_sat, numpy_version_of
-from sympl import replace_none_with_default, DataArray
+from ..._core import (ClimtImplicitPrognostic, bolton_q_sat,
+                      numpy_version_of, get_constant)
 import numpy as np
 try:
     from . import _emanuel_convection
@@ -10,9 +10,9 @@ except ImportError:
 
 class EmanuelConvection(ClimtImplicitPrognostic):
     """
-    The Emanuel convection scheme from `[Emanuel and Živković-Rothman]`_
+    The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_
 
-    .. _[Emanuel and Živković-Rothman]:
+    .. _[Emanuel and Zivkovic-Rothman]:
             http://journals.ametsoc.org/doi/abs/10.1175/1520-0469(1999)056%3C1766%3ADAEOAC%3E2.0.CO%3B2
 
     """
@@ -88,15 +88,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                  mass_flux_relaxation_rate=0.1,
                  mass_flux_damping_rate=0.1,
                  reference_mass_flux_timescale=300.,
-                 number_of_tracers=0,
-                 specific_heat_dry_air=None,
-                 specific_heat_condensible=None,
-                 specific_enthalpy_condensible=2500.,
-                 gas_constant_condensible=None,
-                 gas_constant_dry_air=None,
-                 latent_heat_condensation=None,
-                 acceleration_gravity=None,
-                 density_condensed_phase=None):
+                 number_of_tracers=0):
         """
 
         Args:
@@ -172,39 +164,6 @@ class EmanuelConvection(ClimtImplicitPrognostic):
             number_of_tracers (integer, optional):
                 The number of additional tracers advected by the code.
 
-            specific_heat_dry_air (float, optional):
-                The heat capacity of dry air in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            specific_heat_condensible (float, optional):
-                The heat capacity of the condensible substance in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            specific_enthalpy_condensible (float, optional):
-                The specific enthalpy of the condensible substance in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            gas_constant_condensible (float, optional):
-                The gas constant for the condensible substance in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            gas_constant_dry_air (float, optional):
-                The gas constant for dry air in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            latent_heat_condensation (float, optional):
-                The latent heat of condensation for the condensible substance in
-                :math:`J kg^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            acceleration_gravity (float, optional):
-                The acceleration due to gravity in :math:`m s^{-2}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            density_condensed_phase (float, optional):
-                The density in the condensed phase of the condensible substance in
-                :math:`kg m^{-3}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
         """
 
         if (convective_momentum_transfer_coefficient < 0 or
@@ -242,40 +201,21 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         self._mf_timescale = reference_mass_flux_timescale
         self._ntracers = number_of_tracers
 
-        if specific_heat_condensible is not None:
-            specific_heat_condensible = DataArray(
-                specific_heat_condensible, attrs={'units': 'J kg^-1 K^-1'})
+        self._g = get_constant('gravitational_acceleration')
 
-        self._g = replace_none_with_default(
-            'gravitational_acceleration', acceleration_gravity)
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._Cpd = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
-            specific_heat_dry_air)
+        self._Cpv = get_constant('heat_capacity_of_vapor_phase')
 
-        self._Cpv = replace_none_with_default(
-            'heat_capacity_of_water_vapor_at_constant_pressure',
-            specific_heat_condensible)
+        self._Rdair = get_constant('gas_constant_of_dry_air')
 
-        self._Rair = replace_none_with_default(
-            'gas_constant_of_dry_air',
-            gas_constant_dry_air)
+        self._Rcond = get_constant('gas_constant_of_vapor_phase')
 
-        self._Rcond = replace_none_with_default(
-            'gas_constant_of_water_vapor',
-            gas_constant_condensible)
+        self._Lv = get_constant('latent_heat_of_condensation')
 
-        self._Lv = replace_none_with_default(
-            'latent_heat_of_vaporization_of_water',
-            latent_heat_condensation)
+        self._rho_condensible = get_constant('density_of_liquid_phase')
 
-        self._rho_condensible = replace_none_with_default(
-            'density_of_liquid_water',
-            density_condensed_phase)
-
-        self._Cl = replace_none_with_default(
-            'specific_enthalpy_water_vapor',
-            specific_enthalpy_condensible)
+        self._Cl = get_constant('specific_enthalpy_of_vapor_phase')
 
         _emanuel_convection.init_emanuel_convection(
             self._pbl, self._min_conv_layer,
@@ -288,7 +228,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
             self._con_mom_txfr, self._dtmax,
             self._beta, self._alpha, self._mf_damp,
             self._Cpd, self._Cpv, self._Cl,
-            self._Rcond, self._Rair,
+            self._Rcond, self._Rdair,
             self._Lv, self._g,
             self._rho_condensible, self._mf_timescale)
 
@@ -321,7 +261,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         q_sat = np.asfortranarray(bolton_q_sat(
             raw_arrays['air_temperature'],
             raw_arrays['air_pressure']*100,
-            self._Cpd.values.item(), self._Cpv.values.item()))
+            self._Cpd.values, self._Cpv.values))
 
         tend_arrays = numpy_version_of(tend_dict)
         diag_arrays = numpy_version_of(diag_dict)

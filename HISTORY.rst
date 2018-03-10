@@ -4,9 +4,29 @@ History
 
 Latest
 ------
+* The gas constant for dry air in the Emanuel scheme is now renamed _Rdair
+* RRTMG LW and SW are now OpenMP parallel
+* Added Instellation component to calculate zenith angle
+* Added tests to increase coverage
+* New constants handling functionality added
+* Travis builds now use stages
+* Appveyor CI up and running
+* Pre-installation of cython and numpy no longer necessary for source builds
 * Added snow-ice component
+* Ozone profiles do not need to be specified externally
+* Now also tested on Python 3.6
 
-v.0.9
+Breaking Changes
+----------------
+
+* API for constants setting changed to `set_constant_from_dict` and `add_constants_from_dict`
+* `GfsDynamicalCore` renamed to `GFSDynamicalCore` for consistency
+* `get_prognostic_version` method of `ClimtImplicit` renamed to `prognostic_version`, and
+  no longer accepts timestep as an argument. The current timestep should be set in
+  `ClimtImplicit.current_time_step` during each iteration.
+* `RRTMGShortwave` now uses sympl's solar constant by default instead of from fortran.
+
+v.0.9.1
 -------
 * Held-Suarez and moist GCM with grey radiation work!
 * Added DCMIP initial conditions, test 4 tried out.
@@ -26,6 +46,19 @@ v.0.9
 
 Breaking Changes
 ----------------
+
+Latest
+-------
+
+* method to obtain piecewise constant prognostic has been renamed to
+  :code:`piecewise_constant_version`
+* Ozone profile has been modified
+* Heating rate for RRTMG top-of-atmosphere is no longer manually set to zero
+* Components no longer accept constants during initialisation. All constant handling
+  is done internally.
+
+v.0.9
+------
 * SlabSurface no longer uses depth_slab_surface as input
 * changed order of outputs of GfsDynamicalCore and SimplePhysics to conform
   to TimeStepper order of diagnostics, new_state

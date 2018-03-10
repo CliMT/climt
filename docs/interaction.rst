@@ -13,18 +13,21 @@ Model State
 ------------
 
 The model state is a dictionary whose keys are names of
-quantities and values are `xarray`_ DataArrays. To ensure
+quantities and values are `sympl`_ DataArrays. The `sympl`_ DataArray is
+a thin wrapper over the `xarray`_ DataArray that makes it units aware. To ensure
 model scripts are readable not just by specialists, names
 of quantities use the descriptive `CF Convention`_. Only
 in the case where the CF Convention names are really
 unwieldy, like :code:`air_temperature_at_effective_cloud_top_defined_by_infrared_radiation` for
 example, we use more convenient names.
 
-DataArrays
-are a more human-friendly way of handling numerical arrays.
-DataArrays label the dimensions of an array provide
+DataArrays are a more human-friendly way of handling numerical arrays.
+DataArrays label the dimensions of an array and provide
 various mathematical functions which can be directly
-applied to arrays.
+applied to arrays. `sympl`_ DataArrays in addition allow conversion
+between units, a feature required to allow interoperability between
+components which expect inputs in different units.
+
 
 Let's create a 3-d model state to see how useful DataArrays are:
 
@@ -77,11 +80,42 @@ As you can see, :code:`air_temperature` has
 * units of *degK*, which is the notation used in CliMT (and Sympl) for
   *degrees Kelvin*.
 
+It is also fairly easy to change units. The :py:func:`.to_units()` method can
+be used as below to return a DataArray with the equivalent temperature in degrees Farenheit:
+
+.. ipython:: python
+
+    state['air_temperature'].to_units('degF')
+
+
 .. note::
 
     CliMT always names the vertical coordinate as :code:`mid_levels` or :code:`interface_levels`,
     however, the state dictionary will contain a key corresponding to the name
     of the vertical coordinate specified by the user.
+
+As mentioned previously, DataArrays are a user-friendly way of handling numerical or numpy
+arrays. The numpy array underlying any DataArray is easily accessed using the :code:`values`
+attribute:
+
+.. ipython:: python
+
+    type(state['air_temperature'].values)
+
+and can also be modified easily:
+
+.. ipython:: python
+
+    state['air_temperature'].values[:] = 291
+
+The right hand side can also be any numpy array, as long as it has the same dimensions as the
+current numpy array.
+
+.. note::
+
+    It is recommended to use the syntax :code:`...values[:] = ...` rather than :code:`...values =
+    ...`, as the former modifies the numpy array in-place. In either case, DataArrays check to
+    ensure the dimensions (or shape) of the new data matches with the current dimensions. 
 
 You can perform any of the functions `supported`_ by xarray on
 the model state quantities.
@@ -144,6 +178,8 @@ a tendency, then its units will be :code:`degK/s`.
 
 
 .. _xarray: http://xarray.pydata.org
+
+.. _sympl: http://sympl.readthedocs.io
 
 .. _supported: http://xarray.pydata.org/en/stable/computation.html
 

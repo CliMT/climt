@@ -1,7 +1,8 @@
 from climt import (
     mass_to_volume_mixing_ratio,
     get_interface_values,
-    calculate_q_sat)
+    calculate_q_sat, numpy_version_of,
+    RRTMGShortwave, get_default_state)
 
 from sympl import DataArray
 import numpy as np
@@ -96,6 +97,18 @@ def test_qsat():
 
     assert np.all(qsat[surf_temp == 280] == qsat_at_280)
     assert np.all(qsat[surf_temp == 260] == qsat_at_260)
+
+
+def test_get_numpy_version_with_numpy_array_in_state():
+
+    component = RRTMGShortwave()
+    state = get_default_state([component])
+
+    state['test_values'] = np.arange(100)
+
+    raw_array = numpy_version_of(state)
+
+    assert np.all(raw_array['test_values'] == np.arange(100))
 
 
 if __name__ == '__main__':

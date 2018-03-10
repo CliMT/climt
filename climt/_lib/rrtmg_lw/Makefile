@@ -50,6 +50,8 @@ lib_rrtmglw: $(OBJS) $(OBJ_K_TABLES)
 rrtmg_lw_k_g.o: rrtmg_lw_k_g.f90
 	$(FC) $(FFLAGS) -O0 $< -c -o $@
 
+%.o: %.mod
+
 .f90.o:
 	$(FC) $(FFLAGS) -O3 $< -c -o $@
 

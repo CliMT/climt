@@ -11,11 +11,15 @@ CliMT
     :target: https://travis-ci.org/CliMT/climt
     :alt: Continuous Integration
 
+.. image:: https://ci.appveyor.com/api/projects/status/h9ayx22cxyfwh5rh?svg=true
+    :target: https://ci.appveyor.com/project/JoyMonteiro/climt
+    :alt: Continuous Integration
+
 .. image:: https://img.shields.io/codecov/c/github/CliMT/climt.svg
     :target: https://travis-ci.org/CliMT/climt
     :alt: Coverage
 
-.. image:: https://readthedocs.org/projects/climt/badge/?version=latest
+.. image:: https://readthedocs.org/projects/climt/badge/
     :target: https://climt.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
@@ -50,8 +54,15 @@ https://sympl.readthedocs.io.
 Installation
 -------------
 
-The `documentation`_ has installations to install CliMT.
+CliMT can be installed directly from the python package index using pip.
 
+    pip install climt
+
+should work on most systems. From version 0.9.2 onwards, this command will
+install binary wheels, eliminating the requirement of a compiler on your
+system.
+
+Detailed instructions for Mac and Linux systems are available in the `documentation`_.
 
 Features
 --------

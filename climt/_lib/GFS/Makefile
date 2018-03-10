@@ -1,4 +1,13 @@
-include Makefile.conf
+OMPFLAG		 = -fopenmp
+DEBUGFLAGS   =-fimplicit-none
+FFLAGS		 =-O3 -march=native -ffast-math -pipe -fomit-frame-pointer -fbacktrace -fno-range-check -fPIC
+FREEFLAG	 =-ffree-form
+AUTOFLAG	 =-frecursive
+EXEC         = ../bin/gfs
+LDFLAGS      = $(OMPFLAG)
+SHAREFLAGS 	 = #-static
+LIBS         =  -lshtns_omp -L/usr/lib/ -llapack -lfftw3_omp -lfftw3 -lrt -lm 
+CFLAGS       = -O2# -DLINUX
 
 .SUFFIXES: .o .f90 .F90
 

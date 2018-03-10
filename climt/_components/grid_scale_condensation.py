@@ -1,7 +1,7 @@
 from sympl import (
-    Implicit, DataArray, replace_none_with_default,
+    Implicit, DataArray,
     get_numpy_array, combine_dimensions)
-from .._core import bolton_q_sat, bolton_dqsat_dT
+from .._core import bolton_q_sat, bolton_dqsat_dT, get_constant
 import numpy as np
 
 
@@ -24,55 +24,17 @@ class GridScaleCondensation(Implicit):
         'air_temperature', 'specific_humidity',
     )
 
-    def __init__(self,
-                 gas_constant_of_dry_air=None,
-                 gas_constant_of_water_vapor=None,
-                 heat_capacity_of_dry_air_at_constant_pressure=None,
-                 latent_heat_of_vaporization_of_water=None,
-                 gravitational_acceleration=None,
-                 density_of_liquid_water=None):
+    def __init__(self):
+        """
+        Initialise component.
         """
 
-        Args:
-            gas_constant_of_dry_air (float, optional):
-                Value in  $J kg^{-1} K^{-1}$.
-                Default taken from :code:`sympl.default_constants`.
-
-            gas_constant_of_water_vapor (float, optional):
-                Value in $J kg^{-1} K^{-1}$.
-                Default taken from :code:`sympl.default_constants`.
-
-            heat_capacity_of_dry_air_at_constant_pressure (float, optional):
-                Value in $J kg^{-1} K^{-1}$.
-                Default taken from :code:`sympl.default_constants`.
-
-            latent_heat_of_vaporization_of_water (float, optional):
-                Value in $J kg^{-1}$.
-                Default taken from :code:`sympl.default_constants`.
-
-            gravitational_acceleration (float, optional):
-                Value in $m s^{-2}$. Default taken from :code:`sympl.default_constants`.
-
-            density_of_liquid_water (float, optional):
-                Value in $kg m^{-3}$. Default taken from :code:`sympl.default_constants`.
-        """
-
-        self._Cpd = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
-            heat_capacity_of_dry_air_at_constant_pressure)
-        self._Lv = replace_none_with_default(
-            'latent_heat_of_vaporization_of_water',
-            latent_heat_of_vaporization_of_water)
-        self._Rd = replace_none_with_default('gas_constant_of_dry_air',
-                                             gas_constant_of_dry_air)
-        self._Rh2O = replace_none_with_default('gas_constant_of_water_vapor',
-                                               gas_constant_of_water_vapor)
-        self._g = replace_none_with_default('gravitational_acceleration',
-                                            gravitational_acceleration)
-        self._rhow = replace_none_with_default('density_of_liquid_water',
-                                               density_of_liquid_water)
-        self._q_sat = bolton_q_sat
-        self._dqsat_dT = bolton_dqsat_dT
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
+        self._Lv = get_constant('latent_heat_of_condensation')
+        self._Rd = get_constant('gas_constant_of_dry_air')
+        self._Rh2O = get_constant('gas_constant_of_vapor_phase')
+        self._g = get_constant('gravitational_acceleration')
+        self._rhow = get_constant('density_of_liquid_phase')
 
     def __call__(self, state, timestep):
         """
@@ -106,10 +68,12 @@ class GridScaleCondensation(Implicit):
         p_interface = get_numpy_array(
             state['air_pressure_on_interface_levels'].to_units('Pa'),
             out_dims=('x', 'y', 'z'))
-        q_sat = self._q_sat(T, p, self._Rd.values, self._Rh2O.values)
+
+        q_sat = bolton_q_sat(T, p, self._Rd.values, self._Rh2O.values)
         saturated = q > q_sat
-        dqsat_dT = self._dqsat_dT(
+        dqsat_dT = bolton_dqsat_dT(
             T[saturated], self._Lv.values, self._Rh2O.values, q_sat[saturated])
+
         condensed_q = np.zeros_like(q)
         condensed_q[saturated] = (
             q[saturated] - q_sat[saturated])/(

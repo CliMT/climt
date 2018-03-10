@@ -1,6 +1,6 @@
 from __future__ import division
-from ..._core import ClimtSpectralDynamicalCore, numpy_version_of
-from sympl import replace_none_with_default, DataArray
+from ..._core import ClimtSpectralDynamicalCore, numpy_version_of, get_constant
+from sympl import DataArray
 import numpy as np
 import sys
 from datetime import timedelta
@@ -10,7 +10,7 @@ except ImportError:
     print("Import failed. GFS dynamical core will not be available!")
 
 
-class GfsDynamicalCore(ClimtSpectralDynamicalCore):
+class GFSDynamicalCore(ClimtSpectralDynamicalCore):
     """
     Climt interface to the GFS dynamical core. The GFS
     code is available on `github`_.
@@ -77,16 +77,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             number_of_tracers=0,
             number_of_damped_levels=0,
             damping_timescale=2.*86400,
-            dry_pressure=1.0132e5,
-            time_step=1200.,
-            planetary_radius=None,
-            planetary_rotation_rate=None,
-            universal_gas_constant=None,
-            gas_constant_dry_air=None,
-            gas_constant_condensible=None,
-            acceleration_gravity=None,
-            specific_heat_dry_air=None,
-            specific_heat_condensible=None):
+            time_step=1200.):
         """
         Initialise the GFS dynamical core.
 
@@ -109,7 +100,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             number_of_tracers (int, optional):
                 The number of additional tracers to be used by the model. A minimum of
                 four tracers are used for specific humidity, ozone and liquid and solid cloud condensate.
-                This number indicates number of tracers beyond these three. These tracers
+                This number indicates number of tracers beyond these four. These tracers
                 will appear in the state dictionary in a :code:`DataArray` whose key is
                 :code:`gfs_tracers` and dimensions are
                 :code:`(number_of_longitudes, number_of_latitudes, number_of_levels,
@@ -121,82 +112,28 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
             damping_timescale (float, optional):
                 The damping timescale in :math:`s` to use for top-of-model Rayleigh damping.
 
-            dry_pressure (float, optional):
-                The dry pressure decides the mass of the dry atmosphere, to be used by the
-                dycore to keep the dry mass of the atmosphere constant for the duration of the run.
-                The default value corresponds to :math:`10^5\ Pa`, which is suitable for the
-                current atmospheric mass on earth.
-
             time_step (float, optional):
                 The time step to be used by the model in :math:`s`.
 
-            planetary_radius (float, optional):
-                The radius of the planet to be used in :math:`m`. If None, the default
-                value from :code:`sympl.default_constants` is used.
-
-            planetary_rotation_rate (float, optional):
-                The rotation rate of the planet to be used in :math:`s^{-1}`. If None, the default
-                value from :code:`sympl.default_constants` is used.
-
-            universal_gas_constant (float):
-                value of the gas constant in :math:`J K^{-1} mol^{-1}`.
-                Default value from climt.default_constants is used if None.
-
-            gas_constant_dry_air (float, optional):
-                The gas constant for dry air in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            gas_constant_condensible (float, optional):
-                The gas constant for the condensible substance in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            acceleration_gravity (float):
-                value of acceleration due to gravity in
-                :math:`m s^{-1}`. If None, Default value from :code:`sympl.default_constants` is
-                used.
-
-           specific_heat_dry_air (float, optional):
-                The heat capacity of dry air in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-            specific_heat_condensible (float, optional):
-                The heat capacity of the condensible substance in :math:`J kg^{-1} K^{-1}`.
-                If None, the default value in :code:`sympl.default_constants` is used.
-
-
-
         """
-        if specific_heat_condensible is not None:
-            specific_heat_condensible = DataArray(
-                specific_heat_condensible, attrs={'units': 'J kg^-1 K^-1'})
 
         self._time_step = timedelta(seconds=time_step)
 
-        self._radius = replace_none_with_default(
-            'planetary_radius', planetary_radius)
+        self._radius = get_constant('planetary_radius')
 
-        self._omega = replace_none_with_default(
-            'planetary_rotation_rate', planetary_rotation_rate)
+        self._omega = get_constant('planetary_rotation_rate')
 
-        self._R = replace_none_with_default(
-            'universal_gas_constant', universal_gas_constant)
+        self._R = get_constant('universal_gas_constant')
 
-        self._Rd = replace_none_with_default(
-            'gas_constant_of_dry_air', gas_constant_dry_air)
+        self._Rd = get_constant('gas_constant_of_dry_air')
 
-        self._Rv = replace_none_with_default(
-            'gas_constant_of_water_vapor', gas_constant_condensible)
+        self._Rv = get_constant('gas_constant_of_vapor_phase')
 
-        self._g = replace_none_with_default(
-            'gravitational_acceleration', acceleration_gravity)
+        self._g = get_constant('gravitational_acceleration')
 
-        self._Cp = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
-            specific_heat_dry_air)
+        self._Cp = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
-        self._Cvap = replace_none_with_default(
-            'heat_capacity_of_water_vapor_at_constant_pressure',
-            specific_heat_condensible)
+        self._Cvap = get_constant('heat_capacity_of_vapor_phase')
 
         self._fvirt = (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
 
@@ -220,7 +157,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         self._num_tracers = number_of_tracers + 4
         self.extra_dimensions['tracer_number'] = np.arange(self._num_tracers)
 
-        self._dry_pressure = dry_pressure
+        self._dry_pressure = get_constant('reference_air_pressure')
 
         # Cannot set to new value currently.
         if self._num_levs != 28:
@@ -322,7 +259,7 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
         lnsp = np.log(raw_input_arrays['surface_air_pressure'])
         t_virt = raw_input_arrays['air_temperature']*(
-            1 + self._fvirt.values.item()*raw_input_arrays['specific_humidity'])
+            1 + self._fvirt.values*raw_input_arrays['specific_humidity'])
 
         raw_output_arrays['gfs_tracers'][:, :, :, 0] = raw_input_arrays['specific_humidity']
         raw_output_arrays['gfs_tracers'][:, :, :, 1] = \
@@ -371,8 +308,8 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
 
         # see Pg. 12 in gfsModelDoc.pdf
         virtual_temp_tend = temp_tend*(
-            1 + self._fvirt.values.item()*raw_input_arrays['specific_humidity']) + \
-            self._fvirt.values.item()*t_virt*q_tend
+            1 + self._fvirt.values*raw_input_arrays['specific_humidity']) + \
+            self._fvirt.values*t_virt*q_tend
 
         # dlnps/dt = (1/ps)*dps/dt
         lnps_tend = (1. / raw_input_arrays['surface_air_pressure'])*ps_tend
@@ -392,22 +329,23 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         _gfs_dynamics.convert_to_grid()
         _gfs_dynamics.calculate_pressure()
 
+        raw_output_arrays['specific_humidity'][:] = set_negatives_to_zero(
+            raw_output_arrays['gfs_tracers'][:, :, :, 0])
+
         raw_output_arrays['air_temperature'][:] = t_virt/(
-            1 + self._fvirt.values.item()*raw_output_arrays['specific_humidity'])
+            1 + self._fvirt.values*raw_output_arrays['specific_humidity'])
 
         raw_output_arrays['air_pressure_on_interface_levels'][:] = \
-            np.asfortranarray(raw_output_arrays['air_pressure_on_interface_levels'][:, :, ::-1])
-
-        raw_output_arrays['specific_humidity'][:] = raw_output_arrays['gfs_tracers'][:, :, :, 0]
+            raw_output_arrays['air_pressure_on_interface_levels'][:, :, ::-1]
 
         raw_output_arrays['mole_fraction_of_ozone_in_air'][:] = \
-            raw_output_arrays['gfs_tracers'][:, :, :, 1]
+            set_negatives_to_zero(raw_output_arrays['gfs_tracers'][:, :, :, 1])
 
         raw_output_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'][:] = \
-            raw_output_arrays['gfs_tracers'][:, :, :, 2]
+            set_negatives_to_zero(raw_output_arrays['gfs_tracers'][:, :, :, 2])
 
         raw_output_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'][:] = \
-            raw_output_arrays['gfs_tracers'][:, :, :, 3]
+            set_negatives_to_zero(raw_output_arrays['gfs_tracers'][:, :, :, 3])
 
         self.store_current_state_signature(raw_output_arrays)
 
@@ -519,6 +457,12 @@ class GfsDynamicalCore(ClimtSpectralDynamicalCore):
         print("Cleaning up dynamical core...")
         _gfs_dynamics.shut_down_model()
         print("Done!")
+
+
+def set_negatives_to_zero(array):
+
+    array[array < 0] = 0
+    return array
 
 
 def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):

@@ -1,4 +1,5 @@
-from sympl import Diagnostic, replace_none_with_default, DataArray
+from sympl import Diagnostic, DataArray
+from .._core import get_constant
 import xarray as xr
 try:
     from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
@@ -19,16 +20,12 @@ class BergerSolarInsolation(Diagnostic):
         'normalized_earth_sun_distance',
     )
 
-    def __init__(self, solar_constant=None):
+    def __init__(self):
         """
-        Args:
-            solar_constant (float, optional): Solar constant $S_0$ to use when
-                one is not provided in the input state, in $W m^{-2}$.
-                Default is taken from climt.default_constants.
+        Initialise insolation object
         """
         self._orbital_parameters = {}
-        self._solar_constant = replace_none_with_default(
-            'solar_constant', solar_constant)
+        self._solar_constant = get_constant('stellar_irradiance')
 
     def __call__(self, state):
         """

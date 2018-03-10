@@ -9,8 +9,8 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GfsDynamicalCore, ClimtSpectralDynamicalCore,
-    IceSheet)
+    DcmipInitialConditions, GFSDynamicalCore, ClimtSpectralDynamicalCore,
+    IceSheet, Instellation)
 import climt
 from sympl import (
     DataArray, Implicit, TimeStepper, set_dimension_names
@@ -69,9 +69,9 @@ def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
 
     if isinstance(component, IceSheet):
-        output, diag = component(state, timestep=timestep)
-        diag.pop('snow_ice_temperature_poly')
-        return output, diag
+        output, diagnostics = component(state, timestep=timestep)
+        diagnostics.pop('snow_and_ice_temperature_spline')
+        return output, diagnostics
     if isinstance(component, ClimtSpectralDynamicalCore):
         return component(state)
     elif isinstance(component, (Implicit, TimeStepper)):
@@ -362,7 +362,7 @@ class TestGrayLongwaveRadiation(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestGridScaleCondensation(ComponentBase):
@@ -490,13 +490,15 @@ class TestSimplePhysics(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestSimplePhysicsPrognostic(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         component = SimplePhysics()
-        return component.get_prognostic_version(timedelta(minutes=10))
+        component = component.prognostic_version()
+        component.current_time_step = timedelta(minutes=10)
+        return component
 
     def get_3d_input_state(self):
 
@@ -508,7 +510,7 @@ class TestSimplePhysicsPrognostic(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestRRTMGLongwave(ComponentBase):
@@ -525,12 +527,12 @@ class TestRRTMGLongwave(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestRRTMGLongwaveWithClouds(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
-        return RRTMGLongwave(cloud_optical_properties=1)
+        return RRTMGLongwave(cloud_optical_properties='single_cloud_type')
 
     def get_3d_input_state(self):
 
@@ -542,7 +544,24 @@ class TestRRTMGLongwaveWithClouds(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
+
+
+class TestRRTMGLongwaveWithExternalInterfaceTemperature(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return RRTMGLongwave(calculate_interface_temperature=False)
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        return  # Skipping test
 
 
 class TestRRTMGShortwave(ComponentBase):
@@ -559,7 +578,7 @@ class TestRRTMGShortwave(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestSlabSurface(ComponentBase):
@@ -576,7 +595,7 @@ class TestSlabSurface(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestEmanuel(ComponentBase):
@@ -595,7 +614,30 @@ class TestEmanuel(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
+
+
+def test_various_init_parameters_emanuel():
+
+    with pytest.raises(ValueError) as excinfo:
+        EmanuelConvection(convective_momentum_transfer_coefficient=2)
+
+    assert 'Momentum transfer' in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        EmanuelConvection(downdraft_area_fraction=2)
+
+    assert 'Downdraft' in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        EmanuelConvection(precipitation_fraction_outside_cloud=-3)
+
+    assert 'Outside cloud' in str(excinfo.value)
+
+    with pytest.raises(NotImplementedError) as excinfo:
+        EmanuelConvection(number_of_tracers=2)
+
+    assert 'additional tracers' in str(excinfo.value)
 
 
 class TestDcmip(ComponentBase):
@@ -612,10 +654,31 @@ class TestDcmip(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
-def testDcmipOptions():
+def test_dcmip_validate_inputs():
+
+    dcmip = DcmipInitialConditions()
+
+    state = climt.get_default_state([dcmip],
+                                    y=dict(label='latitude',
+                                           values=np.linspace(0, 60, 20),
+                                           units='degrees_north'))
+
+    with pytest.raises(ValueError) as excinfo:
+        dcmip(state, type_of_output='abcd')
+
+    assert 'has to be one' in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        dcmip(state, type_of_output='tropical_cyclone',
+              moist_simulation=False)
+
+    assert 'must be True' in str(excinfo.value)
+
+
+def test_dcmip_options():
 
     dcmip = DcmipInitialConditions()
 
@@ -641,30 +704,6 @@ def testDcmipOptions():
                              np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
 
 
-class TestGfsDycore(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        return GfsDynamicalCore(number_of_longitudes=68,
-                                number_of_latitudes=32)
-
-    def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component], x=component.grid_definition['x'],
-            y=component.grid_definition['y'],
-            mid_levels=component.grid_definition['mid_levels'],
-            interface_levels=component.grid_definition['interface_levels'])
-
-        dcmip = climt.DcmipInitialConditions()
-        out = dcmip(state, add_perturbation=True)
-        state.update(out)
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        assert True
-
-
 class TestIceSheet(ComponentBase):
     def get_component_instance(self, state_modification_func=lambda x: x):
         ice = IceSheet()
@@ -681,7 +720,7 @@ class TestIceSheet(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestIceSheetSeaIce(ComponentBase):
@@ -704,7 +743,7 @@ class TestIceSheetSeaIce(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestIceSheetLandIce(ComponentBase):
@@ -727,7 +766,7 @@ class TestIceSheetLandIce(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 class TestIceSheetLand(ComponentBase):
@@ -749,7 +788,7 @@ class TestIceSheetLand(ComponentBase):
         return state
 
     def test_1d_output_matches_cached_output(self):
-        assert True
+        return  # Skipping test
 
 
 def test_ice_sheet_too_high():
@@ -769,6 +808,118 @@ def test_ice_sheet_too_high():
         ice(state, timedelta(seconds=100))
 
     assert 'exceeds maximum value' in str(excinfo.value)
+
+
+class TestInstellation(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return Instellation()
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component],
+            x=dict(label='longitude', values=np.linspace(0, 360, 20), units='degrees_east'),
+            y=dict(label='latitude', values=np.linspace(-50, 50, 10), units='degrees_north'))
+
+        state['time'] += timedelta(days=100)
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        return  # Skipping test
+
+
+class TestGFSDycore(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return GFSDynamicalCore(number_of_longitudes=68,
+                                number_of_latitudes=32)
+
+    def get_3d_input_state(self):
+
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component], x=component.grid_definition['x'],
+            y=component.grid_definition['y'],
+            mid_levels=component.grid_definition['mid_levels'],
+            interface_levels=component.grid_definition['interface_levels'])
+
+        dcmip = climt.DcmipInitialConditions()
+        out = dcmip(state, add_perturbation=True)
+        state.update(out)
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        return  # Skipping test
+
+
+class TestGFSDycoreWithPrognostic(ComponentBase):
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        dycore = GFSDynamicalCore(number_of_longitudes=68,
+                                  number_of_latitudes=32)
+        radiation = RRTMGLongwave()
+        dycore.prognostics = [radiation]
+
+        return dycore
+
+    def get_3d_input_state(self):
+
+        prognostic = RRTMGLongwave()
+        component = self.get_component_instance()
+        state = climt.get_default_state(
+            [component, prognostic], x=component.grid_definition['x'],
+            y=component.grid_definition['y'],
+            mid_levels=component.grid_definition['mid_levels'],
+            interface_levels=component.grid_definition['interface_levels'])
+
+        dcmip = climt.DcmipInitialConditions()
+        out = dcmip(state, add_perturbation=True)
+        state.update(out)
+
+        return state
+
+    def test_1d_output_matches_cached_output(self):
+        return  # Skipping test
+
+
+def tests_dycore_with_prognostic_attrs_are_sane():
+
+    dycore = GFSDynamicalCore(number_of_longitudes=68,
+                              number_of_latitudes=32)
+    radiation = RRTMGLongwave()
+    dycore.prognostics = [radiation]
+
+    for quantity in radiation.diagnostics:
+        assert quantity in dycore.diagnostics
+
+    for quantity in radiation.inputs:
+        assert quantity in dycore.inputs
+
+
+def test_piecewise_constant_component():
+
+    radiation = RRTMGLongwave()
+    radiation = radiation.piecewise_constant_version(timedelta(seconds=1000))
+
+    state = climt.get_default_state([radiation])
+
+    current_tendency, current_diagnostic = radiation(state)
+
+    # Perturb state
+    state['air_temperature'] += 3
+
+    new_tendency, new_diagnostic = radiation(state)
+
+    assert np.all(current_tendency['air_temperature'].values ==
+                  new_tendency['air_temperature'].values)
+
+    state['time'] += timedelta(seconds=1500)
+
+    new_tendency, new_diagnostic = radiation(state)
+
+    assert np.any(current_tendency['air_temperature'].values !=
+                  new_tendency['air_temperature'].values)
 
 
 if __name__ == '__main__':

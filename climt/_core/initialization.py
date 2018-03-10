@@ -92,6 +92,10 @@ def init_ozone(array_dims, quantity_description, initial_state):
     if array_dims[-1] == 30:
         target_profile = profile
 
+    # Ensure ozone concentration at top of model is not excessive
+    # This is more in line with observations.
+    target_profile[-1] /= 10
+
     init_array[:] = target_profile[np.newaxis, np.newaxis, :]
 
     return init_array
@@ -130,6 +134,11 @@ climt_quantity_descriptions = {
     },
     'air_temperature': {
         'dims': ['x', 'y', 'mid_levels'],
+        'units': 'degK',
+        'default_value': 290.
+    },
+    'air_temperature_on_interface_levels': {
+        'dims': ['x', 'y', 'interface_levels'],
         'units': 'degK',
         'default_value': 290.
     },
@@ -454,9 +463,9 @@ climt_quantity_descriptions = {
         'default_value': 'sea',
         'dtype': 'a100'
     },
-    'snow_ice_temperature_poly': {
+    'snow_and_ice_temperature_spline': {
         'dims': ['x', 'y'],
-        'units': 'dimensionless',
+        'units': 'degK',
         'default_value': CubicSpline(
             np.linspace(0, 50, 50), 260.*np.ones(50)),
         'dtype': object
@@ -464,7 +473,7 @@ climt_quantity_descriptions = {
     'sea_water_density': {
         'dims': ['x', 'y'],
         'units': 'kg m^-3',
-        'default_value': 4.1813e3
+        'default_value': 1.029e3
     },
     'surface_albedo_for_direct_shortwave': {
         'dims': ['x', 'y'],

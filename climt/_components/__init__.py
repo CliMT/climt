@@ -7,11 +7,13 @@ from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .emanuel import EmanuelConvection
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
-from .gfs import GfsDynamicalCore
+from .gfs import GFSDynamicalCore
 from .dcmip import DcmipInitialConditions
+from .instellation import Instellation
 
 __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
     HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
     RRTMGLongwave, RRTMGShortwave, EmanuelConvection, SlabSurface,
-    GfsDynamicalCore, DcmipInitialConditions, IceSheet)
+    GFSDynamicalCore, DcmipInitialConditions, IceSheet,
+    Instellation)

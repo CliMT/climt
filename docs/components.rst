@@ -29,8 +29,8 @@ Dynamics
 .. autosummary::
     :toctree: generated/
 
-    GfsDynamicalCore
-    GfsDynamicalCore.__call__
+    GFSDynamicalCore
+    GFSDynamicalCore.__call__
 
 Radiation
 ---------

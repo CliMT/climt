@@ -1,7 +1,7 @@
 from sympl import (
-    Diagnostic, DataArray, jit, replace_none_with_default,
+    Diagnostic, DataArray, jit,
     combine_dimensions, get_numpy_array)
-from climt import ClimtPrognostic
+from .._core import ClimtPrognostic, get_constant
 import numpy as np
 
 
@@ -21,35 +21,16 @@ class GrayLongwaveRadiation(ClimtPrognostic):
 
     _climt_tendencies = {'air_temperature': 'degK/s'}
 
-    def __init__(
-            self,
-            stefan_boltzmann=None,
-            gravitational_acceleration=None,
-            heat_capacity_of_dry_air_at_constant_pressure=None):
+    def __init__(self):
         """
 
-        Args:
-            longwave_optical_depth_on_interface_levels (DataArray): The optical
-                depth :math:`\\tau` of the atmosphere, with the lowest values at the
-                surface.
-            stefan_boltzmann: Stefan-Boltzmann constant :math:`\sigma` in
-                :math:`W m^{-2} K^{-4}`.
-                Default taken from :code:`sympl.default_constants`.
-            gravitational_acceleration: Gravitational acceleration in
-                :math:`m s^{-2}`.
-                Default taken from :code:`sympl.default_constants`.
-            heat_capacity_of_dry_air_at_constant_pressure: Heat capacity of
-                dry air at constnat pressure in :math:`J kg^{-1} K^{-1}`.
-                Default taken from :code:`sympl.default_constants`.
+        Initialise component.
+
         """
 
-        self._stefan_boltzmann = replace_none_with_default(
-            'stefan_boltzmann_constant', stefan_boltzmann)
-        self._g = replace_none_with_default(
-            'gravitational_acceleration', gravitational_acceleration)
-        self._Cpd = replace_none_with_default(
-            'heat_capacity_of_dry_air_at_constant_pressure',
-            heat_capacity_of_dry_air_at_constant_pressure)
+        self._stefan_boltzmann = get_constant('stefan_boltzmann_constant')
+        self._g = get_constant('gravitational_acceleration')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
 
     def __call__(self, state):
         """

@@ -26,7 +26,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-pyc clean-test clean-libs ## remove all build, test, coverage and Python artifacts
 
 
 clean-build: ## remove build artifacts
@@ -47,7 +47,7 @@ clean-cython: ## remove Cython generated files
 	cd climt/_components; find . -name '*.c' -exec rm -f {} +; cd ../..
 
 clean-libs: ## remove compiled libraries in _lib
-	cd climt/_lib; make clean; cd ../..
+	cd climt/_lib; make clean; make clean_libs; cd ../..
 
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/

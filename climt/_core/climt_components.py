@@ -271,7 +271,7 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
     def diagnostics(self):
         return tuple(self._climt_diagnostics.keys())
 
-    def version_that_updates_every(self, update_time):
+    def piecewise_constant_version(self, update_time):
         """
         Returns component that updates once every :code:`update_time`.
 
@@ -281,7 +281,7 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
 
         Returns:
             component (UpdateFrequencyWrapper):
-                A "delayed" component.
+                A "piecewise constant" component.
 
         """
 
@@ -362,6 +362,9 @@ class ClimtImplicit(ArrayHandler, Implicit):
     @property
     def diagnostics(self):
         return tuple(self._climt_diagnostics.keys())
+
+    def prognostic_version(self):
+        return ClimtTimeDifferenced(self)
 
 
 class ClimtImplicitPrognostic(ClimtPrognostic):
@@ -458,4 +461,40 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
 
     @property
     def diagnostics(self):
-        return set(self._prognostic.diagnostics).union(set(self._climt_diagnostics.keys()))
+        if self._prognostic is not None:
+            return set(self._prognostic.diagnostics).union(set(self._climt_diagnostics.keys()))
+        else:
+            return set(self._climt_diagnostics.keys())
+
+
+class ClimtTimeDifferenced(ClimtImplicitPrognostic):
+
+    def __init__(self, implicit_component):
+        """
+        Create time differenced version of implicit_component.
+        """
+
+        self._implicit_component = implicit_component
+        self._climt_inputs = copy.copy(implicit_component._climt_inputs)
+        self._climt_diagnostics = copy.copy(implicit_component._climt_diagnostics)
+        self._climt_tendencies = copy.copy(implicit_component._climt_outputs)
+
+        for quantity in self._climt_tendencies:
+            units = self._climt_tendencies[quantity]
+            self._climt_tendencies[quantity] = units + ' s^-1'
+
+    def __call__(self, state):
+        """
+        Create tendencies using first-order time differencing.
+        """
+
+        diagnostics, new_state = self._implicit_component(state,
+                                                          self.current_time_step)
+
+        tendencies = self.create_state_dict_for('_climt_tendencies', state)
+
+        for quantity in tendencies.keys():
+            tendencies[quantity].values = (
+                new_state[quantity] - state[quantity])/self.current_time_step.total_seconds()
+
+        return tendencies, diagnostics

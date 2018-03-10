@@ -1,14 +1,15 @@
 os: linux
 dist: trusty
 sudo: required
+services: docker
 language: python
-python: 3.5
+python: 3.6
+cache:
+    - pip
+    - directories: ~/.travis_libs
 env:
-- TOXENV=cov
-- TOXENV=flake8
-- TOXENV=py35
-- TOXENV=py34
-- TOXENV=py27
+    global:
+      - TWINE_USERNAME=joy.merwin
 
   #matrix:
   #  include:
@@ -19,17 +20,100 @@ env:
   #        - OMP_NUM_THREADS=1
   #      script: travis_wait 45 tox -e ${TOXENV}
 
-  #allow_failures:
-  #- os: osx
+allow_failures:
+  - os: osx
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -sSL https://rvm.io/mpapis.asc | gpg --import -; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rvm get stable                 ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update                    ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask uninstall oclint     ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc               ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade python            ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python3 -m venv climt_venv     ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source climt_venv/bin/activate ; fi
+
 install:
-- pip install -r requirements_dev.txt
-- pip install -U tox
-script: tox -e ${TOXENV}
+- python -m pip install -r requirements_dev.txt
+- python -m pip install -U tox
+
+jobs:
+  include:
+    - stage: light tests
+      env: TOXENV=flake8 CLIMT_ARCH=Linux
+      install:
+          - python -m pip install -r requirements_dev.txt
+          - python -m pip install -U tox
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=cov CLIMT_ARCH=Linux
+      install:
+          - python -m pip install -r requirements_dev.txt
+          - python -m pip install -U tox
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=py36 CLIMT_ARCH=Linux
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      python: 3.5
+      env: TOXENV=py35 CLIMT_ARCH=Linux
+      install:
+           - source ~/virtualenv/python3.5/bin/activate
+           - python -m pip install -r requirements_dev.txt
+           - python -m pip install -U tox
+      script:
+          - tox -e ${TOXENV}
+    - stage: big tests
+      env: TOXENV=py27 CLIMT_ARCH=Linux
+      script:
+          - tox -e ${TOXENV}
+    - stage: wheels
+      env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp35-* cp34-* cp27-manylinux1_i686'
+      script:
+        - |
+          if [[ $TRAVIS_TAG ]]; then
+            python -m pip install cibuildwheel
+            cibuildwheel --output-dir wheelhouse
+            python -m pip install twine
+            python -m twine upload wheelhouse/*.whl
+          fi
+    - stage: wheels
+      env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp34-* cp27-* cp35-manylinux1_i686'
+      script:
+        - |
+            if [[ $TRAVIS_TAG ]]; then
+            python -m pip install cibuildwheel
+            cibuildwheel --output-dir wheelhouse
+            python -m pip install twine
+            python -m twine upload wheelhouse/*.whl
+            fi
+    - stage: wheels
+      env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp35-* cp34-* cp27-* cp36-manylinux1_i686'
+      script:
+        - |
+            if [[ $TRAVIS_TAG ]]; then
+            python -m pip install cibuildwheel
+            cibuildwheel --output-dir wheelhouse
+            python -m pip install twine
+            python -m twine upload wheelhouse/*.whl
+            fi
+    - stage: wheels
+      os: osx
+      language: generic
+      env: CLIMT_ARCH=Darwin CIBW_SKIP='cp33-* cp35-* cp34-* cp27-* cp36-manylinux1_i686'
+      script:
+        - |
+            if [[ $TRAVIS_TAG ]]; then
+            python -m pip install cibuildwheel
+            travis_wait 50 cibuildwheel --output-dir wheelhouse
+            python -m pip install twine
+            python -m twine upload wheelhouse/*.whl
+            fi
+
 
 deploy:
   provider: pypi

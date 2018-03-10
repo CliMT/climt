@@ -13,22 +13,35 @@ SHT_GZ = shtns-2.7-r557.tar.gz
 BLAS_GZ = OpenBLAS-0.2.19.tar.gz
 
 BASE_DIR = $(PWD)
-LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 
+CLIMT_FFTW_FLAGS = --enable-openmp --enable-avx --enable-avx2
+
+LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 CFLAGS = "-I$(BASE_DIR) -L$(LIB_DIR) -fPIC"
 LDFLAGS = "-L$(LIB_DIR)"
 
-all: fftw_lib sht_lib blas_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
+CLIMT_LIB_TARGETS = blas_lib fftw_lib
+
+
+ifeq ($(CLIMT_ARCH),Windows)
+	BASE_DIR = $(subst \,/,$(PWD))
+	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
+	CLIMT_FFTW_FLAGS = --with-our-malloc --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --enable-static --with-g77-wrappers --with-windows-f77-mangling --enable-sse2 --enable-avx
+	CLIMT_LIB_TARGETS =
+endif
+
+
+all: $(CLIMT_LIB_TARGETS) sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
 
 # FFTW3 Configuration
 
-.configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --enable-openmp --enable-avx --enable-avx2 > log 2>&1 && touch ../.configured_fftw
+$(CLIMT_ARCH)/.configured_fftw:
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(CLIMT_FFTW_FLAGS) > log.config.fftw 2>&1 && touch ../$(CLIMT_ARCH)/.configured_fftw
 
-$(CLIMT_ARCH)/libfftw3_omp.a: .configured_fftw
-	cd $(FFTW_DIR); make install > log 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
+$(CLIMT_ARCH)/libfftw3_omp.a: $(CLIMT_ARCH)/.configured_fftw
+	cd $(FFTW_DIR); make install > log.install.fftw 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
 
-$(CLIMT_ARCH)/libfftw3.a: .configured_fftw
+$(CLIMT_ARCH)/libfftw3.a: $(CLIMT_ARCH)/.configured_fftw
 	cp lib/libfftw3.a $(LIB_DIR)
 
 fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
@@ -36,11 +49,11 @@ fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
 
 # SHTNS Configuration
 
-.configured_sht:
-	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) > log 2>&1; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp > log 2>&1 && touch ../.configured_sht
+$(CLIMT_ARCH)/.configured_sht:
+	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) ; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp  && touch ../$(CLIMT_ARCH)/.configured_sht
 
-$(CLIMT_ARCH)/libshtns_omp.a: .configured_sht
-	cd $(SHT_DIR); make install > log 2>&1; cp ../lib/libshtns_omp.a $(LIB_DIR)
+$(CLIMT_ARCH)/libshtns_omp.a: $(CLIMT_ARCH)/.configured_sht
+	cd $(SHT_DIR); make install > log 2>&1; cp ../lib/libshtns_omp.a $(LIB_DIR); ls -ltrh $(LIB_DIR)
 
 sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
 
@@ -49,7 +62,7 @@ sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
 blas_lib: $(CLIMT_ARCH)/libopenblas.a
 
 $(CLIMT_ARCH)/libopenblas.a:
-	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ) > log 2>&1; fi; cd $(BLAS_DIR); make NO_SHARED=1 NO_LAPACK=0 >log 2>&1; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install >log 2>&1; cp ../lib/libopenblas.a $(LIB_DIR)
+	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ) > log 2>&1; fi; cd $(BLAS_DIR); make NO_SHARED=1 NO_LAPACK=0 > log 2>&1 ; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install > log.install.blas 2>&1 ; cp ../lib/libopenblas.a $(LIB_DIR)
 
 # GFS Configuration
 
@@ -99,8 +112,6 @@ clean:
 	if [ -d $(FFTW_DIR) ]; then rm -Rf $(FFTW_DIR); fi
 	if [ -d $(SHT_DIR) ]; then rm -Rf $(SHT_DIR); fi
 	if [ -d $(BLAS_DIR) ]; then rm -Rf $(BLAS_DIR); fi
-	if [ -e  .configured_fftw ]; then rm .configured_fftw; fi
-	if [ -e  .configured_sht ]; then rm .configured_sht; fi
 	cd $(GFS_DIR); make clean
 	cd $(SIM_PHYS_DIR); make clean
 	cd $(EMAN_DIR); make clean
@@ -114,3 +125,4 @@ clean_libs:
 	if [ -d  bin ]; then rm -Rf bin; fi
 	if [ -d  lib ]; then rm -Rf lib; fi
 	rm $(LIB_DIR)/*.a
+	rm $(LIB_DIR)/*.conf*

@@ -1,4 +1,4 @@
-from climt._core.climt_components import ClimtPrognostic
+from .._core import ClimtPrognostic, get_constant
 import numpy as np
 
 
@@ -59,29 +59,15 @@ class SlabSurface(ClimtPrognostic):
     Quantities used for surface heat capacity calculation.
     """
 
-    def __init__(self,
-                 thermal_conductivity_of_ice=2.22,
-                 thermal_conductivity_of_snow=0.2,
-                 melting_point_of_ice=271.
-                 ):
+    def __init__(self):
         """
         Initialise slab surface
 
-        Args:
-
-            thermal_conductivity_of_ice (float, optional):
-                The thermal conductivity of ice in :math:`W m^{-1} K^{-1}`.
-
-            thermal_conductivity_of_snow (float, optional):
-                The thermal conductivity of ice in :math:`W m^{-1} K^{-1}`.
-
-            melting_point_of_ice (float, optional):
-                The melting point of ice in :math:`degK`.
         """
 
-        self._K_snow = thermal_conductivity_of_snow
-        self._K_ice = thermal_conductivity_of_ice
-        self._ice_melt_temp = melting_point_of_ice
+        self._K_snow = get_constant('thermal_conductivity_of_solid_phase_as_snow')
+        self._K_ice = get_constant('thermal_conductivity_of_solid_phase_as_ice')
+        self._ice_melt_temp = get_constant('freezing_temperature_of_liquid_phase')
 
     def __call__(self, state):
         """
