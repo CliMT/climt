@@ -201,21 +201,21 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         self._mf_timescale = reference_mass_flux_timescale
         self._ntracers = number_of_tracers
 
-        self._g = get_constant('gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration', 'm/s^2')
 
-        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
 
-        self._Cpv = get_constant('heat_capacity_of_vapor_phase')
+        self._Cpv = get_constant('heat_capacity_of_vapor_phase', 'J/kg/degK')
 
-        self._Rdair = get_constant('gas_constant_of_dry_air')
+        self._Rdair = get_constant('gas_constant_of_dry_air', 'J/kg/degK')
 
-        self._Rcond = get_constant('gas_constant_of_vapor_phase')
+        self._Rcond = get_constant('gas_constant_of_vapor_phase', 'J/kg/degK')
 
-        self._Lv = get_constant('latent_heat_of_condensation')
+        self._Lv = get_constant('latent_heat_of_condensation', 'J/kg')
 
-        self._rho_condensible = get_constant('density_of_liquid_phase')
+        self._rho_condensible = get_constant('density_of_liquid_phase', 'kg/m^3')
 
-        self._Cl = get_constant('specific_enthalpy_of_vapor_phase')
+        self._Cl = get_constant('specific_enthalpy_of_vapor_phase', 'J/kg')
 
         _emanuel_convection.init_emanuel_convection(
             self._pbl, self._min_conv_layer,
@@ -261,7 +261,7 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         q_sat = np.asfortranarray(bolton_q_sat(
             raw_arrays['air_temperature'],
             raw_arrays['air_pressure']*100,
-            self._Cpd.values, self._Cpv.values))
+            self._Cpd, self._Cpv))
 
         tend_arrays = numpy_version_of(tend_dict)
         diag_arrays = numpy_version_of(diag_dict)

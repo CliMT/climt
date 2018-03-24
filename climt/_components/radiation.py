@@ -28,9 +28,9 @@ class GrayLongwaveRadiation(ClimtPrognostic):
 
         """
 
-        self._stefan_boltzmann = get_constant('stefan_boltzmann_constant')
-        self._g = get_constant('gravitational_acceleration')
-        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
+        self._stefan_boltzmann = get_constant('stefan_boltzmann_constant', 'W/m^2/K^4')
+        self._g = get_constant('gravitational_acceleration', 'm/s^2')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
 
     def __call__(self, state):
         """
@@ -64,8 +64,8 @@ class GrayLongwaveRadiation(ClimtPrognostic):
 
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
-            T, p_interface, Ts, tau, self._stefan_boltzmann.values,
-            self._g.values, self._Cpd.values)
+            T, p_interface, Ts, tau, self._stefan_boltzmann,
+            self._g, self._Cpd)
 
         tendencies = self.create_state_dict_for('_climt_tendencies', state)
         tendencies['air_temperature'].values = lw_temperature_tendency

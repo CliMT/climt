@@ -119,21 +119,21 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
 
         self._time_step = timedelta(seconds=time_step)
 
-        self._radius = get_constant('planetary_radius')
+        self._radius = get_constant('planetary_radius', 'm')
 
-        self._omega = get_constant('planetary_rotation_rate')
+        self._omega = get_constant('planetary_rotation_rate', 's^-1')
 
-        self._R = get_constant('universal_gas_constant')
+        self._R = get_constant('universal_gas_constant', 'J/mole/K')
 
-        self._Rd = get_constant('gas_constant_of_dry_air')
+        self._Rd = get_constant('gas_constant_of_dry_air', 'J/kg/K')
 
-        self._Rv = get_constant('gas_constant_of_vapor_phase')
+        self._Rv = get_constant('gas_constant_of_vapor_phase', 'J/kg/K')
 
-        self._g = get_constant('gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration', 'm/s^2')
 
-        self._Cp = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cp = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
 
-        self._Cvap = get_constant('heat_capacity_of_vapor_phase')
+        self._Cvap = get_constant('heat_capacity_of_vapor_phase', 'J/kg/K')
 
         self._fvirt = (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
 
@@ -157,7 +157,7 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
         self._num_tracers = number_of_tracers + 4
         self.extra_dimensions['tracer_number'] = np.arange(self._num_tracers)
 
-        self._dry_pressure = get_constant('reference_air_pressure')
+        self._dry_pressure = get_constant('reference_air_pressure', 'Pa')
 
         # Cannot set to new value currently.
         if self._num_levs != 28:
@@ -259,7 +259,7 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
 
         lnsp = np.log(raw_input_arrays['surface_air_pressure'])
         t_virt = raw_input_arrays['air_temperature']*(
-            1 + self._fvirt.values*raw_input_arrays['specific_humidity'])
+            1 + self._fvirt*raw_input_arrays['specific_humidity'])
 
         raw_output_arrays['gfs_tracers'][:, :, :, 0] = raw_input_arrays['specific_humidity']
         raw_output_arrays['gfs_tracers'][:, :, :, 1] = \
@@ -308,8 +308,8 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
 
         # see Pg. 12 in gfsModelDoc.pdf
         virtual_temp_tend = temp_tend*(
-            1 + self._fvirt.values*raw_input_arrays['specific_humidity']) + \
-            self._fvirt.values*t_virt*q_tend
+            1 + self._fvirt*raw_input_arrays['specific_humidity']) + \
+            self._fvirt*t_virt*q_tend
 
         # dlnps/dt = (1/ps)*dps/dt
         lnps_tend = (1. / raw_input_arrays['surface_air_pressure'])*ps_tend
@@ -333,7 +333,7 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
             raw_output_arrays['gfs_tracers'][:, :, :, 0])
 
         raw_output_arrays['air_temperature'][:] = t_virt/(
-            1 + self._fvirt.values*raw_output_arrays['specific_humidity'])
+            1 + self._fvirt*raw_output_arrays['specific_humidity'])
 
         raw_output_arrays['air_pressure_on_interface_levels'][:] = \
             raw_output_arrays['air_pressure_on_interface_levels'][:, :, ::-1]

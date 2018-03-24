@@ -13,14 +13,14 @@ from climt import (
     IceSheet, Instellation)
 import climt
 from sympl import (
-    DataArray, Implicit, TimeStepper, set_dimension_names
+    DataArray, Implicit, TimeStepper, add_direction_names
 )
 from datetime import datetime, timedelta
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
     'interface_levels', 'mid_levels', 'full_levels']
-set_dimension_names(x='longitude', y='latitude', z=vertical_dimension_names)
+add_direction_names(x='longitude', y='latitude', z=vertical_dimension_names)
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')

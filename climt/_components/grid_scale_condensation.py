@@ -29,12 +29,12 @@ class GridScaleCondensation(Implicit):
         Initialise component.
         """
 
-        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
-        self._Lv = get_constant('latent_heat_of_condensation')
-        self._Rd = get_constant('gas_constant_of_dry_air')
-        self._Rh2O = get_constant('gas_constant_of_vapor_phase')
-        self._g = get_constant('gravitational_acceleration')
-        self._rhow = get_constant('density_of_liquid_phase')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
+        self._Lv = get_constant('latent_heat_of_condensation', 'J/kg')
+        self._Rd = get_constant('gas_constant_of_dry_air', 'J/kg/degK')
+        self._Rh2O = get_constant('gas_constant_of_vapor_phase', 'J/kg/degK')
+        self._g = get_constant('gravitational_acceleration', 'm/s^2')
+        self._rhow = get_constant('density_of_liquid_phase', 'kg/m^3')
 
     def __call__(self, state, timestep):
         """
@@ -69,21 +69,21 @@ class GridScaleCondensation(Implicit):
             state['air_pressure_on_interface_levels'].to_units('Pa'),
             out_dims=('x', 'y', 'z'))
 
-        q_sat = bolton_q_sat(T, p, self._Rd.values, self._Rh2O.values)
+        q_sat = bolton_q_sat(T, p, self._Rd, self._Rh2O)
         saturated = q > q_sat
         dqsat_dT = bolton_dqsat_dT(
-            T[saturated], self._Lv.values, self._Rh2O.values, q_sat[saturated])
+            T[saturated], self._Lv, self._Rh2O, q_sat[saturated])
 
         condensed_q = np.zeros_like(q)
         condensed_q[saturated] = (
             q[saturated] - q_sat[saturated])/(
-            1 + self._Lv.values/self._Cpd.values * dqsat_dT)
+            1 + self._Lv/self._Cpd * dqsat_dT)
         new_q = q.copy()
         new_T = T.copy()
         new_q[saturated] -= condensed_q[saturated]
-        new_T[saturated] += self._Lv.values/self._Cpd.values * condensed_q[saturated]
+        new_T[saturated] += self._Lv/self._Cpd * condensed_q[saturated]
         mass = (p_interface[:, :, 1:] - p_interface[:, :, :-1])/(
-            self._g.values*self._rhow.values)
+            self._g*self._rhow)
         precipitation = np.sum(condensed_q * mass, axis=2)
 
         dims_3d = combine_dimensions(
