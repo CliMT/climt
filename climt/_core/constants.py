@@ -7,7 +7,7 @@ def list_available_constants():
 
     """
 
-    print(get_constants_string)
+    print(get_constants_string())
 
 
 def set_constants_from_dict(constant_descriptions):
