@@ -1,7 +1,8 @@
 import abc
 from sympl import (Implicit, Diagnostic, Prognostic,
                    TimeStepper, PrognosticComposite,
-                   UpdateFrequencyWrapper)
+                   UpdateFrequencyWrapper, ScalingWrapper,
+                   TimeDifferencingWrapper)
 from datetime import timedelta
 from sympl import get_numpy_array
 from .initialization import climt_quantity_descriptions, get_default_values
@@ -23,6 +24,37 @@ class ArrayHandler(object):
     """
 
     __metaclass__ = abc.ABCMeta
+
+    def create_properties_dict(self, description):
+        """
+
+        Create properties dictionary using _climt_inputs/outputs/etc., dictionaries
+
+        Args:
+
+            description (dict):
+                The climt component descriptions in _climt_inputs, etc.,
+
+        Returns:
+            properties_description (dict):
+                An input/output/etc., properties dict conforming to Sympl requirements.
+        """
+
+        property_dict = {}
+
+        for quantity in description.keys():
+
+            # Use version in quantity descriptions if present
+            if hasattr(self, 'quantity_descriptions') and quantity in self.quantity_descriptions.keys():
+                property_dict[quantity] = self.quantity_descriptions[quantity]
+            else:
+                # Use default version if not
+                property_dict[quantity] = climt_quantity_descriptions[quantity]
+
+                # Update units
+                property_dict[quantity]['units'] = description[quantity]
+
+        return property_dict
 
     def get_numpy_arrays_from_state(self, attribute, state, memory_layout='fortran'):
         """
@@ -271,6 +303,18 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
     def diagnostics(self):
         return tuple(self._climt_diagnostics.keys())
 
+    @property
+    def input_properties(self):
+        return self.create_properties_dict(self._climt_inputs)
+
+    @property
+    def tendency_properties(self):
+        return self.create_properties_dict(self._climt_tendencies)
+
+    @property
+    def diagnostic_properties(self):
+        return self.create_properties_dict(self._climt_diagnostics)
+
     def piecewise_constant_version(self, update_time):
         """
         Returns component that updates once every :code:`update_time`.
@@ -286,6 +330,32 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
         """
 
         return UpdateFrequencyWrapper(self, update_time)
+
+    def scaled_version(self,
+                       input_scale_factors,
+                       diagnostic_scale_factors,
+                       tendency_scale_factors)
+        """
+        Returns component whose input/outputs/tendencies/diagnostics are scaled
+        by the given scale factors.
+
+        Args:
+            input_scale_factors (dict):
+                a dictionary whose keys are the inputs that will be scaled
+                and values are floating point scaling factors.
+            tendency_scale_factors (dict):
+               a dictionary whose keys are the tendencies that will be scaled
+               and values are floating point scaling factors.
+            diagnostic_scale_factors (dict):
+               a dictionary whose keys are the diagnostics that will be scaled
+               and values are floating point scaling factors.
+
+        """
+
+        return ScalingWrapper(self,
+                              input_scale_factors=input_scale_factors,
+                              tendency_scale_factors=tendency_scale_factors,
+                              diagnostic_scale_factors=diagnostic_scale_factors)
 
 
 class ClimtDiagnostic(ArrayHandler, Diagnostic):
@@ -319,6 +389,36 @@ class ClimtDiagnostic(ArrayHandler, Diagnostic):
     @property
     def diagnostics(self):
         return tuple(self._climt_diagnostics.keys())
+
+    @property
+    def input_properties(self):
+        return self.create_properties_dict(self._climt_inputs)
+
+    @property
+    def diagnostic_properties(self):
+        return self.create_properties_dict(self._climt_diagnostics)
+
+    def scaled_version(self,
+                       input_scale_factors,
+                       diagnostic_scale_factors)
+        """
+        Returns component whose input/outputs/tendencies/diagnostics are scaled
+        by the given scale factors.
+
+        Args:
+            input_scale_factors (dict):
+                a dictionary whose keys are the inputs that will be scaled
+                and values are floating point scaling factors.
+            diagnostic_scale_factors (dict):
+               a dictionary whose keys are the diagnostics that will be scaled
+               and values are floating point scaling factors.
+
+        """
+
+        return ScalingWrapper(self,
+                              input_scale_factors=input_scale_factors,
+                              diagnostic_scale_factors=diagnostic_scale_factors)
+
 
 
 class ClimtImplicit(ArrayHandler, Implicit):
@@ -363,8 +463,52 @@ class ClimtImplicit(ArrayHandler, Implicit):
     def diagnostics(self):
         return tuple(self._climt_diagnostics.keys())
 
+    @property
+    def input_properties(self):
+        return self.create_properties_dict(self._climt_inputs)
+
+    @property
+    def output_properties(self):
+        return self.create_properties_dict(self._climt_outputs)
+
+    @property
+    def diagnostic_properties(self):
+        return self.create_properties_dict(self._climt_diagnostics)
+
     def prognostic_version(self):
+        """
+        Returns a Prognostic component whose tendencies are the time differenced
+        outputs of this Implicit component.
+
+        """
         return ClimtTimeDifferenced(self)
+
+    def scaled_version(self,
+                       input_scale_factors,
+                       diagnostic_scale_factors,
+                       output_scale_factors)
+        """
+        Returns component whose input/outputs/tendencies/diagnostics are scaled
+        by the given scale factors.
+
+        Args:
+            input_scale_factors (dict):
+                a dictionary whose keys are the inputs that will be scaled
+                and values are floating point scaling factors.
+            output_scale_factors (dict):
+               a dictionary whose keys are the tendencies that will be scaled
+               and values are floating point scaling factors.
+            diagnostic_scale_factors (dict):
+               a dictionary whose keys are the diagnostics that will be scaled
+               and values are floating point scaling factors.
+
+        """
+
+        return ScalingWrapper(self,
+                              input_scale_factors=input_scale_factors,
+                              output_scale_factors=tendency_scale_factors,
+                              diagnostic_scale_factors=diagnostic_scale_factors)
+
 
 
 class ClimtImplicitPrognostic(ClimtPrognostic):
@@ -465,6 +609,45 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
             return set(self._prognostic.diagnostics).union(set(self._climt_diagnostics.keys()))
         else:
             return set(self._climt_diagnostics.keys())
+
+    @property
+    def input_properties(self):
+        return self.create_properties_dict(self._climt_inputs)
+
+    @property
+    def output_properties(self):
+        return self.create_properties_dict(self._climt_outputs)
+
+    @property
+    def diagnostic_properties(self):
+        return self.create_properties_dict(self._climt_diagnostics)
+
+    def scaled_version(self,
+                       input_scale_factors,
+                       diagnostic_scale_factors,
+                       output_scale_factors)
+        """
+        Returns component whose input/outputs/tendencies/diagnostics are scaled
+        by the given scale factors.
+
+        Args:
+            input_scale_factors (dict):
+                a dictionary whose keys are the inputs that will be scaled
+                and values are floating point scaling factors.
+            output_scale_factors (dict):
+               a dictionary whose keys are the tendencies that will be scaled
+               and values are floating point scaling factors.
+            diagnostic_scale_factors (dict):
+               a dictionary whose keys are the diagnostics that will be scaled
+               and values are floating point scaling factors.
+
+        """
+
+        return ScalingWrapper(self,
+                              input_scale_factors=input_scale_factors,
+                              output_scale_factors=output_scale_factors,
+                              diagnostic_scale_factors=diagnostic_scale_factors)
+
 
 
 class ClimtTimeDifferenced(ClimtImplicitPrognostic):
