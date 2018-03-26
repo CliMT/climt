@@ -76,8 +76,6 @@ def call_with_timestep_if_needed(
         return component(state)
     elif isinstance(component, (Implicit, TimeStepper)):
         return component(state, timestep=timestep)
-    elif isinstance(component, tuple):
-        return component[0](state)
     else:
         return component(state)
 
@@ -834,9 +832,10 @@ class TestInstellation(ComponentBase):
 
 class TestGFSDycore(ComponentBase):
     dycore = None
+
     def get_component_instance(self, state_modification_func=lambda x: x):
 
-        if self.dycore == None:
+        if self.dycore is None:
             self.dycore = GFSDynamicalCore(number_of_longitudes=68,
                                            number_of_latitudes=32)
         return self.dycore
@@ -867,11 +866,12 @@ class TestGFSDycoreWithPrognostic(ComponentBase):
         radiation = RRTMGLongwave()
         dycore.prognostics = [radiation]
 
-        return dycore, radiation
+        return dycore
 
     def get_3d_input_state(self):
 
-        component, prognostic = self.get_component_instance()
+        component = self.get_component_instance()
+        prognostic = RRTMGLongwave()
         state = climt.get_default_state(
             [component, prognostic], x=component.grid_definition['x'],
             y=component.grid_definition['y'],

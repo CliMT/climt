@@ -45,13 +45,13 @@ class ArrayHandler(object):
 
             # Use version in quantity descriptions if present
             if hasattr(self, 'quantity_descriptions') and quantity in self.quantity_descriptions.keys():
-                property_dict[quantity] = self.quantity_descriptions[quantity]
+                property_dict[quantity] = copy.deepcopy(self.quantity_descriptions[quantity])
             else:
                 # Use default version if not
-                property_dict[quantity] = climt_quantity_descriptions[quantity]
+                property_dict[quantity] = copy.deepcopy(climt_quantity_descriptions[quantity])
 
                 # Update units
-                property_dict[quantity]['units'] = description[quantity]
+                property_dict[quantity]['units'] = copy.deepcopy(description[quantity])
 
         return property_dict
 
