@@ -9,10 +9,9 @@ def plot_function(fig, state):
         state['specific_humidity'].values.flatten(),
         state['air_pressure'].values.flatten(), '-o')
     ax.axes.invert_yaxis()
-    # print(state['eastward_wind'].values.flatten())
-    # print(state['air_pressure'].values.flatten())
-    # ax.set_yscale('log')
     ax.set_ylim(1e5, 100.)
+    ax.set_xlabel('m/s')
+    ax.set_ylabel('Pa')
 
 
 monitor = PlotFunctionMonitor(plot_function)
@@ -22,7 +21,6 @@ state['eastward_wind'].values[:] = 10.
 timestep = timedelta(hours=1)
 
 for i in range(600):
-    # print(i)
 
     diagnostics, new_state = simple_physics(state, timestep)
     print('SH Flux:', diagnostics['surface_upward_sensible_heat_flux'].values.item())
