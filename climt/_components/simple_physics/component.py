@@ -28,7 +28,6 @@ class SimplePhysics(ClimtImplicit):
         'specific_humidity': 'g/g',
         'northward_wind': 'm s^-1',
         'eastward_wind': 'm s^-1',
-        'latitude': 'degrees_north',
         'surface_specific_humidity': 'g/g',
     }
 
@@ -186,6 +185,9 @@ class SimplePhysics(ClimtImplicit):
             * diagnostics for Simple Physics
         '''
 
+        if 'latitude' not in state.keys():
+            raise IndexError(
+                'Simple Physics: State must contain a quantity called latitude')
         U = get_numpy_array(state['eastward_wind'].to_units('m/s'), ['x', 'y', 'z'])
         V = get_numpy_array(state['northward_wind'].to_units('m/s'), ['x', 'y', 'z'])
         P = get_numpy_array(state['air_pressure'].to_units('Pa'), ['x', 'y', 'z'])

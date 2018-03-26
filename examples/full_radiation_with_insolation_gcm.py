@@ -67,7 +67,7 @@ radiation_lw = climt.RRTMGLongwave()
 radiation_lw = radiation_lw.piecewise_constant_version(
     constant_duration*model_time_step)
 
-radiation_sw = climt.RRTMGShortwave(use_internal_solar_constant=False)
+radiation_sw = climt.RRTMGShortwave(use_solar_constant_from_fortran=False)
 radiation_sw = radiation_sw.piecewise_constant_version(
     constant_duration*model_time_step)
 
