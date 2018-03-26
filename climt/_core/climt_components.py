@@ -334,7 +334,7 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
     def scaled_version(self,
                        input_scale_factors,
                        diagnostic_scale_factors,
-                       tendency_scale_factors)
+                       tendency_scale_factors):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.
@@ -400,7 +400,7 @@ class ClimtDiagnostic(ArrayHandler, Diagnostic):
 
     def scaled_version(self,
                        input_scale_factors,
-                       diagnostic_scale_factors)
+                       diagnostic_scale_factors):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.
@@ -486,7 +486,7 @@ class ClimtImplicit(ArrayHandler, Implicit):
     def scaled_version(self,
                        input_scale_factors,
                        diagnostic_scale_factors,
-                       output_scale_factors)
+                       output_scale_factors):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.
@@ -625,7 +625,7 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
     def scaled_version(self,
                        input_scale_factors,
                        diagnostic_scale_factors,
-                       output_scale_factors)
+                       output_scale_factors):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.
