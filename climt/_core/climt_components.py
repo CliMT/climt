@@ -1,8 +1,7 @@
 import abc
 from sympl import (Implicit, Diagnostic, Prognostic,
                    TimeStepper, PrognosticComposite,
-                   UpdateFrequencyWrapper, ScalingWrapper,
-                   TimeDifferencingWrapper)
+                   UpdateFrequencyWrapper, ScalingWrapper)
 from datetime import timedelta
 from sympl import get_numpy_array
 from .initialization import climt_quantity_descriptions, get_default_values
@@ -420,7 +419,6 @@ class ClimtDiagnostic(ArrayHandler, Diagnostic):
                               diagnostic_scale_factors=diagnostic_scale_factors)
 
 
-
 class ClimtImplicit(ArrayHandler, Implicit):
     """
     The base class to use for all CliMT Implicits.
@@ -506,9 +504,8 @@ class ClimtImplicit(ArrayHandler, Implicit):
 
         return ScalingWrapper(self,
                               input_scale_factors=input_scale_factors,
-                              output_scale_factors=tendency_scale_factors,
+                              output_scale_factors=output_scale_factors,
                               diagnostic_scale_factors=diagnostic_scale_factors)
-
 
 
 class ClimtImplicitPrognostic(ClimtPrognostic):
@@ -647,7 +644,6 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
                               input_scale_factors=input_scale_factors,
                               output_scale_factors=output_scale_factors,
                               diagnostic_scale_factors=diagnostic_scale_factors)
-
 
 
 class ClimtTimeDifferenced(ClimtImplicitPrognostic):
