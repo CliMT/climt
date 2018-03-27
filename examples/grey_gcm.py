@@ -1,29 +1,33 @@
 import climt
 from sympl import PlotFunctionMonitor
 import numpy as np
-# import time
+import matplotlib.pyplot as plt
 
 
 def plot_function(fig, state):
 
-    fig.set_size_inches(10, 10)
-
+    fig.set_size_inches(8, 8)
     ax = fig.add_subplot(2, 2, 1)
     state['surface_temperature'].transpose().plot.contourf(ax=ax, levels=16)
+    ax.set_title('Surface Temperature')
 
     ax = fig.add_subplot(2, 2, 2)
     state['convective_heating_rate'].mean(dim='longitude').transpose().plot.contourf(
         ax=ax, levels=16)
+    ax.set_title('Convective Heating')
 
     ax = fig.add_subplot(2, 2, 3)
     state['eastward_wind'].mean(dim='longitude').transpose().plot.contourf(
         ax=ax, levels=16)
+    ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 4)
     state['air_temperature'].mean(dim='longitude').transpose().plot.contourf(
         ax=ax, levels=16)
+    ax.set_title('Air Temperature')
 
-    fig.tight_layout()
+    plt.suptitle('Time: '+str(state['time']))
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 
 # Create plotting object
@@ -76,5 +80,8 @@ for i in range(50000):
 
     if i % 20 == 0:
         monitor.store(my_state)
-        print(i, 'max. zonal wind: ', np.amax(my_state['eastward_wind'].values))
-        print('max. surf temp: ', my_state['surface_temperature'].max(keep_attrs=True))
+        print('max. zonal wind: ', np.amax(my_state['eastward_wind'].values))
+        print('max. surf temp: ',
+              my_state['surface_temperature'].max(keep_attrs=True))
+
+    my_state['time'] += dycore._time_step
