@@ -94,6 +94,7 @@ if 'FC' not in os.environ:
         guess_compiler_name('FC')
     else:
         os.environ['FC'] = 'gfortran'
+        os.environ['F77'] = 'gfortran'
 
 if 'CC' not in os.environ:
     if operating_system == 'Darwin':
