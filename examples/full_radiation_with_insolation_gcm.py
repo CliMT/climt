@@ -31,6 +31,7 @@ def plot_function(fig, state):
     plt.suptitle('Time: '+str(state['time']))
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
+
 monitor = PlotFunctionMonitor(plot_function)
 
 climt.set_constants_from_dict({
