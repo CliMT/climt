@@ -5,8 +5,9 @@ from sympl import PlotFunctionMonitor
 def plot_function(fig, state):
 
     ax = fig.add_subplot(1, 1, 1)
-    state['surface_air_pressure'].transpose().plot.contourf(
+    state['surface_air_pressure'].to_units('mbar').transpose().plot.contourf(
         ax=ax, levels=16)
+    ax.set_title('Surface Pressure at: '+str(state['time']))
 
 
 monitor = PlotFunctionMonitor(plot_function)
@@ -30,5 +31,6 @@ my_state.update(out)
 
 for i in range(1000):
     output, diag = dycore(my_state)
-    monitor.store(output)
+    monitor.store(my_state)
     my_state.update(output)
+    my_state['time'] += dycore._time_step
