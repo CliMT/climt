@@ -1,7 +1,7 @@
 import climt
 from sympl import PlotFunctionMonitor
 import numpy as np
-# import time
+import matplotlib.pyplot as plt
 
 
 def plot_function(fig, state):
@@ -25,7 +25,8 @@ def plot_function(fig, state):
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
-    fig.tight_layout()
+    plt.suptitle('Time: '+str(state['time']))
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 
 # Create plotting object
@@ -81,3 +82,5 @@ for i in range(50000):
         monitor.store(my_state)
         print(i, 'max. zonal wind: ', np.amax(my_state['eastward_wind'].values))
         print('max. surf temp: ', my_state['surface_temperature'].max(keep_attrs=True))
+
+    my_state['time'] += dycore._time_step
