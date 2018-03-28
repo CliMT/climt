@@ -33,10 +33,10 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'numpy>=1.10',
+    'numpy>=0.10',
     'pint>=0.7.0',
     'xarray>=0.8.0',
-    'sympl>=0.2.1',
+    'sympl==0.3.2',
     'cython>=0.25',
     'scipy>=0.18.1',
 ]
