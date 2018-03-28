@@ -2,6 +2,12 @@
 History
 =======
 
+v.0.9.4
+-------
+
+* Fixed requirements to ensure this version of climt installs
+  the correct versions of sympl and numpy.
+
 v.0.9.3
 -------
 
