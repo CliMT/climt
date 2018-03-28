@@ -2,6 +2,11 @@
 History
 =======
 
+v.0.9.3
+-------
+
+* Released because of a labelling issue. See 0.9.2 for details.
+
 v.0.9.2
 --------
 * Updated documentation
