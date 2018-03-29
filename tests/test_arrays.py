@@ -90,7 +90,7 @@ def test_extracting_arrays_from_real_component():
 
     arrays = dummy.get_numpy_arrays_from_state('_climt_inputs', state)
 
-    for quantity in dummy.inputs:
+    for quantity in dummy._climt_inputs.keys():
         units = dummy._climt_inputs[quantity]
         state_values = state[quantity].to_units(units).values
         assert np.all(arrays[quantity] == state_values)

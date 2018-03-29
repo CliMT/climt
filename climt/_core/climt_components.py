@@ -297,13 +297,11 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
 
     @property
     def tendencies(self):
-        return tuple(list(self._climt_tendencies.keys()) +
-                     ['x', 'y', 'mid_levels', 'interface_levels'])
+        return tuple(self._climt_tendencies.keys())
 
     @property
     def diagnostics(self):
-        return tuple(list(self._climt_diagnostics.keys()) +
-                     ['x', 'y', 'mid_levels', 'interface_levels'])
+        return tuple(self._climt_diagnostics.keys())
 
     @property
     def input_properties(self):
@@ -391,8 +389,7 @@ class ClimtDiagnostic(ArrayHandler, Diagnostic):
 
     @property
     def diagnostics(self):
-        return tuple(list(self._climt_diagnostics.keys()) +
-                     ['x', 'y', 'mid_levels', 'interface_levels'])
+        return tuple(self._climt_diagnostics.keys())
 
     @property
     def input_properties(self):
@@ -461,13 +458,11 @@ class ClimtImplicit(ArrayHandler, Implicit):
 
     @property
     def outputs(self):
-        return tuple(list(self._climt_outputs.keys()) +
-                     ['x', 'y', 'mid_levels', 'interface_levels'])
+        return tuple(self._climt_outputs.keys())
 
     @property
     def diagnostics(self):
-        return tuple(list(self._climt_diagnostics.keys()) +
-                     ['x', 'y', 'mid_levels', 'interface_levels'])
+        return tuple(self._climt_diagnostics.keys())
 
     @property
     def input_properties(self):
@@ -609,18 +604,15 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
 
     @property
     def outputs(self):
-        return set(list(self._climt_outputs.keys()) +
-                   ['x', 'y', 'mid_levels', 'interface_levels'])
+        return set(self._climt_outputs.keys())
 
     @property
     def diagnostics(self):
         if self._prognostic is not None:
             return set(self._prognostic.diagnostics).union(
-                set(list(self._climt_diagnostics.keys()) +
-                    ['x', 'y', 'mid_levels', 'interface_levels']))
+                set(self._climt_diagnostics.keys()))
         else:
-            return set(list(self._climt_diagnostics.keys()) +
-                       ['x', 'y', 'mid_levels', 'interface_levels'])
+            return set(self._climt_diagnostics.keys())
 
     @property
     def input_properties(self):
