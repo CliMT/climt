@@ -2,11 +2,24 @@ from climt import (
     mass_to_volume_mixing_ratio,
     get_interface_values,
     calculate_q_sat, numpy_version_of,
-    RRTMGShortwave, get_default_state)
+    RRTMGShortwave, get_default_state,
+    set_constants_from_dict, get_constant,
+    list_available_constants)
 
 from sympl import DataArray
 import numpy as np
 import pytest
+
+sample_constants = dict(
+    constant_one=dict(
+        value=10.0,
+        units='J kg^-1 m^-2'),
+    constant_two=dict(
+        value=1.002,
+        units='J kg^-1'),
+    constant_three=dict(
+        value=1.024e6,
+        units='kg^-1'))
 
 
 def test_mol_weight_not_passed():
@@ -109,6 +122,23 @@ def test_get_numpy_version_with_numpy_array_in_state():
     raw_array = numpy_version_of(state)
 
     assert np.all(raw_array['test_values'] == np.arange(100))
+
+
+def test_adding_constant():
+
+    set_constants_from_dict(sample_constants)
+
+    for constant in sample_constants.keys():
+
+        constant_value = get_constant(constant,
+                                      sample_constants[constant]['units'])
+
+        assert constant_value == sample_constants[constant]['value']
+
+
+def test_print_constant():
+
+    list_available_constants()
 
 
 if __name__ == '__main__':

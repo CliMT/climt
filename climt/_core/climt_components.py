@@ -292,7 +292,8 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
 
     @property
     def inputs(self):
-        return tuple(self._climt_inputs.keys())
+        return tuple(list(self._climt_inputs.keys()) +
+                     ['x', 'y', 'mid_levels', 'interface_levels'])
 
     @property
     def tendencies(self):
@@ -331,9 +332,9 @@ class ClimtPrognostic(ArrayHandler, Prognostic):
         return UpdateFrequencyWrapper(self, update_time)
 
     def scaled_version(self,
-                       input_scale_factors,
-                       diagnostic_scale_factors,
-                       tendency_scale_factors):
+                       input_scale_factors=None,
+                       diagnostic_scale_factors=None,
+                       tendency_scale_factors=None):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.
@@ -383,7 +384,8 @@ class ClimtDiagnostic(ArrayHandler, Diagnostic):
 
     @property
     def inputs(self):
-        return tuple(self._climt_inputs.keys())
+        return tuple(list(self._climt_inputs.keys()) +
+                     ['x', 'y', 'mid_levels', 'interface_levels'])
 
     @property
     def diagnostics(self):
@@ -398,8 +400,8 @@ class ClimtDiagnostic(ArrayHandler, Diagnostic):
         return self.create_properties_dict(self._climt_diagnostics)
 
     def scaled_version(self,
-                       input_scale_factors,
-                       diagnostic_scale_factors):
+                       input_scale_factors=None,
+                       diagnostic_scale_factors=None):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.
@@ -451,7 +453,8 @@ class ClimtImplicit(ArrayHandler, Implicit):
 
     @property
     def inputs(self):
-        return tuple(self._climt_inputs.keys())
+        return tuple(list(self._climt_inputs.keys()) +
+                     ['x', 'y', 'mid_levels', 'interface_levels'])
 
     @property
     def outputs(self):
@@ -482,9 +485,9 @@ class ClimtImplicit(ArrayHandler, Implicit):
         return ClimtTimeDifferenced(self)
 
     def scaled_version(self,
-                       input_scale_factors,
-                       diagnostic_scale_factors,
-                       output_scale_factors):
+                       input_scale_factors=None,
+                       diagnostic_scale_factors=None,
+                       output_scale_factors=None):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.
@@ -592,9 +595,12 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
     @property
     def inputs(self):
         if self._prognostic is not None:
-            return set(self._prognostic.inputs).union(set(self._climt_inputs.keys()))
+            return set(self._prognostic.inputs).union(
+                set(list(self._climt_inputs.keys()) +
+                    ['x', 'y', 'mid_levels', 'interface_levels']))
         else:
-            return set(self._climt_inputs.keys())
+            return set(list(self._climt_inputs.keys()) +
+                       ['x', 'y', 'mid_levels', 'interface_levels'])
 
     @property
     def outputs(self):
@@ -603,7 +609,8 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
     @property
     def diagnostics(self):
         if self._prognostic is not None:
-            return set(self._prognostic.diagnostics).union(set(self._climt_diagnostics.keys()))
+            return set(self._prognostic.diagnostics).union(
+                set(self._climt_diagnostics.keys()))
         else:
             return set(self._climt_diagnostics.keys())
 
@@ -620,9 +627,9 @@ class ClimtSpectralDynamicalCore(ArrayHandler, TimeStepper):
         return self.create_properties_dict(self._climt_diagnostics)
 
     def scaled_version(self,
-                       input_scale_factors,
-                       diagnostic_scale_factors,
-                       output_scale_factors):
+                       input_scale_factors=None,
+                       diagnostic_scale_factors=None,
+                       output_scale_factors=None):
         """
         Returns component whose input/outputs/tendencies/diagnostics are scaled
         by the given scale factors.

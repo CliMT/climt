@@ -102,6 +102,16 @@ def init_ozone(array_dims, quantity_description, initial_state):
 
 
 climt_quantity_descriptions = {
+    'latitude': {
+        'dims': ['x', 'y'],
+        'units': 'degrees_north',
+        'default_value': 0
+    },
+    'longitude': {
+        'dims': ['x', 'y'],
+        'units': 'degrees_east',
+        'default_value': 0
+    },
     'air_pressure': {
         'dims': ['x', 'y', 'mid_levels'],
         'units': 'Pa',

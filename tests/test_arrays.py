@@ -10,7 +10,8 @@ from .test_classes import (
     MockPrognosticWithExtraQuantities,
     MockPrognosticWithExtraQuantitiesNotDefined,
     MockPrognosticWithAllAttributes,
-    MockImplicitWithAllAttributes
+    MockImplicitWithAllAttributes,
+    MockDycoreWithAllAttributes
 )
 
 
@@ -57,15 +58,50 @@ def test_get_tendencies():
         assert quantity in diag
 
 
-def test_get_outputs():
+def test_get_outputs_and_diagnostics():
 
     dummy = MockImplicitWithAllAttributes()
     state = get_default_state([dummy])
 
-    diag = dummy.create_state_dict_for('_climt_outputs', state)
+    output = dummy.create_state_dict_for('_climt_outputs', state)
 
     for quantity in dummy.outputs:
+        assert quantity in output
+
+    diag = dummy.create_state_dict_for('_climt_diagnostics', state)
+
+    for quantity in dummy.diagnostics:
         assert quantity in diag
+        assert quantity in dummy.diagnostic_properties
+
+
+def test_dycore_inputs_are_valid():
+
+    dummy = MockDycoreWithAllAttributes()
+    state = get_default_state([dummy])
+
+    for input in dummy.inputs:
+        if input not in ['x', 'y', 'mid_levels', 'interface_levels']:
+            assert input in state
+            assert input in dummy.input_properties
+
+
+def test_get_dycore_outputs_and_diagnostics():
+
+    dummy = MockDycoreWithAllAttributes()
+    state = get_default_state([dummy])
+
+    output = dummy.create_state_dict_for('_climt_outputs', state)
+
+    for quantity in dummy.outputs:
+        assert quantity in output
+
+    diag = dummy.create_state_dict_for('_climt_diagnostics', state)
+
+    for quantity in dummy.diagnostics:
+        assert quantity in diag
+        assert quantity in dummy.diagnostic_properties
+
 
 
 def test_get_diagnostics_with_real_component_with_2d_coordinates():
@@ -90,7 +126,7 @@ def test_extracting_arrays_from_real_component():
 
     arrays = dummy.get_numpy_arrays_from_state('_climt_inputs', state)
 
-    for quantity in dummy.inputs:
+    for quantity in dummy._climt_inputs.keys():
         units = dummy._climt_inputs[quantity]
         state_values = state[quantity].to_units(units).values
         assert np.all(arrays[quantity] == state_values)
