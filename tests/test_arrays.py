@@ -10,7 +10,8 @@ from .test_classes import (
     MockPrognosticWithExtraQuantities,
     MockPrognosticWithExtraQuantitiesNotDefined,
     MockPrognosticWithAllAttributes,
-    MockImplicitWithAllAttributes
+    MockImplicitWithAllAttributes,
+    MockDycoreWithAllAttributes
 )
 
 
@@ -57,15 +58,50 @@ def test_get_tendencies():
         assert quantity in diag
 
 
-def test_get_outputs():
+def test_get_outputs_and_diagnostics():
 
     dummy = MockImplicitWithAllAttributes()
     state = get_default_state([dummy])
 
-    diag = dummy.create_state_dict_for('_climt_outputs', state)
+    output = dummy.create_state_dict_for('_climt_outputs', state)
 
     for quantity in dummy.outputs:
+        assert quantity in output
+
+    diag = dummy.create_state_dict_for('_climt_diagnostics', state)
+
+    for quantity in dummy.diagnostics:
         assert quantity in diag
+        assert quantity in dummy.diagnostic_properties
+
+
+def test_dycore_inputs_are_valid():
+
+    dummy = MockDycoreWithAllAttributes()
+    state = get_default_state([dummy])
+
+    for input in dummy.inputs:
+        if input not in ['x', 'y', 'mid_levels', 'interface_levels']:
+            assert input in state
+            assert input in dummy.input_properties
+
+
+def test_get_dycore_outputs_and_diagnostics():
+
+    dummy = MockDycoreWithAllAttributes()
+    state = get_default_state([dummy])
+
+    output = dummy.create_state_dict_for('_climt_outputs', state)
+
+    for quantity in dummy.outputs:
+        assert quantity in output
+
+    diag = dummy.create_state_dict_for('_climt_diagnostics', state)
+
+    for quantity in dummy.diagnostics:
+        assert quantity in diag
+        assert quantity in dummy.diagnostic_properties
+
 
 
 def test_get_diagnostics_with_real_component_with_2d_coordinates():

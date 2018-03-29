@@ -9,7 +9,8 @@ from .test_classes import (MockPrognostic,
                            MockPrognosticWithExtraQuantities,
                            MockPrognosticWithMalformedExtraQuantities,
                            MockPrognosticWithExtraDimensionsAndSigmaLevels,
-                           MockPrognosticWithExtraDimensionsIn2d)
+                           MockPrognosticWithExtraDimensionsIn2d,
+                           MockImplicitWithAllAttributes)
 
 
 def test_no_components():
@@ -313,6 +314,13 @@ def test_2d_coordinates_in_extra_dimensions():
     with pytest.raises(NotImplementedError) as excinfo:
         get_default_state([dummy])
     assert 'not yet supported' in str(excinfo.value)
+
+
+def test_create_implicit_diagnostics():
+
+    dummy = MockImplicitWithAllAttributes()
+
+    state = get_default_state([dummy])
 
 
 if __name__ == '__main__':
