@@ -288,7 +288,7 @@ def test_basic_2d_coordinates():
     assert np.all(state['x'].values == random_x_values)
     assert np.all(state['y'].values == random_y_values)
 
-    for quantity in dummy.inputs:
+    for quantity in dummy._climt_inputs.keys():
         assert 'shore' in state[quantity].coords
         assert 'latitude' in state[quantity].coords
         assert state[quantity].coords['shore'].units is 'km'
