@@ -21,6 +21,7 @@ class SimplePhysics(ClimtImplicit):
 
     _climt_inputs = {
         'air_temperature': 'degK',
+        'latitude': 'degrees_north',
         'air_pressure': 'mbar',
         'air_pressure_on_interface_levels': 'mbar',
         'surface_air_pressure': 'mbar',
