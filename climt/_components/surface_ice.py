@@ -77,21 +77,23 @@ class IceSheet(ClimtImplicit):
         self._output_levels = int(number_vertical_levels)
         self.extra_dimensions['ice_vertical_levels'] = np.arange(self._output_levels)
 
-        self._Kice = get_constant('thermal_conductivity_of_solid_phase_as_ice')
+        self._Kice = get_constant('thermal_conductivity_of_solid_phase_as_ice',
+                                  'W/m/degK')
 
-        self._Ksnow = get_constant('thermal_conductivity_of_solid_phase_as_snow')
+        self._Ksnow = get_constant('thermal_conductivity_of_solid_phase_as_snow',
+                                   'W/m/degK')
 
-        self._rho_ice = get_constant('density_of_solid_phase_as_ice')
+        self._rho_ice = get_constant('density_of_solid_phase_as_ice', 'kg/m^3')
 
-        self._C_ice = get_constant('heat_capacity_of_solid_phase_as_ice')
+        self._C_ice = get_constant('heat_capacity_of_solid_phase_as_ice', 'J/kg/degK')
 
-        self._rho_snow = get_constant('density_of_solid_phase_as_snow')
+        self._rho_snow = get_constant('density_of_solid_phase_as_snow', 'kg/m^3')
 
-        self._C_snow = get_constant('heat_capacity_of_solid_phase_as_snow')
+        self._C_snow = get_constant('heat_capacity_of_solid_phase_as_snow', 'J/kg/degK')
 
-        self._Lf = get_constant('latent_heat_of_fusion')
+        self._Lf = get_constant('latent_heat_of_fusion', 'J/kg')
 
-        self._temp_melt = get_constant('freezing_temperature_of_liquid_phase')
+        self._temp_melt = get_constant('freezing_temperature_of_liquid_phase', 'degK')
 
     def __call__(self, state, timestep):
         """
@@ -174,14 +176,14 @@ class IceSheet(ClimtImplicit):
                     levels = np.arange(num_layers)
 
                     # Create vertically varying profiles
-                    rho_snow_ice = self._rho_ice.values*np.ones(num_layers)
-                    rho_snow_ice[levels > snow_level] = self._rho_snow.values
+                    rho_snow_ice = self._rho_ice*np.ones(num_layers)
+                    rho_snow_ice[levels > snow_level] = self._rho_snow
 
-                    heat_capacity_snow_ice = self._C_ice.values*np.ones(num_layers)
-                    heat_capacity_snow_ice[levels > snow_level] = self._C_snow.values
+                    heat_capacity_snow_ice = self._C_ice*np.ones(num_layers)
+                    heat_capacity_snow_ice[levels > snow_level] = self._C_snow
 
-                    kappa_snow_ice = self._Kice.values*np.ones(num_layers)
-                    kappa_snow_ice[levels > snow_level] = self._Ksnow.values
+                    kappa_snow_ice = self._Kice*np.ones(num_layers)
+                    kappa_snow_ice[levels > snow_level] = self._Ksnow
 
                     check_melting = True
                     if surface_temperature < self._temp_melt:

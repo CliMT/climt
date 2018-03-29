@@ -4,6 +4,7 @@ from sympl import (
 from climt import SimplePhysics, get_default_state
 import numpy as np
 from datetime import timedelta
+import matplotlib.pyplot as plt
 
 from climt import EmanuelConvection, RRTMGShortwave, RRTMGLongwave, SlabSurface
 
@@ -56,7 +57,7 @@ def plot_function(fig, state):
     ax.axes.invert_yaxis()
     ax.set_xlabel('W/m^2')
     ax.grid()
-    fig.tight_layout()
+    plt.tight_layout()
 
 
 monitor = PlotFunctionMonitor(plot_function)
@@ -101,7 +102,7 @@ relaxation = RelaxationPrognostic('eastward_wind', equilibrium_value, tau)
 time_stepper = AdamsBashforth([relaxation, convection, radiation_lw, radiation_sw, slab])
 
 for i in range(60000):
-    print(state['surface_temperature'].values)
+    print('Surface Temperature: ', state['surface_temperature'].values.item())
     convection.current_time_step = timestep
     diagnostics, state = time_stepper(state, timestep)
     state.update(diagnostics)

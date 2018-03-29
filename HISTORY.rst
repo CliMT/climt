@@ -2,8 +2,25 @@
 History
 =======
 
-Latest
-------
+v.0.9.4
+-------
+
+* Added attributes to inputs/outputs/ etc., to work with ScalingWrapper
+  Added tests as well.
+* Added tests for constants functions
+* Fixed requirements to ensure this version of climt installs
+  the correct versions of sympl and numpy.
+
+v.0.9.3
+-------
+
+* Released because of a labelling issue. See 0.9.2 for details.
+
+v.0.9.2
+--------
+* Updated documentation
+* Cleaned up examples
+* Added (*)_properties as a property to all components
 * The gas constant for dry air in the Emanuel scheme is now renamed _Rdair
 * RRTMG LW and SW are now OpenMP parallel
 * Added Instellation component to calculate zenith angle

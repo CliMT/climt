@@ -65,9 +65,12 @@ class SlabSurface(ClimtPrognostic):
 
         """
 
-        self._K_snow = get_constant('thermal_conductivity_of_solid_phase_as_snow')
-        self._K_ice = get_constant('thermal_conductivity_of_solid_phase_as_ice')
-        self._ice_melt_temp = get_constant('freezing_temperature_of_liquid_phase')
+        self._K_snow = get_constant('thermal_conductivity_of_solid_phase_as_snow',
+                                    'W/m/degK')
+        self._K_ice = get_constant('thermal_conductivity_of_solid_phase_as_ice',
+                                   'W/m/degK')
+        self._ice_melt_temp = get_constant('freezing_temperature_of_liquid_phase',
+                                           'degK')
 
     def __call__(self, state):
         """

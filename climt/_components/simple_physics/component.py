@@ -21,6 +21,7 @@ class SimplePhysics(ClimtImplicit):
 
     _climt_inputs = {
         'air_temperature': 'degK',
+        'latitude': 'degrees_north',
         'air_pressure': 'mbar',
         'air_pressure_on_interface_levels': 'mbar',
         'surface_air_pressure': 'mbar',
@@ -28,7 +29,6 @@ class SimplePhysics(ClimtImplicit):
         'specific_humidity': 'g/g',
         'northward_wind': 'm s^-1',
         'eastward_wind': 'm s^-1',
-        'latitude': 'degrees_north',
         'surface_specific_humidity': 'g/g',
     }
 
@@ -134,19 +134,19 @@ class SimplePhysics(ClimtImplicit):
                                  self._surface_flux, self._use_ext_ts,
                                  self._use_ext_qsurf)
 
-        self._g = get_constant('gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration', 'm/s^2')
 
-        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
 
-        self._Rair = get_constant('gas_constant_of_dry_air')
+        self._Rair = get_constant('gas_constant_of_dry_air', 'J/kg/degK')
 
-        self._Rcond = get_constant('gas_constant_of_vapor_phase')
+        self._Rcond = get_constant('gas_constant_of_vapor_phase', 'J/kg/degK')
 
-        self._radius = get_constant('planetary_radius')
+        self._radius = get_constant('planetary_radius', 'm')
 
-        self._Omega = get_constant('planetary_rotation_rate')
+        self._Omega = get_constant('planetary_rotation_rate', 's^-1')
 
-        self._Lv = get_constant('latent_heat_of_condensation')
+        self._Lv = get_constant('latent_heat_of_condensation', 'J/kg')
 
         self._Ct = drag_coefficient_heat_fluxes
 
@@ -160,7 +160,7 @@ class SimplePhysics(ClimtImplicit):
 
         self._Cm = maximum_momentum_drag_coefficient
 
-        self._rho_condensible = get_constant('density_of_liquid_water')
+        self._rho_condensible = get_constant('density_of_liquid_water', 'kg/m^3')
 
         phys.set_physical_constants(self._g, self._Cpd, self._Rair, self._Lv,
                                     self._Rcond, self._radius, self._Omega,
@@ -186,6 +186,9 @@ class SimplePhysics(ClimtImplicit):
             * diagnostics for Simple Physics
         '''
 
+        if 'latitude' not in state.keys():
+            raise IndexError(
+                'Simple Physics: State must contain a quantity called latitude')
         U = get_numpy_array(state['eastward_wind'].to_units('m/s'), ['x', 'y', 'z'])
         V = get_numpy_array(state['northward_wind'].to_units('m/s'), ['x', 'y', 'z'])
         P = get_numpy_array(state['air_pressure'].to_units('Pa'), ['x', 'y', 'z'])

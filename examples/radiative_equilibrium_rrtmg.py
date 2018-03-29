@@ -3,6 +3,7 @@ from sympl import (
 from climt import RRTMGShortwave, RRTMGLongwave, get_default_state
 import numpy as np
 from datetime import timedelta
+import matplotlib.pyplot as plt
 
 
 def plot_function(fig, state):
@@ -35,6 +36,8 @@ def plot_function(fig, state):
     ax.grid()
     ax.set_xlabel('K')
     ax.set_yticklabels([])
+
+    plt.suptitle('Radiative Eq. with RRTMG')
 
 
 monitor = PlotFunctionMonitor(plot_function)

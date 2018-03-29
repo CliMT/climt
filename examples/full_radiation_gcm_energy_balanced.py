@@ -1,9 +1,9 @@
 import climt
-from sympl import PlotFunctionMonitor  # , NetCDFMonitor
+from sympl import PlotFunctionMonitor, NetCDFMonitor
 import numpy as np
 from metpy import calc
 from metpy.units import units
-# import time
+import matplotlib.pyplot as plt
 
 
 def plot_function(fig, state):
@@ -28,19 +28,17 @@ def plot_function(fig, state):
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
-    fig.tight_layout()
-    # plt.savefig(str(state['time'])+'.png')
+    plt.suptitle('Time: '+str(state['time']))
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 
 fields_to_store = list(climt.RRTMGShortwave._climt_inputs) + list(
     climt.RRTMGShortwave._climt_tendencies) + list(
         climt.RRTMGShortwave._climt_diagnostics)
-fields_to_store.remove('solar_cycle_fraction')
-fields_to_store.remove('flux_adjustment_for_earth_sun_distance')
 # Create plotting object
 monitor = PlotFunctionMonitor(plot_function)
-# netcdf_monitor = NetCDFMonitor('test_sw.nc', write_on_store=True,
-#                               store_names=fields_to_store)
+netcdf_monitor = NetCDFMonitor('gcm_output.nc', write_on_store=True,
+                               store_names=fields_to_store)
 
 climt.set_constants_from_dict({
     'stellar_irradiance': {'value': 200, 'units': 'W m^-2'}})
@@ -61,7 +59,8 @@ simple_physics = simple_physics.prognostic_version()
 simple_physics.current_time_step = model_time_step
 convection.current_time_step = model_time_step
 
-constant_duration = 6
+# run radiation once every hour
+constant_duration = 3
 
 radiation_lw = climt.RRTMGLongwave()
 radiation_lw = radiation_lw.piecewise_constant_version(
@@ -118,9 +117,12 @@ for i in range(500000):
     print('All q values are positive: ',
           np.all(my_state['specific_humidity'] >= 0))
 
-    if i % constant_duration == 0:
+    if i % 3 == 0:
         monitor.store(my_state)
-        # netcdf_monitor.store(my_state)
+
+    # Output once evey half day
+    if i % 18 == 0:
+        netcdf_monitor.store(my_state)
 
     print('max. zonal wind: ',
           np.amax(my_state['eastward_wind'].values))

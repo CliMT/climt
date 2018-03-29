@@ -1,9 +1,9 @@
 import climt
-from sympl import PlotFunctionMonitor  # , NetCDFMonitor
+from sympl import PlotFunctionMonitor
 import numpy as np
 from metpy import calc
 from metpy.units import units
-# import time
+import matplotlib.pyplot as plt
 
 
 def plot_function(fig, state):
@@ -28,18 +28,10 @@ def plot_function(fig, state):
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
-    fig.tight_layout()
-    # plt.savefig(str(state['time'])+'.png')
+    plt.suptitle('Time: '+str(state['time']))
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 
-# fields_to_store = list(climt.RRTMGShortwave._climt_inputs) + list(
-#     climt.RRTMGShortwave._climt_tendencies) + list(
-#       climt.RRTMGShortwave._climt_diagnostics)
-# fields_to_store.remove('solar_cycle_fraction')
-# fields_to_store.remove('flux_adjustment_for_earth_sun_distance')
-# Create plotting object
-# netcdf_monitor = NetCDFMonitor('test_sw.nc', write_on_store=True,
-#                               store_names=fields_to_store)
 monitor = PlotFunctionMonitor(plot_function)
 
 climt.set_constants_from_dict({
@@ -61,13 +53,13 @@ simple_physics = simple_physics.prognostic_version()
 simple_physics.current_time_step = model_time_step
 convection.current_time_step = model_time_step
 
-constant_duration = 10
+constant_duration = 6
 
 radiation_lw = climt.RRTMGLongwave()
 radiation_lw = radiation_lw.piecewise_constant_version(
     constant_duration*model_time_step)
 
-radiation_sw = climt.RRTMGShortwave(use_internal_solar_constant=False)
+radiation_sw = climt.RRTMGShortwave(use_solar_constant_from_fortran=False)
 radiation_sw = radiation_sw.piecewise_constant_version(
     constant_duration*model_time_step)
 
@@ -119,7 +111,6 @@ for i in range(50000):
 
     if i % constant_duration == 0:
         monitor.store(my_state)
-        # netcdf_monitor.store(my_state)
 
     print('max. zonal wind: ',
           np.amax(my_state['eastward_wind'].values))

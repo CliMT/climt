@@ -59,7 +59,11 @@ You can read more about this functionality in :ref:`utility_functions`.
 Behavioural Configuration
 --------------------------
 
-Currently, CliMT allows for two kinds of behavioural modification of components.
+.. warning::
+        This API is currently unstable. Expect the names of methods to change
+        in future versions.
+
+Currently, CliMT allows for three kinds of behavioural modification of components.
 
 * Piecewise constant output: Computationally expensive modules like radiative transfer
   are sometimes called only once every few timesteps, and the same values is used for
@@ -80,10 +84,25 @@ Currently, CliMT allows for two kinds of behavioural modification of components.
   
   See how this is used in the `Grey GCM`_.
 
+* Scaled version: Very often, we perform experiments where we want to study the sensitivity of the simulation
+  to a particular quantity or the effect of a certain quantity on the output (mechanism denial).
+  This is in some instances done by scaling the quantity or setting it to zero (which
+  is also a scaling). To allow for this kind of modification, :py:meth:`scaled_version` can be used. This is a method
+  available to all kinds of components (Implicit, Prognostic, etc.,). See the documentation for this
+  method in the description of the base components in :ref:`component_list`.
+
+Compositional Configuration
+----------------------------
+
+This kind of configuration will allow the automatic building of models given certain
+components selected by the user.
+Currently, the user has to write the script to build the model and run it. It is clear that
+a lot of this code is repetitive and can be replaced by an entity (Which will be called
+:py:mod:`Federation`).
+
 .. note::
-    We also plan to introduce a `ScaledComponent` which allows scaling inputs and outputs/tendencies
-    of a component by an arbitrary floating point number. This will be useful in process studies
-    and mechanism denial studies
+    This functionality is currently unavailble, and will be present in a future version of CliMT.
+
 
 
 .. _GCM: https://github.com/CliMT/climt/blob/e171ebef945535f9f82df716da01b4a7c3b1221a/examples/grey_gcm_energy_balanced.py#L51

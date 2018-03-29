@@ -11,7 +11,6 @@ def plot_function(fig, state):
         ax=ax, levels=16, robust=True)
 
     fig.suptitle('Zenith Angle at time: '+str(state['time']))
-#    plt.savefig(str(state['time'])+'.png')
 
 
 monitor = PlotFunctionMonitor(plot_function)

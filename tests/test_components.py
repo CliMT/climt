@@ -13,14 +13,14 @@ from climt import (
     IceSheet, Instellation)
 import climt
 from sympl import (
-    DataArray, Implicit, TimeStepper, set_dimension_names
+    DataArray, Implicit, TimeStepper, add_direction_names
 )
 from datetime import datetime, timedelta
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
     'interface_levels', 'mid_levels', 'full_levels']
-set_dimension_names(x='longitude', y='latitude', z=vertical_dimension_names)
+add_direction_names(x='longitude', y='latitude', z=vertical_dimension_names)
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
@@ -229,26 +229,8 @@ def compare_one_state_pair(current, cached):
 class TestHeldSuarez(ComponentBase):
 
     def get_3d_input_state(self):
-        random = np.random.RandomState(0)
-        return {
-            'latitude': DataArray(
-                random.randn(3), dims=['latitude'], attrs={'units': 'degrees_N'}),
-            'air_pressure': DataArray(
-                random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'hPa'},),
-            'surface_air_pressure': DataArray(
-                random.rand(2, 3), dims=['longitude', 'latitude'],
-                attrs={'units': 'hPa'},),
-            'air_temperature': DataArray(
-                270. + random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'degK'}),
-            'eastward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'm/s'}),
-            'northward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'm/s'}),
-        }
+        hs = self.get_component_instance()
+        return climt.get_default_state([hs])
 
     def get_component_instance(self, state_modification_func=lambda x: x):
         return HeldSuarez()
@@ -257,27 +239,8 @@ class TestHeldSuarez(ComponentBase):
 class TestHeldSuarezCachedCoordinates(ComponentBase):
 
     def get_3d_input_state(self):
-        random = np.random.RandomState(0)
-        return {
-            'latitude': DataArray(
-                np.linspace(-90, 90, num=3),
-                dims=['latitude'], attrs={'units': 'degrees_N'}),
-            'air_pressure': DataArray(
-                random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'hPa'},),
-            'surface_air_pressure': DataArray(
-                random.rand(2, 3), dims=['longitude', 'latitude'],
-                attrs={'units': 'hPa'},),
-            'air_temperature': DataArray(
-                270. + random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'degK'}),
-            'eastward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'm/s'}),
-            'northward_wind': DataArray(
-                random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-                attrs={'units': 'm/s'}),
-        }
+        hs = self.get_component_instance()
+        return climt.get_default_state([hs])
 
     def get_component_instance(self, state_modification_func=lambda x: x):
         return HeldSuarez()
@@ -831,9 +794,14 @@ class TestInstellation(ComponentBase):
 
 
 class TestGFSDycore(ComponentBase):
+    dycore = None
+
     def get_component_instance(self, state_modification_func=lambda x: x):
-        return GFSDynamicalCore(number_of_longitudes=68,
-                                number_of_latitudes=32)
+
+        if self.dycore is None:
+            self.dycore = GFSDynamicalCore(number_of_longitudes=68,
+                                           number_of_latitudes=32)
+        return self.dycore
 
     def get_3d_input_state(self):
 
@@ -865,8 +833,8 @@ class TestGFSDycoreWithPrognostic(ComponentBase):
 
     def get_3d_input_state(self):
 
-        prognostic = RRTMGLongwave()
         component = self.get_component_instance()
+        prognostic = RRTMGLongwave()
         state = climt.get_default_state(
             [component, prognostic], x=component.grid_definition['x'],
             y=component.grid_definition['y'],

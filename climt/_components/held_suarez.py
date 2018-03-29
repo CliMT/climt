@@ -89,19 +89,19 @@ class HeldSuarez(ClimtPrognostic):
         self._delta_T_y = equator_pole_temperature_difference
         self._delta_theta_z = delta_theta_z
 
-        self._p0 = get_constant('reference_air_pressure')
+        self._p0 = get_constant('reference_air_pressure', 'Pa')
 
-        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure')
+        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
 
-        self._R_d = get_constant('gas_constant_of_dry_air')
+        self._R_d = get_constant('gas_constant_of_dry_air', 'J/kg/degK')
 
         self._kappa = self._R_d/self._Cpd
 
-        self._Omega = get_constant('planetary_rotation_rate')
+        self._Omega = get_constant('planetary_rotation_rate', 's^-1')
 
-        self._g = get_constant('gravitational_acceleration')
+        self._g = get_constant('gravitational_acceleration', 'm/s^2')
 
-        self._r_planet = get_constant('planetary_radius')
+        self._r_planet = get_constant('planetary_radius', 'm')
 
         '''
         # cache computed profiles if grid coordinates are given
@@ -199,8 +199,8 @@ class HeldSuarez(ClimtPrognostic):
         return DataArray(np.maximum(
             200,
             (315 - self._delta_T_y*np.sin(np.radians(latitude))**2 -
-             self._delta_theta_z*np.log(air_pressure/self._p0.values)*np.cos(np.radians(latitude))**2
-             ) * (air_pressure/self._p0.values)**self._kappa.values),
+             self._delta_theta_z*np.log(air_pressure/self._p0)*np.cos(np.radians(latitude))**2
+             ) * (air_pressure/self._p0)**self._kappa),
             dims=out_dims,
             attrs={'units': 'degK'})
 

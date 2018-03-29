@@ -4,6 +4,7 @@
 General Utilities
 ==================
 This documents some utility functions available in :mod:`climt`.
+Most of the constants functionality is inherited from :mod:`sympl`.
 
 Constants
 ----------
@@ -13,9 +14,8 @@ Constants
 
     get_constant
     set_constant
-    reset_constant_library
+    reset_constants
     list_available_constants
-    add_constants_from_dict
     set_constants_from_dict
 
 Miscellaneous

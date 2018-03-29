@@ -1,4 +1,4 @@
-from climt import ClimtPrognostic, ClimtImplicit
+from climt import ClimtPrognostic, ClimtImplicit, ClimtSpectralDynamicalCore
 import numpy as np
 
 
@@ -166,6 +166,38 @@ class MockPrognosticWithAllAttributes(ClimtPrognostic):
 
 
 class MockImplicitWithAllAttributes(ClimtImplicit):
+    _climt_inputs = {
+        'air_temperature': 'degK',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
+        'some_quantity': 'dimensionless',
+    }
+
+    _climt_diagnostics = {
+        'air_pressure': 'Pa',
+        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'kg m^-2'
+    }
+
+    _climt_outputs = {
+        'air_temperature': 'degK',
+        'mole_fraction_of_oxygen_in_air': 'millimole/mole',
+    }
+
+    quantity_descriptions = {
+        'some_quantity': {
+            'dims': ['x', 'y', 'mid_levels'],
+            'units': 'dimensionless',
+            'default_value': 1.
+        }
+    }
+
+    def __init__(self):
+        return
+
+    def __call__(self, state):
+        return
+
+
+class MockDycoreWithAllAttributes(ClimtSpectralDynamicalCore):
     _climt_inputs = {
         'air_temperature': 'degK',
         'mole_fraction_of_oxygen_in_air': 'millimole/mole',

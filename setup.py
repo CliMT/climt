@@ -33,10 +33,10 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'numpy>=1.10',
+    'numpy>=0.10',
     'pint>=0.7.0',
     'xarray>=0.8.0',
-    'sympl>=0.2.1',
+    'sympl==0.3.2',
     'cython>=0.25',
     'scipy>=0.18.1',
 ]
@@ -94,6 +94,7 @@ if 'FC' not in os.environ:
         guess_compiler_name('FC')
     else:
         os.environ['FC'] = 'gfortran'
+        os.environ['F77'] = 'gfortran'
 
 if 'CC' not in os.environ:
     if operating_system == 'Darwin':
@@ -224,7 +225,7 @@ else:
 
 setup(
     name='climt',
-    version='0.9.1',
+    version='0.9.3',
     description='CliMT is a Toolkit for building Earth system models in Python.',
     long_description=readme + '\n\n' + history,
     author="Rodrigo Caballero",
