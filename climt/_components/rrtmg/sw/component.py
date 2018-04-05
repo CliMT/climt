@@ -23,6 +23,61 @@ class RRTMGShortwave(ClimtPrognostic):
 
     """
 
+    input_properties = {
+        'air_pressure': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'mbar'},
+        'air_pressure_on_interface_levels': {
+            'dims': ['*', 'interface_levels'],
+            'units': 'mbar'},
+        'air_temperature': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'degK'
+        },
+        'surface_temperature': {
+            'dims': ['*'],
+            'units': 'degK'
+        },
+        'specific_humidity': {'dims': ['*', 'mid_levels'], 'units': 'degK'},
+        'mole_fraction_of_ozone_in_air': {'dims': ['*', 'mid_levels'], 'units': 'dimensionless'},
+        'mole_fraction_of_carbon_dioxide_in_air': {'dims': ['*', 'mid_levels'], 'units': 'dimensionless'},
+        'mole_fraction_of_methane_in_air': {'dims': ['*', 'mid_levels'], 'units': 'dimensionless'},
+        'mole_fraction_of_nitrous_oxide_in_air': {'dims': ['*', 'mid_levels'], 'units': 'dimensionless'},
+        'mole_fraction_of_oxygen_in_air': {'dims': ['*', 'mid_levels'], 'units': 'dimensionless'},
+        'shortwave_optical_thickness_due_to_cloud': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'mass_content_of_cloud_ice_in_atmosphere_layer': {'dims': ['*', 'mid_levels'], 'units': 'g m^-2'},
+        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {'dims': ['*', 'mid_levels'], 'units': 'g m^-2'},
+        'cloud_ice_particle_size': {'dims': ['*', 'mid_levels'], 'units': 'micrometer'},
+        'cloud_water_droplet_radius': {'dims': ['*', 'mid_levels'], 'units': 'micrometer'},
+        'shortwave_optical_thickness_due_to_aerosol': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'zenith_angle': {'dims': ['*'], 'units': 'radians'},
+        'flux_adjustment_for_earth_sun_distance': {'dims': [], 'units': 'dimensionless'},
+        'surface_albedo_for_direct_shortwave': {'dims': ['*'], 'units': 'dimensionless'},
+        'surface_albedo_for_direct_near_infrared': {'dims': ['*'], 'units': 'dimensionless'},
+        'surface_albedo_for_diffuse_near_infrared': {'dims': ['*'], 'units': 'dimensionless'},
+        'surface_albedo_for_diffuse_shortwave': {'dims': ['*'], 'units': 'dimensionless'},
+        'single_scattering_albedo_due_to_cloud': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'single_scattering_albedo_due_to_aerosol': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'cloud_asymmetry_parameter': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'aerosol_asymmetry_parameter': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'cloud_forward_scattering_fraction': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'aerosol_optical_depth_at_55_micron': {'dims': ['*', 'num_shortwave_bands', 'mid_levels'], 'units': 'dimensionless'},
+        'solar_cycle_fraction': {'dims': [], 'units': 'dimensionless'},
+    }
+
+    tendency_properties = {
+        'air_temperature': {'units': 'degK day^-1'},
+    }
+
+    diagnostic_properties = {
+        'upwelling_shortwave_flux_in_air': {'dims': ['*', 'mid_levels'], 'units': 'W m^-2'},
+        'downwelling_shortwave_flux_in_air': {'dims': ['*', 'mid_levels'], 'units': 'W m^-2'},
+        'upwelling_shortwave_flux_in_air_assuming_clear_sky': {'dims': ['*', 'mid_levels'], 'units': 'W m^-2'},
+        'downwelling_shortwave_flux_in_air_assuming_clear_sky': {'dims': ['*', 'mid_levels'], 'units': 'W m^-2'},
+        'shortwave_heating_rate': {'dims': ['*', 'mid_levels'], 'units': 'W m^-2'},
+        'shortwave_heating_rate_assuming_clear_sky': {'dims': ['*', 'mid_levels'], 'units': 'W m^-2'},
+    }
+
     _climt_inputs = {
         'air_pressure': 'mbar',
         'air_pressure_on_interface_levels': 'mbar',
