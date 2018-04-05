@@ -125,8 +125,3 @@ deploy:
     tags: true
     repo: CliMT/climt
     condition: "$TOXENV == py27"
-notifications:
-  email:
-    recipients:
-    - mcgibbon@uw.edu
-    - joy.monteiro@misu.su.se
