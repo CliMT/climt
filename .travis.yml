@@ -4,6 +4,11 @@ sudo: required
 services: docker
 language: python
 python: 3.6
+
+branches:
+    except:
+    - sympl-0.4.0
+
 cache:
     - pip
     - directories: ~/build/CliMT/climt/climt/_lib/Linux
@@ -125,3 +130,8 @@ deploy:
     tags: true
     repo: CliMT/climt
     condition: "$TOXENV == py27"
+notifications:
+  email:
+    recipients:
+    - mcgibbon@uw.edu
+    - joy.monteiro@misu.su.se
