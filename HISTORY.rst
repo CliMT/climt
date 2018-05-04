@@ -1,6 +1,10 @@
 =======
 History
 =======
+v.0.12.0
+--------
+
+* new release to fix version numbers and create zenodo ID
 
 v.0.9.4
 -------
