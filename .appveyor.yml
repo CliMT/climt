@@ -37,7 +37,7 @@ install:
   - activate python%PYTHON_VERSION%
   - conda install pandas
   - conda install libpython
-  - conda install --yes --file requirements_dev.txt
+  - python -m pip install -r requirements_dev.txt
   - conda upgrade pip setuptools wheel
 #  - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
 
