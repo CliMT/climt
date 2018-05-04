@@ -1,6 +1,12 @@
 =======
 History
 =======
+
+v.0.14.0
+--------
+
+* Fixed broken version numbers
+
 v.0.12.0
 --------
 
