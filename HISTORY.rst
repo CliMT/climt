@@ -2,7 +2,7 @@
 History
 =======
 
-Latest
+v.0.14.3
 -------
 
 * Fix release issue because of pip API change

@@ -23,7 +23,7 @@ try:
     import numpy as np
 except ImportError:
     print('Suitable numpy unavailable, installing...')
-    pip.main(['install', 'numpy'])
+    pip_main(['install', 'numpy'])
     import numpy as np
 
 
