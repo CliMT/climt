@@ -2,6 +2,10 @@
 History
 =======
 
+v.0.14.7
+--------
+
+* Fix issue with pip v10 and pandas 0.22 conflicts
 v.0.14.3
 -------
 
