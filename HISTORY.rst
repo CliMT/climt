@@ -2,6 +2,15 @@
 History
 =======
 
+Latest
+-------
+
+* Fix release issue because of pip API change
+
+v.0.14.1
+--------
+* Fix appveyor fail due to pip changes
+
 v.0.14.0
 --------
 

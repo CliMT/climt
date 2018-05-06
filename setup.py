@@ -3,17 +3,20 @@
 
 from setuptools import setup, Extension
 from wheel.bdist_wheel import bdist_wheel as native_bdist_wheel
-import pip
 import os
 import subprocess
 import platform
 import re
+try:
+    from pip import main as pip_main
+except:
+    from pip._internal import main as pip_main
 
 try:
     from Cython.Build.Distutils import build_ext as native_build_ext
 except ImportError:
     print('Suitable Cython unavailable, installing...')
-    pip.main(['install', 'cython'])
+    pip_main(['install', 'cython'])
     from Cython.Build.Distutils import build_ext as native_build_ext
 
 try:
