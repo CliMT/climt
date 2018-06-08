@@ -1,49 +1,74 @@
-from sympl import (
-    Diagnostic, DataArray, jit,
-    combine_dimensions, get_numpy_array)
-from .._core import ClimtPrognostic, get_constant
+from sympl import Prognostic, Diagnostic, jit, get_constant
 import numpy as np
 
 
-class GrayLongwaveRadiation(ClimtPrognostic):
+class GrayLongwaveRadiation(Prognostic):
 
-    _climt_inputs = {
-        'longwave_optical_depth_on_interface_levels': 'dimensionless',
-        'air_temperature': 'degK',
-        'surface_temperature': 'degK',
-        'air_pressure': 'Pa',
-        'air_pressure_on_interface_levels': 'Pa'}
+    input_properties = {
+        'longwave_optical_depth_on_interface_levels': {
+            'dims': ['*', 'interface_levels'],
+            'units': 'dimensionless',
+            'alias': 'tau',
+        },
+        'air_temperature': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'degK',
+            'alias': 'T',
+        },
+        'surface_temperature': {
+            'dims': ['*'],
+            'units': 'degK',
+            'alias': 'T_surface',
+        },
+        'air_pressure': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'Pa',
+            'alias': 'p',
+        },
+        'air_pressure_on_interface_levels': {
+            'dims': ['*', 'interface_levels'],
+            'units': 'Pa',
+            'alias': 'p_interface',
+        },
+    }
 
-    _climt_diagnostics = {
-        'downwelling_longwave_flux_in_air': 'W m^-2',
-        'upwelling_longwave_flux_in_air': 'W m^-2',
-        'longwave_heating_rate': 'degK/day'}
+    diagnostic_properties = {
+        'downwelling_longwave_flux_in_air_on_interface_levels': {
+            'dims': ['*', 'interface_levels'],
+            'units': 'W m^-2',
+            'alias': 'lw_down',
+        },
+        'upwelling_longwave_flux_in_air_on_interface_levels': {
+            'dims': ['*', 'interface_levels'],
+            'units': 'W m^-2',
+            'alias': 'lw_up',
+        },
+        'longwave_heating_rate': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'degK day^-1'
+        }
+    }
 
-    _climt_tendencies = {'air_temperature': 'degK/s'}
+    tendency_properties = {
+        'air_temperature': {'units': 'degK s^-1'}
+    }
+
 
     def __init__(self):
         """
-
         Initialise component.
-
         """
+        pass
 
-        self._stefan_boltzmann = get_constant('stefan_boltzmann_constant', 'W/m^2/K^4')
-        self._g = get_constant('gravitational_acceleration', 'm/s^2')
-        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
-
-    def __call__(self, state):
+    def array_call(self, state):
         """
         Get heating tendencies and longwave fluxes.
 
         Args:
-
             state (dict): A model state dictionary.
 
         Returns:
-
             tendencies (dict), diagnostics (dict):
-
                 * A dictionary whose keys are strings indicating
                   state quantities and values are the time derivative of those
                   quantities in units/second at the time of the input state.
@@ -51,39 +76,43 @@ class GrayLongwaveRadiation(ClimtPrognostic):
                   state quantities and values are the value of those quantities
                   at the time of the input state.
         """
-        tau = get_numpy_array(state[
-            'longwave_optical_depth_on_interface_levels'].to_units(''),
-            out_dims=('x', 'y', 'z'))
-        T = get_numpy_array(
-            state['air_temperature'].to_units('degK'), out_dims=('x', 'y', 'z'))
-        p_interface = get_numpy_array(
-            state['air_pressure_on_interface_levels'].to_units('Pa'),
-            out_dims=('x', 'y', 'z'))
-        Ts = get_numpy_array(
-            state['surface_temperature'].to_units('degK'), out_dims=('x', 'y'))
-
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
-            T, p_interface, Ts, tau, self._stefan_boltzmann,
-            self._g, self._Cpd)
-
-        tendencies = self.create_state_dict_for('_climt_tendencies', state)
-        tendencies['air_temperature'].values = lw_temperature_tendency
-
-        diagnostics = self.create_state_dict_for('_climt_diagnostics', state)
-
-        diagnostics['downwelling_longwave_flux_in_air'].values = downward_flux
-        diagnostics['upwelling_longwave_flux_in_air'].values = upward_flux
-        diagnostics['longwave_heating_rate'].values = \
-            tendencies['air_temperature'].to_units('degK/day')
-
+            state['T'], state['p_interface'], state['T_surface'], state['tau'],
+            get_constant('stefan_boltzmann_constant', 'W/m^2/K^4'),
+            get_constant('gravitational_acceleration', 'm/s^2'),
+            get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
+        )
+        tendencies = {
+            'air_temperature': lw_temperature_tendency,
+        }
+        diagnostics = {
+            'lw_down': downward_flux,
+            'lw_up': upward_flux,
+            'longwave_heating_rate': lw_temperature_tendency * 86400.
+        }
         return tendencies, diagnostics
 
 
 class Frierson06LongwaveOpticalDepth(Diagnostic):
 
-    inputs = ('sigma_on_interface_levels',)
-    diagnostics = ('longwave_optical_depth_on_interface_levels',)
+    input_properties = {
+        'sigma_on_interface_levels': {
+            'dims': ['*'],
+            'units': 'dimensionless',
+        },
+        'latitude': {
+            'dims': ['*'],
+            'units': 'degrees_N',
+        }
+    }
+
+    diagnostic_properties = {
+        'longwave_optical_depth_on_interface_levels': {
+            'dims': ['*'],
+            'units': 'dimensionless',
+        }
+    }
 
     def __init__(
             self,
@@ -130,24 +159,11 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
                 state quantities and values are the value of those quantities
                 at the time of the input state.
         """
-        lat = get_numpy_array(
-            state['latitude'].to_units('degrees_north'),
-            out_dims=('x', 'y', 'z'))
-
-        sigma_interface = get_numpy_array(
-            state['sigma_on_interface_levels'].to_units(''),
-            out_dims=('x', 'y', 'z'))
-
-        tau = DataArray(
-            get_frierson_06_tau(
-                lat, sigma_interface, self._tau0e, self._tau0p, self._fl),
-            dims=combine_dimensions(
-                [state['latitude'], state['sigma_on_interface_levels']],
-                out_dims=('x', 'y', 'z')),
-            attrs={'units': ''}).squeeze()
-
         return {
-            'longwave_optical_depth_on_interface_levels': tau,
+            'longwave_optical_depth_on_interface_levels': get_frierson_06_tau(
+                state['latitude'], state['sigma_on_interface_levels'],
+                self._tau0e, self._tau0p, self._fl
+            )
         }
 
 
@@ -169,12 +185,12 @@ def integrate_upward_longwave(T, T_surface, tau, sigma):
     """
     upward_flux = np.zeros(
         (T.shape[0], T.shape[1], T.shape[2]+1), dtype=np.float32)
-    upward_flux[:, :, 0] = sigma*T_surface**4
+    upward_flux[:, 0] = sigma*T_surface**4
     for k in range(1, T.shape[2]+1):
-        dtau = tau[:, :, k] - tau[:, :, k-1]
-        upward_flux[:, :, k] = (
-            upward_flux[:, :, k-1] * np.exp(-dtau) +
-            sigma * T[:, :, k-1]**4 * (1. - np.exp(-dtau)))
+        dtau = tau[:, k] - tau[:, k-1]
+        upward_flux[:, k] = (
+            upward_flux[:, k-1] * np.exp(-dtau) +
+            sigma * T[:, k-1]**4 * (1. - np.exp(-dtau)))
     return upward_flux
 
 
@@ -196,10 +212,10 @@ def integrate_downward_longwave(T, tau, sigma):
     downward_flux = np.zeros(
         (T.shape[0], T.shape[1], T.shape[2]+1), dtype=np.float32)
     for k in range(T.shape[2]-1, -1, -1):
-        dtau = tau[:, :, k+1] - tau[:, :, k]
-        downward_flux[:, :, k] = (
-            downward_flux[:, :, k+1]*np.exp(-dtau) +
-            sigma * T[:, :, k]**4 * (1 - np.exp(-dtau)))
+        dtau = tau[:, k+1] - tau[:, k]
+        downward_flux[:, k] = (
+            downward_flux[:, k+1]*np.exp(-dtau) +
+            sigma * T[:, k]**4 * (1 - np.exp(-dtau)))
     return downward_flux
 
 
@@ -210,8 +226,8 @@ def get_longwave_fluxes(
     downward_flux = integrate_downward_longwave(T, tau, sigma)
     net_lw_flux = upward_flux - downward_flux
     longwave_temperature_tendency = g/Cpd * (
-        net_lw_flux[:, :, 1:] - net_lw_flux[:, :, :-1])/(
-        p_interface[:, :, 1:] - p_interface[:, :, :-1])
+        net_lw_flux[:, 1:] - net_lw_flux[:, :-1])/(
+        p_interface[:, 1:] - p_interface[:, :-1])
     return (downward_flux, upward_flux, net_lw_flux,
             longwave_temperature_tendency, tau)
 

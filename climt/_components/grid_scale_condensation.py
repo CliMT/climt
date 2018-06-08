@@ -1,7 +1,5 @@
-from sympl import (
-    Implicit, DataArray,
-    get_numpy_array, combine_dimensions)
-from .._core import bolton_q_sat, bolton_dqsat_dT, get_constant
+from sympl import Implicit, get_constant
+from .._core import bolton_q_sat, bolton_dqsat_dT
 import numpy as np
 
 
@@ -13,16 +11,36 @@ class GridScaleCondensation(Implicit):
     condensed water falls as precipitation.
     """
 
-    inputs = (
-        'air_temperature', 'specific_humidity', 'air_pressure',
-        'air_pressure_on_interface_levels',
-    )
-    diagnostics = (
-        'precipitation_amount',
-    )
-    outputs = (
-        'air_temperature', 'specific_humidity',
-    )
+    input_properties = {
+        'air_temperature': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'degK',
+        },
+        'specific_humidity': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'kg/kg',
+        },
+        'air_pressure': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'Pa'
+        },
+        'air_pressure_on_interface_levels': {
+            'dims': ['*', 'interface_levels'],
+            'units': 'Pa',
+        }
+    }
+
+    diagnostic_properties = {
+        'precipitation_amount': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'kg m^-2',
+        }
+    }
+
+    output_properties = {
+        'air_temperature': {'units': 'degK'},
+        'specific_humidity': {'units': 'degK'},
+    }
 
     def __init__(self):
         """
@@ -36,13 +54,14 @@ class GridScaleCondensation(Implicit):
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
         self._rhow = get_constant('density_of_liquid_phase', 'kg/m^3')
 
-    def __call__(self, state, timestep):
+    def array_call(self, raw_state, timestep):
         """
         Gets diagnostics from the current model state and steps the state
         forward in time according to the timestep.
 
         Args:
-            state (dict): A model state dictionary. Will be updated with any
+            raw_state (dict): A model state dictionary of numpy arrays
+                satisfying input_properties. Will be updated with any
                 diagnostic quantities produced by this object for the time of
                 the input state.
 
@@ -56,18 +75,10 @@ class GridScaleCondensation(Implicit):
             InvalidStateException: If state is not a valid input for the
                 Implicit instance for other reasons.
         """
-        T = get_numpy_array(
-            state['air_temperature'].to_units('degK'),
-            out_dims=('x', 'y', 'z'))
-        q = get_numpy_array(
-            state['specific_humidity'].to_units('kg/kg'),
-            out_dims=('x', 'y', 'z'))
-        p = get_numpy_array(
-            state['air_pressure'].to_units('Pa'),
-            out_dims=('x', 'y', 'z'))
-        p_interface = get_numpy_array(
-            state['air_pressure_on_interface_levels'].to_units('Pa'),
-            out_dims=('x', 'y', 'z'))
+        T = raw_state['air_temperature'],
+        q = raw_state['specific_humidity']
+        p = raw_state['air_pressure']
+        p_interface = raw_state['air_pressure_on_interface_levels']
 
         q_sat = bolton_q_sat(T, p, self._Rd, self._Rh2O)
         saturated = q > q_sat
@@ -86,22 +97,12 @@ class GridScaleCondensation(Implicit):
             self._g*self._rhow)
         precipitation = np.sum(condensed_q * mass, axis=2)
 
-        dims_3d = combine_dimensions(
-            [state['air_temperature'], state['specific_humidity'],
-             state['air_pressure']],
-            out_dims=('x', 'y', 'z'))
-        dims_2d = dims_3d[:-1]
         diagnostics = {
-            'column_integrated_precipitation_rate': DataArray(
-                precipitation / timestep.total_seconds(),
-                dims=dims_2d, attrs={'units': 'kg/s'}).squeeze()
+            'precipitation_amount': precipitation,
         }
-        new_state = {
-            'air_temperature': DataArray(
-                new_T, dims=dims_3d,
-                attrs=state['air_temperature'].attrs).squeeze(),
-            'specific_humidity': DataArray(
-                new_q, dims=dims_3d,
-                attrs=state['specific_humidity'].attrs).squeeze(),
+        outputs = {
+            'air_temperature': new_T,
+            'specific_humidity': new_q,
         }
-        return new_state, diagnostics
+
+        return diagnostics, outputs
