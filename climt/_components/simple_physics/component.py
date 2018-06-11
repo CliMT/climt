@@ -1,6 +1,4 @@
-from sympl import get_numpy_array
-from ..._core import Implicit, get_constant
-import numpy as np
+from sympl import Implicit, get_constant
 try:
     from . import _simple_physics as phys
 except ImportError:
