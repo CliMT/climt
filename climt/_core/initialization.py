@@ -162,7 +162,6 @@ def get_pressure_and_sigma_levels(nz, p_surf):
 
 default_values = {
     'air_temperature': {'value': 290., 'units': 'degK'},
-    'air_temperature': {'value': 290., 'units': 'degK'},
     'surface_temperature': {'value': 300., 'units': 'degK'},
     'sea_surface_temperature': {'value': 300., 'units': 'degK'},
     'soil_surface_temperature': {'value': 300., 'units': 'degK'},
@@ -192,7 +191,8 @@ default_values = {
     'cloud_water_droplet_radius': {'value': 10., 'units': 'micrometer'},
     'longwave_optical_thickness_due_to_cloud': {'value': 0., 'units': 'dimensionless'},
     'shortwave_optical_thickness_due_to_cloud': {'value': 0., 'units': 'dimensionless'},
-    'snow_and_ice_temperature_spline': {'value': CubicSpline(np.linspace(0, 50, 50), 260.*np.ones(50)), 'units': 'degK'}
+    'snow_and_ice_temperature_spline': {'value': CubicSpline(np.linspace(0, 50, 50), 260.*np.ones(50)), 'units': 'degK'},
+    'cloud_base_mass_flux': {'value': 0, 'units': 'kg m^-2 s^-1'},
 }
 
 
