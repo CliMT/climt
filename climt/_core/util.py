@@ -1,8 +1,5 @@
-from pint import UnitRegistry
 from sympl import jit, DataArray
 import numpy as np
-
-pint_units = UnitRegistry()
 
 
 def numpy_version_of(state):
