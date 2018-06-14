@@ -17,15 +17,15 @@ class SimplePhysics(Implicit):
 
     input_properties = {
         'air_temperature': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK',
         },
         'air_pressure': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'mbar',
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'units': 'mbar',
         },
         'surface_air_pressure': {
@@ -37,15 +37,15 @@ class SimplePhysics(Implicit):
             'units': 'degK',
         },
         'specific_humidity': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'kg/kg',
         },
         'northward_wind': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'm s^-1',
         },
         'eastward_wind': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'm s^-1',
         },
         'surface_specific_humidity': {
@@ -93,9 +93,9 @@ class SimplePhysics(Implicit):
             drag_coefficient_heat_fluxes=0.0011,
             base_momentum_drag_coefficient=0.0007,
             wind_dependent_momentum_drag_coefficient=0.000065,
-            maximum_momentum_drag_coefficient=0.002):
+            maximum_momentum_drag_coefficient=0.002,
+            **kwargs):
         """
-
         Args:
 
             simulate_cyclone (bool):
@@ -151,7 +151,6 @@ class SimplePhysics(Implicit):
 
             maximum_momentum_drag_coefficient (float):
                 This drag coefficient is used for surface wind speeds exceeding :math:`20 m/s`.
-
         """
 
         self._cyclone = simulate_cyclone
@@ -172,6 +171,7 @@ class SimplePhysics(Implicit):
         self._Cd1 = wind_dependent_momentum_drag_coefficient
         self._Cm = maximum_momentum_drag_coefficient
         self._set_fortran_constants()
+        super(SimplePhysics, self).__init__(**kwargs)
 
     def _set_fortran_constants(self):
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
@@ -206,6 +206,7 @@ class SimplePhysics(Implicit):
             * diagnostics for Simple Physics
         '''
         self._set_fortran_constants()
+        print(state['air_pressure_on_interface_levels'].shape)
         (t_out, u_out, v_out, q_out, precip_out,
         sensible_heat_flux, latent_heat_flux) = phys.get_new_state(
             state['eastward_wind'],
@@ -214,7 +215,7 @@ class SimplePhysics(Implicit):
             state['air_pressure'],
             state['air_pressure_on_interface_levels'],
             state['specific_humidity'],
-            state['surface_pressure'],
+            state['surface_air_pressure'],
             state['surface_temperature'],
             state['surface_specific_humidity'],
             state['latitude'],

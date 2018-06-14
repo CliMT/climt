@@ -1,4 +1,4 @@
-from Sympl import Implicit, get_constant, initialize_numpy_arrays_with_properties
+from sympl import Implicit, get_constant, initialize_numpy_arrays_with_properties
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy import sparse
@@ -114,26 +114,22 @@ class IceSheet(Implicit):
 
     def __init__(
             self, vertical_resolution=0.1, maximum_snow_ice_height=10,
-            levels=30,):
+            levels=30, **kwargs):
         """
-
         Args:
             vertical_resolution(float):
                 The vertical resolution of the model in :math:`m`.
-
             maximum_snow_ice_height(float):
                 The maximum combined height of snow and ice handled by the model in :math:`m`.
-
             levels(int):
                 The number of levels on which temperature must be output.
-
         """
 
         self._dz = vertical_resolution
         self._max_height = maximum_snow_ice_height
         self._output_levels = int(levels)
-        self.extra_dimensions['ice_vertical_levels'] = np.arange(self._output_levels)
         self._update_constants()
+        super(IceSheet, self).__init__(**kwargs)
 
     def _update_constants(self):
         self._Kice = get_constant('thermal_conductivity_of_solid_phase_as_ice', 'W/m/degK')
@@ -145,26 +141,10 @@ class IceSheet(Implicit):
         self._Lf = get_constant('latent_heat_of_fusion', 'J/kg')
         self._temp_melt = get_constant('freezing_temperature_of_liquid_phase', 'degK')
 
-    def __call__(self, raw_state, timestep):
-        """
-        Calculate new ice sheet height.
-
-        Args:
-            raw_state (dict):
-                The state dictionary of numpy arrays.
-
-            time_step (timedelta):
-                The model timestep.
-
-        Returns:
-            new_state(dict), diagnostics(dict):
-                * The new state calculated
-                * Any diagnostics
-
-        """
+    def array_call(self, raw_state, timestep):
         self._update_constants()
 
-        num_cols = raw_state['area_type'].shape
+        num_cols = raw_state['area_type'].shape[0]
 
         net_heat_flux = (
             raw_state['surface_downwelling_shortwave_flux'] +
@@ -310,7 +290,7 @@ class IceSheet(Implicit):
 
             outputs['surface_temperature'][col] = new_temperature[-1]
 
-        return outputs, diagnostics
+        return diagnostics, outputs
 
     def calculate_new_ice_temperature(self, rho, specific_heat, kappa,
                                       temp_profile, dt,

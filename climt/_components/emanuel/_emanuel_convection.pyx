@@ -99,26 +99,26 @@ def convect(
     cnp.int32_t max_conv_lev,
     cnp.int32_t num_tracers,
     double dt,
-    cnp.double_t[::1, :, :] temp,
-    cnp.double_t[::1, :, :] q,
-    cnp.double_t[::1, :, :] qs,
-    cnp.double_t[::1, :, :] u,
-    cnp.double_t[::1, :, :] v,
-    cnp.double_t[::1, :, :] pmid,
-    cnp.double_t[::1, :, :] pint,
-    cnp.int32_t[::1, :] conv_state,
-    cnp.double_t[::1, :] precip,
-    cnp.double_t[::1, :] downdraft_vel_scale,
-    cnp.double_t[::1, :] downdraft_temp_scale,
-    cnp.double_t[::1, :] downdraft_q_scale,
-    cnp.double_t[::1, :] cloud_base_mass_flux,
-    cnp.double_t[::1, :] cape,
-    cnp.double_t[::1, :, :] dtemp,
-    cnp.double_t[::1, :, :] dq,
-    cnp.double_t[::1, :, :] du,
-    cnp.double_t[::1, :, :] dv,
-    cnp.double_t[::1, :, :, :] dtracers=None,
-    cnp.double_t[::1, :, :, :] tracers=None):
+    cnp.double_t[:, ::1] temp,
+    cnp.double_t[:, ::1] q,
+    cnp.double_t[:, ::1] qs,
+    cnp.double_t[:, ::1] u,
+    cnp.double_t[:, ::1] v,
+    cnp.double_t[:, ::1] pmid,
+    cnp.double_t[:, ::1] pint,
+    cnp.int32_t[::1] conv_state,
+    cnp.double_t[::1] precip,
+    cnp.double_t[::1] downdraft_vel_scale,
+    cnp.double_t[::1] downdraft_temp_scale,
+    cnp.double_t[::1] downdraft_q_scale,
+    cnp.double_t[::1] cloud_base_mass_flux,
+    cnp.double_t[::1] cape,
+    cnp.double_t[:, ::1] dtemp,
+    cnp.double_t[:, ::1] dq,
+    cnp.double_t[:, ::1] du,
+    cnp.double_t[:, ::1] dv,
+    cnp.double_t[:, :, ::1] dtracers=None,
+    cnp.double_t[:, :, ::1] tracers=None):
 
 
     global initialised
@@ -126,7 +126,7 @@ def convect(
     cdef cnp.double_t[::1] cy_temp, cy_q, cy_qs, cy_u,\
             cy_v, cy_pmid, cy_pint, cy_dtemp, cy_dq,\
             cy_du, cy_dv
-    cdef cnp.double_t[::1, :] cy_tracer, cy_dtracer
+    cdef cnp.double_t[:, ::1] cy_tracer, cy_dtracer
 
     cy_temp = np.zeros(nlevs)
     cy_q = np.zeros(nlevs)
@@ -139,16 +139,14 @@ def convect(
     cy_dq = np.zeros(nlevs)
     cy_du = np.zeros(nlevs)
     cy_dv = np.zeros(nlevs)
-    cy_tracer = np.zeros((nlevs, num_tracers), order='F')
-    cy_dtracer = np.zeros((nlevs, num_tracers), order='F')
+    cy_tracer = np.zeros((num_tracers, nlevs))
+    cy_dtracer = np.zeros((num_tracers, nlevs))
 
     if dtracers is None:
-        dtracers = np.zeros((ncols, nlevs, 1), order='F')
-        cy_dtracer = np.zeros((nlevs, 1), order='F')
+        dtracers = np.zeros((ncols, 1, nlevs))
 
     if tracers is None:
-        tracers = np.zeros((ncols, nlevs, 1), order='F')
-        cy_tracer = np.zeros((nlevs, 1), order='F')
+        tracers = np.zeros((ncols, 1, nlevs))
 
     if initialised == 0:
         raise ValueError('Emanuel scheme not initialised.')
@@ -190,11 +188,11 @@ def convect(
             <double *>&downdraft_q_scale[col],
             <double *>&cloud_base_mass_flux[col],
             <double *>&cape[col],
-            <double *>&cy_tracer[0],
-            <double *>&cy_dtracer[0])
+            <double *>&cy_tracer[0, 0],
+            <double *>&cy_dtracer[0, 0])
 
         dtemp[col, :] = cy_dtemp[:]
         dq[col, :] = cy_dq[:]
         du[col, :] = cy_du[:]
         dv[col, :] = cy_dv[:]
-        dtracers[col, :, :] = cy_dtracer[:, :]
+        #dtracers[col, :, :] = cy_dtracer[:, :]

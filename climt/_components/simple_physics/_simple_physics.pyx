@@ -27,7 +27,7 @@ cdef extern:
         double *Cd0_ext, double *Cd1_ext, double *Cm_ext)
 
 #Arrays to pass to fortran. The dimensions are (levels, num_columns) for 3d and (num_columns) for 2d
-cdef cnp.double_t[:] temp, q, u, v, p, p_iface, thickness, inv_thickness
+cdef cnp.double_t[:] thickness, inv_thickness
 cdef cnp.double_t[:] out_temp, out_q, out_u, out_v
 cdef double surf_press, precip, latitude, surf_temp
 cdef cnp.int32_t num_cols, num_levs, initialised
@@ -81,37 +81,40 @@ def init_simple_physics(int sim_cyclone, int sim_lsc, int sim_pbl,
 
 
 #Returns a list of tendencies
-def get_new_state(cnp.ndarray[cnp.double_t, ndim=2] u_ext,
-                    cnp.ndarray[cnp.double_t, ndim=2] v_ext,
-                    cnp.ndarray[cnp.double_t, ndim=2] T_ext,
-                    cnp.ndarray[cnp.double_t, ndim=2] p_ext,
-                    cnp.ndarray[cnp.double_t, ndim=2] p_iface_ext,
-                    cnp.ndarray[cnp.double_t, ndim=2] q_ext,
-                    cnp.ndarray[cnp.double_t, ndim=1] surf_press_ext,
-                    cnp.ndarray[cnp.double_t, ndim=1] ts_ext,
-                    cnp.ndarray[cnp.double_t, ndim=1] qsurf_ext,
-                    cnp.ndarray[cnp.double_t, ndim=1] latitude_ext,
-                    double time_step):
-    '''
-    This function takes fetches new state from the Simple Physics code.
-
-    '''
+def get_new_state(
+        cnp.double_t[:, ::1] u_ext,
+        cnp.double_t[:, ::1] v_ext,
+        cnp.double_t[:, ::1] T_ext,
+        cnp.double_t[:, ::1] p_ext,
+        cnp.double_t[:, ::1] p_iface_ext,
+        cnp.double_t[:, ::1] q_ext,
+        cnp.double_t[::1] surf_press_ext,
+        cnp.double_t[::1] ts_ext,
+        cnp.double_t[::1] qsurf_ext,
+        cnp.double_t[::1] latitude_ext,
+        double time_step):
 
     if not initialised:
         print 'Module not initialised'
         return
 
-    num_cols, num_levs = u_ext.shape
+    num_levs, num_cols = np.asarray(u_ext).shape
 
-    u_ext = np.ascontiguousarray(u_ext[:, ::-1])
-    v_ext = np.ascontguousarray(v_ext[:, ::-1])
-    q_ext = np.ascontiguousarray(q_ext[:, ::-1])
-    T_ext = np.ascontiguousarray(T_ext[:, ::-1])
-    p_ext = np.ascontiguousarray(p_ext[:, ::-1])
-    p_iface_ext = np.ascontiguousarray(p_iface_ext[:, ::-1])
+    u_ext = np.ascontiguousarray(u_ext[::-1, :])
+    v_ext = np.ascontiguousarray(v_ext[::-1, :])
+    q_ext = np.ascontiguousarray(q_ext[::-1, :])
+    T_ext = np.ascontiguousarray(T_ext[::-1, :])
+    p_ext = np.ascontiguousarray(p_ext[::-1, :])
+    p_iface_ext = np.ascontiguousarray(p_iface_ext[::-1, :])
 
-    thickness = np.ascontiguousarray(p_iface_ext[1::, :] - p_iface_ext[0:-1, :])
-    inv_thickness = np.ascontiguousarray(1./thickness)
+    cdef int i = 0
+    cdef int j = 0
+    thickness = np.zeros((num_levs, num_cols), dtype=np.float64)
+
+    for i in range(p_iface_ext.shape[0]-1):
+        for j in range(p_iface_ext.shape[1]):
+            thickness[i, j] = (p_iface_ext[i+1, j] - p_iface_ext[i, j])
+    inv_thickness = 1. / thickness
 
     precip_out = np.zeros([num_cols])
     sh_flx_out = np.zeros([num_cols])
@@ -122,12 +125,13 @@ def get_new_state(cnp.ndarray[cnp.double_t, ndim=2] u_ext,
         u_ext, v_ext, T_ext, p_ext, p_iface_ext,
         thickness, inv_thickness,
         q_ext, surf_press_ext, ts_ext, qsurf_ext, latitude_ext,
-        precip_out, sh_flx_out, lh_flx_out)
+        precip_out, sh_flx_out, lh_flx_out
+    )
 
-    u_ext = u_ext[:, ::-1]
-    v_ext = v_ext[:, ::-1]
-    q_ext = q_ext[:, ::-1]
-    T_ext = T_ext[:, ::-1]
+    u_ext = np.ascontiguousarray(u_ext[::-1, :])
+    v_ext = np.ascontiguousarray(v_ext[::-1, :])
+    q_ext = np.ascontiguousarray(q_ext[::-1, :])
+    T_ext = np.ascontiguousarray(T_ext[::-1, :])
     return T_ext, u_ext, v_ext, q_ext, precip_out, sh_flx_out, lh_flx_out
 
 
@@ -152,29 +156,26 @@ def do_simple_physics(
     cnp.double_t[::1] lh_flx_out):
 
     global lsc, pbl, lhf, ext_ts, cyclone, use_ext_qsurf
-    cdef cnp.int32_t one = 1
 
-    for i_col in range(num_cols):
-        #Call fortran code with these arguments
-        simple_physics(
-            &one, &num_levs,
-            &time_step,
-            &latitude_ext[i_col],
-            <double *>&temp_ext[i_col, 0],
-            <double *>&q_ext[i_col, 0],
-            <double *>&u_ext[i_col, 0],
-            <double *>&v_ext[i_col, 0],
-            <double *>&p_ext[i_col, 0],
-            <double *>&p_iface_ext[i_col, 0],
-            <double *>&thickness_ext[i_col, 0],
-            <double *>&inv_thickness_ext[i_col, 0],
-            &surf_press_ext[i_col],
-            &precip_out[i_col],
-            &cyclone,
-            &lsc, &pbl, &lhf,
-            &ext_ts,
-            &ts_ext[i_col],
-            &use_ext_qsurf,
-            &qsurf_ext[i_col],
-            &sh_flx_out[i_col],
-            &lh_flx_out[i_col])
+    simple_physics(
+        &num_cols, &num_levs,
+        &time_step,
+        &latitude_ext[0],
+        <double *>&temp_ext[0, 0],
+        <double *>&q_ext[0, 0],
+        <double *>&u_ext[0, 0],
+        <double *>&v_ext[0, 0],
+        <double *>&p_ext[0, 0],
+        <double *>&p_iface_ext[0, 0],
+        <double *>&thickness_ext[0, 0],
+        <double *>&inv_thickness_ext[0, 0],
+        &surf_press_ext[0],
+        &precip_out[0],
+        &cyclone,
+        &lsc, &pbl, &lhf,
+        &ext_ts,
+        &ts_ext[0],
+        &use_ext_qsurf,
+        &qsurf_ext[0],
+        &sh_flx_out[0],
+        &lh_flx_out[0])

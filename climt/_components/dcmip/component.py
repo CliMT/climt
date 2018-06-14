@@ -22,22 +22,22 @@ class DcmipInitialConditions(Diagnostic):
             'units': 'degrees_east',
         },
         'air_pressure': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'Pa',
         },
     }
 
     diagnostic_properties = {
         'eastward_wind': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'm s^-1',
         },
         'northward_wind': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'm s^-1',
         },
         'air_temperature': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK',
         },
         'surface_geopotential': {
@@ -49,7 +49,7 @@ class DcmipInitialConditions(Diagnostic):
             'units': 'Pa',
         },
         'specific_humidity': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'g/g',
         },
     }
@@ -58,9 +58,10 @@ class DcmipInitialConditions(Diagnostic):
     def __init__(self,
                  condition_type='baroclinic_wave',
                  add_perturbation=True,
-                 moist=False):
+                 moist=False,
+                 **kwargs):
         """
-        Initialise the DCMIP module.
+        Initialize the DCMIP module.
 
         Args:
             condition_type (str, optional):
@@ -79,20 +80,9 @@ class DcmipInitialConditions(Diagnostic):
         self._condition_type = condition_type
         self._add_perturbation = add_perturbation
         self._moist = moist
+        super(DcmipInitialConditions, self).__init__(**kwargs)
 
-    def __call__(self, state):
-        """
-        Get initial conditions for DCMIP tests.
-
-        Args:
-            state (dict):
-                State dictionary. Should contain 'air_pressure',
-                'latitude' and 'longitude' defined.
-
-        Returns:
-            diagnostics(dict):
-                The desired initial conditions.
-        """
+    def array_call(self, state):
 
         longitude = np.radians(state['longitude'])
         latitude = np.radians(state['latitude'])
@@ -114,11 +104,11 @@ class DcmipInitialConditions(Diagnostic):
                 perturb=self._add_perturbation,
                 moist_sim=self._moist)
 
-        diagnostics['eastward_wind'].values[:] = u
-        diagnostics['northward_wind'].values[:] = v
-        diagnostics['air_temperature'].values[:] = t
-        diagnostics['surface_geopotential'].values[:] = phi_surface
-        diagnostics['specific_humidity'].values[:] = q
-        diagnostics['surface_air_pressure'].values[:] = p_surface
+        diagnostics['eastward_wind'][:] = u
+        diagnostics['northward_wind'][:] = v
+        diagnostics['air_temperature'][:] = t
+        diagnostics['surface_geopotential'][:] = phi_surface
+        diagnostics['specific_humidity'][:] = q
+        diagnostics['surface_air_pressure'][:] = p_surface
 
         return diagnostics

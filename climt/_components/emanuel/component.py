@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ..._core import bolton_q_sat
+from ..._core import bolton_q_sat, ensure_contiguous_state
 from sympl import (
     ImplicitPrognostic, get_constant, initialize_numpy_arrays_with_properties)
 import numpy as np
@@ -53,12 +53,13 @@ class EmanuelConvection(ImplicitPrognostic):
         'convective_state': {
             'dims': ['*'],
             'units': 'dimensionless',
+            'dtype': np.int32,
         },
         'convective_precipitation_rate': {
             'dims': ['*'],
             'units': 'mm day^-1',
         },
-        'convective_downdraft_valocity_scale': {
+        'convective_downdraft_velocity_scale': {
             'dims': ['*'],
             'units': 'm s^-1',
         },
@@ -108,7 +109,8 @@ class EmanuelConvection(ImplicitPrognostic):
                  mass_flux_relaxation_rate=0.1,
                  mass_flux_damping_rate=0.1,
                  reference_mass_flux_timescale=300.,
-                 number_of_tracers=0):
+                 number_of_tracers=0,
+                 **kwargs):
         """
 
         Args:
@@ -214,6 +216,7 @@ class EmanuelConvection(ImplicitPrognostic):
         self._mf_timescale = reference_mass_flux_timescale
         self._ntracers = number_of_tracers
         self._set_fortran_constants()
+        super(EmanuelConvection, self).__init__(**kwargs)
 
     def _set_fortran_constants(self):
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
@@ -239,7 +242,8 @@ class EmanuelConvection(ImplicitPrognostic):
             self._Lv, self._g,
             self._rho_condensible, self._mf_timescale)
 
-    def array_call(self, raw_state):
+    @ensure_contiguous_state
+    def array_call(self, raw_state, timestep):
         """
         Get convective heating and moistening.
 
@@ -280,7 +284,7 @@ class EmanuelConvection(ImplicitPrognostic):
             num_cols,
             max_conv_level,
             self._ntracers,
-            self.current_time_step.total_seconds(),
+            timestep.total_seconds(),
             raw_state['air_temperature'],
             raw_state['specific_humidity'],
             q_sat,
@@ -293,7 +297,7 @@ class EmanuelConvection(ImplicitPrognostic):
             diagnostics['convective_downdraft_velocity_scale'],
             diagnostics['convective_downdraft_temperature_scale'],
             diagnostics['convective_downdraft_specific_humidity_scale'],
-            raw_state['atmosphere_convective_mass_flux'],
+            raw_state['cloud_base_mass_flux'],
             diagnostics['atmosphere_convective_available_potential_energy'],
             tendencies['air_temperature'],
             tendencies['specific_humidity'],

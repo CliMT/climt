@@ -46,14 +46,14 @@ def get_baroclinic_wave_ics(press, lon, lat, perturb=False, moist_sim=False):
 
     global longitude, latitude, pressure, moist, zcoords, add_perturbation, moist
 
-    num_lons, num_lats, num_levs = press.shape
+    num_levs, num_cols = press.shape
 
-    zonal_vel = np.zeros(press.shape, dtype=np.double, order='F')
-    merid_vel = np.zeros(press.shape, dtype=np.double, order='F')
-    temperature = np.zeros(press.shape, dtype=np.double, order='F')
-    specific_humidity = np.zeros(press.shape, dtype=np.double, order='F')
-    surf_geop = np.zeros((num_lons,num_lats), dtype=np.double, order='F')
-    surf_pressure = np.zeros((num_lons,num_lats), dtype=np.double, order='F')
+    zonal_vel = np.empty(press.shape, dtype=np.double)
+    merid_vel = np.empty(press.shape, dtype=np.double)
+    temperature = np.empty(press.shape, dtype=np.double)
+    specific_humidity = np.empty(press.shape, dtype=np.double)
+    surf_geop = np.empty((num_cols,), dtype=np.double)
+    surf_pressure = np.empty((num_cols,), dtype=np.double)
 
     # This makes the code evaluate eta using the pressure.
     zcoords = 0
@@ -71,31 +71,31 @@ def get_baroclinic_wave_ics(press, lon, lat, perturb=False, moist_sim=False):
     #Scale factor, not used in code, but present in argument list!
     X = 1.
 
-    # lat-lon in RADIANS!!
+    # lat-lon must be input in RADIANS
 
-    for i in range(num_lons):
-        for j in range(num_lats):
-            for k in range(num_levs):
-                longitude = lon[i,j]
-                latitude = lat[i,j]
-                pressure = press[i,j,k]
-                dcmipBaroclinicWave(&moist, &X,\
-                                    &longitude, &latitude,\
-                                    &pressure, &dummy,\
-                                    &zcoords, \
-                                    &u, &v,\
-                                    &dummy, &t,\
-                                    &phis, &ps,\
-                                    &dummy, &q,\
-                                    &dummy, &dummy, &add_perturbation)
-                zonal_vel[i,j,k] = u
-                merid_vel[i,j,k] = v
-                temperature[i,j,k] = t
-                specific_humidity[i,j,k] = q
-                surf_geop[i,j] = phis
-                surf_pressure[i,j] = ps
+    for i in range(num_cols):
+        for k in range(num_levs):
+            longitude = lon[i]
+            latitude = lat[i]
+            pressure = press[k, i]
+            dcmipBaroclinicWave(&moist, &X,\
+                                &longitude, &latitude,\
+                                &pressure, &dummy,\
+                                &zcoords, \
+                                &u, &v,\
+                                &dummy, &t,\
+                                &phis, &ps,\
+                                &dummy, &q,\
+                                &dummy, &dummy, &add_perturbation)
+            zonal_vel[k, i] = u
+            merid_vel[k, i] = v
+            temperature[k, i] = t
+            specific_humidity[k, i] = q
+            surf_geop[i] = phis
+            surf_pressure[i] = ps
 
     return zonal_vel, merid_vel, temperature, specific_humidity, surf_pressure, surf_geop
+
 
 def get_tropical_cyclone_ics(press, lon, lat, **kwargs):
     '''
@@ -106,38 +106,37 @@ def get_tropical_cyclone_ics(press, lon, lat, **kwargs):
 
     global longitude, latitude, pressure, zcoords
 
-    num_lons, num_lats, num_levs = press.shape
+    num_levs, num_cols = press.shape
 
-    zonal_vel = np.zeros(press.shape, dtype=np.double, order='F')
-    merid_vel = np.zeros(press.shape, dtype=np.double, order='F')
-    temperature = np.zeros(press.shape, dtype=np.double, order='F')
-    vapour = np.zeros(press.shape, dtype=np.double, order='F')
-    surf_geop = np.zeros((num_lons,num_lats), dtype=np.double, order='F')
-    surf_pressure = np.zeros((num_lons,num_lats), dtype=np.double, order='F')
+    zonal_vel = np.zeros(press.shape, dtype=np.double)
+    merid_vel = np.zeros(press.shape, dtype=np.double)
+    temperature = np.zeros(press.shape, dtype=np.double)
+    vapour = np.zeros(press.shape, dtype=np.double)
+    surf_geop = np.zeros((num_cols,), dtype=np.double)
+    surf_pressure = np.zeros((num_cols,), dtype=np.double)
 
     # This makes the code evaluate eta using the pressure.
     zcoords = 0
 
     # lat-lon in RADIANS!!
 
-    for i in range(num_lons):
-        for j in range(num_lats):
-            for k in range(num_levs):
-                longitude = lon[i,j]
-                latitude = lat[i,j]
-                pressure = press[i,j,k]
-                dcmipTropicalCyclone(&longitude, &latitude,\
-                                    &pressure, &dummy,\
-                                    &zcoords, \
-                                    &u, &v,\
-                                    &dummy, &t,\
-                                    &phis, &ps,\
-                                    &dummy, &q)
-                zonal_vel[i,j,k] = u
-                merid_vel[i,j,k] = v
-                temperature[i,j,k] = t
-                vapour[i,j,k] = q
-                surf_geop[i,j] = phis
-                surf_pressure[i,j] = ps
+    for i in range(num_cols):
+        for k in range(num_levs):
+            longitude = lon[i]
+            latitude = lat[i]
+            pressure = press[k, i]
+            dcmipTropicalCyclone(&longitude, &latitude,\
+                                &pressure, &dummy,\
+                                &zcoords, \
+                                &u, &v,\
+                                &dummy, &t,\
+                                &phis, &ps,\
+                                &dummy, &q)
+            zonal_vel[k, i] = u
+            merid_vel[k, i] = v
+            temperature[k, i] = t
+            vapour[k, i] = q
+            surf_geop[i] = phis
+            surf_pressure[i] = ps
 
     return zonal_vel, merid_vel, temperature, vapour, surf_pressure, surf_geop

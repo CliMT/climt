@@ -1,5 +1,16 @@
 from sympl import jit, DataArray
 import numpy as np
+import functools
+
+
+def ensure_contiguous_state(func):
+    @functools.wraps(func)
+    def wrapper(self, state, *args, **kwargs):
+        for name, value in state.items():
+            if isinstance(value, np.ndarray):
+                state[name] = np.ascontiguousarray(value)
+        return func(self, state, *args, **kwargs)
+    return wrapper
 
 
 def numpy_version_of(state):
@@ -109,21 +120,20 @@ def get_interface_values(
     """
 
     interface_values = np.zeros(
-        (mid_level_values.shape[0], mid_level_values.shape[1], mid_level_values.shape[2]+1),
-        dtype=np.double, order='F')
+        (mid_level_values.shape[0]+1, mid_level_values.shape[1]), dtype=np.double)
 
     log_mid_p = np.log(mid_level_pressure)
-    log_int_p = np.log(interface_level_pressure)
 
-    interp_weight = (log_int_p[:, :, 1:-1] - log_mid_p[:, :, 1::])/(log_mid_p[:, :, :-1] -
-                                                                    log_mid_p[:, :, 1::])
+    interp_weight = (
+        np.log(interface_level_pressure[1:-1, :]) - log_mid_p[1::, :]) / (
+        log_mid_p[:-1, :] - log_mid_p[1::, :])
 
-    interface_values[:, :, 1:-1] = \
-        mid_level_values[:, :, 1::] - interp_weight*(mid_level_values[:, :, 1::] -
-                                                     mid_level_values[:, :, 0:-1])
+    interface_values[1:-1, :] = \
+        mid_level_values[1::, :] - interp_weight*(
+            mid_level_values[1::, :] - mid_level_values[0:-1, :])
 
-    interface_values[:, :, 0] = surface_value[:, :]
-    interface_values[:, :, -1] = mid_level_values[:, :, -1]
+    interface_values[0, :] = surface_value[:]
+    interface_values[:-1, :] = mid_level_values[-1, :]
 
     return interface_values
 

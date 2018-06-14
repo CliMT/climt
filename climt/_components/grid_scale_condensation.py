@@ -13,40 +13,40 @@ class GridScaleCondensation(Implicit):
 
     input_properties = {
         'air_temperature': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK',
         },
         'specific_humidity': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'kg/kg',
         },
         'air_pressure': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'units': 'Pa',
         }
     }
 
     diagnostic_properties = {
         'precipitation_amount': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['*'],
             'units': 'kg m^-2',
         }
     }
 
     output_properties = {
         'air_temperature': {'units': 'degK'},
-        'specific_humidity': {'units': 'degK'},
+        'specific_humidity': {'units': 'kg/kg'},
     }
 
-    def __init__(self):
-        """
-        Initialise component.
-        """
+    def __init__(self, **kwargs):
+        self._update_constants()
+        super(GridScaleCondensation, self).__init__(**kwargs)
 
+    def _update_constants(self):
         self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
         self._Lv = get_constant('latent_heat_of_condensation', 'J/kg')
         self._Rd = get_constant('gas_constant_of_dry_air', 'J/kg/degK')
@@ -75,7 +75,8 @@ class GridScaleCondensation(Implicit):
             InvalidStateException: If state is not a valid input for the
                 Implicit instance for other reasons.
         """
-        T = raw_state['air_temperature'],
+        self._update_constants()
+        T = raw_state['air_temperature']
         q = raw_state['specific_humidity']
         p = raw_state['air_pressure']
         p_interface = raw_state['air_pressure_on_interface_levels']
@@ -93,9 +94,9 @@ class GridScaleCondensation(Implicit):
         new_T = T.copy()
         new_q[saturated] -= condensed_q[saturated]
         new_T[saturated] += self._Lv/self._Cpd * condensed_q[saturated]
-        mass = (p_interface[:, :, 1:] - p_interface[:, :, :-1])/(
+        mass = (p_interface[1:, :] - p_interface[:-1, :])/(
             self._g*self._rhow)
-        precipitation = np.sum(condensed_q * mass, axis=2)
+        precipitation = np.sum(condensed_q * mass, axis=0)
 
         diagnostics = {
             'precipitation_amount': precipitation,

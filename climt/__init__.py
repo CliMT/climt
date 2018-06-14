@@ -3,7 +3,7 @@
 import sympl
 
 from ._core import (
-    get_default_state, mass_to_volume_mixing_ratio,
+    get_default_state, get_grid, mass_to_volume_mixing_ratio,
     get_interface_values, numpy_version_of,
     bolton_q_sat, bolton_dqsat_dT, calculate_q_sat,
     list_available_constants, set_constants_from_dict)
@@ -16,7 +16,7 @@ from ._components import (
 
 
 __all__ = (
-    get_default_state, mass_to_volume_mixing_ratio, numpy_version_of,
+    get_default_state, get_grid, mass_to_volume_mixing_ratio, numpy_version_of,
     get_interface_values, list_available_constants,
     set_constants_from_dict,
     bolton_q_sat, bolton_dqsat_dT, calculate_q_sat,

@@ -64,7 +64,8 @@ class HeldSuarez(Prognostic):
                  k_a=1/40./86400.,
                  k_s=1/4./86400.,
                  equator_pole_temperature_difference=60,
-                 delta_theta_z=10):
+                 delta_theta_z=10,
+                 **kwargs):
         """
 
         Args:
@@ -107,18 +108,17 @@ class HeldSuarez(Prognostic):
         self._delta_T_y = equator_pole_temperature_difference
         self._delta_theta_z = delta_theta_z
 
+        self._update_constants()
+
+        super(HeldSuarez, self).__init__(**kwargs)
+
+    def _update_constants(self):
         self._p0 = get_constant('reference_air_pressure', 'Pa')
-
         self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
-
         self._R_d = get_constant('gas_constant_of_dry_air', 'J/kg/degK')
-
         self._kappa = self._R_d/self._Cpd
-
         self._Omega = get_constant('planetary_rotation_rate', 's^-1')
-
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
-
         self._r_planet = get_constant('planetary_radius', 'm')
 
     def array_call(self, raw_state):
@@ -139,8 +139,8 @@ class HeldSuarez(Prognostic):
               state quantities and values are the value of those quantities
               at the time of the input state.
         """
+        self._update_constants()
         sigma = raw_state['air_pressure'] / raw_state['surface_air_pressure']
-        sigma.attrs['units'] = ''
 
         Teq = self._get_Teq(raw_state['latitude'], raw_state['air_pressure'])
         k_t = self._get_k_t(raw_state['latitude'], sigma)

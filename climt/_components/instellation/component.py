@@ -19,7 +19,7 @@ class Instellation(Diagnostic):
             'dims': ['*'],
             'units': 'degrees_east',
         },
-    },
+    }
 
     diagnostic_properties = {
         'zenith_angle': {
@@ -27,6 +27,11 @@ class Instellation(Diagnostic):
             'units': 'radians',
         }
     }
+
+    def __init__(self, **kwargs):
+        print(self.input_properties)
+        print(self.input_properties.items())
+        super(Instellation, self).__init__(**kwargs)
 
 
     def array_call(self, state):

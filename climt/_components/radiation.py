@@ -6,12 +6,12 @@ class GrayLongwaveRadiation(Prognostic):
 
     input_properties = {
         'longwave_optical_depth_on_interface_levels': {
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'units': 'dimensionless',
             'alias': 'tau',
         },
         'air_temperature': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK',
             'alias': 'T',
         },
@@ -21,12 +21,12 @@ class GrayLongwaveRadiation(Prognostic):
             'alias': 'T_surface',
         },
         'air_pressure': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'Pa',
             'alias': 'p',
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'units': 'Pa',
             'alias': 'p_interface',
         },
@@ -34,17 +34,17 @@ class GrayLongwaveRadiation(Prognostic):
 
     diagnostic_properties = {
         'downwelling_longwave_flux_in_air_on_interface_levels': {
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
             'alias': 'lw_down',
         },
         'upwelling_longwave_flux_in_air_on_interface_levels': {
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
             'alias': 'lw_up',
         },
         'longwave_heating_rate': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK day^-1'
         }
     }
@@ -53,29 +53,7 @@ class GrayLongwaveRadiation(Prognostic):
         'air_temperature': {'units': 'degK s^-1'}
     }
 
-
-    def __init__(self):
-        """
-        Initialise component.
-        """
-        pass
-
     def array_call(self, state):
-        """
-        Get heating tendencies and longwave fluxes.
-
-        Args:
-            state (dict): A model state dictionary.
-
-        Returns:
-            tendencies (dict), diagnostics (dict):
-                * A dictionary whose keys are strings indicating
-                  state quantities and values are the time derivative of those
-                  quantities in units/second at the time of the input state.
-                * A dictionary whose keys are strings indicating
-                  state quantities and values are the value of those quantities
-                  at the time of the input state.
-        """
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
             state['T'], state['p_interface'], state['T_surface'], state['tau'],
@@ -84,7 +62,7 @@ class GrayLongwaveRadiation(Prognostic):
             get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
         )
         tendencies = {
-            'air_temperature': lw_temperature_tendency,
+            'T': lw_temperature_tendency,
         }
         diagnostics = {
             'lw_down': downward_flux,
@@ -118,7 +96,8 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
             self,
             linear_optical_depth_parameter=0.1,
             longwave_optical_depth_at_equator=6,
-            longwave_optical_depth_at_poles=1.5):
+            longwave_optical_depth_at_poles=1.5,
+            **kwargs):
         """
         Args:
 
@@ -143,22 +122,9 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
         self._fl = linear_optical_depth_parameter
         self._tau0e = longwave_optical_depth_at_equator
         self._tau0p = longwave_optical_depth_at_poles
+        super(Frierson06LongwaveOpticalDepth, self).__init__(**kwargs)
 
-    def __call__(self, state):
-        """
-        Calculate longwave optical depth from input state.
-
-        Args:
-            state (dict): A model state dictionary.
-
-        Returns:
-            tendencies (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the time derivative of those
-                quantities in units/second at the time of the input state.
-            diagnostics (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the value of those quantities
-                at the time of the input state.
-        """
+    def array_call(self, state):
         return {
             'longwave_optical_depth_on_interface_levels': get_frierson_06_tau(
                 state['latitude'], state['sigma_on_interface_levels'],
@@ -184,13 +150,13 @@ def integrate_upward_longwave(T, T_surface, tau, sigma):
             upward.
     """
     upward_flux = np.zeros(
-        (T.shape[0], T.shape[1], T.shape[2]+1), dtype=np.float32)
-    upward_flux[:, 0] = sigma*T_surface**4
-    for k in range(1, T.shape[2]+1):
-        dtau = tau[:, k] - tau[:, k-1]
-        upward_flux[:, k] = (
-            upward_flux[:, k-1] * np.exp(-dtau) +
-            sigma * T[:, k-1]**4 * (1. - np.exp(-dtau)))
+        (T.shape[0]+1, T.shape[1]), dtype=np.float32)
+    upward_flux[0, :] = sigma*T_surface**4
+    for k in range(1, T.shape[0]+1):
+        dtau = tau[k, :] - tau[k-1, :]
+        upward_flux[k, :] = (
+            upward_flux[k-1, :] * np.exp(-dtau) +
+            sigma * T[k-1, :]**4 * (1. - np.exp(-dtau)))
     return upward_flux
 
 
@@ -210,12 +176,12 @@ def integrate_downward_longwave(T, tau, sigma):
             downward.
     """
     downward_flux = np.zeros(
-        (T.shape[0], T.shape[1], T.shape[2]+1), dtype=np.float32)
-    for k in range(T.shape[2]-1, -1, -1):
-        dtau = tau[:, k+1] - tau[:, k]
-        downward_flux[:, k] = (
-            downward_flux[:, k+1]*np.exp(-dtau) +
-            sigma * T[:, k]**4 * (1 - np.exp(-dtau)))
+        (T.shape[0]+1, T.shape[1]), dtype=np.float32)
+    for k in range(T.shape[0]-1, -1, -1):
+        dtau = tau[k+1, :] - tau[k, :]
+        downward_flux[k, :] = (
+            downward_flux[k+1, :]*np.exp(-dtau) +
+            sigma * T[k, :]**4 * (1 - np.exp(-dtau)))
     return downward_flux
 
 
@@ -226,8 +192,8 @@ def get_longwave_fluxes(
     downward_flux = integrate_downward_longwave(T, tau, sigma)
     net_lw_flux = upward_flux - downward_flux
     longwave_temperature_tendency = g/Cpd * (
-        net_lw_flux[:, 1:] - net_lw_flux[:, :-1])/(
-        p_interface[:, 1:] - p_interface[:, :-1])
+        net_lw_flux[1:, :] - net_lw_flux[:-1, :])/(
+        p_interface[1:, :] - p_interface[:-1, :])
     return (downward_flux, upward_flux, net_lw_flux,
             longwave_temperature_tendency, tau)
 

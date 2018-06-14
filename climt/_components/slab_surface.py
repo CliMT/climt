@@ -87,21 +87,7 @@ class SlabSurface(Prognostic):
         },
     }
 
-    def __call__(self, raw_state):
-        """
-        Calculate surface temperature.
-
-        Args:
-            raw_state (dict):
-                The state dictionary
-
-        Returns:
-            tendencies (dict), diagnostics(dict):
-                * The surface temperature tendency
-                * Any diagnostics
-
-        """
-
+    def array_call(self, raw_state):
         diagnostics = initialize_numpy_arrays_with_properties(
             self.diagnostic_properties, raw_state, self.input_properties
         )
@@ -126,16 +112,11 @@ class SlabSurface(Prognostic):
         sea_ice_mask = area_type == 'sea_ice'
 
         net_heat_flux[land_ice_mask] = -raw_state['upward_heat_flux_at_ground_level_in_soil'][land_ice_mask]
-
         net_heat_flux[sea_ice_mask] = raw_state['heat_flux_into_sea_water_due_to_sea_ice'][sea_ice_mask]
-
         raw_state['surface_material_density'][sea_mask] = raw_state['sea_water_density'][sea_mask]
-
         raw_state['surface_thermal_capacity'][land_mask] = raw_state['heat_capacity_of_soil'][land_mask]
-
         diagnostics['depth_of_slab_surface'][sea_mask] =\
             raw_state['ocean_mixed_layer_thickness'][sea_mask]
-
         diagnostics['depth_of_slab_surface'][land_mask] =\
             raw_state['soil_layer_thickness'][land_mask]
 
