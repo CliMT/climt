@@ -2,7 +2,7 @@ from sympl import (
     get_numpy_array, Prognostic, get_constant, initialize_numpy_arrays_with_properties
 )
 from ...._core import (
-    mass_to_volume_mixing_ratio, get_interface_values,
+    mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state
 )
 import numpy as np
 from numpy import pi as numpy_pi
@@ -30,56 +30,60 @@ class RRTMGShortwave(Prognostic):
 
     input_properties = {
         'air_pressure': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'mbar'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'units': 'mbar'
         },
         'air_temperature': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK'
         },
         'specific_humidity': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'dimensionless'
         },
         'mole_fraction_of_ozone_in_air': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'dimensionless'
         },
         'mole_fraction_of_carbon_dioxide_in_air': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'dimensionless'
         },
         'mole_fraction_of_methane_in_air': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'dimensionless'
         },
         'mole_fraction_of_nitrous_oxide_in_air': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'dimensionless'
         },
         'mole_fraction_of_oxygen_in_air': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'dimensionless'
         },
         'mass_content_of_cloud_ice_in_atmosphere_layer': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'g m^-2'
         },
         'mass_content_of_cloud_liquid_water_in_atmosphere_layer':{
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'g m^-2'
         },
         'cloud_ice_particle_size': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'micrometer'
         },
         'cloud_water_droplet_radius': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'micrometer'
+        },
+        'cloud_area_fraction_in_atmosphere_layer': {
+            'dims': ['mid_levels', '*'],
+            'units': 'dimensionless',
         },
         'surface_temperature': {
             'dims': ['*'],
@@ -106,35 +110,35 @@ class RRTMGShortwave(Prognostic):
             'units': 'dimensionless'
         },
         'shortwave_optical_thickness_due_to_cloud': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless'
         },
         'shortwave_optical_thickness_due_to_aerosol': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless'
         },
         'single_scattering_albedo_due_to_cloud': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless'
         },
         'single_scattering_albedo_due_to_aerosol': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless'
         },
         'cloud_asymmetry_parameter': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless'
         },
         'aerosol_asymmetry_parameter': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless'
         },
         'cloud_forward_scattering_fraction': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless'
         },
         'aerosol_optical_depth_at_55_micron': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless'
         },
         'solar_cycle_fraction': {
@@ -155,97 +159,28 @@ class RRTMGShortwave(Prognostic):
 
     diagnostic_properties = {
         'upwelling_shortwave_flux_in_air': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'W m^-2',
         },
         'downwelling_shortwave_flux_in_air': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'W m^-2',
         },
         'upwelling_shortwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'W m^-2',
         },
         'downwelling_shortwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'W m^-2',
         },
         'air_temperature_tendency_from_shortwave_assuming_clear_sky': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK day^-1',
         },
         'air_temperature_tendency_from_shortwave': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'degK day^-1',
-        },
-    }
-
-    extra_dimensions = {'num_shortwave_bands': np.arange(14),
-                        'num_ecmwf_aerosols': np.arange(6),
-                        'scalar': np.arange(1)}
-    '''
-    RRTM without MCICA requires certain arrays on spectral bands
-    '''
-
-    quantity_descriptions = {
-        'shortwave_optical_thickness_due_to_cloud': {
-            'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
-            'units': 'dimensionless',
-            'default_value': 0.
-        },
-
-        'cloud_asymmetry_parameter': {
-            'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
-            'units': 'dimensionless',
-            'default_value': 0.85
-        },
-
-        'cloud_forward_scattering_fraction': {
-            'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
-            'units': 'dimensionless',
-            'default_value': 0.8
-        },
-
-        'single_scattering_albedo_due_to_cloud': {
-            'dims': ['x', 'num_shortwave_bands', 'y', 'mid_levels'],
-            'units': 'dimensionless',
-            'default_value': 0.9
-        },
-
-        'shortwave_optical_thickness_due_to_aerosol': {
-            'dims': ['x', 'y', 'mid_levels', 'num_shortwave_bands'],
-            'units': 'dimensionless',
-            'default_value': 0.
-        },
-
-        'aerosol_asymmetry_parameter': {
-            'dims': ['x', 'y', 'mid_levels', 'num_shortwave_bands'],
-            'units': 'dimensionless',
-            'default_value': 0.
-        },
-
-        'single_scattering_albedo_due_to_aerosol': {
-            'dims': ['x', 'y', 'mid_levels', 'num_shortwave_bands'],
-            'units': 'dimensionless',
-            'default_value': 0.5
-        },
-
-        'aerosol_optical_depth_at_55_micron': {
-            'dims': ['x', 'y', 'mid_levels', 'num_ecmwf_aerosols'],
-            'units': 'dimensionless',
-            'default_value': 0.0
-        },
-
-        'solar_cycle_fraction': {
-            'dims': ['scalar'],
-            'units': 'dimensionless',
-            'default_value': 0.0
-        },
-
-        'flux_adjustment_for_earth_sun_distance': {
-            'dims': ['scalar'],
-            'units': 'dimensionless',
-            'default_value': 1.0
         },
     }
 
@@ -261,9 +196,7 @@ class RRTMGShortwave(Prognostic):
             facular_sunspot_amplitude=None,
             solar_variability_by_band=None,
             aerosol_type='no_aerosol', **kwargs):
-
         """
-
         Args:
 
             cloud_overlap_method (int):
@@ -366,7 +299,6 @@ class RRTMGShortwave(Prognostic):
 
         .. _[Fu, 1996]:
              http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
-
             """
 
         self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method.lower()]
@@ -426,7 +358,9 @@ class RRTMGShortwave(Prognostic):
             self._liq_props,
             self._aerosol_type,
             self._solar_var_flag)
+        super(RRTMGShortwave, self).__init__(**kwargs)
 
+    @ensure_contiguous_state
     def array_call(self, state):
         """
         Get heating tendencies and shortwave fluxes.
@@ -445,11 +379,15 @@ class RRTMGShortwave(Prognostic):
                   sky conditions.
 
         """
-        Q = state['specific_humidity']
-        Q = mass_to_volume_mixing_ratio(Q, 18.02)
+        Q = mass_to_volume_mixing_ratio(state['specific_humidity'], 18.02)
 
-        mid_level_shape = state['air_temperature'].shape
-
+        for arg in (
+            state['air_temperature'],
+            state['surface_temperature'],
+            state['air_pressure'],
+            state['air_pressure_on_interface_levels']
+        ):
+            print(arg.shape)
         Tint = get_interface_values(
             state['air_temperature'],
             state['surface_temperature'],
@@ -468,74 +406,49 @@ class RRTMGShortwave(Prognostic):
             day_of_year = 0
         else:
             day_of_year = model_time.timetuple().tm_yday
-        cos_zenith_angle = np.asfortranarray(np.cos(state['zenith_angle']))
-        raw_f_arrays = {}
-        diag_f_arrays = {}
-        tend_f_arrays = {}
-        for quantity in state.keys():
-            if quantity not in ['flux_adjustment_for_earth_sun_distance',
-                                'solar_cycle_fraction']:
-                raw_f_arrays[quantity] = np.asfortranarray(state[quantity].transpose())
-            else:
-                raw_f_arrays[quantity] = state[quantity]
-
-        for quantity in diagnostics.keys():
-            diag_f_arrays[quantity] = np.asfortranarray(diagnostics[quantity].transpose())
-
-        for quantity in tendencies.keys():
-            tend_f_arrays[quantity] = np.asfortranarray(tendencies[quantity].transpose())
-
-        Tint_f = np.asfortranarray(Tint.transpose())
-        Q_f = np.asfortranarray(Q.transpose())
-        zenith_f = np.asfortranarray(cos_zenith_angle.transpose())
+        cos_zenith_angle = np.cos(state['zenith_angle'])
 
         _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
-            mid_level_shape[0],
-            mid_level_shape[1],
-            mid_level_shape[2],
+            state['air_temperature'].shape[1],
+            state['air_temperature'].shape[0],
             day_of_year,
-            raw_f_arrays['solar_cycle_fraction'],
-            raw_f_arrays['flux_adjustment_for_earth_sun_distance'],
-            raw_f_arrays['air_pressure'],
-            raw_f_arrays['air_pressure_on_interface_levels'],
-            raw_f_arrays['air_temperature'],
-            Tint_f,
-            raw_f_arrays['surface_temperature'],
-            Q_f,
-            raw_f_arrays['mole_fraction_of_ozone_in_air'],
-            raw_f_arrays['mole_fraction_of_carbon_dioxide_in_air'],
-            raw_f_arrays['mole_fraction_of_methane_in_air'],
-            raw_f_arrays['mole_fraction_of_nitrous_oxide_in_air'],
-            raw_f_arrays['mole_fraction_of_oxygen_in_air'],
-            raw_f_arrays['surface_albedo_for_direct_shortwave'],
-            raw_f_arrays['surface_albedo_for_direct_near_infrared'],
-            raw_f_arrays['surface_albedo_for_diffuse_shortwave'],
-            raw_f_arrays['surface_albedo_for_diffuse_near_infrared'],
-            zenith_f,
-            raw_f_arrays['cloud_area_fraction_in_atmosphere_layer'],
-            diag_f_arrays['upwelling_shortwave_flux_in_air'],
-            diag_f_arrays['downwelling_shortwave_flux_in_air'],
-            tend_f_arrays['air_temperature'],
-            diag_f_arrays['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
-            diag_f_arrays['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
-            diag_f_arrays['air_temperature_tendency_from_shortwave_assuming_clear_sky'],
-            raw_f_arrays['shortwave_optical_thickness_due_to_aerosol'],
-            raw_f_arrays['single_scattering_albedo_due_to_aerosol'],
-            raw_f_arrays['aerosol_asymmetry_parameter'],
-            raw_f_arrays['aerosol_optical_depth_at_55_micron'],
-            raw_f_arrays['shortwave_optical_thickness_due_to_cloud'],
-            raw_f_arrays['single_scattering_albedo_due_to_cloud'],
-            raw_f_arrays['cloud_asymmetry_parameter'],
-            raw_f_arrays['cloud_forward_scattering_fraction'],
-            raw_f_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'],
-            raw_f_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
-            raw_f_arrays['cloud_ice_particle_size'],
-            raw_f_arrays['cloud_water_droplet_radius'])
-
-        for quantity in diagnostics.keys():
-            diagnostics[quantity].values[:] = diag_f_arrays[quantity].transpose()
-        for quantity in tendencies.keys():
-            tendencies[quantity].values[:] = tend_f_arrays[quantity].transpose()
+            state['solar_cycle_fraction'],
+            state['flux_adjustment_for_earth_sun_distance'],
+            state['air_pressure'],
+            state['air_pressure_on_interface_levels'],
+            state['air_temperature'],
+            Tint,
+            state['surface_temperature'],
+            Q,
+            state['mole_fraction_of_ozone_in_air'],
+            state['mole_fraction_of_carbon_dioxide_in_air'],
+            state['mole_fraction_of_methane_in_air'],
+            state['mole_fraction_of_nitrous_oxide_in_air'],
+            state['mole_fraction_of_oxygen_in_air'],
+            state['surface_albedo_for_direct_shortwave'],
+            state['surface_albedo_for_direct_near_infrared'],
+            state['surface_albedo_for_diffuse_shortwave'],
+            state['surface_albedo_for_diffuse_near_infrared'],
+            cos_zenith_angle,
+            state['cloud_area_fraction_in_atmosphere_layer'],
+            diagnostics['upwelling_shortwave_flux_in_air'],
+            diagnostics['downwelling_shortwave_flux_in_air'],
+            tendencies['air_temperature'],
+            diagnostics['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
+            diagnostics['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
+            diagnostics['air_temperature_tendency_from_shortwave_assuming_clear_sky'],
+            state['shortwave_optical_thickness_due_to_aerosol'],
+            state['single_scattering_albedo_due_to_aerosol'],
+            state['aerosol_asymmetry_parameter'],
+            state['aerosol_optical_depth_at_55_micron'],
+            state['shortwave_optical_thickness_due_to_cloud'],
+            state['single_scattering_albedo_due_to_cloud'],
+            state['cloud_asymmetry_parameter'],
+            state['cloud_forward_scattering_fraction'],
+            state['mass_content_of_cloud_ice_in_atmosphere_layer'],
+            state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+            state['cloud_ice_particle_size'],
+            state['cloud_water_droplet_radius'])
 
         diagnostics['air_temperature_tendency_from_shortwave'].values[:] = tendencies['air_temperature'].values
 

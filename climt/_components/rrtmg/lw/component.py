@@ -3,7 +3,7 @@ from sympl import (
     Prognostic
 )
 from ...._core import (
-    mass_to_volume_mixing_ratio, get_interface_values)
+    mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state)
 import numpy as np
 from numpy import pi as PI
 from ..rrtmg_common import (
@@ -83,7 +83,7 @@ class RRTMGLongwave(Prognostic):
             'units': 'dimensionless',
         },
         'surface_longwave_emissivity': {
-            'dims': ['*'],
+            'dims': ['num_longwave_bands', '*'],
             'units': 'dimensionless',
         },
         'cloud_area_fraction_in_atmosphere_layer': {
@@ -158,8 +158,8 @@ class RRTMGLongwave(Prognostic):
             cloud_optical_properties='liquid_and_ice_clouds',
             cloud_ice_properties='ebert_curry_two',
             cloud_liquid_water_properties='radius_dependent_absorption',
-            calculate_interface_temperature=True):
-
+            calculate_interface_temperature=True,
+            **kwargs):
         """
 
         Args:
@@ -269,25 +269,10 @@ class RRTMGLongwave(Prognostic):
             self._cloud_optics,
             self._ice_props,
             self._liq_props)
+        super(RRTMGLongwave, self).__init__(**kwargs)
 
-    def __call__(self, state):
-        """
-        Get heating tendencies and longwave fluxes.
-
-        Args:
-
-            state (dict):
-                The model state dictionary.
-
-        Returns:
-
-            tendencies (dict), diagnostics (dict):
-
-                * The longwave heating tendency.
-                * The upward/downward longwave fluxes for cloudy and clear
-                  sky conditions.
-
-        """
+    @ensure_contiguous_state
+    def array_call(self, state):
         Q = mass_to_volume_mixing_ratio(state['specific_humidity'], 18.02)
         n_layers, n_columns = state['air_temperature'].shape
 
