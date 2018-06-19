@@ -95,8 +95,7 @@ def get_new_state(
         double time_step):
 
     if not initialised:
-        print 'Module not initialised'
-        return
+        raise RuntimeError('Module not initialised.')
 
     num_levs, num_cols = np.asarray(u_ext).shape
 

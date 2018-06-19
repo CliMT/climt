@@ -3,10 +3,14 @@ from ..._core import bolton_q_sat, ensure_contiguous_state
 from sympl import (
     ImplicitPrognostic, get_constant, initialize_numpy_arrays_with_properties)
 import numpy as np
+import logging
 try:
     from . import _emanuel_convection
 except ImportError:
-    print("Import failed. Emanuel Convection will not be available!")
+    logging.warning(
+        'Import failed. Emanuel Convection is likely not compiled and will not '
+        'be available.'
+    )
 
 
 class EmanuelConvection(ImplicitPrognostic):

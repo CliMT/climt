@@ -9,10 +9,14 @@ from numpy import pi as PI
 from ..rrtmg_common import (
     rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,
     rrtmg_cloud_ice_props_dict, rrtmg_cloud_liquid_props_dict)
+import logging
 try:
     from . import _rrtmg_lw
 except ImportError:
-    print('Import failed. RRTMG Longwave will not be available!')
+    logging.warning(
+        'Import failed. RRTMG Longwave is likely not compiled and '
+        'will not be available.'
+    )
 
 
 class RRTMGLongwave(Prognostic):

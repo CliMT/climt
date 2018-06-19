@@ -1,8 +1,12 @@
 from sympl import Diagnostic, DataArray, get_constant
+import logging
 try:
     from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
 except ImportError:
-    print('Import failed. Insolation will not be available!')
+    logging.warning(
+        'Import failed. Insolation is likely not compiled and will not be '
+        'available.'
+    )
 
 
 class BergerSolarInsolation(Diagnostic):

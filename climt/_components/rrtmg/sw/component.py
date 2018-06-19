@@ -10,10 +10,14 @@ from ..rrtmg_common import (
     rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,
     rrtmg_cloud_ice_props_dict, rrtmg_cloud_liquid_props_dict,
     rrtmg_aerosol_input_dict)
+import logging
 try:
     from . import _rrtmg_sw
 except ImportError:
-    print('Import failed. RRTMG Shortwave will not be available!')
+    logging.warning(
+        'Import failed. RRTMG Shortwave is likely not compiled and will not '
+        'be available.'
+    )
 
 
 class RRTMGShortwave(Prognostic):

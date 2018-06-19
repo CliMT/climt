@@ -1,8 +1,12 @@
 from sympl import Implicit, get_constant
+import logging
 try:
     from . import _simple_physics as phys
 except ImportError:
-    print('Import failed. Simple Physics will not be available!')
+    logging.warning(
+        'Import failed. Simple Physics is likely not compiled and will not be'
+        'available.'
+    )
 
 
 class SimplePhysics(Implicit):
@@ -206,7 +210,6 @@ class SimplePhysics(Implicit):
             * diagnostics for Simple Physics
         '''
         self._set_fortran_constants()
-        print(state['air_pressure_on_interface_levels'].shape)
         (t_out, u_out, v_out, q_out, precip_out,
         sensible_heat_flux, latent_heat_flux) = phys.get_new_state(
             state['eastward_wind'],

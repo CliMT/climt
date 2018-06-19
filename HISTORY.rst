@@ -11,6 +11,7 @@ reading those changes in the Sympl documentation.
 * Updated component APIs to work with Sympl 0.4.0
 * Many components which previously required horizontal dimensions now use
   wildcard matches for column dimensions.
+* Switched many print statements to logging calls.
 
 Breaking Changes
 ----------------

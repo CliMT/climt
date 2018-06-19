@@ -1,16 +1,20 @@
 from __future__ import division
-from ..._core import ClimtSpectralDynamicalCore, numpy_version_of, get_constant
-from sympl import DataArray
+from ..._core import numpy_version_of
+from sympl import DataArray, get_constant
 import numpy as np
 import sys
 from datetime import timedelta
+import logging
 try:
     from . import _gfs_dynamics
 except ImportError:
-    print("Import failed. GFS dynamical core will not be available!")
+    logging.warning(
+        'Import failed. GFS dynamical core is likely not compiled and will not '
+        'be available.'
+    )
 
 
-class GFSDynamicalCore(ClimtSpectralDynamicalCore):
+class GFSDynamicalCore(object):
     """
     Climt interface to the GFS dynamical core. The GFS
     code is available on `github`_.
@@ -118,21 +122,13 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
         """
 
         self._time_step = timedelta(seconds=time_step)
-
         self._radius = get_constant('planetary_radius', 'm')
-
         self._omega = get_constant('planetary_rotation_rate', 's^-1')
-
         self._R = get_constant('universal_gas_constant', 'J/mole/K')
-
         self._Rd = get_constant('gas_constant_of_dry_air', 'J/kg/K')
-
         self._Rv = get_constant('gas_constant_of_vapor_phase', 'J/kg/K')
-
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
-
         self._Cp = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
-
         self._Cvap = get_constant('heat_capacity_of_vapor_phase', 'J/kg/K')
 
         self._fvirt = (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
@@ -182,14 +178,14 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
                                      self._spectral_dim,
                                      self._num_tracers)
 
-        print('Initialising dynamical core, this could take some time...')
+        logging.info('Initialising dynamical core, this could take some time...')
 
         gaussian_weights, area_weights, latitudes, longitudes, sigma, sigma_interface = \
             _gfs_dynamics.init_model(self._dry_pressure,
                                      self._damping_levels,
                                      self._tau_damping)
 
-        print('Done!')
+        logging.info('Done!')
 
         self.gauss_weights = DataArray(gaussian_weights,
                                        name='gauss_weights',
@@ -454,9 +450,9 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
 
     def __del__(self):
         """ call shutdown in fortran code """
-        print("Cleaning up dynamical core...")
+        logging.info("Cleaning up dynamical core...")
         _gfs_dynamics.shut_down_model()
-        print("Done!")
+        logging.info("Done!")
 
 
 def set_negatives_to_zero(array):
