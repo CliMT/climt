@@ -129,19 +129,19 @@ class RRTMGLongwave(Prognostic):
 
     diagnostic_properties = {
         'upwelling_longwave_flux_in_air': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'downwelling_longwave_flux_in_air': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'upwelling_longwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'downwelling_longwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'air_temperature_tendency_from_longwave_assuming_clear_sky': {
@@ -153,7 +153,6 @@ class RRTMGLongwave(Prognostic):
             'units': 'degK day^-1',
         },
     }
-
 
     def __init__(
             self,

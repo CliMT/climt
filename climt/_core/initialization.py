@@ -27,19 +27,21 @@ class RRTMGLongwaveDefaultValues(Diagnostic):
             'units': 'dimensionless',
         },
         'longwave_optical_thickness_due_to_aerosol': {
-            'dims': ['mid_levels', '*', 'num_longwave_bands'],
+            'dims': ['num_longwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless',
         },
     }
 
     def array_call(self, state):
-        lw_band_shape = list(state['air_pressure'].shape) + [RRTMGLongwave.num_longwave_bands]
+        ncol, nz = state['air_pressure'].shape
         diagnostics = {
             'surface_longwave_emissivity': np.ones(
-                [state['air_pressure'].shape[0], RRTMGLongwave.num_longwave_bands]
+                [RRTMGLongwave.num_longwave_bands, ncol]
             ),
-            'longwave_optical_thickness_due_to_cloud': np.zeros(lw_band_shape),
-            'longwave_optical_thickness_due_to_aerosol': np.zeros(lw_band_shape),
+            'longwave_optical_thickness_due_to_cloud': np.zeros(
+                [nz, ncol, RRTMGLongwave.num_longwave_bands]),
+            'longwave_optical_thickness_due_to_aerosol': np.zeros(
+                [RRTMGLongwave.num_longwave_bands, nz, ncol]),
         }
         return diagnostics
 
@@ -378,7 +380,6 @@ default_values = {
     'divergence_of_wind': {'value': 0., 'units': 's^-1'},
     'atmosphere_relative_vorticity': {'value': 0., 'units': 's^-1'},
     'surface_geopotential': {'value': 0., 'units': 'm^2 s^-2', 'grid': 'surface_air_pressure'},
-    'surface_longwave_emissivity': {'value': 0., 'units': 'dimensionless', 'grid': 'surface_air_pressure'},
     'specific_humidity': {'value': 0., 'units': 'kg/kg'},
     'surface_specific_humidity': {'value': 0., 'units': 'kg/kg', 'grid': 'surface_air_pressure'},
     'mole_fraction_of_carbon_dioxide_in_air': {'value': 330e-6, 'units': 'dimensionless'},
@@ -392,14 +393,10 @@ default_values = {
     'mole_fraction_of_cfc22_in_air': {'value': 0., 'units': 'dimensionless'},
     'mole_fraction_of_carbon_tetrachloride_in_air': {'value': 0., 'units': 'dimensionless'},
     'cloud_area_fraction_in_atmosphere_layer': {'value': 0., 'units': 'dimensionless'},
-    'shortwave_optical_thickness_due_to_aerosol': {'value': 0., 'units': 'dimensionless'},
-    'longwave_optical_thickness_due_to_aerosol': {'value': 0., 'units': 'dimensionless'},
     'mass_content_of_cloud_ice_in_atmosphere_layer': {'value': 0., 'units': 'kg m^-2'},
     'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {'value': 0., 'units': 'kg m^-2'},
     'cloud_ice_particle_size': {'value': 20., 'units': 'micrometer'},
     'cloud_water_droplet_radius': {'value': 10., 'units': 'micrometer'},
-    'longwave_optical_thickness_due_to_cloud': {'value': 0., 'units': 'dimensionless'},
-    'shortwave_optical_thickness_due_to_cloud': {'value': 0., 'units': 'dimensionless'},
     'snow_and_ice_temperature_spline': {'value': CubicSpline(np.linspace(0, 50, 50), 260.*np.ones(50)), 'units': 'degK', 'dtype': object},
     'cloud_base_mass_flux': {'value': 0., 'units': 'kg m^-2 s^-1'},
     'surface_thermal_capacity': {'value': 4.1813e3, 'units': 'J kg^-1 degK^-1'},
@@ -499,6 +496,7 @@ def get_default_state(component_list, grid_state=None):
     return_state.update(compute_all_diagnostics(grid_state, diagnostic_list))
     return return_state
 
+
 def init_ozone(p):
     p_ref = np.linspace(0.998, 0.001, 30)
     ozone_ref = np.load(
@@ -523,3 +521,27 @@ init_diagnostics = [
     RRTMGShortwaveDefaultValues(),
     RRTMGLongwaveDefaultValues(),
 ]
+
+for diag in init_diagnostics:
+    output_overlap = set(diag.diagnostic_properties.keys()).intersection(
+        default_values.keys())
+    if len(output_overlap) > 0:
+        raise AssertionError(
+            'Initialization diagnostic {} outputs quantity(ies) {} for which a '
+            'default value is also present. The default value should probably '
+            'be removed.'.format(diag.__class__.__name__, output_overlap))
+    for diag2 in init_diagnostics:
+        output_overlap = set(diag.diagnostic_properties.keys()).intersection(
+            diag2.diagnostic_properties.keys())
+        if diag2 is diag:
+            pass
+        elif len(output_overlap) > 0:
+            raise AssertionError(
+                'Initialization diagnostics {} and {} both outputs quantity(ies)'
+                ' {}. One of these should probably '
+                'be removed.'.format(
+                    diag.__class__.__name__,
+                    diag2.__class__.__name__,
+                    output_overlap
+                )
+            )

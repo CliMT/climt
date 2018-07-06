@@ -163,7 +163,7 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
     component_classes = (
         Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
         GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
-        #RRTMGLongwave,
+        RRTMGLongwave,
         RRTMGShortwave,
         EmanuelConvection, SlabSurface, #GFSDynamicalCore,
         DcmipInitialConditions, IceSheet,
