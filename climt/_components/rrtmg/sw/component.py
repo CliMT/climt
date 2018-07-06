@@ -142,7 +142,7 @@ class RRTMGShortwave(Prognostic):
             'units': 'dimensionless'
         },
         'aerosol_optical_depth_at_55_micron': {
-            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
+            'dims': ['num_ecmwf_aerosols', 'mid_levels', '*'],
             'units': 'dimensionless'
         },
         'solar_cycle_fraction': {
@@ -163,19 +163,19 @@ class RRTMGShortwave(Prognostic):
 
     diagnostic_properties = {
         'upwelling_shortwave_flux_in_air': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'downwelling_shortwave_flux_in_air': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'upwelling_shortwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'downwelling_shortwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['mid_levels', '*'],
+            'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
         },
         'air_temperature_tendency_from_shortwave_assuming_clear_sky': {
@@ -384,14 +384,8 @@ class RRTMGShortwave(Prognostic):
 
         """
         Q = mass_to_volume_mixing_ratio(state['specific_humidity'], 18.02)
+        assert state['air_pressure'].shape[0] + 1 == state['air_pressure_on_interface_levels'].shape[0]
 
-        for arg in (
-            state['air_temperature'],
-            state['surface_temperature'],
-            state['air_pressure'],
-            state['air_pressure_on_interface_levels']
-        ):
-            print(arg.shape)
         Tint = get_interface_values(
             state['air_temperature'],
             state['surface_temperature'],
@@ -454,6 +448,6 @@ class RRTMGShortwave(Prognostic):
             state['cloud_ice_particle_size'],
             state['cloud_water_droplet_radius'])
 
-        diagnostics['air_temperature_tendency_from_shortwave'].values[:] = tendencies['air_temperature'].values
+        diagnostics['air_temperature_tendency_from_shortwave'][:] = tendencies['air_temperature']
 
         return tendencies, diagnostics

@@ -12,8 +12,8 @@ cdef cnp.int32_t rrtm_liq_droplet_flag
 cdef cnp.int32_t rrtm_aerosol_input_flag
 cdef cnp.int32_t rrtm_solar_variability_flag
 cdef double rrtm_solar_constant
-cdef double [:]  rrtm_fac_sunspot_ampl
-cdef double [:]  rrtm_solar_var_by_band
+cdef double [:] rrtm_fac_sunspot_ampl
+cdef double [:] rrtm_solar_var_by_band
 
 #Definitions of the functions we want to use within
 #CliMT: initialisation and radiative transfer

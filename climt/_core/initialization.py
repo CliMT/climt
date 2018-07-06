@@ -55,52 +55,58 @@ class RRTMGShortwaveDefaultValues(Diagnostic):
 
     diagnostic_properties = {
         'shortwave_optical_thickness_due_to_cloud': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless',
         },
         'cloud_asymmetry_parameter': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless',
         },
         'cloud_forward_scattering_fraction': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless',
         },
         'single_scattering_albedo_due_to_cloud': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
             'units': 'dimensionless',
         },
         'shortwave_optical_thickness_due_to_aerosol': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless',
         },
         'aerosol_asymmetry_parameter': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless',
         },
         'single_scattering_albedo_due_to_aerosol': {
-            'dims': ['*', 'num_shortwave_bands', 'mid_levels'],
+            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
             'units': 'dimensionless',
         },
         'aerosol_optical_depth_at_55_micron': {
-            'dims': ['*', 'num_ecmwf_aerosols', 'mid_levels'],
+            'dims': ['num_ecmwf_aerosols', 'mid_levels', '*'],
             'units': 'dimensionless',
         },
     }
 
     def array_call(self, state):
-        p = state['air_pressure']
-        sw_band_shape = [p.shape[0], RRTMGShortwave.num_shortwave_bands, p.shape[1]]
-        ecmwf_aerosol_shape = [p.shape[0], RRTMGShortwave.num_ecmwf_aerosols, p.shape[1]]
+        ncol, nz = state['air_pressure'].shape
         diagnostics = {
-            'shortwave_optical_thickness_due_to_cloud': np.zeros(sw_band_shape),
-            'cloud_asymmetry_parameter': 0.85 * np.ones(sw_band_shape),
-            'cloud_forward_scattering_fraction': 0.8 * np.ones(sw_band_shape),
-            'single_scattering_albedo_due_to_cloud': 0.9 * np.ones(sw_band_shape),
-            'shortwave_optical_thickness_due_to_aerosol': np.zeros(sw_band_shape),
-            'aerosol_asymmetry_parameter': np.zeros(sw_band_shape),
-            'single_scattering_albedo_due_to_aerosol': 0.5 * np.ones(sw_band_shape),
-            'aerosol_optical_depth_at_55_micron': np.zeros(ecmwf_aerosol_shape),
+            'shortwave_optical_thickness_due_to_cloud':
+                np.zeros([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
+            'cloud_asymmetry_parameter':
+                0.85 * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
+            'cloud_forward_scattering_fraction':
+                0.8 * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
+            'single_scattering_albedo_due_to_cloud':
+                0.9 * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
+            'shortwave_optical_thickness_due_to_aerosol':
+                np.zeros([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
+            'aerosol_asymmetry_parameter':
+                np.zeros([RRTMGShortwave.num_shortwave_bands, nz, ncol]),
+            'single_scattering_albedo_due_to_aerosol':
+                0.5 * np.ones([RRTMGShortwave.num_shortwave_bands, nz, ncol]),
+            'aerosol_optical_depth_at_55_micron':
+                np.zeros([RRTMGShortwave.num_ecmwf_aerosols, nz, ncol]),
         }
         return diagnostics
 
@@ -229,7 +235,7 @@ def gaussian_latitudes(n):
     """
     if abs(int(n)) != n:
         raise ValueError('n must be a non-negative integer')
-    nlat = 2 * n
+    nlat = 2 * int(n)
     # Create the coefficients of the Legendre polynomial and construct the
     # companion matrix:
     cs = np.array([0] * nlat + [1], dtype=np.int)
