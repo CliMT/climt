@@ -71,7 +71,7 @@
          dtracerspecdt(:,k,trac) = spectral_tracer_tend(:,k,trac)
      enddo
      enddo
-     !$omp end parallel do 
+     !$omp end parallel do
      dlnpsspecdt(:) = spectral_lnps_tend(:)
 
 
@@ -107,9 +107,9 @@
      radequiltemp(:,:,k) = (prs(:,:,k)/p0)**(2./7.)*&
          (315.-deltmp*sin(lats)**2-delthz*log(prs(:,:,k)/p0)*cos(lats)**2)
      enddo
-     !$omp end parallel do 
+     !$omp end parallel do
      blprof = (blprof-sigbot)/(1.-sigbot)
-     where (blprof < 0) 
+     where (blprof < 0)
          blprof = 0
      endwhere
      where (radequiltemp < tempstrat)
@@ -128,7 +128,7 @@
      call grdtospec(forcingg(:,:,k), spectral_div_tend(:,k))
      !ddivspecdt(:,k) = forcingspec(:,k)
      enddo
-     !$omp end parallel do 
+     !$omp end parallel do
      spectral_lnps_tend = 0.
 
      !print *, 'Maximum tendency in divergence: '
@@ -141,10 +141,10 @@
 
 end subroutine calculate_heldsuarez
 
-subroutine set_tendencies(dvrtgdt,ddivgdt,dvirtempgdt, dqdt, dlnpsgdt,dtracergdt) bind(c, name='gfs_set_tendencies')
+subroutine set_tendencies(dvrtgdt,ddivgdt,dvirtempgdt,dlnpsgdt,dtracergdt) bind(c, name='gfs_set_tendencies')
 
     real(c_double), intent(in), dimension(nlons,nlats,nlevs) :: &
-        dvrtgdt,ddivgdt,dvirtempgdt, dqdt
+        dvrtgdt,ddivgdt,dvirtempgdt
     real(c_double), intent(in), dimension(nlons,nlats,nlevs,ntrac) :: &
         dtracergdt
     real(c_double), intent(in), dimension(nlons,nlats) :: dlnpsgdt
@@ -163,17 +163,16 @@ subroutine set_tendencies(dvrtgdt,ddivgdt,dvirtempgdt, dqdt, dlnpsgdt,dtracergdt
     if (k == 1) then
         print_bool = 1
     end if
-    call grdtospec(dqdt(:,:,k), spectral_tracer_tend(:,k,1))
     print_bool = 0
     !spectral_vort_tend(:,k) = dvrtspecdt(:,k)
-    !spectral_div_tend(:,k) = ddivspecdt(:,k) 
+    !spectral_div_tend(:,k) = ddivspecdt(:,k)
     !spectral_virtemp_tend(:,k) = dvirtempspecdt(:,k)
-    do trac=2,ntrac
-        temp_grid_tracer(:,:) = dtracergdt(:,:,k,ntrac)
-            call grdtospec(temp_grid_tracer, spectral_tracer_tend(:,k,ntrac))
+    do trac=1,ntrac
+        temp_grid_tracer(:,:) = dtracergdt(:,:,k,trac)
+            call grdtospec(temp_grid_tracer, spectral_tracer_tend(:,k,trac))
     enddo
     enddo
-    !$omp end parallel do 
+    !$omp end parallel do
     call grdtospec(dlnpsgdt(:,:), spectral_lnps_tend(:))
     !spectral_lnps_tend(:) = dlnpsspecdt(:)
     !print *, maxval(abs(realpart((spectral_virtemp_tend(:,:)))))
