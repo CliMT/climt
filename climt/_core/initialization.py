@@ -8,6 +8,7 @@ import pkg_resources
 import numpy.linalg as la
 from numpy.polynomial.legendre import legcompanion, legder, legval
 
+
 class RRTMGLongwaveDefaultValues(Diagnostic):
 
     input_properties = {
@@ -223,65 +224,16 @@ def expand_new_last_dim(var, length):
 
 
 def gaussian_latitudes(n):
-    """Construct latitudes and latitude bounds for a Gaussian grid.
-
-    Args:
-
-    * n:
-        The Gaussian grid number (half the number of latitudes in the
-        grid.
-    Returns:
-        A 2-tuple where the first element is a length `n` array of
-        latitudes (in degrees) and the second element is an `(n, 2)`
-        array of bounds.
-    """
-    if abs(int(n)) != n:
-        raise ValueError('n must be a non-negative integer')
-    nlat = 2 * int(n)
-    # Create the coefficients of the Legendre polynomial and construct the
-    # companion matrix:
-    cs = np.array([0] * nlat + [1], dtype=np.int)
-    cm = legcompanion(cs)
-    # Compute the eigenvalues of the companion matrix (the roots of the
-    # Legendre polynomial) taking advantage of the fact that the matrix is
-    # symmetric:
-    roots = la.eigvalsh(cm)
-    roots.sort()
-    # Improve the roots by one application of Newton's method, using the
-    # solved root as the initial guess:
-    fx = legval(roots, cs)
-    fpx = legval(roots, legder(cs))
-    roots -= fx / fpx
-    # The roots should exhibit symmetry, but with a sign change, so make sure
-    # this is the case:
-    roots = (roots - roots[::-1]) / 2.
-    # Compute the Gaussian weights for each interval:
-    fm = legval(roots, cs[1:])
-    fm /= np.abs(fm).max()
-    fpx /= np.abs(fpx).max()
-    weights = 1. / (fm * fpx)
-    # Weights should be symmetric and sum to two (unit weighting over the
-    # interval [-1, 1]):
-    weights = (weights + weights[::-1]) / 2.
-    weights *= 2. / weights.sum()
-    # Calculate the bounds from the weights, still on the interval [-1, 1]:
-    bounds1d = np.empty([nlat + 1])
-    bounds1d[0] = -1
-    bounds1d[1:-1] = -1 + weights[:-1].cumsum()
-    bounds1d[-1] = 1
-    # Convert the bounds to degrees of latitude on [-90, 90]:
-    bounds1d = np.rad2deg(np.arcsin(bounds1d))
-    bounds2d = np.empty([nlat, 2])
-    bounds2d[:, 0] = bounds1d[:-1]
-    bounds2d[:, 1] = bounds1d[1:]
-    # Convert the roots from the interval [-1, 1] to latitude values on the
-    # interval [-90, 90] degrees:
-    latitudes = np.rad2deg(np.arcsin(roots))
-    return latitudes, bounds2d
+    centers, weights = np.polynomial.legendre.leggauss(n)
+    edges = np.empty([n+1])
+    edges[0] = -1
+    edges[1:-1] = -1 + weights[:-1].cumsum()
+    edges[-1] = 1
+    return centers * 90., edges * 90.
 
 
 def get_grid(
-        nx=None, ny=None, nz=50, p_surf_in_Pa=1.0132e5, x_name='longitude',
+        nx=None, ny=None, nz=28, p_surf_in_Pa=1.0132e5, x_name='longitude',
         y_name='latitude', latitude_grid='gaussian'):
     """
     Args:
@@ -311,7 +263,7 @@ def get_grid(
     horizontal_dims = []
     if nx is not None:
         return_state['longitude'] = DataArray(
-            np.linspace(-180., 180., nx*2+1, endpoint=True)[1:-1:2],
+            np.linspace(0., 360., nx*2, endpoint=False)[:-1:2],
             dims=[x_name],
             attrs={'units': 'degrees_east'},
         )
@@ -324,9 +276,7 @@ def get_grid(
                 attrs={'units': 'degrees_north'},
             )
         elif latitude_grid.lower() == 'gaussian':
-            if ny % 2 != 0:
-                raise ValueError('When latitude_grid is gaussian, ny must be even.')
-            lat, lat_interface = gaussian_latitudes(ny / 2)
+            lat, lat_interface = gaussian_latitudes(ny)
             return_state['latitude'] = DataArray(
                 lat,
                 dims=[y_name],

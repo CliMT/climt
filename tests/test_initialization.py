@@ -165,7 +165,7 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
         GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
         RRTMGLongwave,
         RRTMGShortwave,
-        EmanuelConvection, SlabSurface, #GFSDynamicalCore,
+        EmanuelConvection, SlabSurface, GFSDynamicalCore,
         DcmipInitialConditions, IceSheet,
         Instellation
     )
