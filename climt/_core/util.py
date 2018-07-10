@@ -125,15 +125,15 @@ def get_interface_values(
     log_mid_p = np.log(mid_level_pressure)
 
     interp_weight = (
-        np.log(interface_level_pressure[1:-1, :]) - log_mid_p[1::, :]) / (
+        np.log(interface_level_pressure[1:-1, :]) - log_mid_p[1:, :]) / (
         log_mid_p[:-1, :] - log_mid_p[1::, :])
 
     interface_values[1:-1, :] = \
-        mid_level_values[1::, :] - interp_weight*(
-            mid_level_values[1::, :] - mid_level_values[0:-1, :])
+        mid_level_values[1:, :] - interp_weight*(
+            mid_level_values[1:, :] - mid_level_values[0:-1, :])
 
     interface_values[0, :] = surface_value[:]
-    interface_values[:-1, :] = mid_level_values[-1, :]
+    interface_values[-1, :] = mid_level_values[-1, :]
 
     return interface_values
 
