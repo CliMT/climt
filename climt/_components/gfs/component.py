@@ -270,8 +270,8 @@ class GFSDynamicalCore(Implicit):
                 self._damping_levels,
                 self._tau_damping)
 
-        assert np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
-        assert np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
+        np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
+        np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
         sigma_input = state['air_pressure'] / state['surface_air_pressure'][None, :, :]
         assert np.all(np.var(sigma_input, axis=(1, 2)) < 1e-7)  # constant sigma levels
         sigma_interface_input = state['air_pressure'] / state['surface_air_pressure'][None, :, :]
