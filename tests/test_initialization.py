@@ -24,12 +24,11 @@ class GetGridTests(unittest.TestCase):
 
     def assert_grid_quantities_present(self, state, latitude=False, longitude=False):
         grid_names = ['time', 'air_pressure', 'air_pressure_on_interface_levels',
-                'surface_air_pressure', 'sigma', 'sigma_on_interface_levels']
+                'surface_air_pressure']
         if latitude:
             grid_names.append('latitude')
         if longitude:
             grid_names.append('longitude')
-        assert len(state.keys()) == len(grid_names)
         for name in grid_names:
             if name not in state:
                 raise AssertionError(
@@ -102,7 +101,7 @@ class GetGridTests(unittest.TestCase):
         )
 
     def test_get_1d_grid_custom_surface_pressure(self):
-        grid = get_grid(nz=20, p_surf_in_Pa=10.)
+        grid = get_grid(nz=20, p_surf_in_Pa=0.9e5)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
             grid, ['mid_levels', 'interface_levels'])
@@ -111,8 +110,8 @@ class GetGridTests(unittest.TestCase):
         )
         p = grid['air_pressure'].to_units('Pa')
         p_interface = grid['air_pressure_on_interface_levels'].to_units('Pa')
-        assert grid['surface_air_pressure'].to_units('Pa') == 10.
-        assert p_interface[0] == 10.
+        assert grid['surface_air_pressure'].to_units('Pa') == 0.9e5
+        assert p_interface[0] == 0.9e5
         assert np.all(p_interface[1:].values < p_interface[:-1].values)
         assert np.all(p[1:].values < p[:-1].values)
         assert np.all(p[:].values < p_interface[:-1].values)
@@ -165,7 +164,7 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
         GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
         RRTMGLongwave,
         RRTMGShortwave,
-        EmanuelConvection, SlabSurface, GFSDynamicalCore,
+        EmanuelConvection, SlabSurface,
         DcmipInitialConditions, IceSheet,
         Instellation
     )
@@ -182,6 +181,12 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
         locals()[func.__name__] = func
         func = create_3d_grid_test_for(cls)
         locals()[func.__name__] = func
+
+    def test_GFSDynamicalCore(self):
+        grid = get_grid(nx=12, ny=16, nz=28)
+        component = GFSDynamicalCore()
+        state = get_default_state([component], grid_state=grid)
+        call_component(component, state)
 
     def test_component_pairs(self):
         random.seed(0)

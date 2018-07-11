@@ -75,9 +75,13 @@ class GrayLongwaveRadiation(Prognostic):
 class Frierson06LongwaveOpticalDepth(Diagnostic):
 
     input_properties = {
-        'sigma_on_interface_levels': {
+        'air_pressure_on_interface_levels': {
+            'dims': ['interface_levels', '*'],
+            'units': 'Pa',
+        },
+        'surface_air_pressure': {
             'dims': ['*'],
-            'units': 'dimensionless',
+            'units': 'Pa',
         },
         'latitude': {
             'dims': ['*'],
@@ -87,7 +91,7 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
 
     diagnostic_properties = {
         'longwave_optical_depth_on_interface_levels': {
-            'dims': ['*'],
+            'dims': ['interface_levels', '*'],
             'units': 'dimensionless',
         }
     }
@@ -127,7 +131,9 @@ class Frierson06LongwaveOpticalDepth(Diagnostic):
     def array_call(self, state):
         return {
             'longwave_optical_depth_on_interface_levels': get_frierson_06_tau(
-                state['latitude'], state['sigma_on_interface_levels'],
+                state['latitude'],
+                state['air_pressure_on_interface_levels'] /
+                state['surface_air_pressure'][None, :],
                 self._tau0e, self._tau0p, self._fl
             )
         }

@@ -1,5 +1,6 @@
 from sympl import (
-    DataArray, ensure_no_shared_keys, Diagnostic, combine_component_properties)
+    DataArray, Diagnostic, combine_component_properties, get_constant,
+)
 from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np
 from datetime import datetime
@@ -8,6 +9,27 @@ import pkg_resources
 import numpy.linalg as la
 from numpy.polynomial.legendre import legcompanion, legder, legval
 
+a_coord_spline = CubicSpline(
+    np.linspace(0, 1, 29, endpoint=True),
+    np.array([
+        0.0, 0.00899999961, 11.6350002, 86.4570007, 292.576996, 701.453003,
+        1381.526, 2389.20508, 3757.14209, 5481.14404, 7508.53223, 9731.80664,
+        11991.4277, 14089.5352, 15812.9258, 16959.9941, 17364.6582, 16912.1309,
+        15613.5645, 13671.4268, 11343.6543, 8913.7666, 6678.60791, 4844.03613,
+        3376.51611, 2210.979, 1290.53296, 566.89801, 200.0
+    ])
+)
+
+b_coord_spline = CubicSpline(
+    np.linspace(0, 1, 29, endpoint=True),
+    np.array([
+        1.0, 0.988725841, 0.974401832, 0.955872416, 0.931749582, 0.900580883,
+        0.860974848, 0.811784863, 0.752347112, 0.682746828, 0.604054928,
+        0.518456697, 0.429195374, 0.340293199, 0.256084293, 0.180667043,
+        0.117417611, 0.0686749965, 0.0349500999, 0.0143262697, 0.0039327601,
+        0.000378680008, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    ])
+)
 
 class RRTMGLongwaveDefaultValues(Diagnostic):
 
@@ -222,6 +244,7 @@ def expand_new_last_dim(var, length):
     indexer = tuple(slice(0, n) for n in var.shape) + (None,)
     return np.repeat(var[indexer], length, axis=-1)
 
+
 def leggauss(deg):
     """
     Gauss-Legendre quadrature.
@@ -314,18 +337,18 @@ def get_grid(
         grid_state: dict
             A model state containing grid quantities.
     """
-    p, p_interface, p_surface, sigma, sigma_interface = horizontal_broadcast_if_needed(
-        get_pressure_and_sigma_levels(nz, p_surf_in_Pa), nx, ny,
+    return_state = get_hybrid_sigma_pressure_levels(nz)
+    return_state['surface_air_pressure'] = DataArray(
+        p_surf_in_Pa, dims=[], attrs={'units': 'Pa'}
     )
-    return_state = {}
-    horizontal_dims = []
+    return_state['time'] = datetime(2000, 1, 1)
+    return_state.update(HybridSigmaPressureDiagnostic()(return_state))
     if nx is not None:
         return_state['longitude'] = DataArray(
             np.linspace(0., 360., nx*2, endpoint=False)[:-1:2],
             dims=[x_name],
             attrs={'units': 'degrees_east'},
         )
-        horizontal_dims.insert(0, x_name)
     if ny is not None:
         if latitude_grid.lower() == 'regular':
             return_state['latitude'] = DataArray(
@@ -340,42 +363,76 @@ def get_grid(
                 dims=[y_name],
                 attrs={'units': 'degrees_north'},
             )
-        horizontal_dims.insert(0, y_name)
-    return_state.update({
-        'time': datetime(2000, 1, 1),
-        'air_pressure': DataArray(
-                p,
-                dims=['mid_levels'] + horizontal_dims,
-                attrs={'units': 'Pa'}),
-        'air_pressure_on_interface_levels': DataArray(
-                p_interface,
-                dims=['interface_levels'] + horizontal_dims,
-                attrs={'units': 'Pa'}),
-        'surface_air_pressure': DataArray(
-                p_surface,
-                dims=horizontal_dims,
-                attrs={'units': 'Pa'}),
-        'sigma': DataArray(
-                sigma,
-                dims=['mid_levels'] + horizontal_dims,
-                attrs={'units': 'dimensionless'}),
-        'sigma_on_interface_levels': DataArray(
-                sigma_interface,
-                dims=['interface_levels'] + horizontal_dims,
-                attrs={'units': 'dimensionless'}),
-    })
     return return_state
 
 
-def get_pressure_and_sigma_levels(nz, p_surface):
-    sigma = np.linspace(0.998, 0.001, nz)
-    sigma_interface = np.zeros([nz+1])
-    sigma_interface[0] = 1.
-    sigma_interface[-1] = 0.
-    sigma_interface[1:-1] = 0.5 * (sigma[:-1] + sigma[1:])
-    p = p_surface * sigma
-    p_interface = p_surface * sigma_interface
-    return p, p_interface, np.asarray(p_surface), sigma, sigma_interface
+class HybridSigmaPressureDiagnostic(Diagnostic):
+
+    input_properties = {
+        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
+            'units': 'dimensionless',
+            'dims': ['interface_levels', '*'],
+            'alias': 'a_coord',
+        },
+        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels': {
+            'units': 'dimensionless',
+            'dims': ['interface_levels', '*'],
+            'alias': 'b_coord',
+        },
+        'surface_air_pressure': {
+            'units': 'Pa',
+            'dims': ['*'],
+        },
+    }
+
+    diagnostic_properties = {
+        'air_pressure': {
+            'units': 'Pa',
+            'dims': ['mid_levels', '*'],
+        },
+        'air_pressure_on_interface_levels': {
+            'units': 'Pa',
+            'dims': ['interface_levels', '*'],
+        },
+    }
+
+    def array_call(self, state):
+        p_interface = (
+            state['a_coord'] +
+            state['b_coord'] * state['surface_air_pressure'][None, :])
+        delta_p = p_interface[1:, :] - p_interface[:-1, :]
+        Rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
+        Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1')
+        rk = Rd/Cpd
+        p = (
+            (p_interface[1:, :]**(rk+1) - p_interface[:-1, :]**(rk+1)) / (
+                (rk+1) * delta_p
+            )
+        ) ** (1./rk)
+        assert not np.any(np.isnan(p))
+        return {
+            'air_pressure': p,
+            'air_pressure_on_interface_levels': p_interface,
+        }
+
+
+def get_hybrid_sigma_pressure_levels(nz):
+    a_interface = a_coord_spline(np.linspace(0., 1., nz+1, endpoint=True))
+    b_interface = b_coord_spline(np.linspace(0., 1., nz+1, endpoint=True))
+    return {
+        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels':
+            DataArray(
+                a_interface,
+                dims=['interface_levels'],
+                attrs={'units': 'dimensionless'},
+            ),
+        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels':
+            DataArray(
+                b_interface,
+                dims=['interface_levels'],
+                attrs={'units': 'dimensionless'},
+            ),
+    }
 
 
 default_values = {

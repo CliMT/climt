@@ -88,13 +88,23 @@ class GFSDynamicalCore(Implicit):
             'units': 'degK',
             'dims': ['mid_levels', 'latitude', 'longitude'],
         },
+        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
+            'units': 'dimensionless',
+            'dims': ['interface_levels'],
+            'alias': 'a_coord',
+        },
+        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels': {
+            'units': 'dimensionless',
+            'dims': ['interface_levels'],
+            'alias': 'b_coord',
+        },
         'air_pressure': {
-            'units': 'Pa',
             'dims': ['mid_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'units': 'Pa',
             'dims': ['interface_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
         },
         'surface_air_pressure': {
             'units': 'Pa',
@@ -128,8 +138,14 @@ class GFSDynamicalCore(Implicit):
 
     output_properties = {
         'air_temperature': {'units': 'degK'},
-        'air_pressure': {'units': 'Pa'},
-        'air_pressure_on_interface_levels': {'units': 'Pa'},
+        'air_pressure': {
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
+        },
+        'air_pressure_on_interface_levels': {
+            'dims': ['interface_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
+        },
         'surface_air_pressure': {'units': 'Pa'},
         'specific_humidity': {'units': 'g/g'},
         'eastward_wind': {'units': 'm s^-1'},
@@ -260,11 +276,14 @@ class GFSDynamicalCore(Implicit):
             self._num_levs,
             self._truncation,
             self._spectral_dim,
-            self._num_tracers)
+            self._num_tracers,
+            state['a_coord'],
+            state['b_coord'],
+        )
 
         logging.info('Initialising dynamical core, this could take some time...')
 
-        gaussian_weights, area_weights, latitudes, longitudes, sigma, sigma_interface = \
+        gaussian_weights, area_weights, latitudes, longitudes = \
             _gfs_dynamics.init_model(
                 self._dry_pressure,
                 self._damping_levels,
@@ -272,12 +291,6 @@ class GFSDynamicalCore(Implicit):
 
         np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
         np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
-        sigma_input = state['air_pressure'] / state['surface_air_pressure'][None, :, :]
-        assert np.all(np.var(sigma_input, axis=(1, 2)) < 1e-7)  # constant sigma levels
-        sigma_interface_input = state['air_pressure'] / state['surface_air_pressure'][None, :, :]
-        assert np.all(np.var(sigma_interface_input, axis=(1, 2)) < 1e-7)  # constant sigma levels
-        np.testing.assert_allclose(sigma_input[:, 0, 0], sigma)
-        np.testing.assert_allclose(sigma_interface_input[:, 0, 0], sigma_interface)
 
         logging.info('Done!')
 
@@ -353,20 +366,43 @@ class GFSDynamicalCore(Implicit):
             new_state, diagnostics (dict):
                 The new state and associated diagnostics.
         """
-        print(list(state.keys()))
         self._update_constants()
+        nlev, nlat, nlon = state['air_temperature'].shape
+        if nlat < 18:
+            raise GFSError('GFS requires at least 18 latitudes.')
+        if nlon < 12:
+            raise GFSError('GFS requires at least 12 longitudes')
         if not self.initialized:
             self._initialize_model(state, timestep)
+        if nlev != self._num_levs:
+            raise GFSError(
+                'Number of vertical levels may not change between successive '
+                'calls to GFS. Last time was {}, this time is {}'.format(
+                    self._num_levs, nlev)
+            )
+        if nlat != self._num_lats:
+            raise GFSError(
+                'Number of latitudes may not change between successive '
+                'calls to GFS. Last time was {}, this time is {}'.format(
+                    self._num_lats, nlat)
+            )
+        if nlon != self._num_lons:
+            raise GFSError(
+                'Number of longitudes may not change between successive '
+                'calls to GFS. Last time was {}, this time is {}'.format(
+                    self._num_lons, nlon)
+            )
         if timestep.total_seconds() != self._time_step.total_seconds():
             raise GFSError(
                 'GFSDynamicalCore can only be run with a constant timestep.'
             )
+
+
         outputs = initialize_numpy_arrays_with_properties(
             self.output_properties, state, self.input_properties,
             tracer_dims=self.tracer_dims
         )
 
-        self._update_spectral_arrays(state)
 
         lnsp = np.log(state['surface_air_pressure'])
         t_virt = state['air_temperature']*(
@@ -397,6 +433,16 @@ class GFSDynamicalCore(Implicit):
             outputs['air_pressure_on_interface_levels'])
 
         _gfs_dynamics.set_topography(state['surface_geopotential'])
+
+        _gfs_dynamics.calculate_pressure()
+
+        np.testing.assert_allclose(outputs['air_pressure'], state['air_pressure'])
+        np.testing.assert_allclose(
+            outputs['air_pressure_on_interface_levels'][::-1, :, :],
+            state['air_pressure_on_interface_levels']
+        )
+
+        self._update_spectral_arrays(state)
 
         tendencies, _ = self._prognostic(state)
 
@@ -435,8 +481,6 @@ class GFSDynamicalCore(Implicit):
         outputs['air_pressure_on_interface_levels'][:] = \
             outputs['air_pressure_on_interface_levels'][::-1, :, :]
 
-        self.store_current_state_signature(outputs)
-
         for quantity in tendencies.keys():
             if quantity not in self._climt_outputs.keys():
                 # Step forward using Euler
@@ -454,70 +498,32 @@ class GFSDynamicalCore(Implicit):
         been modified since they were last returned, and if they have will
         update the specctral counterpart to reflect the new state array.
         """
-        raise NotImplementedError()
+        u_hash = get_hash(state['eastward_wind'])
+        v_hash = get_hash(state['northward_wind'])
+        if (u_hash != self._hash_u or
+            v_hash != self._hash_v):
+            _gfs_dynamics.vrt_div_to_spectral()
+            self._hash_u = u_hash
+            self._hash_v = v_hash
+        T_hash = get_hash(state['air_temperature'])
+        if T_hash != self._hash_temperature:
+            _gfs_dynamics.virtemp_to_spectral()
+            self._hash_temperature = T_hash
+        tracer_hash = get_hash(state['tracers'])
+        if tracer_hash != self._hash_tracers:
+            _gfs_dynamics.tracer_to_spectral()
+            self._hash_tracers = tracer_hash
+        p_surf_hash = get_hash(state['surface_air_pressure'])
+        if p_surf_hash != self._hash_surface_pressure:
+            _gfs_dynamics.lnps_to_spectral()
+            self._hash_surface_pressure = p_surf_hash
 
     def initialise_state_signature(self):
-
-        self._random_slice_x = np.random.randint(0, self._num_lons, size=(10, 10, 10))
-        self._random_slice_y = np.random.randint(0, self._num_lats, size=(10, 10, 10))
-        self._random_slice_z = np.random.randint(0, self._num_levs, size=(10, 10, 10))
-
         self._hash_u = 1000
         self._hash_v = 1000
-        self._hash_temp = 1000
-        self._hash_press = 1000
-        self._hash_surf_press = 1000
-
-    def calculate_state_signature(self, state):
-        """ Calculates hash signatures from state """
-        random_u = state['eastward_wind'][
-            self._random_slice_z, self._random_slice_y, self._random_slice_x]
-        hash_u = get_hash(random_u)
-        random_v = state['northward_wind'][
-            self._random_slice_z, self._random_slice_y, self._random_slice_x]
-        hash_v = get_hash(random_v)
-        random_temperature = state['air_temperature'][
-            self._random_slice_z, self._random_slice_y, self._random_slice_x]
-        hash_temperature = get_hash(random_temperature)
-        random_pressure = state['air_pressure'][
-            self._random_slice_z, self._random_slice_y, self._random_slice_x]
-        hash_pressure = get_hash(random_pressure)
-        random_ps = state['surface_air_pressure'][
-            self._random_slice_y, self._random_slice_x]
-        hash_ps = get_hash(random_ps)
-        return hash_u, hash_v, hash_temperature, hash_pressure, hash_ps
-
-    def state_is_modified_externally(self, state_arr):
-        """ Function to check if grid space arrays have been modified outside the dynamical core """
-
-        hash_u, hash_v, hash_temp, hash_press, hash_ps = self.calculate_state_signature(state_arr)
-
-        if (
-            (hash_u != self._hash_u) or
-            (hash_v != self._hash_v) or
-            (hash_press != self._hash_press) or
-            (hash_ps != self._hash_surf_press) or
-           (hash_temp != self._hash_temp)):
-                logging.info('State modified, setting spectral arrays')
-                self._hash_u = hash_u
-                self._hash_v = hash_v
-                self._hash_temp = hash_temp
-                self._hash_surf_press = hash_ps
-                self._hash_press = hash_press
-                return True
-        else:
-            return False
-
-    def store_current_state_signature(self, output_arr):
-        """ Store state signature for comparison during next time step """
-
-        hash_u, hash_v, hash_temp, hash_press, hash_ps = self.calculate_state_signature(output_arr)
-
-        self._hash_u = hash_u
-        self._hash_v = hash_v
-        self._hash_temp = hash_temp
-        self._hash_surf_press = hash_ps
-        self._hash_press = hash_press
+        self._hash_temperature = 1000
+        self._hash_surface_pressure = 1000
+        self._hash_tracers = 1000
 
     def __del__(self):
         """ call shutdown in fortran code """

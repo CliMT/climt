@@ -14,6 +14,12 @@ ctypedef void (*pyPhysicsCallback)(double *, double *, double *, double *,
 cdef extern:
     bint dry, adiabatic, heldsuarez
 
+cdef extern:
+    void gfs_lnps_to_spectral()
+    void gfs_vrt_div_to_spectral()
+    void gfs_virtemp_to_spectral()
+    void gfs_tracer_to_spectral()
+
 #Function to set global mass of dry air
 cdef extern:
     void gfs_set_dry_pressure(double *pdry_init)
@@ -255,15 +261,32 @@ cdef object physicsCallback
 #TODO get constant from physcons.f90
 cdef double fv
 
+def lnps_to_spectral():
+    gfs_lnps_to_spectral()
+
+def vrt_div_to_spectral():
+    gfs_vrt_div_to_spectral()
+
+def virtemp_to_spectral():
+    gfs_virtemp_to_spectral()
+
+def tracer_to_spectral():
+    gfs_tracer_to_spectral()
+
 def set_constants(double radius, double omega,
                   double R, double Rd, double Rv,
                   double g, double Cp, double C_cond):
 
     gfs_set_constants(&radius, &omega, &R, &Rd, &Rv, &g, &Cp, &C_cond)
 
-def set_model_grid(int nlats, int nlons,
-                   int nlevs, int ntrunc, int ndimspec,
-                   int ntracers):
+#@cython.boundscheck(False)
+def set_model_grid(
+        int nlats, int nlons,
+        int nlevs, int ntrunc, int ndimspec,
+        int ntracers,
+        cnp.double_t[:] ak_in,
+        cnp.double_t[:] bk_in,
+    ):
 
     global pyDmhyb, pyAmhyb, pyBmhyb,\
             pyTref, pyPkref, pyDpkref,\
@@ -302,6 +325,10 @@ def set_model_grid(int nlats, int nlons,
 
     pyAk = np.zeros((nlevs+1), dtype=np.double)
     pyBk = np.zeros((nlevs+1), dtype=np.double)
+    cdef int i
+    for i in range(nlevs+1):
+        pyAk[i] = ak_in[i]
+        pyBk[i] = bk_in[i]
     pySi = np.zeros((nlevs+1), dtype=np.double)
     pyCk = np.zeros((nlevs), dtype=np.double)
     pyDbk = np.zeros((nlevs), dtype=np.double)
@@ -368,10 +395,10 @@ def init_model(double dry_pressure, int num_damp_levels, double tau_damping):
     latitudes = np.ascontiguousarray(pyLats).copy()
     area_weights = np.ascontiguousarray(pyAreaWeights).copy()
     gaussian_weights = np.ascontiguousarray(pyGaussWeights).copy()
-    sigma_levels = np.ascontiguousarray(pySl).copy()
-    sigma_inteface_levels = np.ascontiguousarray(pySi).copy()
+    # sigma_levels = np.ascontiguousarray(pySl).copy()
+    # sigma_inteface_levels = np.ascontiguousarray(pySi).copy()
 
-    return gaussian_weights, area_weights, latitudes, longitudes, sigma_levels, sigma_inteface_levels
+    return gaussian_weights, area_weights, latitudes, longitudes#, sigma_levels, sigma_inteface_levels
 
 
 # Create the spectral arrays (defined in spectral_data.f90)
