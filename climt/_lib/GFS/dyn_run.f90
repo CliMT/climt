@@ -100,10 +100,42 @@ end subroutine gfs_uv_to_vrtdiv
         enddo
     enddo
 !$omp end parallel do
-    call grdtospec(lnpsg,lnpsspec)
-
+ call grdtospec(lnpsg,lnpsspec)
  end subroutine
 
+ subroutine lnpsToSpec() bind(c, name='gfs_lnps_to_spectral')
+    call grdtospec(lnpsg,lnpsspec)
+ end subroutine
+
+ subroutine vrtdivToSpec() bind(c, name='gfs_vrt_div_to_spectral')
+     integer k
+!$omp parallel do private(k) schedule(dynamic)
+     do k=1, nlevs
+        call getvrtdivspec(ug(:,:,k),vg(:,:,k),vrtspec(:,k),divspec(:,k),rerth)
+     enddo
+!$omp end parallel do
+ end subroutine
+
+ subroutine virtempToSpec() bind(c, name='gfs_virtemp_to_spectral')
+     integer k
+!$omp parallel do private(k) schedule(dynamic)
+     do k=1, nlevs
+        call grdtospec(virtempg(:,:,k),virtempspec(:,k))
+     enddo
+!$omp end parallel do
+ end subroutine
+
+ subroutine tracerToSpec() bind(c, name='gfs_tracer_to_spectral')
+     integer k, i
+!$omp parallel do private(k,i) schedule(dynamic)
+     do k=1, nlevs
+        call grdtospec(virtempg(:,:,k),virtempspec(:,k))
+        do i=1,ntrac
+            call grdtospec(tracerg(:,:,k,i),tracerspec(:,k,i))
+        enddo
+     enddo
+!$omp end parallel do
+ end subroutine
 
  subroutine getdyntend(dvrtspecdt,ddivspecdt,dvirtempspecdt,&
                        dtracerspecdt,dlnpsspecdt,rkstage,just_do_inverse_transform)
