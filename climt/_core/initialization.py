@@ -73,7 +73,7 @@ class RRTMGShortwaveDefaultValues(Diagnostic):
 
     input_properties = {
         'air_pressure': {
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'Pa',
         },
     }
@@ -114,7 +114,7 @@ class RRTMGShortwaveDefaultValues(Diagnostic):
     }
 
     def array_call(self, state):
-        ncol, nz = state['air_pressure'].shape
+        nz, ncol = state['air_pressure'].shape
         diagnostics = {
             'shortwave_optical_thickness_due_to_cloud':
                 np.zeros([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
@@ -125,7 +125,7 @@ class RRTMGShortwaveDefaultValues(Diagnostic):
             'single_scattering_albedo_due_to_cloud':
                 0.9 * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
             'shortwave_optical_thickness_due_to_aerosol':
-                np.zeros([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
+                np.zeros([RRTMGShortwave.num_shortwave_bands, nz, ncol]),
             'aerosol_asymmetry_parameter':
                 np.zeros([RRTMGShortwave.num_shortwave_bands, nz, ncol]),
             'single_scattering_albedo_due_to_aerosol':
