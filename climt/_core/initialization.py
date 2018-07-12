@@ -526,6 +526,13 @@ def get_init_diagnostic(name):
             default_values[name]['units'],
             dtype=default_values[name].get('dtype', None)
         )
+    elif name[-20:] == '_on_interface_levels' and name[:-20] in default_values:
+        return ConstantDefaultValue(
+            name,
+            default_values[name[:-20]]['value'],
+            default_values[name[:-20]]['units'],
+            dtype=default_values[name].get('dtype', None)
+        )
     # If it isn't, check if there is a diagnostic defined in some library of Diagnostic
     # classes (probably a list stored here) that can calculate the quantity,
     # and return that one.

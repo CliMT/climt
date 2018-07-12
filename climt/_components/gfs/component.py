@@ -126,10 +126,6 @@ class GFSDynamicalCore(Implicit):
             'units': 's^-1',
             'dims': ['mid_levels', 'latitude', 'longitude'],
         },
-        'specific_humidity': {
-            'units': 'g/g',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
-        },
         'surface_geopotential': {
             'units': 'm^2 s^-2',
             'dims': ['latitude', 'longitude'],
@@ -147,7 +143,6 @@ class GFSDynamicalCore(Implicit):
             'units': 'Pa'
         },
         'surface_air_pressure': {'units': 'Pa'},
-        'specific_humidity': {'units': 'g/g'},
         'eastward_wind': {'units': 'm s^-1'},
         'northward_wind': {'units': 'm s^-1'},
         'divergence_of_wind': {'units': 's^-1'},
@@ -252,6 +247,7 @@ class GFSDynamicalCore(Implicit):
             raise GFSError(
                 'GFS does not support tracers when running as a dry model. '
                 'It would assume the first tracer is specific humidity.')
+        assert not self._num_tracers == 0 and self.moist
         self._num_levs, self._num_lats, self._num_lons = state['air_temperature'].shape
 
         if self._num_levs != 28:
@@ -368,8 +364,8 @@ class GFSDynamicalCore(Implicit):
         """
         self._update_constants()
         nlev, nlat, nlon = state['air_temperature'].shape
-        if nlat < 18:
-            raise GFSError('GFS requires at least 18 latitudes.')
+        if nlat < 16:
+            raise GFSError('GFS requires at least 16 latitudes.')
         if nlon < 12:
             raise GFSError('GFS requires at least 12 longitudes')
         if not self.initialized:
@@ -405,8 +401,11 @@ class GFSDynamicalCore(Implicit):
 
 
         lnsp = np.log(state['surface_air_pressure'])
-        t_virt = state['air_temperature']*(
-            1 + self._fvirt*state['specific_humidity'])
+        if self.moist:
+            t_virt = state['air_temperature']*(
+                1 + self._fvirt*state['tracers'][0, :, :, :])
+        else:
+            t_virt = state['air_temperature'].copy()
 
         outputs['air_pressure_on_interface_levels'][:] = (
             state['air_pressure_on_interface_levels'][::-1, :, :])
@@ -446,10 +445,9 @@ class GFSDynamicalCore(Implicit):
 
         tendencies, _ = self._prognostic(state)
 
-        temp_tend, q_tend, u_tend, v_tend, ps_tend = \
+        temp_tend, u_tend, v_tend, ps_tend = \
             return_tendency_arrays_or_zeros(
                 ['air_temperature',
-                 'specific_humidity',
                  'eastward_wind',
                  'northward_wind',
                  'surface_air_pressure'],
@@ -457,9 +455,12 @@ class GFSDynamicalCore(Implicit):
         tracer_tend = self._tracer_packer.pack(tendencies)
 
         # see Pg. 12 in gfsModelDoc.pdf
-        virtual_temp_tend = temp_tend*(
-            1 + self._fvirt*state['specific_humidity']) + \
-            self._fvirt*t_virt*q_tend
+        if self.moist:
+            virtual_temp_tend = temp_tend*(
+                1 + self._fvirt*state['tracers'][0, :, :, :]) + \
+                self._fvirt*t_virt*tracer_tend[0, :, :, :]
+        else:
+            virtual_temp_tend = temp_tend
 
         # dlnps/dt = (1/ps)*dps/dt
         lnps_tend = (1. / state['surface_air_pressure'])*ps_tend
