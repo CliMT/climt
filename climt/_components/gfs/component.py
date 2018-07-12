@@ -393,12 +393,11 @@ class GFSDynamicalCore(Implicit):
                 'GFSDynamicalCore can only be run with a constant timestep.'
             )
 
-
         outputs = initialize_numpy_arrays_with_properties(
             self.output_properties, state, self.input_properties,
-            tracer_dims=self.tracer_dims
+            prepend_tracers=self.prepend_tracers,
+            tracer_dims=self.tracer_dims,
         )
-
 
         lnsp = np.log(state['surface_air_pressure'])
         if self.moist:
@@ -452,7 +451,7 @@ class GFSDynamicalCore(Implicit):
                  'northward_wind',
                  'surface_air_pressure'],
                 state, tendencies)
-        tracer_tend = self._tracer_packer.pack(tendencies)
+        tracer_tend = self._get_tracer_tendencies(tendencies)
 
         # see Pg. 12 in gfsModelDoc.pdf
         if self.moist:
@@ -492,6 +491,9 @@ class GFSDynamicalCore(Implicit):
                     outputs[quantity].attrs[attrib] = state[quantity].attrs[attrib]
 
         return {}, outputs
+
+    def _get_tracer_tendencies(self, tendencies, tracer_shape):
+        return_array = np.zeros(tracer_shape)
 
     def _update_spectral_arrays(self, state):
         """
