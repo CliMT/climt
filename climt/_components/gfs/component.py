@@ -166,7 +166,8 @@ class GFSDynamicalCore(Implicit):
             timestepper=None,
             number_of_damped_levels=0,
             damping_timescale=2.*86400,
-            moist=True
+            moist=True,
+            zero_negative_moisture=True,
     ):
         """
         Initialise the GFS dynamical core.
@@ -181,6 +182,9 @@ class GFSDynamicalCore(Implicit):
             moist (bool, optional):
                 Whether to account for and advect moisture. Default is True.
 
+            zero_negative_moisture (bool, optional):
+                If True, all negative values of moisture will be set to zero
+                before tracers are returned. Only matters if moist=True.
         """
         prognostic_list = prognostic_list or []
         self._prognostic = PrognosticComposite(*prognostic_list)
@@ -216,6 +220,7 @@ class GFSDynamicalCore(Implicit):
 
         self._damping_levels = number_of_damped_levels
         self._tau_damping = damping_timescale
+        self._zero_negative_moisture = zero_negative_moisture
 
         if moist:
             self.prepend_tracers = [('specific_humidity', 'kg/kg')]
@@ -332,7 +337,12 @@ class GFSDynamicalCore(Implicit):
             for name in self._tracer_packer.tracer_names:
                 raw_state.pop(name)
         raw_state['time'] = state['time']
-        raw_diagnostics, raw_new_state = self.array_call(raw_state, timestep)
+        tendencies, _ = self._prognostic(state)
+        for name, value in tendencies.items():
+            if name in self.input_properties.keys():
+                tendencies[name] = value.to_units(self.input_properties[name]['units'] + ' s^-1')
+        raw_diagnostics, raw_new_state = self.array_call(
+            raw_state, timestep, prognostic_tendencies=tendencies)
         if self.uses_tracers:
             raw_new_state.update(self._tracer_packer.unpack(raw_new_state['tracers']))
             raw_new_state.pop('tracers')
@@ -352,7 +362,7 @@ class GFSDynamicalCore(Implicit):
         return diagnostics, prog_new_state
 
     @ensure_contiguous_state
-    def array_call(self, state, timestep):
+    def array_call(self, state, timestep, prognostic_tendencies=None):
         """ Step the dynamical core by one step
 
         Args:
@@ -362,6 +372,7 @@ class GFSDynamicalCore(Implicit):
             new_state, diagnostics (dict):
                 The new state and associated diagnostics.
         """
+        prognostic_tendencies = prognostic_tendencies or {}
         self._update_constants()
         nlev, nlat, nlon = state['air_temperature'].shape
         if nlat < 16:
@@ -442,58 +453,101 @@ class GFSDynamicalCore(Implicit):
 
         self._update_spectral_arrays(state)
 
-        tendencies, _ = self._prognostic(state)
-
-        temp_tend, u_tend, v_tend, ps_tend = \
-            return_tendency_arrays_or_zeros(
-                ['air_temperature',
-                 'eastward_wind',
-                 'northward_wind',
-                 'surface_air_pressure'],
-                state, tendencies)
-        tracer_tend = self._get_tracer_tendencies(tendencies)
+        tendency_arrays = \
+            self._get_tendency_arrays(
+                prognostic_tendencies, state['air_temperature'].shape)
 
         # see Pg. 12 in gfsModelDoc.pdf
         if self.moist:
-            virtual_temp_tend = temp_tend*(
+            virtual_temp_tend = tendency_arrays['air_temperature']*(
                 1 + self._fvirt*state['tracers'][0, :, :, :]) + \
-                self._fvirt*t_virt*tracer_tend[0, :, :, :]
+                self._fvirt*t_virt*tendency_arrays['tracers'][0, :, :, :]
         else:
-            virtual_temp_tend = temp_tend
+            virtual_temp_tend = tendency_arrays['air_temperature']
 
         # dlnps/dt = (1/ps)*dps/dt
-        lnps_tend = (1. / state['surface_air_pressure'])*ps_tend
+        lnps_tend = ((1. / state['surface_air_pressure']) *
+                     tendency_arrays['surface_air_pressure'])
 
-        _gfs_dynamics.assign_tendencies(u_tend, v_tend, virtual_temp_tend,
-                                        lnps_tend, tracer_tend)
+        _gfs_dynamics.assign_tendencies(
+            tendency_arrays['eastward_wind'],
+            tendency_arrays['northward_wind'],
+            virtual_temp_tend,
+            lnps_tend,
+            tendency_arrays['tracers'])
 
         _gfs_dynamics.take_one_step()
         _gfs_dynamics.convert_to_grid()
         _gfs_dynamics.calculate_pressure()
 
         if self.moist:
-            # set_negatives_to_zero(outputs['tracers'][0, :, :, :])
+            if self._zero_negative_moisture:
+                set_negatives_to_zero(outputs['tracers'][0, :, :, :])
             outputs['air_temperature'][:] = t_virt/(
-                1 + self._fvirt*outputs['specific_humidity'])
+                1 + self._fvirt*outputs['tracers'][0, :, :, :])
         else:
             outputs['air_temperature'][:] = t_virt
 
         outputs['air_pressure_on_interface_levels'][:] = \
             outputs['air_pressure_on_interface_levels'][::-1, :, :]
 
-        for quantity in tendencies.keys():
-            if quantity not in self._climt_outputs.keys():
-                # Step forward using Euler
-                outputs[quantity] = state[quantity] + \
-                    tendencies[quantity].values*self._time_step.total_seconds()
-
-                for attrib in state[quantity].attrs:
-                    outputs[quantity].attrs[attrib] = state[quantity].attrs[attrib]
-
         return {}, outputs
 
-    def _get_tracer_tendencies(self, tendencies, tracer_shape):
-        return_array = np.zeros(tracer_shape)
+    def _get_tendency_arrays(self, tendencies, T_shape):
+        out_arrays = {}
+        out_arrays.update(self._get_3d_tendencies(tendencies, T_shape))
+        out_arrays.update(self._get_2d_tendencies(tendencies, T_shape))
+        out_arrays['tracers'] = self._get_tracer_tendencies(tendencies, T_shape)
+        return out_arrays
+
+    def _get_3d_tendencies(self, tendencies, T_shape):
+        return self._get_tendencies(
+            tendencies,
+            ['air_temperature', 'eastward_wind', 'northward_wind'],
+            ['mid_levels', 'latitude', 'longitude'],
+            T_shape
+        )
+
+    def _get_2d_tendencies(self, tendencies, T_shape):
+        return self._get_tendencies(
+            tendencies,
+            ['surface_air_pressure'],
+            ['latitude', 'longitude'],
+            T_shape[1:]
+        )
+
+    def _get_tendencies(self, tendencies, quantity_names, dims, shape):
+        out_arrays = {}
+        for name in quantity_names:
+            if name in tendencies:
+                property_dict = {
+                    name: {
+                        'dims': dims,
+                        'units': tendencies[name]['units'],
+                    }
+                }
+                out_arrays.update(
+                    get_numpy_arrays_with_properties(tendencies, property_dict))
+            else:
+                out_arrays[name] = np.zeros(shape)
+        return out_arrays
+
+    def _get_tracer_tendencies(self, tendencies, T_shape):
+        return_array = np.empty([self._num_tracers] + list(T_shape))
+        for i, name in enumerate(self._tracer_packer.tracer_names):
+            if name in tendencies:
+                property_dict = {
+                    name: {
+                        'dims': ['mid_levels', 'latitude', 'longitude'],
+                        'units': tendencies[name]['units'],
+                    }
+                }
+                tend = get_numpy_arrays_with_properties(
+                    tendencies, property_dict)[name]
+                return_array[i, :, :, :] = tend
+            else:
+                return_array[i, :, :, :] = 0.
+        return return_array
 
     def _update_spectral_arrays(self, state):
         """
