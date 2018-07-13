@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..._core import bolton_q_sat, ensure_contiguous_state
 from sympl import (
-    ImplicitPrognostic, get_constant, initialize_numpy_arrays_with_properties)
+    ImplicitPrognosticComponent, get_constant, initialize_numpy_arrays_with_properties)
 import numpy as np
 import logging
 try:
@@ -13,7 +13,7 @@ except ImportError:
     )
 
 
-class EmanuelConvection(ImplicitPrognostic):
+class EmanuelConvection(ImplicitPrognosticComponent):
     """
     The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_
 
@@ -113,7 +113,6 @@ class EmanuelConvection(ImplicitPrognostic):
                  mass_flux_relaxation_rate=0.1,
                  mass_flux_damping_rate=0.1,
                  reference_mass_flux_timescale=300.,
-                 number_of_tracers=0,
                  **kwargs):
         """
 
@@ -182,9 +181,6 @@ class EmanuelConvection(ImplicitPrognostic):
                 Timescale used to calculate the actual damping coefficient along with
                 :code:`mass_flux_damping_rate` and the current time step.
 
-            number_of_tracers (integer, optional):
-                The number of additional tracers advected by the code.
-
         """
 
         if (convective_momentum_transfer_coefficient < 0 or
@@ -199,8 +195,6 @@ class EmanuelConvection(ImplicitPrognostic):
                 precipitation_fraction_outside_cloud > 1):
             raise ValueError("Outside cloud precipitation fraction must be between 0 and 1.")
 
-        if number_of_tracers != 0:
-            raise NotImplementedError("Component does not yet support additional tracers")
 
         self._con_mom_txfr = convective_momentum_transfer_coefficient
         self._downdraft_area_frac = downdraft_area_fraction
@@ -218,7 +212,7 @@ class EmanuelConvection(ImplicitPrognostic):
         self._mf_damp = mass_flux_damping_rate
         self._alpha = mass_flux_relaxation_rate
         self._mf_timescale = reference_mass_flux_timescale
-        self._ntracers = number_of_tracers
+        self._ntracers = 0
         self._set_fortran_constants()
         super(EmanuelConvection, self).__init__(**kwargs)
 

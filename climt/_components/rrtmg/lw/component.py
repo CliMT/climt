@@ -1,6 +1,6 @@
 from sympl import (
     get_numpy_array, get_constant, initialize_numpy_arrays_with_properties,
-    Prognostic
+    PrognosticComponent
 )
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state)
@@ -19,7 +19,7 @@ except ImportError:
     )
 
 
-class RRTMGLongwave(Prognostic):
+class RRTMGLongwave(PrognosticComponent):
     """
     The Rapid Radiative Transfer Model (RRTMG).
 
@@ -224,7 +224,7 @@ class RRTMGLongwave(Prognostic):
              http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
 
             """
-
+        self.input_properties = RRTMGLongwave.input_properties.copy()
         if calculate_change_up_flux:
             self._calc_dflxdt = 1
         else:

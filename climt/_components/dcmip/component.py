@@ -1,12 +1,14 @@
-from sympl import Diagnostic, initialize_numpy_arrays_with_properties
+from sympl import DiagnosticComponent, initialize_numpy_arrays_with_properties
+import logging
 import numpy as np
 try:
     from . import _dcmip
 except ImportError:
-    print('Import Failed. DCMIP initial conditions will not be available!')
+    logging.warning(
+        'Import Failed. DCMIP initial conditions will not be available.')
 
 
-class DcmipInitialConditions(Diagnostic):
+class DcmipInitialConditions(DiagnosticComponent):
     """
         Climt interface to the DCMIP initial conditions.
         Currently only provides interfaces to tests 4 and 5.

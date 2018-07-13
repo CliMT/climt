@@ -1,8 +1,8 @@
-from sympl import Prognostic, Diagnostic, jit, get_constant
+from sympl import PrognosticComponent, DiagnosticComponent, jit, get_constant
 import numpy as np
 
 
-class GrayLongwaveRadiation(Prognostic):
+class GrayLongwaveRadiation(PrognosticComponent):
 
     input_properties = {
         'longwave_optical_depth_on_interface_levels': {
@@ -72,7 +72,7 @@ class GrayLongwaveRadiation(Prognostic):
         return tendencies, diagnostics
 
 
-class Frierson06LongwaveOpticalDepth(Diagnostic):
+class Frierson06LongwaveOpticalDepth(DiagnosticComponent):
 
     input_properties = {
         'air_pressure_on_interface_levels': {

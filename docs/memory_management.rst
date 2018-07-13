@@ -7,15 +7,15 @@ Arrays
 
 If possible, you should try to be aware of when there are two code references
 to the same in-memory array. This can help avoid some common bugs. Let's start
-with an example. Say you create a ConstantPrognostic object like so::
+with an example. Say you create a ConstantPrognosticComponent object like so::
 
     >>> import numpy as np
-    >>> from climt import ConstantPrognostic, DataArray
+    >>> from climt import ConstantPrognosticComponent, DataArray
     >>> array = DataArray(
             np.ones((5, 5, 10)),
             dims=('lon', 'lat', 'lev'), attrs={'units': 'K/s'})
     >>> tendencies = {'air_temperature': array}
-    >>> prognostic = ConstantPrognostic(tendencies)
+    >>> prognostic = ConstantPrognosticComponent(tendencies)
 
 This is all fine so far. But it's important to know that now ``array`` is the
 same array stored inside ``prognostic``::

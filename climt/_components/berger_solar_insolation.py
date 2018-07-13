@@ -1,4 +1,4 @@
-from sympl import Diagnostic, DataArray, get_constant
+from sympl import DiagnosticComponent, DataArray, get_constant
 import logging
 try:
     from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
@@ -9,7 +9,7 @@ except ImportError:
     )
 
 
-class BergerSolarInsolation(Diagnostic):
+class BergerSolarInsolation(DiagnosticComponent):
     """Determines solar insolation using spectral solutions for orbital
     constants from Berger 1978. This is the same approach taken by CAM 3.
     """

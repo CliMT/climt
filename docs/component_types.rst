@@ -1,4 +1,4 @@
-=============== 
+===============
 Component Types
 ===============
 
@@ -16,23 +16,23 @@ or :py:class:`ClimtImplicit`. To summarise their behaviours:
   temperature and pressure.
 
 You can read more about this schema of model components in Sympl's
-documentation_. 
+documentation_.
 
 Unfortunately, not all components used in a typical climate model fit into this
 schema. Convection schemes output tendencies (like a :py:class:`ClimtPrognostic`) but require the model timestep
 (like a :py:class:`ClimtImplicit`) for various reasons, including to ensure that a vertical CFL_ criterion is met.
 Spectral dynamical cores require model state and tendencies in spectral space, which means they
-don't play well with :py:class:`~sympl.Implicit` components which modify model state in grid space.
+don't play well with :py:class:`~sympl.Stepper` components which modify model state in grid space.
 
 To account for this diversity of model components, CliMT introduces two additional entities: :py:class:`ClimtImplicitPrognostic`
-which subclasses :py:class:`~sympl.Prognostic` and :py:class:`~ClimtSpectralDynamicalCore`, which subclasses :py:class:`~sympl.TimeStepper`. The awkward
-name :py:class:`ImplicitPrognostic` mirrors the awkwardness of the way in which convection schemes are constructed.
+which subclasses :py:class:`~sympl.PrognosticComponent` and :py:class:`~ClimtSpectralDynamicalCore`, which subclasses :py:class:`~sympl.PrognosticStepper`. The awkward
+name :py:class:`ImplicitPrognosticComponent` mirrors the awkwardness of the way in which convection schemes are constructed.
 Ideally, those parts of a convection scheme which require the model time step and those that do not
 should live in separate components; until someone writes such a scheme, :py:class:`ClimtImplicitPrognostic` is here
 to stay!
 
 :py:class:`ClimtSpectralDynamicalCore` is a generalisation of the standard
-:py:class:`~sympl.TimeStepper` in that it allows you to assign Prognostics after object
+:py:class:`~sympl.PrognosticStepper` in that it allows you to assign Prognostics after object
 initialisation and it can function without any Prognostics at all (just adiabatic stepping
 forward of the primitive equations).
 

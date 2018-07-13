@@ -1,9 +1,9 @@
-from sympl import Implicit, get_constant
+from sympl import Stepper, get_constant
 from .._core import bolton_q_sat, bolton_dqsat_dT
 import numpy as np
 
 
-class GridScaleCondensation(Implicit):
+class GridScaleCondensation(Stepper):
     """
     Calculate condensation due to supersaturation of water.
 
@@ -73,7 +73,7 @@ class GridScaleCondensation(Implicit):
         Raises:
             KeyError: If a required quantity is missing from the state.
             InvalidStateException: If state is not a valid input for the
-                Implicit instance for other reasons.
+                Stepper instance for other reasons.
         """
         self._update_constants()
         T = raw_state['air_temperature']

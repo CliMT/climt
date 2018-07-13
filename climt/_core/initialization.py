@@ -1,5 +1,5 @@
 from sympl import (
-    DataArray, Diagnostic, combine_component_properties, get_constant,
+    DataArray, DiagnosticComponent, combine_component_properties, get_constant,
 )
 from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np
@@ -31,7 +31,7 @@ b_coord_spline = CubicSpline(
     ])
 )
 
-class RRTMGLongwaveDefaultValues(Diagnostic):
+class RRTMGLongwaveDefaultValues(DiagnosticComponent):
 
     input_properties = {
         'air_pressure': {
@@ -69,7 +69,7 @@ class RRTMGLongwaveDefaultValues(Diagnostic):
         return diagnostics
 
 
-class RRTMGShortwaveDefaultValues(Diagnostic):
+class RRTMGShortwaveDefaultValues(DiagnosticComponent):
 
     input_properties = {
         'air_pressure': {
@@ -136,7 +136,7 @@ class RRTMGShortwaveDefaultValues(Diagnostic):
         return diagnostics
 
 
-class ConstantDefaultValue(Diagnostic):
+class ConstantDefaultValue(DiagnosticComponent):
 
     input_properties = {}
     diagnostic_properties = {}
@@ -162,7 +162,7 @@ class ConstantDefaultValue(Diagnostic):
         return {self._output_name: np.array(self._output_value, dtype=self._dtype)}
 
 
-class PressureFunctionDiagnostic(Diagnostic):
+class PressureFunctionDiagnosticComponent(DiagnosticComponent):
     """Defines a quantity as a function of pressure."""
 
     input_properties = {
@@ -216,7 +216,7 @@ class PressureFunctionDiagnostic(Diagnostic):
         }
         self._output_function = output_function
         self._output_name = output_name
-        super(PressureFunctionDiagnostic, self).__init__()
+        super(PressureFunctionDiagnosticComponent, self).__init__()
 
     def array_call(self, raw_state):
         return {
@@ -342,7 +342,7 @@ def get_grid(
         p_surf_in_Pa, dims=[], attrs={'units': 'Pa'}
     )
     return_state['time'] = datetime(2000, 1, 1)
-    return_state.update(HybridSigmaPressureDiagnostic()(return_state))
+    return_state.update(HybridSigmaPressureDiagnosticComponent()(return_state))
     if nx is not None:
         return_state['longitude'] = DataArray(
             np.linspace(0., 360., nx*2, endpoint=False)[:-1:2],
@@ -366,7 +366,7 @@ def get_grid(
     return return_state
 
 
-class HybridSigmaPressureDiagnostic(Diagnostic):
+class HybridSigmaPressureDiagnosticComponent(DiagnosticComponent):
 
     input_properties = {
         'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
@@ -514,11 +514,11 @@ def aggregate_input_properties(component_list):
 
 def get_init_diagnostic(name):
     """
-    Takes in a quantity name. Returns a Diagnostic object which calculates that
+    Takes in a quantity name. Returns a DiagnosticComponent object which calculates that
     quantity from a grid state.
     """
     # First, check if the quantity is in the default_values dict, and return
-    # a constructed ConstantDefaultValue Diagnostic if it is.
+    # a constructed ConstantDefaultValue DiagnosticComponent if it is.
     if name in default_values:
         return ConstantDefaultValue(
             name,
@@ -531,9 +531,9 @@ def get_init_diagnostic(name):
             name,
             default_values[name[:-20]]['value'],
             default_values[name[:-20]]['units'],
-            dtype=default_values[name].get('dtype', None)
+            dtype=default_values[name[:-20]].get('dtype', None)
         )
-    # If it isn't, check if there is a diagnostic defined in some library of Diagnostic
+    # If it isn't, check if there is a diagnostic defined in some library of DiagnosticComponent
     # classes (probably a list stored here) that can calculate the quantity,
     # and return that one.
     else:
@@ -578,13 +578,13 @@ def init_ozone(p):
     return spline(p)
 
 init_diagnostics = [
-    PressureFunctionDiagnostic(
+    PressureFunctionDiagnosticComponent(
         'longwave_optical_depth',
         lambda p: 1. * (1. - p),
         'dimensionless',
         'interface',
     ),
-    PressureFunctionDiagnostic(
+    PressureFunctionDiagnosticComponent(
         'mole_fraction_of_ozone_in_air',
         init_ozone,
         'mole/mole',

@@ -1,9 +1,9 @@
-from sympl import Diagnostic
+from sympl import DiagnosticComponent
 import datetime
 import numpy as np
 
 
-class Instellation(Diagnostic):
+class Instellation(DiagnosticComponent):
     """
     Calculates the zenith angle and star-planet correction
     factor given orbital parameters. Currently useful only
@@ -29,10 +29,7 @@ class Instellation(Diagnostic):
     }
 
     def __init__(self, **kwargs):
-        print(self.input_properties)
-        print(self.input_properties.items())
         super(Instellation, self).__init__(**kwargs)
-
 
     def array_call(self, state):
         """

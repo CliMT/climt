@@ -1,10 +1,9 @@
 from __future__ import division
 from ..._core import numpy_version_of, ensure_contiguous_state
 from sympl import (
-    DataArray, get_constant, Implicit, initialize_numpy_arrays_with_properties,
-    get_numpy_arrays_with_properties, AdamsBashforth, PrognosticComposite,
-    Prognostic, get_tracer_names, restore_data_arrays_with_properties,
-
+    DataArray, get_constant, PrognosticStepper, initialize_numpy_arrays_with_properties,
+    get_numpy_arrays_with_properties, AdamsBashforth, PrognosticComponentComposite,
+    PrognosticComponent, get_tracer_names, restore_data_arrays_with_properties,
 )
 import numpy as np
 import sys
@@ -23,7 +22,7 @@ class GFSError(Exception):
     pass
 
 
-class SelectivePrognostic(Prognostic):
+class SelectivePrognosticComponent(PrognosticComponent):
 
     @property
     def input_properties(self):
@@ -55,7 +54,7 @@ class SelectivePrognostic(Prognostic):
         self.prognostic = prognostic
         self.ignore_names = ignore_names
         self.include_names = include_names
-        super(SelectivePrognostic, self).__init__()
+        super(SelectivePrognosticComponent, self).__init__()
 
     def __call__(self, *args, **kwargs):
         tendencies, diagnostics = self.prognostic(*args, **kwargs)
@@ -66,7 +65,21 @@ class SelectivePrognostic(Prognostic):
         return self._filter_tendency_dict(tendencies), diagnostics
 
 
-class GFSDynamicalCore(Implicit):
+def copy_valid_properties(gfs_properties, prognostic_properties, property_type):
+    for name, properties in prognostic_properties.items():
+        if name not in gfs_properties:
+            gfs_properties[name] = properties
+        elif 'dims' in prognostic_properties.keys():
+            extra_dims = set(prognostic_properties['dims']).difference(['*'] + list(gfs_properties[name]['dims']))
+            if len(extra_dims) != 0:
+                raise GFSError(
+                    'Cannot handle PrognosticComponent with {} {} '
+                    'that has extra dimensions {} not used by GFS'.format(
+                        property_type, name, extra_dims)
+                )
+
+
+class GFSDynamicalCore(PrognosticStepper):
     """
     Climt interface to the GFS dynamical core. The GFS
     code is available on `github`_.
@@ -186,10 +199,13 @@ class GFSDynamicalCore(Implicit):
                 If True, all negative values of moisture will be set to zero
                 before tracers are returned. Only matters if moist=True.
         """
+        self.input_properties = GFSDynamicalCore.input_properties.copy()
+        self.diagnostic_properties = GFSDynamicalCore.diagnostic_properties.copy()
+        self.output_properties = GFSDynamicalCore.output_properties.copy()
         prognostic_list = prognostic_list or []
-        self._prognostic = PrognosticComposite(*prognostic_list)
+        self._prognostic = PrognosticComponentComposite(*prognostic_list)
         self._prognostic_timestepper = timestepper or AdamsBashforth(
-            SelectivePrognostic(
+            SelectivePrognosticComponent(
                 self._prognostic,
                 ignore_names=self.spectral_names,
             ),
@@ -200,7 +216,7 @@ class GFSDynamicalCore(Implicit):
             self.spectral_names)
         if len(bad_diagnostics) > 0:
             raise GFSError(
-                'Cannot use Prognostic components that produce {} as diagnostic '
+                'Cannot use PrognosticComponent components that produce {} as diagnostic '
                 'output as these must only be stepped spectrally.'.format(
                     bad_diagnostics,
                 )
@@ -210,7 +226,7 @@ class GFSDynamicalCore(Implicit):
             self.diagnostic_properties.keys())
         if len(bad_diagnostics) > 0:
             raise GFSError(
-                'Cannot use Prognostic components that produce {} as diagnostic'
+                'Cannot use PrognosticComponent components that produce {} as diagnostic'
                 ' output as these are already diagnosed by GFS.'.format(
                     bad_diagnostics,
                 )
@@ -231,6 +247,12 @@ class GFSDynamicalCore(Implicit):
 
         self.initialized = False
         super(GFSDynamicalCore, self).__init__()
+        copy_valid_properties(
+            self.input_properties, self._prognostic_timestepper.input_properties, 'input')
+        copy_valid_properties(
+            self.output_properties, self._prognostic_timestepper.output_properties, 'output')
+        copy_valid_properties(
+            self.diagnostic_properties, self._prognostic_timestepper.diagnostic_properties, 'diagnostic')
 
     def _update_constants(self):
         self._radius = get_constant('planetary_radius', 'm')
@@ -288,15 +310,20 @@ class GFSDynamicalCore(Implicit):
             _gfs_dynamics.init_model(
                 self._dry_pressure,
                 self._damping_levels,
-                self._tau_damping)
+                self._tau_damping,
+                state['air_pressure_on_interface_levels'][-1, 0, 0])
 
         np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
         np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
 
         logging.info('Done!')
 
-        # Random array to slice variables
-        self.initialise_state_signature()
+        self._hash_u = 1000
+        self._hash_v = 1000
+        self._hash_temperature = 1000
+        self._hash_surface_pressure = 1000
+        self._hash_tracers = 1000
+
         self.initialized = True
 
     def __call__(self, state, timestep):
@@ -326,7 +353,7 @@ class GFSDynamicalCore(Implicit):
         KeyError
             If a required quantity is missing from the state.
         InvalidStateError
-            If state is not a valid input for the Implicit instance
+            If state is not a valid input for the Stepper instance
             for other reasons.
         """
         self._check_self_is_initialized()
@@ -351,10 +378,13 @@ class GFSDynamicalCore(Implicit):
                 raw_state, raw_new_state, timestep, raw_diagnostics)
         diagnostics = restore_data_arrays_with_properties(
             raw_diagnostics, self.diagnostic_properties,
-            state, self.input_properties)
+            state, self.input_properties, ignore_missing=True)
         new_state = restore_data_arrays_with_properties(
             raw_new_state, self.output_properties,
-            state, self.input_properties)
+            state, self.input_properties, ignore_missing=True)
+        for key in state.keys():
+            if key not in new_state:
+                new_state[key] = state[key]
         prog_diagnostics, prog_new_state = self._prognostic_timestepper(new_state, timestep)
         diagnostics.update(prog_diagnostics)
         self._diagnostic_checker.check_diagnostics(diagnostics)
@@ -523,7 +553,7 @@ class GFSDynamicalCore(Implicit):
                 property_dict = {
                     name: {
                         'dims': dims,
-                        'units': tendencies[name]['units'],
+                        'units': tendencies[name].attrs['units'],
                     }
                 }
                 out_arrays.update(
@@ -539,7 +569,7 @@ class GFSDynamicalCore(Implicit):
                 property_dict = {
                     name: {
                         'dims': ['mid_levels', 'latitude', 'longitude'],
-                        'units': tendencies[name]['units'],
+                        'units': tendencies[name].attrs['units'],
                     }
                 }
                 tend = get_numpy_arrays_with_properties(
@@ -574,13 +604,6 @@ class GFSDynamicalCore(Implicit):
         if p_surf_hash != self._hash_surface_pressure:
             _gfs_dynamics.lnps_to_spectral()
             self._hash_surface_pressure = p_surf_hash
-
-    def initialise_state_signature(self):
-        self._hash_u = 1000
-        self._hash_v = 1000
-        self._hash_temperature = 1000
-        self._hash_surface_pressure = 1000
-        self._hash_tracers = 1000
 
     def __del__(self):
         """ call shutdown in fortran code """

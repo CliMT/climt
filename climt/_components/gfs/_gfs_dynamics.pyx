@@ -59,7 +59,7 @@ cdef extern:
 
 # Function to init dynamics
 cdef extern:
-    void gfs_init_dynamics(int *num_damp_levs, double *tau_damping)
+    void gfs_init_dynamics(int *num_damp_levs, double *tau_damping, double *model_top_pressure)
 
 # Function to init physics
 cdef extern:
@@ -381,14 +381,16 @@ def set_model_grid(
 
 
 # Initialise dynamics and physics
-def init_model(double dry_pressure, int num_damp_levels, double tau_damping):
+def init_model(
+    double dry_pressure, int num_damp_levels, double tau_damping,
+    double model_top_pressure):
 
     # Now that the arrays are initialised, call dynamics and physics init
 
 
     gfs_set_dry_pressure(&dry_pressure)
     gfs_set_model_time(&zero_model_time)
-    gfs_init_dynamics(&num_damp_levels, &tau_damping)
+    gfs_init_dynamics(&num_damp_levels, &tau_damping, &model_top_pressure)
     #gfs_get_lon_lat(<double *>&__longitudes[0,0], <double *>&__latitudes[0,0])
 
     longitudes = np.ascontiguousarray(pyLons).copy()
@@ -398,7 +400,7 @@ def init_model(double dry_pressure, int num_damp_levels, double tau_damping):
     # sigma_levels = np.ascontiguousarray(pySl).copy()
     # sigma_inteface_levels = np.ascontiguousarray(pySi).copy()
 
-    return gaussian_weights, area_weights, latitudes, longitudes#, sigma_levels, sigma_inteface_levels
+    return gaussian_weights, area_weights, latitudes, longitudes#, sigma_levels, sigma_interface_levels
 
 
 # Create the spectral arrays (defined in spectral_data.f90)

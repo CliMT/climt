@@ -1,4 +1,4 @@
-from sympl import Implicit, get_constant
+from sympl import Stepper, get_constant
 import logging
 try:
     from . import _simple_physics as phys
@@ -9,7 +9,7 @@ except ImportError:
     )
 
 
-class SimplePhysics(Implicit):
+class SimplePhysics(Stepper):
     """
     Interface to the simple physics package.
 

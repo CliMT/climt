@@ -1,11 +1,11 @@
-from sympl import Implicit, get_constant, initialize_numpy_arrays_with_properties
+from sympl import Stepper, get_constant, initialize_numpy_arrays_with_properties
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
 
-class IceSheet(Implicit):
+class IceSheet(Stepper):
     """
     1-d snow-ice energy balance model.
     """
@@ -55,8 +55,8 @@ class IceSheet(Implicit):
             'dims': ['*'],
             'units': 'degK',
         },
-        'snow_and_ice_temperature_spline': {
-            'dims': ['*'],
+        'snow_and_ice_temperature': {
+            'dims': ['ice_levels', '*'],
             'units': 'degK',
         },
         'sea_surface_temperature': {
@@ -87,7 +87,7 @@ class IceSheet(Implicit):
             'units': 'degK',
         },
         'snow_and_ice_temperature': {
-            'dims': ['*'],
+            'dims': ['ice_levels', '*'],
             'units': 'degK',
         },
         'sea_surface_temperature': {
@@ -105,10 +105,6 @@ class IceSheet(Implicit):
         'heat_flux_into_sea_water_due_to_sea_ice': {
             'dims': ['*'],
             'units': 'W m^-2',
-        },
-        'snow_and_ice_temperature_spline': {
-            'dims': ['*'],
-            'units': 'degK',
         },
     }
 
@@ -200,8 +196,7 @@ class IceSheet(Implicit):
             num_layers = int(total_height / self._dz)
 
             # Create temperature profile from cubic spline
-            vertical_coordinates = np.linspace(0, total_height, num_layers)
-            temp_profile = raw_state['snow_and_ice_temperature_spline'][col](vertical_coordinates)
+            temp_profile = raw_state['snow_and_ice_temperature']
 
             snow_level = int((1 - snow_height_fraction)*num_layers)
             levels = np.arange(num_layers)
@@ -220,7 +215,6 @@ class IceSheet(Implicit):
             if surface_temperature < self._temp_melt:
                 check_melting = False
 
-            # Calculat_indexe new temp_profile based using implicit method
             new_temperature = self.calculate_new_ice_temperature(
                 rho_snow_ice, heat_capacity_snow_ice,
                 kappa_snow_ice, temp_profile,
@@ -281,12 +275,7 @@ class IceSheet(Implicit):
 
             total_height += (height_of_growing_ice + height_of_melting_ice)
 
-            diagnostics['snow_and_ice_temperature_spline'][col] = CubicSpline(
-                np.linspace(0, total_height, num_layers), new_temperature)
-
-            outputs['snow_and_ice_temperature'][col] = \
-                diagnostics['snow_and_ice_temperature_spline'][col](
-                    np.linspace(0, total_height, self._output_levels))
+            outputs['snow_and_ice_temperature'][col] = new_temperature
 
             outputs['surface_temperature'][col] = new_temperature[-1]
 
