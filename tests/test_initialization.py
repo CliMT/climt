@@ -4,7 +4,7 @@ from climt import (
     EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions, IceSheet,
     Instellation, get_grid)
 import random
-from sympl import SharedKeyError, PrognosticComponent, DiagnosticComponent, Stepper, ImplicitPrognosticComponent, PrognosticStepper
+from sympl import SharedKeyError, TendencyComponent, DiagnosticComponent, Stepper, ImplicitTendencyComponent, PrognosticStepper
 import numpy as np
 import pytest
 import unittest
@@ -12,9 +12,9 @@ from datetime import timedelta
 
 
 def call_component(component, state):
-    if isinstance(component, (DiagnosticComponent, PrognosticComponent)):
+    if isinstance(component, (DiagnosticComponent, TendencyComponent)):
         return component(state)
-    elif isinstance(component, (Stepper, ImplicitPrognosticComponent, PrognosticStepper)):
+    elif isinstance(component, (Stepper, ImplicitTendencyComponent, PrognosticStepper)):
         return component(state, timedelta(hours=1))
     else:
         raise AssertionError('Component is of unknown type')
@@ -24,7 +24,7 @@ class GetGridTests(unittest.TestCase):
 
     def assert_grid_quantities_present(self, state, latitude=False, longitude=False):
         grid_names = ['time', 'air_pressure', 'air_pressure_on_interface_levels',
-                'surface_air_pressure']
+                'surface_air_pressure', 'height_on_ice_interface_levels']
         if latitude:
             grid_names.append('latitude')
         if longitude:
@@ -71,13 +71,13 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid()
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels'])
+            grid, ['mid_levels', 'interface_levels', 'ice_interface_levels'])
 
     def test_get_1d_vertical_grid(self):
         grid = get_grid(nz=20)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels'])
+            grid, ['mid_levels', 'interface_levels', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )
@@ -86,7 +86,7 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nx=4, ny=6, nz=20)
         self.assert_grid_quantities_present(grid, latitude=True, longitude=True)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'latitude', 'longitude'])
+            grid, ['mid_levels', 'interface_levels', 'latitude', 'longitude', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21, 'latitude': 6, 'longitude': 4}
         )
@@ -95,7 +95,7 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nx=3, ny=8, nz=20, x_name='name1', y_name='name2')
         self.assert_grid_quantities_present(grid, latitude=True, longitude=True)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'name1', 'name2'])
+            grid, ['mid_levels', 'interface_levels', 'name1', 'name2', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21, 'name1': 3, 'name2': 8}
         )
@@ -104,7 +104,7 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nz=20, p_surf_in_Pa=0.9e5)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels'])
+            grid, ['mid_levels', 'interface_levels', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )

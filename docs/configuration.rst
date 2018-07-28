@@ -72,7 +72,7 @@ Currently, CliMT allows for three kinds of behavioural modification of component
   behaviour, :py:meth:`climt.ClimtPrognostic.piecewise_constant_version` can be used.
   See how this can be used practically in this `example`_.
 
-* PrognosticComponent version: Spectral dynamical cores step the model forward in spectral space,
+* TendencyComponent version: Spectral dynamical cores step the model forward in spectral space,
   and therefore, they do not play well with :py:mod:`climt.ClimtImplicit`
   components that step forward the model in grid space. Typically, this is handled by
   finite differencing the output of Stepper components and providing them as time tendencies.
@@ -88,7 +88,7 @@ Currently, CliMT allows for three kinds of behavioural modification of component
   to a particular quantity or the effect of a certain quantity on the output (mechanism denial).
   This is in some instances done by scaling the quantity or setting it to zero (which
   is also a scaling). To allow for this kind of modification, :py:meth:`scaled_version` can be used. This is a method
-  available to all kinds of components (Stepper, PrognosticComponent, etc.,). See the documentation for this
+  available to all kinds of components (Stepper, TendencyComponent, etc.,). See the documentation for this
   method in the description of the base components in :ref:`component_list`.
 
 Compositional Configuration

@@ -1,8 +1,8 @@
-from sympl import PrognosticComponent, get_constant, initialize_numpy_arrays_with_properties
+from sympl import TendencyComponent, get_constant, initialize_numpy_arrays_with_properties
 import numpy as np
 
 
-class SlabSurface(PrognosticComponent):
+class SlabSurface(TendencyComponent):
     """
     Calculate the surface energy balance.
 

@@ -1,8 +1,8 @@
-from sympl import PrognosticComponent, get_constant
+from sympl import TendencyComponent, get_constant
 import numpy as np
 
 
-class HeldSuarez(PrognosticComponent):
+class HeldSuarez(TendencyComponent):
     """
     Provide the Held-Suarez forcing.
 

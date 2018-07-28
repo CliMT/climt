@@ -1,6 +1,6 @@
 from sympl import (
     get_numpy_array, get_constant, initialize_numpy_arrays_with_properties,
-    PrognosticComponent
+    TendencyComponent
 )
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state)
@@ -19,7 +19,7 @@ except ImportError:
     )
 
 
-class RRTMGLongwave(PrognosticComponent):
+class RRTMGLongwave(TendencyComponent):
     """
     The Rapid Radiative Transfer Model (RRTMG).
 

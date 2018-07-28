@@ -56,7 +56,7 @@ class IceSheet(Stepper):
             'units': 'degK',
         },
         'snow_and_ice_temperature': {
-            'dims': ['ice_levels', '*'],
+            'dims': ['ice_interface_levels', '*'],
             'units': 'degK',
         },
         'sea_surface_temperature': {
@@ -66,6 +66,10 @@ class IceSheet(Stepper):
         'soil_surface_temperature': {
             'dims': ['*'],
             'units': 'degK',
+        },
+        'height_on_ice_interface_levels': {
+            'dims': ['ice_interface_levels', '*'],
+            'units': 'm',
         },
     }
 
@@ -87,15 +91,18 @@ class IceSheet(Stepper):
             'units': 'degK',
         },
         'snow_and_ice_temperature': {
-            'dims': ['ice_levels', '*'],
+            'dims': ['ice_interface_levels', '*'],
             'units': 'degK',
+        },
+        'height_on_ice_interface_levels': {
+            'dims': ['ice_interface_levels', '*'],
+            'units': 'm',
         },
         'sea_surface_temperature': {
             'dims': ['*'],
             'units': 'degK',
         },
     }
-
 
     diagnostic_properties = {
         'upward_heat_flux_at_ground_level_in_soil': {
@@ -109,21 +116,19 @@ class IceSheet(Stepper):
     }
 
     def __init__(
-            self, vertical_resolution=0.1, maximum_snow_ice_height=10,
-            levels=30, **kwargs):
+            self, vertical_resolution=0.1, maximum_snow_ice_height=10, **kwargs):
         """
         Args:
-            vertical_resolution(float):
+            vertical_resolution (float):
                 The vertical resolution of the model in :math:`m`.
-            maximum_snow_ice_height(float):
+            maximum_snow_ice_height (float):
                 The maximum combined height of snow and ice handled by the model in :math:`m`.
-            levels(int):
+            levels (int):
                 The number of levels on which temperature must be output.
         """
 
         self._dz = vertical_resolution
         self._max_height = maximum_snow_ice_height
-        self._output_levels = int(levels)
         self._update_constants()
         super(IceSheet, self).__init__(**kwargs)
 
@@ -278,6 +283,12 @@ class IceSheet(Stepper):
             outputs['snow_and_ice_temperature'][col] = new_temperature
 
             outputs['surface_temperature'][col] = new_temperature[-1]
+            outputs['height_on_ice_interface_levels'][col] = np.linspace(
+                0,
+                outputs['surface_snow_thickness'][col],
+                outputs['height_on_ice_interface_levels'].shape[0],
+                endpoint=True
+            )
 
         return diagnostics, outputs
 

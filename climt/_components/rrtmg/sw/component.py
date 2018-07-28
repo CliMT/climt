@@ -1,5 +1,5 @@
 from sympl import (
-    get_numpy_array, PrognosticComponent, get_constant, initialize_numpy_arrays_with_properties
+    get_numpy_array, TendencyComponent, get_constant, initialize_numpy_arrays_with_properties
 )
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state
@@ -20,7 +20,7 @@ except ImportError:
     )
 
 
-class RRTMGShortwave(PrognosticComponent):
+class RRTMGShortwave(TendencyComponent):
     """
     The Rapid Radiative Transfer Model (RRTMG).
 

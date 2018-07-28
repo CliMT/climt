@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..._core import bolton_q_sat, ensure_contiguous_state
 from sympl import (
-    ImplicitPrognosticComponent, get_constant, initialize_numpy_arrays_with_properties)
+    ImplicitTendencyComponent, get_constant, initialize_numpy_arrays_with_properties)
 import numpy as np
 import logging
 try:
@@ -13,7 +13,7 @@ except ImportError:
     )
 
 
-class EmanuelConvection(ImplicitPrognosticComponent):
+class EmanuelConvection(ImplicitTendencyComponent):
     """
     The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_
 

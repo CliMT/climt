@@ -25,8 +25,8 @@ Spectral dynamical cores require model state and tendencies in spectral space, w
 don't play well with :py:class:`~sympl.Stepper` components which modify model state in grid space.
 
 To account for this diversity of model components, CliMT introduces two additional entities: :py:class:`ClimtImplicitPrognostic`
-which subclasses :py:class:`~sympl.PrognosticComponent` and :py:class:`~ClimtSpectralDynamicalCore`, which subclasses :py:class:`~sympl.PrognosticStepper`. The awkward
-name :py:class:`ImplicitPrognosticComponent` mirrors the awkwardness of the way in which convection schemes are constructed.
+which subclasses :py:class:`~sympl.TendencyComponent` and :py:class:`~ClimtSpectralDynamicalCore`, which subclasses :py:class:`~sympl.PrognosticStepper`. The awkward
+name :py:class:`ImplicitTendencyComponent` mirrors the awkwardness of the way in which convection schemes are constructed.
 Ideally, those parts of a convection scheme which require the model time step and those that do not
 should live in separate components; until someone writes such a scheme, :py:class:`ClimtImplicitPrognostic` is here
 to stay!

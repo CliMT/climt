@@ -2,8 +2,9 @@ from __future__ import division
 from ..._core import numpy_version_of, ensure_contiguous_state
 from sympl import (
     DataArray, get_constant, PrognosticStepper, initialize_numpy_arrays_with_properties,
-    get_numpy_arrays_with_properties, AdamsBashforth, PrognosticComponentComposite,
-    PrognosticComponent, get_tracer_names, restore_data_arrays_with_properties,
+    get_numpy_arrays_with_properties, AdamsBashforth, ImplicitTendencyComponentComposite,
+    TendencyComponent, ImplicitTendencyComponent,
+    get_tracer_names, restore_data_arrays_with_properties,
 )
 import numpy as np
 import sys
@@ -22,7 +23,7 @@ class GFSError(Exception):
     pass
 
 
-class SelectivePrognosticComponent(PrognosticComponent):
+class SelectiveTendencyComponent(ImplicitTendencyComponent):
 
     @property
     def input_properties(self):
@@ -49,34 +50,57 @@ class SelectivePrognosticComponent(PrognosticComponent):
         return self.prognostic.diagnostic_properties
 
     def __init__(self, prognostic, include_names=None, ignore_names=None):
+        """
+
+        Args:
+            prognostic: Prognostic
+                The Prognostic to be wrapped.
+            include_names: iterable of str, optional
+                If given, the tendency names for the wrapper to output.
+                Cannot be given with ignore_names.
+            ignore_names: iterable of str, optional
+                If given, the tendency names for the wrapper to suppress.
+                Cannot be given with include_names.
+        """
         if not (include_names is None or ignore_names is None):
             raise ValueError('Cannot give both include_names and ignore_names')
         self.prognostic = prognostic
         self.ignore_names = ignore_names
         self.include_names = include_names
-        super(SelectivePrognosticComponent, self).__init__()
+        super(SelectiveTendencyComponent, self).__init__()
 
     def __call__(self, *args, **kwargs):
         tendencies, diagnostics = self.prognostic(*args, **kwargs)
         return self._filter_tendency_dict(tendencies), diagnostics
 
-    def array_call(self, state):
-        tendencies, diagnostics = self.prognostic.array_call(state)
+    def array_call(self, state, timestep=None):
+        if isinstance(self.prognostic, TendencyComponent):
+            tendencies, diagnostics = self.prognostic.array_call(state)
+        elif isinstance(self.prognostic, ImplicitTendencyComponent):
+            tendencies, diagnostics = self.prognostic.array_call(state, timestep)
+        else:
+            raise GFSError(
+                'Given a component to wrap of type {} that is not a '
+                'TendencyComponent or ImplicitTendencyComponent'.format(
+                    self.prognostic.__class__.__name__)
+            )
         return self._filter_tendency_dict(tendencies), diagnostics
 
 
-def copy_valid_properties(gfs_properties, prognostic_properties, property_type):
+def get_valid_properties(gfs_properties, prognostic_properties, property_type):
+    return_dict = {}
     for name, properties in prognostic_properties.items():
         if name not in gfs_properties:
-            gfs_properties[name] = properties
+            return_dict[name] = properties
         elif 'dims' in prognostic_properties.keys():
             extra_dims = set(prognostic_properties['dims']).difference(['*'] + list(gfs_properties[name]['dims']))
             if len(extra_dims) != 0:
                 raise GFSError(
-                    'Cannot handle PrognosticComponent with {} {} '
+                    'Cannot handle TendencyComponent with {} {} '
                     'that has extra dimensions {} not used by GFS'.format(
                         property_type, name, extra_dims)
                 )
+    return return_dict
 
 
 class GFSDynamicalCore(PrognosticStepper):
@@ -88,7 +112,7 @@ class GFSDynamicalCore(PrognosticStepper):
        https://github.com/jswhit/gfs-dycore
     """
 
-    input_properties = {
+    _gfs_input_properties = {
         'latitude': {
             'units': 'degrees_N',
             'dims': ['latitude'],
@@ -145,7 +169,7 @@ class GFSDynamicalCore(PrognosticStepper):
         },
     }
 
-    output_properties = {
+    _gfs_output_properties = {
         'air_temperature': {'units': 'degK'},
         'air_pressure': {
             'dims': ['mid_levels', 'latitude', 'longitude'],
@@ -162,7 +186,11 @@ class GFSDynamicalCore(PrognosticStepper):
         'atmosphere_relative_vorticity': {'units': 's^-1'},
     }
 
-    diagnostic_properties = {}
+    _gfs_diagnostic_properties = {}
+
+    input_properties = None
+    output_properties = None
+    diagnostic_properties = None
 
     uses_tracers = True
     tracer_dims = ['tracer', 'mid_levels', 'latitude', 'longitude']
@@ -175,8 +203,9 @@ class GFSDynamicalCore(PrognosticStepper):
 
     def __init__(
             self,
-            prognostic_list=None,
-            timestepper=None,
+            tendency_component_list=None,
+            prognostic_stepper_class=None,
+            prognostic_stepper_kwargs=None,
             number_of_damped_levels=0,
             damping_timescale=2.*86400,
             moist=True,
@@ -186,6 +215,17 @@ class GFSDynamicalCore(PrognosticStepper):
         Initialise the GFS dynamical core.
 
         Args:
+            tendency_component_list (list of TendencyComponent, optional):
+                The TendencyComponent objects to use for spectral time stepping.
+
+            prognostic_stepper_class (type, optional):
+                The class of PrognosticStepper to use. Default is AdamsBashforth.
+
+            prognostic_stepper_kwargs (dict, optional);
+                Keyword arguments to pass on to the PrognosticStepper init. If
+                prognostic_stepper_class is given, default is {}, otherwise default is
+                {'order': 1}.
+
             number_of_damped_levels (int, optional):
                 The number of levels from the model top which are Rayleigh damped.
 
@@ -199,34 +239,36 @@ class GFSDynamicalCore(PrognosticStepper):
                 If True, all negative values of moisture will be set to zero
                 before tracers are returned. Only matters if moist=True.
         """
-        self.input_properties = GFSDynamicalCore.input_properties.copy()
-        self.diagnostic_properties = GFSDynamicalCore.diagnostic_properties.copy()
-        self.output_properties = GFSDynamicalCore.output_properties.copy()
-        prognostic_list = prognostic_list or []
-        self._prognostic = PrognosticComponentComposite(*prognostic_list)
-        self._prognostic_timestepper = timestepper or AdamsBashforth(
-            SelectivePrognosticComponent(
-                self._prognostic,
+        tendency_component_list = tendency_component_list or []
+        prognostic_stepper_class = prognostic_stepper_class or AdamsBashforth
+        if prognostic_stepper_class is None:
+            prognostic_stepper_kwargs = prognostic_stepper_kwargs or {'order': 1}
+        else:
+            prognostic_stepper_kwargs = prognostic_stepper_kwargs or {}
+        self._tendency_component = ImplicitTendencyComponentComposite(*tendency_component_list)
+        self._tendency_stepper = prognostic_stepper_class(
+            SelectiveTendencyComponent(
+                self._tendency_component,
                 ignore_names=self.spectral_names,
             ),
-            order=1,
+            **prognostic_stepper_kwargs
         )
         bad_diagnostics = set(
-            self._prognostic.diagnostic_properties.keys()).intersection(
+            self._tendency_component.diagnostic_properties.keys()).intersection(
             self.spectral_names)
         if len(bad_diagnostics) > 0:
             raise GFSError(
-                'Cannot use PrognosticComponent components that produce {} as diagnostic '
+                'Cannot use TendencyComponent components that produce {} as diagnostic '
                 'output as these must only be stepped spectrally.'.format(
                     bad_diagnostics,
                 )
             )
         bad_diagnostics = set(
-            self._prognostic.diagnostic_properties.keys()).intersection(
-            self.diagnostic_properties.keys())
+            self._tendency_component.diagnostic_properties.keys()).intersection(
+            self._gfs_diagnostic_properties.keys())
         if len(bad_diagnostics) > 0:
             raise GFSError(
-                'Cannot use PrognosticComponent components that produce {} as diagnostic'
+                'Cannot use TendencyComponent components that produce {} as diagnostic'
                 ' output as these are already diagnosed by GFS.'.format(
                     bad_diagnostics,
                 )
@@ -240,19 +282,22 @@ class GFSDynamicalCore(PrognosticStepper):
 
         if moist:
             self.prepend_tracers = [('specific_humidity', 'kg/kg')]
-            self.moist = True
         else:
             self.prepend_tracers = []
-            self.moist = False
+        self.moist = moist
 
         self.initialized = False
+        self.input_properties = get_valid_properties(
+            self._gfs_input_properties, self._tendency_stepper.input_properties, 'input')
+        self.input_properties.update(self._gfs_input_properties)
+        self.output_properties = get_valid_properties(
+            self._gfs_output_properties, self._tendency_stepper.output_properties, 'output')
+        self.output_properties.update(self._gfs_output_properties)
+        self.diagnostic_properties = get_valid_properties(
+            self._gfs_diagnostic_properties, self._tendency_stepper.diagnostic_properties, 'diagnostic')
+        self.diagnostic_properties.update(self._gfs_diagnostic_properties)
+
         super(GFSDynamicalCore, self).__init__()
-        copy_valid_properties(
-            self.input_properties, self._prognostic_timestepper.input_properties, 'input')
-        copy_valid_properties(
-            self.output_properties, self._prognostic_timestepper.output_properties, 'output')
-        copy_valid_properties(
-            self.diagnostic_properties, self._prognostic_timestepper.diagnostic_properties, 'diagnostic')
 
     def _update_constants(self):
         self._radius = get_constant('planetary_radius', 'm')
@@ -274,7 +319,7 @@ class GFSDynamicalCore(PrognosticStepper):
             raise GFSError(
                 'GFS does not support tracers when running as a dry model. '
                 'It would assume the first tracer is specific humidity.')
-        assert not self._num_tracers == 0 and self.moist
+        assert not (self._num_tracers == 0 and self.moist)
         self._num_levs, self._num_lats, self._num_lons = state['air_temperature'].shape
 
         if self._num_levs != 28:
@@ -364,7 +409,7 @@ class GFSDynamicalCore(PrognosticStepper):
             for name in self._tracer_packer.tracer_names:
                 raw_state.pop(name)
         raw_state['time'] = state['time']
-        tendencies, _ = self._prognostic(state)
+        tendencies, _ = self._tendency_component(state, timestep)
         for name, value in tendencies.items():
             if name in self.input_properties.keys():
                 tendencies[name] = value.to_units(self.input_properties[name]['units'] + ' s^-1')
@@ -385,10 +430,15 @@ class GFSDynamicalCore(PrognosticStepper):
         for key in state.keys():
             if key not in new_state:
                 new_state[key] = state[key]
-        prog_diagnostics, prog_new_state = self._prognostic_timestepper(new_state, timestep)
+        prog_diagnostics, prog_new_state = self._tendency_stepper(new_state, timestep)
         diagnostics.update(prog_diagnostics)
+        check_new_state = {
+            name: quantity
+            for (name, quantity) in prog_new_state.items()
+            if name in self.output_properties.keys()
+        }
         self._diagnostic_checker.check_diagnostics(diagnostics)
-        self._output_checker.check_outputs(prog_new_state)
+        self._output_checker.check_outputs(check_new_state)
         return diagnostics, prog_new_state
 
     @ensure_contiguous_state
@@ -521,6 +571,8 @@ class GFSDynamicalCore(PrognosticStepper):
         outputs['air_pressure_on_interface_levels'][:] = \
             outputs['air_pressure_on_interface_levels'][::-1, :, :]
 
+        outputs['time'] = state['time']
+
         return {}, outputs
 
     def _get_tendency_arrays(self, tendencies, T_shape):
@@ -560,6 +612,12 @@ class GFSDynamicalCore(PrognosticStepper):
                     get_numpy_arrays_with_properties(tendencies, property_dict))
             else:
                 out_arrays[name] = np.zeros(shape)
+        # must broadcast any singleton dimensions
+        for name, current_array in out_arrays.items():
+            if current_array.shape != shape:
+                new_array = np.empty(shape)
+                new_array[:] = current_array
+                out_arrays[name] = new_array
         return out_arrays
 
     def _get_tracer_tendencies(self, tendencies, T_shape):

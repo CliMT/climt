@@ -314,7 +314,8 @@ def gaussian_latitudes(n):
 
 
 def get_grid(
-        nx=None, ny=None, nz=28, p_surf_in_Pa=1.0132e5, x_name='longitude',
+        nx=None, ny=None, nz=28, n_ice_interface_levels=10,
+        p_surf_in_Pa=1.0132e5, x_name='longitude',
         y_name='latitude', latitude_grid='gaussian'):
     """
     Args:
@@ -324,6 +325,9 @@ def get_grid(
             Number of latitudinal points.
         nz : int, optional
             Number of vertical mid levels.
+        n_ice_interface_levels (int, optional): Number of vertical
+            interface levels to use for ice. Use None to disable the ice
+            vertical grid.
         p_surf_in_Pa : float, optional
             Surface pressure in Pa.
         x_name : str, optional
@@ -363,6 +367,13 @@ def get_grid(
                 dims=[y_name],
                 attrs={'units': 'degrees_north'},
             )
+    if n_ice_interface_levels is not None:
+        return_state['height_on_ice_interface_levels'] = DataArray(
+            np.zeros(n_ice_interface_levels),
+            dims=['ice_interface_levels'],
+            attrs={'units': 'm'},
+        )
+    print(return_state.keys(), n_ice_interface_levels)
     return return_state
 
 
@@ -462,7 +473,7 @@ default_values = {
     'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {'value': 0., 'units': 'kg m^-2'},
     'cloud_ice_particle_size': {'value': 20., 'units': 'micrometer'},
     'cloud_water_droplet_radius': {'value': 10., 'units': 'micrometer'},
-    'snow_and_ice_temperature_spline': {'value': CubicSpline(np.linspace(0, 50, 50), 260.*np.ones(50)), 'units': 'degK', 'dtype': object},
+    'snow_and_ice_temperature': {'value': 0., 'units': 'degK'},
     'cloud_base_mass_flux': {'value': 0., 'units': 'kg m^-2 s^-1'},
     'surface_thermal_capacity': {'value': 4.1813e3, 'units': 'J kg^-1 degK^-1'},
     'depth_of_slab_surface': {'value': 50., 'units': 'm'},
@@ -559,8 +570,26 @@ def compute_all_diagnostics(state, diagnostic_list):
     return return_dict
 
 
-def get_default_state(component_list, grid_state=None):
-    grid_state = grid_state or get_grid()
+def get_default_state(
+        component_list, grid_state=None, n_ice_interface_levels=10):
+    """
+    Retrieves a reasonable initial state for the set of components given.
+
+    Args:
+        component_list (list): Components for which to retrieve an
+            initial state.
+        grid_state (dict, optional): An initial state containing grid
+            quantities. If none is given, a default will be created.
+        n_ice_interface_levels (int, optional): Number of vertical
+            interface levels to use for ice. Use None to disable the ice
+            vertical grid.
+
+    Returns:
+        default_state (dict): A reasonable initial state.
+    """
+    print(n_ice_interface_levels)
+    grid_state = grid_state or get_grid(
+        n_ice_interface_levels=n_ice_interface_levels)
     input_properties = aggregate_input_properties(component_list)
     diagnostic_list = get_diagnostics_for(input_properties, grid_state)
     return_state = {}
