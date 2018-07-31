@@ -514,6 +514,4 @@ def test_piecewise_constant_component():
 
 
 if __name__ == '__main__':
-    test = TestDryGFSDycoreWithRRTMGLongwave()
-    test.test_3d_output_matches_cached_output()
-    # pytest.main([__file__])
+    pytest.main([__file__])
