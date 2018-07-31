@@ -1,5 +1,6 @@
 from sympl import (
     DataArray, DiagnosticComponent, combine_component_properties, get_constant,
+    get_tracer_input_properties,
 )
 from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np

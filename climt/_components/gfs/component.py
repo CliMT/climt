@@ -405,9 +405,7 @@ class GFSDynamicalCore(PrognosticStepper):
         self._input_checker.check_inputs(state)
         raw_state = get_numpy_arrays_with_properties(state, self.input_properties)
         if self.uses_tracers:
-            raw_state['tracers'] = self._tracer_packer.pack(raw_state)
-            for name in self._tracer_packer.tracer_names:
-                raw_state.pop(name)
+            raw_state['tracers'] = self._tracer_packer.pack(state)
         raw_state['time'] = state['time']
         tendencies, _ = self._tendency_component(state, timestep)
         for name, value in tendencies.items():
@@ -416,17 +414,18 @@ class GFSDynamicalCore(PrognosticStepper):
         raw_diagnostics, raw_new_state = self.array_call(
             raw_state, timestep, prognostic_tendencies=tendencies)
         if self.uses_tracers:
-            raw_new_state.update(self._tracer_packer.unpack(raw_new_state['tracers']))
-            raw_new_state.pop('tracers')
+            new_state = self._tracer_packer.unpack(raw_new_state.pop('tracers'), state)
+        else:
+            new_state = {}
         if self.tendencies_in_diagnostics:
             self._insert_tendencies_to_diagnostics(
                 raw_state, raw_new_state, timestep, raw_diagnostics)
         diagnostics = restore_data_arrays_with_properties(
             raw_diagnostics, self.diagnostic_properties,
             state, self.input_properties, ignore_missing=True)
-        new_state = restore_data_arrays_with_properties(
+        new_state.update(restore_data_arrays_with_properties(
             raw_new_state, self.output_properties,
-            state, self.input_properties, ignore_missing=True)
+            state, self.input_properties, ignore_missing=True))
         for key in state.keys():
             if key not in new_state:
                 new_state[key] = state[key]

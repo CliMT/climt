@@ -1,5 +1,5 @@
 from sympl import (
-    DataArray, PlotFunctionMonitor, RelaxationPrognosticComponent,
+    DataArray, PlotFunctionMonitor, RelaxationTendencyComponent,
     AdamsBashforth)
 from climt import SimplePhysics, get_default_state
 import numpy as np
@@ -98,7 +98,7 @@ equilibrium_value = DataArray(
 tau = DataArray(
     np.array(2.), dims=[], attrs={'units': 'hour'})
 
-relaxation = RelaxationPrognosticComponent('eastward_wind', equilibrium_value, tau)
+relaxation = RelaxationTendencyComponent('eastward_wind', equilibrium_value, tau)
 time_stepper = AdamsBashforth([relaxation, convection, radiation_lw, radiation_sw, slab])
 
 for i in range(60000):
