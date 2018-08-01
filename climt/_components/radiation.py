@@ -139,7 +139,7 @@ class Frierson06LongwaveOpticalDepth(DiagnosticComponent):
         }
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def integrate_upward_longwave(T, T_surface, tau, sigma):
     """
     Args:
@@ -166,7 +166,7 @@ def integrate_upward_longwave(T, T_surface, tau, sigma):
     return upward_flux
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def integrate_downward_longwave(T, tau, sigma):
     """
     Args:
@@ -191,7 +191,7 @@ def integrate_downward_longwave(T, tau, sigma):
     return downward_flux
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def get_longwave_fluxes(
         T, p_interface, T_surface, tau, sigma, g, Cpd):
     upward_flux = integrate_upward_longwave(T, T_surface, tau, sigma)
@@ -204,7 +204,7 @@ def get_longwave_fluxes(
             longwave_temperature_tendency, tau)
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def get_frierson_06_tau(latitude, sigma, tau0e, tau0p, fl):
     tau_0 = tau0e + (tau0p - tau0e) * np.sin(latitude/360.)**2
     tau = tau_0 * (1 - (fl*sigma + (1 - fl)*sigma**4))
