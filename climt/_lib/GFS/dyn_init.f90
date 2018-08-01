@@ -86,7 +86,7 @@ module dyn_init
     enddo
          ! compute sigma coordinate quantities (bottom to top).
     do k=1,nlevs+1
-        si(nlevs+2-k)= (ak(k) - model_top_pressure)/(py_pdryini - model_top_pressure)+bk(k) ! si are now sigmas
+        si(nlevs+2-k)= (ak(k) - model_top_pressure)/(pdryini - model_top_pressure)+bk(k) ! si are now sigmas
     enddo
     do k=1,nlevs
         sl(k) = 0.5*(si(k)+si(k+1))
