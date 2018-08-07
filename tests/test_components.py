@@ -415,17 +415,6 @@ class TestGFSDycore(ComponentBase3D):
         return GFSDynamicalCore()
 
 
-# class TestDryGFSDycore(ComponentBase3D):
-#
-#     def test_inputs_are_dry(self):
-#         component = self.get_component_instance()
-#         assert 'specific_humidity' not in component.input_properties.keys()
-#         assert 'specific_humidity_on_interface_levels' not in component.input_properties.keys()
-#
-#     def get_component_instance(self):
-#         return GFSDynamicalCore(moist=False)
-
-
 @pytest.mark.skip('Known to be failing')
 class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
 
@@ -449,14 +438,14 @@ class TestGFSDycoreWithImplicitTendency(ComponentBase3D):
         return state
 
 
-class TestDryGFSDycoreWithHeldSuarez(ComponentBase3D):
+class TestGFSDycoreWithHeldSuarez(ComponentBase3D):
     def test_inputs_are_dry(self):
         component = self.get_component_instance()
         assert 'specific_humidity' not in component.input_properties.keys()
         assert 'specific_humidity_on_interface_levels' not in component.input_properties.keys()
 
     def get_component_instance(self):
-        return GFSDynamicalCore([HeldSuarez()], moist=False)
+        return GFSDynamicalCore([HeldSuarez()])
 
     def get_3d_input_state(self):
         state = climt.get_default_state(
@@ -465,14 +454,10 @@ class TestDryGFSDycoreWithHeldSuarez(ComponentBase3D):
         return state
 
 
-class TestDryGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
-    def test_inputs_are_dry(self):
-        component = self.get_component_instance()
-        assert 'specific_humidity' not in component.input_properties.keys()
-        assert 'specific_humidity_on_interface_levels' not in component.input_properties.keys()
+class TestGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
 
     def get_component_instance(self):
-        return GFSDynamicalCore([GrayLongwaveRadiation()], moist=False)
+        return GFSDynamicalCore([GrayLongwaveRadiation()])
 
     def get_3d_input_state(self):
         state = climt.get_default_state(
@@ -486,18 +471,6 @@ class TestGFSDycoreWithRRTMGLongwave(ComponentBase3D):
     def get_component_instance(self):
         radiation = RRTMGLongwave()
         return GFSDynamicalCore([radiation], moist=True)
-
-    def get_3d_input_state(self):
-        state = climt.get_default_state(
-            [self.get_component_instance()], grid_state=get_grid(nx=16, ny=16, nz=28))
-        return state
-
-
-class TestDryGFSDycoreWithRRTMGLongwave(ComponentBase3D):
-
-    def get_component_instance(self):
-        radiation = RRTMGLongwave()
-        return GFSDynamicalCore([radiation], moist=False)
 
     def get_3d_input_state(self):
         state = climt.get_default_state(

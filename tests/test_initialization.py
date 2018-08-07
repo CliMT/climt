@@ -2,9 +2,13 @@ from climt import (
     get_default_state, Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
     EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions, IceSheet,
-    Instellation, get_grid)
+    Instellation, get_grid
+)
 import random
-from sympl import SharedKeyError, TendencyComponent, DiagnosticComponent, Stepper, ImplicitTendencyComponent, TendencyStepper
+from sympl import (
+    SharedKeyError, TendencyComponent, DiagnosticComponent, Stepper,
+    ImplicitTendencyComponent, TendencyStepper, TimeDifferencingWrapper
+)
 import numpy as np
 import pytest
 import unittest
@@ -215,6 +219,26 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
             call_component(component2, state)
             call_component(component3, state)
 
+class TestFullMoistGFSDycoreWithPhysics(unittest.TestCase):
+
+    def get_component_instance(self):
+        # Create Radiation Prognostic
+        radiation = RRTMGLongwave()
+        # Create Convection Prognostic
+        convection = EmanuelConvection()
+        # Create a SimplePhysics Prognostic
+        boundary_layer = TimeDifferencingWrapper(
+            SimplePhysics()
+        )
+        return GFSDynamicalCore(
+            [radiation, convection, boundary_layer]
+        )
+
+    def test_component_3d_grid(self):
+        grid = get_grid(nx=16, ny=16, nz=16)
+        component = self.get_component_instance()
+        state = get_default_state([component], grid_state=grid)
+        call_component(component, state)
 
 if __name__ == '__main__':
     pytest.main([__file__])

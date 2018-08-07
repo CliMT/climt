@@ -193,7 +193,8 @@ class GFSDynamicalCore(TendencyStepper):
     diagnostic_properties = None
 
     uses_tracers = True
-    tracer_dims = ['tracer', 'mid_levels', 'latitude', 'longitude']
+    tracer_dims = ('tracer', 'mid_levels', 'latitude', 'longitude')
+    prepend_tracers = (('specific_humidity', 'kg/kg'),)
 
     @property
     def spectral_names(self):
@@ -232,12 +233,9 @@ class GFSDynamicalCore(TendencyStepper):
             damping_timescale (float, optional):
                 The damping timescale in :math:`s` to use for top-of-model Rayleigh damping.
 
-            moist (bool, optional):
-                Whether to account for and advect moisture. Default is True.
-
             zero_negative_moisture (bool, optional):
                 If True, all negative values of moisture will be set to zero
-                before tracers are returned. Only matters if moist=True.
+                before tracers are returned.
         """
         tendency_component_list = tendency_component_list or []
         prognostic_stepper_class = prognostic_stepper_class or AdamsBashforth
@@ -280,12 +278,6 @@ class GFSDynamicalCore(TendencyStepper):
         self._tau_damping = damping_timescale
         self._zero_negative_moisture = zero_negative_moisture
 
-        if moist:
-            self.prepend_tracers = [('specific_humidity', 'kg/kg')]
-        else:
-            self.prepend_tracers = []
-        self.moist = moist
-
         self.initialized = False
 
         self.input_properties = self._gfs_input_properties.copy()
@@ -321,16 +313,7 @@ class GFSDynamicalCore(TendencyStepper):
         assert not self.initialized
         self._time_step = timestep
         self._num_tracers = state['tracers'].shape[0]
-        if self._num_tracers > 0 and not self.moist:
-            raise GFSError(
-                'GFS does not support tracers when running as a dry model. '
-                'It would assume the first tracer is specific humidity.')
-        assert not (self._num_tracers == 0 and self.moist)
         self._num_levs, self._num_lats, self._num_lons = state['air_temperature'].shape
-
-        if self._num_levs != 28:
-            raise NotImplementedError(
-                'GFS can currently only run with 28 vertical levels.')
 
         self._truncation = int(self._num_lons/3 - 2)
 
@@ -351,8 +334,8 @@ class GFSDynamicalCore(TendencyStepper):
             self._truncation,
             self._spectral_dim,
             self._num_tracers,
-            state['a_coord'],
-            state['b_coord'],
+            state['a_coord'][::-1],#.ascontiguousarray(),
+            state['b_coord'][::-1],#.ascontiguousarray(),
         )
 
         logging.info('Initialising dynamical core, this could take some time...')
@@ -497,11 +480,8 @@ class GFSDynamicalCore(TendencyStepper):
         )
 
         lnsp = np.log(state['surface_air_pressure'])
-        if self.moist:
-            t_virt = state['air_temperature']*(
-                1 + self._fvirt*state['tracers'][0, :, :, :])
-        else:
-            t_virt = state['air_temperature'].copy()
+        t_virt = state['air_temperature']*(
+            1 + self._fvirt*state['tracers'][0, :, :, :])
 
         outputs['air_pressure_on_interface_levels'][:] = (
             state['air_pressure_on_interface_levels'][::-1, :, :])
@@ -531,7 +511,7 @@ class GFSDynamicalCore(TendencyStepper):
 
         _gfs_dynamics.calculate_pressure()
 
-        np.testing.assert_allclose(outputs['air_pressure'], state['air_pressure'][::-1, :, :])
+        np.testing.assert_allclose(outputs['air_pressure'], state['air_pressure'])
         np.testing.assert_allclose(
             outputs['air_pressure_on_interface_levels'][::-1, :, :],
             state['air_pressure_on_interface_levels']
@@ -544,12 +524,9 @@ class GFSDynamicalCore(TendencyStepper):
                 prognostic_tendencies, state['air_temperature'].shape)
 
         # see Pg. 12 in gfsModelDoc.pdf
-        if self.moist:
-            virtual_temp_tend = tendency_arrays['air_temperature']*(
-                1 + self._fvirt*state['tracers'][0, :, :, :]) + \
-                self._fvirt*t_virt*tendency_arrays['tracers'][0, :, :, :]
-        else:
-            virtual_temp_tend = tendency_arrays['air_temperature']
+        virtual_temp_tend = tendency_arrays['air_temperature']*(
+            1 + self._fvirt*state['tracers'][0, :, :, :]) + \
+            self._fvirt*t_virt*tendency_arrays['tracers'][0, :, :, :]
 
         # dlnps/dt = (1/ps)*dps/dt
         lnps_tend = ((1. / state['surface_air_pressure']) *
@@ -566,13 +543,10 @@ class GFSDynamicalCore(TendencyStepper):
         _gfs_dynamics.convert_to_grid()
         _gfs_dynamics.calculate_pressure()
 
-        if self.moist:
-            if self._zero_negative_moisture:
-                set_negatives_to_zero(outputs['tracers'][0, :, :, :])
-            outputs['air_temperature'][:] = t_virt/(
-                1 + self._fvirt*outputs['tracers'][0, :, :, :])
-        else:
-            outputs['air_temperature'][:] = t_virt
+        if self._zero_negative_moisture:
+            set_negatives_to_zero(outputs['tracers'][0, :, :, :])
+        outputs['air_temperature'][:] = t_virt/(
+            1 + self._fvirt*outputs['tracers'][0, :, :, :])
 
         outputs['air_pressure_on_interface_levels'][:] = \
             outputs['air_pressure_on_interface_levels'][::-1, :, :]
