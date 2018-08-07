@@ -334,8 +334,8 @@ class GFSDynamicalCore(TendencyStepper):
             self._truncation,
             self._spectral_dim,
             self._num_tracers,
-            state['a_coord'][::-1],#.ascontiguousarray(),
-            state['b_coord'][::-1],#.ascontiguousarray(),
+            state['a_coord'][::-1],
+            state['b_coord'][::-1],
         )
 
         logging.info('Initialising dynamical core, this could take some time...')
