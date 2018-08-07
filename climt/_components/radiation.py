@@ -13,7 +13,7 @@ class GrayLongwaveRadiation(TendencyComponent):
         'air_temperature': {
             'dims': ['mid_levels', '*'],
             'units': 'degK',
-            'alias': 'T',
+            'alias': 'sl',
         },
         'surface_temperature': {
             'dims': ['*'],
@@ -56,13 +56,13 @@ class GrayLongwaveRadiation(TendencyComponent):
     def array_call(self, state):
         (downward_flux, upward_flux, net_lw_flux,
          lw_temperature_tendency, tau) = get_longwave_fluxes(
-            state['T'], state['p_interface'], state['T_surface'], state['tau'],
+            state['sl'], state['p_interface'], state['T_surface'], state['tau'],
             get_constant('stefan_boltzmann_constant', 'W/m^2/K^4'),
             get_constant('gravitational_acceleration', 'm/s^2'),
             get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
         )
         tendencies = {
-            'T': lw_temperature_tendency,
+            'sl': lw_temperature_tendency,
         }
         diagnostics = {
             'lw_down': downward_flux,
