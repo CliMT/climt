@@ -240,5 +240,18 @@ class TestFullMoistGFSDycoreWithPhysics(unittest.TestCase):
         state = get_default_state([component], grid_state=grid)
         call_component(component, state)
 
+
+class TestGFSDycoreWith32VerticalLevels(unittest.TestCase):
+
+    def get_component_instance(self):
+        return GFSDynamicalCore()
+
+    def test_component_3d_grid(self):
+        grid = get_grid(nx=16, ny=16, nz=32)
+        component = self.get_component_instance()
+        state = get_default_state([component], grid_state=grid)
+        call_component(component, state)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
