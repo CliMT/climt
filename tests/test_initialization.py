@@ -4,7 +4,7 @@ from climt import (
     EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions, IceSheet,
     Instellation, get_grid)
 import random
-from sympl import SharedKeyError, TendencyComponent, DiagnosticComponent, Stepper, ImplicitTendencyComponent, PrognosticStepper
+from sympl import SharedKeyError, TendencyComponent, DiagnosticComponent, Stepper, ImplicitTendencyComponent, TendencyStepper
 import numpy as np
 import pytest
 import unittest
@@ -14,7 +14,7 @@ from datetime import timedelta
 def call_component(component, state):
     if isinstance(component, (DiagnosticComponent, TendencyComponent)):
         return component(state)
-    elif isinstance(component, (Stepper, ImplicitTendencyComponent, PrognosticStepper)):
+    elif isinstance(component, (Stepper, ImplicitTendencyComponent, TendencyStepper)):
         return component(state, timedelta(hours=1))
     else:
         raise AssertionError('Component is of unknown type')

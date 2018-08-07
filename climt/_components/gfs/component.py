@@ -1,7 +1,7 @@
 from __future__ import division
 from ..._core import numpy_version_of, ensure_contiguous_state
 from sympl import (
-    DataArray, get_constant, PrognosticStepper, initialize_numpy_arrays_with_properties,
+    DataArray, get_constant, TendencyStepper, initialize_numpy_arrays_with_properties,
     get_numpy_arrays_with_properties, AdamsBashforth, ImplicitTendencyComponentComposite,
     TendencyComponent, ImplicitTendencyComponent,
     get_tracer_names, restore_data_arrays_with_properties,
@@ -103,7 +103,7 @@ def get_valid_properties(gfs_properties, prognostic_properties, property_type):
     return return_dict
 
 
-class GFSDynamicalCore(PrognosticStepper):
+class GFSDynamicalCore(TendencyStepper):
     """
     Climt interface to the GFS dynamical core. The GFS
     code is available on `github`_.
@@ -219,10 +219,10 @@ class GFSDynamicalCore(PrognosticStepper):
                 The TendencyComponent objects to use for spectral time stepping.
 
             prognostic_stepper_class (type, optional):
-                The class of PrognosticStepper to use. Default is AdamsBashforth.
+                The class of TendencyStepper to use. Default is AdamsBashforth.
 
             prognostic_stepper_kwargs (dict, optional);
-                Keyword arguments to pass on to the PrognosticStepper init. If
+                Keyword arguments to pass on to the TendencyStepper init. If
                 prognostic_stepper_class is given, default is {}, otherwise default is
                 {'order': 1}.
 
@@ -287,17 +287,23 @@ class GFSDynamicalCore(PrognosticStepper):
         self.moist = moist
 
         self.initialized = False
-        self.input_properties = get_valid_properties(
-            self._gfs_input_properties, self._tendency_stepper.input_properties, 'input')
-        self.input_properties.update(self._gfs_input_properties)
-        self.output_properties = get_valid_properties(
-            self._gfs_output_properties, self._tendency_stepper.output_properties, 'output')
-        self.output_properties.update(self._gfs_output_properties)
-        self.diagnostic_properties = get_valid_properties(
-            self._gfs_diagnostic_properties, self._tendency_stepper.diagnostic_properties, 'diagnostic')
-        self.diagnostic_properties.update(self._gfs_diagnostic_properties)
 
+        self.input_properties = self._gfs_input_properties.copy()
+        self.output_properties = self._gfs_output_properties.copy()
+        self.diagnostic_properties = self._gfs_diagnostic_properties.copy()
         super(GFSDynamicalCore, self).__init__()
+        self.input_properties.update(
+            get_valid_properties(
+                self._gfs_input_properties, self._tendency_stepper.input_properties, 'input')
+        )
+        self.output_properties.update(
+            get_valid_properties(
+                self._gfs_output_properties, self._tendency_stepper.output_properties, 'output')
+        )
+        self.diagnostic_properties.update(
+            get_valid_properties(
+                self._gfs_diagnostic_properties, self._tendency_stepper.diagnostic_properties, 'diagnostic')
+        )
 
     def _update_constants(self):
         self._radius = get_constant('planetary_radius', 'm')
@@ -351,12 +357,13 @@ class GFSDynamicalCore(PrognosticStepper):
 
         logging.info('Initialising dynamical core, this could take some time...')
 
+        model_top_pressure = state['air_pressure_on_interface_levels'][-1, 0, 0]
         gaussian_weights, area_weights, latitudes, longitudes = \
             _gfs_dynamics.init_model(
                 self._dry_pressure,
                 self._damping_levels,
                 self._tau_damping,
-                state['air_pressure_on_interface_levels'][-1, 0, 0])
+                model_top_pressure)
 
         np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
         np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
@@ -398,7 +405,7 @@ class GFSDynamicalCore(PrognosticStepper):
         KeyError
             If a required quantity is missing from the state.
         InvalidStateError
-            If state is not a valid input for the Stepper instance
+            If state is not a value input for the Stepper instance
             for other reasons.
         """
         self._check_self_is_initialized()
@@ -524,7 +531,7 @@ class GFSDynamicalCore(PrognosticStepper):
 
         _gfs_dynamics.calculate_pressure()
 
-        np.testing.assert_allclose(outputs['air_pressure'], state['air_pressure'])
+        np.testing.assert_allclose(outputs['air_pressure'], state['air_pressure'][::-1, :, :])
         np.testing.assert_allclose(
             outputs['air_pressure_on_interface_levels'][::-1, :, :],
             state['air_pressure_on_interface_levels']

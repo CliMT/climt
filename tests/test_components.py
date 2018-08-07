@@ -13,7 +13,7 @@ from climt import (
     IceSheet, Instellation, get_grid)
 import climt
 from sympl import (
-    Stepper, PrognosticStepper, TimeDifferencingWrapper,
+    Stepper, TendencyStepper, TimeDifferencingWrapper,
     ImplicitTendencyComponent, UpdateFrequencyWrapper
 )
 from sympl._core.tracers import reset_tracers, reset_packers
@@ -70,7 +70,7 @@ def transpose_state(state, dims=None):
 
 def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
-    if isinstance(component, (Stepper, PrognosticStepper, ImplicitTendencyComponent)):
+    if isinstance(component, (Stepper, TendencyStepper, ImplicitTendencyComponent)):
         return component(state, timestep=timestep)
     else:
         return component(state)
@@ -393,21 +393,37 @@ class TestInstellation(ComponentBaseColumn, ComponentBase3D):
         return Instellation()
 
 
+class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
+
+    def get_component_instance(self):
+        # Create Radiation Prognostic
+        radiation = climt.RRTMGLongwave()
+        # Create Convection Prognostic
+        convection = climt.EmanuelConvection()
+        # Create a SimplePhysics Prognostic
+        boundary_layer = TimeDifferencingWrapper(
+            climt.SimplePhysics()
+        )
+        return GFSDynamicalCore(
+            [radiation, convection, boundary_layer]
+        )
+
+
 class TestGFSDycore(ComponentBase3D):
 
     def get_component_instance(self):
         return GFSDynamicalCore()
 
 
-class TestDryGFSDycore(ComponentBase3D):
-
-    def test_inputs_are_dry(self):
-        component = self.get_component_instance()
-        assert 'specific_humidity' not in component.input_properties.keys()
-        assert 'specific_humidity_on_interface_levels' not in component.input_properties.keys()
-
-    def get_component_instance(self):
-        return GFSDynamicalCore(moist=False)
+# class TestDryGFSDycore(ComponentBase3D):
+#
+#     def test_inputs_are_dry(self):
+#         component = self.get_component_instance()
+#         assert 'specific_humidity' not in component.input_properties.keys()
+#         assert 'specific_humidity_on_interface_levels' not in component.input_properties.keys()
+#
+#     def get_component_instance(self):
+#         return GFSDynamicalCore(moist=False)
 
 
 @pytest.mark.skip('Known to be failing')
