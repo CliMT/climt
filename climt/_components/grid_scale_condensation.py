@@ -72,7 +72,7 @@ class GridScaleCondensation(Stepper):
 
         Raises:
             KeyError: If a required quantity is missing from the state.
-            InvalidStateException: If state is not a valid input for the
+            InvalidStateException: If state is not a value input for the
                 Stepper instance for other reasons.
         """
         self._update_constants()

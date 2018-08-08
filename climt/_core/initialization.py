@@ -374,7 +374,6 @@ def get_grid(
             dims=['ice_interface_levels'],
             attrs={'units': 'm'},
         )
-    print(return_state.keys(), n_ice_interface_levels)
     return return_state
 
 
@@ -588,7 +587,6 @@ def get_default_state(
     Returns:
         default_state (dict): A reasonable initial state.
     """
-    print(n_ice_interface_levels)
     grid_state = grid_state or get_grid(
         n_ice_interface_levels=n_ice_interface_levels)
     input_properties = aggregate_input_properties(component_list)
