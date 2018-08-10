@@ -333,10 +333,10 @@ class TestDcmip(ComponentBaseColumn, ComponentBase3D):
         return DcmipInitialConditions()
 
 
-@pytest.mark.skip('Failing, need Joy to look at this')
 def test_dcmip_options():
 
-    state = climt.get_default_state([DcmipInitialConditions()])
+    state = climt.get_default_state([DcmipInitialConditions()],
+                                    grid_state=get_grid(nx=64, ny=64, nz=10))
 
     dry_state = DcmipInitialConditions(moist=False)(state)
     moist_state = DcmipInitialConditions(moist=True)(state)
@@ -349,7 +349,7 @@ def test_dcmip_options():
     assert not np.all(np.isclose(dry_state['eastward_wind'].values,
                                  not_perturbed_state['eastward_wind'].values))
 
-    assert np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
+    assert not np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
                              np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
 
 
