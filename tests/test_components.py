@@ -415,14 +415,15 @@ class TestGFSDycore(ComponentBase3D):
         return GFSDynamicalCore()
 
 
-@pytest.mark.skip('Known to be failing')
 class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
 
     def get_component_instance(self):
         return GFSDynamicalCore()
 
     def get_3d_input_state(self):
-        state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
+        state = climt.get_default_state(
+            [self.get_component_instance()], grid_state=get_grid(nx=32, ny=32, nz=28))
+        #state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
         state.update(climt.DcmipInitialConditions(add_perturbation=True)(state))
         return state
 
