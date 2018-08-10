@@ -1,4 +1,4 @@
-from sympl import TendencyComponent, DiagnosticComponent, jit, get_constant
+from sympl import TendencyComponent, DiagnosticComponent, get_constant
 import numpy as np
 
 

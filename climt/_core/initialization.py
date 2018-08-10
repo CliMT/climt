@@ -1,6 +1,6 @@
 from sympl import (
     DataArray, DiagnosticComponent, combine_component_properties, get_constant,
-    get_tracer_input_properties,
+    get_tracer_input_properties, set_constant
 )
 from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np
@@ -316,8 +316,11 @@ def gaussian_latitudes(n):
 
 def get_grid(
         nx=None, ny=None, nz=28, n_ice_interface_levels=10,
-        p_surf_in_Pa=1.0132e5, x_name='longitude',
-        y_name='latitude', latitude_grid='gaussian'):
+        p_surf_in_Pa=None, p_toa_in_Pa=None,
+        proportion_sigma_levels=0.1,
+        proportion_isobaric_levels=0.25,
+        x_name='longitude', y_name='latitude',
+        latitude_grid='gaussian'):
     """
     Args:
         nx : int, optional
@@ -342,7 +345,19 @@ def get_grid(
         grid_state: dict
             A model state containing grid quantities.
     """
-    return_state = get_hybrid_sigma_pressure_levels(nz)
+    if p_surf_in_Pa is None:
+        p_surf_in_Pa = get_constant('reference_air_pressure', 'Pa')
+
+    if p_toa_in_Pa is None:
+        p_toa_in_Pa = get_constant('top_of_model_pressure', 'Pa')
+    else:
+        set_constant('top_of_model_pressure', p_toa_in_Pa, 'Pa')
+
+    return_state = get_hybrid_sigma_pressure_levels(nz,
+                                                    p_surf_in_Pa,
+                                                    p_toa_in_Pa,
+                                                    proportion_isobaric_levels,
+                                                    proportion_sigma_levels)
     return_state['surface_air_pressure'] = DataArray(
         p_surf_in_Pa, dims=[], attrs={'units': 'Pa'}
     )
@@ -368,6 +383,10 @@ def get_grid(
                 dims=[y_name],
                 attrs={'units': 'degrees_north'},
             )
+        else:
+            raise ValueError(
+                'latitude_grid can be either regular or gaussian. ' +
+                'Other grid types are currently not supported.')
     if n_ice_interface_levels is not None:
         return_state['height_on_ice_interface_levels'] = DataArray(
             np.zeros(n_ice_interface_levels),
@@ -408,9 +427,10 @@ class HybridSigmaPressureDiagnosticComponent(DiagnosticComponent):
     }
 
     def array_call(self, state):
+        model_top_pressure = get_constant('top_of_model_pressure', 'Pa')
         p_interface = (
             state['a_coord'] +
-            state['b_coord'] * state['surface_air_pressure'][None, :])
+            state['b_coord'] * (state['surface_air_pressure'][None, :] - model_top_pressure))
         delta_p = p_interface[1:, :] - p_interface[:-1, :]
         Rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
         Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1')
@@ -427,7 +447,127 @@ class HybridSigmaPressureDiagnosticComponent(DiagnosticComponent):
         }
 
 
-def get_hybrid_sigma_pressure_levels(nz):
+def get_hybrid_sigma_pressure_levels(num_levels=28,
+                                     reference_pressure=1e5,
+                                     model_top_pressure=20,
+                                     proportion_isobaric_levels=0.25,
+                                     proportion_sigma_levels=0.1):
+
+    '''
+    Calculate the values of ak and bk using the algorithm from
+    `[Eckermann]`_ (2008) for their NEWHYB2 coordinate system.
+
+    The pressure thickness distribution is given by a sine shaped
+    curve with a maximum at the middle of the pressure range. The
+    nominal lower surface pressure of 1000 mb is used to calculate
+    the coordinates, but this does not put any restriction on the
+    actual surface pressure.
+
+    Args:
+        num_levels: int, optional
+            The number of vertical levels
+        reference_pressure: float, optional
+            The reference surface pressure
+        model_top_pressure: float, optional
+            The pressure at the top of the model
+        proportion_isobaric_levels: float, optional
+            The proportion of levels where bk = 0
+        proportion_sigma_levels: float, optional
+            The proportion of levels where ak = 0
+
+    Returns:
+        hybrid_coords: dict
+            dictionary containing ak, bk, and sigma levels
+
+    Reference:
+        Eckermann, S: Hybrid σ–p Coordinate Choices for a Global Model,
+        Monthly Weather Review Jan 2009.
+
+    .. _[Eckermann]:
+        https://journals.ametsoc.org/doi/pdf/10.1175/2008MWR2537.1
+
+    '''
+
+    thickness_dist = np.sin(np.linspace(0.1, np.pi-0.1, num_levels-1))
+
+    thickness_dist /= np.sum(thickness_dist)
+    thickness_dist *= (reference_pressure - model_top_pressure)
+
+    pressure_levels = np.zeros(num_levels)
+    pressure_levels[0] = model_top_pressure
+    pressure_levels[1:] = model_top_pressure + np.cumsum(thickness_dist)
+
+    sigma_interface = (pressure_levels - model_top_pressure)/(reference_pressure -
+                                                              model_top_pressure)
+
+    ak = np.zeros(num_levels)
+    bk = np.zeros(num_levels)
+
+    num_isobaric_levels = int(proportion_isobaric_levels*num_levels)
+    num_sigma_levels = int(proportion_sigma_levels*num_levels)
+
+    #print(num_sigma_levels, num_isobaric_levels)
+
+    ak[0:num_isobaric_levels] = pressure_levels[0:num_isobaric_levels]
+
+    isobaric_sigma_level = sigma_interface[num_isobaric_levels-1]
+
+    for level in range(num_isobaric_levels, num_levels - num_sigma_levels):
+
+        sigma_value = sigma_interface[level]
+        b_level = (sigma_value - isobaric_sigma_level)/(1 - isobaric_sigma_level)
+
+        r_level = get_exponent_for_sigma(b_level, num_sigma_levels)
+
+        bk[level] = b_level**r_level
+
+        ak[level] = model_top_pressure + (sigma_value - bk[level])*(reference_pressure -
+                                                                   model_top_pressure)
+
+
+    for level in range(num_levels - num_sigma_levels, num_levels):
+
+        sigma_value = sigma_interface[level]
+        bk[level] = (sigma_interface[level] - isobaric_sigma_level)/(1 - isobaric_sigma_level)
+        ak[level] = model_top_pressure + (sigma_value - bk[level])*(reference_pressure -
+                                                                   model_top_pressure)
+
+    ak = ak[::-1]
+    bk = bk[::-1]
+
+    return {
+        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels':
+            DataArray(
+                ak,
+                dims=['interface_levels'],
+                attrs={'units': 'dimensionless'},
+            ),
+        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels':
+            DataArray(
+                bk,
+                dims=['interface_levels'],
+                attrs={'units': 'dimensionless'},
+            ),
+    }
+
+
+def get_exponent_for_sigma(b_half, num_sigma_levels):
+
+    # These values correspond to the NEWHYB2 coordinate
+    r_p = 2.2
+    r_sigma = 1.0
+    S = 5
+
+    if num_sigma_levels > 0:
+        r_sigma = 1
+    else:
+        r_sigma = 1.35
+
+    return r_p + (r_sigma - r_p)*np.arctan(S*b_half)/np.arctan(S)
+
+
+'''
+def get_hybrid_sigma_pressure_levels(nz, reference_pressure):
     a_interface = a_coord_spline(np.linspace(0., 1., nz+1, endpoint=True))
     b_interface = b_coord_spline(np.linspace(0., 1., nz+1, endpoint=True))
     return {
@@ -444,7 +584,7 @@ def get_hybrid_sigma_pressure_levels(nz):
                 attrs={'units': 'dimensionless'},
             ),
     }
-
+'''
 
 default_values = {
     'air_temperature': {'value': 290., 'units': 'degK'},

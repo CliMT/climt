@@ -1,4 +1,4 @@
-from sympl import TendencyComponent, get_constant, initialize_numpy_arrays_with_properties
+from sympl import TendencyComponent, initialize_numpy_arrays_with_properties
 import numpy as np
 
 
@@ -121,7 +121,7 @@ class SlabSurface(TendencyComponent):
             raw_state['soil_layer_thickness'][land_mask]
 
         mass_surface_slab = raw_state['surface_material_density'] * \
-                            diagnostics['depth_of_slab_surface']
+            diagnostics['depth_of_slab_surface']
         heat_capacity_surface = mass_surface_slab * raw_state['surface_thermal_capacity']
 
         tendencies['surface_temperature'][:] = net_heat_flux/heat_capacity_surface

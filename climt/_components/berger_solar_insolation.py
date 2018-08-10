@@ -1,4 +1,4 @@
-from sympl import DiagnosticComponent, DataArray, get_constant
+from sympl import DiagnosticComponent, get_constant
 import logging
 try:
     from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
@@ -46,7 +46,6 @@ class BergerSolarInsolation(DiagnosticComponent):
             'units': 'dimensionless',
         },
     }
-
 
     def __init__(self, **kwargs):
         self._orbital_parameters = {}
