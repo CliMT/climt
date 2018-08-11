@@ -120,15 +120,19 @@ class ComponentBase(object):
             output = [output]
         for i, out_dict in enumerate(output):
             for name, value in out_dict.items():
-                if name != 'time' and np.any(np.isnan(value)):
-                    raise AssertionError(
-                        'NaN produced in output {} from dict {}'.format(name, i))
+                try:
+                    if name != 'time' and np.any(np.isnan(value)):
+                        raise AssertionError(
+                            'NaN produced in output {} from dict {}'.format(name, i))
+                except TypeError:  # raised if cannot run isnan on dtype of value
+                    pass
 
 
 class ComponentBaseColumn(ComponentBase):
 
-    def get_1d_input_state(self):
-        component = self.get_component_instance()
+    def get_1d_input_state(self, component=None):
+        if component is None:
+            component = self.get_component_instance()
         return climt.get_default_state(
             [component], grid_state=get_grid(nx=None, ny=None, nz=30))
 
@@ -151,10 +155,10 @@ class ComponentBaseColumn(ComponentBase):
         self.assert_valid_output(output)
 
     def test_column_stepping_output_matches_cached_output(self):
-        state = self.get_1d_input_state()
         component = self.get_component_instance()
         if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
             component = AdamsBashforth([self.get_component_instance()])
+            state = self.get_1d_input_state(component)
             output = call_with_timestep_if_needed(component, state)
             cached_output = self.get_cached_output('column_stepping')
             if cached_output is None:
@@ -168,8 +172,9 @@ class ComponentBaseColumn(ComponentBase):
 
 class ComponentBase3D(ComponentBase):
 
-    def get_3d_input_state(self):
-        component = self.get_component_instance()
+    def get_3d_input_state(self, component=None):
+        if component is None:
+            component = self.get_component_instance()
         return climt.get_default_state(
             [component], grid_state=get_grid(nx=16, ny=16, nz=28))
 
@@ -186,10 +191,10 @@ class ComponentBase3D(ComponentBase):
             compare_outputs(output, cached_output)
 
     def test_3d_stepping_output_matches_cached_output(self):
-        state = self.get_3d_input_state()
         component = self.get_component_instance()
         if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
             component = AdamsBashforth([component])
+            state = self.get_3d_input_state(component)
             output = call_with_timestep_if_needed(component, state)
             cached_output = self.get_cached_output('3d_stepping')
             if cached_output is None:
@@ -258,9 +263,8 @@ def compare_one_state_pair(current, cached):
             assert key in cached.keys()
         else:
             try:
-                assert not np.any(np.isnan(current[key])), 'nan in current'
-                assert not np.any(np.isnan(cached[key])), 'nan in cache'
-                assert np.all(np.isclose(current[key] - cached[key], 0.))
+                if not np.all(current[key] == cached[key]):
+                    assert np.all(np.isclose(current[key] - cached[key], 0.))
                 for attr in current[key].attrs:
                     assert current[key].attrs[attr] == cached[key].attrs[attr]
                 for attr in cached[key].attrs:
