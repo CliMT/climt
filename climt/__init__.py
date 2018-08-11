@@ -15,6 +15,8 @@ from ._components import (
     DcmipInitialConditions, IceSheet, Instellation)
 
 
+sympl.set_constant('top_of_model_pressure', 20., 'Pa')
+
 __all__ = (
     get_default_state, get_grid, mass_to_volume_mixing_ratio, numpy_version_of,
     get_interface_values, list_available_constants,

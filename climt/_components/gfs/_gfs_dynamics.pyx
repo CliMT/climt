@@ -24,6 +24,10 @@ cdef extern:
 cdef extern:
     void gfs_set_dry_pressure(double *pdry_init)
 
+#Function to set top of model pressure
+cdef extern:
+    void gfs_set_model_top_pressure(double *p_toa)
+
 #Function to set time step
 cdef extern:
     void gfs_set_time_step(double *dt)
@@ -59,7 +63,7 @@ cdef extern:
 
 # Function to init dynamics
 cdef extern:
-    void gfs_init_dynamics(int *num_damp_levs, double *tau_damping, double *model_top_pressure)
+    void gfs_init_dynamics(int *num_damp_levs, double *tau_damping)
 
 # Function to init physics
 cdef extern:
@@ -389,8 +393,9 @@ def init_model(
 
 
     gfs_set_dry_pressure(&dry_pressure)
+    gfs_set_model_top_pressure(&model_top_pressure)
     gfs_set_model_time(&zero_model_time)
-    gfs_init_dynamics(&num_damp_levels, &tau_damping, &model_top_pressure)
+    gfs_init_dynamics(&num_damp_levels, &tau_damping)
     #gfs_get_lon_lat(<double *>&__longitudes[0,0], <double *>&__latitudes[0,0])
 
     longitudes = np.ascontiguousarray(pyLons).copy()

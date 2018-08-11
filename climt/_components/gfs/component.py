@@ -1,14 +1,13 @@
 from __future__ import division
-from ..._core import numpy_version_of, ensure_contiguous_state
+from ..._core import ensure_contiguous_state
 from sympl import (
-    DataArray, get_constant, TendencyStepper, initialize_numpy_arrays_with_properties,
+    get_constant, TendencyStepper, initialize_numpy_arrays_with_properties,
     get_numpy_arrays_with_properties, AdamsBashforth, ImplicitTendencyComponentComposite,
     TendencyComponent, ImplicitTendencyComponent,
     get_tracer_names, restore_data_arrays_with_properties,
 )
 import numpy as np
 import sys
-from datetime import timedelta
 import logging
 try:
     from . import _gfs_dynamics
@@ -308,6 +307,7 @@ class GFSDynamicalCore(TendencyStepper):
         self._Cvap = get_constant('heat_capacity_of_vapor_phase', 'J/kg/K')
         self._fvirt = (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
         self._dry_pressure = get_constant('reference_air_pressure', 'Pa')
+        self._toa_pressure = get_constant('top_of_model_pressure', 'Pa')
 
     def _initialize_model(self, state, timestep):
         assert not self.initialized
@@ -340,13 +340,12 @@ class GFSDynamicalCore(TendencyStepper):
 
         logging.info('Initialising dynamical core, this could take some time...')
 
-        model_top_pressure = state['air_pressure_on_interface_levels'][-1, 0, 0]
         gaussian_weights, area_weights, latitudes, longitudes = \
             _gfs_dynamics.init_model(
                 self._dry_pressure,
                 self._damping_levels,
                 self._tau_damping,
-                model_top_pressure)
+                self._toa_pressure)
 
         np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
         np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
@@ -488,8 +487,7 @@ class GFSDynamicalCore(TendencyStepper):
         for name in (
                 'air_pressure', 'tracers', 'eastward_wind', 'northward_wind',
                 'divergence_of_wind', 'atmosphere_relative_vorticity',
-                'surface_air_pressure',
-            ):
+                'surface_air_pressure',):
             if np.product(outputs[name].shape) > 0:
                 outputs[name][:] = state[name]
 
@@ -625,8 +623,7 @@ class GFSDynamicalCore(TendencyStepper):
         """
         u_hash = get_hash(state['eastward_wind'])
         v_hash = get_hash(state['northward_wind'])
-        if (u_hash != self._hash_u or
-            v_hash != self._hash_v):
+        if (u_hash != self._hash_u or v_hash != self._hash_v):
             _gfs_dynamics.vrt_div_to_spectral()
             self._hash_u = u_hash
             self._hash_v = v_hash

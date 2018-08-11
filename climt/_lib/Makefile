@@ -125,4 +125,4 @@ clean_libs:
 	if [ -d  bin ]; then rm -Rf bin; fi
 	if [ -d  lib ]; then rm -Rf lib; fi
 	rm $(LIB_DIR)/*.a
-	rm $(LIB_DIR)/*.conf*
+	rm $(LIB_DIR)/.conf*

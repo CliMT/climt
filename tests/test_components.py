@@ -369,10 +369,10 @@ class TestDcmip(ComponentBaseColumn, ComponentBase3D):
         return DcmipInitialConditions()
 
 
-@pytest.mark.skip('Failing, need Joy to look at this')
 def test_dcmip_options():
 
-    state = climt.get_default_state([DcmipInitialConditions()])
+    state = climt.get_default_state([DcmipInitialConditions()],
+                                    grid_state=get_grid(nx=64, ny=64, nz=10))
 
     dry_state = DcmipInitialConditions(moist=False)(state)
     moist_state = DcmipInitialConditions(moist=True)(state)
@@ -385,7 +385,7 @@ def test_dcmip_options():
     assert not np.all(np.isclose(dry_state['eastward_wind'].values,
                                  not_perturbed_state['eastward_wind'].values))
 
-    assert np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
+    assert not np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
                              np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
 
 
@@ -451,14 +451,15 @@ class TestGFSDycore(ComponentBase3D):
         return GFSDynamicalCore()
 
 
-@pytest.mark.skip('Known to be failing')
 class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
 
     def get_component_instance(self):
         return GFSDynamicalCore()
 
     def get_3d_input_state(self):
-        state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
+        state = climt.get_default_state(
+            [self.get_component_instance()], grid_state=get_grid(nx=32, ny=32, nz=28))
+        #state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
         state.update(climt.DcmipInitialConditions(add_perturbation=True)(state))
         return state
 

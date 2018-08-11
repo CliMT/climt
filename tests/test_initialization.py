@@ -6,7 +6,7 @@ from climt import (
 )
 import random
 from sympl import (
-    SharedKeyError, TendencyComponent, DiagnosticComponent, Stepper,
+    TendencyComponent, DiagnosticComponent, Stepper,
     ImplicitTendencyComponent, TendencyStepper, TimeDifferencingWrapper
 )
 import numpy as np
@@ -28,7 +28,7 @@ class GetGridTests(unittest.TestCase):
 
     def assert_grid_quantities_present(self, state, latitude=False, longitude=False):
         grid_names = ['time', 'air_pressure', 'air_pressure_on_interface_levels',
-                'surface_air_pressure', 'height_on_ice_interface_levels']
+                      'surface_air_pressure', 'height_on_ice_interface_levels']
         if latitude:
             grid_names.append('latitude')
         if longitude:
@@ -115,7 +115,7 @@ class GetGridTests(unittest.TestCase):
         p = grid['air_pressure'].to_units('Pa')
         p_interface = grid['air_pressure_on_interface_levels'].to_units('Pa')
         assert grid['surface_air_pressure'].to_units('Pa') == 0.9e5
-        assert p_interface[0] == 0.9e5
+        assert np.isclose(p_interface[0], 0.9e5)
         assert np.all(p_interface[1:].values < p_interface[:-1].values)
         assert np.all(p[1:].values < p[:-1].values)
         assert np.all(p[:].values < p_interface[:-1].values)
@@ -218,6 +218,7 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
             call_component(component1, state)
             call_component(component2, state)
             call_component(component3, state)
+
 
 class TestFullMoistGFSDycoreWithPhysics(unittest.TestCase):
 

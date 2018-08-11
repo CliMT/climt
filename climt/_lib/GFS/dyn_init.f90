@@ -16,7 +16,7 @@ module dyn_init
  use params, only: &
  nlons,nlats,nlevs,ndimspec,ntrunc,initfile,dry,ndiss,efold,dcmip,polar_opt,&
  heldsuarez,explicit,tstart,idate_start,hdif_fac,hdif_fac2,fshk,ntrac,taustratdamp,&
- ntoz,ntclw,pdryini,massfix
+ ntoz,ntclw,pdryini,massfix,toa_pressure
  !sighead
  !JOY removed sighead to remove sigio dependency
  use shtns, only: shtns_init, spectogrd, grdtospec, getgrad, getvrtdivspec, lap, lats, lons
@@ -56,16 +56,15 @@ module dyn_init
 
  end subroutine set_topography
 
- subroutine init_dyn(py_damping_level, py_taustratdamp, model_top_pressure) bind(c, name='gfs_init_dynamics')
+ subroutine init_dyn(py_damping_level, py_taustratdamp) bind(c, name='gfs_init_dynamics')
     integer k
     ! allocate arrays
     ! JOY data array inits will be done from python
 
     !call init_specdata()
     !call init_griddata()
-    integer, intent(in):: py_damping_level
+    integer(c_int), intent(in):: py_damping_level
     real(c_double), intent(in):: py_taustratdamp
-    real(c_double), intent(in):: model_top_pressure
 
     ! initialize spherical harmonic lib
     !print *,'Initialising shtns'
@@ -86,7 +85,7 @@ module dyn_init
     enddo
          ! compute sigma coordinate quantities (bottom to top).
     do k=1,nlevs+1
-        si(nlevs+2-k)= (ak(k) - model_top_pressure)/(pdryini - model_top_pressure)+bk(k) ! si are now sigmas
+        si(nlevs+2-k)= (ak(k) - toa_pressure)/(pdryini - toa_pressure)+bk(k) ! si are now sigmas
     enddo
     do k=1,nlevs
         sl(k) = 0.5*(si(k)+si(k+1))
@@ -245,11 +244,12 @@ module dyn_init
 ! end subroutine dcmip_ics
 
 
- subroutine heldsuarez_ics()
+ subroutine heldsuarez_ics(toa_pressure)
    ! jablonowski and williamson (2006, QJR, p. 2943, doi: 10.1256/qj.06.12)
    ! initial perturbation on an isothermal state.
    real(r_kind), dimension(nlons,nlats) :: rnh,xnh,rsh,xsh, rand_vel
    real(r_kind) :: lonc,latc,up,pertrad
+   real(c_double), intent(in):: toa_pressure
    integer k
    print *,'replacing initial conds with held and suarez test case..'
    lonc = pi/9.
