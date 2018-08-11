@@ -36,7 +36,7 @@ class GetGridTests(unittest.TestCase):
         for name in grid_names:
             if name not in state:
                 raise AssertionError(
-                    'Grid quantity {} is not present in state.'.format(name))
+                    'Grid quantity {} is not present in state_array.'.format(name))
 
     def assert_grid_quantities_have_dimensions(self, state, dim_names):
         state_dim_names = []

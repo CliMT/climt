@@ -14,7 +14,8 @@ from climt import (
 import climt
 from sympl import (
     Stepper, TendencyStepper, TimeDifferencingWrapper,
-    ImplicitTendencyComponent, UpdateFrequencyWrapper
+    ImplicitTendencyComponent, UpdateFrequencyWrapper, DataArray,
+    TendencyComponent, AdamsBashforth
 )
 from sympl._core.tracers import reset_tracers, reset_packers
 from datetime import datetime, timedelta
@@ -149,6 +150,21 @@ class ComponentBaseColumn(ComponentBase):
         output = call_with_timestep_if_needed(component, state)
         self.assert_valid_output(output)
 
+    def test_column_stepping_output_matches_cached_output(self):
+        state = self.get_1d_input_state()
+        component = self.get_component_instance()
+        if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
+            component = AdamsBashforth([self.get_component_instance()])
+            output = call_with_timestep_if_needed(component, state)
+            cached_output = self.get_cached_output('column_stepping')
+            if cached_output is None:
+                self.cache_output(output, 'column_stepping')
+                raise AssertionError(
+                    'Failed due to no cached output, cached current output.')
+            else:
+                compare_outputs(output, cached_output)
+
+
 
 class ComponentBase3D(ComponentBase):
 
@@ -168,6 +184,20 @@ class ComponentBase3D(ComponentBase):
                 'Failed due to no cached output, cached current output.')
         else:
             compare_outputs(output, cached_output)
+
+    def test_3d_stepping_output_matches_cached_output(self):
+        state = self.get_3d_input_state()
+        component = self.get_component_instance()
+        if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
+            component = AdamsBashforth([component])
+            output = call_with_timestep_if_needed(component, state)
+            cached_output = self.get_cached_output('3d_stepping')
+            if cached_output is None:
+                self.cache_output(output, '3d_stepping')
+                raise AssertionError(
+                    'Failed due to no cached output, cached current output.')
+            else:
+                compare_outputs(output, cached_output)
 
     def test_no_nans_in_3D_output(self):
         state = self.get_3d_input_state()
@@ -271,17 +301,23 @@ class TestBergerSolarInsolation(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return BergerSolarInsolation()
 
-
-class TestBergerSolarInsolationDifferentTime(ComponentBaseColumn, ComponentBase3D):
-
-    def get_component_instance(self):
-        return BergerSolarInsolation()
-
-
-class TestBergerSolarInsolationWithSolarConstant(ComponentBaseColumn, ComponentBase3D):
-
-    def get_component_instance(self):
-        return BergerSolarInsolation()
+    def test_no_nans_in_2d_output(self):
+        state = {
+            'time': datetime(1998, 7, 13),
+            'latitude': DataArray(
+                np.linspace(-90, 90, 30),
+                dims=['latitude'],
+                attrs={'units': 'degrees_N'}
+            ),
+            'longitude': DataArray(
+                np.linspace(0, 360, 60),
+                dims=['longitude'],
+                attrs={'units': 'degrees_E'}
+            ),
+        }
+        component = self.get_component_instance()
+        output = call_with_timestep_if_needed(component, state)
+        self.assert_valid_output(output)
 
 
 class TestSimplePhysics(ComponentBaseColumn, ComponentBase3D):
@@ -376,14 +412,14 @@ class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
 #
 #     ice = IceSheet()
 #
-#     state = climt.get_default_state([ice])
+#     state_array = climt.get_default_state([ice])
 #
-#     state['area_type'].values = 'land_ice'
-#     state['land_ice_thickness'].values = 8
-#     state['surface_snow_thickness'].values = 3
+#     state_array['area_type'].values = 'land_ice'
+#     state_array['land_ice_thickness'].values = 8
+#     state_array['surface_snow_thickness'].values = 3
 #
 #     with pytest.raises(ValueError) as excinfo:
-#         ice(state, timedelta(seconds=100))
+#         ice(state_array, timedelta(seconds=100))
 #
 #     assert 'exceeds maximum value' in str(excinfo.value)
 
@@ -486,7 +522,7 @@ def test_piecewise_constant_component():
 
     current_tendency, current_diagnostic = radiation(state)
 
-    # Perturb state
+    # Perturb state_array
     state['air_temperature'] += 3
 
     new_tendency, new_diagnostic = radiation(state)
