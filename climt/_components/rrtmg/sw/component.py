@@ -1,5 +1,5 @@
 from sympl import (
-    get_numpy_array, TendencyComponent, get_constant, initialize_numpy_arrays_with_properties
+    TendencyComponent, get_constant, initialize_numpy_arrays_with_properties
 )
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state
@@ -73,7 +73,7 @@ class RRTMGShortwave(TendencyComponent):
             'dims': ['mid_levels', '*'],
             'units': 'g m^-2'
         },
-        'mass_content_of_cloud_liquid_water_in_atmosphere_layer':{
+        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {
             'dims': ['mid_levels', '*'],
             'units': 'g m^-2'
         },
@@ -107,8 +107,7 @@ class RRTMGShortwave(TendencyComponent):
         },
         'surface_albedo_for_diffuse_near_infrared': {
             'dims': ['*'],
-            'units': 'dimensionless'}
-        ,
+            'units': 'dimensionless'},
         'surface_albedo_for_diffuse_shortwave': {
             'dims': ['*'],
             'units': 'dimensionless'
@@ -157,6 +156,7 @@ class RRTMGShortwave(TendencyComponent):
 
     tendency_properties = {
         'air_temperature': {
+            'dims': ['mid_levels', '*'],
             'units': 'degK day^-1'
         },
     }
