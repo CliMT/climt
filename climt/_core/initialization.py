@@ -1,14 +1,12 @@
 from sympl import (
     DataArray, DiagnosticComponent, combine_component_properties, get_constant,
-    get_tracer_input_properties, set_constant
+    set_constant
 )
 from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np
 from datetime import datetime
 from scipy.interpolate import CubicSpline
 import pkg_resources
-import numpy.linalg as la
-from numpy.polynomial.legendre import legcompanion, legder, legval
 
 a_coord_spline = CubicSpline(
     np.linspace(0, 1, 29, endpoint=True),
@@ -31,6 +29,7 @@ b_coord_spline = CubicSpline(
         0.000378680008, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     ])
 )
+
 
 class RRTMGLongwaveDefaultValues(DiagnosticComponent):
 
@@ -150,7 +149,7 @@ class ConstantDefaultValue(DiagnosticComponent):
         else:
             self._dtype = dtype
         self.diagnostic_properties = {
-            output_name : {
+            output_name: {
                 'dims': [],
                 'units': output_units,
             },
@@ -353,7 +352,7 @@ def get_grid(
     else:
         set_constant('top_of_model_pressure', p_toa_in_Pa, 'Pa')
 
-    return_state = get_hybrid_sigma_pressure_levels(nz,
+    return_state = get_hybrid_sigma_pressure_levels(nz+1,
                                                     p_surf_in_Pa,
                                                     p_toa_in_Pa,
                                                     proportion_isobaric_levels,
@@ -506,8 +505,6 @@ def get_hybrid_sigma_pressure_levels(num_levels=28,
     num_isobaric_levels = int(proportion_isobaric_levels*num_levels)
     num_sigma_levels = int(proportion_sigma_levels*num_levels)
 
-    #print(num_sigma_levels, num_isobaric_levels)
-
     ak[0:num_isobaric_levels] = pressure_levels[0:num_isobaric_levels]
 
     isobaric_sigma_level = sigma_interface[num_isobaric_levels-1]
@@ -522,15 +519,14 @@ def get_hybrid_sigma_pressure_levels(num_levels=28,
         bk[level] = b_level**r_level
 
         ak[level] = model_top_pressure + (sigma_value - bk[level])*(reference_pressure -
-                                                                   model_top_pressure)
-
+                                                                    model_top_pressure)
 
     for level in range(num_levels - num_sigma_levels, num_levels):
 
         sigma_value = sigma_interface[level]
         bk[level] = (sigma_interface[level] - isobaric_sigma_level)/(1 - isobaric_sigma_level)
         ak[level] = model_top_pressure + (sigma_value - bk[level])*(reference_pressure -
-                                                                   model_top_pressure)
+                                                                    model_top_pressure)
 
     ak = ak[::-1]
     bk = bk[::-1]
@@ -744,6 +740,7 @@ def init_ozone(p):
     )
     spline = CubicSpline(p_ref[::-1], ozone_ref[::-1])  # x must be increasing
     return spline(p)
+
 
 init_diagnostics = [
     PressureFunctionDiagnosticComponent(
