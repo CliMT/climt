@@ -50,7 +50,9 @@ class GrayLongwaveRadiation(TendencyComponent):
     }
 
     tendency_properties = {
-        'air_temperature': {'units': 'degK s^-1'}
+        'air_temperature': {
+            'dims': ['mid_levels', '*'],
+            'units': 'degK s^-1'}
     }
 
     def array_call(self, state):

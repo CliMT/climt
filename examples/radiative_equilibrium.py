@@ -31,6 +31,6 @@ for i in range(6*7*4*10):
     state.update(diagnostic(state))
     diagnostics, new_state = time_stepper.__call__(state, timestep)
     state.update(diagnostics)
-    if i % 5 == 0:
+    if (i+1) % 5 == 0:
         monitor.store(state)
     state.update(new_state)
