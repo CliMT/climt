@@ -102,12 +102,12 @@ class DcmipInitialConditions(DiagnosticComponent):
         self._condition_type = condition_type
         self._add_perturbation = add_perturbation
         self._moist = moist
-        self._toa_pressure = get_constant('top_of_model_pressure', 'Pa')
-        self._rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
-        self._cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1')
         super(DcmipInitialConditions, self).__init__(**kwargs)
 
     def array_call(self, state):
+        toa_pressure = get_constant('top_of_model_pressure', 'Pa')
+        rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
+        cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1')
 
         longitude = np.radians(state['longitude'])
         latitude = np.radians(state['latitude'])
@@ -136,9 +136,9 @@ class DcmipInitialConditions(DiagnosticComponent):
         diagnostics['specific_humidity'][:] = q
         diagnostics['surface_air_pressure'][:] = p_surface
         p_interface = (
-            state['ak'] + state['bk']*(p_surface - self._toa_pressure))
+            state['ak'] + state['bk']*(p_surface - toa_pressure))
         delta_p = p_interface[1:, :] - p_interface[:-1, :]
-        rk = self._rd/self._cpd
+        rk = rd/cpd
 
         diagnostics['air_pressure_on_interface_levels'][:] = p_interface
         diagnostics['air_pressure'][:] = (

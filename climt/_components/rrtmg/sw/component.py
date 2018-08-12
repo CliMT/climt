@@ -155,10 +155,7 @@ class RRTMGShortwave(TendencyComponent):
     }
 
     tendency_properties = {
-        'air_temperature': {
-            'dims': ['mid_levels', '*'],
-            'units': 'degK day^-1'
-        },
+        'air_temperature': {'units': 'degK day^-1'},
     }
 
     diagnostic_properties = {
