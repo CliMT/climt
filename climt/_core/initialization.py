@@ -1,12 +1,13 @@
 from sympl import (
     DataArray, DiagnosticComponent, combine_component_properties, get_constant,
-    set_constant
+    set_constant, InvalidStateError
 )
 from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np
 from datetime import datetime
 from scipy.interpolate import CubicSpline
 import pkg_resources
+import xarray as xr
 
 a_coord_spline = CubicSpline(
     np.linspace(0, 1, 29, endpoint=True),
@@ -730,7 +731,43 @@ def get_default_state(
     return_state = {}
     return_state.update(grid_state)
     return_state.update(compute_all_diagnostics(grid_state, diagnostic_list))
+    broadcast_dims_to_match_properties(return_state, input_properties)
     return return_state
+
+
+def broadcast_dims_to_match_properties(state, properties):
+    dim_lengths = get_dim_lengths(state)
+    for name, value in state.items():
+        if name != 'time' and name in properties.keys():
+            out_dims = list(properties[name]['dims'])
+            if '*' in out_dims:
+                out_dims.remove('*')
+            if len(set(out_dims).difference(value.dims)) != 0:
+                new_shape = tuple(dim_lengths[dim_name] for dim_name in out_dims)
+                new_value = DataArray(
+                    np.empty(new_shape, dtype=value.dtype),
+                    dims=out_dims,
+                    attrs=value.attrs
+                )
+                _, broadcast_value = xr.broadcast(new_value, value)
+                new_value[:] = broadcast_value
+                state[name] = new_value
+
+
+def get_dim_lengths(state):
+    out_dict = {}
+    for name, data_array in state.items():
+        if name != 'time':
+            for dim_name, length in zip(data_array.dims, data_array.shape):
+                if dim_name not in out_dict:
+                    out_dict[dim_name] = length
+                else:
+                    if out_dict[dim_name] != length:
+                        raise InvalidStateError(
+                            'Inconsistent lengths {} and {} for dimension {}'.format(
+                                out_dict[dim_name], length, dim_name)
+                        )
+    return out_dict
 
 
 def init_ozone(p):
