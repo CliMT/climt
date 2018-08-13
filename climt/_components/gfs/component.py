@@ -204,8 +204,8 @@ class GFSDynamicalCore(TendencyStepper):
     def __init__(
             self,
             tendency_component_list=None,
-            prognostic_stepper_class=None,
-            prognostic_stepper_kwargs=None,
+            tendency_stepper_class=None,
+            tendency_stepper_kwargs=None,
             number_of_damped_levels=0,
             damping_timescale=2.*86400,
             moist=True,
@@ -218,10 +218,10 @@ class GFSDynamicalCore(TendencyStepper):
             tendency_component_list (list of TendencyComponent, optional):
                 The TendencyComponent objects to use for spectral time stepping.
 
-            prognostic_stepper_class (type, optional):
+            tendency_stepper_class (type, optional):
                 The class of TendencyStepper to use. Default is AdamsBashforth.
 
-            prognostic_stepper_kwargs (dict, optional);
+            tendency_stepper_kwargs (dict, optional);
                 Keyword arguments to pass on to the TendencyStepper init. If
                 prognostic_stepper_class is given, default is {}, otherwise default is
                 {'order': 1}.
@@ -237,18 +237,18 @@ class GFSDynamicalCore(TendencyStepper):
                 before tracers are returned.
         """
         tendency_component_list = tendency_component_list or []
-        prognostic_stepper_class = prognostic_stepper_class or AdamsBashforth
-        if prognostic_stepper_class is None:
-            prognostic_stepper_kwargs = prognostic_stepper_kwargs or {'order': 1}
+        tendency_stepper_class = tendency_stepper_class or AdamsBashforth
+        if tendency_stepper_class is None:
+            tendency_stepper_kwargs = tendency_stepper_kwargs or {'order': 1}
         else:
-            prognostic_stepper_kwargs = prognostic_stepper_kwargs or {}
+            tendency_stepper_kwargs = tendency_stepper_kwargs or {}
         self._tendency_component = ImplicitTendencyComponentComposite(*tendency_component_list)
-        self._tendency_stepper = prognostic_stepper_class(
+        self._tendency_stepper = tendency_stepper_class(
             SelectiveTendencyComponent(
                 self._tendency_component,
                 ignore_names=self.spectral_names,
             ),
-            **prognostic_stepper_kwargs
+            **tendency_stepper_kwargs
         )
         bad_diagnostics = set(
             self._tendency_component.diagnostic_properties.keys()).intersection(
