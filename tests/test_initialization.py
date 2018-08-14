@@ -122,6 +122,12 @@ class GetGridTests(unittest.TestCase):
         assert np.all(p[:].values > p_interface[1:].values)
 
 
+def assert_state_is_full(state, component):
+    for name, properties in component.input_properties.items():
+        missing_dims = set(properties['dims']).difference(['*'] + list(state[name].dims))
+        assert len(missing_dims) == 0, '{} is missing dims {}'.format(name, missing_dims)
+
+
 def create_default_test_for(cls):
     def test_component(self):
         component = cls()
@@ -136,6 +142,7 @@ def create_1d_grid_test_for(cls):
         grid = get_grid(nz=10)
         component = cls()
         state = get_default_state([component], grid_state=grid)
+        assert_state_is_full(state, component)
         call_component(component, state)
     test_component_1d_grid.__name__ = 'test_{}_1d_grid'.format(cls.__name__)
     return test_component_1d_grid
@@ -146,6 +153,7 @@ def create_2d_grid_test_for(cls):
         grid = get_grid(nx=3, nz=10)
         component = cls()
         state = get_default_state([component], grid_state=grid)
+        assert_state_is_full(state, component)
         call_component(component, state)
     test_component_2d_grid.__name__ = 'test_{}_2d_grid'.format(cls.__name__)
     return test_component_2d_grid
@@ -156,6 +164,7 @@ def create_3d_grid_test_for(cls):
         grid = get_grid(nx=3, ny=4, nz=10)
         component = cls()
         state = get_default_state([component], grid_state=grid)
+        assert_state_is_full(state, component)
         call_component(component, state)
     test_component_3d_grid.__name__ = 'test_{}_3d_grid'.format(cls.__name__)
     return test_component_3d_grid
