@@ -23,7 +23,7 @@ grid = climt.get_grid(nx=128, ny=64, nz=20)
 
 my_state = climt.get_default_state([dycore], grid_state=grid)
 
-my_state['surface_air_pressure'].values = 1e5
+#my_state['surface_air_pressure'].values = 1e5
 
 timestep = timedelta(minutes=10)
 
@@ -31,10 +31,8 @@ out = dcmip(my_state)
 
 my_state.update(out)
 
-
 for i in range(1000):
     diag, output = dycore(my_state, timestep)
-    if i > 2:
-        monitor.store(my_state)
+    monitor.store(my_state)
     my_state.update(output)
     my_state['time'] += timestep
