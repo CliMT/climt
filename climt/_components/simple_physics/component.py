@@ -26,15 +26,15 @@ class SimplePhysics(Stepper):
         },
         'air_pressure': {
             'dims': ['mid_levels', '*'],
-            'units': 'mbar',
+            'units': 'Pa',
         },
         'air_pressure_on_interface_levels': {
             'dims': ['interface_levels', '*'],
-            'units': 'mbar',
+            'units': 'Pa',
         },
         'surface_air_pressure': {
             'dims': ['*'],
-            'units': 'mbar',
+            'units': 'Pa',
         },
         'surface_temperature': {
             'dims': ['*'],
@@ -211,7 +211,7 @@ class SimplePhysics(Stepper):
         '''
         self._set_fortran_constants()
         (t_out, u_out, v_out, q_out, precip_out,
-        sensible_heat_flux, latent_heat_flux) = phys.get_new_state(
+         sensible_heat_flux, latent_heat_flux) = phys.get_new_state(
             state['eastward_wind'],
             state['northward_wind'],
             state['air_temperature'],
