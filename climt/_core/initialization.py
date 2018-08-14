@@ -771,7 +771,7 @@ def get_dim_lengths(state):
 
 
 def init_ozone(p):
-    p_ref = np.linspace(0.998, 0.001, 30)
+    p_ref = 1e5*np.linspace(0.998, 0.001, 30)
     ozone_ref = np.load(
         pkg_resources.resource_filename('climt._data', 'ozone_profile.npy')
     )
