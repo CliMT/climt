@@ -1,7 +1,6 @@
 from sympl import (
     AdamsBashforth, PlotFunctionMonitor)
 from climt import RRTMGShortwave, RRTMGLongwave, get_default_state, get_grid
-import numpy as np
 from datetime import timedelta
 import matplotlib.pyplot as plt
 
