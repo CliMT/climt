@@ -23,8 +23,6 @@ grid = climt.get_grid(nx=128, ny=64, nz=20)
 
 my_state = climt.get_default_state([dycore], grid_state=grid)
 
-#my_state['surface_air_pressure'].values = 1e5
-
 timestep = timedelta(minutes=10)
 
 out = dcmip(my_state)
