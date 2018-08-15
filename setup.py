@@ -15,6 +15,7 @@ except ImportError:
     print('Suitable Cython unavailable, installing...')
     pip.main(['install', 'cython'])
     from Cython.Build.Distutils import build_ext as native_build_ext
+from Cython.Build import cythonize
 
 try:
     import numpy as np
@@ -103,15 +104,12 @@ if 'CC' not in os.environ:
         os.environ['CC'] = 'gcc'
 
 if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
-    # os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
-    # os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
-    # os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
     libraries = []
     openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
     default_compile_args = ['-DMS_WIN64']
 
-os.environ['FFLAGS'] = '-fPIC -fno-range-check'
+os.environ['FFLAGS'] = '-O0 -g -Wall -pedantic -fbounds-check -fcheck=all -fbacktrace -fPIC'
 os.environ['CFLAGS'] = '-fPIC'
 
 print('Compilers: ', os.environ['CC'], os.environ['FC'])
@@ -242,7 +240,7 @@ setup(
         'build_ext': climt_build_ext,
         'bdist_wheel': climt_bdist_wheel,
     },
-    ext_modules=ext_modules,
+    ext_modules=cythonize(ext_modules, gdb_debug=True),
     include_dirs=include_dirs,
     license="BSD license",
     zip_safe=False,
