@@ -12,7 +12,7 @@ from ._components import (
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave,
     EmanuelConvection, SlabSurface, GFSDynamicalCore,
-    DcmipInitialConditions, IceSheet, Instellation)
+    DcmipInitialConditions, IceSheet, Instellation, DryConvectiveAdjustment)
 
 
 sympl.set_constant('top_of_model_pressure', 20., 'Pa')
@@ -26,7 +26,6 @@ __all__ = (
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave,
     EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions,
-    IceSheet,
-    Instellation)
+    IceSheet, Instellation, DryConvectiveAdjustment)
 
 __version__ = '0.9.3'

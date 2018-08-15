@@ -1,10 +1,9 @@
 from sympl import (
-    get_numpy_array, get_constant, initialize_numpy_arrays_with_properties,
+    get_constant, initialize_numpy_arrays_with_properties,
     TendencyComponent
 )
 from ...._core import (
     mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state)
-import numpy as np
 from numpy import pi as PI
 from ..rrtmg_common import (
     rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,

@@ -17,6 +17,7 @@ def plot_function(fig, state):
     ax.set_xlabel('Kelvin')
     ax.set_ylabel('Pa')
     ax.set_title('Radiative equilibrium in a Grey Gas atmosphere')
+    ax.grid()
 
 
 monitor = PlotFunctionMonitor(plot_function)
@@ -29,8 +30,8 @@ state = get_default_state([radiation, diagnostic])
 
 for i in range(6*7*4*10):
     state.update(diagnostic(state))
-    diagnostics, new_state = time_stepper.__call__(state, timestep)
+    diagnostics, new_state = time_stepper(state, timestep)
     state.update(diagnostics)
-    if (i+1) % 5 == 0:
+    if i % 5 == 0:
         monitor.store(state)
     state.update(new_state)
