@@ -9,28 +9,11 @@ from scipy.interpolate import CubicSpline
 import pkg_resources
 import xarray as xr
 
-a_coord_spline = CubicSpline(
-    np.linspace(0, 1, 29, endpoint=True),
-    np.array([
-        0.0, 0.00899999961, 11.6350002, 86.4570007, 292.576996, 701.453003,
-        1381.526, 2389.20508, 3757.14209, 5481.14404, 7508.53223, 9731.80664,
-        11991.4277, 14089.5352, 15812.9258, 16959.9941, 17364.6582, 16912.1309,
-        15613.5645, 13671.4268, 11343.6543, 8913.7666, 6678.60791, 4844.03613,
-        3376.51611, 2210.979, 1290.53296, 566.89801, 200.0
-    ])
+from .properties import (
+    get_dims_dict_from_properties, combine_dims_dict_list, get_wildcard_dims,
+    get_dims_dict_from_state, broadcast_state, expand_wildcard_dim,
+    get_dim_lengths
 )
-
-b_coord_spline = CubicSpline(
-    np.linspace(0, 1, 29, endpoint=True),
-    np.array([
-        1.0, 0.988725841, 0.974401832, 0.955872416, 0.931749582, 0.900580883,
-        0.860974848, 0.811784863, 0.752347112, 0.682746828, 0.604054928,
-        0.518456697, 0.429195374, 0.340293199, 0.256084293, 0.180667043,
-        0.117417611, 0.0686749965, 0.0349500999, 0.0143262697, 0.0039327601,
-        0.000378680008, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-    ])
-)
-
 
 class RRTMGLongwaveDefaultValues(DiagnosticComponent):
 
@@ -563,26 +546,6 @@ def get_exponent_for_sigma(b_half, num_sigma_levels):
     return r_p + (r_sigma - r_p)*np.arctan(S*b_half)/np.arctan(S)
 
 
-'''
-def get_hybrid_sigma_pressure_levels(nz, reference_pressure):
-    a_interface = a_coord_spline(np.linspace(0., 1., nz+1, endpoint=True))
-    b_interface = b_coord_spline(np.linspace(0., 1., nz+1, endpoint=True))
-    return {
-        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels':
-            DataArray(
-                a_interface,
-                dims=['interface_levels'],
-                attrs={'units': 'dimensionless'},
-            ),
-        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels':
-            DataArray(
-                b_interface,
-                dims=['interface_levels'],
-                attrs={'units': 'dimensionless'},
-            ),
-    }
-'''
-
 default_values = {
     'air_temperature': {'value': 290., 'units': 'degK'},
     'surface_temperature': {'value': 300., 'units': 'degK', 'grid': 'surface_air_pressure'},
@@ -731,43 +694,75 @@ def get_default_state(
     return_state = {}
     return_state.update(grid_state)
     return_state.update(compute_all_diagnostics(grid_state, diagnostic_list))
-    broadcast_dims_to_match_properties(return_state, input_properties)
+    return_state = broadcast_dims_to_match_component_properties(return_state, component_list)
     return return_state
 
 
-def broadcast_dims_to_match_properties(state, properties):
-    dim_lengths = get_dim_lengths(state)
-    for name, value in state.items():
-        if name != 'time' and name in properties.keys():
-            out_dims = list(properties[name]['dims'])
-            if '*' in out_dims:
-                out_dims.remove('*')
-            if len(set(out_dims).difference(value.dims)) != 0:
-                new_shape = tuple(dim_lengths[dim_name] for dim_name in out_dims)
-                new_value = DataArray(
-                    np.empty(new_shape, dtype=value.dtype),
-                    dims=out_dims,
-                    attrs=value.attrs
+def get_dims_dict(component_list):
+    dims_dict_list = []
+    for component in component_list:
+        for dict_name in (
+                'tendency_properties', 'diagnostic_properties',
+                'output_properties', 'input_properties',
+                ):
+            if hasattr(component, dict_name):
+                dims_dict_list.append(
+                    get_dims_dict_from_properties(
+                        getattr(component, dict_name),
+                        component.input_properties
+                    )
                 )
-                _, broadcast_value = xr.broadcast(new_value, value)
-                new_value[:] = broadcast_value
-                state[name] = new_value
+    return combine_dims_dict_list(dims_dict_list)
 
 
-def get_dim_lengths(state):
-    out_dict = {}
-    for name, data_array in state.items():
-        if name != 'time':
-            for dim_name, length in zip(data_array.dims, data_array.shape):
-                if dim_name not in out_dict:
-                    out_dict[dim_name] = length
-                else:
-                    if out_dict[dim_name] != length:
-                        raise InvalidStateError(
-                            'Inconsistent lengths {} and {} for dimension {}'.format(
-                                out_dict[dim_name], length, dim_name)
-                        )
-    return out_dict
+def broadcast_dims_to_match_component_properties(state, component_list):
+    dims_dict = get_dims_dict(component_list)
+    dim_lengths = get_dim_lengths(state)
+    wildcard_dim_list = get_wildcard_dims(
+        dims_dict,
+        get_dims_dict_from_state(state),
+    )
+    dims_dict = expand_wildcard_dim(dims_dict, wildcard_dim_list)
+    return broadcast_state(state, dims_dict, dim_lengths)
+
+
+# def broadcast_dims_to_match_properties(state, properties):
+#     dim_lengths = get_dim_lengths(state)
+#     for name, value in state.items():
+#         if name != 'time' and name in properties.keys():
+#             out_dims = list(properties[name]['dims'])
+#             if '*' in out_dims:
+#                 out_dims.remove('*')
+#             if len(set(out_dims).difference(value.dims)) != 0:
+#                 new_shape = tuple(dim_lengths[dim_name] for dim_name in out_dims)
+#                 new_value = DataArray(
+#                     np.empty(new_shape, dtype=value.dtype),
+#                     dims=out_dims,
+#                     attrs=value.attrs
+#                 )
+#                 _, broadcast_value = xr.broadcast(new_value, value)
+#                 new_value[:] = broadcast_value
+#                 state[name] = new_value
+#
+#
+# def get_dim_lengths(state):
+#     out_dict = {}
+#     for name, data_array in state.items():
+#         if name != 'time':
+#             for dim_name, length in zip(data_array.dims, data_array.shape):
+#                 if dim_name not in out_dict:
+#                     out_dict[dim_name] = length
+#                 else:
+#                     if out_dict[dim_name] != length:
+#                         raise InvalidStateError(
+#                             'Inconsistent lengths {} and {} for dimension {}'.format(
+#                                 out_dict[dim_name], length, dim_name)
+#                         )
+#     return out_dict
+#
+#
+# def get_initial_state_dims(input_dims, output_dims):
+#     pass
 
 
 def init_ozone(p):

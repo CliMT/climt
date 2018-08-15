@@ -123,9 +123,19 @@ class GetGridTests(unittest.TestCase):
 
 
 def assert_state_is_full(state, component):
-    for name, properties in component.input_properties.items():
-        missing_dims = set(properties['dims']).difference(['*'] + list(state[name].dims))
-        assert len(missing_dims) == 0, '{} is missing dims {}'.format(name, missing_dims)
+    for dict_name in ('output_properties', 'tendency_properties', 'diagnostic_proprerties'):
+        if hasattr(component, dict_name):
+            for quantity_name, properties in getattr(component, dict_name).items():
+                if quantity_name not in component.input_properties.keys():
+                    continue
+                elif 'dims' in properties.keys():
+                    dims = properties['dims']
+                else:
+                    dims = component.input_properties[quantity_name]['dims']
+                missing_dims = set(dims).difference(
+                    ['*'] + list(state[quantity_name].dims))
+                assert len(missing_dims) == 0, '{} is missing {} dims {}'.format(
+                    quantity_name, dict_name, missing_dims)
 
 
 def create_default_test_for(cls):
@@ -262,6 +272,20 @@ class TestGFSDycoreWith32VerticalLevels(unittest.TestCase):
         state = get_default_state([component], grid_state=grid)
         call_component(component, state)
 
+
+def test_3d_initialization_is_full_based_on_wildcard():
+    grid_state = get_grid(nx=10, ny=10, nz=20)
+    rrtmg_shortwave = RRTMGShortwave()
+    instellation = Instellation()
+    state = get_default_state([rrtmg_shortwave, instellation], grid_state=grid_state)
+    for quantity_name, properties in rrtmg_shortwave.input_properties.items():
+        if '*' in properties['dims']:
+            assert len(state[quantity_name].dims) == len(properties['dims']) + 1
+        if tuple(properties['dims']) == ('*',):
+            assert set(state[quantity_name].dims) == {'latitude', 'longitude'}
+        elif tuple(properties['dims']) == ('mid_levels', '*'):
+            assert state[quantity_name].dims[0] == 'mid_levels'
+            assert set(state[quantity_name].dims[1:]) == {'latitude', 'longitude'}
 
 if __name__ == '__main__':
     pytest.main([__file__])
