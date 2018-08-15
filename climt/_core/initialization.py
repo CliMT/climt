@@ -618,9 +618,12 @@ default_values = {
     'solar_cycle_fraction': {'value': 0., 'units': 'dimensionless'},
     'flux_adjustment_for_earth_sun_distance': {'value': 1.0, 'units': 'dimensionless'},
     'sea_water_density': {'value': 1.029e3, 'units': 'kg m^-3'},
-    'surface_albedo_for_direct_shortwave': {'value': 0.06, 'units': 'dimensionless'},
-    'surface_albedo_for_diffuse_shortwave': {'value': 0.06, 'units': 'dimensionless'},
-    'surface_albedo_for_direct_near_infrared': {'value': 0.06, 'units': 'dimensionless'},
+    'surface_albedo_for_direct_shortwave': {'value': 0.06, 'units': 'dimensionless', 'grid':
+                                            'surface_air_pressure'},
+    'surface_albedo_for_diffuse_shortwave': {'value': 0.06, 'units': 'dimensionless', 'grid':
+                                             'surface_air_pressure'},
+    'surface_albedo_for_direct_near_infrared': {'value': 0.06, 'units': 'dimensionless', 'grid':
+                                                'surface_air_pressure'},
     'surface_albedo_for_diffuse_near_infrared': {'value': 0.06, 'units': 'dimensionless'},
     'soil_type': {'value': 'clay', 'units': 'dimensionless', 'dtype': 'a100'},
     'surface_roughness_length': {'value': 0.0002, 'units': 'dimensionless'},
@@ -630,10 +633,14 @@ default_values = {
     'zenith_angle': {'value': 0., 'units': 'radians'},
     'latitude': {'value': 0., 'units': 'degrees_north'},
     'longitude': {'value': 0., 'units': 'degrees_east'},
-    'surface_downwelling_shortwave_flux': {'value': 0., 'units': 'W m^-2'},
-    'surface_downwelling_longwave_flux': {'value': 0., 'units': 'W m^-2'},
-    'surface_upwelling_shortwave_flux': {'value': 0., 'units': 'W m^-2'},
-    'surface_upwelling_longwave_flux': {'value': 0., 'units': 'W m^-2'},
+    'downwelling_shortwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'grid':
+                                          'air_pressure_on_interface_levels'},
+    'downwelling_longwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'grid':
+                                         'air_pressure_on_interface_levels'},
+    'upwelling_shortwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'grid':
+                                        'air_pressure_on_interface_levels'},
+    'upwelling_longwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'grid':
+                                       'air_pressure_on_interface_levels'},
     'upward_heat_flux_at_ground_level_in_soil': {'value': 0., 'units': 'W m^-2'},
     'heat_flux_into_sea_water_due_to_sea_ice': {'value': 0., 'units': 'W m^-2'},
     'ocean_mixed_layer_thickness': {'value': 50., 'units': 'm'},
