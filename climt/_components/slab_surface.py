@@ -104,8 +104,6 @@ class SlabSurface(TendencyComponent):
             raw_state['surface_upward_latent_heat_flux']
         )
 
-        print('Net: ', net_heat_flux)
-
         area_type = raw_state['area_type'].astype(str)
 
         land_mask = np.logical_or(area_type == 'land', area_type == 'land_ice')
