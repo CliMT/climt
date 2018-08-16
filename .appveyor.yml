@@ -37,7 +37,7 @@ install:
   - activate python%PYTHON_VERSION%
   - conda install pandas
   - conda install libpython
-  - pip install -r requirements_dev.txt
+  - python -m pip install -r requirements_dev.txt
   - conda upgrade pip setuptools wheel
 #  - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
 
@@ -62,5 +62,5 @@ on_success:
 #  You can use this step to upload your artifacts to a public website.
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
-  - pip install -U twine
+  - python -m pip install -U twine
   - bash -c "cd /c/projects/climt; if [[ $APPVEYOR_REPO_TAG == true ]]; then python -m twine upload  dist/*.whl; fi"

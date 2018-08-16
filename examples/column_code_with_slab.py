@@ -1,5 +1,5 @@
 from sympl import (
-    DataArray, PlotFunctionMonitor, RelaxationTendencyComponent,
+    DataArray, PlotFunctionMonitor,
     AdamsBashforth
 )
 import numpy as np
@@ -101,7 +101,6 @@ equilibrium_value = DataArray(
 tau = DataArray(
     np.array(2.), dims=[], attrs={'units': 'hour'})
 
-#relaxation = RelaxationTendencyComponent('eastward_wind', equilibrium_value, tau)
 time_stepper = AdamsBashforth([convection, radiation_lw, radiation_sw, slab])
 
 for i in range(60000):

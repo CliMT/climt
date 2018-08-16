@@ -2,7 +2,7 @@ from __future__ import division
 from ..._core import ensure_contiguous_state
 from sympl import (
     get_constant, TendencyStepper, initialize_numpy_arrays_with_properties,
-    get_numpy_arrays_with_properties, AdamsBashforth, ImplicitTendencyComponentComposite,
+    get_numpy_arrays_with_properties, ImplicitTendencyComponentComposite,
     TendencyComponent, ImplicitTendencyComponent,
     get_tracer_names, restore_data_arrays_with_properties,
 )
@@ -204,8 +204,6 @@ class GFSDynamicalCore(TendencyStepper):
     def __init__(
             self,
             tendency_component_list=None,
-            tendency_stepper_class=None,
-            tendency_stepper_kwargs=None,
             number_of_damped_levels=0,
             damping_timescale=2.*86400,
             moist=True,
@@ -218,14 +216,6 @@ class GFSDynamicalCore(TendencyStepper):
             tendency_component_list (list of TendencyComponent, optional):
                 The TendencyComponent objects to use for spectral time stepping.
 
-            tendency_stepper_class (type, optional):
-                The class of TendencyStepper to use. Default is AdamsBashforth.
-
-            tendency_stepper_kwargs (dict, optional);
-                Keyword arguments to pass on to the TendencyStepper init. If
-                prognostic_stepper_class is given, default is {}, otherwise default is
-                {'order': 1}.
-
             number_of_damped_levels (int, optional):
                 The number of levels from the model top which are Rayleigh damped.
 
@@ -237,19 +227,7 @@ class GFSDynamicalCore(TendencyStepper):
                 before tracers are returned.
         """
         tendency_component_list = tendency_component_list or []
-        tendency_stepper_class = tendency_stepper_class or AdamsBashforth
-        if tendency_stepper_class is None:
-            tendency_stepper_kwargs = tendency_stepper_kwargs or {'order': 1}
-        else:
-            tendency_stepper_kwargs = tendency_stepper_kwargs or {}
         self._tendency_component = ImplicitTendencyComponentComposite(*tendency_component_list)
-        self._tendency_stepper = tendency_stepper_class(
-            SelectiveTendencyComponent(
-                self._tendency_component,
-                ignore_names=self.spectral_names,
-            ),
-            **tendency_stepper_kwargs
-        )
         bad_diagnostics = set(
             self._tendency_component.diagnostic_properties.keys()).intersection(
             self.spectral_names)
@@ -285,15 +263,15 @@ class GFSDynamicalCore(TendencyStepper):
         super(GFSDynamicalCore, self).__init__()
         self.input_properties.update(
             get_valid_properties(
-                self._gfs_input_properties, self._tendency_stepper.input_properties, 'input')
+                self._gfs_input_properties, self._tendency_component.input_properties, 'input')
         )
         self.output_properties.update(
             get_valid_properties(
-                self._gfs_output_properties, self._tendency_stepper.output_properties, 'output')
+                self._gfs_output_properties, self._tendency_component.tendency_properties, 'output')
         )
         self.diagnostic_properties.update(
             get_valid_properties(
-                self._gfs_diagnostic_properties, self._tendency_stepper.diagnostic_properties, 'diagnostic')
+                self._gfs_diagnostic_properties, self._tendency_component.diagnostic_properties, 'diagnostic')
         )
 
     def _update_constants(self):
@@ -396,7 +374,8 @@ class GFSDynamicalCore(TendencyStepper):
         if self.uses_tracers:
             raw_state['tracers'] = self._tracer_packer.pack(state)
         raw_state['time'] = state['time']
-        tendencies, _ = self._tendency_component(state, timestep)
+
+        tendencies, diagnostics = self._tendency_component(state, timestep)
         for name, value in tendencies.items():
             if name in self.input_properties.keys():
                 tendencies[name] = value.to_units(self.input_properties[name]['units'] + ' s^-1')
@@ -409,25 +388,33 @@ class GFSDynamicalCore(TendencyStepper):
         if self.tendencies_in_diagnostics:
             self._insert_tendencies_to_diagnostics(
                 raw_state, raw_new_state, timestep, raw_diagnostics)
-        diagnostics = restore_data_arrays_with_properties(
+
+        diagnostics.update(restore_data_arrays_with_properties(
             raw_diagnostics, self.diagnostic_properties,
-            state, self.input_properties, ignore_missing=True)
+            state, self.input_properties, ignore_missing=True))
         new_state.update(restore_data_arrays_with_properties(
             raw_new_state, self.output_properties,
             state, self.input_properties, ignore_missing=True))
+
+        gfs_output_quantities = list(self._gfs_output_properties.keys())
+        for tracer in self.prepend_tracers:
+            gfs_output_quantities.append(tracer[0])
+        remaining = set(tendencies.keys()).difference(gfs_output_quantities)
+
+        for name in remaining:
+            new_state[name] = state[name] + tendencies[name]*timestep.total_seconds()
         for key in state.keys():
             if key not in new_state:
                 new_state[key] = state[key]
-        prog_diagnostics, prog_new_state = self._tendency_stepper(new_state, timestep)
-        diagnostics.update(prog_diagnostics)
+
         check_new_state = {
             name: quantity
-            for (name, quantity) in prog_new_state.items()
+            for (name, quantity) in new_state.items()
             if name in self.output_properties.keys()
         }
         self._diagnostic_checker.check_diagnostics(diagnostics)
         self._output_checker.check_outputs(check_new_state)
-        return diagnostics, prog_new_state
+        return diagnostics, new_state
 
     @ensure_contiguous_state
     def array_call(self, state, timestep, prognostic_tendencies=None):
