@@ -40,10 +40,6 @@ force_look:
 
 clean: force_look
 	rm -f $(OBJS) *.mod *genmod* libgfs_dycore.a
-	ln -fs phy_init_stub.f90 phy_init.f90
-	ln -fs phy_data_stub.f90 phy_data.f90
-	ln -fs phy_finalize_stub.f90 phy_finalize.f90
-	ln -fs phy_run_hs.f90 phy_run.f90
 
 
 .f90.o:

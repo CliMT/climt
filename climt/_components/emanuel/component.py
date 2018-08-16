@@ -195,7 +195,6 @@ class EmanuelConvection(ImplicitTendencyComponent):
                 precipitation_fraction_outside_cloud > 1):
             raise ValueError("Outside cloud precipitation fraction must be between 0 and 1.")
 
-
         self._con_mom_txfr = convective_momentum_transfer_coefficient
         self._downdraft_area_frac = downdraft_area_fraction
         self._precip_frac_outside_cloud = precipitation_fraction_outside_cloud

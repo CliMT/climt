@@ -78,8 +78,8 @@ cdef extern:
     void gfs_take_one_step()
 
 #Function to register an external callback
-cdef extern:
-    void gfsRegisterPhysicsCallback(pyPhysicsCallback callback)
+#cdef extern:
+#    void gfsRegisterPhysicsCallback(pyPhysicsCallback callback)
 
 #Function to add u,v tendency to vrt,div tendency
 cdef extern:
@@ -88,18 +88,6 @@ cdef extern:
         double *pyVg,
         double *pyVrtg,
         double *pyDivg)
-
-#Function to calculate tendencies within the fortran code (For testing)
-cdef extern:
-    void gfs_calculate_tendencies(
-        double *pyVrtg,
-        double *pyDivg,
-        double *pyVirtTempg,
-        double *pyPressGrid,
-        double *pySurfPressure,
-        double *pyTracerg,
-        double t,
-        double dt)
 
 #Function to set tendencies within the fortran code, which will be called by the
 # dynamical core after the semi-implicit step
@@ -545,10 +533,10 @@ def assign_tendencies(
 # Register a callback which calculates the physics (to be used in stand-alone
 # mode only)
 
-cdef setPhysicsCallback(physicsFnPtr):
+#cdef setPhysicsCallback(physicsFnPtr):
 
-    physicsCallback = physicsFnPtr
-    physicsEnabled = True
+#    physicsCallback = physicsFnPtr
+#    physicsEnabled = True
     #        gfsRegisterPhysicsCallback(testFunc)
 
 
