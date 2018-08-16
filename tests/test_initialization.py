@@ -219,10 +219,6 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
             component2 = self.component_classes[j]()
             print(component1.__class__.__name__, component2.__class__.__name__)
             state = get_default_state([component1, component2])
-            print(
-                {name: zip(value.dims, value.shape)
-                 for name, value in state.items()
-                 if name != 'time'})
             call_component(component1, state)
             call_component(component2, state)
 
@@ -233,6 +229,7 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
             component1 = self.component_classes[i]()
             component2 = self.component_classes[j]()
             component3 = self.component_classes[k]()
+            print(component1.__class__.__name__, component2.__class__.__name__, component3.__class__.__name__)
             state = get_default_state([component1, component2, component3])
             call_component(component1, state)
             call_component(component2, state)

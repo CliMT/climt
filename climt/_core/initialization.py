@@ -729,6 +729,7 @@ def broadcast_dims_to_match_component_properties(state, component_list):
         dims_dict,
         get_dims_dict_from_state(state),
     )
+    wildcard_dim_list = sorted(wildcard_dim_list)
     dims_dict = expand_wildcard_dim(dims_dict, wildcard_dim_list)
     return broadcast_state(state, dims_dict, dim_lengths)
 
