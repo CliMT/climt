@@ -1,6 +1,6 @@
 from sympl import Stepper, get_constant, initialize_numpy_arrays_with_properties
 import numpy as np
-from scipy.interpolate import CubicSpline
+# from scipy.interpolate import CubicSpline
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
@@ -11,20 +11,20 @@ class IceSheet(Stepper):
     """
 
     input_properties = {
-        'surface_downwelling_longwave_flux': {
-            'dims': ['*'],
+        'downwelling_longwave_flux_in_air': {
+            'dims': ['*', 'interface_levels'],
             'units': 'W m^-2',
         },
-        'surface_downwelling_shortwave_flux': {
-            'dims': ['*'],
+        'downwelling_shortwave_flux_in_air': {
+            'dims': ['*', 'interface_levels'],
             'units': 'W m^-2',
         },
-        'surface_upwelling_longwave_flux': {
-            'dims': ['*'],
+        'upwelling_longwave_flux_in_air': {
+            'dims': ['*', 'interface_levels'],
             'units': 'W m^-2',
         },
-        'surface_upwelling_shortwave_flux': {
-            'dims': ['*'],
+        'upwelling_shortwave_flux_in_air': {
+            'dims': ['*', 'interface_levels'],
             'units': 'W m^-2',
         },
         'surface_upward_latent_heat_flux': {
@@ -143,10 +143,10 @@ class IceSheet(Stepper):
         num_cols = raw_state['area_type'].shape[0]
 
         net_heat_flux = (
-            raw_state['surface_downwelling_shortwave_flux'] +
-            raw_state['surface_downwelling_longwave_flux'] -
-            raw_state['surface_upwelling_shortwave_flux'] -
-            raw_state['surface_upwelling_longwave_flux'] -
+            raw_state['downwelling_shortwave_flux_in_air'][:, 0] +
+            raw_state['downwelling_longwave_flux_in_air'][:, 0] -
+            raw_state['upwelling_shortwave_flux_in_air'][:, 0] -
+            raw_state['upwelling_longwave_flux_in_air'][:, 0] -
             raw_state['surface_upward_sensible_heat_flux'] -
             raw_state['surface_upward_latent_heat_flux']
         )
@@ -192,7 +192,6 @@ class IceSheet(Stepper):
                 continue
 
             snow_height_fraction = raw_state['surface_snow_thickness'][col] / total_height
-
 
             temp_profile = raw_state['snow_and_ice_temperature'][:, col]
             num_layers = temp_profile.shape[0]

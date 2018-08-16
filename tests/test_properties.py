@@ -2,8 +2,8 @@ import unittest
 from climt._core.properties import (
     combine_dims_dict_list, get_wildcard_dims, get_dims_dict_from_state,
     get_dims_dict_from_properties, expand_wildcard_dim, get_dim_lengths,
-    get_initial_dims, convert_state_units, get_units_dict_from_properties,
-    broadcast_state, transform_array_to_dims, get_arrays_from_state,
+    # get_initial_dims, convert_state_units, get_units_dict_from_properties,
+    broadcast_state, transform_array_to_dims,  # get_arrays_from_state,
     IncompatibleDimensionsError
 )
 from sympl import DataArray
@@ -290,6 +290,7 @@ class TestGetDimsDictFromProperties(unittest.TestCase):
             'name3': ('dim3',)
         }
 
+
 class ExpandWildcardDimTests(unittest.TestCase):
 
     def test_empty(self):
@@ -328,6 +329,7 @@ class ExpandWildcardDimTests(unittest.TestCase):
             'name1': ('dim1', 'dim2', 'dim3'),
             'name2': ('dim4', 'dim1'),
         }
+
 
 class GetDimLengthsTests(unittest.TestCase):
 

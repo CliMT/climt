@@ -169,7 +169,6 @@ class ComponentBaseColumn(ComponentBase):
                 compare_outputs(output, cached_output)
 
 
-
 class ComponentBase3D(ComponentBase):
 
     def get_3d_input_state(self, component=None):
@@ -390,7 +389,7 @@ def test_dcmip_options():
                                  not_perturbed_state['eastward_wind'].values))
 
     assert not np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
-                             np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
+                                 np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
 
 
 class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
@@ -463,7 +462,7 @@ class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
     def get_3d_input_state(self):
         state = climt.get_default_state(
             [self.get_component_instance()], grid_state=get_grid(nx=32, ny=32, nz=28))
-        #state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
+        # state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
         state.update(climt.DcmipInitialConditions(add_perturbation=True)(state))
         return state
 
