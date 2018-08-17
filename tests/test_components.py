@@ -401,7 +401,7 @@ class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
         return IceSheet()
 
 
-@pytest.mark.skipif(sys.platform == 'win32')
+@pytest.mark.skipif(sys.version_info < (3, 0))
 class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         ice = IceSheet()
@@ -490,7 +490,7 @@ class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
         )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 0))
+@pytest.mark.skipif(sys.platform == 'win32')
 class TestGFSDycore(ComponentBase3D):
 
     def get_component_instance(self):
