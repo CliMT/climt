@@ -39,7 +39,7 @@ requirements = [
     'numpy>=0.10',
     'pint>=0.7.0',
     'xarray>=0.8.0',
-    'sympl==0.3.2',
+    'sympl==0.4.0',
     'cython>=0.25',
     'scipy>=0.18.1',
 ]
@@ -106,9 +106,9 @@ if 'CC' not in os.environ:
         os.environ['CC'] = 'gcc'
 
 if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
-    # os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
-    # os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
-    # os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
+    os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
+    os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
+    os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
     libraries = []
     openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']

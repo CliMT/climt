@@ -2,12 +2,42 @@
 History
 =======
 
+Latest
+------
+
+Many of the changes in this version come from changes in Sympl 0.4.0. We recommend
+reading those changes in the Sympl documentation.
+
+* Updated component APIs to work with Sympl 0.4.0
+* Many components which previously required horizontal dimensions now use
+  wildcard matches for column dimensions.
+* Switched many print statements to logging calls.
+* Fixed bugs in some components
+
+Breaking Changes
+----------------
+
+* get_constant and set_constant have been removed, use the ones in Sympl.
+* Emanuel convection scheme can no longer be set to perform dry adiabatic
+  adjustment to the boundary layer. This has been implemented in a separate
+  component.
+* ClimtPrognostic, ClimtImplicitPrognostic, ClimtDiagnostic, ClimtImplicit have
+  been removed. Use the base types in Sympl.
+* State initialization has been entirely re-worked. get_default_state now takes in
+  an optional grid state instead of options to do with the state grid. A function
+  get_grid is provided which can create a grid state, or one can be created manually.
+  A grid state is a state containing air pressure and sigma on mid and interface
+  levels, as well as surface pressure.
+* Replaced references to "thermal_capacity" with references to "heat_capacity" in
+  component quantity names.
+
 v.0.14.7
 --------
 
 * Fix issue with pip v10 and pandas 0.22 conflicts
+
 v.0.14.3
--------
+--------
 
 * Fix release issue because of pip API change
 

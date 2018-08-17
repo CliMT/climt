@@ -4,9 +4,7 @@ from sympl import set_constant, get_constants_string
 def list_available_constants():
     """
     Prints all the constants currently registered with sympl.
-
     """
-
     print(get_constants_string())
 
 

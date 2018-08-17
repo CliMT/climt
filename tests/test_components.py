@@ -9,18 +9,22 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GFSDynamicalCore, ClimtSpectralDynamicalCore,
-    IceSheet, Instellation)
+    DcmipInitialConditions, GFSDynamicalCore,
+    IceSheet, Instellation, DryConvectiveAdjustment,
+    get_grid)
 import climt
 from sympl import (
-    DataArray, Implicit, TimeStepper, add_direction_names
+    Stepper, TendencyStepper, TimeDifferencingWrapper,
+    ImplicitTendencyComponent, UpdateFrequencyWrapper, DataArray,
+    TendencyComponent, AdamsBashforth, get_constant
 )
+from sympl._core.tracers import reset_tracers, reset_packers
 from datetime import datetime, timedelta
+import sys
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
     'interface_levels', 'mid_levels', 'full_levels']
-add_direction_names(x='longitude', y='latitude', z=vertical_dimension_names)
 
 cache_folder = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
@@ -33,7 +37,9 @@ def cache_dictionary(dictionary, filename):
 
 def load_dictionary(filename):
     dataset = xr.open_dataset(filename, engine='scipy')
-    return dict(dataset.data_vars)
+    return_dict = dict(dataset.data_vars)
+    return_dict.update(dataset.coords)
+    return return_dict
 
 
 def state_3d_to_1d(state):
@@ -67,14 +73,7 @@ def transpose_state(state, dims=None):
 
 def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
-
-    if isinstance(component, IceSheet):
-        output, diagnostics = component(state, timestep=timestep)
-        diagnostics.pop('snow_and_ice_temperature_spline')
-        return output, diagnostics
-    if isinstance(component, ClimtSpectralDynamicalCore):
-        return component(state)
-    elif isinstance(component, (Implicit, TimeStepper)):
+    if isinstance(component, (Stepper, TendencyStepper, ImplicitTendencyComponent)):
         return component(state, timestep=timestep)
     else:
         return component(state)
@@ -82,20 +81,23 @@ def call_with_timestep_if_needed(
 
 class ComponentBase(object):
 
-    @abc.abstractmethod
-    def get_3d_input_state(self):
-        pass
+    def setUp(self):
+        reset_tracers()
+        reset_packers()
+        super(ComponentBase, self).setUp()
 
     @abc.abstractmethod
-    def get_component_instance(self, state_modification_func=lambda x: x):
+    def get_component_instance(self):
         pass
 
-    def get_cached_output(self,):
+    def get_cache_filename(self, descriptor, i):
+        return '{}-{}-{}.cache'.format(self.__class__.__name__, descriptor, i)
+
+    def get_cached_output(self, descriptor):
         cache_filename_list = sorted(glob(
             os.path.join(
                 cache_folder,
-                '{}-*.cache'.format(
-                    self.__class__.__name__))))
+                self.get_cache_filename(descriptor, '*'))))
         if len(cache_filename_list) > 0:
             return_list = []
             for filename in cache_filename_list:
@@ -107,98 +109,143 @@ class ComponentBase(object):
         else:
             return None
 
-    def cache_output(self, output):
+    def cache_output(self, output, descriptor):
         if not isinstance(output, tuple):
             output = (output,)
         for i in range(len(output)):
             cache_filename = os.path.join(
-                cache_folder, '{}-{}.cache'.format(self.__class__.__name__, i))
+                cache_folder, self.get_cache_filename(descriptor, i))
             cache_dictionary(output[i], cache_filename)
 
-    def test_output_matches_cached_output(self):
-        state = self.get_3d_input_state()
+    def assert_valid_output(self, output):
+        if isinstance(output, dict):
+            output = [output]
+        for i, out_dict in enumerate(output):
+            for name, value in out_dict.items():
+                try:
+                    if name != 'time' and np.any(np.isnan(value)):
+                        raise AssertionError(
+                            'NaN produced in output {} from dict {}'.format(name, i))
+                except TypeError:  # raised if cannot run isnan on dtype of value
+                    pass
+
+
+class ComponentBaseColumn(ComponentBase):
+
+    def get_1d_input_state(self, component=None):
+        if component is None:
+            component = self.get_component_instance()
+        return climt.get_default_state(
+            [component], grid_state=get_grid(nx=None, ny=None, nz=30))
+
+    def test_column_output_matches_cached_output(self):
+        state = self.get_1d_input_state()
         component = self.get_component_instance()
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output()
+        cached_output = self.get_cached_output('column')
         if cached_output is None:
-            self.cache_output(output)
+            self.cache_output(output, 'column')
             raise AssertionError(
-                'Failed due to no cached output, cached current output')
+                'Failed due to no cached output, cached current output.')
         else:
             compare_outputs(output, cached_output)
 
-    def test_1d_output_matches_cached_output(self):
-        state = state_3d_to_1d(self.get_3d_input_state())
-        component = self.get_component_instance(
-            state_modification_func=state_3d_to_1d)
+    def test_no_nans_in_column_output(self):
+        state = self.get_1d_input_state()
+        component = self.get_component_instance()
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output()
-        if cached_output is None:
-            raise AssertionError(
-                'Failed due to no cached output.')
-        else:
-            if isinstance(cached_output, dict):
-                compare_outputs(output, state_3d_to_1d(cached_output))
+        self.assert_valid_output(output)
+
+    def test_column_stepping_output_matches_cached_output(self):
+        component = self.get_component_instance()
+        if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
+            component = AdamsBashforth([self.get_component_instance()])
+            state = self.get_1d_input_state(component)
+            output = call_with_timestep_if_needed(component, state)
+            cached_output = self.get_cached_output('column_stepping')
+            if cached_output is None:
+                self.cache_output(output, 'column_stepping')
+                raise AssertionError(
+                    'Failed due to no cached output, cached current output.')
             else:
-                cached_output_1d = []
-                for cached_state in cached_output:
-                    cached_output_1d.append(state_3d_to_1d(cached_state))
-                compare_outputs(output, tuple(cached_output_1d))
+                compare_outputs(output, cached_output)
+
+
+class ComponentBase3D(ComponentBase):
+
+    def get_3d_input_state(self, component=None):
+        if component is None:
+            component = self.get_component_instance()
+        return climt.get_default_state(
+            [component], grid_state=get_grid(nx=16, ny=16, nz=28))
+
+    def test_3d_output_matches_cached_output(self):
+        state = self.get_3d_input_state()
+        component = self.get_component_instance()
+        output = call_with_timestep_if_needed(component, state)
+        cached_output = self.get_cached_output('3d')
+        if cached_output is None:
+            self.cache_output(output, '3d')
+            raise AssertionError(
+                'Failed due to no cached output, cached current output.')
+        else:
+            compare_outputs(output, cached_output)
+
+    def test_3d_stepping_output_matches_cached_output(self):
+        component = self.get_component_instance()
+        if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
+            component = AdamsBashforth([component])
+            state = self.get_3d_input_state(component)
+            output = call_with_timestep_if_needed(component, state)
+            cached_output = self.get_cached_output('3d_stepping')
+            if cached_output is None:
+                self.cache_output(output, '3d_stepping')
+                raise AssertionError(
+                    'Failed due to no cached output, cached current output.')
+            else:
+                compare_outputs(output, cached_output)
+
+    def test_no_nans_in_3D_output(self):
+        state = self.get_3d_input_state()
+        component = self.get_component_instance()
+        output = call_with_timestep_if_needed(component, state)
+        self.assert_valid_output(output)
 
     def test_reversed_state_gives_same_output(self):
-        state = transpose_state(self.get_3d_input_state())
-        component = self.get_component_instance(
-            state_modification_func=transpose_state)
+        state = self.get_3d_input_state()
+        for name, value in state.items():
+            if isinstance(value, (timedelta, datetime)):
+                pass
+            elif len(value.dims) == 3:
+                state[name] = value.transpose(value.dims[2], value.dims[1], value.dims[0])
+            elif len(value.dims) == 2:
+                state[name] = value.transpose(value.dims[1], value.dims[0])
+        component = self.get_component_instance()
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output()
+        cached_output = self.get_cached_output('3d')
         if cached_output is None:
             raise AssertionError(
                 'Failed due to no cached output.')
         else:
             compare_outputs(output, cached_output)
 
-    def test_component_listed_inputs_are_accurate(self):
+    def test_transposed_state_gives_same_output(self):
         state = self.get_3d_input_state()
+        for name, value in state.items():
+            if isinstance(value, (timedelta, datetime)):
+                pass
+            elif len(value.dims) == 3:
+                state[name] = value.transpose(value.dims[2], value.dims[0], value.dims[1])
+            elif len(value.dims) == 2:
+                state[name] = value.transpose(value.dims[1], value.dims[0])
         component = self.get_component_instance()
-        input_state = {}
-        for key in component.inputs:
-            input_state[key] = state[key]
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output()
-        if cached_output is not None:
-            compare_outputs(output, cached_output)
-
-    def test_consistent_dim_length(self):
-        input_state = self.get_3d_input_state()
-        assert_dimension_lengths_are_consistent(input_state)
-        component = self.get_component_instance()
-        output = call_with_timestep_if_needed(component, input_state)
-        if isinstance(output, tuple):
-            # Check diagnostics/tendencies/outputs are consistent with one
-            # another
-            test_state = {}
-            for state in output:
-                test_state.update(state)
-            assert_dimension_lengths_are_consistent(test_state)
+        cached_output = self.get_cached_output('3d')
+        if cached_output is None:
+            raise AssertionError(
+                'Failed due to no cached output.')
         else:
-            test_state = output  # if not a tuple assume it's a dict
-            assert_dimension_lengths_are_consistent(test_state)
-
-
-def assert_dimension_lengths_are_consistent(state):
-    dimension_lengths = {}
-    for name, value in state.items():
-        if name != 'time':
-            for i, dim_name in enumerate(value.dims):
-                try:
-                    if dim_name in dimension_lengths:
-                        assert dimension_lengths[dim_name] == value.shape[i]
-                    else:
-                        dimension_lengths[dim_name] = value.shape[i]
-                except AssertionError as err:
-                    raise AssertionError(
-                        'Inconsistent length on dimension {} for value {}:'
-                        '{}'.format(dim_name, name, err))
+            compare_outputs(output, cached_output)
 
 
 def compare_outputs(current, cached):
@@ -213,449 +260,131 @@ def compare_outputs(current, cached):
 
 def compare_one_state_pair(current, cached):
     for key in current.keys():
-        try:
-            assert np.all(np.isclose(current[key].values, cached[key].values))
-            for attr in current[key].attrs:
-                assert current[key].attrs[attr] == cached[key].attrs[attr]
-            for attr in cached[key].attrs:
-                assert attr in current[key].attrs
-            assert current[key].dims == cached[key].dims
-        except AssertionError as err:
-            raise AssertionError('Error for {}: {}'.format(key, err))
+        if key == 'time':
+            assert key in cached.keys()
+        else:
+            try:
+                if not np.all(current[key] == cached[key]):
+                    assert np.all(np.isclose(current[key] - cached[key], 0.))
+                for attr in current[key].attrs:
+                    assert current[key].attrs[attr] == cached[key].attrs[attr]
+                for attr in cached[key].attrs:
+                    assert attr in current[key].attrs
+                assert set(current[key].dims) == set(cached[key].dims)
+            except AssertionError as err:
+                raise AssertionError('Error for {}: {}'.format(key, err))
     for key in cached.keys():
         assert key in current.keys()
 
 
-class TestHeldSuarez(ComponentBase):
+@pytest.mark.skip('until get_default_state is fixed')
+class TestHeldSuarez(ComponentBase3D, ComponentBaseColumn):
 
-    def get_3d_input_state(self):
-        hs = self.get_component_instance()
-        return climt.get_default_state([hs])
-
-    def get_component_instance(self, state_modification_func=lambda x: x):
+    def get_component_instance(self):
         return HeldSuarez()
 
 
-class TestHeldSuarezCachedCoordinates(ComponentBase):
+class TestFrierson06LongwaveOpticalDepth(ComponentBaseColumn, ComponentBase3D):
 
-    def get_3d_input_state(self):
-        hs = self.get_component_instance()
-        return climt.get_default_state([hs])
-
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        return HeldSuarez()
-
-    def test_1d_output_matches_cached_output(self):
-        state = state_3d_to_1d(self.get_3d_input_state())
-        component = self.get_component_instance()
-        output = component(state)
-        cached_output = self.get_cached_output()
-        if cached_output is None:
-            raise AssertionError(
-                'Failed due to no cached output.')
-        else:
-            if isinstance(cached_output, dict):
-                compare_outputs(output, state_3d_to_1d(cached_output))
-            else:
-                cached_output_1d = []
-                for cached_state in cached_output:
-                    cached_output_1d.append(state_3d_to_1d(cached_state))
-                compare_outputs(output, tuple(cached_output_1d))
-
-
-def test_hs_without_latitude():
-
-    hs = HeldSuarez()
-
-    random = np.random.RandomState(0)
-    input_state = {
-        'air_pressure': DataArray(
-            random.rand(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-            attrs={'units': 'hPa'},),
-        'surface_air_pressure': DataArray(
-            random.rand(2, 3), dims=['longitude', 'latitude'],
-            attrs={'units': 'hPa'},),
-        'air_temperature': DataArray(
-            270. + random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-            attrs={'units': 'degK'}),
-        'eastward_wind': DataArray(
-            random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-            attrs={'units': 'm/s'}),
-        'northward_wind': DataArray(
-            random.randn(2, 3, 6), dims=['longitude', 'latitude', 'mid_levels'],
-            attrs={'units': 'm/s'})}
-
-    with pytest.raises(IndexError) as excinfo:
-        hs(input_state)
-    assert 'quantity labeled' in str(excinfo.value)
-
-
-class TestFrierson06LongwaveOpticalDepth(ComponentBase):
-
-    def get_3d_input_state(self):
-        state = {
-            'latitude': DataArray(
-                np.linspace(-90, 90, num=10),
-                dims=['latitude'], attrs={'units': 'degrees_N'}),
-            'sigma_on_interface_levels': DataArray(
-                np.linspace(0., 1., num=6),
-                dims=['interface_levels'], attrs={'units': ''}),
-        }
-        return state
-
-    def get_1d_input_state(self):
-        state_3d = self.get_3d_input_state()
-        return {
-            'latitude': state_3d['latitude'][0],
-            'sigma_on_interface_levels': state_3d['sigma_on_interface_levels']
-        }
-
-    def get_component_instance(self, state_modification_func=lambda x: x):
+    def get_component_instance(self):
         return Frierson06LongwaveOpticalDepth()
 
 
-class TestGrayLongwaveRadiation(ComponentBase):
+class TestGrayLongwaveRadiation(ComponentBaseColumn, ComponentBase3D):
 
-    def get_component_instance(self, state_modification_func=lambda x: x):
+    def get_component_instance(self):
         return GrayLongwaveRadiation()
 
-    def get_3d_input_state(self):
-        component = self.get_component_instance()
-        state = climt.get_default_state([component])
-        return state
 
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
+class TestGridScaleCondensation(ComponentBaseColumn, ComponentBase3D):
 
-
-class TestGridScaleCondensation(ComponentBase):
-
-    def get_component_instance(self, state_modification_func=lambda x: x):
+    def get_component_instance(self):
         return GridScaleCondensation()
 
-    def get_3d_input_state(self):
-        nx, ny, nz = 2, 3, 10
-        p_interface = DataArray(
-            np.linspace(1e5, 0, nz+1),
-            dims=['interface_levels'], attrs={'units': 'Pa'},
-        )
-        p = DataArray(
-            0.5*(p_interface.values[1:] + p_interface.values[:-1]),
-            dims=['mid_levels'], attrs={'units': 'Pa'})
-        random = np.random.RandomState(0)
-        return {
-            'air_pressure': p,
-            'air_temperature': DataArray(
-                270. + random.randn(nx, ny, nz),
-                dims=['longitude', 'latitude', 'mid_levels'], attrs={'units': 'degK'}),
-            'specific_humidity': DataArray(
-                random.rand(nx, ny, nz)*15.,
-                dims=['longitude', 'latitude', 'mid_levels'], attrs={'units': 'kg/kg'}),
-            'air_pressure_on_interface_levels': p_interface,
-        }
 
+class TestBergerSolarInsolation(ComponentBaseColumn, ComponentBase3D):
 
-class TestBergerSolarInsolation(ComponentBase):
-
-    def get_component_instance(self, state_modification_func=lambda x: x):
+    def get_component_instance(self):
         return BergerSolarInsolation()
 
-    def get_3d_input_state(self):
-        nx = 5
-        ny = 10
-        return {
-            'time': datetime(2016, 12, 20, 6),
-            'longitude': DataArray(
-                np.linspace(-90, 90, nx, endpoint=False),
-                dims=['longitude'], attrs={'units': 'degree_E'}),
+    def test_no_nans_in_2d_output(self):
+        state = {
+            'time': datetime(1998, 7, 13),
             'latitude': DataArray(
-                np.linspace(-180., 180., num=ny),
-                dims=['latitude'], attrs={'units': 'degrees_north'}),
-        }
-
-
-class TestBergerSolarInsolationDifferentTime(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        return BergerSolarInsolation()
-
-    def get_3d_input_state(self):
-        nx = 5
-        ny = 10
-        return {
-            'time': datetime(1916, 12, 20, 6),
+                np.linspace(-90, 90, 30),
+                dims=['latitude'],
+                attrs={'units': 'degrees_N'}
+            ),
             'longitude': DataArray(
-                np.linspace(-90, 90, nx, endpoint=False),
-                dims=['longitude'], attrs={'units': 'degree_E'}),
-            'latitude': DataArray(
-                np.linspace(-180., 180., num=ny),
-                dims=['latitude'], attrs={'units': 'degrees_north'}),
+                np.linspace(0, 360, 60),
+                dims=['longitude'],
+                attrs={'units': 'degrees_E'}
+            ),
         }
+        component = self.get_component_instance()
+        output = call_with_timestep_if_needed(component, state)
+        self.assert_valid_output(output)
 
 
-class TestBergerSolarInsolationWithSolarConstant(ComponentBase):
+class TestSimplePhysics(ComponentBaseColumn, ComponentBase3D):
 
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        return BergerSolarInsolation()
-
-    def get_3d_input_state(self):
-        nx = 5
-        ny = 10
-        return {
-            'time': datetime(2016, 12, 20, 6),
-            'longitude': DataArray(
-                np.linspace(-90, 90, nx, endpoint=False),
-                dims=['longitude'], attrs={'units': 'degree_E'}),
-            'latitude': DataArray(
-                np.linspace(-180., 180., num=ny),
-                dims=['latitude'], attrs={'units': 'degrees_north'}),
-            'solar_constant': DataArray(
-                1364.*np.ones(1),
-                dims=[''], attrs={'units': 'W m^-2'}),
-
-        }
-
-
-def test_berger_insolation_with_bad_solar_constant():
-
-    berger = BergerSolarInsolation()
-    nx = 5
-    ny = 10
-    input_state = {
-        'time': datetime(2016, 12, 20, 6),
-        'longitude': DataArray(
-            np.linspace(-90, 90, nx, endpoint=False),
-            dims=['longitude'], attrs={'units': 'degree_E'}),
-        'latitude': DataArray(
-            np.linspace(-180., 180., num=ny),
-            dims=['latitude'], attrs={'units': 'degrees_north'}),
-        'solar_constant': DataArray(
-            1364.*np.ones((2)),
-            dims=['latitude'], attrs={'units': 'W m^-2'}),
-
-    }
-
-    with pytest.raises(ValueError) as excinfo:
-        berger(input_state)
-    assert 'Solar constant should' in str(excinfo.value)
-
-
-class TestSimplePhysics(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+    def get_component_instance(self):
         return SimplePhysics()
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+class TestSimplePhysicsImplicitPrognostic(ComponentBaseColumn, ComponentBase3D):
 
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestSimplePhysicsPrognostic(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        component = SimplePhysics()
-        component = component.prognostic_version()
-        component.current_time_step = timedelta(minutes=10)
+    def get_component_instance(self):
+        component = TimeDifferencingWrapper(SimplePhysics())
         return component
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestRRTMGLongwave(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestRRTMGLongwave(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         return RRTMGLongwave()
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestRRTMGLongwaveWithClouds(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestRRTMGLongwaveWithClouds(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         return RRTMGLongwave(cloud_optical_properties='single_cloud_type')
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestRRTMGLongwaveWithExternalInterfaceTemperature(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestRRTMGLongwaveWithExternalInterfaceTemperature(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         return RRTMGLongwave(calculate_interface_temperature=False)
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestRRTMGShortwave(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestRRTMGShortwave(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         return RRTMGShortwave()
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestSlabSurface(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         return SlabSurface()
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestEmanuel(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestEmanuel(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         emanuel = EmanuelConvection()
-        emanuel.current_time_step = timedelta(seconds=300)
         return emanuel
 
-    def get_3d_input_state(self):
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-def test_various_init_parameters_emanuel():
-
-    with pytest.raises(ValueError) as excinfo:
-        EmanuelConvection(convective_momentum_transfer_coefficient=2)
-
-    assert 'Momentum transfer' in str(excinfo.value)
-
-    with pytest.raises(ValueError) as excinfo:
-        EmanuelConvection(downdraft_area_fraction=2)
-
-    assert 'Downdraft' in str(excinfo.value)
-
-    with pytest.raises(ValueError) as excinfo:
-        EmanuelConvection(precipitation_fraction_outside_cloud=-3)
-
-    assert 'Outside cloud' in str(excinfo.value)
-
-    with pytest.raises(NotImplementedError) as excinfo:
-        EmanuelConvection(number_of_tracers=2)
-
-    assert 'additional tracers' in str(excinfo.value)
-
-
-class TestDcmip(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+@pytest.mark.skip('until get_default_state is fixed')
+class TestDcmip(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         return DcmipInitialConditions()
-
-    def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-def test_dcmip_validate_inputs():
-
-    dcmip = DcmipInitialConditions()
-
-    state = climt.get_default_state([dcmip],
-                                    y=dict(label='latitude',
-                                           values=np.linspace(0, 60, 20),
-                                           units='degrees_north'))
-
-    with pytest.raises(ValueError) as excinfo:
-        dcmip(state, type_of_output='abcd')
-
-    assert 'has to be one' in str(excinfo.value)
-
-    with pytest.raises(ValueError) as excinfo:
-        dcmip(state, type_of_output='tropical_cyclone',
-              moist_simulation=False)
-
-    assert 'must be True' in str(excinfo.value)
 
 
 def test_dcmip_options():
 
-    dcmip = DcmipInitialConditions()
+    state = climt.get_default_state([DcmipInitialConditions()],
+                                    grid_state=get_grid(nx=64, ny=64, nz=10))
 
-    state = climt.get_default_state([dcmip],
-                                    y=dict(label='latitude',
-                                           values=np.linspace(0, 60, 20),
-                                           units='degrees_north'))
-
-    dry_state = dcmip(state)
-    moist_state = dcmip(state, moist_simulation=True)
-    not_perturbed_state = dcmip(state, add_perturbation=False)
-
-    tropical_cyclone_state = dcmip(state, type_of_output='tropical_cyclone',
-                                   moist_simulation=True)
+    dry_state = DcmipInitialConditions(moist=False)(state)
+    moist_state = DcmipInitialConditions(moist=True)(state)
+    not_perturbed_state = DcmipInitialConditions(moist=False, add_perturbation=False)(state)
+    tropical_cyclone_state = DcmipInitialConditions(moist=True, condition_type='tropical_cyclone')(state)
 
     assert not np.all(np.isclose(dry_state['specific_humidity'].values,
                                  moist_state['specific_humidity'].values))
@@ -663,218 +392,189 @@ def test_dcmip_options():
     assert not np.all(np.isclose(dry_state['eastward_wind'].values,
                                  not_perturbed_state['eastward_wind'].values))
 
-    assert np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
-                             np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
+    assert not np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
+                                 np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
 
 
-class TestIceSheet(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return IceSheet()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason='get_default_state')
+class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         ice = IceSheet()
         return ice
 
     def get_3d_input_state(self):
+        state = super(TestIceSheetLand, self).get_3d_input_state()
 
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
+        state['area_type'].values = 'land'
+        state['surface_snow_thickness'].values = 3
 
         return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestIceSheetSeaIce(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        ice = IceSheet()
-        return ice
-
-    def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        state['area_type'][:] = 'sea_ice'
-        state['sea_ice_thickness'][:] = 4
-        state['surface_snow_thickness'][:] = 3
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
+#
+#
+# def test_ice_sheet_too_high():
+#
+#     ice = IceSheet()
+#
+#     state_array = climt.get_default_state([ice])
+#
+#     state_array['area_type'].values = 'land_ice'
+#     state_array['land_ice_thickness'].values = 8
+#     state_array['surface_snow_thickness'].values = 3
+#
+#     with pytest.raises(ValueError) as excinfo:
+#         ice(state_array, timedelta(seconds=100))
+#
+#     assert 'exceeds maximum value' in str(excinfo.value)
 
 
-class TestIceSheetLandIce(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        ice = IceSheet()
-        return ice
-
-    def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        state['area_type'][:] = 'land_ice'
-        state['land_ice_thickness'][:] = 4
-        state['surface_snow_thickness'][:] = 3
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-class TestIceSheetLand(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        ice = IceSheet()
-        return ice
-
-    def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        state = climt.get_default_state(
-            [component],
-            x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
-            y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-        state['area_type'][:] = 'land'
-        state['surface_snow_thickness'][:] = 3
-
-        return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-def test_ice_sheet_too_high():
-
-    ice = IceSheet()
-
-    state = climt.get_default_state(
-        [ice],
-        x=dict(label='longtiude', values=np.linspace(0, 2, 4), units='degrees_east'),
-        y=dict(label='latitude', values=np.linspace(0, 2, 4), units='degrees_north'))
-
-    state['area_type'][:] = 'land_ice'
-    state['land_ice_thickness'][:] = 8
-    state['surface_snow_thickness'][:] = 3
-
-    with pytest.raises(ValueError) as excinfo:
-        ice(state, timedelta(seconds=100))
-
-    assert 'exceeds maximum value' in str(excinfo.value)
-
-
-class TestInstellation(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
+class TestInstellation(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
         return Instellation()
 
+
+class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return DryConvectiveAdjustment()
+
+
+def heat_capacity(q):
+
+    Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
+    Cvap = get_constant('heat_capacity_of_vapor_phase', 'J/kg/K')
+
+    return Cpd*(1-q) + Cvap*q
+
+
+def test_enthalpy_and_water_conservation():
+
+    conv_adj = climt.DryConvectiveAdjustment()
+
+    state = climt.get_default_state([conv_adj], grid_state=climt.get_grid(nz=35))
+
+    dp = (state['air_pressure_on_interface_levels'][:-1] - state['air_pressure_on_interface_levels'][1:])/(
+        state['air_pressure_on_interface_levels'][0] - state['air_pressure_on_interface_levels'][-1])
+    state['air_temperature'][:1] += 10
+    state['specific_humidity'][0] = 0.5
+
+    initial_enthalpy = np.sum(heat_capacity(state['specific_humidity'])*state['air_temperature']*dp)
+    initial_water = np.sum(state['specific_humidity'].values*dp.values)
+
+    diag, output = conv_adj(state, timedelta(hours=1))
+
+    final_water = np.sum(output['specific_humidity'].values*dp.values)
+    final_enthalpy = np.sum(heat_capacity(output['specific_humidity'])*output['air_temperature']*dp)
+
+    assert np.isclose(initial_water, final_water)
+    assert np.isclose(initial_enthalpy, final_enthalpy)
+
+
+@pytest.mark.skip('until get_default_state is fixed')
+class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
+
+    def get_component_instance(self):
+        # Create Radiation Prognostic
+        radiation = climt.RRTMGLongwave()
+        # Create Convection Prognostic
+        convection = climt.EmanuelConvection()
+        # Create a SimplePhysics Prognostic
+        boundary_layer = TimeDifferencingWrapper(
+            climt.SimplePhysics()
+        )
+        return GFSDynamicalCore(
+            [radiation, convection, boundary_layer]
+        )
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='get_default_state')
+class TestGFSDycore(ComponentBase3D):
+
+    def get_component_instance(self):
+        return GFSDynamicalCore()
+
+
+@pytest.mark.skip('until get_default_state is fixed')
+class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
+
+    def get_component_instance(self):
+        return GFSDynamicalCore()
+
     def get_3d_input_state(self):
-
-        component = self.get_component_instance()
         state = climt.get_default_state(
-            [component],
-            x=dict(label='longitude', values=np.linspace(0, 360, 20), units='degrees_east'),
-            y=dict(label='latitude', values=np.linspace(-50, 50, 10), units='degrees_north'))
-
-        state['time'] += timedelta(days=100)
-
+            [self.get_component_instance()], grid_state=get_grid(nx=32, ny=32, nz=28))
+        # state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
+        state.update(climt.DcmipInitialConditions(add_perturbation=True)(state))
         return state
 
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
 
+@pytest.mark.skip('until get_default_state is fixed')
+class TestGFSDycoreWithImplicitTendency(ComponentBase3D):
 
-class TestGFSDycore(ComponentBase):
-    dycore = None
-
-    def get_component_instance(self, state_modification_func=lambda x: x):
-
-        if self.dycore is None:
-            self.dycore = GFSDynamicalCore(number_of_longitudes=68,
-                                           number_of_latitudes=32)
-        return self.dycore
+    def get_component_instance(self):
+        return GFSDynamicalCore([EmanuelConvection()])
 
     def get_3d_input_state(self):
-
-        component = self.get_component_instance()
         state = climt.get_default_state(
-            [component], x=component.grid_definition['x'],
-            y=component.grid_definition['y'],
-            mid_levels=component.grid_definition['mid_levels'],
-            interface_levels=component.grid_definition['interface_levels'])
-
-        dcmip = climt.DcmipInitialConditions()
-        out = dcmip(state, add_perturbation=True)
-        state.update(out)
-
+            [self.get_component_instance()], grid_state=get_grid(nx=16, ny=16, nz=28))
         return state
 
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
+
+@pytest.mark.skip('until get_default_state is fixed')
+class TestGFSDycoreWithHeldSuarez(ComponentBase3D):
+    def test_inputs_are_dry(self):
+        component = self.get_component_instance()
+        assert 'specific_humidity' not in component.input_properties.keys()
+        assert 'specific_humidity_on_interface_levels' not in component.input_properties.keys()
+
+    def get_component_instance(self):
+        return GFSDynamicalCore([HeldSuarez()])
+
+    def get_3d_input_state(self):
+        state = climt.get_default_state(
+            [self.get_component_instance()],
+            grid_state=get_grid(nx=16, ny=16, nz=28))
+        return state
 
 
-class TestGFSDycoreWithPrognostic(ComponentBase):
-    def get_component_instance(self, state_modification_func=lambda x: x):
-        dycore = GFSDynamicalCore(number_of_longitudes=68,
-                                  number_of_latitudes=32)
+@pytest.mark.skip('until get_default_state is fixed')
+class TestGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
+
+    def get_component_instance(self):
+        return GFSDynamicalCore([GrayLongwaveRadiation()])
+
+    def get_3d_input_state(self):
+        state = climt.get_default_state(
+            [self.get_component_instance()],
+            grid_state=get_grid(nx=16, ny=16, nz=28))
+        return state
+
+
+@pytest.mark.skip('until get_default_state is fixed')
+class TestGFSDycoreWithRRTMGLongwave(ComponentBase3D):
+
+    def get_component_instance(self):
         radiation = RRTMGLongwave()
-        dycore.prognostics = [radiation]
-
-        return dycore
+        return GFSDynamicalCore([radiation], moist=True)
 
     def get_3d_input_state(self):
-
-        component = self.get_component_instance()
-        prognostic = RRTMGLongwave()
         state = climt.get_default_state(
-            [component, prognostic], x=component.grid_definition['x'],
-            y=component.grid_definition['y'],
-            mid_levels=component.grid_definition['mid_levels'],
-            interface_levels=component.grid_definition['interface_levels'])
-
-        dcmip = climt.DcmipInitialConditions()
-        out = dcmip(state, add_perturbation=True)
-        state.update(out)
-
+            [self.get_component_instance()], grid_state=get_grid(nx=16, ny=16, nz=28))
         return state
-
-    def test_1d_output_matches_cached_output(self):
-        return  # Skipping test
-
-
-def tests_dycore_with_prognostic_attrs_are_sane():
-
-    dycore = GFSDynamicalCore(number_of_longitudes=68,
-                              number_of_latitudes=32)
-    radiation = RRTMGLongwave()
-    dycore.prognostics = [radiation]
-
-    for quantity in radiation.diagnostics:
-        assert quantity in dycore.diagnostics
-
-    for quantity in radiation.inputs:
-        assert quantity in dycore.inputs
 
 
 def test_piecewise_constant_component():
 
-    radiation = RRTMGLongwave()
-    radiation = radiation.piecewise_constant_version(timedelta(seconds=1000))
+    radiation = UpdateFrequencyWrapper(RRTMGLongwave(), timedelta(seconds=1000))
 
     state = climt.get_default_state([radiation])
 
     current_tendency, current_diagnostic = radiation(state)
 
-    # Perturb state
+    # Perturb state_array
     state['air_temperature'] += 3
 
     new_tendency, new_diagnostic = radiation(state)

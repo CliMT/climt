@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
-from ..._core import (ClimtImplicitPrognostic, bolton_q_sat,
-                      numpy_version_of, get_constant)
+from ..._core import bolton_q_sat, ensure_contiguous_state
+from sympl import (
+    ImplicitTendencyComponent, get_constant, initialize_numpy_arrays_with_properties)
 import numpy as np
+import logging
 try:
     from . import _emanuel_convection
 except ImportError:
-    print("Import failed. Emanuel Convection will not be available!")
+    logging.warning(
+        'Import failed. Emanuel Convection is likely not compiled and will not '
+        'be available.'
+    )
 
 
-class EmanuelConvection(ClimtImplicitPrognostic):
+class EmanuelConvection(ImplicitTendencyComponent):
     """
     The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_
 
@@ -17,61 +22,81 @@ class EmanuelConvection(ClimtImplicitPrognostic):
 
     """
 
-    # TODO: Add additional tracers
-    _climt_inputs = {
-        'air_temperature': 'degK',
-        'specific_humidity': 'g/g',
-        'eastward_wind': 'm s^-1',
-        'northward_wind': 'm s^-1',
-        'air_pressure': 'mbar',
-        'air_pressure_on_interface_levels': 'mbar',
-        'atmosphere_convective_mass_flux': 'kg m^-2 s^-1',
+    input_properties = {
+        'air_temperature': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'degK',
+        },
+        'specific_humidity': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'kg/kg',
+        },
+        'eastward_wind': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'm s^-1',
+        },
+        'northward_wind': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'm s^-1',
+        },
+        'air_pressure': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'mbar',
+        },
+        'air_pressure_on_interface_levels': {
+            'dims': ['*', 'interface_levels'],
+            'units': 'mbar',
+        },
+        'cloud_base_mass_flux': {
+            'dims': ['*'],
+            'units': 'kg m^-2 s^-1',
+        },
     }
 
-    _climt_diagnostics = {
-        'convective_state': 'dimensionless',
-        'convective_precipitation_rate': 'mm day^-1',
-        'convective_downdraft_velocity_scale': 'm s^-1',
-        'convective_downdraft_temperature_scale': 'degK',
-        'convective_downdraft_specific_humidity_scale': 'g/g',
-        'atmosphere_convective_mass_flux': 'kg m^-2 s^-1',
-        'atmosphere_convective_available_potential_energy': 'J kg^-1',
-        'convective_heating_rate': 'degK/day'
-    }
-
-    _climt_tendencies = {
-        'air_temperature': 'degK s^-1',
-        'specific_humidity': 'g g^-1 s^-1',
-        'eastward_wind': 'm s^-2',
-        'northward_wind': 'm s^-2',
-    }
-
-    quantity_descriptions = {
+    diagnostic_properties = {
         'convective_state': {
-            'dims': ['x', 'y'],
+            'dims': ['*'],
             'units': 'dimensionless',
-            'default_value': 0,
-            'dtype': np.int32
+            'dtype': np.int32,
+        },
+        'convective_precipitation_rate': {
+            'dims': ['*'],
+            'units': 'mm day^-1',
         },
         'convective_downdraft_velocity_scale': {
-            'dims': ['x', 'y'],
+            'dims': ['*'],
             'units': 'm s^-1',
-            'default_value': 0
-        },
-        'convective_downdraft_specific_humidity_scale': {
-            'dims': ['x', 'y'],
-            'units': 'g/g',
-            'default_value': 0
         },
         'convective_downdraft_temperature_scale': {
-            'dims': ['x', 'y'],
+            'dims': ['*'],
             'units': 'degK',
-            'default_value': 0
         },
+        'convective_downdraft_specific_humidity_scale': {
+            'dims': ['*'],
+            'units': 'kg/kg',
+        },
+        'cloud_base_mass_flux': {
+            'dims': ['*'],
+            'units': 'kg m^-2 s^-1',
+        },
+        'atmosphere_convective_available_potential_energy': {
+            'dims': ['*'],
+            'units': 'J kg^-1',
+        },
+        'air_temperature_tendency_from_convection': {
+            'dims': ['*', 'mid_levels'],
+            'units': 'degK day^-1',
+        }
+    }
+
+    tendency_properties = {
+        'air_temperature': {'units': 'degK s^-1'},
+        'specific_humidity': {'units': 'kg/kg s^-1'},
+        'eastward_wind': {'units': 'm s^-2'},
+        'northward_wind': {'units': 'm s^-2'},
     }
 
     def __init__(self,
-                 simulate_boundary_layer=0,
                  minimum_convecting_layer=1,
                  autoconversion_water_content_threshold=0.0011,
                  autoconversion_temperature_threshold=-55,
@@ -88,15 +113,10 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                  mass_flux_relaxation_rate=0.1,
                  mass_flux_damping_rate=0.1,
                  reference_mass_flux_timescale=300.,
-                 number_of_tracers=0):
+                 **kwargs):
         """
 
         Args:
-
-            simulate_boundary_layer (int, optional):
-                Whether the scheme must perform dry adiabatic adjustment near the surface.
-                This will modify the input fields **in place**. Do not use if your model
-                includes a separate boundary layer scheme.
 
             minimum_convecting_layer (int, optional):
                 The least model level from which convection can be initiated. Normally set
@@ -161,9 +181,6 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                 Timescale used to calculate the actual damping coefficient along with
                 :code:`mass_flux_damping_rate` and the current time step.
 
-            number_of_tracers (integer, optional):
-                The number of additional tracers advected by the code.
-
         """
 
         if (convective_momentum_transfer_coefficient < 0 or
@@ -178,14 +195,9 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                 precipitation_fraction_outside_cloud > 1):
             raise ValueError("Outside cloud precipitation fraction must be between 0 and 1.")
 
-        if number_of_tracers != 0:
-            raise NotImplementedError("Component does not yet support additional tracers")
-
         self._con_mom_txfr = convective_momentum_transfer_coefficient
         self._downdraft_area_frac = downdraft_area_fraction
         self._precip_frac_outside_cloud = precipitation_fraction_outside_cloud
-
-        self._pbl = simulate_boundary_layer
         self._min_conv_layer = minimum_convecting_layer
         self._crit_humidity = autoconversion_water_content_threshold
         self._crit_temp = autoconversion_temperature_threshold
@@ -199,26 +211,21 @@ class EmanuelConvection(ClimtImplicitPrognostic):
         self._mf_damp = mass_flux_damping_rate
         self._alpha = mass_flux_relaxation_rate
         self._mf_timescale = reference_mass_flux_timescale
-        self._ntracers = number_of_tracers
+        self._ntracers = 0
+        self._set_fortran_constants()
+        super(EmanuelConvection, self).__init__(**kwargs)
 
+    def _set_fortran_constants(self):
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
-
         self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
-
         self._Cpv = get_constant('heat_capacity_of_vapor_phase', 'J/kg/degK')
-
         self._Rdair = get_constant('gas_constant_of_dry_air', 'J/kg/degK')
-
         self._Rcond = get_constant('gas_constant_of_vapor_phase', 'J/kg/degK')
-
         self._Lv = get_constant('latent_heat_of_condensation', 'J/kg')
-
         self._rho_condensible = get_constant('density_of_liquid_phase', 'kg/m^3')
-
         self._Cl = get_constant('specific_enthalpy_of_vapor_phase', 'J/kg')
-
         _emanuel_convection.init_emanuel_convection(
-            self._pbl, self._min_conv_layer,
+            self._min_conv_layer,
             self._crit_humidity,
             self._crit_temp, self._entrain_coeff,
             self._downdraft_area_frac,
@@ -232,14 +239,16 @@ class EmanuelConvection(ClimtImplicitPrognostic):
             self._Lv, self._g,
             self._rho_condensible, self._mf_timescale)
 
-    def __call__(self, state):
+    @ensure_contiguous_state
+    def array_call(self, raw_state, timestep):
         """
         Get convective heating and moistening.
 
         Args:
 
-            state (dict):
-                The state dictionary
+            raw_state (dict):
+                The state dictionary of numpy arrays satisfying this
+                component's input properties.
 
         Returns:
 
@@ -248,51 +257,51 @@ class EmanuelConvection(ClimtImplicitPrognostic):
                 * Any diagnostics associated.
 
         """
+        self._set_fortran_constants()
 
-        raw_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
-
-        num_lons, num_cols, num_levs = raw_arrays['air_temperature'].shape
+        num_cols, num_levs = raw_state['air_temperature'].shape
 
         max_conv_level = num_levs - 3
 
-        tend_dict = self.create_state_dict_for('_climt_tendencies', state)
-        diag_dict = self.create_state_dict_for('_climt_diagnostics', state)
+        tendencies = initialize_numpy_arrays_with_properties(
+            self.tendency_properties, raw_state, self.input_properties
+        )
+        diagnostics = initialize_numpy_arrays_with_properties(
+            self.diagnostic_properties, raw_state, self.input_properties
+        )
 
-        q_sat = np.asfortranarray(bolton_q_sat(
-            raw_arrays['air_temperature'],
-            raw_arrays['air_pressure']*100,
-            self._Cpd, self._Cpv))
-
-        tend_arrays = numpy_version_of(tend_dict)
-        diag_arrays = numpy_version_of(diag_dict)
+        q_sat = bolton_q_sat(
+            raw_state['air_temperature'],
+            raw_state['air_pressure'] * 100,
+            self._Cpd, self._Cpv
+        )
 
         _emanuel_convection.convect(
             num_levs,
-            num_lons,
             num_cols,
             max_conv_level,
             self._ntracers,
-            self.current_time_step.total_seconds(),
-            raw_arrays['air_temperature'],
-            raw_arrays['specific_humidity'],
+            timestep.total_seconds(),
+            raw_state['air_temperature'],
+            raw_state['specific_humidity'],
             q_sat,
-            raw_arrays['eastward_wind'],
-            raw_arrays['northward_wind'],
-            raw_arrays['air_pressure'],
-            raw_arrays['air_pressure_on_interface_levels'],
-            diag_arrays['convective_state'],
-            diag_arrays['convective_precipitation_rate'],
-            diag_arrays['convective_downdraft_velocity_scale'],
-            diag_arrays['convective_downdraft_temperature_scale'],
-            diag_arrays['convective_downdraft_specific_humidity_scale'],
-            raw_arrays['atmosphere_convective_mass_flux'],
-            diag_arrays['atmosphere_convective_available_potential_energy'],
-            tend_arrays['air_temperature'],
-            tend_arrays['specific_humidity'],
-            tend_arrays['eastward_wind'],
-            tend_arrays['northward_wind'])
+            raw_state['eastward_wind'],
+            raw_state['northward_wind'],
+            raw_state['air_pressure'],
+            raw_state['air_pressure_on_interface_levels'],
+            diagnostics['convective_state'],
+            diagnostics['convective_precipitation_rate'],
+            diagnostics['convective_downdraft_velocity_scale'],
+            diagnostics['convective_downdraft_temperature_scale'],
+            diagnostics['convective_downdraft_specific_humidity_scale'],
+            raw_state['cloud_base_mass_flux'],
+            diagnostics['atmosphere_convective_available_potential_energy'],
+            tendencies['air_temperature'],
+            tendencies['specific_humidity'],
+            tendencies['eastward_wind'],
+            tendencies['northward_wind'])
 
-        diag_dict['convective_heating_rate'].values[:] = \
-            tend_dict['air_temperature'].to_units('degK/day').values
-        diag_dict['atmosphere_convective_mass_flux'].values[:] = raw_arrays['atmosphere_convective_mass_flux']
-        return tend_dict, diag_dict
+        diagnostics['air_temperature_tendency_from_convection'][:] = (
+            tendencies['air_temperature'] * 86400.)
+        diagnostics['cloud_base_mass_flux'][:] = raw_state['cloud_base_mass_flux']
+        return tendencies, diagnostics

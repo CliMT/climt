@@ -1,121 +1,149 @@
-from ..._core import ClimtDiagnostic
+from sympl import (
+    DiagnosticComponent, initialize_numpy_arrays_with_properties,
+    get_constant)
+import logging
 import numpy as np
-
 try:
     from . import _dcmip
 except ImportError:
-    print('Import Failed. DCMIP initial conditions will not be available!')
+    logging.warning(
+        'Import Failed. DCMIP initial conditions will not be available.')
 
 
-class DcmipInitialConditions(ClimtDiagnostic):
+class DcmipInitialConditions(DiagnosticComponent):
     """
         Climt interface to the DCMIP initial conditions.
         Currently only provides interfaces to tests 4 and 5.
     """
 
-    _climt_inputs = {
-        'latitude': 'degrees_north',
-        'longitude': 'degrees_east',
-        'air_pressure': 'Pa',
-    }
-
-    _climt_diagnostics = {
-        'eastward_wind': 'm s^-1',
-        'northward_wind': 'm s^-1',
-        'air_temperature': 'degK',
-        'surface_geopotential': 'm^2 s^-2',
-        'surface_air_pressure': 'Pa',
-        'specific_humidity': 'g/g'
-    }
-
-    quantity_descriptions = {
+    input_properties = {
         'latitude': {
-            'dims': ['y'],
+            'dims': ['*'],
             'units': 'degrees_north',
-            'default_value': 0.
         },
         'longitude': {
-            'dims': ['x'],
+            'dims': ['*'],
             'units': 'degrees_east',
-            'default_value': 0.
+        },
+        'air_pressure': {
+            'dims': ['mid_levels', '*'],
+            'units': 'Pa',
+        },
+        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
+            'dims': ['interface_levels', '*'],
+            'units': 'dimensionless',
+            'alias': 'ak'
+        },
+        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels': {
+            'dims': ['interface_levels', '*'],
+            'units': 'dimensionless',
+            'alias': 'bk'
         },
     }
 
-    def __init__(self):
-        """
-        Initialise the DCMIP module.
+    diagnostic_properties = {
+        'eastward_wind': {
+            'dims': ['mid_levels', '*'],
+            'units': 'm s^-1',
+        },
+        'northward_wind': {
+            'dims': ['mid_levels', '*'],
+            'units': 'm s^-1',
+        },
+        'air_temperature': {
+            'dims': ['mid_levels', '*'],
+            'units': 'degK',
+        },
+        'surface_geopotential': {
+            'dims': ['*'],
+            'units': 'm^2 s^-2',
+        },
+        'surface_air_pressure': {
+            'dims': ['*'],
+            'units': 'Pa',
+        },
+        'specific_humidity': {
+            'dims': ['mid_levels', '*'],
+            'units': 'g/g',
+        },
+        'air_pressure': {
+            'dims': ['mid_levels', '*'],
+            'units': 'Pa',
+        },
+        'air_pressure_on_interface_levels': {
+            'dims': ['interface_levels', '*'],
+            'units': 'Pa',
+        },
+    }
 
-        """
-
-    def __call__(self, state,
-                 type_of_output='baroclinic_wave',
+    def __init__(self,
+                 condition_type='baroclinic_wave',
                  add_perturbation=True,
-                 moist_simulation=False):
+                 moist=False,
+                 **kwargs):
         """
-        Get initial conditions for DCMIP tests.
+        Initialize the DCMIP module.
 
         Args:
-            state (dict):
-                State dictionary. Should contain 'air_pressure',
-                'latitude' and 'longitude' defined.
-
-            type_of_output (optional, str):
+            condition_type (str, optional):
                 The type of initial conditions desired. Can be
                 one of :code:`'baroclinic_wave'` or
                 :code:`'tropical_cyclone'`.
-
-            add_perturbation (optional, bool):
+            add_perturbation (bool, optional):
                 Whether a perturbation must be added. Only applies
                 to the baroclinic wave test.
-
-            moist_simulation (optional, bool):
-                Whether the simulation is using moisture or not.
-
-        Returns:
-            diagnostics(dict):
-                The desired initial conditions.
         """
-
-        # TODO Implement full DCMIP ICs
-
-        if type_of_output not in ['baroclinic_wave', 'tropical_cyclone']:
+        if condition_type not in ['baroclinic_wave', 'tropical_cyclone']:
             raise ValueError("type_of_output has to be one \
                              of 'baroclinic_wave' or 'tropical_cyclone'")
-
-        if type_of_output is 'tropical_cyclone' and moist_simulation is False:
+        if condition_type is 'tropical_cyclone' and moist is False:
             raise ValueError("moist_simulation must be True for tropical cyclone test")
+        self._condition_type = condition_type
+        self._add_perturbation = add_perturbation
+        self._moist = moist
+        super(DcmipInitialConditions, self).__init__(**kwargs)
 
-        raw_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
-        if len(raw_arrays['latitude'].shape) == 1:  # 1D coordinate
+    def array_call(self, state):
+        toa_pressure = get_constant('top_of_model_pressure', 'Pa')
+        rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
+        cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1')
 
-            latitude, longitude = np.meshgrid(np.radians(raw_arrays['latitude']),
-                                              np.radians(raw_arrays['longitude']))
+        longitude = np.radians(state['longitude'])
+        latitude = np.radians(state['latitude'])
 
-            longitude = np.asfortranarray(longitude)
-            latitude = np.asfortranarray(latitude)
-        else:
+        diagnostics = initialize_numpy_arrays_with_properties(
+            self.diagnostic_properties, state, self.input_properties
+        )
 
-            longitude = np.radians(raw_arrays['longitude'])
-            latitude = np.radians(raw_arrays['latitude'])
+        if self._condition_type is 'baroclinic_wave':
+            u, v, t, q, p_surface, phi_surface = _dcmip.get_baroclinic_wave_ics(
+                state['air_pressure'],
+                longitude, latitude,
+                perturb=self._add_perturbation,
+                moist_sim=self._moist)
+        elif self._condition_type is 'tropical_cyclone':
+            u, v, t, q, p_surface, phi_surface = _dcmip.get_tropical_cyclone_ics(
+                state['air_pressure'],
+                longitude, latitude,
+                perturb=self._add_perturbation,
+                moist_sim=self._moist)
 
-        diag = self.create_state_dict_for('_climt_diagnostics', state)
-        if type_of_output is 'baroclinic_wave':
-            u, v, t, q, ps, phis = _dcmip.get_baroclinic_wave_ics(raw_arrays['air_pressure'],
-                                                                  longitude, latitude,
-                                                                  perturb=add_perturbation,
-                                                                  moist_sim=moist_simulation)
+        diagnostics['eastward_wind'][:] = u
+        diagnostics['northward_wind'][:] = v
+        diagnostics['air_temperature'][:] = t
+        diagnostics['surface_geopotential'][:] = phi_surface
+        diagnostics['specific_humidity'][:] = q
+        diagnostics['surface_air_pressure'][:] = p_surface
+        p_interface = (
+            state['ak'] + state['bk']*(p_surface - toa_pressure))
+        delta_p = p_interface[1:, :] - p_interface[:-1, :]
+        rk = rd/cpd
 
-        elif type_of_output is 'tropical_cyclone':
-            u, v, t, q, ps, phis = _dcmip.get_tropical_cyclone_ics(raw_arrays['air_pressure'],
-                                                                   longitude, latitude,
-                                                                   perturb=add_perturbation,
-                                                                   moist_sim=moist_simulation)
+        diagnostics['air_pressure_on_interface_levels'][:] = p_interface
+        diagnostics['air_pressure'][:] = (
+            (p_interface[1:, :]**(rk+1) - p_interface[:-1, :]**(rk+1)) / (
+                (rk+1) * delta_p
+            )
+        ) ** (1./rk)
 
-        diag['eastward_wind'].values[:] = u
-        diag['northward_wind'].values[:] = v
-        diag['air_temperature'].values[:] = t
-        diag['surface_geopotential'].values[:] = phis
-        diag['specific_humidity'].values[:] = q
-        diag['surface_air_pressure'].values[:] = ps
-
-        return diag
+        return diagnostics
