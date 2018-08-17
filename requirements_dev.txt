@@ -17,4 +17,4 @@ numpy>=0.10
 cython>=0.25
 ipython>=5.3.0
 coveralls
-sympl==0.3.2
+sympl==0.4.0
