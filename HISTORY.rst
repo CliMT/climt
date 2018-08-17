@@ -35,6 +35,9 @@ Breaking Changes
 v.0.9.4
 -------
 
+* Added attributes to inputs/outputs/ etc., to work with ScalingWrapper
+  Added tests as well.
+* Added tests for constants functions
 * Fixed requirements to ensure this version of climt installs
   the correct versions of sympl and numpy.
 

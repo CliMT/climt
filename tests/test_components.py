@@ -277,8 +277,26 @@ def compare_one_state_pair(current, cached):
         assert key in current.keys()
 
 
+<<<<<<< HEAD
 @pytest.mark.skip('until get_default_state is fixed')
 class TestHeldSuarez(ComponentBase3D, ComponentBaseColumn):
+=======
+class TestHeldSuarez(ComponentBase):
+
+    def get_3d_input_state(self):
+        hs = self.get_component_instance()
+        return climt.get_default_state([hs])
+
+    def get_component_instance(self, state_modification_func=lambda x: x):
+        return HeldSuarez()
+
+
+class TestHeldSuarezCachedCoordinates(ComponentBase):
+
+    def get_3d_input_state(self):
+        hs = self.get_component_instance()
+        return climt.get_default_state([hs])
+>>>>>>> develop
 
     def get_component_instance(self):
         return HeldSuarez()

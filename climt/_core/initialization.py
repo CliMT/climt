@@ -225,10 +225,490 @@ def horizontal_broadcast_if_needed(output, nx=None, ny=None):
     return tuple(output_list)
 
 
+<<<<<<< HEAD
 def expand_new_last_dim(var, length):
     indexer = tuple(slice(0, n) for n in var.shape) + (None,)
     return np.repeat(var[indexer], length, axis=-1)
 '''
+=======
+    vert_levels = array_dims[-1]
+    spacing = np.linspace(0.998, 0.001, vert_levels-1)
+    midlevel = spacing
+
+    interface = np.zeros(vert_levels)
+    interface[1:-1] = 0.5*(midlevel[:-1] + midlevel[1:])
+    interface[0] = 1.
+    interface[-1] = 0.0005
+    tau_longwave = 1.*(1 - interface)
+
+    return tau_longwave*np.ones(array_dims, order='F')
+
+
+def init_ozone(array_dims, quantity_description, initial_state):
+
+    import pkg_resources
+
+    init_array = np.ones(array_dims, order='F')
+    current_levels = np.linspace(0.998, 0.001, 30)[::-1]
+
+    target_levels = np.linspace(0.998, 0.001, array_dims[-1])[::-1]
+
+    file_name = 'ozone_profile.npy'
+    file_path = 'climt._data'
+
+    resource_path = pkg_resources.resource_filename(file_path, file_name)
+
+    profile = np.load(resource_path)
+
+    target_profile = CubicSpline(current_levels, profile[::-1])(target_levels)[::-1]
+
+    if array_dims[-1] == 30:
+        target_profile = profile
+
+    # Ensure ozone concentration at top of model is not excessive
+    # This is more in line with observations.
+    target_profile[-1] /= 10
+
+    init_array[:] = target_profile[np.newaxis, np.newaxis, :]
+
+    return init_array
+
+
+climt_quantity_descriptions = {
+    'latitude': {
+        'dims': ['x', 'y'],
+        'units': 'degrees_north',
+        'default_value': 0
+    },
+    'longitude': {
+        'dims': ['x', 'y'],
+        'units': 'degrees_east',
+        'default_value': 0
+    },
+    'air_pressure': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'Pa',
+        'init_func': init_mid_level_pressures
+    },
+    'air_pressure_on_interface_levels': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'Pa',
+        'init_func': init_interface_level_pressures
+    },
+    'sigma_levels': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'init_func': init_mid_level_sigma
+    },
+    'sigma_on_interface_levels': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'dimensionless',
+        'init_func': init_interface_level_sigma
+    },
+    'longwave_optical_depth_on_interface_levels': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'dimensionless',
+        'init_func': init_interface_level_tau_longwave
+    },
+    'surface_air_pressure': {
+        'dims': ['x', 'y'],
+        'units': 'Pa',
+        'default_value': 1.0132e5
+    },
+    'air_temperature': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'degK',
+        'default_value': 290.
+    },
+    'air_temperature_on_interface_levels': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'degK',
+        'default_value': 290.
+    },
+    'surface_temperature': {
+        'dims': ['x', 'y'],
+        'units': 'degK',
+        'default_value': 300.
+    },
+    'sea_surface_temperature': {
+        'dims': ['x', 'y'],
+        'units': 'degK',
+        'default_value': 300.
+    },
+    'soil_surface_temperature': {
+        'dims': ['x', 'y'],
+        'units': 'degK',
+        'default_value': 300.
+    },
+    'northward_wind': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
+    'eastward_wind': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
+    'divergence_of_wind': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 's^-1',
+        'default_value': 0.
+    },
+    'atmosphere_relative_vorticity': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 's^-1',
+        'default_value': 0.
+    },
+    'surface_geopotential': {
+        'dims': ['x', 'y'],
+        'units': 'm^2 s^-2',
+        'default_value': 0.
+    },
+    'surface_longwave_emissivity': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 1.
+    },
+    'specific_humidity': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'g/g',
+        'default_value': 0.
+    },
+    'surface_specific_humidity': {
+        'dims': ['x', 'y'],
+        'units': 'g/g',
+        'default_value': 0.
+    },
+    'mole_fraction_of_ozone_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'init_func': init_ozone
+    },
+    'mole_fraction_of_carbon_dioxide_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 330e-6
+    },
+    'mole_fraction_of_methane_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.
+    },
+    'mole_fraction_of_nitrous_oxide_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.
+    },
+    'mole_fraction_of_oxygen_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.21
+    },
+    'mole_fraction_of_nitrogen_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.78
+    },
+    'mole_fraction_of_hydrogen_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 500e-9
+    },
+    'mole_fraction_of_cfc11_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.
+    },
+    'mole_fraction_of_cfc12_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.
+    },
+    'mole_fraction_of_cfc22_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.
+    },
+    'mole_fraction_of_carbon_tetrachloride_in_air': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'mole/mole',
+        'default_value': 0.
+    },
+    'cloud_area_fraction_in_atmosphere_layer': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'default_value': 0.
+    },
+    'shortwave_optical_thickness_due_to_aerosol': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'default_value': 0.
+    },
+    'longwave_optical_thickness_due_to_aerosol': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'default_value': 0.
+    },
+    'mass_content_of_cloud_ice_in_atmosphere_layer': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'kg m^-2',
+        'default_value': 0.
+    },
+    'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'kg m^-2',
+        'default_value': 0.
+    },
+    'cloud_ice_particle_size': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'micrometer',
+        'default_value': 20.
+    },
+    'cloud_water_droplet_radius': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'micrometer',
+        'default_value': 10.
+    },
+    'longwave_optical_thickness_due_to_cloud': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'default_value': 0.
+    },
+    'shortwave_optical_thickness_due_to_cloud': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'dimensionless',
+        'default_value': 0.
+    },
+    'longwave_heating_rate': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
+    'longwave_heating_rate_assuming_clear_sky': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
+    'upwelling_longwave_flux_in_air': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'upwelling_longwave_flux_in_air_assuming_clear_sky': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'downwelling_longwave_flux_in_air': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'downwelling_longwave_flux_in_air_assuming_clear_sky': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'shortwave_heating_rate': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
+    'shortwave_heating_rate_assuming_clear_sky': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
+    'upwelling_shortwave_flux_in_air': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'upwelling_shortwave_flux_in_air_assuming_clear_sky': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'downwelling_shortwave_flux_in_air': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'downwelling_shortwave_flux_in_air_assuming_clear_sky': {
+        'dims': ['x', 'y', 'interface_levels'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'surface_upward_sensible_heat_flux': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'surface_upward_latent_heat_flux': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'upward_heat_flux_at_ground_level_in_soil': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'heat_flux_into_sea_water_due_to_sea_ice': {
+        'dims': ['x', 'y'],
+        'units': 'W m^-2',
+        'default_value': 0.
+    },
+    'precipitation_amount': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-2',
+        'default_value': 0.
+    },
+    'convective_precipitation_amount': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-2',
+        'default_value': 0.
+    },
+    'stratiform_precipitation_amount': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-2',
+        'default_value': 0.
+    },
+    'precipitation_rate': {
+        'dims': ['x', 'y'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
+    'convective_precipitation_rate': {
+        'dims': ['x', 'y'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
+    'stratiform_precipitation_rate': {
+        'dims': ['x', 'y'],
+        'units': 'm s^-1',
+        'default_value': 0.
+    },
+    'atmosphere_convective_mass_flux': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-2 s^-1',
+        'default_value': 0.
+    },
+    'atmosphere_convective_available_potential_energy': {
+        'dims': ['x', 'y'],
+        'units': 'J kg^-1',
+        'default_value': 0.
+    },
+    'convective_heating_rate': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'K day^-1',
+        'default_value': 0.
+    },
+    'zenith_angle': {
+        'dims': ['x', 'y'],
+        'units': 'radians',
+        'default_value': 0.
+    },
+    'land_ice_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 0.
+    },
+    'sea_ice_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 0.
+    },
+    'surface_snow_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 0.
+    },
+    'ocean_mixed_layer_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 50.
+    },
+    'soil_layer_thickness': {
+        'dims': ['x', 'y'],
+        'units': 'm',
+        'default_value': 50.
+    },
+    'soil_thermal_capacity': {
+        'dims': ['x', 'y'],
+        'units': 'J kg^-1 degK^-1',
+        'default_value': 2000.
+    },
+    'area_type': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 'sea',
+        'dtype': 'a100'
+    },
+    'snow_and_ice_temperature_spline': {
+        'dims': ['x', 'y'],
+        'units': 'degK',
+        'default_value': CubicSpline(
+            np.linspace(0, 50, 50), 260.*np.ones(50)),
+        'dtype': object
+    },
+    'sea_water_density': {
+        'dims': ['x', 'y'],
+        'units': 'kg m^-3',
+        'default_value': 1.029e3
+    },
+    'surface_albedo_for_direct_shortwave': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+
+    'surface_albedo_for_diffuse_shortwave': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+
+    'surface_albedo_for_direct_near_infrared': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+
+    'surface_albedo_for_diffuse_near_infrared': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.06
+    },
+    'soil_type': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 'clay',
+        'dtype': 'a100'
+    },
+    'surface_roughness_length': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.0002,
+    },
+    'surface_drag_coefficient_for_heat_in_air': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.0012,
+    },
+    'surface_drag_coefficient_for_momentum_in_air': {
+        'dims': ['x', 'y'],
+        'units': 'dimensionless',
+        'default_value': 0.0012,
+    },
+    'soil_temperature': {
+        'dims': ['x', 'y', 'mid_levels'],
+        'units': 'degK',
+        'default_value': 274.,
+    },
+}
+>>>>>>> develop
 
 
 def leggauss(deg):
