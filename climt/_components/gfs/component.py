@@ -648,6 +648,7 @@ def set_negatives_to_zero(array):
     return array
 
 
+'''
 def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):
 
     tendency_list = []
@@ -660,3 +661,4 @@ def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):
             raise IndexError("{} not found in input state or tendencies".format(quantity))
 
     return tendency_list
+'''

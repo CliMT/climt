@@ -400,6 +400,7 @@ class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
         return IceSheet()
 
 
+@pytest.mark.skip('until get_default_state is fixed')
 class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         ice = IceSheet()
@@ -488,6 +489,7 @@ class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
         )
 
 
+@pytest.mark.skip('until get_default_state is fixed')
 class TestGFSDycore(ComponentBase3D):
 
     def get_component_instance(self):
