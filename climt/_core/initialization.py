@@ -208,6 +208,7 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
         }
 
 
+'''
 def horizontal_broadcast_if_needed(output, nx=None, ny=None):
     """
     Take a tuple of numpy arrays output. If nx and ny are not None, broadcast
@@ -227,6 +228,7 @@ def horizontal_broadcast_if_needed(output, nx=None, ny=None):
 def expand_new_last_dim(var, length):
     indexer = tuple(slice(0, n) for n in var.shape) + (None,)
     return np.repeat(var[indexer], length, axis=-1)
+'''
 
 
 def leggauss(deg):

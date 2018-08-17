@@ -3,7 +3,6 @@ from ..._core import ensure_contiguous_state
 from sympl import (
     get_constant, TendencyStepper, initialize_numpy_arrays_with_properties,
     get_numpy_arrays_with_properties, ImplicitTendencyComponentComposite,
-    TendencyComponent, ImplicitTendencyComponent,
     get_tracer_names, restore_data_arrays_with_properties,
 )
 import numpy as np
@@ -22,6 +21,7 @@ class GFSError(Exception):
     pass
 
 
+'''
 class SelectiveTendencyComponent(ImplicitTendencyComponent):
 
     @property
@@ -84,6 +84,7 @@ class SelectiveTendencyComponent(ImplicitTendencyComponent):
                     self.prognostic.__class__.__name__)
             )
         return self._filter_tendency_dict(tendencies), diagnostics
+'''
 
 
 def get_valid_properties(gfs_properties, prognostic_properties, property_type):
