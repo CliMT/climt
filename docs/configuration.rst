@@ -39,7 +39,7 @@ Memory/Array Configuration
 --------------------------
 
 CliMT does not yet support MPI, so there is no API yet to handle distributed arrays.
-However, the shape of arrays used by a model can be set while calling 
+However, the shape of arrays used by a model can be set while calling
 :py:func:`climt.get_default_state`. See, for example, the configuration of arrays in a
 `GCM`_.
 
@@ -72,23 +72,23 @@ Currently, CliMT allows for three kinds of behavioural modification of component
   behaviour, :py:meth:`climt.ClimtPrognostic.piecewise_constant_version` can be used.
   See how this can be used practically in this `example`_.
 
-* Prognostic version: Spectral dynamical cores step the model forward in spectral space,
+* TendencyComponent version: Spectral dynamical cores step the model forward in spectral space,
   and therefore, they do not play well with :py:mod:`climt.ClimtImplicit`
   components that step forward the model in grid space. Typically, this is handled by
-  finite differencing the output of Implicit components and providing them as time tendencies.
-  :py:mod:`ClimtImplicit` components have a method :py:mod:`ClimtImplicit.prognostic_version` which 
+  finite differencing the output of Stepper components and providing them as time tendencies.
+  :py:mod:`ClimtImplicit` components have a method :py:mod:`ClimtImplicit.prognostic_version` which
   returns a component which provides the
   time differenced tendencies. The time differencing is done using a first order scheme:
- 
+
   :math:`\frac{dX}{dt} = (X_{out} - X_{in})/\delta t`.
-  
+
   See how this is used in the `Grey GCM`_.
 
 * Scaled version: Very often, we perform experiments where we want to study the sensitivity of the simulation
   to a particular quantity or the effect of a certain quantity on the output (mechanism denial).
   This is in some instances done by scaling the quantity or setting it to zero (which
   is also a scaling). To allow for this kind of modification, :py:meth:`scaled_version` can be used. This is a method
-  available to all kinds of components (Implicit, Prognostic, etc.,). See the documentation for this
+  available to all kinds of components (Stepper, TendencyComponent, etc.,). See the documentation for this
   method in the description of the base components in :ref:`component_list`.
 
 Compositional Configuration
@@ -107,4 +107,4 @@ a lot of this code is repetitive and can be replaced by an entity (Which will be
 
 .. _GCM: https://github.com/CliMT/climt/blob/e171ebef945535f9f82df716da01b4a7c3b1221a/examples/grey_gcm_energy_balanced.py#L51
 .. _example: https://github.com/CliMT/climt/blob/e171ebef945535f9f82df716da01b4a7c3b1221a/examples/full_radiation_gcm_energy_balanced.py#L70
-.. _Grey GCM: https://github.com/CliMT/climt/blob/5bdac431413f122ae5f46ed4e6610f6a314593c6/examples/grey_gcm_energy_balanced.py#L44 
+.. _Grey GCM: https://github.com/CliMT/climt/blob/5bdac431413f122ae5f46ed4e6610f6a314593c6/examples/grey_gcm_energy_balanced.py#L44

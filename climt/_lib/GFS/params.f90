@@ -14,7 +14,7 @@ use iso_c_binding, only: c_double,c_int,c_bool
  public :: initfile,sfcinitfile,dt,ntmax,ndimspec,nlons,nlats,&
  tstart,ndiss,efold,nlevs,ntrunc,dry,explicit,heldsuarez,dcmip,&
  ntout,fhdfi,fhzer,idate_start,adiabatic,hdif_fac,hdif_fac2,fshk,ntrac,ntoz,ntclw,&
- pdryini,massfix,timestepsperhr,ncw,taustratdamp,polar_opt,ntdfi,gfsio_out,sigio_out,&
+ pdryini, toa_pressure, massfix,timestepsperhr,ncw,taustratdamp,polar_opt,ntdfi,gfsio_out,sigio_out,&
 ! gfs phys parameters.
  nmtvr,fhlwr,fhswr,ictm,isol,ico2,iaer,ialb,iems,isubc_sw,isubc_lw,&
  iovr_sw,iovr_lw,newsas,ras,sashal,num_p3d,num_p2d,crick_proof,ccnorm,&
@@ -51,6 +51,9 @@ use iso_c_binding, only: c_double,c_int,c_bool
 
  real(c_double) :: pdryini ! initial dry ps
  bind(c) :: pdryini
+
+ real(c_double) :: toa_pressure !top of model pressure
+ bind(c) :: toa_pressure
 
  logical(c_bool)  :: massfix=.true. ! apply dry mass 'fixer'
  bind(c) :: massfix
@@ -212,6 +215,14 @@ contains
         real(c_double), intent(in):: py_pdryini
 
         pdryini = py_pdryini
+
+    end subroutine
+
+    subroutine set_model_top_pressure(py_ptoa)bind(c, name='gfs_set_model_top_pressure')
+
+        real(c_double), intent(in):: py_ptoa
+
+        toa_pressure = py_ptoa
 
     end subroutine
 

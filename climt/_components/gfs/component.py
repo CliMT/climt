@@ -1,110 +1,221 @@
 from __future__ import division
-from ..._core import ClimtSpectralDynamicalCore, numpy_version_of, get_constant
-from sympl import DataArray
+from ..._core import ensure_contiguous_state
+from sympl import (
+    get_constant, TendencyStepper, initialize_numpy_arrays_with_properties,
+    get_numpy_arrays_with_properties, ImplicitTendencyComponentComposite,
+    get_tracer_names, restore_data_arrays_with_properties,
+)
 import numpy as np
 import sys
-from datetime import timedelta
+import logging
 try:
     from . import _gfs_dynamics
 except ImportError:
-    print("Import failed. GFS dynamical core will not be available!")
+    logging.warning(
+        'Import failed. GFS dynamical core is likely not compiled and will not '
+        'be available.'
+    )
 
 
-class GFSDynamicalCore(ClimtSpectralDynamicalCore):
+class GFSError(Exception):
+    pass
+
+
+'''
+class SelectiveTendencyComponent(ImplicitTendencyComponent):
+
+    @property
+    def input_properties(self):
+        return self.prognostic.input_properties
+
+    @property
+    def tendency_properties(self):
+        return_dict = {}
+        return_dict.update(self.prognostic.tendency_properties)
+        return self._filter_tendency_dict(return_dict)
+
+    def _filter_tendency_dict(self, tendency_dict):
+        return_dict = {}
+        if self.ignore_names is not None:
+            for name in set(tendency_dict.keys()).difference(self.ignore_names):
+                return_dict[name] = tendency_dict[name]
+        elif self.include_names is not None:
+            for name in set(tendency_dict.keys()).intersection(self.include_names):
+                return_dict[name] = tendency_dict[name]
+        return return_dict
+
+    @property
+    def diagnostic_properties(self):
+        return self.prognostic.diagnostic_properties
+
+    def __init__(self, prognostic, include_names=None, ignore_names=None):
+        """
+
+        Args:
+            prognostic: Prognostic
+                The Prognostic to be wrapped.
+            include_names: iterable of str, optional
+                If given, the tendency names for the wrapper to output.
+                Cannot be given with ignore_names.
+            ignore_names: iterable of str, optional
+                If given, the tendency names for the wrapper to suppress.
+                Cannot be given with include_names.
+        """
+        if not (include_names is None or ignore_names is None):
+            raise ValueError('Cannot give both include_names and ignore_names')
+        self.prognostic = prognostic
+        self.ignore_names = ignore_names
+        self.include_names = include_names
+        super(SelectiveTendencyComponent, self).__init__()
+
+    def __call__(self, *args, **kwargs):
+        tendencies, diagnostics = self.prognostic(*args, **kwargs)
+        return self._filter_tendency_dict(tendencies), diagnostics
+
+    def array_call(self, state, timestep=None):
+        if isinstance(self.prognostic, TendencyComponent):
+            tendencies, diagnostics = self.prognostic.array_call(state)
+        elif isinstance(self.prognostic, ImplicitTendencyComponent):
+            tendencies, diagnostics = self.prognostic.array_call(state, timestep)
+        else:
+            raise GFSError(
+                'Given a component to wrap of type {} that is not a '
+                'TendencyComponent or ImplicitTendencyComponent'.format(
+                    self.prognostic.__class__.__name__)
+            )
+        return self._filter_tendency_dict(tendencies), diagnostics
+'''
+
+
+def get_valid_properties(gfs_properties, prognostic_properties, property_type):
+    return_dict = {}
+    for name, properties in prognostic_properties.items():
+        if name not in gfs_properties:
+            return_dict[name] = properties
+        elif 'dims' in prognostic_properties.keys():
+            extra_dims = set(prognostic_properties['dims']).difference(['*'] + list(gfs_properties[name]['dims']))
+            if len(extra_dims) != 0:
+                raise GFSError(
+                    'Cannot handle TendencyComponent with {} {} '
+                    'that has extra dimensions {} not used by GFS'.format(
+                        property_type, name, extra_dims)
+                )
+    return return_dict
+
+
+class GFSDynamicalCore(TendencyStepper):
     """
     Climt interface to the GFS dynamical core. The GFS
     code is available on `github`_.
-
-    :attribute area_weights: Weights used for calculating area averages.
-    :attribute gauss_weights: Unnormalised weights used for calculating integrals along longitude.
 
     .. _github:
        https://github.com/jswhit/gfs-dycore
     """
 
-    _climt_inputs = {
-        'eastward_wind': 'm s^-1',
-        'northward_wind': 'm s^-1',
-        'air_temperature': 'degK',
-        'surface_air_pressure': 'Pa',
-        'air_pressure': 'Pa',
-        'air_pressure_on_interface_levels': 'Pa',
-        'specific_humidity': 'g/g',
-        'surface_geopotential': 'm^2 s^-2',
-        'atmosphere_relative_vorticity': 's^-1',
-        'divergence_of_wind': 's^-1',
-        'mole_fraction_of_ozone_in_air': 'dimensionless',
-        'mass_content_of_cloud_ice_in_atmosphere_layer': 'g m^-2',
-        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'g m^-2',
-        'gfs_tracers': 'dimensionless',
-    }
-
-    _climt_outputs = {
-        'eastward_wind': 'm s^-1',
-        'northward_wind': 'm s^-1',
-        'air_temperature': 'degK',
-        'air_pressure': 'Pa',
-        'air_pressure_on_interface_levels': 'Pa',
-        'surface_air_pressure': 'Pa',
-        'specific_humidity': 'g/g',
-        'atmosphere_relative_vorticity': 's^-1',
-        'divergence_of_wind': 's^-1',
-        'mole_fraction_of_ozone_in_air': 'dimensionless',
-        'mass_content_of_cloud_ice_in_atmosphere_layer': 'g m^-2',
-        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': 'g m^-2',
-        'gfs_tracers': 'dimensionless',
-    }
-
-    _climt_diagnostics = {
-        # 'downward_air_velocity': 'm s^-1',
-    }
-
-    extra_dimensions = {'tracer_number': np.arange(4)}
-
-    quantity_descriptions = {
-        'gfs_tracers': {
-            'dims': ['x', 'y', 'mid_levels', 'tracer_number'],
+    _gfs_input_properties = {
+        'latitude': {
+            'units': 'degrees_N',
+            'dims': ['latitude'],
+        },
+        'longitude': {
+            'units': 'degrees_E',
+            'dims': ['longitude'],
+        },
+        'air_temperature': {
+            'units': 'degK',
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+        },
+        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
             'units': 'dimensionless',
-            'default_value': 0.
-        }
+            'dims': ['interface_levels'],
+            'alias': 'a_coord',
+        },
+        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels': {
+            'units': 'dimensionless',
+            'dims': ['interface_levels'],
+            'alias': 'b_coord',
+        },
+        'air_pressure': {
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
+        },
+        'air_pressure_on_interface_levels': {
+            'dims': ['interface_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
+        },
+        'surface_air_pressure': {
+            'units': 'Pa',
+            'dims': ['latitude', 'longitude'],
+        },
+        'eastward_wind': {
+            'units': 'm s^-1',
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+        },
+        'northward_wind': {
+            'units': 'm s^-1',
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+        },
+        'divergence_of_wind': {
+            'units': 's^-1',
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+        },
+        'atmosphere_relative_vorticity': {
+            'units': 's^-1',
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+        },
+        'surface_geopotential': {
+            'units': 'm^2 s^-2',
+            'dims': ['latitude', 'longitude'],
+        },
     }
+
+    _gfs_output_properties = {
+        'air_temperature': {'units': 'degK'},
+        'air_pressure': {
+            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
+        },
+        'air_pressure_on_interface_levels': {
+            'dims': ['interface_levels', 'latitude', 'longitude'],
+            'units': 'Pa'
+        },
+        'surface_air_pressure': {'units': 'Pa'},
+        'eastward_wind': {'units': 'm s^-1'},
+        'northward_wind': {'units': 'm s^-1'},
+        'divergence_of_wind': {'units': 's^-1'},
+        'atmosphere_relative_vorticity': {'units': 's^-1'},
+    }
+
+    _gfs_diagnostic_properties = {}
+
+    input_properties = None
+    output_properties = None
+    diagnostic_properties = None
+
+    uses_tracers = True
+    tracer_dims = ('tracer', 'mid_levels', 'latitude', 'longitude')
+    prepend_tracers = (('specific_humidity', 'kg/kg'),)
+
+    @property
+    def spectral_names(self):
+        return (
+            'eastward_wind', 'northward_wind', 'air_temperature',
+            'surface_air_pressure') + get_tracer_names()
 
     def __init__(
             self,
-            number_of_latitudes=94,
-            number_of_longitudes=198,
-            number_of_levels=28,
-            number_of_tracers=0,
+            tendency_component_list=None,
             number_of_damped_levels=0,
             damping_timescale=2.*86400,
-            time_step=1200.):
+            moist=True,
+            zero_negative_moisture=True,
+    ):
         """
         Initialise the GFS dynamical core.
 
         Args:
-
-            number_of_latitudes (int, optional):
-                The desired number of latitudes for the model. Note that
-                not all combinations of latitudes and longitudes are
-                acceptable. In particular, the number of latitudes must be
-                :math:`\leq (longitudes)/2`.
-
-            number_of_longitudes (int, optional):
-                The desired number of longitudes. The resolution of the model in `Txx`
-                notation is approximately :math:`xx = longitudes/3`. So, 192
-                longitudes is T64, etc.,
-
-            number_of_levels (int, optional):
-                The desired number of levels. **Setting this option is not supported yet.**
-
-            number_of_tracers (int, optional):
-                The number of additional tracers to be used by the model. A minimum of
-                four tracers are used for specific humidity, ozone and liquid and solid cloud condensate.
-                This number indicates number of tracers beyond these four. These tracers
-                will appear in the state dictionary in a :code:`DataArray` whose key is
-                :code:`gfs_tracers` and dimensions are
-                :code:`(number_of_longitudes, number_of_latitudes, number_of_levels,
-                number_of_tracers)`.
+            tendency_component_list (list of TendencyComponent, optional):
+                The TendencyComponent objects to use for spectral time stepping.
 
             number_of_damped_levels (int, optional):
                 The number of levels from the model top which are Rayleigh damped.
@@ -112,359 +223,432 @@ class GFSDynamicalCore(ClimtSpectralDynamicalCore):
             damping_timescale (float, optional):
                 The damping timescale in :math:`s` to use for top-of-model Rayleigh damping.
 
-            time_step (float, optional):
-                The time step to be used by the model in :math:`s`.
-
+            zero_negative_moisture (bool, optional):
+                If True, all negative values of moisture will be set to zero
+                before tracers are returned.
         """
+        tendency_component_list = tendency_component_list or []
+        self._tendency_component = ImplicitTendencyComponentComposite(*tendency_component_list)
+        bad_diagnostics = set(
+            self._tendency_component.diagnostic_properties.keys()).intersection(
+            self.spectral_names)
+        if len(bad_diagnostics) > 0:
+            raise GFSError(
+                'Cannot use TendencyComponent components that produce {} as diagnostic '
+                'output as these must only be stepped spectrally.'.format(
+                    bad_diagnostics,
+                )
+            )
+        bad_diagnostics = set(
+            self._tendency_component.diagnostic_properties.keys()).intersection(
+            self._gfs_diagnostic_properties.keys())
+        if len(bad_diagnostics) > 0:
+            raise GFSError(
+                'Cannot use TendencyComponent components that produce {} as diagnostic'
+                ' output as these are already diagnosed by GFS.'.format(
+                    bad_diagnostics,
+                )
+            )
 
-        self._time_step = timedelta(seconds=time_step)
-
-        self._radius = get_constant('planetary_radius', 'm')
-
-        self._omega = get_constant('planetary_rotation_rate', 's^-1')
-
-        self._R = get_constant('universal_gas_constant', 'J/mole/K')
-
-        self._Rd = get_constant('gas_constant_of_dry_air', 'J/kg/K')
-
-        self._Rv = get_constant('gas_constant_of_vapor_phase', 'J/kg/K')
-
-        self._g = get_constant('gravitational_acceleration', 'm/s^2')
-
-        self._Cp = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
-
-        self._Cvap = get_constant('heat_capacity_of_vapor_phase', 'J/kg/K')
-
-        self._fvirt = (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
-
-        # Sanity Checks
-        assert number_of_tracers >= 0
-        assert number_of_levels > 0
-        assert number_of_latitudes > 0
-        assert number_of_longitudes > 0
-        assert number_of_damped_levels >= 0
-
-        self._num_lats = number_of_latitudes
-
-        self._num_lons = number_of_longitudes
-
-        self._num_levs = number_of_levels
+        self._update_constants()
 
         self._damping_levels = number_of_damped_levels
         self._tau_damping = damping_timescale
+        self._zero_negative_moisture = zero_negative_moisture
 
-        # 4 tracers at least for water vapour, ozone and liquid and solid cloud condensate
-        self._num_tracers = number_of_tracers + 4
-        self.extra_dimensions['tracer_number'] = np.arange(self._num_tracers)
+        self.initialized = False
 
+        self.input_properties = self._gfs_input_properties.copy()
+        self.output_properties = self._gfs_output_properties.copy()
+        self.diagnostic_properties = self._gfs_diagnostic_properties.copy()
+        super(GFSDynamicalCore, self).__init__()
+        self.input_properties.update(
+            get_valid_properties(
+                self._gfs_input_properties, self._tendency_component.input_properties, 'input')
+        )
+        self.output_properties.update(
+            get_valid_properties(
+                self._gfs_output_properties, self._tendency_component.tendency_properties, 'output')
+        )
+        self.diagnostic_properties.update(
+            get_valid_properties(
+                self._gfs_diagnostic_properties, self._tendency_component.diagnostic_properties, 'diagnostic')
+        )
+
+    def _update_constants(self):
+        self._radius = get_constant('planetary_radius', 'm')
+        self._omega = get_constant('planetary_rotation_rate', 's^-1')
+        self._R = get_constant('universal_gas_constant', 'J/mole/K')
+        self._Rd = get_constant('gas_constant_of_dry_air', 'J/kg/K')
+        self._Rv = get_constant('gas_constant_of_vapor_phase', 'J/kg/K')
+        self._g = get_constant('gravitational_acceleration', 'm/s^2')
+        self._Cp = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
+        self._Cvap = get_constant('heat_capacity_of_vapor_phase', 'J/kg/K')
+        self._fvirt = (1 - self._Rd/self._Rv)/(self._Rd/self._Rv)
         self._dry_pressure = get_constant('reference_air_pressure', 'Pa')
+        self._toa_pressure = get_constant('top_of_model_pressure', 'Pa')
 
-        # Cannot set to new value currently.
-        if self._num_levs != 28:
-            raise NotImplementedError(
-                'Setting levels is not supported yet!.')
+    def _initialize_model(self, state, timestep):
+        assert not self.initialized
+        self._time_step = timestep
+        self._num_tracers = state['tracers'].shape[0]
+        self._num_levs, self._num_lats, self._num_lons = state['air_temperature'].shape
 
         self._truncation = int(self._num_lons/3 - 2)
 
         self._spectral_dim = int(
             (self._truncation + 1)*(self._truncation + 2)/2)
 
-        _gfs_dynamics.set_time_step(self._time_step.total_seconds())
+        _gfs_dynamics.set_time_step(
+            self._time_step.total_seconds())
 
-        _gfs_dynamics.set_constants(self._radius, self._omega,
-                                    self._R, self._Rd, self._Rv,
-                                    self._g, self._Cp, self._Cvap)
+        _gfs_dynamics.set_constants(
+            self._radius, self._omega, self._R, self._Rd, self._Rv, self._g,
+            self._Cp, self._Cvap)
 
-        _gfs_dynamics.set_model_grid(self._num_lats,
-                                     self._num_lons,
-                                     self._num_levs,
-                                     self._truncation,
-                                     self._spectral_dim,
-                                     self._num_tracers)
+        _gfs_dynamics.set_model_grid(
+            self._num_lats,
+            self._num_lons,
+            self._num_levs,
+            self._truncation,
+            self._spectral_dim,
+            self._num_tracers,
+            state['a_coord'][::-1],
+            state['b_coord'][::-1],
+        )
 
-        print('Initialising dynamical core, this could take some time...')
+        logging.info('Initialising dynamical core, this could take some time...')
 
-        gaussian_weights, area_weights, latitudes, longitudes, sigma, sigma_interface = \
-            _gfs_dynamics.init_model(self._dry_pressure,
-                                     self._damping_levels,
-                                     self._tau_damping)
+        gaussian_weights, area_weights, latitudes, longitudes = \
+            _gfs_dynamics.init_model(
+                self._dry_pressure,
+                self._damping_levels,
+                self._tau_damping,
+                self._toa_pressure)
 
-        print('Done!')
+        np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
+        np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
 
-        self.gauss_weights = DataArray(gaussian_weights,
-                                       name='gauss_weights',
-                                       dims=['latitude'],
-                                       coords=[np.degrees(latitudes[0, :])],
-                                       attrs=dict(
-                                           units='dimensionless'))
+        logging.info('Done!')
 
-        self.area_weights = DataArray(area_weights,
-                                      name='area_weights',
-                                      dims=['longitude', 'latitude'],
-                                      coords=[np.degrees(longitudes[:, 0]),
-                                              np.degrees(latitudes[0, :])],
-                                      attrs=dict(
-                                          units='dimensionless'))
+        self._hash_u = 1000
+        self._hash_v = 1000
+        self._hash_temperature = 1000
+        self._hash_surface_pressure = 1000
+        self._hash_tracers = 1000
 
-        latitude = dict(label='latitude',
-                        values=np.degrees(latitudes[0, :]),
-                        units='degrees_north')
+        self.initialized = True
 
-        longitude = dict(label='longitude',
-                         values=np.degrees(longitudes[:, 0]),
-                         units='degrees_east')
+    def __call__(self, state, timestep):
+        """
+        Gets diagnostics from the current model state and steps the state
+        forward in time according to the timestep.
 
-        sigma_levels = dict(label='sigma_levels',
-                            values=sigma,
-                            units='dimensionless')
+        Args
+        ----
+        state : dict
+            A model state dictionary satisfying the input_properties of this
+            object.
+        timestep : timedelta
+            The amount of time to step forward.
 
-        sigma_int_levels = dict(label='sigma_interface_levels',
-                                values=sigma_interface,
-                                units='dimensionless')
+        Returns
+        -------
+        diagnostics : dict
+            Diagnostics from the timestep of the input state.
+        new_state : dict
+            A dictionary whose keys are strings indicating
+            state quantities and values are the value of those quantities
+            at the timestep after input state.
 
-        self.grid_definition = dict(y=latitude, x=longitude,
-                                    mid_levels=sigma_levels,
-                                    interface_levels=sigma_int_levels)
+        Raises
+        ------
+        KeyError
+            If a required quantity is missing from the state.
+        InvalidStateError
+            If state is not a value input for the Stepper instance
+            for other reasons.
+        """
+        self._check_self_is_initialized()
+        self._input_checker.check_inputs(state)
+        raw_state = get_numpy_arrays_with_properties(state, self.input_properties)
+        if self.uses_tracers:
+            raw_state['tracers'] = self._tracer_packer.pack(state)
+        raw_state['time'] = state['time']
 
-        # Random array to slice variables
-        self.initialise_state_signature()
+        tendencies, diagnostics = self._tendency_component(state, timestep)
+        for name, value in tendencies.items():
+            if name in self.input_properties.keys():
+                tendencies[name] = value.to_units(self.input_properties[name]['units'] + ' s^-1')
+        raw_diagnostics, raw_new_state = self.array_call(
+            raw_state, timestep, prognostic_tendencies=tendencies)
+        if self.uses_tracers:
+            new_state = self._tracer_packer.unpack(raw_new_state.pop('tracers'), state)
+        else:
+            new_state = {}
+        if self.tendencies_in_diagnostics:
+            self._insert_tendencies_to_diagnostics(
+                raw_state, raw_new_state, timestep, raw_diagnostics)
 
-    def __call__(self, state):
+        diagnostics.update(restore_data_arrays_with_properties(
+            raw_diagnostics, self.diagnostic_properties,
+            state, self.input_properties, ignore_missing=True))
+        new_state.update(restore_data_arrays_with_properties(
+            raw_new_state, self.output_properties,
+            state, self.input_properties, ignore_missing=True))
+
+        gfs_output_quantities = list(self._gfs_output_properties.keys())
+        for tracer in self.prepend_tracers:
+            gfs_output_quantities.append(tracer[0])
+        remaining = set(tendencies.keys()).difference(gfs_output_quantities)
+
+        for name in remaining:
+            new_state[name] = state[name] + tendencies[name]*timestep.total_seconds()
+        for key in state.keys():
+            if key not in new_state:
+                new_state[key] = state[key]
+
+        check_new_state = {
+            name: quantity
+            for (name, quantity) in new_state.items()
+            if name in self.output_properties.keys()
+        }
+        self._diagnostic_checker.check_diagnostics(diagnostics)
+        self._output_checker.check_outputs(check_new_state)
+        return diagnostics, new_state
+
+    @ensure_contiguous_state
+    def array_call(self, state, timestep, prognostic_tendencies=None):
         """ Step the dynamical core by one step
 
         Args:
-            state (dict): The state dictionary.
+            state (dict): The state dictionary of numpy arrays.
 
         Returns:
             new_state, diagnostics (dict):
                 The new state and associated diagnostics.
         """
+        prognostic_tendencies = prognostic_tendencies or {}
+        self._update_constants()
+        nlev, nlat, nlon = state['air_temperature'].shape
+        if nlat < 16:
+            raise GFSError('GFS requires at least 16 latitudes.')
+        if nlon < 12:
+            raise GFSError('GFS requires at least 12 longitudes')
+        if not self.initialized:
+            self._initialize_model(state, timestep)
+        if nlev != self._num_levs:
+            raise GFSError(
+                'Number of vertical levels may not change between successive '
+                'calls to GFS. Last time was {}, this time is {}'.format(
+                    self._num_levs, nlev)
+            )
+        if nlat != self._num_lats:
+            raise GFSError(
+                'Number of latitudes may not change between successive '
+                'calls to GFS. Last time was {}, this time is {}'.format(
+                    self._num_lats, nlat)
+            )
+        if nlon != self._num_lons:
+            raise GFSError(
+                'Number of longitudes may not change between successive '
+                'calls to GFS. Last time was {}, this time is {}'.format(
+                    self._num_lons, nlon)
+            )
+        if timestep.total_seconds() != self._time_step.total_seconds():
+            raise GFSError(
+                'GFSDynamicalCore can only be run with a constant timestep.'
+            )
 
-        raw_input_arrays = self.get_numpy_arrays_from_state('_climt_inputs', state)
+        outputs = initialize_numpy_arrays_with_properties(
+            self.output_properties, state, self.input_properties,
+            prepend_tracers=self.prepend_tracers,
+            tracer_dims=self.tracer_dims,
+        )
 
-        output_dict = self.create_state_dict_for('_climt_outputs', state)
-        raw_output_arrays = numpy_version_of(output_dict)
+        lnsp = np.log(state['surface_air_pressure'])
+        t_virt = state['air_temperature']*(
+            1 + self._fvirt*state['tracers'][0, :, :, :])
 
-        mylist = ['air_pressure']
-        # mylist = self.outputs
-
-        for quantity in mylist:
-            raw_output_arrays[quantity][:] = raw_input_arrays[quantity][:]
-
-        update_spectral_arrays = False
-        if self.state_is_modified_externally(raw_input_arrays):
-            for quantity in self._climt_outputs.keys():
-                raw_output_arrays[quantity][:] = raw_input_arrays[quantity][:]
-            update_spectral_arrays = True
-
-        lnsp = np.log(raw_input_arrays['surface_air_pressure'])
-        t_virt = raw_input_arrays['air_temperature']*(
-            1 + self._fvirt*raw_input_arrays['specific_humidity'])
-
-        raw_output_arrays['gfs_tracers'][:, :, :, 0] = raw_input_arrays['specific_humidity']
-        raw_output_arrays['gfs_tracers'][:, :, :, 1] = \
-            raw_input_arrays['mole_fraction_of_ozone_in_air']
-        raw_output_arrays['gfs_tracers'][:, :, :, 2] = \
-            raw_input_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer']
-        raw_output_arrays['gfs_tracers'][:, :, :, 3] = \
-            raw_input_arrays['mass_content_of_cloud_ice_in_atmosphere_layer']
-        raw_output_arrays['air_pressure_on_interface_levels'][:] = \
-            np.asfortranarray(raw_input_arrays['air_pressure_on_interface_levels'][:, :, ::-1])
+        outputs['air_pressure_on_interface_levels'][:] = (
+            state['air_pressure_on_interface_levels'][::-1, :, :])
+        for name in (
+                'air_pressure', 'tracers', 'eastward_wind', 'northward_wind',
+                'divergence_of_wind', 'atmosphere_relative_vorticity',
+                'surface_air_pressure',):
+            if np.product(outputs[name].shape) > 0:
+                outputs[name][:] = state[name]
 
         _gfs_dynamics.assign_grid_arrays(
-            raw_output_arrays['eastward_wind'],
-            raw_output_arrays['northward_wind'],
+            outputs['eastward_wind'],
+            outputs['northward_wind'],
             t_virt,
             lnsp,
-            raw_output_arrays['gfs_tracers'],
-            raw_output_arrays['atmosphere_relative_vorticity'],
-            raw_output_arrays['divergence_of_wind'])
+            outputs['tracers'],
+            outputs['atmosphere_relative_vorticity'],
+            outputs['divergence_of_wind'])
 
         _gfs_dynamics.assign_pressure_arrays(
-            raw_output_arrays['surface_air_pressure'],
-            raw_output_arrays['air_pressure'],
-            raw_output_arrays['air_pressure_on_interface_levels'])
+            outputs['surface_air_pressure'],
+            outputs['air_pressure'],
+            outputs['air_pressure_on_interface_levels'])
 
-        _gfs_dynamics.set_topography(raw_input_arrays['surface_geopotential'])
+        _gfs_dynamics.set_topography(state['surface_geopotential'])
 
-        tendencies = {}
-        diagnostics = {}
-        if self.prognostics:
-            tendencies, diagnostics = self.prognostics(state)
+        _gfs_dynamics.calculate_pressure()
 
-        (temp_tend, q_tend, u_tend, v_tend, ps_tend,
-         ozone_tend, cloud_water_tend, cloud_ice_tend, tracer_tend) = \
-            return_tendency_arrays_or_zeros(
-                ['air_temperature',
-                 'specific_humidity',
-                 'eastward_wind',
-                 'northward_wind',
-                 'surface_air_pressure',
-                 'mole_fraction_of_ozone_in_air',
-                 'mass_content_of_cloud_liquid_water_in_atmosphere_layer',
-                 'mass_content_of_cloud_ice_in_atmosphere_layer',
-                 'gfs_tracers'],
-                raw_input_arrays, tendencies)
+        np.testing.assert_allclose(outputs['air_pressure'], state['air_pressure'])
+        np.testing.assert_allclose(
+            outputs['air_pressure_on_interface_levels'][::-1, :, :],
+            state['air_pressure_on_interface_levels']
+        )
+
+        self._update_spectral_arrays(state)
+
+        tendency_arrays = \
+            self._get_tendency_arrays(
+                prognostic_tendencies, state['air_temperature'].shape)
 
         # see Pg. 12 in gfsModelDoc.pdf
-        virtual_temp_tend = temp_tend*(
-            1 + self._fvirt*raw_input_arrays['specific_humidity']) + \
-            self._fvirt*t_virt*q_tend
+        virtual_temp_tend = tendency_arrays['air_temperature']*(
+            1 + self._fvirt*state['tracers'][0, :, :, :]) + \
+            self._fvirt*t_virt*tendency_arrays['tracers'][0, :, :, :]
 
         # dlnps/dt = (1/ps)*dps/dt
-        lnps_tend = (1. / raw_input_arrays['surface_air_pressure'])*ps_tend
+        lnps_tend = ((1. / state['surface_air_pressure']) *
+                     tendency_arrays['surface_air_pressure'])
 
-        tracer_tend[:, :, :, 0] = q_tend
-        tracer_tend[:, :, :, 1] = ozone_tend
-        tracer_tend[:, :, :, 2] = cloud_water_tend
-        tracer_tend[:, :, :, 3] = cloud_ice_tend
-
-        _gfs_dynamics.assign_tendencies(u_tend, v_tend, virtual_temp_tend, q_tend,
-                                        lnps_tend, tracer_tend)
-
-        if update_spectral_arrays:
-            _gfs_dynamics.update_spectral_arrays()
+        _gfs_dynamics.assign_tendencies(
+            tendency_arrays['eastward_wind'],
+            tendency_arrays['northward_wind'],
+            virtual_temp_tend,
+            lnps_tend,
+            tendency_arrays['tracers'])
 
         _gfs_dynamics.take_one_step()
         _gfs_dynamics.convert_to_grid()
         _gfs_dynamics.calculate_pressure()
 
-        raw_output_arrays['specific_humidity'][:] = set_negatives_to_zero(
-            raw_output_arrays['gfs_tracers'][:, :, :, 0])
+        if self._zero_negative_moisture:
+            set_negatives_to_zero(outputs['tracers'][0, :, :, :])
+        outputs['air_temperature'][:] = t_virt/(
+            1 + self._fvirt*outputs['tracers'][0, :, :, :])
 
-        raw_output_arrays['air_temperature'][:] = t_virt/(
-            1 + self._fvirt*raw_output_arrays['specific_humidity'])
+        outputs['air_pressure_on_interface_levels'][:] = \
+            outputs['air_pressure_on_interface_levels'][::-1, :, :]
 
-        raw_output_arrays['air_pressure_on_interface_levels'][:] = \
-            raw_output_arrays['air_pressure_on_interface_levels'][:, :, ::-1]
+        outputs['time'] = state['time']
 
-        raw_output_arrays['mole_fraction_of_ozone_in_air'][:] = \
-            set_negatives_to_zero(raw_output_arrays['gfs_tracers'][:, :, :, 1])
+        return {}, outputs
 
-        raw_output_arrays['mass_content_of_cloud_liquid_water_in_atmosphere_layer'][:] = \
-            set_negatives_to_zero(raw_output_arrays['gfs_tracers'][:, :, :, 2])
+    def _get_tendency_arrays(self, tendencies, T_shape):
+        out_arrays = {}
+        out_arrays.update(self._get_3d_tendencies(tendencies, T_shape))
+        out_arrays.update(self._get_2d_tendencies(tendencies, T_shape))
+        out_arrays['tracers'] = self._get_tracer_tendencies(tendencies, T_shape)
+        return out_arrays
 
-        raw_output_arrays['mass_content_of_cloud_ice_in_atmosphere_layer'][:] = \
-            set_negatives_to_zero(raw_output_arrays['gfs_tracers'][:, :, :, 3])
+    def _get_3d_tendencies(self, tendencies, T_shape):
+        return self._get_tendencies(
+            tendencies,
+            ['air_temperature', 'eastward_wind', 'northward_wind'],
+            ['mid_levels', 'latitude', 'longitude'],
+            T_shape
+        )
 
-        self.store_current_state_signature(raw_output_arrays)
+    def _get_2d_tendencies(self, tendencies, T_shape):
+        return self._get_tendencies(
+            tendencies,
+            ['surface_air_pressure'],
+            ['latitude', 'longitude'],
+            T_shape[1:]
+        )
 
-        for quantity in tendencies.keys():
-            if quantity not in self._climt_outputs.keys():
-                # Step forward using Euler
-                output_dict[quantity] = state[quantity] + \
-                    tendencies[quantity].values*self._time_step.total_seconds()
+    def _get_tendencies(self, tendencies, quantity_names, dims, shape):
+        out_arrays = {}
+        for name in quantity_names:
+            if name in tendencies:
+                property_dict = {
+                    name: {
+                        'dims': dims,
+                        'units': tendencies[name].attrs['units'],
+                    }
+                }
+                out_arrays.update(
+                    get_numpy_arrays_with_properties(tendencies, property_dict))
+            else:
+                out_arrays[name] = np.zeros(shape)
+        # must broadcast any singleton dimensions
+        for name, current_array in out_arrays.items():
+            if current_array.shape != shape:
+                new_array = np.empty(shape)
+                new_array[:] = current_array
+                out_arrays[name] = new_array
+        return out_arrays
 
-                for attrib in state[quantity].attrs:
-                    output_dict[quantity].attrs[attrib] = state[quantity].attrs[attrib]
+    def _get_tracer_tendencies(self, tendencies, T_shape):
+        return_array = np.empty([self._num_tracers] + list(T_shape))
+        for i, name in enumerate(self._tracer_packer.tracer_names):
+            if name in tendencies:
+                property_dict = {
+                    name: {
+                        'dims': ['mid_levels', 'latitude', 'longitude'],
+                        'units': tendencies[name].attrs['units'],
+                    }
+                }
+                tend = get_numpy_arrays_with_properties(
+                    tendencies, property_dict)[name]
+                return_array[i, :, :, :] = tend
+            else:
+                return_array[i, :, :, :] = 0.
+        return return_array
 
-        for quantity in mylist:
-            raw_input_arrays[quantity][:] = raw_output_arrays[quantity][:]
-
-        return output_dict, diagnostics
-
-    def initialise_state_signature(self):
-
-        self._random_slice_x = np.random.randint(0, self._num_lons, size=(10, 10, 10))
-        self._random_slice_y = np.random.randint(0, self._num_lats, size=(10, 10, 10))
-        self._random_slice_z = np.random.randint(0, self._num_levs, size=(10, 10, 10))
-
-        self._hash_u = 1000
-        self._hash_v = 1000
-        self._hash_temp = 1000
-        self._hash_press = 1000
-        self._hash_surf_press = 1000
-
-    def calculate_state_signature(self, state_arr):
-        """ Calculates hash signatures from state """
-        random_u = state_arr['eastward_wind'][self._random_slice_x, self._random_slice_y,
-                                              self._random_slice_z]
-
-        if sys.version_info > (3, 0):
-            hash_u = hash(random_u.data.tobytes())
-        else:
-            random_u.flags.writeable = False
-            hash_u = hash(random_u.data)
-
-        random_v = state_arr['northward_wind'][self._random_slice_x, self._random_slice_y,
-                                               self._random_slice_z]
-        if sys.version_info > (3, 0):
-            hash_v = hash(random_v.data.tobytes())
-        else:
-            random_v.flags.writeable = False
-            hash_v = hash(random_v.data)
-
-        random_temp = state_arr['air_temperature'][self._random_slice_x, self._random_slice_y,
-                                                   self._random_slice_z]
-        if sys.version_info > (3, 0):
-            hash_temp = hash(random_temp.data.tobytes())
-        else:
-            random_temp.flags.writeable = False
-            hash_temp = hash(random_temp.data)
-
-        random_pressure = state_arr['air_pressure'][self._random_slice_x, self._random_slice_y,
-                                                    self._random_slice_z]
-        if sys.version_info > (3, 0):
-            hash_press = hash(random_pressure.data.tobytes())
-        else:
-            random_pressure.flags.writeable = False
-            hash_press = hash(random_pressure.data)
-
-        random_ps = state_arr['surface_air_pressure'][self._random_slice_x, self._random_slice_y]
-
-        if sys.version_info > (3, 0):
-            hash_ps = hash(random_ps.data.tobytes())
-        else:
-            random_ps.flags.writeable = False
-            hash_ps = hash(random_ps.data)
-
-        return hash_u, hash_v, hash_temp, hash_press, hash_ps
-
-    def state_is_modified_externally(self, state_arr):
-        """ Function to check if grid space arrays have been modified outside the dynamical core """
-
-        hash_u, hash_v, hash_temp, hash_press, hash_ps = self.calculate_state_signature(state_arr)
-
-        if (
-            (hash_u != self._hash_u) or
-            (hash_v != self._hash_v) or
-            (hash_press != self._hash_press) or
-            (hash_ps != self._hash_surf_press) or
-           (hash_temp != self._hash_temp)):
-                print('State modified, setting spectral arrays')
-                self._hash_u = hash_u
-                self._hash_v = hash_v
-                self._hash_temp = hash_temp
-                self._hash_surf_press = hash_ps
-                self._hash_press = hash_press
-                return True
-        else:
-            return False
-
-    def store_current_state_signature(self, output_arr):
-        """ Store state signature for comparison during next time step """
-
-        hash_u, hash_v, hash_temp, hash_press, hash_ps = self.calculate_state_signature(output_arr)
-
-        self._hash_u = hash_u
-        self._hash_v = hash_v
-        self._hash_temp = hash_temp
-        self._hash_surf_press = hash_ps
-        self._hash_press = hash_press
+    def _update_spectral_arrays(self, state):
+        """
+        Checks the state to see if any arrays with spectral counterparts have
+        been modified since they were last returned, and if they have will
+        update the specctral counterpart to reflect the new state array.
+        """
+        u_hash = get_hash(state['eastward_wind'])
+        v_hash = get_hash(state['northward_wind'])
+        if (u_hash != self._hash_u or v_hash != self._hash_v):
+            _gfs_dynamics.vrt_div_to_spectral()
+            self._hash_u = u_hash
+            self._hash_v = v_hash
+        T_hash = get_hash(state['air_temperature'])
+        if T_hash != self._hash_temperature:
+            _gfs_dynamics.virtemp_to_spectral()
+            self._hash_temperature = T_hash
+        tracer_hash = get_hash(state['tracers'])
+        if tracer_hash != self._hash_tracers:
+            _gfs_dynamics.tracer_to_spectral()
+            self._hash_tracers = tracer_hash
+        p_surf_hash = get_hash(state['surface_air_pressure'])
+        if p_surf_hash != self._hash_surface_pressure:
+            _gfs_dynamics.lnps_to_spectral()
+            self._hash_surface_pressure = p_surf_hash
 
     def __del__(self):
         """ call shutdown in fortran code """
-        print("Cleaning up dynamical core...")
+        logging.info("Cleaning up dynamical core...")
         _gfs_dynamics.shut_down_model()
-        print("Done!")
+        logging.info("Done!")
+
+
+def get_hash(array):
+    if sys.version_info > (3, 0):
+        return hash(array.data.tobytes())
+    else:
+        array.flags.writeable = False
+        return hash(array.data)
 
 
 def set_negatives_to_zero(array):
-
     array[array < 0] = 0
     return array
 
 
+'''
 def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):
 
     tendency_list = []
@@ -477,3 +661,4 @@ def return_tendency_arrays_or_zeros(quantity_list, state, tendencies):
             raise IndexError("{} not found in input state or tendencies".format(quantity))
 
     return tendency_list
+'''

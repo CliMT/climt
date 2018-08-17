@@ -16,7 +16,7 @@ module dyn_init
  use params, only: &
  nlons,nlats,nlevs,ndimspec,ntrunc,initfile,dry,ndiss,efold,dcmip,polar_opt,&
  heldsuarez,explicit,tstart,idate_start,hdif_fac,hdif_fac2,fshk,ntrac,taustratdamp,&
- ntoz,ntclw,pdryini,massfix
+ ntoz,ntclw,pdryini,massfix,toa_pressure
  !sighead
  !JOY removed sighead to remove sigio dependency
  use shtns, only: shtns_init, spectogrd, grdtospec, getgrad, getvrtdivspec, lap, lats, lons
@@ -25,7 +25,7 @@ module dyn_init
  use pressure_data, only: ak,bk,ck,dbk,bkl,sl,si,psg,prs,pk,dpk,calc_pressdata
  use grid_data, only: init_griddata, dphisdx, dphisdy, phis, ug, vg, virtempg, &
  tracerg,lnpsg,dlnpdtg
-! JOY removing stochastic routines 
+! JOY removing stochastic routines
 ! use stoch_data, only: init_stochdata
  use physcons, only: rerth => con_rerth, rd => con_rd, cp => con_cp, &
                      omega => con_omega, grav => con_g, pi => con_pi, &
@@ -63,9 +63,9 @@ module dyn_init
 
     !call init_specdata()
     !call init_griddata()
-    integer, intent(in):: py_damping_level
+    integer(c_int), intent(in):: py_damping_level
     real(c_double), intent(in):: py_taustratdamp
-    
+
     ! initialize spherical harmonic lib
     !print *,'Initialising shtns'
     call shtns_init(nlons,nlats,ntrunc,nthreads=1,polar_opt=polar_opt)
@@ -76,23 +76,6 @@ module dyn_init
     !call spectogrd(lnpsspec, psg)
     !psg = 1000.*exp(psg) ! convert to Pa
     !call grdtospec(log(psg), lnpsspec) ! back to spectral.
-    !JOY adding read from namelist to eliminate using sigio to read ak,bk
-    ak = (/ 200.00000000,566.898010,1290.53296,2210.97900&
-    ,3376.51611,4844.03613,6678.60791,8913.76660,&
-    11343.6543,13671.4268,15613.5645,16912.1309,&
-    17364.6582,16959.9941,15812.9258,14089.5352,&
-    11991.4277,9731.80664,7508.53223,5481.14404,&
-    3757.14209,2389.20508,1381.52600,701.453003,&
-    292.576996,86.4570007,11.6350002,8.99999961E-03,0.00000000 /)
-
-    bk = (/ 0.00000000,0.00000000,0.00000000,0.00000000,&
-            0.00000000,0.00000000,0.00000000,3.78680008E-04,&
-            3.93276010E-03,1.43262697E-02,3.49500999E-02,&
-            6.86749965E-02,0.117417611,0.180667043,0.256084293,&
-            0.340293199,0.429195374,0.518456697,0.604054928,&
-            0.682746828,0.752347112,0.811784863,0.860974848,&
-            0.900580883,0.931749582,0.955872416,0.974401832,&
-            0.988725841,1.00000000 /)
 
 
     do k=1,nlevs
@@ -102,7 +85,7 @@ module dyn_init
     enddo
          ! compute sigma coordinate quantities (bottom to top).
     do k=1,nlevs+1
-        si(nlevs+2-k)= ak(k)/101300.0+bk(k) ! si are now sigmas
+        si(nlevs+2-k)= (ak(k) - toa_pressure)/(pdryini - toa_pressure)+bk(k) ! si are now sigmas
     enddo
     do k=1,nlevs
         sl(k) = 0.5*(si(k)+si(k+1))
@@ -116,20 +99,20 @@ module dyn_init
     !call spectogrd(grav*topospec, phis)
     !print *,'min/max surface geopotential',minval(phis),maxval(phis)
     !call spectogrd(lnpsspec, psg)
-    !psg = exp(psg) 
+    !psg = exp(psg)
     !print *,'min/max sfc pressure (hPa)',minval(psg/100.),maxval(psg/100.)
-    ! initialize model interface and level pressures, related variables. 
+    ! initialize model interface and level pressures, related variables.
     !call calc_pressdata(lnpsg)
     ! compute gradient of surface orography
     !call getgrad(grav*topospec, dphisdx, dphisdy, rerth)
     ! hyper-diffusion operator (plus rayleigh damping in upper stratosphere)
 
     call setdampspec(ndiss,efold,hdif_fac,hdif_fac2,fshk,disspec,diff_prof,dmp_prof)
-    
+
     ! initialize arrays for semi-implicit adjustments.
     if (.not. explicit) call init_semimpdata()
     ! initialize stochastic data.
-    ! JOY removing stochastic routines 
+    ! JOY removing stochastic routines
     !call init_stochdata()
  end subroutine init_dyn
 
@@ -159,7 +142,7 @@ module dyn_init
        nn = nn + 2
     enddo
  end subroutine copyspecout
- 
+
 
  subroutine twodtooned(data2,data1)
    real(r_kind), intent(in) :: data2(nlons,nlats)
@@ -175,8 +158,8 @@ module dyn_init
 ! subroutine dcmip_ics(testcase,dry)
 !   ! DCMIP 2012 test case initial conditions (test cases 4 and 5)
 !   ! (idealized baroclinic instability or trop cyclone test case initial conditions)
-!   use dcmip_initial_conditions_test_4, only: test4_baroclinic_wave 
-!   use dcmip_initial_conditions_test_5, only: test5_tropical_cyclone 
+!   use dcmip_initial_conditions_test_4, only: test4_baroclinic_wave
+!   use dcmip_initial_conditions_test_5, only: test5_tropical_cyclone
 !   integer, intent(in) :: testcase
 !   logical, intent(in) :: dry
 !   real(8) lon,lat,z,X,p,u,v,w,t,phi_s,ps,rho,q,q1,q2
@@ -193,7 +176,7 @@ module dyn_init
 !   else
 !      print *,'dcmip must be 40 something or 50 something'
 !      stop
-!   endif 
+!   endif
 !   zcoords = 0 ! p, not z, is specified.
 !   if (dry) then
 !     moist = 0
@@ -231,7 +214,7 @@ module dyn_init
 !            call test4_baroclinic_wave (moist,X,lon,lat,p,z,zcoords,u,v,w,t,phi_s,ps,rho,q,q1,q2)
 !         else if (testcase/10 .eq. 5) then
 !            call test5_tropical_cyclone (lon,lat,p,z,zcoords,u,v,w,t,phi_s,ps,rho,q)
-!         endif 
+!         endif
 !         ug(i,j,k) = u; vg(i,j,k) = v; phis(i,j) = phi_s
 !         if (dry) then
 !            virtempg(i,j,k) = t
@@ -241,7 +224,7 @@ module dyn_init
 !         else
 !            virtempg(i,j,k) = t*(1. + fv*q)
 !            tracerg(i,j,k,1) = q
-!            if (testcase/10 .eq. 4) then 
+!            if (testcase/10 .eq. 4) then
 !               tracerg(i,j,k,2) = q1
 !               tracerg(i,j,k,3) = q2
 !            else if (testcase .eq. 52) then
@@ -256,16 +239,17 @@ module dyn_init
 !          call grdtospec(tracerg(:,:,k,nt),tracerspec(:,k,nt))
 !       enddo
 !   enddo
-!   call grdtospec(phis/grav, topospec) 
+!   call grdtospec(phis/grav, topospec)
 !
 ! end subroutine dcmip_ics
 
 
- subroutine heldsuarez_ics()
+ subroutine heldsuarez_ics(toa_pressure)
    ! jablonowski and williamson (2006, QJR, p. 2943, doi: 10.1256/qj.06.12)
    ! initial perturbation on an isothermal state.
    real(r_kind), dimension(nlons,nlats) :: rnh,xnh,rsh,xsh, rand_vel
    real(r_kind) :: lonc,latc,up,pertrad
+   real(c_double), intent(in):: toa_pressure
    integer k
    print *,'replacing initial conds with held and suarez test case..'
    lonc = pi/9.

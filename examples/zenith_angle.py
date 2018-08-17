@@ -1,14 +1,15 @@
 import climt
 from sympl import PlotFunctionMonitor
 from datetime import timedelta
-import numpy as np
 
 
 def plot_function(fig, state):
 
     ax = fig.add_subplot(1, 1, 1)
-    state['zenith_angle'].transpose().plot.contourf(
-        ax=ax, levels=16, robust=True)
+    ax.contourf(state['longitude'], state['latitude'],
+                state['zenith_angle'])
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
 
     fig.suptitle('Zenith Angle at time: '+str(state['time']))
 
@@ -17,12 +18,9 @@ monitor = PlotFunctionMonitor(plot_function)
 
 instellation = climt.Instellation()
 
-y_grid = dict(label='latitude',
-              values=np.linspace(-90, 90, 100), units='degrees_north')
-x_grid = dict(label='longitude',
-              values=np.linspace(0, 360, 100), units='degrees_east')
-
-state = climt.get_default_state([instellation], x=x_grid, y=y_grid)
+state = climt.get_default_state([instellation],
+                                grid_state=climt.get_grid(nx=100, ny=100,
+                                                          latitude_grid='regular'))
 
 time_step = timedelta(hours=6)
 

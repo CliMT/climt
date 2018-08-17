@@ -47,7 +47,6 @@ Arrays and variables to pass to the fortran code
 '''
 
 def init_emanuel_convection(
-    cnp.int32_t py_pbl,
     cnp.int32_t py_least_conv_level,
     double py_thresh_water_level,
     double py_crit_temp, double py_entrain_coeff,
@@ -65,7 +64,12 @@ def init_emanuel_convection(
 
     global initialised
 
+    # The dry convective PBL adjustment modifies inputs, so it has been moved
+    # to a separate component. Here we disable it.
+    cdef cnp.int32_t py_pbl = 0
+
     initialised = 0
+
     init_emanuel_convection_fortran(
         &py_pbl,
         &py_least_conv_level,
@@ -91,40 +95,38 @@ def init_emanuel_convection(
 @cython.boundscheck(False)
 def convect(
     cnp.int32_t nlevs,
-    cnp.int32_t nlons,
-    cnp.int32_t nlats,
+    cnp.int32_t ncols,
     cnp.int32_t max_conv_lev,
     cnp.int32_t num_tracers,
     double dt,
-    cnp.double_t[::1, :, :] temp,
-    cnp.double_t[::1, :, :] q,
-    cnp.double_t[::1, :, :] qs,
-    cnp.double_t[::1, :, :] u,
-    cnp.double_t[::1, :, :] v,
-    cnp.double_t[::1, :, :] pmid,
-    cnp.double_t[::1, :, :] pint,
-    cnp.int32_t[::1, :] conv_state,
-    cnp.double_t[::1, :] precip,
-    cnp.double_t[::1, :] downdraft_vel_scale,
-    cnp.double_t[::1, :] downdraft_temp_scale,
-    cnp.double_t[::1, :] downdraft_q_scale,
-    cnp.double_t[::1, :] cloud_base_mass_flux,
-    cnp.double_t[::1, :] cape,
-    cnp.double_t[::1, :, :] dtemp,
-    cnp.double_t[::1, :, :] dq,
-    cnp.double_t[::1, :, :] du,
-    cnp.double_t[::1, :, :] dv,
-    cnp.double_t[::1, :, :, :] dtracers=None,
-    cnp.double_t[::1, :, :, :] tracers=None):
+    cnp.double_t[:, ::1] temp,
+    cnp.double_t[:, ::1] q,
+    cnp.double_t[:, ::1] qs,
+    cnp.double_t[:, ::1] u,
+    cnp.double_t[:, ::1] v,
+    cnp.double_t[:, ::1] pmid,
+    cnp.double_t[:, ::1] pint,
+    cnp.int32_t[::1] conv_state,
+    cnp.double_t[::1] precip,
+    cnp.double_t[::1] downdraft_vel_scale,
+    cnp.double_t[::1] downdraft_temp_scale,
+    cnp.double_t[::1] downdraft_q_scale,
+    cnp.double_t[::1] cloud_base_mass_flux,
+    cnp.double_t[::1] cape,
+    cnp.double_t[:, ::1] dtemp,
+    cnp.double_t[:, ::1] dq,
+    cnp.double_t[:, ::1] du,
+    cnp.double_t[:, ::1] dv,
+    cnp.double_t[:, :, ::1] dtracers=None,
+    cnp.double_t[:, :, ::1] tracers=None):
 
 
     global initialised
-    cdef Py_ssize_t lat, lon
+    cdef Py_ssize_t col, lon
     cdef cnp.double_t[::1] cy_temp, cy_q, cy_qs, cy_u,\
             cy_v, cy_pmid, cy_pint, cy_dtemp, cy_dq,\
             cy_du, cy_dv
-    cdef cnp.double_t[::1, :] cy_tracer, cy_dtracer
-
+    cdef cnp.double_t[:, ::1] cy_tracer, cy_dtracer
 
     cy_temp = np.zeros(nlevs)
     cy_q = np.zeros(nlevs)
@@ -137,63 +139,60 @@ def convect(
     cy_dq = np.zeros(nlevs)
     cy_du = np.zeros(nlevs)
     cy_dv = np.zeros(nlevs)
-    cy_tracer = np.zeros((nlevs, num_tracers), order='F')
-    cy_dtracer = np.zeros((nlevs, num_tracers), order='F')
+    cy_tracer = np.zeros((num_tracers, nlevs))
+    cy_dtracer = np.zeros((num_tracers, nlevs))
 
     if dtracers is None:
-        dtracers = np.zeros((nlons, nlats, nlevs, 1), order='F')
-        cy_dtracer = np.zeros((nlevs, 1), order='F')
+        dtracers = np.zeros((ncols, 1, nlevs))
 
     if tracers is None:
-        tracers = np.zeros((nlons, nlats, nlevs, 1), order='F')
-        cy_tracer = np.zeros((nlevs, 1), order='F')
+        tracers = np.zeros((ncols, 1, nlevs))
 
     if initialised == 0:
         raise ValueError('Emanuel scheme not initialised.')
 
-    for lon in range(nlons):
-        for lat in range(nlats):
-        # for lat in prange(nlats, nogil=True):
+    for col in range(ncols):
+    # for lat in prange(nlats, nogil=True):
 
-            cy_temp[:] = temp[lon, lat, :]
-            cy_q[:] = q[lon, lat, :]
-            cy_qs[:] = qs[lon, lat, :]
-            cy_u[:] = u[lon, lat, :]
-            cy_v[:] = v[lon, lat, :]
-            cy_pmid[:] = pmid[lon, lat, :]
-            cy_pint[:] = pint[lon, lat, :]
-            cy_tracer[:] = tracers[lon, lat, :, :]
+        cy_temp[:] = temp[col, :]
+        cy_q[:] = q[col, :]
+        cy_qs[:] = qs[col, :]
+        cy_u[:] = u[col, :]
+        cy_v[:] = v[col, :]
+        cy_pmid[:] = pmid[col, :]
+        cy_pint[:] = pint[col, :]
+        cy_tracer[:] = tracers[col, :, :]
 
-            # Call fortran code
-            emanuel_convection(
-                <double *>&cy_temp[0],
-                <double *>&cy_q[0],
-                <double *>&cy_qs[0],
-                <double *>&cy_u[0],
-                <double *>&cy_v[0],
-                <double *>&cy_pmid[0],
-                <double *>&cy_pint[0],
+        # Call fortran code
+        emanuel_convection(
+            <double *>&cy_temp[0],
+            <double *>&cy_q[0],
+            <double *>&cy_qs[0],
+            <double *>&cy_u[0],
+            <double *>&cy_v[0],
+            <double *>&cy_pmid[0],
+            <double *>&cy_pint[0],
 
-                &nlevs, &max_conv_lev, &num_tracers,
-                &dt,
+            &nlevs, &max_conv_lev, &num_tracers,
+            &dt,
 
-                <cnp.int32_t *>&conv_state[lon, lat],
-                <double *>&cy_dtemp[0],
-                <double *>&cy_dq[0],
-                <double *>&cy_du[0],
-                <double *>&cy_dv[0],
+            <cnp.int32_t *>&conv_state[col],
+            <double *>&cy_dtemp[0],
+            <double *>&cy_dq[0],
+            <double *>&cy_du[0],
+            <double *>&cy_dv[0],
 
-                <double *>&precip[lon, lat],
-                <double *>&downdraft_vel_scale[lon, lat],
-                <double *>&downdraft_temp_scale[lon, lat],
-                <double *>&downdraft_q_scale[lon, lat],
-                <double *>&cloud_base_mass_flux[lon, lat],
-                <double *>&cape[lon, lat],
-                <double *>&cy_tracer[0,0],
-                <double *>&cy_dtracer[0,0])
+            <double *>&precip[col],
+            <double *>&downdraft_vel_scale[col],
+            <double *>&downdraft_temp_scale[col],
+            <double *>&downdraft_q_scale[col],
+            <double *>&cloud_base_mass_flux[col],
+            <double *>&cape[col],
+            <double *>&cy_tracer[0, 0],
+            <double *>&cy_dtracer[0, 0])
 
-            dtemp[lon, lat, :] = cy_dtemp[:]
-            dq[lon, lat, :] = cy_dq[:]
-            du[lon, lat, :] = cy_du[:]
-            dv[lon, lat, :] = cy_dv[:]
-            dtracers[lon, lat, :, :] = cy_dtracer[:, :]
+        dtemp[col, :] = cy_dtemp[:]
+        dq[col, :] = cy_dq[:]
+        du[col, :] = cy_du[:]
+        dv[col, :] = cy_dv[:]
+        #dtracers[col, :, :] = cy_dtracer[:, :]

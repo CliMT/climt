@@ -3,10 +3,11 @@ from climt import (
     get_interface_values,
     calculate_q_sat, numpy_version_of,
     RRTMGShortwave, get_default_state,
-    set_constants_from_dict, get_constant,
-    list_available_constants)
+    set_constants_from_dict,
+    list_available_constants
+)
 
-from sympl import DataArray
+from sympl import DataArray, get_constant
 import numpy as np
 import pytest
 
@@ -71,25 +72,25 @@ def test_for_g_per_kg():
 
 def test_interface_levels():
 
-    mid_level_values = np.ones((1, 1, 10))
-    surface_value = np.ones((1, 1, 1))
+    mid_level_values = np.ones((10, 1))
+    surface_value = np.ones((1, 1))
 
-    pressure_mid_level = np.linspace(0.995, 0.001, 10)[None, None, :]
+    pressure_mid_level = np.linspace(0.995, 0.001, 10)[:, None]
     surface_pressure = 1.
 
-    pressure_interface_level = np.zeros((1, 1, 11))
+    pressure_interface_level = np.zeros((11, 1))
 
-    pressure_interface_level[:, :, 1:-1] = (
-        pressure_mid_level[:, :, 1::] + pressure_mid_level[:, :, :-1])/2.
+    pressure_interface_level[1:-1, :] = (
+        pressure_mid_level[1:, :] + pressure_mid_level[:-1, :])/2.
 
-    pressure_interface_level[:, :, 0] = surface_pressure
-    pressure_interface_level[:, :, -1] = 0.0005
+    pressure_interface_level[0, :] = surface_pressure
+    pressure_interface_level[-1, :] = 0.0005
 
     interface_values = get_interface_values(
         mid_level_values, surface_value,
         pressure_mid_level, pressure_interface_level)
 
-    assert np.all(interface_values == np.ones((1, 1, 11)))
+    assert np.all(interface_values == np.ones((11, 1)))
 
 
 def test_qsat():

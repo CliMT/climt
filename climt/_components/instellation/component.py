@@ -1,30 +1,37 @@
-from ..._core import ClimtDiagnostic
+from sympl import DiagnosticComponent
 import datetime
 import numpy as np
 
 
-class Instellation(ClimtDiagnostic):
+class Instellation(DiagnosticComponent):
     """
     Calculates the zenith angle and star-planet correction
     factor given orbital parameters. Currently useful only
-    for earth-sun system. Used pyorbital for references to
-    formulae and code structure.
+    for Earth-sun system.
     """
 
-    _climt_inputs = {
-        'latitude': 'degrees_north',
-        'longitude': 'degrees_east'}
-
-    _climt_diagnostics = {
-        'zenith_angle': 'radians',
-        # 'normalised_star_planet_distance': 'dimensionless'
+    input_properties = {
+        'latitude': {
+            'dims': ['*'],
+            'units': 'degrees_north',
+        },
+        'longitude': {
+            'dims': ['*'],
+            'units': 'degrees_east',
+        },
     }
 
-    def __init__(self):
+    diagnostic_properties = {
+        'zenith_angle': {
+            'dims': ['*'],
+            'units': 'radians',
+        }
+    }
 
-        return
+    def __init__(self, **kwargs):
+        super(Instellation, self).__init__(**kwargs)
 
-    def __call__(self, state):
+    def array_call(self, state):
         """
         Calculate zenith angle.
 
@@ -34,25 +41,12 @@ class Instellation(ClimtDiagnostic):
                 state dictionary
 
         """
-
-        diag_dict = self.create_state_dict_for('_climt_diagnostics', state)
-
-        zenith_angle = diag_dict['zenith_angle']
-
-        latitudes = np.deg2rad(state['latitude'].values)
-        longitudes = np.deg2rad(state['longitude'].values)
-
-        lon_mesh, lat_mesh = np.meshgrid(longitudes, latitudes)
-
-        zen_angle = sun_zenith_angle(
-            state['time'], lon_mesh, lat_mesh)
-
+        lat_radians = np.deg2rad(state['latitude'])
+        lon_radians = np.deg2rad(state['longitude'])
+        zen_angle = sun_zenith_angle(state['time'], lon=lon_radians, lat=lat_radians)
         zen_angle[zen_angle > np.pi/2] = np.pi/2
         zen_angle[zen_angle < -np.pi/2] = -np.pi/2
-
-        zenith_angle.values = zen_angle.transpose()
-
-        return diag_dict
+        return {'zenith_angle': zen_angle}
 
 
 def days_from_2000(model_time):

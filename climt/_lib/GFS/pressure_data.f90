@@ -5,7 +5,7 @@ module pressure_data
 ! calc_pressdata: computes pressure related vars given ln(psg).
 ! (called by getdyntend in module dyn_run).
 ! destroy_pressdata: deallocate arrays.
- use params, only: nlons,nlats,nlevs
+ use params, only: nlons,nlats,nlevs,toa_pressure
  use kinds, only: r_kind
  use physcons, only: con_rd,con_cp,rk => con_rocp
  use iso_c_binding
@@ -92,6 +92,7 @@ module pressure_data
 
      subroutine updatePressure() bind(c, name='gfs_calculate_pressure')
          use grid_data, only: lnpsg
+
          call calc_pressdata(lnpsg)
 
      end subroutine updatePressure
@@ -107,7 +108,7 @@ module pressure_data
          !$omp parallel
          !$omp do private(k)
          do k=1,nlevs+1
-         pk(:,:,k)=ak(k) + bk(k)*psg(:,:)
+         pk(:,:,k)=ak(k) + bk(k)*(psg(:,:) - toa_pressure)
          enddo
          !$omp end do
          !$omp do private(k)

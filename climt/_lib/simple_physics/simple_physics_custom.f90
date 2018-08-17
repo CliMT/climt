@@ -416,7 +416,7 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
         do i=1,pcols
             
             !JOY Add calculation of sensible heat flux
-            rho = ps(i)/(rair*Tsurf(i))
+            rho = pmid(i, pver)/(rair*t(i, pver))
             sens_ht_flux(i) = cpair*rho*C*wind(i)*(Tsurf(i) - t(i, pver))
             
             dtdt(i,pver) = dtdt(i,pver) +((t(i,pver)+C*wind(i)*Tsurf(i)*dtime/za(i)) &
@@ -447,9 +447,9 @@ subroutine simple_physics_func (pcols, pver, dtime, lat, t, q, u, v, pmid, pint,
             end if
 
             !JOY Add calculation of latent heat flux
-            rho = ps(i)/(rair*Tsurf(i))
+            rho = pmid(i, pver)/(rair*t(i, pver))
             lat_ht_flux(i) = latvap*rho*C*wind(i)*(qsats - q(i, pver))
-            
+
             dqdt(i,pver) = dqdt(i,pver) +((q(i,pver)+C*wind(i)*qsats*dtime/za(i)) &
                             /(1._r8+C*wind(i)*dtime/za(i))-q(i,pver))/dtime
             q(i,pver) = (q(i,pver)+C*wind(i)*qsats*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))
