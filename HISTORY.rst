@@ -2,8 +2,8 @@
 History
 =======
 
-Latest
-------
+v.0.14.8
+--------
 
 Many of the changes in this version come from changes in Sympl 0.4.0. We recommend
 reading those changes in the Sympl documentation.
