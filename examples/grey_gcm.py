@@ -1,61 +1,68 @@
 import climt
-from sympl import PlotFunctionMonitor
+from sympl import (
+    PlotFunctionMonitor, NetCDFMonitor,
+    TimeDifferencingWrapper, UpdateFrequencyWrapper,
+    DataArray
+)
 import numpy as np
-import matplotlib.pyplot as plt
+from datetime import timedelta
 
 
 def plot_function(fig, state):
 
-    fig.set_size_inches(8, 8)
     ax = fig.add_subplot(2, 2, 1)
-    state['surface_temperature'].transpose().plot.contourf(ax=ax, levels=16)
-    ax.set_title('Surface Temperature')
-
-    ax = fig.add_subplot(2, 2, 2)
-    state['convective_heating_rate'].mean(dim='longitude').transpose().plot.contourf(
-        ax=ax, levels=16)
-    ax.set_title('Convective Heating')
+    state['specific_humidity'].mean(
+        dim='longitude').plot.contourf(
+            ax=ax, levels=16, robust=True)
+    ax.set_title('Specific Humidity')
 
     ax = fig.add_subplot(2, 2, 3)
-    state['eastward_wind'].mean(dim='longitude').transpose().plot.contourf(
-        ax=ax, levels=16)
+    state['eastward_wind'].mean(dim='longitude').plot.contourf(
+        ax=ax, levels=16, robust=True)
     ax.set_title('Zonal Wind')
 
-    ax = fig.add_subplot(2, 2, 4)
-    state['air_temperature'].mean(dim='longitude').transpose().plot.contourf(
-        ax=ax, levels=16)
-    ax.set_title('Air Temperature')
+    ax = fig.add_subplot(2, 2, 2)
+    state['air_temperature_tendency_from_convection'].transpose().mean(
+        dim='longitude').plot.contourf(
+        ax=ax, levels=16, robust=True)
+    ax.set_title('Conv. Heating Rate')
 
-    plt.suptitle('Time: '+str(state['time']))
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    ax = fig.add_subplot(2, 2, 4)
+    state['air_temperature'].mean(dim='longitude').plot.contourf(
+        ax=ax, levels=16)
+    ax.set_title('Temperature')
+
+    fig.tight_layout()
 
 
 # Create plotting object
 monitor = PlotFunctionMonitor(plot_function)
 
+climt.set_constants_from_dict({
+    'stellar_irradiance': {'value': 200, 'units': 'W m^-2'}})
+
+model_time_step = timedelta(seconds=600)
+
 # Create components
-dycore = climt.GFSDynamicalCore(number_of_longitudes=128,
-                                number_of_latitudes=64,
-                                number_of_damped_levels=5)
-
-model_time_step = dycore._time_step
-
-convection = climt.EmanuelConvection(convective_momentum_transfer_coefficient=1)
-simple_physics = climt.SimplePhysics()
-
-simple_physics = simple_physics.prognostic_version()
-simple_physics.current_time_step = model_time_step
-convection.current_time_step = model_time_step
+convection = climt.EmanuelConvection()
+simple_physics = TimeDifferencingWrapper(climt.SimplePhysics())
 
 radiation = climt.GrayLongwaveRadiation()
-slab_surface = climt.SlabSurface()
+
+dycore = climt.GFSDynamicalCore(
+    [simple_physics, radiation,
+     convection], number_of_damped_levels=5
+)
+grid = climt.get_grid(nx=128, ny=62)
 
 # Create model state
-my_state = climt.get_default_state([dycore, radiation, convection, simple_physics, slab_surface],
-                                   x=dycore.grid_definition['x'],
-                                   y=dycore.grid_definition['y'],
-                                   mid_levels=dycore.grid_definition['mid_levels'],
-                                   interface_levels=dycore.grid_definition['interface_levels'])
+my_state = climt.get_default_state([dycore], grid_state=grid)
+
+# Set initial/boundary conditions
+latitudes = my_state['latitude'].values
+longitudes = my_state['longitude'].values
+
+surface_shape = [len(longitudes), len(latitudes)]
 
 # Set initial/boundary conditions
 temperature_equator = 300
@@ -63,25 +70,22 @@ temperature_pole = 240
 latitudes = my_state['latitude'].values
 
 temperature_profile = temperature_equator - (
-    (temperature_equator - temperature_pole)*(np.sin(np.radians(latitudes))**2))
+    (temperature_equator - temperature_pole)*(
+        np.sin(np.radians(latitudes))**2))
 
-my_state['surface_temperature'].values[:] = temperature_profile[np.newaxis, :]
+my_state['surface_temperature'] = DataArray(
+    temperature_profile*np.ones(surface_shape),
+    dims=['longitude', 'latitude'], attrs={'units': 'degK'})
+my_state['eastward_wind'].values[:] = np.random.randn(
+    *my_state['eastward_wind'].shape)
 
-my_state['eastward_wind'].values[:] = np.random.randn(*my_state['eastward_wind'].shape)
-my_state['air_temperature'].values[:] = 240
-my_state['ocean_mixed_layer_thickness'].values[:] = 30
 
-dycore.prognostics = [simple_physics, slab_surface, radiation, convection]
-
-for i in range(50000):
-    output, diag = dycore(my_state)
-    my_state.update(output)
+for i in range(1500*24*6):
+    diag, my_state = dycore(my_state, model_time_step)
     my_state.update(diag)
+    my_state['time'] += model_time_step
 
-    if i % 20 == 0:
+    if i % 6 == 0:
         monitor.store(my_state)
-        print('max. zonal wind: ', np.amax(my_state['eastward_wind'].values))
-        print('max. surf temp: ',
-              my_state['surface_temperature'].max(keep_attrs=True))
 
-    my_state['time'] += dycore._time_step
+    print(my_state['time'])
