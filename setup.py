@@ -3,24 +3,27 @@
 
 from setuptools import setup, Extension
 from wheel.bdist_wheel import bdist_wheel as native_bdist_wheel
-import pip
 import os
 import subprocess
 import platform
 import re
+try:
+    from pip import main as pip_main
+except:
+    from pip._internal import main as pip_main
 
 try:
     from Cython.Build.Distutils import build_ext as native_build_ext
 except ImportError:
     print('Suitable Cython unavailable, installing...')
-    pip.main(['install', 'cython'])
+    pip_main(['install', 'cython'])
     from Cython.Build.Distutils import build_ext as native_build_ext
 
 try:
     import numpy as np
 except ImportError:
     print('Suitable numpy unavailable, installing...')
-    pip.main(['install', 'numpy'])
+    pip_main(['install', 'numpy'])
     import numpy as np
 
 
@@ -225,7 +228,7 @@ else:
 
 setup(
     name='climt',
-    version='0.9.3',
+    version='0.14.8',
     description='CliMT is a Toolkit for building Earth system models in Python.',
     long_description=readme + '\n\n' + history,
     author="Rodrigo Caballero",

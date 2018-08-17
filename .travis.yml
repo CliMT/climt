@@ -77,7 +77,7 @@ jobs:
       script:
           - tox -e ${TOXENV}
     - stage: wheels
-      env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp35-* cp34-* cp27-manylinux1_i686'
+      env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp35-* cp34-* cp27-manylinux1_i686' CIBW_BEFORE_BUILD="{pip} install pandas==0.20.3"
       script:
         - |
           if [[ $TRAVIS_TAG ]]; then

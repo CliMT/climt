@@ -23,6 +23,9 @@ CliMT
     :target: https://climt.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://zenodo.org/badge/74854230.svg
+    :target: https://zenodo.org/badge/latestdoi/74854230
+    :alt: Zenodo DOI
 
 CliMT is a Toolkit for building Earth system models in Python. CliMT stands for *Climate Modelling
 and diagnostics Toolkit* -- it is meant both for creating models and for generating diagnostics

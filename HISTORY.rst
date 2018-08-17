@@ -31,6 +31,29 @@ Breaking Changes
 * Replaced references to "thermal_capacity" with references to "heat_capacity" in
   component quantity names.
 
+v.0.14.7
+--------
+
+* Fix issue with pip v10 and pandas 0.22 conflicts
+
+v.0.14.3
+--------
+
+* Fix release issue because of pip API change
+
+v.0.14.1
+--------
+* Fix appveyor fail due to pip changes
+
+v.0.14.0
+--------
+
+* Fixed broken version numbers
+
+v.0.12.0
+--------
+
+* new release to fix version numbers and create zenodo ID
 
 v.0.9.4
 -------
