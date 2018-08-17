@@ -10,7 +10,8 @@ from climt import (
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
     DcmipInitialConditions, GFSDynamicalCore,
-    IceSheet, Instellation, get_grid)
+    IceSheet, Instellation, DryConvectiveAdjustment,
+    get_grid)
 import climt
 from sympl import (
     Stepper, TendencyStepper, TimeDifferencingWrapper,
@@ -431,6 +432,11 @@ class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
 class TestInstellation(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return Instellation()
+
+
+class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return DryConvectiveAdjustment()
 
 
 class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
