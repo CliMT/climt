@@ -1,19 +1,19 @@
 from sympl import (
     DataArray, DiagnosticComponent, combine_component_properties, get_constant,
-    set_constant, InvalidStateError
+    set_constant
 )
 from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np
 from datetime import datetime
 from scipy.interpolate import CubicSpline
 import pkg_resources
-import xarray as xr
 
 from .properties import (
     get_dims_dict_from_properties, combine_dims_dict_list, get_wildcard_dims,
     get_dims_dict_from_state, broadcast_state, expand_wildcard_dim,
     get_dim_lengths
 )
+
 
 class RRTMGLongwaveDefaultValues(DiagnosticComponent):
 
@@ -711,7 +711,7 @@ def get_dims_dict(component_list):
         for dict_name in (
                 'tendency_properties', 'diagnostic_properties',
                 'output_properties', 'input_properties',
-                ):
+        ):
             if hasattr(component, dict_name):
                 dims_dict_list.append(
                     get_dims_dict_from_properties(

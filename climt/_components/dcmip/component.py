@@ -29,12 +29,12 @@ class DcmipInitialConditions(DiagnosticComponent):
             'dims': ['mid_levels', '*'],
             'units': 'Pa',
         },
-       'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
+        'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
             'dims': ['interface_levels', '*'],
             'units': 'dimensionless',
             'alias': 'ak'
         },
-       'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels': {
+        'atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels': {
             'dims': ['interface_levels', '*'],
             'units': 'dimensionless',
             'alias': 'bk'
@@ -75,7 +75,6 @@ class DcmipInitialConditions(DiagnosticComponent):
             'units': 'Pa',
         },
     }
-
 
     def __init__(self,
                  condition_type='baroclinic_wave',
