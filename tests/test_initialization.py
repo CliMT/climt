@@ -284,12 +284,6 @@ def test_3d_initialization_is_full_based_on_wildcard():
             assert state[quantity_name].dims[0] == 'mid_levels'
             assert set(state[quantity_name].dims[1:]) == {'latitude', 'longitude'}
 
-def test_create_implicit_diagnostics():
-
-    dummy = MockImplicitWithAllAttributes()
-
-    state = get_default_state([dummy])
-
 
 if __name__ == '__main__':
     pytest.main([__file__])
