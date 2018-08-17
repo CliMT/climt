@@ -20,6 +20,7 @@ from sympl import (
 )
 from sympl._core.tracers import reset_tracers, reset_packers
 from datetime import datetime, timedelta
+import sys
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
@@ -400,6 +401,7 @@ class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
         return IceSheet()
 
 
+@pytest.mark.skipif(sys.platform == 'win32')
 class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         ice = IceSheet()
@@ -488,6 +490,7 @@ class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
         )
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0))
 class TestGFSDycore(ComponentBase3D):
 
     def get_component_instance(self):
