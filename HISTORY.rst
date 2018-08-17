@@ -12,6 +12,7 @@ reading those changes in the Sympl documentation.
 * Many components which previously required horizontal dimensions now use
   wildcard matches for column dimensions.
 * Switched many print statements to logging calls.
+* Fixed bugs in some components
 
 Breaking Changes
 ----------------
@@ -29,8 +30,6 @@ Breaking Changes
   levels, as well as surface pressure.
 * Replaced references to "thermal_capacity" with references to "heat_capacity" in
   component quantity names.
-* Surface components now take surface upwelling and downwelling radiative fluxes,
-  rather than taking a profile of fluxes and extracting the lowest model level values.
 
 
 v.0.9.4
