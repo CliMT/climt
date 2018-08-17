@@ -463,7 +463,7 @@ def get_hybrid_sigma_pressure_levels(num_levels=28,
             dictionary containing ak, bk, and sigma levels
 
     Reference:
-        Eckermann, S: Hybrid σ–p Coordinate Choices for a Global Model,
+        Eckermann, S: Hybrid \sigma-p Coordinate Choices for a Global Model,
         Monthly Weather Review Jan 2009.
 
     .. _[Eckermann]:
