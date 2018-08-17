@@ -19,7 +19,6 @@ class SimplePhysics(Stepper):
 
     """
 
-<<<<<<< HEAD
     input_properties = {
         'air_temperature': {
             'dims': ['mid_levels', '*'],
@@ -61,19 +60,6 @@ class SimplePhysics(Stepper):
             'dims': ['*'],
             'units': 'degrees_N',
         }
-=======
-    _climt_inputs = {
-        'air_temperature': 'degK',
-        'latitude': 'degrees_north',
-        'air_pressure': 'mbar',
-        'air_pressure_on_interface_levels': 'mbar',
-        'surface_air_pressure': 'mbar',
-        'surface_temperature': 'degK',
-        'specific_humidity': 'g/g',
-        'northward_wind': 'm s^-1',
-        'eastward_wind': 'm s^-1',
-        'surface_specific_humidity': 'g/g',
->>>>>>> develop
     }
 
     diagnostic_properties = {
