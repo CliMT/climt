@@ -15,7 +15,7 @@ def plot_function(fig, state):
 
 
 monitor = PlotFunctionMonitor(plot_function)
-simple_physics = SimplePhysics(use_external_surface_specific_humidity=False)
+simple_physics = SimplePhysics()
 state = get_default_state([simple_physics])
 state['eastward_wind'].values[:] = 10.
 timestep = timedelta(hours=1)
