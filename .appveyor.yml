@@ -3,9 +3,9 @@ version: 0.9.1.{build}
 environment:
   matrix:
     - PYTHON_VERSION: "3.6"
-      MINICONDA: "C:\\Miniconda36-x64"
+      MINICONDA: "C:\\Miniconda36-x64\\envs\\python3.6"
     - PYTHON_VERSION: "3.5"
-      MINICONDA: "C:\\Miniconda35-x64"
+      MINICONDA: "C:\\Miniconda35-x64\\envs\\python3.5"
 
 platform:
   - x64
