@@ -23,7 +23,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION%
   - activate python%PYTHON_VERSION%
-  - conda update -q conda
+#  - conda update -q conda
   - conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
   - bash -c "ls -l $COMPILER_PATH"
   - bash -c "echo $PATH"
