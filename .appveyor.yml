@@ -19,12 +19,13 @@ cache:
 
 install:
   - set COMPILER_PATH=%MINICONDA%\\Library\\mingw-w64\\bin\\
-  - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
+  - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;%MINICONDA%\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION%
   - activate python%PYTHON_VERSION%
 #  - conda update -q conda
   - conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
+  - bash -c "which x86_64-w64-mingw32-gcc.exe"
   - bash -c "ls -l $COMPILER_PATH"
   - bash -c "echo $PATH"
   - bash -c "printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg"
@@ -33,7 +34,6 @@ install:
   - bash -c "gfortran --version"
   - bash -c "x86_64-w64-mingw32-gfortran.exe --version"
   - bash -c "x86_64-w64-mingw32-gcc.exe --version"
-  - bash -c "which x86_64-w64-mingw32-gcc.exe"
   - bash -c "which make"
   - bash -c "ls -l /c/projects/climt/climt/_lib/Windows"
   - bash -c "cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe"
