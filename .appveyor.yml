@@ -19,6 +19,9 @@ install:
   - set COMPILER_PATH=C:\\Miniconda-x64\\Library\\mingw-w64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
+  - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION%
+  - conda update -q conda
+  - activate python%PYTHON_VERSION%
   - conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
   - bash -c "echo $PATH"
   - bash -c "printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg"
@@ -32,9 +35,6 @@ install:
   - bash -c "ls -l /c/projects/climt/climt/_lib/Windows"
   - bash -c "cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe"
   - bash -c "ls -l $COMPILER_PATH"
-  - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION%
-  - conda update -q conda
-  - activate python%PYTHON_VERSION%
   - conda install pandas
   - conda install libpython
   - python -m pip install -r requirements_dev.txt
