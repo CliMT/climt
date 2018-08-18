@@ -19,7 +19,7 @@ cache:
 
 install:
   - set PYTHON_NAME=python%PYTHON_VERSION%
-  - set COMPILER_PATH=%MINICONDA%\\Library\\mingw-w64\\bin\\
+  - set COMPILER_PATH=%MINICONDA%\\envs\\%PYTHON_NAME%\\Library\\mingw-w64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;%MINICONDA%\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name %PYTHON_NAME% python=%PYTHON_VERSION%
