@@ -22,8 +22,8 @@ install:
   - set COMPILER_PATH=%MINICONDA%\\Library\\mingw-w64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;%MINICONDA%\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
-  - conda create -q --name PYTHON_NAME python=%PYTHON_VERSION%
-  - activate python%PYTHON_VERSION%
+  - conda create -q --name %PYTHON_NAME% python=%PYTHON_VERSION%
+  - activate %PYTHON_NAME%
 #  - conda update -q conda
   - conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
   - bash -c "which x86_64-w64-mingw32-gcc.exe"
