@@ -3,20 +3,22 @@ version: 0.9.1.{build}
 environment:
   matrix:
     - PYTHON_VERSION: "3.6"
+      MINICONDA: "C:\\Miniconda36-x64"
     - PYTHON_VERSION: "3.5"
+      MINICONDA: "C:\\Miniconda35-x64"
 
 platform:
   - x64
 
 matrix:
-  fast_finish: false
+  fast_finish: true
 
 cache:
   - C:\projects\climt\climt\_lib\Windows -> .appveyor.yml
   - C:\Users\appveyor\AppData\Local\pip\ -> requirements_dev.txt
 
 install:
-  - set COMPILER_PATH=C:\\Miniconda-x64\\Library\\mingw-w64\\bin\\
+  - set COMPILER_PATH=%MINICONDA%\\Library\\mingw-w64\\bin\\
   - set PATH=%COMPILER_PATH%;C:\msys64\usr\bin\;C:\Miniconda-x64\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
   - conda create -q --name python%PYTHON_VERSION% python=%PYTHON_VERSION%
