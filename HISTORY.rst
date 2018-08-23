@@ -2,6 +2,12 @@
 History
 =======
 
+Latest
+------
+
+* Fix docs to reflect API changes after refactor.
+
+
 v.0.14.8
 --------
 
