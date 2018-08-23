@@ -7,21 +7,6 @@ Components
 
 This page documents the different components available through CliMT.
 
-Base Components
-----------------
-
-.. autosummary::
-    :toctree: generated/
-
-    ClimtPrognostic
-
-    ClimtDiagnostic
-
-    ClimtImplicit
-
-    ClimtImplicitPrognostic
-
-    ClimtSpectralDynamicalCore
 
 Dynamics
 ---------

@@ -56,27 +56,24 @@ at the end of a run.
 
 You can read more about this functionality in :ref:`utility_functions`.
 
-Behavioural Configuration
+Interfacial Configuration
 --------------------------
 
-.. warning::
-        This API is currently unstable. Expect the names of methods to change
-        in future versions.
-
-Currently, CliMT allows for three kinds of behavioural modification of components.
+Wrappers are the preferred way of changing the inputs or outputs of a component to make
+it apparently work in a different way.
 
 * Piecewise constant output: Computationally expensive modules like radiative transfer
   are sometimes called only once every few timesteps, and the same values is used for
   the intermediate timesteps of a model. For example a GCM with a time step of 10 minutes
   might only call radiation after 1 hour of model time has elapsed. To allow for such
-  behaviour, :py:meth:`climt.ClimtPrognostic.piecewise_constant_version` can be used.
+  behaviour, :py:class:`sympl.UpdateFrequencyWrapper` can be used.
   See how this can be used practically in this `example`_.
 
 * TendencyComponent version: Spectral dynamical cores step the model forward in spectral space,
-  and therefore, they do not play well with :py:mod:`climt.ClimtImplicit`
+  and therefore, they do not play well with :py:mod:`Stepper`
   components that step forward the model in grid space. Typically, this is handled by
   finite differencing the output of Stepper components and providing them as time tendencies.
-  :py:mod:`ClimtImplicit` components have a method :py:mod:`ClimtImplicit.prognostic_version` which
+  :py:mod:`Stepper` components can be wrapped with :py:class:`sympl.TimeDifferencingWrapper` which
   returns a component which provides the
   time differenced tendencies. The time differencing is done using a first order scheme:
 
@@ -87,7 +84,7 @@ Currently, CliMT allows for three kinds of behavioural modification of component
 * Scaled version: Very often, we perform experiments where we want to study the sensitivity of the simulation
   to a particular quantity or the effect of a certain quantity on the output (mechanism denial).
   This is in some instances done by scaling the quantity or setting it to zero (which
-  is also a scaling). To allow for this kind of modification, :py:meth:`scaled_version` can be used. This is a method
+  is also a scaling). To allow for this kind of modification, :py:class:`sympl.ScalingWrapper` can be used. This is a method
   available to all kinds of components (Stepper, TendencyComponent, etc.,). See the documentation for this
   method in the description of the base components in :ref:`component_list`.
 
@@ -105,6 +102,6 @@ a lot of this code is repetitive and can be replaced by an entity (Which will be
 
 
 
-.. _GCM: https://github.com/CliMT/climt/blob/e171ebef945535f9f82df716da01b4a7c3b1221a/examples/grey_gcm_energy_balanced.py#L51
-.. _example: https://github.com/CliMT/climt/blob/e171ebef945535f9f82df716da01b4a7c3b1221a/examples/full_radiation_gcm_energy_balanced.py#L70
-.. _Grey GCM: https://github.com/CliMT/climt/blob/5bdac431413f122ae5f46ed4e6610f6a314593c6/examples/grey_gcm_energy_balanced.py#L44
+.. _GCM: https://github.com/CliMT/climt/blob/a69a23fc2470cc516a41c057976bb3d31ac6f0d7/examples/grey_gcm.py#L56-L59
+.. _example: https://github.com/CliMT/climt/blob/a69a23fc2470cc516a41c057976bb3d31ac6f0d7/examples/full_radiation_gcm_energy_balanced.py#L61
+.. _Grey GCM: https://github.com/CliMT/climt/blob/a69a23fc2470cc516a41c057976bb3d31ac6f0d7/examples/grey_gcm.py#L48
