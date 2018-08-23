@@ -1,7 +1,7 @@
 Welcome to CliMT's documentation!
 =================================
 
-.. figure:: climt_logo.png
+.. figure:: climt_logo.jpg
    :width: 1500px
    :height: 750px
    :scale: 50%
