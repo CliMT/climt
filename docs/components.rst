@@ -44,6 +44,9 @@ Convection
     EmanuelConvection
     EmanuelConvection.__call__
 
+    DryConvectiveAdjustment
+    DryConvectiveAdjustment.__call__
+
 Surface Processes
 -----------------
 

@@ -6,7 +6,8 @@ import numpy as np
 
 class DryConvectiveAdjustment(Stepper):
     """
-    Changes the temperature profile if it is super-adiabatic
+    A conservative scheme to keep the temperature profile close to the
+    dry adiabat if it is super-adiabatic.
     """
     input_properties = {
         'air_temperature': {
