@@ -33,12 +33,12 @@ class GrayLongwaveRadiation(TendencyComponent):
     }
 
     diagnostic_properties = {
-        'downwelling_longwave_flux_in_air_on_interface_levels': {
+        'downwelling_longwave_flux_in_air': {
             'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
             'alias': 'lw_down',
         },
-        'upwelling_longwave_flux_in_air_on_interface_levels': {
+        'upwelling_longwave_flux_in_air': {
             'dims': ['interface_levels', '*'],
             'units': 'W m^-2',
             'alias': 'lw_up',

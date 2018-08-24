@@ -7,6 +7,12 @@ Latest
 
 * Fix docs to reflect API changes after refactor.
 
+Breaking Changes
+----------------
+
+* The flux outputs of GrayLongwaveRadiation have been renamed to eliminate
+  `on_interface_levels`
+
 
 v.0.14.8
 --------
