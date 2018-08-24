@@ -214,7 +214,6 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
         self._output_name = output_name
         super(PressureFunctionDiagnosticComponent, self).__init__()
 
-
     def array_call(self, raw_state):
         return {
             self._output_name: self._output_function(raw_state['p'], raw_state['ps'])
