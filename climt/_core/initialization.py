@@ -151,9 +151,14 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
 
     input_properties = {
         'air_pressure': {
-            'dims': ['*'],
+            'dims': ['mid_levels'],
             'units': 'Pa',
             'alias': 'p'
+        },
+        'surface_air_pressure': {
+            'dims': ['*'],
+            'units': 'Pa',
+            'alias': 'ps'
         }
     }
 
@@ -178,13 +183,20 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
                 Whether this diagnostic should perform the calculation on
                 mid levels or interface levels.
         """
+        vertical_dimension = 'mid_levels'
         if mid_or_interface_levels == 'interface':
+            vertical_dimension = 'interface_levels'
             output_name += '_on_interface_levels'
             self.input_properties = {
                 'air_pressure_on_interface_levels': {
-                    'dims': ['*'],
+                    'dims': ['interface_levels'],
                     'units': 'Pa',
                     'alias': 'p'
+                },
+                'surface_air_pressure': {
+                    'dims': ['*'],
+                    'units': 'Pa',
+                    'alias': 'ps'
                 }
             }
         elif mid_or_interface_levels == 'mid':
@@ -194,7 +206,7 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
                 "Argument mid_or_interface_levels must be 'mid' or 'interface'")
         self.diagnostic_properties = {
             output_name: {
-                'dims': ['*'],
+                'dims': [vertical_dimension],
                 'units': output_units
             }
         }
@@ -202,9 +214,10 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
         self._output_name = output_name
         super(PressureFunctionDiagnosticComponent, self).__init__()
 
+
     def array_call(self, raw_state):
         return {
-            self._output_name: self._output_function(raw_state['p'])
+            self._output_name: self._output_function(raw_state['p'], raw_state['ps'])
         }
 
 
@@ -775,7 +788,7 @@ def broadcast_dims_to_match_component_properties(state, component_list):
 #     pass
 
 
-def init_ozone(p):
+def init_ozone(p, ps):
     p_ref = 1e5*np.linspace(0.998, 0.001, 30)
     ozone_ref = np.load(
         pkg_resources.resource_filename('climt._data', 'ozone_profile.npy')
@@ -787,7 +800,7 @@ def init_ozone(p):
 init_diagnostics = [
     PressureFunctionDiagnosticComponent(
         'longwave_optical_depth',
-        lambda p: 1. * (1. - p),
+        lambda p, ps: 1. * (1. - p/ps),
         'dimensionless',
         'interface',
     ),
