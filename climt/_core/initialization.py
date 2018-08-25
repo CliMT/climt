@@ -151,7 +151,7 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
 
     input_properties = {
         'air_pressure': {
-            'dims': ['mid_levels'],
+            'dims': ['mid_levels', '*'],
             'units': 'Pa',
             'alias': 'p'
         },
@@ -189,7 +189,7 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
             output_name += '_on_interface_levels'
             self.input_properties = {
                 'air_pressure_on_interface_levels': {
-                    'dims': ['interface_levels'],
+                    'dims': ['interface_levels', '*'],
                     'units': 'Pa',
                     'alias': 'p'
                 },
@@ -206,7 +206,7 @@ class PressureFunctionDiagnosticComponent(DiagnosticComponent):
                 "Argument mid_or_interface_levels must be 'mid' or 'interface'")
         self.diagnostic_properties = {
             output_name: {
-                'dims': [vertical_dimension],
+                'dims': [vertical_dimension, '*'],
                 'units': output_units
             }
         }

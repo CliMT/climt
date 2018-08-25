@@ -6,13 +6,14 @@ Latest
 ------
 
 * Fix docs to reflect API changes after refactor.
-* Fix wrong initialisation of optical depth for GrayLongwaveRadiation
+* Fix wrong initialisation to use sigma values instead of pressure values 
+  of optical depth for GrayLongwaveRadiation
 
 Breaking Changes
 ----------------
 
 * The flux outputs of GrayLongwaveRadiation have been renamed to eliminate
-  `on_interface_levels`
+  `on_interface_levels` to keep consistency with other components.
 
 
 
