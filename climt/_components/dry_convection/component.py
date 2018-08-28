@@ -88,7 +88,6 @@ class DryConvectiveAdjustment(Stepper):
 
                 if convect_to_level == 0:
                     continue
-                print(convect_to_level)
                 stable_level = level + convect_to_level
 
                 q_conv = output_q[column, level:stable_level]

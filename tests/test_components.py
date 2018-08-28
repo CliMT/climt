@@ -450,7 +450,11 @@ def heat_capacity(q):
     return Cpd*(1-q) + Cvap*q
 
 
-def test_enthalpy_and_water_conservation():
+def test_DryConvectiveAdjustment_conserves_enthalpy_and_water():
+    """
+    Test whether the enthalpy and amount of water is the same after
+    DryConvectiveAdjustment eliminates the instability in the column.
+    """
 
     unstable_level = 1
     conv_adj = climt.DryConvectiveAdjustment()
