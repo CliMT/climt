@@ -450,24 +450,31 @@ def heat_capacity(q):
     return Cpd*(1-q) + Cvap*q
 
 
-def test_enthalpy_and_water_conservation():
+def test_DryConvectiveAdjustment_conserves_enthalpy_and_water():
+    """
+    Test whether the enthalpy and amount of water is the same after
+    DryConvectiveAdjustment eliminates the instability in the column.
+    """
 
+    unstable_level = 1
     conv_adj = climt.DryConvectiveAdjustment()
 
     state = climt.get_default_state([conv_adj], grid_state=climt.get_grid(nz=35))
 
     dp = (state['air_pressure_on_interface_levels'][:-1] - state['air_pressure_on_interface_levels'][1:])/(
         state['air_pressure_on_interface_levels'][0] - state['air_pressure_on_interface_levels'][-1])
-    state['air_temperature'][:1] += 10
-    state['specific_humidity'][0] = 0.5
+    state['air_temperature'][:unstable_level] += 10
+    state['specific_humidity'][:unstable_level] = 0.05
 
-    initial_enthalpy = np.sum(heat_capacity(state['specific_humidity'])*state['air_temperature']*dp)
+    initial_enthalpy = np.sum(heat_capacity(state['specific_humidity']).values *
+                              state['air_temperature'].values*dp.values)
     initial_water = np.sum(state['specific_humidity'].values*dp.values)
 
     diag, output = conv_adj(state, timedelta(hours=1))
 
     final_water = np.sum(output['specific_humidity'].values*dp.values)
-    final_enthalpy = np.sum(heat_capacity(output['specific_humidity'])*output['air_temperature']*dp)
+    final_enthalpy = np.sum(heat_capacity(output['specific_humidity']).values *
+                            output['air_temperature'].values*dp.values)
 
     assert np.isclose(initial_water, final_water)
     assert np.isclose(initial_enthalpy, final_enthalpy)

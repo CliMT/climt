@@ -84,7 +84,7 @@ class DryConvectiveAdjustment(Stepper):
                 convect_to_level = len(theta_lesser) - np.argmax(theta_lesser[::-1])
 
                 if level == 0:
-                    convect_to_level = 1
+                    convect_to_level = max(convect_to_level, 1)
 
                 if convect_to_level == 0:
                     continue
