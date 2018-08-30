@@ -4,7 +4,7 @@
 !     created:   $Date: 2016-12-29 15:53:24 -0500 (Thu, 29 Dec 2016) $
 !
 
-       module rrtmg_sw_rad
+       module rrtmg_sw_rad_nomcica
 
 !----------------------------------------------------------------------------
 ! Copyright (c) 2002-2016, Atmospheric & Environmental Research, Inc. (AER)
@@ -304,7 +304,7 @@
                                                       !        scaled to scon and solar variability defined
                                                       !        (optional) by setting non-zero scale factors
                                                       !        for each band in bndsolvar
-      real(kind=rb), intent(in), optional :: indsolvar(:) ! Facular and sunspot amplitude 
+      real(kind=rb), intent(inout), optional :: indsolvar(:) ! Facular and sunspot amplitude 
                                                           ! scale factors (isolvar=1), or
                                                           ! Mg and SB indices (isolvar=2)
                                                           !    Dimensions: (2)
@@ -959,7 +959,7 @@
                                                           ! for Kurucz solar constant (isolvar=-1), or
                                                           ! averaged NRLSSI2 model solar cycle (isolvar=3)
                                                           !    Dimensions: (nbndsw=14)
-      real(kind=rb), intent(in), optional :: indsolvar(:) ! Facular and sunspot amplitude 
+      real(kind=rb), intent(inout), optional :: indsolvar(:) ! Facular and sunspot amplitude 
                                                           ! scale factors (isolvar=1), or
                                                           ! Mg and SB indices (isolvar=2)
                                                           !    Dimensions: (2)
@@ -1536,6 +1536,6 @@
 
       end subroutine inatm_sw
 
-      end module rrtmg_sw_rad
+      end module rrtmg_sw_rad_nomcica
 
 
