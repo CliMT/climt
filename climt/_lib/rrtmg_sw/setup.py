@@ -45,7 +45,8 @@ sources_list = [
     'mcica_random_numbers.f90',
     'rrtmg_sw_init.f90',
     'mcica_subcol_gen_sw.f90',
-    'rrtmg_sw_rad.f90']
+    'rrtmg_sw_rad.f90',
+    'rrtmg_sw_c_binder.f90']
 
 unoptimised_sources_list = [
     'rrtmg_sw_k_g.f90',
