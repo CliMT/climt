@@ -18,38 +18,42 @@ cdef double [:] rrtm_solar_var_by_band
 #Definitions of the functions we want to use within
 #CliMT: initialisation and radiative transfer
 cdef extern:
-    void rrtmg_shortwave_init(double *cp_d_air)
+    void rrtmg_sw_set_constants(
+        double *pi, double *grav, double *planck,
+        double *boltz, double *clight, double *avogadro,
+        double *loschmidt, double *gas_const,
+        double *stef_boltz, double *secs_per_day)
 
 cdef extern:
-    void rrtmg_set_constants(double *pi, double *grav, double *planck,
-                            double *boltz, double *clight, double *avogadro,
-                            double *loschmidt, double *gas_const,
-                            double *stef_boltz, double *secs_per_day)
+    void rrtmg_sw_ini_wrapper(double *cp_d_air)
+
 
 cdef extern nogil:
-    void rrtmg_shortwave(
+    void rrtmg_sw_nomcica_wrapper(
         cnp.int32_t *num_cols, cnp.int32_t *num_layers,
         cnp.int32_t *cld_overlap_method, cnp.int32_t *aerosol_input_format,
         double *layer_pressure, double *interface_pressure,
         double *layer_temp, double *interface_temp, double *surface_temp,
         double *h2o_vmr, double *o3_vmr, double *co2_vmr,
         double *ch4_vmr, double *n2o_vmr, double *o2_vmr,
-        double *surface_direct_sw_albedo, double *surface_direct_nir_albedo,
-        double *surface_diffuse_sw_albedo, double *surface_diffuse_nir_albedo,
+        double *surface_direct_sw_albedo, double *surface_diffuse_sw_albedo,
+        double *surface_direct_nir_albedo, double *surface_diffuse_nir_albedo,
         double *cosine_zenith_angle, double *flux_adj_earth_sun_dist,
         cnp.int32_t *day_of_year, double *solar_constant,
-        cnp.int32_t *solar_variability_type,
-        cnp.int32_t *cloud_props_flag, cnp.int32_t *ice_props_flag,
-        cnp.int32_t *liq_droplet_flag, double *cloud_fraction,
-        double *cloud_tau, double *cloud_single_scat_albedo,
-        double *cloud_asym, double *cloud_fwd_scat_frac,
-        double *cloud_ice_path, double *cloud_liq_path,
-        double *cloud_ice_eff_size, double *cloud_droplet_eff_radius, double *aerosol_tau,
+        cnp.int32_t *solar_variability_type, cnp.int32_t *cloud_props_flag,
+        cnp.int32_t *ice_props_flag, cnp.int32_t *liq_droplet_flag,
+        double *cloud_fraction, double *cloud_tau,
+        double *cloud_single_scat_albedo, double *cloud_asym,
+        double *cloud_fwd_scat_frac, double *cloud_ice_path,
+        double *cloud_liq_path, double *cloud_ice_eff_size,
+        double *cloud_droplet_eff_radius, double *aerosol_tau,
         double *aer_single_scat_albedo, double *aer_asym,
         double *aer_tau_at_55_micron,
+        # Output
         double *upward_shortwave_flux, double *downward_shortwave_flux,
         double *shortwave_heating_rate, double *up_sw_flux_clearsky,
         double *down_sw_flux_clearsky, double *sw_heating_rate_clearsky,
+        # Optional
         double *sol_var_scale_factors, double *fac_sunspot_ampl,
         double *solar_cycle_frac)
 
@@ -67,7 +71,7 @@ def initialise_rrtm_radiation(
     cnp.int32_t aerosol_input_flag=0,
     cnp.int32_t solar_var_flag=0):
 
-    rrtmg_shortwave_init(&cp_d_air)
+    rrtmg_sw_ini_wrapper(&cp_d_air)
 
     global rrtm_cloud_overlap_method, rrtm_cloud_props_flag,\
         rrtm_ice_props_flag, rrtm_liq_droplet_flag,\
@@ -86,13 +90,13 @@ def initialise_rrtm_radiation(
     rrtm_solar_var_by_band = solar_var_banded
 
 def set_constants(double pi, double grav, double planck, double boltz,
-                  double clight, double avogadro, double loschmidt, double gas_const,
-                  double stef_boltz, double secs_per_day):
+                  double clight, double avogadro, double loschmidt,
+                  double gas_const, double stef_boltz, double secs_per_day):
 
-    rrtmg_set_constants(&pi, &grav, &planck,
-                        &boltz, &clight, &avogadro,
-                        &loschmidt, &gas_const,
-                        &stef_boltz, &secs_per_day)
+    rrtmg_sw_set_constants(
+        &pi, &grav, &planck, &boltz,
+        &clight, &avogadro, &loschmidt,
+        &gas_const, &stef_boltz, &secs_per_day)
 
 @cython.boundscheck(False)
 cpdef void rrtm_calculate_shortwave_fluxes(
@@ -143,7 +147,7 @@ cpdef void rrtm_calculate_shortwave_fluxes(
         rrtm_solar_constant, rrtm_fac_sunspot_ampl,\
         rrtm_solar_var_by_band
 
-    rrtmg_shortwave(
+    rrtmg_sw_nomcica_wrapper(
         &num_cols, &num_layers,
         &rrtm_cloud_overlap_method,
         &rrtm_aerosol_input_flag,
@@ -191,8 +195,4 @@ cpdef void rrtm_calculate_shortwave_fluxes(
         <double *>&sw_heating_rate_clearsky[0,0],
         <double *>&rrtm_solar_var_by_band[0],
         <double *>&rrtm_fac_sunspot_ampl[0],
-    &solar_cycle_fraction)
-
-#    return (upward_shortwave_flux, downward_shortwave_flux,
-#            shortwave_heating_rate, up_sw_flux_clearsky,
-#            down_sw_flux_clearsky, sw_heating_rate_clearsky)
+        &solar_cycle_fraction)
