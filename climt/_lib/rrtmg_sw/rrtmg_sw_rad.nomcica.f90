@@ -21,18 +21,18 @@
 !    the names of its contributors may be used to endorse or promote products
 !    derived from this software without specific prior written permission.
 !
-! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-! ARE DISCLAIMED. IN NO EVENT SHALL ATMOSPHERIC & ENVIRONMENTAL RESEARCH, INC.,
-! BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-! CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-! SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-! INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-! CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-! ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+! ARE DISCLAIMED. IN NO EVENT SHALL ATMOSPHERIC & ENVIRONMENTAL RESEARCH, INC., 
+! BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+! CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+! SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+! INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+! CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+! ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
 ! THE POSSIBILITY OF SUCH DAMAGE.
-!                        (http://www.rtweb.aer.com/)
+!                        (http://www.rtweb.aer.com/)                        
 !----------------------------------------------------------------------------
 !
 ! ****************************************************************************
@@ -75,14 +75,11 @@
       use parkind, only : im => kind_im, rb => kind_rb
       use rrsw_vsn
       use rrtmg_sw_cldprop, only: cldprop_sw
-! *** Move the required call to rrtmg_sw_ini below and the following
+! *** Move the required call to rrtmg_sw_ini below and the following 
 ! use association to GCM initialization area ***
 !      use rrtmg_sw_init, only: rrtmg_sw_ini
       use rrtmg_sw_setcoef, only: setcoef_sw
       use rrtmg_sw_spcvrt, only: spcvrt_sw
-
-      !JOY
-      use iso_c_binding
 
       implicit none
 
@@ -109,27 +106,27 @@
              tauaer  ,ssaaer  ,asmaer  ,ecaer   , &
              swuflx  ,swdflx  ,swhr    ,swuflxc ,swdflxc ,swhrc, &
 ! optional I/O
-             bndsolvar,indsolvar,solcycfrac)bind(c, name='rrtmg_shortwave')
+             bndsolvar,indsolvar,solcycfrac)
 
 ! ------- Description -------
 
-! This program is the driver for RRTMG_SW, the AER SW radiation model for
+! This program is the driver for RRTMG_SW, the AER SW radiation model for 
 !  application to GCMs, that has been adapted from RRTM_SW for improved
 !  efficiency and to provide fractional cloudiness and cloud overlap
 !  capability using McICA.
 !
-! Note: The call to RRTMG_SW_INI should be moved to the GCM initialization
-!  area, since this has to be called only once.
+! Note: The call to RRTMG_SW_INI should be moved to the GCM initialization 
+!  area, since this has to be called only once. 
 !
 ! This routine
 !    b) calls INATM_SW to read in the atmospheric profile from GCM;
-!       all layering in RRTMG is ordered from surface to toa.
+!       all layering in RRTMG is ordered from surface to toa. 
 !    c) calls CLDPROP_SW to set cloud optical depth based on input
 !       cloud properties
-!    d) calls SETCOEF_SW to calculate various quantities needed for
+!    d) calls SETCOEF_SW to calculate various quantities needed for 
 !       the radiative transfer algorithm
-!    e) calls SPCVRT to call the two-stream model that in turn
-!       calls TAUMOL to calculate gaseous optical depths for each
+!    e) calls SPCVRT to call the two-stream model that in turn 
+!       calls TAUMOL to calculate gaseous optical depths for each 
 !       of the 16 spectral bands and to perform the radiative transfer;
 !    f) passes the calculated fluxes and cooling rates back to GCM
 !
@@ -137,26 +134,26 @@
 !     The mode is chosen by using either rrtmg_sw.nomcica.f90 (to not use
 !     McICA) or rrtmg_sw.f90 (to use McICA) to interface with a GCM.
 !
-!    1) Standard, single forward model calculation (imca = 0); this is
+!    1) Standard, single forward model calculation (imca = 0); this is 
 !       valid only for clear sky or fully overcast clouds
-!    2) Monte Carlo Independent Column Approximation (McICA, Pincus et al.,
+!    2) Monte Carlo Independent Column Approximation (McICA, Pincus et al., 
 !       JC, 2003) method is applied to the forward model calculation (imca = 1)
 !       This method is valid for clear sky and full or partial cloud conditions.
 !
 ! Two methods of cloud property input are possible:
-!     Cloud properties can be input in one of two ways (controlled by input
+!     Cloud properties can be input in one of two ways (controlled by input 
 !     flags inflag, iceflag and liqflag; see text file rrtmg_sw_instructions
 !     and subroutine rrtmg_sw_cldprop.f90 for further details):
 !
-!    1) Input cloud fraction, cloud optical depth, single scattering albedo
+!    1) Input cloud fraction, cloud optical depth, single scattering albedo 
 !       and asymmetry parameter directly (inflgsw = 0)
 !    2) Input cloud fraction and cloud physical properties: ice fracion,
-!       ice and liquid particle sizes (inflgsw = 1 or 2);
+!       ice and liquid particle sizes (inflgsw = 1 or 2);  
 !       cloud optical properties are calculated by cldprop or cldprmc based
 !       on input settings of iceflgsw and liqflgsw
 !
 ! Two methods of aerosol property input are possible:
-!     Aerosol properties can be input in one of two ways (controlled by input
+!     Aerosol properties can be input in one of two ways (controlled by input 
 !     flag iaer, see text file rrtmg_sw_instructions for further details):
 !
 !    1) Input aerosol optical depth, single scattering albedo and asymmetry
@@ -168,7 +165,7 @@
 ! ------- Modifications -------
 !
 ! This version of RRTMG_SW has been modified from RRTM_SW to use a reduced
-! set of g-point intervals and a two-stream model for application to GCMs.
+! set of g-point intervals and a two-stream model for application to GCMs. 
 !
 !-- Original version (derived from RRTM_SW)
 !     2002: AER. Inc.
@@ -177,20 +174,20 @@
 !-- Additional modifications for GCM application
 !     Aug 2003: M. J. Iacono, AER Inc.
 !-- Total number of g-points reduced from 224 to 112.  Original
-!   set of 224 can be restored by exchanging code in module parrrsw.f90
+!   set of 224 can be restored by exchanging code in module parrrsw.f90 
 !   and in file rrtmg_sw_init.f90.
 !     Apr 2004: M. J. Iacono, AER, Inc.
-!-- Modifications to include output for direct and diffuse
+!-- Modifications to include output for direct and diffuse 
 !   downward fluxes.  There are output as "true" fluxes without
 !   any delta scaling applied.  Code can be commented to exclude
 !   this calculation in source file rrtmg_sw_spcvrt.f90.
 !     Jan 2005: E. J. Mlawer, M. J. Iacono, AER, Inc.
 !-- Reformatted for consistency with rrtmg_lw.
 !     Feb 2007: M. J. Iacono, AER, Inc.
-!-- Modifications to formatting to use assumed-shape arrays.
+!-- Modifications to formatting to use assumed-shape arrays. 
 !     Aug 2007: M. J. Iacono, AER, Inc.
 !-- Modified to output direct and diffuse fluxes either with or without
-!   delta scaling based on setting of idelm flag.
+!   delta scaling based on setting of idelm flag. 
 !     Dec 2008: M. J. Iacono, AER, Inc.
 !-- Revised to add new solar variability options based on the
 !   NRLSSI2 solar model
@@ -208,8 +205,8 @@
 
 ! ----- Input -----
 ! Note: All volume mixing ratios are in dimensionless units of mole fraction obtained
-! by scaling mass mixing ratio (g/g) with the appropriate molecular weights (g/mol)
-      integer(kind=im), intent(in) :: ncol            ! Number of horizontal columns
+! by scaling mass mixing ratio (g/g) with the appropriate molecular weights (g/mol) 
+      integer(kind=im), intent(in) :: ncol            ! Number of horizontal columns     
       integer(kind=im), intent(in) :: nlay            ! Number of model layers
       integer(kind=im), intent(inout) :: icld         ! Cloud overlap method
                                                       !    0: Clear only
@@ -219,55 +216,55 @@
       integer(kind=im), intent(inout) :: iaer         ! Aerosol option flag
                                                       !    0: No aerosol
                                                       !    6: ECMWF method
-                                                      !    10:Input aerosol optical
+                                                      !    10:Input aerosol optical 
                                                       !       properties
 
-      real(kind=rb), intent(in) :: play(ncol, nlay)          ! Layer pressures (hPa, mb)
+      real(kind=rb), intent(in) :: play(:,:)          ! Layer pressures (hPa, mb)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: plev(ncol, nlay+1)          ! Interface pressures (hPa, mb)
+      real(kind=rb), intent(in) :: plev(:,:)          ! Interface pressures (hPa, mb)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(in) :: tlay(ncol, nlay)          ! Layer temperatures (K)
+      real(kind=rb), intent(in) :: tlay(:,:)          ! Layer temperatures (K)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: tlev(ncol, nlay+1)          ! Interface temperatures (K)
+      real(kind=rb), intent(in) :: tlev(:,:)          ! Interface temperatures (K)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(in) :: tsfc(ncol)            ! Surface temperature (K)
+      real(kind=rb), intent(in) :: tsfc(:)            ! Surface temperature (K)
                                                       !    Dimensions: (ncol)
-      real(kind=rb), intent(in) :: h2ovmr(ncol, nlay)        ! H2O volume mixing ratio
+      real(kind=rb), intent(in) :: h2ovmr(:,:)        ! H2O volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: o3vmr(ncol, nlay)         ! O3 volume mixing ratio
+      real(kind=rb), intent(in) :: o3vmr(:,:)         ! O3 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: co2vmr(ncol, nlay)        ! CO2 volume mixing ratio
+      real(kind=rb), intent(in) :: co2vmr(:,:)        ! CO2 volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: ch4vmr(ncol, nlay)        ! Methane volume mixing ratio
+      real(kind=rb), intent(in) :: ch4vmr(:,:)        ! Methane volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: n2ovmr(ncol, nlay)        ! Nitrous oxide volume mixing ratio
+      real(kind=rb), intent(in) :: n2ovmr(:,:)        ! Nitrous oxide volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: o2vmr(ncol, nlay)         ! Oxygen volume mixing ratio
+      real(kind=rb), intent(in) :: o2vmr(:,:)         ! Oxygen volume mixing ratio
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: asdir(ncol)           ! UV/vis surface albedo direct rad
+      real(kind=rb), intent(in) :: asdir(:)           ! UV/vis surface albedo direct rad
                                                       !    Dimensions: (ncol)
-      real(kind=rb), intent(in) :: aldir(ncol)           ! Near-IR surface albedo direct rad
+      real(kind=rb), intent(in) :: aldir(:)           ! Near-IR surface albedo direct rad
                                                       !    Dimensions: (ncol)
-      real(kind=rb), intent(in) :: asdif(ncol)           ! UV/vis surface albedo: diffuse rad
+      real(kind=rb), intent(in) :: asdif(:)           ! UV/vis surface albedo: diffuse rad
                                                       !    Dimensions: (ncol)
-      real(kind=rb), intent(in) :: aldif(ncol)           ! Near-IR surface albedo: diffuse rad
+      real(kind=rb), intent(in) :: aldif(:)           ! Near-IR surface albedo: diffuse rad
                                                       !    Dimensions: (ncol)
 
       integer(kind=im), intent(in) :: dyofyr          ! Day of the year (used to get Earth/Sun
                                                       !  distance if adjflx not provided)
       real(kind=rb), intent(in) :: adjes              ! Flux adjustment for Earth/Sun distance
-      real(kind=rb), intent(in) :: coszen(ncol)          ! Cosine of solar zenith angle
+      real(kind=rb), intent(in) :: coszen(:)          ! Cosine of solar zenith angle
                                                       !    Dimensions: (ncol)
       real(kind=rb), intent(in) :: scon               ! Solar constant (W/m2)
-                                                      !    Total solar irradiance averaged
+                                                      !    Total solar irradiance averaged 
                                                       !    over the solar cycle.
-                                                      !    If scon = 0.0, the internal solar
-                                                      !    constant, which depends on the
-                                                      !    value of isolvar, will be used.
+                                                      !    If scon = 0.0, the internal solar 
+                                                      !    constant, which depends on the  
+                                                      !    value of isolvar, will be used. 
                                                       !    For isolvar=-1, scon=1368.22 Wm-2,
                                                       !    For isolvar=0,1,3, scon=1360.85 Wm-2,
                                                       !    If scon > 0.0, the internal solar
-                                                      !    constant will be scaled to the
+                                                      !    constant will be scaled to the 
                                                       !    provided value of scon.
       integer(kind=im), intent(in) :: isolvar         ! Flag for solar variability method
                                                       !   -1 = (when scon .eq. 0.0): No solar variability
@@ -277,14 +274,14 @@
                                                       !        scaled to scon and solar variability defined
                                                       !        (optional) by setting non-zero scale factors
                                                       !        for each band in bndsolvar
-                                                      !    0 = (when SCON .eq. 0.0): No solar variability
-                                                      !        and no solar cycle (NRLSSI2 solar constant of
-                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral
-                                                      !        range only), with facular and sunspot effects
+                                                      !    0 = (when SCON .eq. 0.0): No solar variability 
+                                                      !        and no solar cycle (NRLSSI2 solar constant of 
+                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral 
+                                                      !        range only), with facular and sunspot effects 
                                                       !        fixed to the mean of Solar Cycles 13-24;
-                                                      !        (when SCON .ne. 0.0): No solar variability
-                                                      !        and no solar cycle (NRLSSI2 solar constant of
-                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral
+                                                      !        (when SCON .ne. 0.0): No solar variability 
+                                                      !        and no solar cycle (NRLSSI2 solar constant of 
+                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral 
                                                       !        range only), is scaled to SCON
                                                       !    1 = Solar variability (using NRLSSI2  solar
                                                       !        model) with solar cycle contribution
@@ -294,9 +291,9 @@
                                                       !        average of Solar Cycles 13-24;
                                                       !        two amplitude scale factors allow
                                                       !        facular and sunspot adjustments from
-                                                      !        mean solar cycle as defined by indsolvar
+                                                      !        mean solar cycle as defined by indsolvar 
                                                       !    2 = Solar variability (using NRLSSI2 solar
-                                                      !        model) over solar cycle determined by
+                                                      !        model) over solar cycle determined by 
                                                       !        direct specification of Mg (facular)
                                                       !        and SB (sunspot) indices provided
                                                       !        in indsolvar (scon = 0.0 only)
@@ -307,11 +304,11 @@
                                                       !        scaled to scon and solar variability defined
                                                       !        (optional) by setting non-zero scale factors
                                                       !        for each band in bndsolvar
-      real(kind=rb), intent(inout), optional :: indsolvar(2) ! Facular and sunspot amplitude
+      real(kind=rb), intent(in), optional :: indsolvar(:) ! Facular and sunspot amplitude 
                                                           ! scale factors (isolvar=1), or
                                                           ! Mg and SB indices (isolvar=2)
                                                           !    Dimensions: (2)
-      real(kind=rb), intent(in), optional :: bndsolvar(14) ! Solar variability scale factors
+      real(kind=rb), intent(in), optional :: bndsolvar(:) ! Solar variability scale factors 
                                                           ! for each shortwave band
                                                           !    Dimensions: (nbndsw=14)
       real(kind=rb), intent(in), optional :: solcycfrac   ! Fraction of averaged solar cycle (0-1)
@@ -321,25 +318,25 @@
       integer(kind=im), intent(in) :: iceflgsw        ! Flag for ice particle specification
       integer(kind=im), intent(in) :: liqflgsw        ! Flag for liquid droplet specification
 
-      real(kind=rb), intent(in) :: cldfr(ncol, nlay)         ! Cloud fraction
+      real(kind=rb), intent(in) :: cldfr(:,:)         ! Cloud fraction
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: taucld(nbndsw, ncol, nlay)      ! In-cloud optical depth
+      real(kind=rb), intent(in) :: taucld(:,:,:)      ! In-cloud optical depth
                                                       !    Dimensions: (nbndsw,ncol,nlay)
-      real(kind=rb), intent(in) :: ssacld(nbndsw, ncol, nlay)      ! In-cloud single scattering albedo
+      real(kind=rb), intent(in) :: ssacld(:,:,:)      ! In-cloud single scattering albedo
                                                       !    Dimensions: (nbndsw,ncol,nlay)
-      real(kind=rb), intent(in) :: asmcld(nbndsw, ncol, nlay)      ! In-cloud asymmetry parameter
+      real(kind=rb), intent(in) :: asmcld(:,:,:)      ! In-cloud asymmetry parameter
                                                       !    Dimensions: (nbndsw,ncol,nlay)
-      real(kind=rb), intent(in) :: fsfcld(nbndsw, ncol, nlay)      ! In-cloud forward scattering fraction
+      real(kind=rb), intent(in) :: fsfcld(:,:,:)      ! In-cloud forward scattering fraction
                                                       !    Dimensions: (nbndsw,ncol,nlay)
-      real(kind=rb), intent(in) :: cicewp(ncol, nlay)        ! In-cloud ice water path (g/m2)
+      real(kind=rb), intent(in) :: cicewp(:,:)        ! In-cloud ice water path (g/m2)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: cliqwp(ncol, nlay)        ! In-cloud liquid water path (g/m2)
+      real(kind=rb), intent(in) :: cliqwp(:,:)        ! In-cloud liquid water path (g/m2)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: reice(ncol, nlay)         ! Cloud ice effective radius (microns)
+      real(kind=rb), intent(in) :: reice(:,:)         ! Cloud ice effective radius (microns)
                                                       !    Dimensions: (ncol,nlay)
                                                       ! specific definition of reice depends on setting of iceflgsw:
                                                       ! iceflgsw = 0: (inactive)
-                                                      !
+                                                      !              
                                                       ! iceflgsw = 1: ice effective radius, r_ec, (Ebert and Curry, 1992),
                                                       !               r_ec range is limited to 13.0 to 130.0 microns
                                                       ! iceflgsw = 2: ice effective radius, r_k, (Key, Streamer Ref. Manual, 1996)
@@ -347,34 +344,34 @@
                                                       ! iceflgsw = 3: generalized effective size, dge, (Fu, 1996),
                                                       !               dge range is limited to 5.0 to 140.0 microns
                                                       !               [dge = 1.0315 * r_ec]
-      real(kind=rb), intent(in) :: reliq(ncol, nlay)         ! Cloud water drop effective radius (microns)
+      real(kind=rb), intent(in) :: reliq(:,:)         ! Cloud water drop effective radius (microns)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(in) :: tauaer(ncol, nlay, nbndsw)      ! Aerosol optical depth (iaer=10 only)
+      real(kind=rb), intent(in) :: tauaer(:,:,:)      ! Aerosol optical depth (iaer=10 only)
                                                       !    Dimensions: (ncol,nlay,nbndsw)
-                                                      ! (non-delta scaled)
-      real(kind=rb), intent(in) :: ssaaer(ncol, nlay, nbndsw)      ! Aerosol single scattering albedo (iaer=10 only)
+                                                      ! (non-delta scaled)      
+      real(kind=rb), intent(in) :: ssaaer(:,:,:)      ! Aerosol single scattering albedo (iaer=10 only)
                                                       !    Dimensions: (ncol,nlay,nbndsw)
-                                                      ! (non-delta scaled)
-      real(kind=rb), intent(in) :: asmaer(ncol, nlay, nbndsw)      ! Aerosol asymmetry parameter (iaer=10 only)
+                                                      ! (non-delta scaled)      
+      real(kind=rb), intent(in) :: asmaer(:,:,:)      ! Aerosol asymmetry parameter (iaer=10 only)
                                                       !    Dimensions: (ncol,nlay,nbndsw)
-                                                      ! (non-delta scaled)
-      real(kind=rb), intent(in) :: ecaer(ncol, nlay, naerec)       ! Aerosol optical depth at 0.55 micron (iaer=6 only)
+                                                      ! (non-delta scaled)      
+      real(kind=rb), intent(in) :: ecaer(:,:,:)       ! Aerosol optical depth at 0.55 micron (iaer=6 only)
                                                       !    Dimensions: (ncol,nlay,naerec)
-                                                      ! (non-delta scaled)
+                                                      ! (non-delta scaled)      
 
 ! ----- Output -----
 
-      real(kind=rb), intent(out) :: swuflx(ncol, nlay+1)       ! Total sky shortwave upward flux (W/m2)
+      real(kind=rb), intent(out) :: swuflx(:,:)       ! Total sky shortwave upward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: swdflx(ncol, nlay+1)       ! Total sky shortwave downward flux (W/m2)
+      real(kind=rb), intent(out) :: swdflx(:,:)       ! Total sky shortwave downward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: swhr(ncol, nlay)         ! Total sky shortwave radiative heating rate (K/d)
+      real(kind=rb), intent(out) :: swhr(:,:)         ! Total sky shortwave radiative heating rate (K/d)
                                                       !    Dimensions: (ncol,nlay)
-      real(kind=rb), intent(out) :: swuflxc(ncol, nlay+1)      ! Clear sky shortwave upward flux (W/m2)
+      real(kind=rb), intent(out) :: swuflxc(:,:)      ! Clear sky shortwave upward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: swdflxc(ncol, nlay+1)      ! Clear sky shortwave downward flux (W/m2)
+      real(kind=rb), intent(out) :: swdflxc(:,:)      ! Clear sky shortwave downward flux (W/m2)
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out) :: swhrc(ncol, nlay)        ! Clear sky shortwave radiative heating rate (K/d)
+      real(kind=rb), intent(out) :: swhrc(:,:)        ! Clear sky shortwave radiative heating rate (K/d)
                                                       !    Dimensions: (ncol,nlay)
 
 ! ----- Local -----
@@ -402,7 +399,7 @@
       real(kind=rb) :: zdpgcp                 ! flux to heating conversion ratio
 
 ! Atmosphere
-      real(kind=rb) :: pavel(nlay+1)          ! layer pressures (mb)
+      real(kind=rb) :: pavel(nlay+1)          ! layer pressures (mb) 
       real(kind=rb) :: tavel(nlay+1)          ! layer temperatures (K)
       real(kind=rb) :: pz(0:nlay+1)           ! level (interface) pressures (hPa, mb)
       real(kind=rb) :: tz(0:nlay+1)           ! level (interface) temperatures (K)
@@ -425,7 +422,7 @@
       integer(kind=im) :: laytrop             ! tropopause layer index
       integer(kind=im) :: layswtch            ! tropopause layer index
       integer(kind=im) :: laylow              ! tropopause layer index
-      integer(kind=im) :: jp(nlay+1)          !
+      integer(kind=im) :: jp(nlay+1)          ! 
       integer(kind=im) :: jt(nlay+1)          !
       integer(kind=im) :: jt1(nlay+1)         !
 
@@ -436,7 +433,7 @@
       real(kind=rb) :: colch4(nlay+1)         ! column amount (ch4)
       real(kind=rb) :: colo2(nlay+1)          ! column amount (o2)
       real(kind=rb) :: colmol(nlay+1)         ! column amount
-      real(kind=rb) :: co2mult(nlay+1)        ! column amount
+      real(kind=rb) :: co2mult(nlay+1)        ! column amount 
 
       integer(kind=im) :: indself(nlay+1)
       integer(kind=im) :: indfor(nlay+1)
@@ -447,7 +444,7 @@
 
       real(kind=rb) :: &                      !
                          fac00(nlay+1), fac01(nlay+1), &
-                         fac10(nlay+1), fac11(nlay+1)
+                         fac10(nlay+1), fac11(nlay+1) 
 
 ! Atmosphere/clouds - cldprop
       integer(kind=im) :: ncbands             ! number of cloud spectral bands
@@ -473,11 +470,11 @@
 ! Atmosphere/clouds/aerosol - spcvrt,spcvmc
       real(kind=rb) :: ztauc(nlay+1,nbndsw)     ! cloud optical depth
       real(kind=rb) :: ztaucorig(nlay+1,nbndsw) ! unscaled cloud optical depth
-      real(kind=rb) :: zasyc(nlay+1,nbndsw)     ! cloud asymmetry parameter
+      real(kind=rb) :: zasyc(nlay+1,nbndsw)     ! cloud asymmetry parameter 
                                                 !  (first moment of phase function)
       real(kind=rb) :: zomgc(nlay+1,nbndsw)     ! cloud single scattering albedo
       real(kind=rb) :: ztaua(nlay+1,nbndsw)     ! total aerosol optical depth
-      real(kind=rb) :: zasya(nlay+1,nbndsw)     ! total aerosol asymmetry parameter
+      real(kind=rb) :: zasya(nlay+1,nbndsw)     ! total aerosol asymmetry parameter 
       real(kind=rb) :: zomga(nlay+1,nbndsw)     ! total aerosol single scattering albedo
 
       real(kind=rb) :: zbbfu(nlay+2)          ! temporary upward shortwave flux (w/m2)
@@ -495,13 +492,13 @@
       real(kind=rb) :: znifddir(nlay+2)       ! temporary near-IR downward direct shortwave flux (w/m2)
       real(kind=rb) :: znicddir(nlay+2)       ! temporary clear sky near-IR downward direct shortwave flux (w/m2)
 
-! Optional output fields
+! Optional output fields 
       real(kind=rb) :: swnflx(nlay+2)         ! Total sky shortwave net flux (W/m2)
       real(kind=rb) :: swnflxc(nlay+2)        ! Clear sky shortwave net flux (W/m2)
       real(kind=rb) :: dirdflux(nlay+2)       ! Direct downward shortwave surface flux
       real(kind=rb) :: difdflux(nlay+2)       ! Diffuse downward shortwave surface flux
-      real(kind=rb) :: uvdflx(nlay+2)         ! Total sky downward shortwave flux, UV/vis
-      real(kind=rb) :: nidflx(nlay+2)         ! Total sky downward shortwave flux, near-IR
+      real(kind=rb) :: uvdflx(nlay+2)         ! Total sky downward shortwave flux, UV/vis  
+      real(kind=rb) :: nidflx(nlay+2)         ! Total sky downward shortwave flux, near-IR 
       real(kind=rb) :: dirdnuv(nlay+2)        ! Direct downward shortwave flux, UV/vis
       real(kind=rb) :: difdnuv(nlay+2)        ! Diffuse downward shortwave flux, UV/vis
       real(kind=rb) :: dirdnir(nlay+2)        ! Direct downward shortwave flux, near-IR
@@ -551,9 +548,9 @@
 
 ! *** This version does not use McICA (imca = 0) ***
 
-! Set icld to select of clear or cloud calculation and cloud
-! overlap method (read by subroutine readprof from input file INPUT_RRTM):
-! Without McICA, SW calculation is limited to clear or fully overcast conditions.
+! Set icld to select of clear or cloud calculation and cloud 
+! overlap method (read by subroutine readprof from input file INPUT_RRTM):  
+! Without McICA, SW calculation is limited to clear or fully overcast conditions. 
 ! icld = 0, clear only
 ! icld = 1, with clouds using random cloud overlap (McICA only)
 ! icld = 2, with clouds using maximum/random cloud overlap (McICA only)
@@ -564,7 +561,7 @@
 ! iaer = 0, no aerosols
 ! iaer = 6, use six ECMWF aerosol types
 !           input aerosol optical depth at 0.55 microns for each aerosol type (ecaer)
-! iaer = 10, input total aerosol optical depth, single scattering albedo
+! iaer = 10, input total aerosol optical depth, single scattering albedo 
 !            and asymmetry parameter (tauaer, ssaaer, asmaer) directly
       if (iaer.ne.0.and.iaer.ne.6.and.iaer.ne.10) iaer = 0
 
@@ -581,7 +578,7 @@
 ! coefficient data and other arrays.
 !
 ! In a GCM this call should be placed in the model initialization
-! area, since this has to be called only once.
+! area, since this has to be called only once.  
 !      call rrtmg_sw_ini(cpdair)
 
 ! This is the main longitude/column loop in RRTMG.
@@ -611,10 +608,10 @@
 !  input cloud physical properties.  Select method based on choices described
 !  in cldprop.  Cloud fraction, water path, liquid droplet and ice particle
 !  effective radius must be passed in cldprop.  Cloud fraction and cloud
-!  optical properties are transferred to rrtmg_sw arrays in cldprop.
+!  optical properties are transferred to rrtmg_sw arrays in cldprop.  
 
-!  Without McICA, SW calculation is limited to clear or fully overcast conditions.
-!  Stop model if partial cloudiness is present.
+!  Without McICA, SW calculation is limited to clear or fully overcast conditions. 
+!  Stop model if partial cloudiness is present.  
 
          do i = 1, nlayers
             if (cldfrac(i).gt.zepsec .and. cldfrac(i).lt.oneminus) then
@@ -626,7 +623,7 @@
                          taucldorig, taucloud, ssacloud, asmcloud)
          icpr = 1
 
-! Calculate coefficients for the temperature and pressure dependence of the
+! Calculate coefficients for the temperature and pressure dependence of the 
 ! molecular absorption coefficients by interpolating data from stored
 ! reference atmospheres.
 
@@ -637,15 +634,15 @@
                          selffac, selffrac, indself, forfac, forfrac, indfor)
 
 
-! Cosine of the solar zenith angle
-!  Prevent using value of zero; ideally, SW model is not called from host model when sun
+! Cosine of the solar zenith angle 
+!  Prevent using value of zero; ideally, SW model is not called from host model when sun 
 !  is below horizon
 
          cossza = coszen(iplon)
          if (cossza .lt. zepzen) cossza = zepzen
 
 
-! Transfer albedo, cloud and aerosol properties into arrays for 2-stream radiative transfer
+! Transfer albedo, cloud and aerosol properties into arrays for 2-stream radiative transfer 
 
 ! Surface albedo
 !  Near-IR bands 16-24 and 29 (1-9 and 14), 820-16000 cm-1, 0.625-12.195 microns
@@ -680,7 +677,7 @@
                enddo
             enddo
 
-         endif
+         endif   
 
 ! Aerosol
 ! IAER = 0: no aerosols
@@ -691,7 +688,7 @@
             zomga(:,:) = 1._rb
 
 ! IAER = 6: Use ECMWF six aerosol types. See rrsw_aer.f90 for details.
-! Input aerosol optical thickness at 0.55 micron for each aerosol type (ecaer),
+! Input aerosol optical thickness at 0.55 micron for each aerosol type (ecaer), 
 ! or set manually here for each aerosol and layer.
          elseif (iaer.eq.6) then
 
@@ -765,7 +762,7 @@
              (nlayers, istart, iend, icpr, idelm, iout, &
               pavel, tavel, pz, tz, tbound, albdif, albdir, &
               cldfrac, ztauc, zasyc, zomgc, ztaucorig, &
-              ztaua, zasya, zomga, cossza, coldry, wkl, adjflux, &
+              ztaua, zasya, zomga, cossza, coldry, wkl, adjflux, &	 
               isolvar, svar_f, svar_s, svar_i, &
               svar_f_bnd, svar_s_bnd, svar_i_bnd, &
               laytrop, layswtch, laylow, jp, jt, jt1, &
@@ -808,10 +805,8 @@
             swhrc(iplon,i) = (swnflxc(i+1) - swnflxc(i)) * zdpgcp
             swhr(iplon,i) = (swnflx(i+1) - swnflx(i)) * zdpgcp
          enddo
-         ! Commented out from original version to
-         ! Conserve energy
-         !swhrc(iplon,nlayers) = 0._rb
-         !swhr(iplon,nlayers) = 0._rb
+         swhrc(iplon,nlayers) = 0._rb
+         swhr(iplon,nlayers) = 0._rb
 
 ! End longitude loop
       enddo
@@ -863,7 +858,7 @@
 !***************************************************************************
 !
 !  Input atmospheric profile from GCM, and prepare it for use in RRTMG_SW.
-!  Set other RRTMG_SW input parameters.
+!  Set other RRTMG_SW input parameters.  
 !
 !***************************************************************************
 
@@ -878,7 +873,7 @@
 
 ! ----- Input -----
 ! Note: All volume mixing ratios are in dimensionless units of mole fraction obtained
-! by scaling mass mixing ratio (g/g) with the appropriate molecular weights (g/mol)
+! by scaling mass mixing ratio (g/g) with the appropriate molecular weights (g/mol) 
       integer(kind=im), intent(in) :: iplon           ! column loop index
       integer(kind=im), intent(in) :: nlay            ! number of model layers
       integer(kind=im), intent(in) :: icld            ! clear/cloud flag
@@ -911,15 +906,15 @@
                                                       !  distance if adjflx not provided)
       real(kind=rb), intent(in) :: adjes              ! Flux adjustment for Earth/Sun distance
       real(kind=rb), intent(in) :: scon               ! Solar constant (W/m2)
-                                                      !    Total solar irradiance averaged
+                                                      !    Total solar irradiance averaged 
                                                       !    over the solar cycle.
-                                                      !    If scon = 0.0, the internal solar
-                                                      !    constant, which depends on the
-                                                      !    value of isolvar, will be used.
+                                                      !    If scon = 0.0, the internal solar 
+                                                      !    constant, which depends on the  
+                                                      !    value of isolvar, will be used. 
                                                       !    For isolvar=-1, scon=1368.22 Wm-2,
                                                       !    For isolvar=0,1,3, scon=1360.85 Wm-2,
                                                       !    If scon > 0.0, the internal solar
-                                                      !    constant will be scaled to the
+                                                      !    constant will be scaled to the 
                                                       !    provided value of scon.
       integer(kind=im), intent(in) :: isolvar         ! Flag for solar variability method
                                                       !   -1 = (when scon .eq. 0.0): No solar variability
@@ -929,14 +924,14 @@
                                                       !        scaled to scon and solar variability defined
                                                       !        (optional) by setting non-zero scale factors
                                                       !        for each band in bndsolvar
-                                                      !    0 = (when SCON .eq. 0.0): No solar variability
-                                                      !        and no solar cycle (NRLSSI2 solar constant of
-                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral
-                                                      !        range only), with facular and sunspot effects
+                                                      !    0 = (when SCON .eq. 0.0): No solar variability 
+                                                      !        and no solar cycle (NRLSSI2 solar constant of 
+                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral 
+                                                      !        range only), with facular and sunspot effects 
                                                       !        fixed to the mean of Solar Cycles 13-24;
-                                                      !        (when SCON .ne. 0.0): No solar variability
-                                                      !        and no solar cycle (NRLSSI2 solar constant of
-                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral
+                                                      !        (when SCON .ne. 0.0): No solar variability 
+                                                      !        and no solar cycle (NRLSSI2 solar constant of 
+                                                      !        1360.85 Wm-2 for the 100-50000 cm-1 spectral 
                                                       !        range only), is scaled to SCON
                                                       !    1 = Solar variability (using NRLSSI2  solar
                                                       !        model) with solar cycle contribution
@@ -946,9 +941,9 @@
                                                       !        average of Solar Cycles 13-24;
                                                       !        two amplitude scale factors allow
                                                       !        facular and sunspot adjustments from
-                                                      !        mean solar cycle as defined by indsolvar
+                                                      !        mean solar cycle as defined by indsolvar 
                                                       !    2 = Solar variability (using NRLSSI2 solar
-                                                      !        model) over solar cycle determined by
+                                                      !        model) over solar cycle determined by 
                                                       !        direct specification of Mg (facular)
                                                       !        and SB (sunspot) indices provided
                                                       !        in indsolvar (scon = 0.0 only)
@@ -964,7 +959,7 @@
                                                           ! for Kurucz solar constant (isolvar=-1), or
                                                           ! averaged NRLSSI2 model solar cycle (isolvar=3)
                                                           !    Dimensions: (nbndsw=14)
-      real(kind=rb), intent(inout), optional :: indsolvar(:) ! Facular and sunspot amplitude
+      real(kind=rb), intent(in), optional :: indsolvar(:) ! Facular and sunspot amplitude 
                                                           ! scale factors (isolvar=1), or
                                                           ! Mg and SB indices (isolvar=2)
                                                           !    Dimensions: (2)
@@ -1004,7 +999,7 @@
 ! Atmosphere
       integer(kind=im), intent(out) :: nlayers        ! number of layers
 
-      real(kind=rb), intent(out) :: pavel(:)          ! layer pressures (mb)
+      real(kind=rb), intent(out) :: pavel(:)          ! layer pressures (mb) 
                                                       ! Dimensions: (nlay)
       real(kind=rb), intent(out) :: tavel(:)          ! layer temperatures (K)
                                                       ! Dimensions: (nlay)
@@ -1082,7 +1077,7 @@
       real(kind=rb), parameter :: sbc = 5.67e-08_rb   ! Stefan-Boltzmann constant (W/m2K4)
 
       integer(kind=im) :: isp, l, ix, n, imol, ib       ! Loop indices
-      real(kind=rb) :: amm, summol                      !
+      real(kind=rb) :: amm, summol                      ! 
       real(kind=rb) :: adjflx                           ! flux adjustment for Earth/Sun distance
 !      real(kind=rb) :: earth_sun                        ! function for Earth/Sun distance adjustment
       real(kind=rb) :: solvar(jpband)                   ! solar constant scaling factor by band
@@ -1098,7 +1093,7 @@
       real(kind=rb) :: tmp_a_0, tmp_b_0                 ! Solar variability temporary quantities
       real(kind=rb) :: fraclo, frachi, intfrac          ! Solar variability interpolation factors
 
-! Mean quiet sun, facular brightening, and sunspot dimming coefficient terms (NRLSSI2, 100-50000 cm-1),
+! Mean quiet sun, facular brightening, and sunspot dimming coefficient terms (NRLSSI2, 100-50000 cm-1), 
 ! spectrally integrated (from hi-res values after mapping to g-point space)
       real(kind=rb), parameter :: Iint = 1360.37_rb     ! Solar quiet sun irradiance term, integrated
       real(kind=rb), parameter :: Fint = 0.996047_rb    ! Solar facular brightening term (index-offset), integrated
@@ -1107,10 +1102,10 @@
       real(kind=rb), parameter :: Soffset = 0.00066696_rb    ! Solar variability sunspot offset
 
 ! Mg and SB indices for average solar cycle integrated over solar cycle
-      real(kind=rb), parameter :: svar_f_avg = 0.1568113_rb  ! Solar variability NRLSSI2 Mg "Bremen" index
+      real(kind=rb), parameter :: svar_f_avg = 0.1568113_rb  ! Solar variability NRLSSI2 Mg "Bremen" index 
                                                              !  time-averaged over Solar Cycles 13-24
                                                              !  and averaged over solar cycle
-      real(kind=rb), parameter :: svar_s_avg = 909.21910_rb  ! Solar variability NRLSSI2 SB "SPOT67" index
+      real(kind=rb), parameter :: svar_s_avg = 909.21910_rb  ! Solar variability NRLSSI2 SB "SPOT67" index 
                                                              !  time-averaged over Solar Cycles 13-24
                                                              !  and averaged over solar cycle
       integer(kind=im), parameter :: nsolfrac = 132     ! Number of elements in solar arrays (12 months
@@ -1118,9 +1113,9 @@
       real(kind=rb) :: nsfm1_inv                        ! Inverse of (nsolfrac-1)
 
 ! Mg and SB index look-up tables for average solar cycle as a function of solar cycle
-      real(kind=rb) :: mgavgcyc(nsolfrac)               ! Facular index from NRLSSI2 Mg "Bremen" index
+      real(kind=rb) :: mgavgcyc(nsolfrac)               ! Facular index from NRLSSI2 Mg "Bremen" index 
                                                         !  time-averaged over Solar Cycles 13-24
-      real(kind=rb) :: sbavgcyc(nsolfrac)               ! Sunspot index from NRLSSI2 SB "SPOT67" index
+      real(kind=rb) :: sbavgcyc(nsolfrac)               ! Sunspot index from NRLSSI2 SB "SPOT67" index 
                                                         !  time-averaged over Solar Cycles 13-24
       mgavgcyc(:) = (/ &
         &   0.150737_rb,  0.150733_rb,  0.150718_rb,  0.150725_rb,  0.150762_rb,  0.150828_rb, &
@@ -1190,17 +1185,17 @@
       asma(:,:) = 0.0_rb
       solvar(:) = 1.0_rb
       adjflux(:) = 1.0_rb
-      svar_f = 1.0_rb
-      svar_s = 1.0_rb
-      svar_i = 1.0_rb
-      svar_f_bnd(:) = 1.0_rb
-      svar_s_bnd(:) = 1.0_rb
-      svar_i_bnd(:) = 1.0_rb
-
+      svar_f = 1.0_rb 
+      svar_s = 1.0_rb 
+      svar_i = 1.0_rb 
+      svar_f_bnd(:) = 1.0_rb 
+      svar_s_bnd(:) = 1.0_rb 
+      svar_i_bnd(:) = 1.0_rb 
+ 
 ! Adjust amplitude scaling to be 1.0 at solar min (solcycfrac=0.0229),
 ! to be the requested indsolvar at solar max (solcycfrac=0.3817), and
-! to vary between those values at other solcycfrac.
-         if (indsolvar(1).ne.1.0_rb.or.indsolvar(2).ne.1.0_rb) then
+! to vary between those values at other solcycfrac. 
+         if (indsolvar(1).ne.1.0_rb.or.indsolvar(2).ne.1.0_rb) then 
             if (solcycfrac.ge.0.0_rb.and.solcycfrac.lt.0.0229_rb) then
                wgt = (solcycfrac+1.0_rb-0.3817_rb)/(1.0229_rb-0.3817_rb)
                indsolvar(1) = indsolvar(1) + wgt * (1.0_rb-indsolvar(1))
@@ -1223,40 +1218,40 @@
       adjflx = adjes
 !
 ! 2) Calculate Earth/Sun distance from DYOFYR, the cumulative day of the year.
-!    (Set adjflx to 1. to use constant Earth/Sun distance of 1 AU).
+!    (Set adjflx to 1. to use constant Earth/Sun distance of 1 AU). 
       if (dyofyr .gt. 0) then
          adjflx = earth_sun(dyofyr)
       endif
 
-! Apply selected solar variability option based on ISOLVAR and input
+! Apply selected solar variability option based on ISOLVAR and input 
 ! solar constant.
 ! For scon = 0, use internally defined solar constant, which is
 ! 1368.22 Wm-2 (for ISOLVAR=-1) and 1360.85 Wm-2 (for ISOLVAR=0,3;
 ! options ISOLVAR=1,2 model solar cycle variations from 1360.85 Wm-2)
 !
-! SCON = 0
+! SCON = 0 
 ! Use internal TSI value
-      if (scon .eq. 0.0_rb) then
+      if (scon .eq. 0.0_rb) then 
 
 !   No solar cycle and no solar variability (Kurucz solar source function)
 !   Apply constant scaling by band if first element of bndsolvar specified
          if (isolvar .eq. -1) then
             solvar(jpb1:jpb2) = 1.0_rb
             if (present(bndsolvar)) solvar(jpb1:jpb2) = bndsolvar(:)
-         endif
+         endif 
 
 !   Mean solar cycle with no solar variability (NRLSSI2 model solar irradiance)
-!   Quiet sun, facular, and sunspot terms averaged over the mean solar cycle
+!   Quiet sun, facular, and sunspot terms averaged over the mean solar cycle 
 !   (defined as average of Solar Cycles 13-24).
          if (isolvar .eq. 0) then
             svar_f = 1.0_rb
             svar_s = 1.0_rb
             svar_i = 1.0_rb
-         endif
+         endif 
 
 !   Mean solar cycle with solar variability (NRLSSI2 model)
-!   Facular and sunspot terms interpolated from LUTs to input solar cycle
-!   fraction for mean solar cycle. Scalings defined below to convert from
+!   Facular and sunspot terms interpolated from LUTs to input solar cycle 
+!   fraction for mean solar cycle. Scalings defined below to convert from 
 !   averaged Mg and SB terms to Mg and SB terms interpolated here.
 !   (Includes optional facular and sunspot amplitude scale factors)
          if (isolvar .eq. 1) then
@@ -1281,23 +1276,23 @@
             svar_f = indsolvar(1) * (svar_f_0 - Foffset) / (svar_f_avg - Foffset)
             svar_s = indsolvar(2) * (svar_s_0 - Soffset) / (svar_s_avg - Soffset)
             svar_i = 1.0_rb
-         endif
+         endif 
 
 !   Specific solar cycle with solar variability (NRLSSI2 model)
-!   Facular and sunspot index terms input directly to model specific
+!   Facular and sunspot index terms input directly to model specific 
 !   solar cycle.  Scalings defined below to convert from averaged
-!   Mg and SB terms to specified Mg and SB terms.
+!   Mg and SB terms to specified Mg and SB terms. 
          if (isolvar .eq. 2) then
             svar_f = (indsolvar(1) - Foffset) / (svar_f_avg - Foffset)
             svar_s = (indsolvar(2) - Soffset) / (svar_s_avg - Soffset)
             svar_i = 1.0_rb
-         endif
+         endif 
 
 !   Mean solar cycle with no solar variability (NRLSSI2 model)
-!   Averaged facular, sunspot and quiet sun terms from mean solar cycle
+!   Averaged facular, sunspot and quiet sun terms from mean solar cycle 
 !   (derived as average of Solar Cycles 13-24). This information is built
 !   into coefficient terms specified by g-point elsewhere. Separate
-!   scaling by spectral band is applied as defined by bndsolvar.
+!   scaling by spectral band is applied as defined by bndsolvar. 
          if (isolvar .eq. 3) then
             solvar(jpb1:jpb2) = bndsolvar(:)
             do ib = jpb1,jpb2
@@ -1305,27 +1300,27 @@
                svar_s_bnd(ib) = solvar(ib)
                svar_i_bnd(ib) = solvar(ib)
             enddo
-         endif
+         endif 
 
       endif
 
-! SCON > 0
+! SCON > 0 
 ! Scale from internal TSI to externally specified TSI value (scon)
-      if (scon .gt. 0.0_rb) then
+      if (scon .gt. 0.0_rb) then 
 
 !   No solar cycle and no solar variability (Kurucz solar source function)
 !   Scale from internal solar constant to requested solar constant.
 !   Apply optional constant scaling by band if first element of bndsolvar > 0.0
          if (isolvar .eq. -1) then
-            if (.not. present(bndsolvar)) solvar(jpb1:jpb2) = scon / rrsw_scon
-            if (present(bndsolvar)) solvar(jpb1:jpb2) = bndsolvar(:) * scon / rrsw_scon
-         endif
+            if (.not. present(bndsolvar)) solvar(jpb1:jpb2) = scon / rrsw_scon 
+            if (present(bndsolvar)) solvar(jpb1:jpb2) = bndsolvar(:) * scon / rrsw_scon 
+         endif 
 
 !   Mean solar cycle with no solar variability (NRLSSI2 model solar irradiance)
-!   Quiet sun, facular, and sunspot terms averaged over the mean solar cycle
+!   Quiet sun, facular, and sunspot terms averaged over the mean solar cycle 
 !   (defined as average of Solar Cycles 13-24).
-!   Scale internal solar constant to requested solar constant.
-!!   Fint is provided as the product of (svar_f_avg-Foffset) and Fint,
+!   Scale internal solar constant to requested solar constant. 
+!!   Fint is provided as the product of (svar_f_avg-Foffset) and Fint, 
 !!   Sint is provided as the product of (svar_s_avg-Soffset) and Sint
          if (isolvar .eq. 0) then
             svar_cprim = Fint + Sint + Iint
@@ -1333,13 +1328,13 @@
             svar_f = svar_r
             svar_s = svar_r
             svar_i = svar_r
-         endif
+         endif 
 
 !   Mean solar cycle with solar variability (NRLSSI2 model)
-!   Facular and sunspot terms interpolated from LUTs to input solar cycle
-!   fraction for mean solar cycle. Scalings defined below to convert from
+!   Facular and sunspot terms interpolated from LUTs to input solar cycle 
+!   fraction for mean solar cycle. Scalings defined below to convert from 
 !   averaged Mg and SB terms to Mg and SB terms interpolated here.
-!   Scale internal solar constant to requested solar constant.
+!   Scale internal solar constant to requested solar constant. 
 !   (Includes optional facular and sunspot amplitude scale factors)
          if (isolvar .eq. 1) then
 !   Interpolate svar_f_0 and svar_s_0 from lookup tables using provided solar cycle fraction
@@ -1360,14 +1355,14 @@
             endif
             svar_f_0 = tmp_a_0
             svar_s_0 = tmp_b_0
-!   Define Cprime
+!   Define Cprime 
 !            svar_cprim = indsolvar(1) * svar_f_avg * Fint + indsolvar(2) * svar_s_avg * Sint + Iint
-!   Fint is provided as the product of (svar_f_avg-Foffset) and Fint,
+!   Fint is provided as the product of (svar_f_avg-Foffset) and Fint, 
 !   Sint is provided as the product of (svar_s_avg-Soffset) and Sint
             svar_i = (scon - (indsolvar(1) * Fint + indsolvar(2) * Sint)) / Iint
             svar_f = indsolvar(1) * (svar_f_0 - Foffset) / (svar_f_avg - Foffset)
             svar_s = indsolvar(2) * (svar_s_0 - Soffset) / (svar_s_avg - Soffset)
-         endif
+         endif 
 
 !   Specific solar cycle with solar variability (NRLSSI2 model)
 !   (Not available for SCON > 0)
@@ -1376,15 +1371,15 @@
 !            svar_f = (indsolvar(1) - Foffset) / (svar_f_avg - Foffset)
 !            svar_s = (indsolvar(2) - Soffset) / (svar_s_avg - Soffset)
 !            svar_i = 1.0_rb
-!         endif
+!         endif 
 
 !   Mean solar cycle with no solar variability (NRLSSI2 model)
-!   Averaged facular, sunspot and quiet sun terms from mean solar cycle
+!   Averaged facular, sunspot and quiet sun terms from mean solar cycle 
 !   (derived as average of Solar Cycles 13-24). This information is built
 !   into coefficient terms specified by g-point elsewhere. Separate
-!   scaling by spectral band is applied as defined by bndsolvar.
+!   scaling by spectral band is applied as defined by bndsolvar. 
 !   Scale internal solar constant (svar_cprim) to requested solar constant (scon)
-!   Fint is provided as the product of (svar_f_avg-Foffset) and Fint,
+!   Fint is provided as the product of (svar_f_avg-Foffset) and Fint, 
 !   Sint is provided as the product of (svar_s_avg-Soffset) and Sint
          if (isolvar .eq. 3) then
             svar_cprim = Fint + Sint + Iint
@@ -1395,7 +1390,7 @@
                svar_s_bnd(ib) = solvar(ib)
                svar_i_bnd(ib) = solvar(ib)
             enddo
-         endif
+         endif 
 
       endif
 
@@ -1417,15 +1412,15 @@
       tbound = tsfc(iplon)
 
 !  Install input GCM arrays into RRTMG_SW arrays for pressure, temperature,
-!  and molecular amounts.
+!  and molecular amounts.  
 !  Pressures are input in mb, or are converted to mb here.
-!  Molecular amounts are input in volume mixing ratio, or are converted from
+!  Molecular amounts are input in volume mixing ratio, or are converted from 
 !  mass mixing ratio (or specific humidity for h2o) to volume mixing ratio
-!  here. These are then converted to molecular amount (molec/cm2) below.
-!  The dry air column COLDRY (in molec/cm2) is calculated from the level
-!  pressures, pz (in mb), based on the hydrostatic equation and includes a
-!  correction to account for h2o in the layer.  The molecular weight of moist
-!  air (amm) is calculated for each layer.
+!  here. These are then converted to molecular amount (molec/cm2) below.  
+!  The dry air column COLDRY (in molec/cm2) is calculated from the level 
+!  pressures, pz (in mb), based on the hydrostatic equation and includes a 
+!  correction to account for h2o in the layer.  The molecular weight of moist 
+!  air (amm) is calculated for each layer.  
 !  Note: In RRTMG, layer indexing goes from bottom to top, and coding below
 !  assumes GCM input fields are also bottom to top. Input layer indexing
 !  from GCM fields should be reversed here if necessary.
@@ -1449,18 +1444,18 @@
          wkl(4,l) = n2ovmr(iplon,l)
          wkl(6,l) = ch4vmr(iplon,l)
          wkl(7,l) = o2vmr(iplon,l)
-         amm = (1._rb - wkl(1,l)) * amd + wkl(1,l) * amw
+         amm = (1._rb - wkl(1,l)) * amd + wkl(1,l) * amw            
          coldry(l) = (pz(l-1)-pz(l)) * 1.e3_rb * avogad / &
                      (1.e2_rb * grav * amm * (1._rb + wkl(1,l)))
       enddo
 
 ! The following section can be used to set values for an additional layer (from
-! the GCM top level to 1.e-4 mb) for improved calculation of TOA fluxes.
-! Temperature and molecular amounts in the extra model layer are set to
+! the GCM top level to 1.e-4 mb) for improved calculation of TOA fluxes. 
+! Temperature and molecular amounts in the extra model layer are set to 
 ! their values in the top GCM model layer, though these can be modified
-! here if necessary.
+! here if necessary. 
 ! If this feature is utilized, increase nlayers by one above, limit the two
-! loops above to (nlayers-1), and set the top most (nlayers) layer values here.
+! loops above to (nlayers-1), and set the top most (nlayers) layer values here. 
 
 !      pavel(nlayers) = 0.5_rb * pz(nlayers-1)
 !      tavel(nlayers) = tavel(nlayers-1)
@@ -1478,8 +1473,8 @@
 !      coldry(nlayers) = (pz(nlayers-1)) * 1.e3_rb * avogad / &
 !                        (1.e2_rb * grav * amm * (1._rb + wkl(1,nlayers-1)))
 
-! At this point all molecular amounts in wkl are in volume mixing ratio;
-! convert to molec/cm2 based on coldry for use in rrtm.
+! At this point all molecular amounts in wkl are in volume mixing ratio; 
+! convert to molec/cm2 based on coldry for use in rrtm.  
 
       do l = 1, nlayers
          do imol = 1, nmol
@@ -1490,7 +1485,7 @@
 ! Transfer aerosol optical properties to RRTM variables;
 ! modify to reverse layer indexing here if necessary.
 
-      if (iaer .ge. 1) then
+      if (iaer .ge. 1) then 
          do l = 1, nlayers
             do ib = 1, nbndsw
                taua(l,ib) = tauaer(iplon,l,ib)
@@ -1503,7 +1498,7 @@
 ! Transfer cloud fraction and cloud optical properties to RRTM variables;
 ! modify to reverse layer indexing here if necessary.
 
-      if (icld .ge. 1) then
+      if (icld .ge. 1) then 
          inflag = inflgsw
          iceflag = iceflgsw
          liqflag = liqflgsw
@@ -1536,7 +1531,7 @@
 !         clwp(nlayers) = 0.0_rb
 !         rei(nlayers) = 0.0_rb
 !         rel(nlayers) = 0.0_rb
-
+      
       endif
 
       end subroutine inatm_sw
