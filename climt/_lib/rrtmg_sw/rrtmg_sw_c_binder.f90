@@ -56,6 +56,56 @@
 
           end subroutine rrtmg_sw_ini_wrapper
 
+          subroutine mcica_subcol_sw_wrapper &
+              (iplon, ncol, nlay, icld, permuteseed, irng, play, &
+               cldfrac, ciwp, clwp, rei, rel, &
+               tauc, ssac, asmc, fsfc, &
+               cldfmcl, ciwpmcl, clwpmcl, reicmcl, relqmcl, &
+               taucmcl, ssacmcl, asmcmcl, fsfcmcl)&
+             bind(c)
+
+            use mcica_subcol_gen_sw, only: mcica_subcol_sw
+            use parrrsw, only : nbndsw, ngptsw
+
+            integer(kind=im), intent(in) :: iplon
+            integer(kind=im), intent(in) :: ncol
+            integer(kind=im), intent(in) :: nlay
+            integer(kind=im), intent(in) :: icld
+            integer(kind=im), intent(in) :: permuteseed
+            integer(kind=im), intent(inout) :: irng
+            real(kind=rb), intent(in) :: play(ncol, nlay)
+
+            real(kind=rb), intent(in) :: cldfrac(ncol, nlay)
+            real(kind=rb), intent(in) :: ciwp(ncol, nlay)
+            real(kind=rb), intent(in) :: clwp(ncol, nlay)
+            real(kind=rb), intent(in) :: rei(ncol, nlay)
+            real(kind=rb), intent(in) :: rel(ncol, nlay)
+
+            real(kind=rb), intent(in) :: tauc(nbndsw, ncol, nlay)
+            real(kind=rb), intent(in) :: ssac(nbndsw, ncol, nlay)
+            real(kind=rb), intent(in) :: asmc(nbndsw, ncol, nlay)
+            real(kind=rb), intent(in) :: fsfc(nbndsw, ncol, nlay)
+
+            real(kind=rb), intent(out) :: cldfmcl(ngptsw, ncol, nlay)
+            real(kind=rb), intent(out) :: ciwpmcl(ngptsw, ncol, nlay)
+            real(kind=rb), intent(out) :: clwpmcl(ngptsw, ncol, nlay)
+            real(kind=rb), intent(out) :: reicmcl(ncol, nlay)
+            real(kind=rb), intent(out) :: relqmcl(ncol, nlay)
+
+            real(kind=rb), intent(out) :: taucmcl(ngptsw, ncol, nlay)
+            real(kind=rb), intent(out) :: ssacmcl(ngptsw, ncol, nlay)
+            real(kind=rb), intent(out) :: asmcmcl(ngptsw, ncol, nlay)
+            real(kind=rb), intent(out) :: fsfcmcl(ngptsw, ncol, nlay)
+
+            call mcica_subcol_sw &
+                (iplon, ncol, nlay, icld, permuteseed, irng, play, &
+                 cldfrac, ciwp, clwp, rei, rel, &
+                 tauc, ssac, asmc, fsfc, &
+                 cldfmcl, ciwpmcl, clwpmcl, reicmcl, relqmcl, &
+                 taucmcl, ssacmcl, asmcmcl, fsfcmcl)
+
+          end subroutine mcica_subcol_sw_wrapper
+
           subroutine rrtmg_sw_mcica_wrapper &
               (ncol, nlay, icld, iaer, &
                play, plev, tlay, tlev, tsfc, &
