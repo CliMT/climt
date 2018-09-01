@@ -2,7 +2,7 @@ import climt
 from sympl import (
     PlotFunctionMonitor, NetCDFMonitor,
     TimeDifferencingWrapper, UpdateFrequencyWrapper,
-    DataArray
+    DataArray, set_constant
 )
 import numpy as np
 from datetime import timedelta
@@ -46,23 +46,22 @@ netcdf_monitor = NetCDFMonitor('gcm_without_seasonal_cycle.nc',
                                write_on_store=True,
                                store_names=fields_to_store)
 
-climt.set_constants_from_dict({
-    'stellar_irradiance': {'value': 200, 'units': 'W m^-2'}})
+set_constant('stellar_irradiance', value=200, units='W m^-2')
 
-model_time_step = timedelta(seconds=600)
+model_time_step = timedelta(minutes=10)
 # Create components
 
 
 convection = climt.EmanuelConvection()
 simple_physics = TimeDifferencingWrapper(climt.SimplePhysics())
 
-constant_duration = 6
+radiation_step = timedelta(hours=1)
 
 radiation_lw = UpdateFrequencyWrapper(
-    climt.RRTMGLongwave(), constant_duration*model_time_step)
+    climt.RRTMGLongwave(), radiation_step)
 
 radiation_sw = UpdateFrequencyWrapper(
-    climt.RRTMGShortwave(), constant_duration*model_time_step)
+    climt.RRTMGShortwave(), radiation_step)
 
 slab_surface = climt.SlabSurface()
 

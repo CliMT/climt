@@ -5,7 +5,7 @@ History
 Latest
 ------
 
-* Add GMD example scripts to repository following Editor suggestion.
+* Add GMD example scripts to repository.
 * Fix docs to reflect API changes after refactor.
 * Fix wrong initialisation to use sigma values instead of pressure values 
   of optical depth for GrayLongwaveRadiation
