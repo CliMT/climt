@@ -102,11 +102,8 @@ for i in range(1500*24*6):
     if i % (6*24) == 0:
         netcdf_monitor.store(my_state)
         monitor.store(my_state)
-        print('max. zonal wind: ',
-              np.amax(my_state['eastward_wind'].values))
-        print('max. humidity: ',
-              np.amax(my_state['specific_humidity'].values))
-        print('max. surf temp: ',
-              my_state['surface_temperature'].max(keep_attrs=True).values)
+        print('max. zonal wind: ', np.amax(my_state['eastward_wind'].values))
+        print('max. humidity: ', np.amax(my_state['specific_humidity'].values))
+        print('max. surf temp: ', np.amax(my_state['surface_temperature']..values))
 
     print(my_state['time'])
