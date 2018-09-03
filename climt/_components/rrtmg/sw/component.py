@@ -6,6 +6,7 @@ from ...._core import (
 )
 import numpy as np
 from numpy import pi as numpy_pi
+
 from ..rrtmg_common import (
     rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,
     rrtmg_cloud_ice_props_dict, rrtmg_cloud_liquid_props_dict,
@@ -31,6 +32,8 @@ class RRTMGShortwave(TendencyComponent):
 
     num_shortwave_bands = 14
     num_ecmwf_aerosols = 6
+    num_reduced_g_intervals = 112
+    rrtm_iplon = 1
 
     input_properties = {
         'air_pressure': {
@@ -185,6 +188,7 @@ class RRTMGShortwave(TendencyComponent):
         },
     }
 
+
     def __init__(
             self,
             cloud_overlap_method='random',
@@ -196,7 +200,10 @@ class RRTMGShortwave(TendencyComponent):
             ignore_day_of_year=False,
             facular_sunspot_amplitude=None,
             solar_variability_by_band=None,
-            aerosol_type='no_aerosol', **kwargs):
+            aerosol_type='no_aerosol',
+            mcica=False,
+            random_number_generator=0,
+            permute_seed=112, **kwargs):
         """
         Args:
 
@@ -292,6 +299,14 @@ class RRTMGShortwave(TendencyComponent):
                   state quantity :code:`aerosol_optical_depth_at_55_micron`.
                 * :code:`all_aerosol_properties`: Input all aerosol optical properties.
 
+            random_number_generator (int):
+                Different methods of generating random numbers for McICA.
+                * random_number_generator = 0: kissvec
+                * random_number_generator = 1: Mersenne Twister
+
+            permute_seed (int):
+                For McICA, permute the seed between each call to the cloud generator.
+
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
 
@@ -308,6 +323,11 @@ class RRTMGShortwave(TendencyComponent):
         self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
         self._solar_var_flag = solar_variability_method
         self._ignore_day_of_year = ignore_day_of_year
+        self._mcica = mcica
+
+        if mcica:
+            self._random_number_generator = random_number_generator #TODO: make dictionary
+            self._permute_seed = permute_seed
 
         if facular_sunspot_amplitude is None:
             self._fac_sunspot_coeff = np.ones(2)
@@ -348,17 +368,33 @@ class RRTMGShortwave(TendencyComponent):
             self._stef_boltz,
             self._secs_per_day)
 
-        _rrtmg_sw.initialise_rrtm_radiation(
-            self._Cpd,
-            self._solar_const,
-            self._fac_sunspot_coeff,
-            self._solar_var_by_band,
-            self._cloud_overlap,
-            self._cloud_optics,
-            self._ice_props,
-            self._liq_props,
-            self._aerosol_type,
-            self._solar_var_flag)
+        if mcica:
+            _rrtmg_sw.initialise_rrtm_radiation_mcica(
+                self._Cpd,
+                self._solar_const,
+                self._fac_sunspot_coeff,
+                self._solar_var_by_band,
+                self._cloud_overlap,
+                self._cloud_optics,
+                self._ice_props,
+                self._liq_props,
+                self._aerosol_type,
+                self._solar_var_flag,
+                self._random_number_generator,
+                self._permute_seed)
+        else:
+            _rrtmg_sw.initialise_rrtm_radiation(
+                self._Cpd,
+                self._solar_const,
+                self._fac_sunspot_coeff,
+                self._solar_var_by_band,
+                self._cloud_overlap,
+                self._cloud_optics,
+                self._ice_props,
+                self._liq_props,
+                self._aerosol_type,
+                self._solar_var_flag)
+
         super(RRTMGShortwave, self).__init__(**kwargs)
 
     @ensure_contiguous_state
@@ -396,6 +432,28 @@ class RRTMGShortwave(TendencyComponent):
         tendencies = initialize_numpy_arrays_with_properties(
             self.tendency_properties, state, self.input_properties
         )
+
+        num_reduced_g_intervals = self.num_reduced_g_intervals
+        mid_levels = state['air_pressure'].shape[0]
+        mcica_properties = {
+            'cloud_area_fraction_in_atmosphere_layer': np.zeros(
+                (mid_levels, 1, num_reduced_g_intervals)),
+            'mass_content_of_cloud_ice_in_atmosphere_layer': np.zeros(
+                (mid_levels, 1, num_reduced_g_intervals)),
+            'mass_content_of_cloud_liquid_water_in_atmosphere_layer': np.zeros(
+                (mid_levels, 1, num_reduced_g_intervals)),
+            'cloud_ice_particle_size': np.zeros((mid_levels, 1)),
+            'cloud_water_droplet_radius': np.zeros((mid_levels, 1)),
+            'shortwave_optical_thickness_due_to_cloud': np.zeros(
+                (mid_levels, 1, num_reduced_g_intervals)),
+            'single_scattering_albedo_due_to_cloud': np.zeros(
+                (mid_levels, 1, num_reduced_g_intervals)),
+            'cloud_asymmetry_parameter': np.zeros(
+                (mid_levels, 1, num_reduced_g_intervals)),
+            'cloud_forward_scattering_fraction': np.zeros(
+                (mid_levels, 1, num_reduced_g_intervals))
+        }
+
         model_time = state['time']
         if self._ignore_day_of_year:
             day_of_year = 0
@@ -403,47 +461,102 @@ class RRTMGShortwave(TendencyComponent):
             day_of_year = model_time.timetuple().tm_yday
         cos_zenith_angle = np.cos(state['zenith_angle'])
 
-        _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
-            state['air_temperature'].shape[1],
-            state['air_temperature'].shape[0],
-            day_of_year,
-            state['solar_cycle_fraction'],
-            state['flux_adjustment_for_earth_sun_distance'],
-            state['air_pressure'],
-            state['air_pressure_on_interface_levels'],
-            state['air_temperature'],
-            Tint,
-            state['surface_temperature'],
-            Q,
-            state['mole_fraction_of_ozone_in_air'],
-            state['mole_fraction_of_carbon_dioxide_in_air'],
-            state['mole_fraction_of_methane_in_air'],
-            state['mole_fraction_of_nitrous_oxide_in_air'],
-            state['mole_fraction_of_oxygen_in_air'],
-            state['surface_albedo_for_direct_shortwave'],
-            state['surface_albedo_for_direct_near_infrared'],
-            state['surface_albedo_for_diffuse_shortwave'],
-            state['surface_albedo_for_diffuse_near_infrared'],
-            cos_zenith_angle,
-            state['cloud_area_fraction_in_atmosphere_layer'],
-            diagnostics['upwelling_shortwave_flux_in_air'],
-            diagnostics['downwelling_shortwave_flux_in_air'],
-            tendencies['air_temperature'],
-            diagnostics['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
-            diagnostics['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
-            diagnostics['air_temperature_tendency_from_shortwave_assuming_clear_sky'],
-            state['shortwave_optical_thickness_due_to_aerosol'],
-            state['single_scattering_albedo_due_to_aerosol'],
-            state['aerosol_asymmetry_parameter'],
-            state['aerosol_optical_depth_at_55_micron'],
-            state['shortwave_optical_thickness_due_to_cloud'],
-            state['single_scattering_albedo_due_to_cloud'],
-            state['cloud_asymmetry_parameter'],
-            state['cloud_forward_scattering_fraction'],
-            state['mass_content_of_cloud_ice_in_atmosphere_layer'],
-            state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
-            state['cloud_ice_particle_size'],
-            state['cloud_water_droplet_radius'])
+        if self._mcica:
+            _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica(
+                self.rrtm_iplon,
+                state['air_temperature'].shape[1],
+                state['air_temperature'].shape[0],
+                day_of_year,
+                state['solar_cycle_fraction'],
+                state['flux_adjustment_for_earth_sun_distance'],
+                state['air_pressure'],
+                state['air_pressure_on_interface_levels'],
+                state['air_temperature'],
+                Tint,
+                state['surface_temperature'],
+                Q,
+                state['mole_fraction_of_ozone_in_air'],
+                state['mole_fraction_of_carbon_dioxide_in_air'],
+                state['mole_fraction_of_methane_in_air'],
+                state['mole_fraction_of_nitrous_oxide_in_air'],
+                state['mole_fraction_of_oxygen_in_air'],
+                state['surface_albedo_for_direct_shortwave'],
+                state['surface_albedo_for_direct_near_infrared'],
+                state['surface_albedo_for_diffuse_shortwave'],
+                state['surface_albedo_for_diffuse_near_infrared'],
+                cos_zenith_angle,
+                state['cloud_area_fraction_in_atmosphere_layer'],
+                diagnostics['upwelling_shortwave_flux_in_air'],
+                diagnostics['downwelling_shortwave_flux_in_air'],
+                tendencies['air_temperature'],
+                diagnostics['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['air_temperature_tendency_from_shortwave_assuming_clear_sky'],
+                state['shortwave_optical_thickness_due_to_aerosol'],
+                state['single_scattering_albedo_due_to_aerosol'],
+                state['aerosol_asymmetry_parameter'],
+                state['aerosol_optical_depth_at_55_micron'],
+                state['shortwave_optical_thickness_due_to_cloud'],
+                state['single_scattering_albedo_due_to_cloud'],
+                state['cloud_asymmetry_parameter'],
+                state['cloud_forward_scattering_fraction'],
+                state['mass_content_of_cloud_ice_in_atmosphere_layer'],
+                state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+                state['cloud_ice_particle_size'],
+                state['cloud_water_droplet_radius'],
+                mcica_properties['cloud_area_fraction_in_atmosphere_layer'],
+                mcica_properties['shortwave_optical_thickness_due_to_cloud'],
+                mcica_properties['single_scattering_albedo_due_to_cloud'],
+                mcica_properties['cloud_asymmetry_parameter'],
+                mcica_properties['cloud_forward_scattering_fraction'],
+                mcica_properties['mass_content_of_cloud_ice_in_atmosphere_layer'],
+                mcica_properties['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+                mcica_properties['cloud_ice_particle_size'],
+                mcica_properties['cloud_water_droplet_radius']
+            )
+        else:
+            _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
+                state['air_temperature'].shape[1],
+                state['air_temperature'].shape[0],
+                day_of_year,
+                state['solar_cycle_fraction'],
+                state['flux_adjustment_for_earth_sun_distance'],
+                state['air_pressure'],
+                state['air_pressure_on_interface_levels'],
+                state['air_temperature'],
+                Tint,
+                state['surface_temperature'],
+                Q,
+                state['mole_fraction_of_ozone_in_air'],
+                state['mole_fraction_of_carbon_dioxide_in_air'],
+                state['mole_fraction_of_methane_in_air'],
+                state['mole_fraction_of_nitrous_oxide_in_air'],
+                state['mole_fraction_of_oxygen_in_air'],
+                state['surface_albedo_for_direct_shortwave'],
+                state['surface_albedo_for_direct_near_infrared'],
+                state['surface_albedo_for_diffuse_shortwave'],
+                state['surface_albedo_for_diffuse_near_infrared'],
+                cos_zenith_angle,
+                state['cloud_area_fraction_in_atmosphere_layer'],
+                diagnostics['upwelling_shortwave_flux_in_air'],
+                diagnostics['downwelling_shortwave_flux_in_air'],
+                tendencies['air_temperature'],
+                diagnostics['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['air_temperature_tendency_from_shortwave_assuming_clear_sky'],
+                state['shortwave_optical_thickness_due_to_aerosol'],
+                state['single_scattering_albedo_due_to_aerosol'],
+                state['aerosol_asymmetry_parameter'],
+                state['aerosol_optical_depth_at_55_micron'],
+                state['shortwave_optical_thickness_due_to_cloud'],
+                state['single_scattering_albedo_due_to_cloud'],
+                state['cloud_asymmetry_parameter'],
+                state['cloud_forward_scattering_fraction'],
+                state['mass_content_of_cloud_ice_in_atmosphere_layer'],
+                state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+                state['cloud_ice_particle_size'],
+                state['cloud_water_droplet_radius']
+                )
 
         diagnostics['air_temperature_tendency_from_shortwave'][:] = tendencies['air_temperature']
 
