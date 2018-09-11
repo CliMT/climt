@@ -298,6 +298,10 @@ class RRTMGShortwave(TendencyComponent):
                   state quantity :code:`aerosol_optical_depth_at_55_micron`.
                 * :code:`all_aerosol_properties`: Input all aerosol optical properties.
 
+            mcica (bool):
+                * mcica = True: use the McICA version for the shortwave component of RRTMG
+                * mcica = False: use the nomcica version for the shortwave component of RRTMG
+
             random_number_generator (int):
                 Different methods of generating random numbers for McICA.
                 * random_number_generator = 0: kissvec
