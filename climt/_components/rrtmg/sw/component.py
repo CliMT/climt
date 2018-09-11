@@ -188,7 +188,6 @@ class RRTMGShortwave(TendencyComponent):
         },
     }
 
-
     def __init__(
             self,
             cloud_overlap_method='random',
@@ -326,7 +325,7 @@ class RRTMGShortwave(TendencyComponent):
         self._mcica = mcica
 
         if mcica:
-            self._random_number_generator = random_number_generator #TODO: make dictionary
+            self._random_number_generator = random_number_generator  # TODO: make dictionary
             self._permute_seed = permute_seed
 
         if facular_sunspot_amplitude is None:
@@ -556,7 +555,7 @@ class RRTMGShortwave(TendencyComponent):
                 state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
                 state['cloud_ice_particle_size'],
                 state['cloud_water_droplet_radius']
-                )
+            )
 
         diagnostics['air_temperature_tendency_from_shortwave'][:] = tendencies['air_temperature']
 
