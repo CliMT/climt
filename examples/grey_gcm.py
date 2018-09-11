@@ -1,7 +1,7 @@
 import climt
 from sympl import (
-    PlotFunctionMonitor, NetCDFMonitor,
-    TimeDifferencingWrapper, UpdateFrequencyWrapper,
+    PlotFunctionMonitor,
+    TimeDifferencingWrapper,
     DataArray
 )
 import numpy as np
