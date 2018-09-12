@@ -4,7 +4,7 @@
 !     created:   $Date: 2011/04/08 20:25:01 $
 !
 
-       module rrtmg_lw_rad
+       module rrtmg_lw_rad_nomcica
 
 !  --------------------------------------------------------------------------
 ! |                                                                          |
@@ -899,5 +899,5 @@
       
       end subroutine inatm
 
-      end module rrtmg_lw_rad
+      end module rrtmg_lw_rad_nomcica
 
