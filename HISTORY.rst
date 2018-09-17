@@ -5,6 +5,8 @@ History
 Latest
 ------
 
+* Enable the McICA version of RRTMG Shortwave,
+  so that partial cloud fractions can be used.
 * Add GMD example scripts to repository.
 * Fix docs to reflect API changes after refactor.
 * Fix wrong initialisation to use sigma values instead of pressure values 
