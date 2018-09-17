@@ -359,6 +359,11 @@ class TestRRTMGShortwave(ComponentBaseColumn, ComponentBase3D):
         return RRTMGShortwave()
 
 
+class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return RRTMGShortwave(mcica=True)
+
+
 class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return SlabSurface()

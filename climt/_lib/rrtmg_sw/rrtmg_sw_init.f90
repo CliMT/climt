@@ -38,15 +38,13 @@
       use parkind, only : im => kind_im, rb => kind_rb
       use rrsw_wvn
       use rrtmg_sw_setcoef, only: swatmref
-      !JOY
-      use iso_c_binding
 
       implicit none
 
       contains
 
 ! **************************************************************************
-      subroutine rrtmg_sw_ini(cpdair)bind(c,name='rrtmg_shortwave_init')
+      subroutine rrtmg_sw_ini(cpdair)
 ! **************************************************************************
 !
 !  Original version:   Michael J. Iacono; February, 2004
@@ -62,9 +60,7 @@
       use rrsw_tbl, only: ntbl, tblint, pade, bpade, tau_tbl, exp_tbl
       use rrsw_vsn, only: hvrini, hnamini
 
-!JOY change kind to c_double. This is an 8 byte real, just like rb
-!defined in parkind.f90
-      real(kind=c_double), intent(in) :: cpdair     ! Specific heat capacity of dry air
+      real(kind=rb), intent(in) :: cpdair     ! Specific heat capacity of dry air
                                               ! at constant pressure at 273 K
                                               ! (J kg-1 K-1)
 
@@ -209,35 +205,35 @@
 ! Fundamental physical constants from NIST 2002
 
 !      grav = 9.8066_rb                        ! Acceleration of gravity
-!                                              ! (m s-2)
+                                              ! (m s-2)
 !      planck = 6.62606876e-27_rb              ! Planck constant
-!                                              ! (ergs s; g cm2 s-1)
+                                              ! (ergs s; g cm2 s-1)
 !      boltz = 1.3806503e-16_rb                ! Boltzmann constant
-!                                              ! (ergs K-1; g cm2 s-2 K-1)
+                                              ! (ergs K-1; g cm2 s-2 K-1)
 !      clight = 2.99792458e+10_rb              ! Speed of light in a vacuum  
-!                                              ! (cm s-1)
+                                              ! (cm s-1)
 !      avogad = 6.02214199e+23_rb              ! Avogadro constant
-!                                              ! (mol-1)
+                                              ! (mol-1)
 !      alosmt = 2.6867775e+19_rb               ! Loschmidt constant
-!                                              ! (cm-3)
+                                              ! (cm-3)
 !      gascon = 8.31447200e+07_rb              ! Molar gas constant
-!                                              ! (ergs mol-1 K-1)
+                                              ! (ergs mol-1 K-1)
 !      radcn1 = 1.191042772e-12_rb             ! First radiation constant
-!                                              ! (W cm2 sr-1)
+                                              ! (W cm2 sr-1)
 !      radcn2 = 1.4387752_rb                   ! Second radiation constant
-!                                              ! (cm K)
+                                              ! (cm K)
 !      sbcnst = 5.670400e-04_rb                ! Stefan-Boltzmann constant
-!                                              ! (W cm-2 K-4)
+                                              ! (W cm-2 K-4)
 !      secdy = 8.6400e4_rb                     ! Number of seconds per day
-!                                              ! (s d-1)
-!!
-!!     units are generally cgs
-!!
-!!     The first and second radiation constants are taken from NIST.
-!!     They were previously obtained from the relations:
-!!          radcn1 = 2.*planck*clight*clight*1.e-07
-!!          radcn2 = planck*clight/boltz
+                                              ! (s d-1)
 !
+!     units are generally cgs
+!
+!     The first and second radiation constants are taken from NIST.
+!     They were previously obtained from the relations:
+!          radcn1 = 2.*planck*clight*clight*1.e-07
+!          radcn2 = planck*clight/boltz
+
 !     Heatfac is the factor by which delta-flux / delta-pressure is
 !     multiplied, with flux in W/m-2 and pressure in mbar, to get 
 !     the heating rate in units of degrees/day.  It is equal to:

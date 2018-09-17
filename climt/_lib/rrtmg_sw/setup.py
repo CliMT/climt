@@ -33,7 +33,6 @@ module_list = [
     'rrsw_wvn.f90']
 
 sources_list = [
-    # 'rrtmg_sw_rad.f90',
     'rrtmg_sw_cldprop.f90',
     'rrtmg_sw_cldprmc.f90',
     'rrtmg_sw_taumol.f90',
@@ -45,7 +44,9 @@ sources_list = [
     'rrtmg_sw_rad.nomcica.f90',
     'mcica_random_numbers.f90',
     'rrtmg_sw_init.f90',
-    'mcica_subcol_gen_sw.f90']
+    'mcica_subcol_gen_sw.f90',
+    'rrtmg_sw_rad.f90',
+    'rrtmg_sw_c_binder.f90']
 
 unoptimised_sources_list = [
     'rrtmg_sw_k_g.f90',

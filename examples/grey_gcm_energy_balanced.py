@@ -1,7 +1,7 @@
 import climt
 from sympl import (
-    PlotFunctionMonitor, NetCDFMonitor,
-    TimeDifferencingWrapper, UpdateFrequencyWrapper,
+    PlotFunctionMonitor,
+    TimeDifferencingWrapper,
     DataArray
 )
 import numpy as np
@@ -12,7 +12,7 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 1)
     state['surface_temperature'].plot.contourf(
-            ax=ax, levels=16, robust=True)
+        ax=ax, levels=16, robust=True)
     ax.set_title('Surface Temperature')
 
     ax = fig.add_subplot(2, 2, 3)
@@ -72,7 +72,7 @@ latitudes = my_state['latitude'].values
 sw_flux_profile = sw_flux_equator - (
     (sw_flux_equator - sw_flux_pole)*(np.sin(np.radians(latitudes))**2))
 
-my_state['downwelling_shortwave_flux_in_air'] =  DataArray(
+my_state['downwelling_shortwave_flux_in_air'] = DataArray(
     sw_flux_profile*np.ones(surface_shape),
     dims=['longitude', 'latitude'], attrs={'units': 'W m^-2'})
 
