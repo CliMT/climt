@@ -348,12 +348,6 @@ class RRTMGLongwave(TendencyComponent):
                 'cloud_ice_particle_size': np.zeros((mid_levels, 1)),
                 'cloud_water_droplet_radius': np.zeros((mid_levels, 1)),
                 'longwave_optical_thickness_due_to_cloud': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
-                'single_scattering_albedo_due_to_cloud': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
-                'cloud_asymmetry_parameter': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
-                'cloud_forward_scattering_fraction': np.zeros(
                     (mid_levels, 1, num_reduced_g_intervals))
             }
 
@@ -392,9 +386,6 @@ class RRTMGLongwave(TendencyComponent):
                 state['cloud_water_droplet_radius'],
                 mcica_properties['cloud_area_fraction_in_atmosphere_layer'],
                 mcica_properties['longwave_optical_thickness_due_to_cloud'],
-                mcica_properties['single_scattering_albedo_due_to_cloud'],
-                mcica_properties['cloud_asymmetry_parameter'],
-                mcica_properties['cloud_forward_scattering_fraction'],
                 mcica_properties['mass_content_of_cloud_ice_in_atmosphere_layer'],
                 mcica_properties['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
                 mcica_properties['cloud_ice_particle_size'],

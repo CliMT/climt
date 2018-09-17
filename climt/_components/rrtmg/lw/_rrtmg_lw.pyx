@@ -247,9 +247,6 @@ cpdef void rrtm_calculate_longwave_fluxes_mcica(
     cnp.double_t[:,::1] cloud_droplet_eff_radius,
     cnp.double_t[:,:,::1] cloud_fraction_mcica,
     cnp.double_t[:,:,::1] cloud_tau_mcica,
-    cnp.double_t[:,:,::1] cloud_single_scat_alb_mcica,
-    cnp.double_t[:,:,::1] cloud_asym_mcica,
-    cnp.double_t[:,:,::1] cloud_fwd_scat_frac_mcica,
     cnp.double_t[:,:,::1] cloud_ice_path_mcica,
     cnp.double_t[:,:,::1] cloud_liq_path_mcica,
     cnp.double_t[:,::1] cloud_ice_eff_size_mcica,
@@ -320,4 +317,4 @@ cpdef void rrtm_calculate_longwave_fluxes_mcica(
             <double *>&down_lw_flux_clearsky[0,0],
             <double *>&lw_heating_rate_clearsky[0,0],
             <double *>&duflx_dt[0,0],
-             <double *>&duflxc_dt[0,0])
+            <double *>&duflxc_dt[0,0])
