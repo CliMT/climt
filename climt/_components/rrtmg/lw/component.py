@@ -28,7 +28,7 @@ class RRTMGLongwave(TendencyComponent):
     """
 
     num_longwave_bands = 16
-    num_reduced_g_intervals = 112
+    num_reduced_g_intervals = 140
     rrtm_iplon = 1
 
     input_properties = {
