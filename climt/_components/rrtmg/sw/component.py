@@ -436,9 +436,6 @@ class RRTMGShortwave(TendencyComponent):
             self.tendency_properties, state, self.input_properties
         )
 
-        num_reduced_g_intervals = self.num_reduced_g_intervals
-        mid_levels = state['air_pressure'].shape[0]
-
         model_time = state['time']
         if self._ignore_day_of_year:
             day_of_year = 0
@@ -453,23 +450,30 @@ class RRTMGShortwave(TendencyComponent):
             # first part of _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica.
             # Specifically they are calculated by mcica_subcol_gen_sw.f90
             # and are input to rrtmg_sw_rad.f90
+            num_reduced_g_intervals = self.num_reduced_g_intervals
+            mid_levels = state['air_pressure'].shape[0]
+            try:
+                num_cols = state['air_pressure'].shape[1]
+            except IndexError:
+                num_cols = 1
+
             mcica_properties = {
                 'cloud_area_fraction_in_atmosphere_layer': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
                 'mass_content_of_cloud_ice_in_atmosphere_layer': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
                 'mass_content_of_cloud_liquid_water_in_atmosphere_layer': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
-                'cloud_ice_particle_size': np.zeros((mid_levels, 1)),
-                'cloud_water_droplet_radius': np.zeros((mid_levels, 1)),
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'cloud_ice_particle_size': np.zeros((mid_levels, num_cols)),
+                'cloud_water_droplet_radius': np.zeros((mid_levels, num_cols)),
                 'shortwave_optical_thickness_due_to_cloud': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
                 'single_scattering_albedo_due_to_cloud': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
                 'cloud_asymmetry_parameter': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals)),
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
                 'cloud_forward_scattering_fraction': np.zeros(
-                    (mid_levels, 1, num_reduced_g_intervals))
+                    (mid_levels, num_cols, num_reduced_g_intervals))
             }
 
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica(
