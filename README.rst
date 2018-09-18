@@ -85,27 +85,27 @@ If you use climt in your research, please cite the following paper documenting s
 
     @article{sympl_climt_2018,
 
-    	title = {sympl (v. 0.4.0) and climt (v. 0.15.3) – towards a flexible framework for building model hierarchies in {Python}},  
+    	title = {sympl (v. 0.4.0) and climt (v. 0.15.3) – towards a flexible framework for building model hierarchies in {Python}},
 
-    	volume = {11},  
+    	volume = {11},
 
-	    issn = {1991-959X},  
+	    issn = {1991-959X},
 
-    	url = {https://www.geosci-model-dev.net/11/3781/2018/},  
+    	url = {https://www.geosci-model-dev.net/11/3781/2018/},
 
-	    doi = {https://doi.org/10.5194/gmd-11-3781-2018},  
+	    doi = {https://doi.org/10.5194/gmd-11-3781-2018},
 
-    	number = {9},  
+    	number = {9},
 
-	    journal = {Geoscientific Model Development},  
+	    journal = {Geoscientific Model Development},
 
-    	author = {Monteiro, Joy Merwin and McGibbon, Jeremy and Caballero, Rodrigo},  
+    	author = {Monteiro, Joy Merwin and McGibbon, Jeremy and Caballero, Rodrigo},
 
-	    month = sep,  
+	    month = sep,
 
-    	year = {2018},  
+    	year = {2018},
 
-	    pages = {3781--3794},  
+	    pages = {3781--3794},
 
     }
 
