@@ -83,7 +83,6 @@ Citing climt
 
 If you use climt in your research, please cite the following paper documenting sympl_ and climt
 
-```
 @article{monteiro_sympl_2018,
 	title = {sympl (v. 0.4.0) and climt (v. 0.15.3) – towards a flexible framework for building model hierarchies in {Python}},
 	volume = {11},
@@ -97,7 +96,6 @@ If you use climt in your research, please cite the following paper documenting s
 	year = {2018},
 	pages = {3781--3794},
 }
-```
 
 Credits
 -------
