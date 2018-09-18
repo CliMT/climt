@@ -1,6 +1,6 @@
 import climt
 from sympl import (
-    PlotFunctionMonitor, NetCDFMonitor,
+    PlotFunctionMonitor,
     TimeDifferencingWrapper, UpdateFrequencyWrapper,
     DataArray
 )
@@ -12,7 +12,7 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 1)
     state['surface_temperature'].plot.contourf(
-            ax=ax, levels=16, robust=True)
+        ax=ax, levels=16, robust=True)
     ax.set_title('Surface Temperature')
 
     ax = fig.add_subplot(2, 2, 3)
@@ -32,6 +32,7 @@ def plot_function(fig, state):
     ax.set_title('Temperature')
 
     fig.tight_layout()
+
 
 # Create plotting object
 monitor = PlotFunctionMonitor(plot_function)
