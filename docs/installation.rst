@@ -13,7 +13,7 @@ You can install climt by simply typing
 
     $ pip install climt
 
-This is the preferred method to install CliMT, as it will always install the most recent stable release.
+This is the preferred method to install climt, as it will always install the most recent stable release.
 On Ubuntu Linux, you might need to prefix the above command with :code:`sudo`. This command should
 work on Linux, Mac and Windows. For Mac and Windows, it is recommended to use the `anaconda`_ python
 distribution to make installation simpler.
@@ -30,7 +30,7 @@ you through the process.
 Installing from source
 ----------------------
 
-The sources for CliMT can be downloaded from the `Github repo`_.
+The sources for climt can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
 
@@ -57,7 +57,7 @@ Both commands may require the use of :code:`sudo`.
 Dependencies for source installations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-CliMT depends on some easily installable libraries. For
+climt depends on some easily installable libraries. For
 an installation from source, it also requires that C and fortran
 compilers be installed.
 
@@ -88,12 +88,12 @@ Where :code:`gcc-x,gfortran-x` are the names of the C,Fortran compilers that Hom
 Exporting the name of the compiler is essential on Mac since the
 default compiler that ships with Mac (called :code:`gcc`, but is actually a
 different compiler) cannot
-compile OpenMP programs, like the dynamical core in CliMT.
+compile OpenMP programs, like the dynamical core in climt.
 
 
 .. _Homebrew: https://brew.sh/
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
-.. _Github repo: https://github.com/CliMT/climt
+.. _Github repo: https://github.com/climt/climt
 .. _tarball: https://github.com/CliMT/climt/tarball/master
 .. _anaconda: https://www.continuum.io/downloads

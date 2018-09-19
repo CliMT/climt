@@ -1,10 +1,10 @@
 .. highlight:: python
 
 ======================
-Interacting with CliMT
+Interacting with climt
 ======================
 
-As we saw in the Quickstart section, CliMT has two
+As we saw in the Quickstart section, climt has two
 kinds of entities for the user to interact with:
 model components and model state. Here, we will take
 a closer look at both these elements.
@@ -41,13 +41,13 @@ Let's create a 3-d model state to see how useful DataArrays are:
    radiation = climt.GrayLongwaveRadiation()
    simple_physics = climt.SimplePhysics()
 
-We need to tell CliMT what the model dimensions are. This is done
+We need to tell climt what the model dimensions are. This is done
 by the :code:`get_grid` function. This function takes three arguments
 which are the number of grid points in the three directions, and
 provides a state dictionary containing the definition of a grid.
 
 Passing this grid state dictionary onto :code:`get_default_state` makes
-CliMT aware of the dimensions required by the model:
+climt aware of the dimensions required by the model:
 
 .. ipython:: python
 
@@ -59,7 +59,7 @@ CliMT aware of the dimensions required by the model:
 
    state['air_temperature']
 
-CliMT **does not** interpret any of the dimension attributes in
+climt **does not** interpret any of the dimension attributes in
 state quantities other than :code:`units`. The values and labels of coordinates
 are mainly for users and components. For instance, :py:class:`SimplePhysics`
 requires that the y dimension be called :code:`latitude`. So, any
@@ -70,7 +70,7 @@ As you can see, :code:`air_temperature` has
 
 * a uniform value of 290
 * coordinates of latitude and mid_levels
-* units of *degK*, which is the notation used in CliMT (and Sympl) for
+* units of *degK*, which is the notation used in climt (and Sympl) for
   *degrees Kelvin*.
 
 It is also fairly easy to change units. The :py:func:`.to_units()` method can
@@ -83,7 +83,7 @@ be used as below to return a DataArray with the equivalent temperature in degree
 
 .. note::
 
-    CliMT always names the vertical coordinate as :code:`mid_levels` or :code:`interface_levels`,
+    climt always names the vertical coordinate as :code:`mid_levels` or :code:`interface_levels`,
     however, the state dictionary will contain a key corresponding to the name
     of the vertical coordinate specified by :code:`get_grid`.
 
@@ -126,13 +126,13 @@ You can also directly plot DataArrays:
     plt.show()
 
 DataArrays are a very powerful way of dealing with array-oriented data, and
-you should read more about `xarray`_, and not just for using CliMT!
+you should read more about `xarray`_, and not just for using climt!
 
 Model Components
 -----------------
 
 Components are representations of physical processes. You can see
-all available components in CliMT in the section :ref:`component_list`.
+all available components in climt in the section :ref:`component_list`.
 
 All components take some inputs from the model state, and return **outputs** or
 **tendencies** along with diagnostics (if any).

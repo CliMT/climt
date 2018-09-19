@@ -5,7 +5,7 @@
 Components
 ==========
 
-This page documents the different components available through CliMT.
+This page documents the different components available through climt.
 
 
 Dynamics

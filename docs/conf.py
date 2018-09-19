@@ -64,7 +64,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'CliMT'
+project = u'climt'
 copyright = u"2006-2017, Rodrigo Caballero"
 
 # The version info for the project you're documenting, acts as replacement
@@ -226,7 +226,7 @@ latex_elements = {
 # [howto/manual]).
 latex_documents = [
     ('index', 'climt.tex',
-     u'CliMT Documentation',
+     u'climt Documentation',
      u'Rodrigo Caballero', 'manual'),
 ]
 
@@ -257,7 +257,7 @@ latex_domain_indices = True
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'climt',
-     u'CliMT Documentation',
+     u'climt Documentation',
      [u'Rodrigo Caballero'], 1)
 ]
 
@@ -272,10 +272,10 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'climt',
-     u'CliMT Documentation',
+     u'climt Documentation',
      u'Rodrigo Caballero',
      'climt',
-     'CliMT is a Toolkit for building Earth system models in Python.',
+     'climt is a Toolkit for building Earth system models in Python.',
      'Miscellaneous'),
 ]
 
