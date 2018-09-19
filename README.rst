@@ -31,6 +31,10 @@ climt
 .. image:: ./docs/climt_logo.jpg
     :align: center
 
+   Background: **Approaching Thunderstorm** (Gustav Klimt).
+   
+   Image source: `Wikimedia Commons` 
+
 **climt** is a Toolkit for building Earth system models in Python. climt stands for *Climate Modelling
 and Diagnostics Toolkit* -- it is meant both for creating models and for generating diagnostics
 (radiative fluxes for an atmospheric column, for example). However, since it might eventually
