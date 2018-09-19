@@ -46,9 +46,9 @@ could enable the development of non-climate models (e.g. weather prediction,
 large-eddy simulation). To do so requires only that the prognostic and
 diagnostic schemes are wrapped into the correct Python-accessible interface.
 
-climt builds on Sympl_, which provides the base classes and  array and constants handling
-functionality. Thanks to Sympl_ and Pint_, climt is also a fully units aware model. It is
-useful to know how Sympl_ works to use climt better. Read more about Sympl_ at
+climt builds on sympl_, which provides the base classes and  array and constants handling
+functionality. Thanks to sympl_ and Pint_, climt is also a fully units aware model. It is
+useful to know how sympl_ works to use climt better. Read more about sympl_ at
 https://sympl.readthedocs.io.
 
 * Free software: BSD license
