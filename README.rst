@@ -30,7 +30,7 @@ climt
 
 .. image:: ./docs/climt_logo.jpg
     :height: 500px
-    :width: 25%
+    :width: 250px
     :scale: 50%
     :align: center
 
