@@ -5,6 +5,7 @@ History
 Latest
 ------
 
+* Fix energy conservation in surface flux scheme
 * Enable the McICA version of RRTMG Shortwave,
   so that partial cloud fractions can be used.
 * Add GMD example scripts to repository.

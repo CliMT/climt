@@ -31,6 +31,10 @@ class SlabSurface(TendencyComponent):
             'dims': ['*'],
             'units': 'W m^-2',
         },
+        'surface_temperature': {
+            'dims': ['*'],
+            'units': 'degK',
+        },
         'surface_upward_sensible_heat_flux': {
             'dims': ['*'],
             'units': 'W m^-2',
