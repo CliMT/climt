@@ -4,7 +4,7 @@
 A Realistic Model
 =================
 
-As mentioned before, CliMT includes some components
+As mentioned before, climt includes some components
 which returns the a new version of the model state,
 and some which return just tendencies.
 
@@ -75,7 +75,7 @@ examples which setup graphics to view the evolution of the model over time.
 
 .. note::
     A more user friendly API called :code:`Federation` will be available in
-    a later version of CliMT. However, setting up models is easy enough even
+    a later version of climt. However, setting up models is easy enough even
     without :code:`Federation` once you get used to the workflow.
 
 .. _integrator: https://en.wikipedia.org/wiki/Linear_multistep_method

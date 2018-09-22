@@ -1,4 +1,4 @@
-Welcome to CliMT's documentation!
+Welcome to climt's documentation!
 =================================
 
 .. figure:: climt_logo.jpg
@@ -17,15 +17,15 @@ Welcome to CliMT's documentation!
     https://commons.wikimedia.org/wiki/File:Gustav_Klimt_-_Approaching_Thunderstorm_(The_Large_Poplar_II)_-_Google_Art_Project.jpg
 
 
-CliMT (Climate Modelling and Diagnostics Toolkit) is a Python based library which provides a
-modular and intuitive approach to writing numerical models of the climate system. CliMT provides
+climt (Climate Modelling and Diagnostics Toolkit) is a Python based library which provides a
+modular and intuitive approach to writing numerical models of the climate system. climt provides
 state-of-the art components and an easy-to-use interface to allow writing research quality models
 without the hassle of modifying Fortran code.
 
-The modular nature of CliMT allows re-use of model code, allowing users to build progressively
+The modular nature of climt allows re-use of model code, allowing users to build progressively
 complicated models without having to rewrite the same code at each level of complexity.
 
-CliMT uses `sympl`_ for its modelling infrastructure, making CliMT components and model scripts highly readable
+climt uses `sympl`_ for its modelling infrastructure, making climt components and model scripts highly readable
 and self-documenting.
 
 .. _sympl:
