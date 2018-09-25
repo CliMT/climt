@@ -587,7 +587,7 @@ default_values = {
     'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {'value': 0., 'units': 'kg m^-2'},
     'cloud_ice_particle_size': {'value': 20., 'units': 'micrometer'},
     'cloud_water_droplet_radius': {'value': 10., 'units': 'micrometer'},
-    'snow_and_ice_temperature': {'value': 0., 'units': 'degK'},
+    'snow_and_ice_temperature': {'value': 270., 'units': 'degK'},
     'cloud_base_mass_flux': {'value': 0., 'units': 'kg m^-2 s^-1'},
     'surface_thermal_capacity': {'value': 4.1813e3, 'units': 'J kg^-1 degK^-1'},
     'depth_of_slab_surface': {'value': 50., 'units': 'm'},
