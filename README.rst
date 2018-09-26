@@ -27,8 +27,12 @@ climt
     :target: https://zenodo.org/badge/latestdoi/74854230
     :alt: Zenodo DOI
 
-climt is a Toolkit for building Earth system models in Python. climt stands for *Climate Modelling
-and diagnostics Toolkit* -- it is meant both for creating models and for generating diagnostics
+
+.. image:: ./docs/climt_logo.jpg
+    :align: center
+
+**climt** is a Toolkit for building Earth system models in Python. climt stands for *Climate Modelling
+and Diagnostics Toolkit* -- it is meant both for creating models and for generating diagnostics
 (radiative fluxes for an atmospheric column, for example). However, since it might eventually
 include model components for purposes other than climate modelling (local area models, large-eddy
 simulation), we prefer to keep the abbreviation un-expanded!

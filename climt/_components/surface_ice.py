@@ -188,7 +188,7 @@ class IceSheet(Stepper):
             if total_height > self._max_height:
                 raise ValueError("Total height exceeds maximum value of {} m.".format(self._max_height))
 
-            if total_height < 1e-8:  # Some epsilon_index
+            if total_height < 1e-8:  # Some epsilon
                 continue
 
             snow_height_fraction = raw_state['surface_snow_thickness'][col] / total_height
@@ -280,7 +280,7 @@ class IceSheet(Stepper):
             outputs['surface_temperature'][col] = new_temperature[-1]
             outputs['height_on_ice_interface_levels'][:, col] = np.linspace(
                 0,
-                outputs['surface_snow_thickness'][col],
+                total_height,
                 outputs['height_on_ice_interface_levels'].shape[0],
                 endpoint=True
             )

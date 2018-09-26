@@ -2,7 +2,7 @@
 Component Types
 ===============
 
-Deriving from Sympl_, most components in CliMT are either :py:class:`TendencyComponent`,
+Deriving from Sympl_, most components in climt are either :py:class:`TendencyComponent`,
 :py:class:`DiagnosticComponent`, :py:class:`ImplicitTendencyComponent`
 or :py:class:`Stepper`.
 
