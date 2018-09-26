@@ -692,7 +692,7 @@ def compute_all_diagnostics(state, diagnostic_list):
 
 
 def get_default_state(
-        component_list, grid_state=None, n_ice_interface_levels=10):
+        component_list, grid_state=None, n_ice_interface_levels=30):
     """
     Retrieves a reasonable initial state for the set of components given.
 
