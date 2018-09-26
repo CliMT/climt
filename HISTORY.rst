@@ -5,6 +5,7 @@ History
 Latest
 ------
 
+* Fix bugs in initialisation
 * Fix energy conservation in surface flux scheme
 * Enable the McICA version of RRTMG Shortwave,
   so that partial cloud fractions can be used.
