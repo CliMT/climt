@@ -4,16 +4,17 @@ from sympl import (
     TendencyComponent, TendencyStepper)
 from datetime import timedelta
 import numpy as np
-import logging
-
-logger = logging.getLogger('Conservation')
 
 
 class Conservation(object):
 
     def get_model_state(self, component):
 
-        return climt.get_default_state([component])
+        state = climt.get_default_state([component])
+        return self.modify_state(state)
+
+    def modify_state(self, state):
+        return state
 
     def get_component_instance(self):
         pass
@@ -64,7 +65,7 @@ class Conservation(object):
         forcing_amount = self.get_quantity_forcing(new_state)*time_step.total_seconds()
 
         assert np.isclose(new_amount - old_amount, forcing_amount,
-                          rtol=0, atol=1e-3)
+                          rtol=0, atol=1e-4)
 
 
 def get_pressure_thickness(state):
@@ -157,6 +158,30 @@ class AtmosphereTracerConservation(Conservation):
         return vertical_integral(state, state[self.tracer_name])
 
 
+class SurfaceEnergyConservation(Conservation):
+
+    def get_quantity_forcing(self, state):
+        return -get_surface_forcing(state)
+
+
+class SlabSurfaceConservation(SurfaceEnergyConservation):
+
+    def get_component_instance(self):
+        return climt.SlabSurface()
+
+    def get_quantity_amount(self, state):
+        C = state['surface_thermal_capacity'].values
+        T = state['surface_temperature'].values
+        mass = state['sea_water_density'].values*state['ocean_mixed_layer_thickness'].values
+
+        return mass*C*T
+
+
+#####################
+# Start Actual Tests
+#####################
+
+
 class TestRRTMGLongwaveConservation(AtmosphereEnergyConservation):
 
     def get_component_instance(self):
@@ -169,14 +194,46 @@ class TestRRTMGShortwaveConservation(AtmosphereEnergyConservation):
         return climt.RRTMGShortwave()
 
 
+class TestRRTMGShortwaveConservationWithClouds(AtmosphereEnergyConservation):
+
+    def get_component_instance(self):
+        return climt.RRTMGShortwave()
+
+    def modify_state(self, state):
+        state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
+        state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 1.
+        return state
+
+
+class TestRRTMGShortwaveConservationWithCloudsAndMCICA(AtmosphereEnergyConservation):
+
+    def get_component_instance(self):
+        return climt.RRTMGShortwave(mcica=True)
+
+    def modify_state(self, state):
+        state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
+        state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.5
+        return state
+
+
+class TestRRTMGLongwaveConservationWithClouds(AtmosphereEnergyConservation):
+
+    def get_component_instance(self):
+        return climt.RRTMGLongwave()
+
+    def modify_state(self, state):
+        state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
+        state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 1.
+        return state
+
+
 class TestSimplePhysicsDryConservation(AtmosphereEnergyConservation):
 
     def get_component_instance(self):
         return climt.SimplePhysics(boundary_layer=False,
                                    use_external_surface_specific_humidity=True)
 
-    def get_model_state(self, component):
-        state = climt.get_default_state([component])
+    def modify_state(self, state):
         state['eastward_wind'].values[:] = 3.
         return state
 
@@ -186,8 +243,7 @@ class TestSimplePhysicsConservation(AtmosphereEnergyConservation):
     def get_component_instance(self):
         return climt.SimplePhysics(boundary_layer=False)
 
-    def get_model_state(self, component):
-        state = climt.get_default_state([component])
+    def modify_state(self, state):
         state['eastward_wind'].values[:] = 3.
         return state
 
@@ -197,10 +253,8 @@ class TestDryConvectionConservation(AtmosphereEnergyConservation):
     def get_component_instance(self):
         return climt.DryConvectiveAdjustment()
 
-    def get_model_state(self, component):
+    def modify_state(self, state):
         unstable_level = 5
-
-        state = climt.get_default_state([component], grid_state=climt.get_grid(nz=35))
         state['air_temperature'][:unstable_level] += 10
         state['specific_humidity'][:unstable_level] = 0.05
         return state
@@ -220,10 +274,8 @@ class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
     def get_component_instance(self):
         return climt.DryConvectiveAdjustment()
 
-    def get_model_state(self, component):
+    def modify_state(self, state):
         unstable_level = 5
-
-        state = climt.get_default_state([component], grid_state=climt.get_grid(nz=35))
         state['air_temperature'][:unstable_level] += 10
         state['specific_humidity'][:unstable_level] = 0.05
         return state
@@ -235,3 +287,32 @@ class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
     def get_quantity_forcing(self, state):
         return 0
 
+
+class TestSlabSurfaceOnlySensibleHeat(SlabSurfaceConservation):
+
+    def modify_state(self, state):
+        state['surface_upward_sensible_heat_flux'].values = 10.
+        state['ocean_mixed_layer_thickness'].values = 1.
+
+        return state
+
+
+class TestSlabSurfaceOnlyLatentHeat(SlabSurfaceConservation):
+
+    def modify_state(self, state):
+        state['surface_upward_latent_heat_flux'].values = 40.
+        state['ocean_mixed_layer_thickness'].values = 1.
+
+        return state
+
+
+class TestSlabSurfaceOnlyRadiative(SlabSurfaceConservation):
+
+    def modify_state(self, state):
+        state['upwelling_shortwave_flux_in_air'].values[:] = 40.
+        state['upwelling_longwave_flux_in_air'].values[:] = 40.
+        state['downwelling_shortwave_flux_in_air'].values[:] = 40.
+        state['downwelling_longwave_flux_in_air'].values[:] = 40.
+        state['ocean_mixed_layer_thickness'].values = 1.
+
+        return state
