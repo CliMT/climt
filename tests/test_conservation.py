@@ -54,20 +54,19 @@ class Conservation(object):
         component = self.get_steppable_component()
         state = self.get_model_state(component)
         time_step = timedelta(seconds=1)
-        
+
         first_state = self.get_new_state_and_diagnostics(state,
-                component, time_step)
+                                                         component, time_step)
 
         old_amount = self.get_quantity_amount(first_state)
 
         new_state = self.get_new_state_and_diagnostics(first_state,
-                component, time_step)
+                                                       component, time_step)
 
         new_amount = self.get_quantity_amount(new_state)
 
         forcing_amount = self.get_quantity_forcing(new_state)*time_step.total_seconds()
 
-        print(new_amount - old_amount, forcing_amount)
         assert np.isclose(new_amount - old_amount, forcing_amount,
                           rtol=0, atol=1e-3)
 
@@ -181,6 +180,7 @@ class SlabSurfaceConservation(SurfaceEnergyConservation):
         return mass*C*T
 
 
+'''
 class SeaIceConservation(SurfaceEnergyConservation):
 
     def get_component_instance(self):
@@ -197,40 +197,31 @@ class SeaIceConservation(SurfaceEnergyConservation):
 
         temp_profile = state['snow_and_ice_temperature'].values
         num_layers = temp_profile.shape[0]
-        dz = height_snow_ice/num_layers
+        dz = float(height_snow_ice / num_layers)
 
-        snow_level = int((1 - snow_height_fraction)*num_layers)
-        levels = np.arange(num_layers)
+        snow_level = int((1 - snow_height_fraction)*num_layers) - 1
+        levels = np.arange(num_layers - 1)
 
-        rho_snow_ice = rho_ice*np.ones(num_layers)
+        # Create vertically varying profiles
+        rho_snow_ice = rho_ice*np.ones(num_layers - 1)
         rho_snow_ice[levels > snow_level] = rho_snow
-        rho_mean = (rho_snow_ice[1:] + rho_snow_ice[:-1])/2.
 
-        mass_snow_ice = rho_mean*dz
-
-        heat_capacity_snow_ice = C_ice*np.ones(num_layers)
+        heat_capacity_snow_ice = C_ice*np.ones(num_layers - 1)
         heat_capacity_snow_ice[levels > snow_level] = C_snow
-        heat_capacity_mean = (heat_capacity_snow_ice[1:] +
-                heat_capacity_snow_ice[:-1])/2.
+
+        mass_snow_ice = rho_snow_ice*dz
 
         temp_mean = (temp_profile[1:] + temp_profile[:-1])/2.
 
-        heat_content = np.sum(mass_snow_ice*heat_capacity_mean*temp_mean)
-        print(state['sea_ice_thickness'].values, state['surface_snow_thickness'].values)
-        print(height_snow_ice)
-        print(dz)
-        print(temp_profile)
-        print(heat_content)
+        heat_content = np.sum(mass_snow_ice*heat_capacity_snow_ice*temp_mean)
 
         return heat_content
 
     def get_quantity_forcing(self, state):
 
-        print('Forcing: ', state['heat_flux_into_sea_water_due_to_sea_ice'].values,
-                state['surface_downward_heat_flux_in_sea_ice'].values)
         return -state['heat_flux_into_sea_water_due_to_sea_ice'].values +\
-                state['surface_downward_heat_flux_in_sea_ice'].values
-
+            state['surface_downward_heat_flux_in_sea_ice'].values
+'''
 
 #####################
 # Start Actual Tests
@@ -372,6 +363,7 @@ class TestSlabSurfaceOnlyRadiative(SlabSurfaceConservation):
         state['ocean_mixed_layer_thickness'].values = 1.
 
         return state
+
 
 '''
 class TestSeaIceOnlySensibleHeatNoSnow(SeaIceConservation):

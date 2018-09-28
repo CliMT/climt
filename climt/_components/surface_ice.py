@@ -129,6 +129,7 @@ class IceSheet(Stepper):
         """
         self._max_height = maximum_snow_ice_height
         self._update_constants()
+        self._epsilon = 1e-6
         super(IceSheet, self).__init__(**kwargs)
 
     def _update_constants(self):
@@ -174,7 +175,7 @@ class IceSheet(Stepper):
         for col in range(num_cols):
             area_type = raw_state['area_type'][col].astype(str)
             total_height = 0.
-            surface_temperature = raw_state['snow_and_ice_temperature'][col][-1]
+            surface_temperature = raw_state['snow_and_ice_temperature'][:, col][-1]
             soil_surface_temperature = None
 
             if area_type == 'land_ice':
@@ -193,7 +194,7 @@ class IceSheet(Stepper):
             if total_height > self._max_height:
                 raise ValueError("Total height exceeds maximum value of {} m.".format(self._max_height))
 
-            if total_height < 1e-6:  # Some epsilon
+            if total_height < self._epsilon:  # Some epsilon
                 continue
 
             snow_height_fraction = raw_state['surface_snow_thickness'][col] / total_height
@@ -202,17 +203,17 @@ class IceSheet(Stepper):
             num_layers = temp_profile.shape[0]
             dz = float(total_height / num_layers)
 
-            snow_level = int((1 - snow_height_fraction)*num_layers)
-            levels = np.arange(num_layers)
+            snow_level = int((1 - snow_height_fraction)*num_layers) - 1
+            levels = np.arange(num_layers - 1)
 
             # Create vertically varying profiles
-            rho_snow_ice = self._rho_ice*np.ones(num_layers)
+            rho_snow_ice = self._rho_ice*np.ones(num_layers - 1)
             rho_snow_ice[levels > snow_level] = self._rho_snow
 
-            heat_capacity_snow_ice = self._C_ice*np.ones(num_layers)
+            heat_capacity_snow_ice = self._C_ice*np.ones(num_layers - 1)
             heat_capacity_snow_ice[levels > snow_level] = self._C_snow
 
-            kappa_snow_ice = self._Kice*np.ones(num_layers)
+            kappa_snow_ice = self._Kice*np.ones(num_layers - 1)
             kappa_snow_ice[levels > snow_level] = self._Ksnow
 
             check_melting = True
@@ -228,14 +229,12 @@ class IceSheet(Stepper):
                 net_heat_flux[col],
                 soil_surface_temperature)
 
-
-            print(new_temperature)
             # Energy balance for lower surface of snow/ice
             if area_type == 'sea_ice':
                 # TODO Add ocean heat flux parameterization
                 # At sea surface
                 heat_flux_to_sea_water = (new_temperature[1] - new_temperature[0])*(
-                        kappa_snow_ice[0] + kappa_snow_ice[1])*0.5/dz
+                    kappa_snow_ice[0] + kappa_snow_ice[1])*0.5/dz
                 heat_flux_to_sea_water = round(heat_flux_to_sea_water, 6)
 
                 # If heat_flux_to_sea_water is positive, flux of heat into water
@@ -263,19 +262,16 @@ class IceSheet(Stepper):
 
             # Energy balance at atmosphere surface
             heat_flux_to_atmosphere = -((new_temperature[-1] - new_temperature[-2]) *
-                                       (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/dz)
+                                        (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/dz)
             diagnostics['surface_downward_heat_flux_in_sea_ice'][col] = heat_flux_to_atmosphere
 
             height_of_melting_ice = 0
             # Surface is melting
             if check_melting:
                 energy_to_melt_ice = (net_heat_flux[col] + heat_flux_to_atmosphere)*timestep.total_seconds()
-                print('Heat fluxes: ', net_heat_flux[col], heat_flux_to_atmosphere)
                 energy_to_melt_ice = round(energy_to_melt_ice, 6)
 
                 height_of_melting_ice = (energy_to_melt_ice / (rho_snow_ice[-1]*self._Lf))
-
-                print('Height ice:', height_of_melting_ice)
 
                 if height_of_melting_ice > raw_state['surface_snow_thickness'][col]:
 
@@ -309,18 +305,24 @@ class IceSheet(Stepper):
         a_sub = np.zeros(num_layers)
         a_sup = np.zeros(num_layers)
 
-        K_bar = 0.25*(kappa[2:] + kappa[:-2]) + 0.5 * kappa[1:-1]
-        K_mid = 0.5*(kappa[1:] + kappa[:-1])
+        # K_bar = 0.25*(kappa[2:] + kappa[:-2]) + 0.5 * kappa[1:-1]
+        # K_mid = 0.5*(kappa[1:] + kappa[:-1])
+        K_int = 0.5*(kappa[:-1] + kappa[1:])
+        K_mid = kappa
 
-        mu_inv = dt / (rho * specific_heat * 2 * dz * dz)
+        heat_cap = rho * specific_heat
+        heat_cap_int = 0.5*(heat_cap[:-1] + heat_cap[1:])
 
-        r[1:-1] = K_bar*mu_inv[1:-1]
+        # mu_inv = dt / (heat_cap * 2 * dz * dz)
+        mu_inv_int = dt / (heat_cap_int * 2 * dz * dz)
+
+        r[1:-1] = K_int*mu_inv_int
 
         dp = (1 + 2*r)
         dm = (1 - 2*r)
 
-        a_sub[:-1] = -mu_inv[1:]*K_mid
-        a_sup[1:] = -mu_inv[:-1]*K_mid
+        a_sub[:-2] = -mu_inv_int*K_mid[:-1]
+        a_sup[2:] = -mu_inv_int*K_mid[1:]
 
         mat_lhs = sparse.spdiags([a_sub, dp, a_sup], [-1, 0, 1], num_layers, num_layers, format='csc')
 
@@ -330,7 +332,7 @@ class IceSheet(Stepper):
 
         # Set flux condition if temperature is below melting point,
         # and dirichlet condition above melting point
-        if surf_temp <= self._temp_melt:
+        if surf_temp < self._temp_melt - self._epsilon:
             mat_lhs[-1, -1] = -1
             mat_lhs[-1, -2] = 1
             rhs[-1] = -net_flux*dz/K_mid[-1]
