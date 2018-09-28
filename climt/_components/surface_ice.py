@@ -113,6 +113,10 @@ class IceSheet(Stepper):
             'dims': ['*'],
             'units': 'W m^-2',
         },
+        'surface_downward_heat_flux_in_sea_ice': {
+            'dims': ['*'],
+            'units': 'W m^-2',
+        },
     }
 
     def __init__(self, maximum_snow_ice_height=10, **kwargs):
@@ -165,11 +169,12 @@ class IceSheet(Stepper):
         outputs['land_ice_thickness'][:] = raw_state['land_ice_thickness']
         outputs['sea_ice_thickness'][:] = raw_state['sea_ice_thickness']
         outputs['surface_snow_thickness'][:] = raw_state['surface_snow_thickness']
+        outputs['snow_and_ice_temperature'][:] = raw_state['snow_and_ice_temperature']
 
         for col in range(num_cols):
             area_type = raw_state['area_type'][col].astype(str)
             total_height = 0.
-            surface_temperature = raw_state['surface_temperature'][col]
+            surface_temperature = raw_state['snow_and_ice_temperature'][col][-1]
             soil_surface_temperature = None
 
             if area_type == 'land_ice':
@@ -178,7 +183,7 @@ class IceSheet(Stepper):
                 soil_surface_temperature = raw_state['soil_surface_temperature'][col]
             elif area_type == 'sea_ice':
                 if raw_state['sea_ice_thickness'][col] == 0:
-                    # No sea ice, so skip calculat_indexion
+                    # No sea ice, so skip calculation
                     continue
                 total_height = raw_state['sea_ice_thickness'][col] \
                     + raw_state['surface_snow_thickness'][col]
@@ -188,7 +193,7 @@ class IceSheet(Stepper):
             if total_height > self._max_height:
                 raise ValueError("Total height exceeds maximum value of {} m.".format(self._max_height))
 
-            if total_height < 1e-8:  # Some epsilon
+            if total_height < 1e-6:  # Some epsilon
                 continue
 
             snow_height_fraction = raw_state['surface_snow_thickness'][col] / total_height
@@ -223,11 +228,15 @@ class IceSheet(Stepper):
                 net_heat_flux[col],
                 soil_surface_temperature)
 
+
+            print(new_temperature)
             # Energy balance for lower surface of snow/ice
             if area_type == 'sea_ice':
                 # TODO Add ocean heat flux parameterization
                 # At sea surface
-                heat_flux_to_sea_water = (new_temperature[1] - new_temperature[0])*kappa_snow_ice[0]/dz
+                heat_flux_to_sea_water = (new_temperature[1] - new_temperature[0])*(
+                        kappa_snow_ice[0] + kappa_snow_ice[1])*0.5/dz
+                heat_flux_to_sea_water = round(heat_flux_to_sea_water, 6)
 
                 # If heat_flux_to_sea_water is positive, flux of heat into water
                 # an impossible situation which means ice is above freezing point.
@@ -253,16 +262,20 @@ class IceSheet(Stepper):
                 continue
 
             # Energy balance at atmosphere surface
-            heat_flux_to_atmosphere = ((new_temperature[-1] - new_temperature[-2]) *
+            heat_flux_to_atmosphere = -((new_temperature[-1] - new_temperature[-2]) *
                                        (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/dz)
+            diagnostics['surface_downward_heat_flux_in_sea_ice'][col] = heat_flux_to_atmosphere
 
             height_of_melting_ice = 0
             # Surface is melting
             if check_melting:
-                energy_to_melt_ice = (net_heat_flux[col] + heat_flux_to_atmosphere)
+                energy_to_melt_ice = (net_heat_flux[col] + heat_flux_to_atmosphere)*timestep.total_seconds()
+                print('Heat fluxes: ', net_heat_flux[col], heat_flux_to_atmosphere)
+                energy_to_melt_ice = round(energy_to_melt_ice, 6)
 
-                height_of_melting_ice = (energy_to_melt_ice*timestep.total_seconds() /
-                                         (rho_snow_ice[-1]*self._Lf))
+                height_of_melting_ice = (energy_to_melt_ice / (rho_snow_ice[-1]*self._Lf))
+
+                print('Height ice:', height_of_melting_ice)
 
                 if height_of_melting_ice > raw_state['surface_snow_thickness'][col]:
 
@@ -317,7 +330,7 @@ class IceSheet(Stepper):
 
         # Set flux condition if temperature is below melting point,
         # and dirichlet condition above melting point
-        if surf_temp < self._temp_melt:
+        if surf_temp <= self._temp_melt:
             mat_lhs[-1, -1] = -1
             mat_lhs[-1, -2] = 1
             rhs[-1] = -net_flux*dz/K_mid[-1]

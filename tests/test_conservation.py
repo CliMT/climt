@@ -53,19 +53,23 @@ class Conservation(object):
 
         component = self.get_steppable_component()
         state = self.get_model_state(component)
-
-        old_amount = self.get_quantity_amount(state)
-
         time_step = timedelta(seconds=1)
-        new_state = self.get_new_state_and_diagnostics(state,
-                                                       component, time_step)
+        
+        first_state = self.get_new_state_and_diagnostics(state,
+                component, time_step)
+
+        old_amount = self.get_quantity_amount(first_state)
+
+        new_state = self.get_new_state_and_diagnostics(first_state,
+                component, time_step)
 
         new_amount = self.get_quantity_amount(new_state)
 
         forcing_amount = self.get_quantity_forcing(new_state)*time_step.total_seconds()
 
+        print(new_amount - old_amount, forcing_amount)
         assert np.isclose(new_amount - old_amount, forcing_amount,
-                          rtol=0, atol=1e-4)
+                          rtol=0, atol=1e-3)
 
 
 def get_pressure_thickness(state):
@@ -177,6 +181,57 @@ class SlabSurfaceConservation(SurfaceEnergyConservation):
         return mass*C*T
 
 
+class SeaIceConservation(SurfaceEnergyConservation):
+
+    def get_component_instance(self):
+        return climt.IceSheet()
+
+    def get_quantity_amount(self, state):
+        C_ice = get_constant('heat_capacity_of_solid_phase_as_ice', 'J/kg/degK')
+        C_snow = get_constant('heat_capacity_of_solid_phase_as_snow', 'J/kg/degK')
+        rho_ice = get_constant('density_of_solid_phase_as_ice', 'kg/m^3')
+        rho_snow = get_constant('density_of_solid_phase_as_snow', 'kg/m^3')
+
+        height_snow_ice = state['sea_ice_thickness'].values + state['surface_snow_thickness'].values
+        snow_height_fraction = state['surface_snow_thickness'].values / height_snow_ice
+
+        temp_profile = state['snow_and_ice_temperature'].values
+        num_layers = temp_profile.shape[0]
+        dz = height_snow_ice/num_layers
+
+        snow_level = int((1 - snow_height_fraction)*num_layers)
+        levels = np.arange(num_layers)
+
+        rho_snow_ice = rho_ice*np.ones(num_layers)
+        rho_snow_ice[levels > snow_level] = rho_snow
+        rho_mean = (rho_snow_ice[1:] + rho_snow_ice[:-1])/2.
+
+        mass_snow_ice = rho_mean*dz
+
+        heat_capacity_snow_ice = C_ice*np.ones(num_layers)
+        heat_capacity_snow_ice[levels > snow_level] = C_snow
+        heat_capacity_mean = (heat_capacity_snow_ice[1:] +
+                heat_capacity_snow_ice[:-1])/2.
+
+        temp_mean = (temp_profile[1:] + temp_profile[:-1])/2.
+
+        heat_content = np.sum(mass_snow_ice*heat_capacity_mean*temp_mean)
+        print(state['sea_ice_thickness'].values, state['surface_snow_thickness'].values)
+        print(height_snow_ice)
+        print(dz)
+        print(temp_profile)
+        print(heat_content)
+
+        return heat_content
+
+    def get_quantity_forcing(self, state):
+
+        print('Forcing: ', state['heat_flux_into_sea_water_due_to_sea_ice'].values,
+                state['surface_downward_heat_flux_in_sea_ice'].values)
+        return -state['heat_flux_into_sea_water_due_to_sea_ice'].values +\
+                state['surface_downward_heat_flux_in_sea_ice'].values
+
+
 #####################
 # Start Actual Tests
 #####################
@@ -272,6 +327,7 @@ class TestDryConvectionConservation(AtmosphereEnergyConservation):
 class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
 
     def get_component_instance(self):
+        self.tracer_name = 'specific_humidity'
         return climt.DryConvectiveAdjustment()
 
     def modify_state(self, state):
@@ -316,3 +372,14 @@ class TestSlabSurfaceOnlyRadiative(SlabSurfaceConservation):
         state['ocean_mixed_layer_thickness'].values = 1.
 
         return state
+
+'''
+class TestSeaIceOnlySensibleHeatNoSnow(SeaIceConservation):
+
+    def modify_state(self, state):
+        state['surface_upward_sensible_heat_flux'].values = 10.
+        state['snow_and_ice_temperature'].values[:] = 273.
+        state['sea_ice_thickness'].values = 5.
+        state['area_type'].values = 'sea_ice'
+        return state
+'''
