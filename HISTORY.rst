@@ -5,6 +5,8 @@ History
 Latest
 ------
 
+* Enable the McICA version of RRTMG Longwave for consistency
+  with the Shortwave component.
 * Fix energy conservation in surface flux scheme
 * Enable the McICA version of RRTMG Shortwave,
   so that partial cloud fractions can be used.
