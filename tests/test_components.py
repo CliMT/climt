@@ -348,6 +348,15 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return RRTMGLongwave(mcica=True)
 
+    def test_longwave_heating_mcica(self):
+        cached_output = self.get_cached_output('cloudy_heating_rates')
+        rad_lw = self.get_component_instance()
+        state = climt.get_default_state([rad_lw])
+        state['cloud_area_fraction_in_atmosphere_layer'][16:19] = 0.5
+        state['mass_content_of_cloud_ice_in_atmosphere_layer'][16:19] = 0.3
+        lw_output = rad_lw(state)
+        compare_outputs(lw_output, cached_output)
+
 
 class TestRRTMGLongwaveWithClouds(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
@@ -367,6 +376,15 @@ class TestRRTMGShortwave(ComponentBaseColumn, ComponentBase3D):
 class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return RRTMGShortwave(mcica=True)
+
+    def test_shortwave_heating_mcica(self):
+        cached_output = self.get_cached_output('cloudy_heating_rates')
+        rad_sw = self.get_component_instance()
+        state = climt.get_default_state([rad_sw])
+        state['cloud_area_fraction_in_atmosphere_layer'][16:19] = 0.5
+        state['mass_content_of_cloud_ice_in_atmosphere_layer'][16:19] = 0.3
+        sw_output = rad_sw(state)
+        compare_outputs(sw_output, cached_output)
 
 
 class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):
