@@ -159,7 +159,7 @@ class ComponentBaseColumn(ComponentBase):
     def test_column_stepping_output_matches_cached_output(self):
         component = self.get_component_instance()
         if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
-            component = AdamsBashforth([self.get_component_instance()])
+            component = AdamsBashforth(self.get_component_instance())
             state = self.get_1d_input_state(component)
             output = call_with_timestep_if_needed(component, state)
             cached_output = self.get_cached_output('column_stepping')
@@ -194,7 +194,7 @@ class ComponentBase3D(ComponentBase):
     def test_3d_stepping_output_matches_cached_output(self):
         component = self.get_component_instance()
         if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
-            component = AdamsBashforth([component])
+            component = AdamsBashforth(component)
             state = self.get_3d_input_state(component)
             output = call_with_timestep_if_needed(component, state)
             cached_output = self.get_cached_output('3d_stepping')
