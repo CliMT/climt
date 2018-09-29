@@ -140,7 +140,7 @@ class IceSheet(Stepper):
         self._rho_snow = get_constant('density_of_solid_phase_as_snow', 'kg/m^3')
         self._C_snow = get_constant('heat_capacity_of_solid_phase_as_snow', 'J/kg/degK')
         self._Lf = get_constant('latent_heat_of_fusion', 'J/kg')
-        self._temp_melt = get_constant('freezing_temperature_of_liquid_phase', 'degK')
+        self._melting_temperature = get_constant('freezing_temperature_of_liquid_phase', 'degK')
 
     def array_call(self, raw_state, timestep):
         self._update_constants()
@@ -217,7 +217,7 @@ class IceSheet(Stepper):
             kappa_snow_ice[levels > snow_level] = self._Ksnow
 
             check_melting = True
-            if surface_temperature < self._temp_melt:
+            if surface_temperature < self._melting_temperature:
                 check_melting = False
 
             new_temperature = self.calculate_new_ice_temperature(
@@ -298,25 +298,22 @@ class IceSheet(Stepper):
 
     def calculate_new_ice_temperature(self, rho, specific_heat, kappa,
                                       temp_profile, dt, dz,
-                                      num_layers, surf_temp, net_flux,
+                                      num_layers, surf_temperature, net_flux,
                                       soil_temperature=None):
 
         r = np.zeros(num_layers)
         a_sub = np.zeros(num_layers)
         a_sup = np.zeros(num_layers)
 
-        # K_bar = 0.25*(kappa[2:] + kappa[:-2]) + 0.5 * kappa[1:-1]
-        # K_mid = 0.5*(kappa[1:] + kappa[:-1])
-        K_int = 0.5*(kappa[:-1] + kappa[1:])
+        K_interface = 0.5*(kappa[:-1] + kappa[1:])
         K_mid = kappa
 
-        heat_cap = rho * specific_heat
-        heat_cap_int = 0.5*(heat_cap[:-1] + heat_cap[1:])
+        heat_capacity = rho * specific_heat
+        heat_capacity_int = 0.5*(heat_capacity[:-1] + heat_capacity[1:])
 
-        # mu_inv = dt / (heat_cap * 2 * dz * dz)
-        mu_inv_int = dt / (heat_cap_int * 2 * dz * dz)
+        mu_inv_int = dt / (heat_capacity_int * 2 * dz * dz)
 
-        r[1:-1] = K_int*mu_inv_int
+        r[1:-1] = K_interface*mu_inv_int
 
         dp = (1 + 2*r)
         dm = (1 - 2*r)
@@ -332,19 +329,19 @@ class IceSheet(Stepper):
 
         # Set flux condition if temperature is below melting point,
         # and dirichlet condition above melting point
-        if surf_temp < self._temp_melt - self._epsilon:
+        if surf_temperature < self._melting_temperature - self._epsilon:
             mat_lhs[-1, -1] = -1
             mat_lhs[-1, -2] = 1
             rhs[-1] = -net_flux*dz/K_mid[-1]
         else:
             mat_lhs[-1, -1] = 1
             mat_lhs[-1, -2] = 0
-            rhs[-1] = self._temp_melt
+            rhs[-1] = self._melting_temperature
 
         mat_lhs[0, 0] = 1
         mat_lhs[0, 1] = 0
         if soil_temperature is None:
-            rhs[0] = self._temp_melt
+            rhs[0] = self._melting_temperature
         else:
             rhs[0] = soil_temperature
 

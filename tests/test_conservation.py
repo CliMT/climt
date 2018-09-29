@@ -6,10 +6,9 @@ from datetime import timedelta
 import numpy as np
 
 
-class Conservation(object):
+class ConservationTestBase(object):
 
     def get_model_state(self, component):
-
         state = climt.get_default_state([component])
         return self.modify_state(state)
 
@@ -26,7 +25,6 @@ class Conservation(object):
         pass
 
     def get_steppable_component(self):
-
         component = self.get_component_instance()
 
         if isinstance(component, TendencyComponent):
@@ -36,7 +34,6 @@ class Conservation(object):
 
     def get_new_state_and_diagnostics(self, state,
                                       component, time_step):
-
         if isinstance(component, TendencyStepper):
             diag, state = component(state, time_step)
             state.update(diag)
@@ -50,18 +47,17 @@ class Conservation(object):
             return state
 
     def test_quantity_is_conserved(self):
-
         component = self.get_steppable_component()
         state = self.get_model_state(component)
         time_step = timedelta(seconds=1)
 
-        first_state = self.get_new_state_and_diagnostics(state,
-                                                         component, time_step)
+        first_state = self.get_new_state_and_diagnostics(
+            state, component, time_step)
 
         old_amount = self.get_quantity_amount(first_state)
 
-        new_state = self.get_new_state_and_diagnostics(first_state,
-                                                       component, time_step)
+        new_state = self.get_new_state_and_diagnostics(
+            first_state, component, time_step)
 
         new_amount = self.get_quantity_amount(new_state)
 
@@ -72,8 +68,8 @@ class Conservation(object):
 
 
 def get_pressure_thickness(state):
-    return (state['air_pressure_on_interface_levels'][:-1] -
-            state['air_pressure_on_interface_levels'][1:]).rename(
+    return (state['air_pressure_on_interface_levels'].to_units('pascal')[:-1] -
+            state['air_pressure_on_interface_levels'].to_units('pascal')[1:]).rename(
                 dict(interface_levels='mid_levels'))
 
 
@@ -88,83 +84,80 @@ def get_moist_enthalpy(state):
     Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
     Lv = get_constant('latent_heat_of_condensation', 'J/kg')
 
-    dry_enthalpy = vertical_integral(state, Cpd*state['air_temperature'])
+    dry_enthalpy = vertical_integral(state, Cpd*state['air_temperature'].to_units('degK'))
 
     moisture_enthalpy = 0.0
     if 'specific_humidity' in state:
-        moisture_enthalpy = vertical_integral(state, Lv*state['specific_humidity'])
+        moisture_enthalpy = vertical_integral(state, Lv*state['specific_humidity'].to_units('kg/kg'))
 
     return dry_enthalpy + moisture_enthalpy
 
 
 def heat_capacity_including_condensible(q):
-
     Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/degK')
     Cvap = get_constant('heat_capacity_of_vapor_phase', 'J/kg/K')
 
     return Cpd*(1-q) + Cvap*q
 
 
-def get_surface_forcing(state):
-
+def get_surface_energy_flux(state):
     surf_forcing = 0
 
     if 'upwelling_shortwave_flux_in_air' in state:
-        surf_forcing += state['upwelling_shortwave_flux_in_air'][0].values
+        surf_forcing += state['upwelling_shortwave_flux_in_air'].to_units('W/m^2')[0].values
 
     if 'upwelling_longwave_flux_in_air' in state:
-        surf_forcing += state['upwelling_longwave_flux_in_air'][0].values
+        surf_forcing += state['upwelling_longwave_flux_in_air'].to_units('W/m^2')[0].values
 
     if 'downwelling_shortwave_flux_in_air' in state:
-        surf_forcing -= state['downwelling_shortwave_flux_in_air'][0].values
+        surf_forcing -= state['downwelling_shortwave_flux_in_air'].to_units('W/m^2')[0].values
 
     if 'downwelling_longwave_flux_in_air' in state:
-        surf_forcing -= state['downwelling_longwave_flux_in_air'][0].values
+        surf_forcing -= state['downwelling_longwave_flux_in_air'].to_units('W/m^2')[0].values
 
     if 'surface_upward_sensible_heat_flux' in state:
-        surf_forcing += state['surface_upward_sensible_heat_flux'].values
+        surf_forcing += state['surface_upward_sensible_heat_flux'].to_units('W/m^2').values
 
     if 'surface_upward_latent_heat_flux' in state:
-        surf_forcing += state['surface_upward_latent_heat_flux'].values
+        surf_forcing += state['surface_upward_latent_heat_flux'].to_units('W/m^2').values
 
     return surf_forcing
 
 
-def get_top_of_atmosphere_forcing(state):
-
+def get_top_of_atmosphere_energy_flux(state):
     toa_forcing = 0
 
     if 'downwelling_shortwave_flux_in_air' in state:
-        toa_forcing += state['downwelling_shortwave_flux_in_air'][-1].values
+        toa_forcing += state['downwelling_shortwave_flux_in_air'].to_units('W/m^2')[-1].values
 
     if 'upwelling_shortwave_flux_in_air' in state:
-        toa_forcing -= state['upwelling_shortwave_flux_in_air'][-1].values
+        toa_forcing -= state['upwelling_shortwave_flux_in_air'].to_units('W/m^2')[-1].values
 
     if 'upwelling_longwave_flux_in_air' in state:
-        toa_forcing -= state['upwelling_longwave_flux_in_air'][-1].values
+        toa_forcing -= state['upwelling_longwave_flux_in_air'].to_units('W/m^2')[-1].values
 
     return toa_forcing
 
 
-class AtmosphereEnergyConservation(Conservation):
+class AtmosphereMoistEnthalpyConservation(ConservationTestBase):
 
     def get_quantity_amount(self, state):
         return get_moist_enthalpy(state)
 
     def get_quantity_forcing(self, state):
-        return get_surface_forcing(state) + get_top_of_atmosphere_forcing(state)
+        return get_surface_energy_flux(state) + get_top_of_atmosphere_energy_flux(state)
 
 
-class AtmosphereTracerConservation(Conservation):
+class AtmosphereTracerConservation(ConservationTestBase):
 
     def get_quantity_amount(self, state):
         return vertical_integral(state, state[self.tracer_name])
 
 
-class SurfaceEnergyConservation(Conservation):
+class SurfaceEnergyConservation(ConservationTestBase):
 
     def get_quantity_forcing(self, state):
-        return -get_surface_forcing(state)
+        return -get_surface_energy_flux(state)
 
 
 class SlabSurfaceConservation(SurfaceEnergyConservation):
@@ -180,67 +173,24 @@ class SlabSurfaceConservation(SurfaceEnergyConservation):
         return mass*C*T
 
 
-'''
-class SeaIceConservation(SurfaceEnergyConservation):
-
-    def get_component_instance(self):
-        return climt.IceSheet()
-
-    def get_quantity_amount(self, state):
-        C_ice = get_constant('heat_capacity_of_solid_phase_as_ice', 'J/kg/degK')
-        C_snow = get_constant('heat_capacity_of_solid_phase_as_snow', 'J/kg/degK')
-        rho_ice = get_constant('density_of_solid_phase_as_ice', 'kg/m^3')
-        rho_snow = get_constant('density_of_solid_phase_as_snow', 'kg/m^3')
-
-        height_snow_ice = state['sea_ice_thickness'].values + state['surface_snow_thickness'].values
-        snow_height_fraction = state['surface_snow_thickness'].values / height_snow_ice
-
-        temp_profile = state['snow_and_ice_temperature'].values
-        num_layers = temp_profile.shape[0]
-        dz = float(height_snow_ice / num_layers)
-
-        snow_level = int((1 - snow_height_fraction)*num_layers) - 1
-        levels = np.arange(num_layers - 1)
-
-        # Create vertically varying profiles
-        rho_snow_ice = rho_ice*np.ones(num_layers - 1)
-        rho_snow_ice[levels > snow_level] = rho_snow
-
-        heat_capacity_snow_ice = C_ice*np.ones(num_layers - 1)
-        heat_capacity_snow_ice[levels > snow_level] = C_snow
-
-        mass_snow_ice = rho_snow_ice*dz
-
-        temp_mean = (temp_profile[1:] + temp_profile[:-1])/2.
-
-        heat_content = np.sum(mass_snow_ice*heat_capacity_snow_ice*temp_mean)
-
-        return heat_content
-
-    def get_quantity_forcing(self, state):
-
-        return -state['heat_flux_into_sea_water_due_to_sea_ice'].values +\
-            state['surface_downward_heat_flux_in_sea_ice'].values
-'''
-
 #####################
 # Start Actual Tests
 #####################
 
 
-class TestRRTMGLongwaveConservation(AtmosphereEnergyConservation):
+class TestRRTMGLongwaveConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.RRTMGLongwave()
 
 
-class TestRRTMGShortwaveConservation(AtmosphereEnergyConservation):
+class TestRRTMGShortwaveConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.RRTMGShortwave()
 
 
-class TestRRTMGShortwaveConservationWithClouds(AtmosphereEnergyConservation):
+class TestRRTMGShortwaveConservationWithClouds(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.RRTMGShortwave()
@@ -251,7 +201,7 @@ class TestRRTMGShortwaveConservationWithClouds(AtmosphereEnergyConservation):
         return state
 
 
-class TestRRTMGShortwaveConservationWithCloudsAndMCICA(AtmosphereEnergyConservation):
+class TestRRTMGShortwaveConservationWithCloudsAndMCICA(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.RRTMGShortwave(mcica=True)
@@ -262,7 +212,7 @@ class TestRRTMGShortwaveConservationWithCloudsAndMCICA(AtmosphereEnergyConservat
         return state
 
 
-class TestRRTMGLongwaveConservationWithClouds(AtmosphereEnergyConservation):
+class TestRRTMGLongwaveConservationWithClouds(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.RRTMGLongwave()
@@ -273,7 +223,7 @@ class TestRRTMGLongwaveConservationWithClouds(AtmosphereEnergyConservation):
         return state
 
 
-class TestSimplePhysicsDryConservation(AtmosphereEnergyConservation):
+class TestSimplePhysicsDryConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.SimplePhysics(boundary_layer=False,
@@ -284,7 +234,7 @@ class TestSimplePhysicsDryConservation(AtmosphereEnergyConservation):
         return state
 
 
-class TestSimplePhysicsConservation(AtmosphereEnergyConservation):
+class TestSimplePhysicsConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.SimplePhysics(boundary_layer=False)
@@ -294,7 +244,7 @@ class TestSimplePhysicsConservation(AtmosphereEnergyConservation):
         return state
 
 
-class TestDryConvectionConservation(AtmosphereEnergyConservation):
+class TestDryConvectionConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
         return climt.DryConvectiveAdjustment()
@@ -329,7 +279,7 @@ class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
 
     def get_quantity_amount(self, state):
         return vertical_integral(
-            state, state['specific_humidity'])
+            state, state['specific_humidity'].to_units('kg/kg'))
 
     def get_quantity_forcing(self, state):
         return 0
@@ -363,15 +313,3 @@ class TestSlabSurfaceOnlyRadiative(SlabSurfaceConservation):
         state['ocean_mixed_layer_thickness'].values = 1.
 
         return state
-
-
-'''
-class TestSeaIceOnlySensibleHeatNoSnow(SeaIceConservation):
-
-    def modify_state(self, state):
-        state['surface_upward_sensible_heat_flux'].values = 10.
-        state['snow_and_ice_temperature'].values[:] = 273.
-        state['sea_ice_thickness'].values = 5.
-        state['area_type'].values = 'sea_ice'
-        return state
-'''
