@@ -206,6 +206,6 @@ def get_longwave_fluxes(
 
 # @jit(nopython=True)
 def get_frierson_06_tau(latitude, sigma, tau0e, tau0p, fl):
-    tau_0 = tau0e + (tau0p - tau0e) * np.sin(latitude/360.)**2
+    tau_0 = tau0e + (tau0p - tau0e) * np.sin(latitude*np.pi/180.)**2
     tau = tau_0 * (1 - (fl*sigma + (1 - fl)*sigma**4))
     return tau
