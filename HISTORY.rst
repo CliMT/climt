@@ -5,6 +5,9 @@ History
 Latest
 ------
 
+* Fix bugs in IceSheet
+* Add tests to verify conservation of quantities
+* Fix bugs in initialisation
 * Fix energy conservation in surface flux scheme
 * Enable the McICA version of RRTMG Shortwave,
   so that partial cloud fractions can be used.

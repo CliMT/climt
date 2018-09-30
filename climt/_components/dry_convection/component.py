@@ -62,6 +62,7 @@ class DryConvectiveAdjustment(Stepper):
 
         rd_cp = self.gas_constant(q)/self.heat_capacity(q)
         theta = state['air_temperature']*(self._Pref/state['air_pressure'])**rd_cp
+        theta_q = theta*(1 + output_q*self._Rv/self._Rdair - output_q)
 
         # print('initial theta:', theta)
 
@@ -71,7 +72,6 @@ class DryConvectiveAdjustment(Stepper):
             for level in range(num_levels-1, -1, -1):
 
                 dp = state['P_int'][column, :-1] - state['P_int'][column, 1:]
-                theta_q = theta*(1 + output_q*self._Rv/self._Rdair - output_q)
                 theta_sum = np.cumsum(theta_q[column, level::])
                 divisor = np.arange(1, num_levels - level+1)
 
