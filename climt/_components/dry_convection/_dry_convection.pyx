@@ -3,7 +3,13 @@ cimport numpy as cnp
 import numpy as np
 
 
-@cython.boundscheck(False)
+ctypedef double [:] dim_one_buffer
+
+ctypedef fused float_or_arr:
+    double
+    dim_one_buffer
+
+
 cpdef void calculate_dry_adjustment(
     cnp.ndarray [double, ndim=2] P_int,
     cnp.ndarray [double, ndim=2] P,
@@ -49,31 +55,25 @@ cpdef void calculate_dry_adjustment(
             p_conv_high = P_int[column, level]
             p_conv_low = P_int[column, stable_level]
 
-            enthalpy = heat_capacity_cython(q_conv, cpd, cvap)*t_conv
+            enthalpy = one_dim(q_conv, cpd, cvap)*t_conv
             integral_enthalpy = np.sum(enthalpy*dp_conv)
             mean_conv_q = sum_arr(q_conv*dp_conv)/(p_conv_high - p_conv_low)
 
             output_q[column, level:stable_level] = mean_conv_q
 
-            rdcp_conv = gas_constant_cython(mean_conv_q, rdair, rv)
-            rdcp_conv = rdcp_conv/heat_capacity_cython(mean_conv_q, cpd, cvap)
+            rdcp_conv = rdair*(1 - mean_conv_q) + rv*mean_conv_q
+            rdcp_conv = rdcp_conv/(cpd*(1 - mean_conv_q) + mean_conv_q*cvap)
 
             theta_coeff = (
                 P[column, level:stable_level]/pref)**rdcp_conv
 
-            integral_theta_den = np.sum(heat_capacity_cython(q_conv, cpd,
-                                                       cvap)*theta_coeff*dp_conv)
+            integral_theta_den = np.sum(one_dim(q_conv, cpd,
+                                                cvap)*theta_coeff*dp_conv)
 
             mean_theta = integral_enthalpy/integral_theta_den
 
             output_temp[column, level:stable_level] = mean_theta*theta_coeff
 
-
-ctypedef double [:] dim_one_buffer
-
-ctypedef fused float_or_arr:
-    double
-    dim_one_buffer
 
 cpdef double sum_arr(double [:] arr) nogil:
 
@@ -86,7 +86,7 @@ cpdef double sum_arr(double [:] arr) nogil:
 
     return result
 
-
+'''
 @cython.boundscheck(False)
 cdef float_or_arr heat_capacity_cython(
     float_or_arr q,
@@ -102,7 +102,7 @@ cdef float_or_arr heat_capacity_cython(
 
 
 @cython.boundscheck(False)
-def gas_constant_cython(
+cdef float_or_arr gas_constant_cython(
     float_or_arr q,
     double rdair,
     double rv):
@@ -114,7 +114,7 @@ def gas_constant_cython(
         return rdair*(1-q) + rv*q
     elif float_or_arr is dim_one_buffer:
         return one_dim(q, rdair, rv)
-
+'''
 
 @cython.boundscheck(False)
 cdef dim_one_buffer one_dim(dim_one_buffer q,
