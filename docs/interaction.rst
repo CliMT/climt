@@ -39,7 +39,6 @@ Let's create a 3-d model state to see how useful DataArrays are:
 
    # Create some components
    radiation = climt.GrayLongwaveRadiation()
-   simple_physics = climt.SimplePhysics()
 
 We need to tell climt what the model dimensions are. This is done
 by the :code:`get_grid` function. This function takes three arguments
@@ -55,7 +54,7 @@ climt aware of the dimensions required by the model:
 
    # Get a state dictionary filled with required quantities
    # for the components to run
-   state = climt.get_default_state([simple_physics], grid_state=grid)
+   state = climt.get_default_state([radiation], grid_state=grid)
 
    state['air_temperature']
 

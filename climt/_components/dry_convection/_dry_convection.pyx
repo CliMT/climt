@@ -10,6 +10,7 @@ ctypedef fused float_or_arr:
     dim_one_buffer
 
 
+@cython.boundscheck(False)
 cpdef void calculate_dry_adjustment(
     cnp.ndarray [double, ndim=2] P_int,
     cnp.ndarray [double, ndim=2] P,
