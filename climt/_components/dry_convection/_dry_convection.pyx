@@ -2,6 +2,7 @@ cimport cython
 cimport numpy as cnp
 import numpy as np
 
+
 @cython.boundscheck(False)
 cpdef void calculate_dry_adjustment(
     cnp.ndarray [double, ndim=2] P_int,
@@ -17,6 +18,8 @@ cpdef void calculate_dry_adjustment(
     int num_columns, int num_levels) except *:
 
     cdef int column, level
+    cdef dim_one_buffer q_conv
+    cdef double mean_conv_q
 
     for column in range(num_columns):
         for level in range(num_levels-1, -1, -1):
@@ -46,19 +49,19 @@ cpdef void calculate_dry_adjustment(
             p_conv_high = P_int[column, level]
             p_conv_low = P_int[column, stable_level]
 
-            enthalpy = heat_capacity(q_conv, cpd, cvap)*t_conv
+            enthalpy = heat_capacity_cython(q_conv, cpd, cvap)*t_conv
             integral_enthalpy = np.sum(enthalpy*dp_conv)
-            mean_conv_q = np.sum(q_conv*dp_conv)/(p_conv_high - p_conv_low)
+            mean_conv_q = sum_arr(q_conv*dp_conv)/(p_conv_high - p_conv_low)
 
             output_q[column, level:stable_level] = mean_conv_q
 
-            rdcp_conv = gas_constant(mean_conv_q, rdair, rv)/heat_capacity(
-                mean_conv_q, cpd, cvap)
+            rdcp_conv = gas_constant_cython(mean_conv_q, rdair, rv)
+            rdcp_conv = rdcp_conv/heat_capacity_cython(mean_conv_q, cpd, cvap)
 
             theta_coeff = (
                 P[column, level:stable_level]/pref)**rdcp_conv
 
-            integral_theta_den = np.sum(heat_capacity(q_conv, cpd,
+            integral_theta_den = np.sum(heat_capacity_cython(q_conv, cpd,
                                                        cvap)*theta_coeff*dp_conv)
 
             mean_theta = integral_enthalpy/integral_theta_den
@@ -66,9 +69,11 @@ cpdef void calculate_dry_adjustment(
             output_temp[column, level:stable_level] = mean_theta*theta_coeff
 
 
+ctypedef double [:] dim_one_buffer
+
 ctypedef fused float_or_arr:
     double
-    cnp.ndarray
+    dim_one_buffer
 
 cpdef double sum_arr(double [:] arr) nogil:
 
@@ -83,18 +88,21 @@ cpdef double sum_arr(double [:] arr) nogil:
 
 
 @cython.boundscheck(False)
-def heat_capacity(
+cdef float_or_arr heat_capacity_cython(
     float_or_arr q,
     double cpd,
-    double cvap):
+    double cvap) nogil:
     """
     Calculate heat capacity based on amount of q
     """
+    if float_or_arr is double:
+        return cpd*(1-q) + cvap*q
+    elif float_or_arr is dim_one_buffer:
+        return one_dim(q, cpd, cvap)
 
-    return cpd*(1-q) + cvap*q
 
 @cython.boundscheck(False)
-def gas_constant(
+def gas_constant_cython(
     float_or_arr q,
     double rdair,
     double rv):
@@ -102,4 +110,20 @@ def gas_constant(
     Calculate gas constant based on amount of q
     """
 
-    return rdair*(1-q) + rv*q
+    if float_or_arr is double:
+        return rdair*(1-q) + rv*q
+    elif float_or_arr is dim_one_buffer:
+        return one_dim(q, rdair, rv)
+
+
+@cython.boundscheck(False)
+cdef dim_one_buffer one_dim(dim_one_buffer q,
+                               double dry_const,
+                               double moist_const) nogil:
+    cdef dim_one_buffer output
+    cdef int num_levs = q.shape[0]
+    with gil:
+        output = np.zeros(num_levs)
+    for index_lev in range(num_levs):
+        output[index_lev] = dry_const - dry_const*q[index_lev] + moist_const*q[index_lev]
+    return output

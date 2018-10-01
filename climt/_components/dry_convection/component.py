@@ -3,7 +3,7 @@ from sympl import (
 )
 import logging
 try:
-    from ._dry_convection import gas_constant, heat_capacity, calculate_dry_adjustment
+    from ._dry_convection import calculate_dry_adjustment
 except ImportError:
     logging.warning(
         'Import failed. Dry Convection is likely not compiled and will not be '
@@ -80,3 +80,13 @@ class DryConvectiveAdjustment(Stepper):
             self._Pref, q.shape[0], q.shape[1])
 
         return {}, output_arrays
+
+
+def heat_capacity(q, dry_constant, moist_constant):
+
+    return dry_constant*(1 - q) + moist_constant*q
+
+
+def gas_constant(q, dry_constant, moist_constant):
+
+    return dry_constant*(1 - q) + moist_constant*q
