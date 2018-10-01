@@ -93,8 +93,8 @@ rrtmg_cloud_ice_props_dict = {
 ### ebert_curry_one
 
 For the longwave, `ebert_curry_one` gives an absorption coefficient of
-```fortran
-abscoice(ig) = 0.005_rb + 1.0_rb/radice
+```
+abscoice = 0.005 + 1.0 / radice
 ```
 Here, `radice` is the ice particle size and the absorption coefficient is the same for all wavebands.
 
@@ -102,7 +102,7 @@ Here, `radice` is the ice particle size and the absorption coefficient is the sa
 
 ### ebert_curry_two
 
-`ebert_curry_two` is the default choice for cloud optical properties in `climt`.
+`ebert_curry_two` is the default choice for cloud ice optical properties in `climt`.
 In this case, the longwave absorption coefficient is calculated as follows.
 ```fortran
 do ig = 1, ngptlw
@@ -132,48 +132,25 @@ The particle size dependence comes from `radice`, so each parameter consists of 
 
 ### key_streamer_manual
 
-The longwave absorption coefficient is calculated as follows:
+In this case, both the longwave absorption coefficient and three of the shortwave parameters (`excoice`, `ssacoice`, `gice`) are interpolated from look up tables.
+The look up tables contain 42 values for each of the 16 longwave and 14 shortwave wavebands.
+The 42 values correspond to different ice particle radii, evenly spaced in the range [5, 131] microns.
+Ice particles outside this range are not allowed.
 
-```fortran
-abscoice(ig) = absice2(index,ib) + fint * (absice2(index+1,ib) - (absice2(index,ib)))
-```
-
-In this case, `index` provides a particle size dependent index for the look up table and `ib` provides a waveband dependent index.
-There are 42 values for each of the 16 different wavebands.
-The ice particle size must be in the range [5, 131] microns and `index` maps this size onto an integer value in the range [1, 42].
-The mapping works such that particles sizes of 5, 6, and 7 microns are all mapped to 1, particles sizes of 8, 9 and 10 microns are all mapped to 2 and so on.
-The second term contributing to `abscoice` is a correction term.
-`fint` is between zero and one, so this term differentiates the absorption coefficient between similarly sized particles.
-
-For the shortwave, the parameters are calculated as follows.
-
-```fortran
-extcoice(ig) = extice2(index,ib) + fint * (extice2(index+1,ib) -  extice2(index,ib))
-ssacoice(ig) = ssaice2(index,ib) + fint * (ssaice2(index+1,ib) -  ssaice2(index,ib))
-gice(ig) = asyice2(index,ib) + fint * (asyice2(index+1,ib) -  asyice2(index,ib))
-forwice(ig) = gice(ig)*gice(ig)
-```
-
-As for the longwave calculation, `index` provides a particle size dependent index for the look up table and `ib` provides a waveband dependent index.
-There are 42 values for each of the 14 different wavebands.
-The mapping of particle size onto `index` is the same as for the longwave calculation.
-Here again, the second term in the equations for `extcoice`, `ssacoice` and `gice` is a correction term, with `fint` between zero and one.
-
+The shortwave parameter `forwice` is calculated as the square of `gice`.
 
 ### fu
 
-The longwave absorption coefficient is calculated in the same way as in `key_streamer_manual`, but the look up tables differ.
-Comments in the RRTMG code state that the look up tables for `fu` are for a hexagonal ice particle parameterisation, whereas those for `key_streamer_manual` are for a spherical ice particle parameterisation.
+The longwave absorption coefficient and shortwave parameters `extcoice`, `ssacoice` and `gice` are interpolated from look up tables.
+The look up tables differ to those in `key_streamer_manual`, and
+comments in the RRTMG code state that the look up tables for `fu` are for a hexagonal ice particle parameterisation, whereas those for `key_streamer_manual` are for a spherical ice particle parameterisation.
 The look up tables for `fu` are slightly larger, and the range of allowed values for the ice particle size is corresponding larger ([5, 140] microns).
 
-For the shortwave, the coefficients `extcoice`, `ssacoice` are calculated as in `key_streamer_manual`, but from different look up tables (allowing for particle sizes in the range [5, 140] microns).
-However, the calculation of `forwice` differs and it no longer depends on `gice`.
+The calculation of the shortwave parameter `forwice` is calculated from `fdelta` (again taken from look up tables) and `ssacoice` as follows.
 
-```fortran
-fdelta(ig) = fdlice3(index,ib) + fint * (fdlice3(index+1,ib) - fdlice3(index,ib))
-forwice(ig) = fdelta(ig) + 0.5_rb / ssacoice(ig)
 ```
-
+forwice = fdelta + 0.5 / ssacoice
+```
 
 ## Cloud liquid properties
 
@@ -189,29 +166,10 @@ rrtmg_cloud_liquid_props_dict = {
 For `radius_independent_absorption`, the longwave absorption coefficient is 0.0903614 for all wavebands.
 This option should not be used for the shortwave.
 
-For `radius_dependent_absorption`, the longwave absorption coefficient is calculated as:
-
-```fortran
-abscoliq(ig) = absliq1(index,ib) + fint * (absliq1(index+1,ib) - (absliq1(index,ib)))
-```
-
-`index` provides a particle size dependent index for the look up table and `ib` provides a waveband dependent index.
-The look up table has values for particle sizes in the range [2.5, 59.5] microns in 1 micron intervals (58 values) for each of the 16 different wavebands.
-`index` provides a mapping for particle sizes in the range [2.5, 60] microns onto integers in the range [1, 57].
-`fint` is between zero and one (except for particle sizes in the range [59.5, 60] microns, in which case it is between 1 and 1.5), and provides a correction term to the absorption coefficient.
-
-For the shortwave, we have:
-
-```fortran
-extcoliq(ig) = extliq1(index,ib) + fint * (extliq1(index+1,ib) - extliq1(index,ib))
-ssacoliq(ig) = ssaliq1(index,ib) + fint * (ssaliq1(index+1,ib) - ssaliq1(index,ib))
-gliq(ig) = asyliq1(index,ib) + fint * (asyliq1(index+1,ib) - asyliq1(index,ib))
-forwliq(ig) = gliq(ig)*gliq(ig)
-```
-
-The equations for the first three of these shortwave parameters (`extcoliq`, `ssacoliq` and `gliq`, the extinction coefficient, single scattering albedo, and asymmetry parameter respectively) are the same as that for the longwave absorption coefficient, but use different look up tables.
-Each of these look up tables has values for particle sizes in the range [2.5, 59.5] microns in 1 micron intervals and for each of the 14 shortwave wavebands.
-The forth parameter, `forwliq` is the square of `gliq`.
+`radius_dependent_absorption` is the default choice for cloud liquid water properties in climt.
+In this case, the longwave absorption coefficient and the shortwave parameters `extcoliq`, `ssacoliq`, and `gliq` are interpolated from look up tables.
+The look up tables have values for particle sizes in the range [2.5, 59.5] microns in 1 micron intervals (58 values) for each of the 16 longwave and 14 shortwave wavebands.
+The forth shortwave parameter, `forwliq` is the calculated as the square of `gliq`.
 
 ## Cloud overlap method
 
