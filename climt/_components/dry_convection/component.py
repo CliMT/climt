@@ -19,20 +19,20 @@ class DryConvectiveAdjustment(Stepper):
     input_properties = {
         'air_temperature': {
             'units': 'degK',
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
         },
         'air_pressure': {
             'units': 'Pa',
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
         },
         'air_pressure_on_interface_levels': {
             'units': 'Pa',
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'alias': 'P_int',
         },
         'specific_humidity': {
             'units': 'kg/kg',
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
         },
     }
 

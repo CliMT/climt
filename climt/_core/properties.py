@@ -78,7 +78,7 @@ def combine_dims_dict_list(dims_dict_list):
     return return_dict
 
 
-def get_wildcard_dims(dims_dict_with_wildcard, dims_dict_without_wildcard):
+def get_wildcard_dims(dims_dict_might_have_wildcard, dims_dict_without_wildcard):
     for name, dims in dims_dict_without_wildcard.items():
         if '*' in dims:
             raise ValueError(
@@ -87,11 +87,13 @@ def get_wildcard_dims(dims_dict_with_wildcard, dims_dict_without_wildcard):
             )
     cannot_be_wildcard_dims = set()
     wildcard_dims = []
-    for name, dims_with_wildcard in dims_dict_with_wildcard.items():
-        cannot_be_wildcard_dims.update(dims_with_wildcard)
+    for name, dims_might_have_wildcard in dims_dict_might_have_wildcard.items():
+        if '*' not in dims_might_have_wildcard:
+            continue
+        cannot_be_wildcard_dims.update(dims_might_have_wildcard)
         if name in dims_dict_without_wildcard:
             for dim in dims_dict_without_wildcard[name]:
-                if dim not in dims_with_wildcard and dim not in wildcard_dims:
+                if dim not in dims_might_have_wildcard and dim not in wildcard_dims:
                     wildcard_dims.append(dim)
     bad_wildcard_dims = cannot_be_wildcard_dims.intersection(wildcard_dims)
     if len(bad_wildcard_dims) > 0:

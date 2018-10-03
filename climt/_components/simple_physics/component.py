@@ -56,9 +56,9 @@ class SimplePhysics(Stepper):
             'dims': ['*'],
             'units': 'kg/kg',
         },
-        'latitude': {
+        'model_latitude': {
             'dims': ['*'],
-            'units': 'degrees_N',
+            'units': 'degrees_north',
         }
     }
 
@@ -221,7 +221,7 @@ class SimplePhysics(Stepper):
             state['surface_air_pressure'],
             state['surface_temperature'],
             state['surface_specific_humidity'],
-            state['latitude'],
+            state['model_latitude'],
             timestep.total_seconds()
         )
         latent_heat_flux[latent_heat_flux < 0] = 0

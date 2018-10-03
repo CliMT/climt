@@ -350,34 +350,44 @@ def get_grid(
     else:
         set_constant('top_of_model_pressure', p_toa_in_Pa, 'Pa')
 
+    if nx is None:
+        nx = 1
+    if ny is None:
+        ny = 1
+
     return_state = get_hybrid_sigma_pressure_levels(nz+1,
                                                     p_surf_in_Pa,
                                                     p_toa_in_Pa,
                                                     proportion_isobaric_levels,
                                                     proportion_sigma_levels)
     return_state['surface_air_pressure'] = DataArray(
-        p_surf_in_Pa, dims=[], attrs={'units': 'Pa'}
+        np.ones((ny, nx))*p_surf_in_Pa, dims=[y_name, x_name], attrs={'units': 'Pa'}
     )
     return_state['time'] = datetime(2000, 1, 1)
     return_state.update(HybridSigmaPressureDiagnosticComponent()(return_state))
     if nx is not None:
-        return_state['longitude'] = DataArray(
-            np.linspace(0., 360., nx*2, endpoint=False)[:-1:2],
-            dims=[x_name],
+        two_dim_lons = np.ones((ny, nx))
+        two_dim_lons[:] = np.linspace(0., 360., nx*2, endpoint=False)[:-1:2][np.newaxis, :]
+        return_state['model_longitude'] = DataArray(
+            two_dim_lons,
+            dims=[y_name, x_name],
             attrs={'units': 'degrees_east'},
         )
     if ny is not None:
+        two_dim_lats = np.ones((ny, nx))
         if latitude_grid.lower() == 'regular':
-            return_state['latitude'] = DataArray(
-                np.linspace(-90., 90., ny*2+1, endpoint=True)[1:-1:2],
-                dims=[y_name],
+            two_dim_lats[:] = np.linspace(-90., 90., ny*2+1, endpoint=True)[1:-1:2][:, np.newaxis]
+            return_state['model_latitude'] = DataArray(
+                two_dim_lats,
+                dims=[y_name, x_name],
                 attrs={'units': 'degrees_north'},
             )
         elif latitude_grid.lower() == 'gaussian':
             lat, lat_interface = gaussian_latitudes(ny)
-            return_state['latitude'] = DataArray(
-                lat,
-                dims=[y_name],
+            two_dim_lats[:] = lat[:, np.newaxis]
+            return_state['model_latitude'] = DataArray(
+                two_dim_lats,
+                dims=[y_name, x_name],
                 attrs={'units': 'degrees_north'},
             )
         else:

@@ -17,11 +17,11 @@ class DcmipInitialConditions(DiagnosticComponent):
     """
 
     input_properties = {
-        'latitude': {
+        'model_latitude': {
             'dims': ['*'],
             'units': 'degrees_north',
         },
-        'longitude': {
+        'model_longitude': {
             'dims': ['*'],
             'units': 'degrees_east',
         },
@@ -108,8 +108,8 @@ class DcmipInitialConditions(DiagnosticComponent):
         rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
         cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1')
 
-        longitude = np.radians(state['longitude'])
-        latitude = np.radians(state['latitude'])
+        longitude = np.radians(state['model_longitude'])
+        latitude = np.radians(state['model_latitude'])
 
         diagnostics = initialize_numpy_arrays_with_properties(
             self.diagnostic_properties, state, self.input_properties

@@ -30,9 +30,9 @@ class GetGridTests(unittest.TestCase):
         grid_names = ['time', 'air_pressure', 'air_pressure_on_interface_levels',
                       'surface_air_pressure', 'height_on_ice_interface_levels']
         if latitude:
-            grid_names.append('latitude')
+            grid_names.append('model_latitude')
         if longitude:
-            grid_names.append('longitude')
+            grid_names.append('model_longitude')
         for name in grid_names:
             if name not in state:
                 raise AssertionError(
@@ -75,13 +75,13 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid()
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['latitude', 'longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
 
     def test_get_1d_vertical_grid(self):
         grid = get_grid(nz=20)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['latitude', 'longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )
@@ -108,7 +108,7 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nz=20, p_surf_in_Pa=0.9e5)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['latitude', 'longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )

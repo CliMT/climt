@@ -77,6 +77,7 @@ def vertical_integral(state, quantity):
     g = get_constant('gravitational_acceleration', 'm/s^2')
     dp = get_pressure_thickness(state)
 
+    print(dp, quantity)
     return (quantity*dp/g).sum().values
 
 
