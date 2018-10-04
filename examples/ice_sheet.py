@@ -3,7 +3,7 @@ from datetime import timedelta
 from sympl import PlotFunctionMonitor
 
 
-ice = climt.IceSheet(maximum_snow_ice_height=30., number_vertical_levels=30)
+ice = climt.IceSheet(maximum_snow_ice_height=30.)
 
 state = climt.get_default_state([ice])
 state['area_type'].values[:] = 'sea_ice'

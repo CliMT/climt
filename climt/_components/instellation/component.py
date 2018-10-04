@@ -11,11 +11,11 @@ class Instellation(DiagnosticComponent):
     """
 
     input_properties = {
-        'model_latitude': {
+        'latitude': {
             'dims': ['*'],
             'units': 'degrees_north',
         },
-        'model_longitude': {
+        'longitude': {
             'dims': ['*'],
             'units': 'degrees_east',
         },
@@ -41,8 +41,8 @@ class Instellation(DiagnosticComponent):
                 state dictionary
 
         """
-        lat_radians = np.deg2rad(state['model_latitude'])
-        lon_radians = np.deg2rad(state['model_longitude'])
+        lat_radians = np.deg2rad(state['latitude'])
+        lon_radians = np.deg2rad(state['longitude'])
         zen_angle = sun_zenith_angle(state['time'], lon=lon_radians, lat=lat_radians)
         zen_angle[zen_angle > np.pi/2] = np.pi/2
         zen_angle[zen_angle < -np.pi/2] = -np.pi/2

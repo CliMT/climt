@@ -44,7 +44,7 @@ class HeldSuarez(TendencyComponent):
             'dims': ['*'],
             'units': 'Pa',
         },
-        'model_latitude': {
+        'latitude': {
             'dims': ['*'],
             'units': 'degrees_north',
         }
@@ -142,8 +142,8 @@ class HeldSuarez(TendencyComponent):
         self._update_constants()
         sigma = raw_state['air_pressure'] / raw_state['surface_air_pressure'][:, np.newaxis]
 
-        Teq = self._get_Teq(raw_state['model_latitude'][:, np.newaxis], raw_state['air_pressure'])
-        k_t = self._get_k_t(raw_state['model_latitude'][:, np.newaxis], sigma)
+        Teq = self._get_Teq(raw_state['latitude'][:, np.newaxis], raw_state['air_pressure'])
+        k_t = self._get_k_t(raw_state['latitude'][:, np.newaxis], sigma)
         k_v = self._get_k_v(sigma)
 
         tendencies = {

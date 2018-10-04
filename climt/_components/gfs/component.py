@@ -113,11 +113,11 @@ class GFSDynamicalCore(TendencyStepper):
     """
 
     _gfs_input_properties = {
-        'model_latitude': {
+        'latitude': {
             'units': 'degrees_N',
             'dims': ['latitude', 'longitude'],
         },
-        'model_longitude': {
+        'longitude': {
             'units': 'degrees_E',
             'dims': ['latitude', 'longitude'],
         },
@@ -326,8 +326,8 @@ class GFSDynamicalCore(TendencyStepper):
                 self._tau_damping,
                 self._toa_pressure)
 
-        np.testing.assert_allclose(latitudes*180./np.pi, state['model_latitude'])
-        np.testing.assert_allclose(longitudes*180./np.pi, state['model_longitude'])
+        np.testing.assert_allclose(latitudes*180./np.pi, state['latitude'])
+        np.testing.assert_allclose(longitudes*180./np.pi, state['longitude'])
 
         logging.info('Done!')
 

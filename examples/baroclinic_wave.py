@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 def plot_function(fig, state):
 
     ax = fig.add_subplot(1, 1, 1)
-    CS = ax.contourf(state['model_longitude'], state['model_latitude'],
+    CS = ax.contourf(state['longitude'], state['latitude'],
                      state['surface_air_pressure'].to_units('mbar'))
     plt.colorbar(CS)
     ax.set_title('Surface Pressure at: '+str(state['time']))
