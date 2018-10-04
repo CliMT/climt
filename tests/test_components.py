@@ -356,7 +356,6 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
         return state
 
 
-
 class TestRRTMGLongwaveWithClouds(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return RRTMGLongwave(cloud_optical_properties='single_cloud_type')
