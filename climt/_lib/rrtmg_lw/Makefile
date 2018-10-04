@@ -37,8 +37,9 @@ OBJS =     parkind.o\
     rrtmg_lw_rad.nomcica.o\
     mcica_random_numbers.o\
     rrtmg_lw_init.o\
-    mcica_subcol_gen_lw.o
-    # rrtmg_lw_rad.o\
+    mcica_subcol_gen_lw.o\
+    rrtmg_lw_rad.o\
+    rrtmg_lw_c_binder.o
 
 OBJ_K_TABLES = rrtmg_lw_k_g.o
 

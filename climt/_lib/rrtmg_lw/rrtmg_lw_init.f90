@@ -16,8 +16,6 @@
 !  --------------------------------------------------------------------------
 
 ! ------- Modules -------
-!JOY adding iso_c_binding
-      use iso_c_binding
       use parkind, only : im => kind_im, rb => kind_rb
       use rrlw_wvn
       use rrtmg_lw_setcoef, only: lwatmref, lwavplank, lwavplankderiv
@@ -27,7 +25,7 @@
       contains
 
 ! **************************************************************************
-      subroutine rrtmg_lw_ini(cpdair) bind(c, name='rrtmg_longwave_init')
+      subroutine rrtmg_lw_ini(cpdair)
 ! **************************************************************************
 !
 !  Original version:       Michael J. Iacono; July, 1998
@@ -44,9 +42,7 @@
       use rrlw_tbl, only: ntbl, tblint, pade, bpade, tau_tbl, exp_tbl, tfn_tbl
       use rrlw_vsn, only: hvrini, hnamini
 
-!JOY change kind to c_double. This is an 8 byte real, just like rb
-!defined in parkind.f90
-      real(kind=c_double), intent(in) :: cpdair     ! Specific heat capacity of dry air
+      real(kind=rb), intent(in) :: cpdair     ! Specific heat capacity of dry air
                                               ! at constant pressure at 273 K
                                               ! (J kg-1 K-1)
 
