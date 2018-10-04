@@ -220,6 +220,17 @@ class TestRRTMGLongwaveConservationWithClouds(AtmosphereMoistEnthalpyConservatio
         return state
 
 
+class TestRRTMGLongwaveConservationWithCloudsAndMCICA(AtmosphereMoistEnthalpyConservation):
+
+    def get_component_instance(self):
+        return climt.RRTMGLongwave(mcica=True)
+
+    def modify_state(self, state):
+        state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
+        state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.5
+        return state
+
+
 class TestSimplePhysicsDryConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):

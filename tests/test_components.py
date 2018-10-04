@@ -346,14 +346,15 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return RRTMGLongwave(mcica=True)
 
-    def test_longwave_heating_mcica(self):
-        cached_output = self.get_cached_output('cloudy_heating_rates')
-        rad_lw = self.get_component_instance()
-        state = climt.get_default_state([rad_lw])
+    def get_3d_input_state(self, component=None):
+        if component is None:
+            component = self.get_component_instance()
+        state = climt.get_default_state([component],
+                                        grid_state=climt.get_grid(nx=10, ny=5))
         state['cloud_area_fraction_in_atmosphere_layer'][16:19] = 0.5
         state['mass_content_of_cloud_ice_in_atmosphere_layer'][16:19] = 0.3
-        lw_output = rad_lw(state)
-        compare_outputs(lw_output, cached_output)
+        return state
+
 
 
 class TestRRTMGLongwaveWithClouds(ComponentBaseColumn, ComponentBase3D):
@@ -375,14 +376,20 @@ class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return RRTMGShortwave(mcica=True)
 
-    def test_shortwave_heating_mcica(self):
-        cached_output = self.get_cached_output('cloudy_heating_rates')
-        rad_sw = self.get_component_instance()
-        state = climt.get_default_state([rad_sw])
-        state['cloud_area_fraction_in_atmosphere_layer'][16:19] = 0.5
-        state['mass_content_of_cloud_ice_in_atmosphere_layer'][16:19] = 0.3
-        sw_output = rad_sw(state)
-        compare_outputs(sw_output, cached_output)
+    def get_3d_input_state(self, component=None):
+        if component is None:
+            component = self.get_component_instance()
+        state = climt.get_default_state([component],
+                                        grid_state=climt.get_grid(nx=3, ny=2, nz=15))
+        state['cloud_area_fraction_in_atmosphere_layer'][10:12] = 0.5
+        state['mass_content_of_cloud_ice_in_atmosphere_layer'][10:12] = 0.3
+        return state
+
+    def test_transposed_state_gives_same_output(self):
+        return
+
+    def test_reversed_state_gives_same_output(self):
+        return
 
 
 class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):
