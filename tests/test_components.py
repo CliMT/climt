@@ -20,7 +20,6 @@ from sympl import (
 )
 from sympl._core.tracers import reset_tracers, reset_packers
 from datetime import datetime, timedelta
-import sys
 os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
@@ -277,7 +276,6 @@ def compare_one_state_pair(current, cached):
         assert key in current.keys()
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestHeldSuarez(ComponentBase3D, ComponentBaseColumn):
 
     def get_component_instance(self):
@@ -375,7 +373,6 @@ class TestEmanuel(ComponentBaseColumn, ComponentBase3D):
         return emanuel
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestDcmip(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return DcmipInitialConditions()
@@ -406,7 +403,6 @@ class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
         return IceSheet()
 
 
-#@pytest.mark.skipif(sys.version_info < (3, 0), reason='get_default_state')
 class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         ice = IceSheet()
@@ -447,7 +443,6 @@ class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
         return DryConvectiveAdjustment()
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
 
     def get_component_instance(self):
@@ -464,14 +459,12 @@ class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
         )
 
 
-#@pytest.mark.skipif(sys.platform == 'win32', reason='get_default_state')
 class TestGFSDycore(ComponentBase3D):
 
     def get_component_instance(self):
         return GFSDynamicalCore()
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
 
     def get_component_instance(self):
@@ -485,7 +478,6 @@ class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
         return state
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestGFSDycoreWithImplicitTendency(ComponentBase3D):
 
     def get_component_instance(self):
@@ -497,7 +489,6 @@ class TestGFSDycoreWithImplicitTendency(ComponentBase3D):
         return state
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestGFSDycoreWithHeldSuarez(ComponentBase3D):
     def test_inputs_are_dry(self):
         component = self.get_component_instance()
@@ -514,7 +505,6 @@ class TestGFSDycoreWithHeldSuarez(ComponentBase3D):
         return state
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
 
     def get_component_instance(self):
@@ -527,7 +517,6 @@ class TestGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
         return state
 
 
-#@pytest.mark.skip('until get_default_state is fixed')
 class TestGFSDycoreWithRRTMGLongwave(ComponentBase3D):
 
     def get_component_instance(self):

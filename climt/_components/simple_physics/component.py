@@ -1,3 +1,4 @@
+from ..._core import ensure_contiguous_state
 from sympl import Stepper, get_constant
 import logging
 try:
@@ -192,6 +193,7 @@ class SimplePhysics(Stepper):
                                     self._delta_pbl, self._Ct, self._Cd0,
                                     self._Cd1, self._Cm)
 
+    @ensure_contiguous_state
     def array_call(self, state, timestep):
         '''
         Calculate surface and boundary layer tendencies.

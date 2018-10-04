@@ -224,13 +224,6 @@ else:
             extra_compile_args=default_compile_args,
             library_dirs=[lib_path],
             extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),
-
-        Extension(
-            'climt._components.dry_convection._dry_convection',
-            sources=['climt/_components/dry_convection/_dry_convection.pyx'],
-            extra_compile_args=['-fopenmp'],
-            extra_link_args=['-fopenmp']),
-
     ]
 
 setup(

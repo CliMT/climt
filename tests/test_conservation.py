@@ -51,13 +51,10 @@ class ConservationTestBase(object):
         state = self.get_model_state(component)
         time_step = timedelta(seconds=1)
 
-        first_state = self.get_new_state_and_diagnostics(
-            state, component, time_step)
-
-        old_amount = self.get_quantity_amount(first_state)
+        old_amount = self.get_quantity_amount(state)
 
         new_state = self.get_new_state_and_diagnostics(
-            first_state, component, time_step)
+            state, component, time_step)
 
         new_amount = self.get_quantity_amount(new_state)
 
@@ -77,7 +74,6 @@ def vertical_integral(state, quantity):
     g = get_constant('gravitational_acceleration', 'm/s^2')
     dp = get_pressure_thickness(state)
 
-    print(dp, quantity)
     return (quantity*dp/g).sum().values
 
 
@@ -275,7 +271,7 @@ class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
     def modify_state(self, state):
         unstable_level = 5
         state['air_temperature'][:unstable_level] += 10
-        state['specific_humidity'][:unstable_level] = 0.05
+        state['specific_humidity'][:unstable_level] = 0.07
         return state
 
     def get_quantity_amount(self, state):
