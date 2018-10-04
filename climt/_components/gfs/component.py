@@ -115,15 +115,15 @@ class GFSDynamicalCore(TendencyStepper):
     _gfs_input_properties = {
         'latitude': {
             'units': 'degrees_N',
-            'dims': ['latitude', 'longitude'],
+            'dims': ['model_latitude', 'model_longitude'],
         },
         'longitude': {
             'units': 'degrees_E',
-            'dims': ['latitude', 'longitude'],
+            'dims': ['model_latitude', 'model_longitude'],
         },
         'air_temperature': {
             'units': 'degK',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
         },
         'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
             'units': 'dimensionless',
@@ -136,47 +136,47 @@ class GFSDynamicalCore(TendencyStepper):
             'alias': 'b_coord',
         },
         'air_pressure': {
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
             'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['interface_levels', 'latitude', 'longitude'],
+            'dims': ['interface_levels', 'model_latitude', 'model_longitude'],
             'units': 'Pa'
         },
         'surface_air_pressure': {
             'units': 'Pa',
-            'dims': ['latitude', 'longitude'],
+            'dims': ['model_latitude', 'model_longitude'],
         },
         'eastward_wind': {
             'units': 'm s^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
         },
         'northward_wind': {
             'units': 'm s^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
         },
         'divergence_of_wind': {
             'units': 's^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
         },
         'atmosphere_relative_vorticity': {
             'units': 's^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
         },
         'surface_geopotential': {
             'units': 'm^2 s^-2',
-            'dims': ['latitude', 'longitude'],
+            'dims': ['model_latitude', 'model_longitude'],
         },
     }
 
     _gfs_output_properties = {
         'air_temperature': {'units': 'degK'},
         'air_pressure': {
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
             'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['interface_levels', 'latitude', 'longitude'],
+            'dims': ['interface_levels', 'model_latitude', 'model_longitude'],
             'units': 'Pa'
         },
         'surface_air_pressure': {'units': 'Pa'},
@@ -193,7 +193,7 @@ class GFSDynamicalCore(TendencyStepper):
     diagnostic_properties = None
 
     uses_tracers = True
-    tracer_dims = ('tracer', 'mid_levels', 'latitude', 'longitude')
+    tracer_dims = ('tracer', 'mid_levels', 'model_latitude', 'model_longitude')
     prepend_tracers = (('specific_humidity', 'kg/kg'),)
 
     @property
@@ -552,7 +552,7 @@ class GFSDynamicalCore(TendencyStepper):
         return self._get_tendencies(
             tendencies,
             ['air_temperature', 'eastward_wind', 'northward_wind'],
-            ['mid_levels', 'latitude', 'longitude'],
+            ['mid_levels', 'model_latitude', 'model_longitude'],
             T_shape
         )
 
@@ -560,7 +560,7 @@ class GFSDynamicalCore(TendencyStepper):
         return self._get_tendencies(
             tendencies,
             ['surface_air_pressure'],
-            ['latitude', 'longitude'],
+            ['model_latitude', 'model_longitude'],
             T_shape[1:]
         )
 
@@ -592,7 +592,7 @@ class GFSDynamicalCore(TendencyStepper):
             if name in tendencies:
                 property_dict = {
                     name: {
-                        'dims': ['mid_levels', 'latitude', 'longitude'],
+                        'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
                         'units': tendencies[name].attrs['units'],
                     }
                 }

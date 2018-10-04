@@ -30,9 +30,9 @@ class GetGridTests(unittest.TestCase):
         grid_names = ['time', 'air_pressure', 'air_pressure_on_interface_levels',
                       'surface_air_pressure', 'height_on_ice_interface_levels']
         if latitude:
-            grid_names.append('model_latitude')
+            grid_names.append('latitude')
         if longitude:
-            grid_names.append('model_longitude')
+            grid_names.append('longitude')
         for name in grid_names:
             if name not in state:
                 raise AssertionError(
@@ -75,13 +75,13 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid()
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['latitude', 'longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['model_latitude', 'model_longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
 
     def test_get_1d_vertical_grid(self):
         grid = get_grid(nz=20)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['latitude', 'longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['model_latitude', 'model_longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )
@@ -90,9 +90,9 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nx=4, ny=6, nz=20)
         self.assert_grid_quantities_present(grid, latitude=True, longitude=True)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'latitude', 'longitude', 'ice_interface_levels'])
+            grid, ['mid_levels', 'interface_levels', 'model_latitude', 'model_longitude', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
-            grid, {'mid_levels': 20, 'interface_levels': 21, 'latitude': 6, 'longitude': 4}
+            grid, {'mid_levels': 20, 'interface_levels': 21, 'model_latitude': 6, 'model_longitude': 4}
         )
 
     def test_get_3d_grid_custom_dim_names(self):
@@ -108,7 +108,7 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nz=20, p_surf_in_Pa=0.9e5)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['latitude', 'longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['model_latitude', 'model_longitude', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )
@@ -279,10 +279,10 @@ def test_3d_initialization_is_full_based_on_wildcard():
         if '*' in properties['dims']:
             assert len(state[quantity_name].dims) == len(properties['dims']) + 1
         if tuple(properties['dims']) == ('*',):
-            assert set(state[quantity_name].dims) == {'latitude', 'longitude'}
+            assert set(state[quantity_name].dims) == {'model_latitude', 'model_longitude'}
         elif tuple(properties['dims']) == ('mid_levels', '*'):
             assert state[quantity_name].dims[0] == 'mid_levels'
-            assert set(state[quantity_name].dims[1:]) == {'latitude', 'longitude'}
+            assert set(state[quantity_name].dims[1:]) == {'model_latitude', 'model_longitude'}
 
 
 if __name__ == '__main__':
