@@ -52,13 +52,13 @@ state = get_default_state([rad_sw, rad_lw], grid_state=grid)
 tp_profiles = np.load('thermodynamic_profiles.npz')
 mol_profiles = np.load('molecule_profiles.npz')
 
-state['air_pressure'].values[:] = tp_profiles['air_pressure']
-state['air_temperature'].values[:] = tp_profiles['air_temperature']
-state['air_pressure_on_interface_levels'].values[:] = tp_profiles['interface_pressures']
+state['air_pressure'].values[:] = tp_profiles['air_pressure'][:, np.newaxis, np.newaxis]
+state['air_temperature'].values[:] = tp_profiles['air_temperature'][:, np.newaxis, np.newaxis]
+state['air_pressure_on_interface_levels'].values[:] = tp_profiles['interface_pressures'][:, np.newaxis, np.newaxis]
 
-state['specific_humidity'].values[:] = mol_profiles['specific_humidity']*1e-3
-state['mole_fraction_of_carbon_dioxide_in_air'].values[:] = mol_profiles['carbon_dioxide']
-state['mole_fraction_of_ozone_in_air'].values[:] = mol_profiles['ozone']
+state['specific_humidity'].values[:] = mol_profiles['specific_humidity'][:, np.newaxis, np.newaxis]*1e-3
+state['mole_fraction_of_carbon_dioxide_in_air'].values[:] = mol_profiles['carbon_dioxide'][:, np.newaxis, np.newaxis]
+state['mole_fraction_of_ozone_in_air'].values[:] = mol_profiles['ozone'][:, np.newaxis, np.newaxis]
 
 
 for i in range(100000):
