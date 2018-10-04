@@ -12,15 +12,16 @@ rrtmg_cloud_props_dict = {
 }
 ```
 
-For McICA, we cannot use `single_cloud_type`, but can choose between `direct_input` and `liquid_and_ice_clouds`.
-If, we choose `direct_input`, the cloud ice and water droplet particle sizes do not do anything, but the input cloud optical depth matters (for both the long and shortwave).
-Similarly, for the shortwave, the `single_scattering_albedo_due_to_cloud`, `cloud_asymmetry_parameter` and `cloud_forward_scattering_fraction` matter.
-Here the RRTMG `iceflag` and `liqflag` do not matter.
+With McICA, we cannot use `single_cloud_type`, but can choose between `direct_input` and `liquid_and_ice_clouds`.
+If we choose `direct_input`, we input the `longwave_optical_thickness_due_to_cloud`, `shortwave_optical_thickness_due_to_cloud`, as well as the shortwave parameters `single_scattering_albedo_due_to_cloud`, `cloud_asymmetry_parameter` and `cloud_forward_scattering_fraction`.
+The `cloud_forward_scattering_fraction` is used to scale the other shortwave parameters (`shortwave_optical_thickness_due_to_cloud`, `single_scattering_albedo_due_to_cloud` and `cloud_asymmetry_parameter`), but it is not directly used in the radiative transfer calculations.
+The other cloud properties, namely `cloud_ice_particle_size` and `cloud_water_droplet_radius`, `mass_content_of_cloud_ice_in_atmosphere_layer`, and `mass_content_of_cloud_liquid_water_in_atmosphere_layer` are completely unused.
+The RRTMG `iceflag` and `liqflag` are irrelevant.
 
-On the other hand, if we choose `liquid_and_ice_clouds`, the optical depth is calculated from the cloud ice and water droplet particle sizes (`cloud_ice_particle_size` and `cloud_water_droplet_radius`), as well as the cloud ice and water paths (`mass_content_of_cloud_ice_in_atmosphere_layer`, `mass_content_of_cloud_liquid_water_in_atmosphere_layer`).
-Likewise, the single scattering albedo and the cloud asymmetry parameter (both for the shortwave) are calculated from the cloud ice and water properties in the case of `liquid_and_ice_clouds`.
-As such, any input values for `longwave_optical_thickness_due_to_cloud`, `shortwave_optical_thickness_due_to_cloud`, `single_scattering_albedo_due_to_cloud`, `cloud_asymmetry_parameter` and `cloud_forward_scattering_fraction` are irrelevant.
-The calculation of the above variables depends on the cloud ice and water properties; `iceflag` and `liqflag` in RRTMG.
+On the other hand, if we choose `liquid_and_ice_clouds`,
+any input values for `longwave_optical_thickness_due_to_cloud`, `shortwave_optical_thickness_due_to_cloud`, `single_scattering_albedo_due_to_cloud` and `cloud_asymmetry_parameter` are irrelevant.
+Instead, these parameters are calculated from the cloud ice and water droplet particle sizes (`cloud_ice_particle_size` and `cloud_water_droplet_radius`), as well as the cloud ice and water paths (`mass_content_of_cloud_ice_in_atmosphere_layer`, `mass_content_of_cloud_liquid_water_in_atmosphere_layer`).
+The methods used for the calculations depend on the cloud ice and water properties; `iceflag` and `liqflag` in RRTMG.
 
 
 ## Calculation of cloud properties
@@ -115,7 +116,7 @@ The first of these `absice1(1, ib)` comes from a look up table and is given in [
 `absice1(2,ib)` also comes from a look up table and is given in [microns m<sup>2</sup> g]. It is divided by `radice`, the cloud ice particle size, providing an ice particle size dependence of the absorption coefficient.
 Although the syntax does not emphasise it, the absorption coefficient may also depend on model layer (pressure), as `radice` can have model layer dependence.
 `radice` comes from the input property labeled `cloud_ice_particle_size` in `climt`.
-The ice particle size dependent term is more important than the independent term (`absice1(2, ib)/radice` > `absice(ig)`) at all wavebands for ice particle sizes less than 88 microns.
+The ice particle size dependent term is more important than the independent term (`absice1(2,ib)/radice` > `absice1(1,ib)`) at all wavebands for ice particle sizes less than 88 microns.
 Using `ebert_curry_two`, the ice particle size must be in the range [13, 130] microns, and even for larger particle sizes (> 88), the ice particle size dependent term is more important than the independent term for four of the five wavebands.
 
 For the shortwave, the parameters (required for the optical depth, single scattering albedo and asymmetry) are calculated as follows.
@@ -133,9 +134,10 @@ The particle size dependence comes from `radice`, so each parameter consists of 
 ### key_streamer_manual
 
 In this case, both the longwave absorption coefficient and three of the shortwave parameters (`excoice`, `ssacoice`, `gice`) are interpolated from look up tables.
+Comments in the RRTMG code state that these look up tables are for a spherical ice particle parameterisation.
 The look up tables contain 42 values for each of the 16 longwave and 14 shortwave wavebands.
 The 42 values correspond to different ice particle radii, evenly spaced in the range [5, 131] microns.
-Ice particles outside this range are not allowed.
+Ice particles must be within this range, otherwise an error is thrown.
 
 The shortwave parameter `forwice` is calculated as the square of `gice`.
 
@@ -143,10 +145,10 @@ The shortwave parameter `forwice` is calculated as the square of `gice`.
 
 The longwave absorption coefficient and shortwave parameters `extcoice`, `ssacoice` and `gice` are interpolated from look up tables.
 The look up tables differ to those in `key_streamer_manual`, and
-comments in the RRTMG code state that the look up tables for `fu` are for a hexagonal ice particle parameterisation, whereas those for `key_streamer_manual` are for a spherical ice particle parameterisation.
-The look up tables for `fu` are slightly larger, and the range of allowed values for the ice particle size is corresponding larger ([5, 140] microns).
+comments in the RRTMG code state that the look up tables for `fu` are for a hexagonal ice particle parameterisation.
+The look up tables for `fu` are slightly larger than those for `key_streamer_manual`, and the range of allowed values for the ice particle size is corresponding larger ([5, 140] microns).
 
-The calculation of the shortwave parameter `forwice` is calculated from `fdelta` (again taken from look up tables) and `ssacoice` as follows.
+The shortwave parameter `forwice` is calculated from `fdelta` (again taken from look up tables) and `ssacoice` as follows.
 
 ```
 forwice = fdelta + 0.5 / ssacoice
@@ -166,10 +168,10 @@ rrtmg_cloud_liquid_props_dict = {
 For `radius_independent_absorption`, the longwave absorption coefficient is 0.0903614 for all wavebands.
 This option should not be used for the shortwave.
 
-`radius_dependent_absorption` is the default choice for cloud liquid water properties in climt.
+`radius_dependent_absorption` is the default choice for cloud liquid water properties in `climt`.
 In this case, the longwave absorption coefficient and the shortwave parameters `extcoliq`, `ssacoliq`, and `gliq` are interpolated from look up tables.
 The look up tables have values for particle sizes in the range [2.5, 59.5] microns in 1 micron intervals (58 values) for each of the 16 longwave and 14 shortwave wavebands.
-The forth shortwave parameter, `forwliq` is the calculated as the square of `gliq`.
+The shortwave parameter `forwliq` is calculated as the square of `gliq`.
 
 ## Cloud overlap method
 
