@@ -6,7 +6,7 @@ from datetime import timedelta
 def plot_function(fig, state):
 
     ax = fig.add_subplot(1, 1, 1)
-    ax.contourf(state['longitude'], state['latitude'],
+    ax.contourf(state['model_longitude'], state['model_latitude'],
                 state['zenith_angle'])
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
