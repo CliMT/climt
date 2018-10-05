@@ -42,7 +42,7 @@ install:
   - conda install libpython
   - python -m pip install -r requirements_dev.txt
   - conda upgrade pip setuptools wheel
-#  - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
+# - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
 
 build_script:
   - bash -c "cd /c/projects/climt/; python setup.py develop"
