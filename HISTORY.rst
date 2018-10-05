@@ -6,6 +6,7 @@ Latest
 ------
 
 
+* Refactored initialisation code
 * Enable the McICA version of RRTMG Longwave for consistency
   with the Shortwave component.
 * Fix bugs in IceSheet
@@ -24,6 +25,9 @@ Breaking Changes
 
 * The flux outputs of GrayLongwaveRadiation have been renamed to eliminate
   `on_interface_levels` to keep consistency with other components.
+* All arrays are now 3/2d by default based on their expected dimensions.
+* horizontal dimensions are now `model_longitude`, `model_latitude`, but inputs
+  used by components remain the same (`latitude`, `longitude`).
 
 
 
