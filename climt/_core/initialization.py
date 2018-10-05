@@ -8,11 +8,83 @@ from datetime import datetime
 from scipy.interpolate import CubicSpline
 import pkg_resources
 
-from .properties import (
-    get_dims_dict_from_properties, combine_dims_dict_list, get_wildcard_dims,
-    get_dims_dict_from_state, broadcast_state, expand_wildcard_dim,
-    get_dim_lengths
-)
+
+def get_atmosphere_grid(grid_state,
+                        interface=False,
+                        horizontal=False):
+    y, x = grid_state['latitude'].shape
+    y_dim, x_dim = grid_state['latitude'].dims
+    z = grid_state['atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels'].shape[0]
+
+    if horizontal:
+        return (y, x), (y_dim, x_dim)
+    if interface:
+        return (z, y, x), ('interface_levels', y_dim, x_dim)
+    else:
+        return (z-1, y, x), ('mid_levels', y_dim, x_dim)
+
+
+def get_surface_grid(grid_state,
+                     interface=False,
+                     horizontal=False):
+    return tuple(grid_state['latitude'].shape), tuple(grid_state['latitude'].dims)
+
+
+def get_land_grid(grid_state,
+                  interface=False,
+                  horizontal=False):
+    y, x = grid_state['latitude'].shape
+    y_dim, x_dim = grid_state['latitude'].dims
+
+    if horizontal:
+        return (y, x), (y_dim, x_dim)
+    else:
+        raise NotImplementedError(
+            '3D land grids are not yet supported')
+
+
+def get_ocean_grid(grid_state,
+                   interface=False,
+                   horizontal=False):
+    y, x = grid_state['latitude'].shape
+    y_dim, x_dim = grid_state['latitude'].dims
+
+    if horizontal:
+        return (y, x), (y_dim, x_dim)
+    else:
+        raise NotImplementedError(
+            '3D ocean grids are not yet supported')
+
+
+def get_ice_grid(grid_state,
+                 interface=False,
+                 horizontal=False):
+    y, x = grid_state['latitude'].shape
+    y_dim, x_dim = grid_state['latitude'].dims
+    z = grid_state['height_on_ice_interface_levels'].shape[0]
+
+    if horizontal:
+        return (y, x), (y_dim, x_dim)
+    if interface:
+        return (z, y, x), ('ice_interface_levels', y_dim, x_dim)
+    else:
+        return (z-1, y, x), ('ice_mid_levels', y_dim, x_dim)
+
+
+def get_scalar_grid(grid_state,
+                    interface=False,
+                    horizontal=False):
+    return (), ()
+
+
+domain_shape_descriptor = {
+    'atmosphere': get_atmosphere_grid,
+    'surface': get_surface_grid,
+    'land': get_land_grid,
+    'ocean': get_ocean_grid,
+    'ice': get_ice_grid,
+    'scalar': get_scalar_grid,
+}
 
 
 class RRTMGLongwaveDefaultValues(DiagnosticComponent):
@@ -127,23 +199,61 @@ class ConstantDefaultValue(DiagnosticComponent):
 
     def __init__(
             self, output_name, output_value, output_units,
-            dtype=None, **kwargs):
+            dtype=None, domain=None, **kwargs):
         if dtype is None:
             self._dtype = np.float64
         else:
             self._dtype = dtype
+        self._output_name = output_name
+        self._output_value = output_value
+        self._output_units = output_units
+        self.store_domain_properties(domain)
+
         self.diagnostic_properties = {
             output_name: {
-                'dims': [],
+                'dims': ['*'],
                 'units': output_units,
             },
         }
-        self._output_name = output_name
-        self._output_value = output_value
         super(ConstantDefaultValue, self).__init__(**kwargs)
 
+    def store_domain_properties(self, domain):
+        self._interface = False
+        self._horizontal = False
+        if domain is None:
+            self._domain = 'scalar'
+            return
+
+        domain_and_type = domain.split('_')
+        self._domain = domain_and_type[0]
+
+        if len(domain_and_type) > 1:
+            if domain_and_type[1] == 'horizontal':
+                self._horizontal = True
+            elif domain_and_type[1] == 'interface':
+                self._interface = True
+            else:
+                NotImplementedError(
+                    'Unknown domain descriptor {}'.format(domain))
+
+    def __call__(self, grid_state):
+        shape, dims = domain_shape_descriptor[self._domain](
+            grid_state, self._interface, self._horizontal)
+
+        quantity_np_array = np.broadcast_to(
+            np.array(self._output_value, dtype=self._dtype),
+            shape).copy()
+
+        quantity_array = DataArray(
+            quantity_np_array,
+            dims=dims,
+            name=self._output_name,
+            attrs=dict(units=self._output_units))
+
+        return {self._output_name: quantity_array}
+
     def array_call(self, state):
-        return {self._output_name: np.array(self._output_value, dtype=self._dtype)}
+        return
 
 
 class PressureFunctionDiagnosticComponent(DiagnosticComponent):
@@ -577,7 +687,6 @@ default_values = {
     'divergence_of_wind': {'value': 0., 'units': 's^-1', 'domain': 'atmosphere'},
     'atmosphere_relative_vorticity': {'value': 0., 'units': 's^-1', 'domain': 'atmosphere'},
     'specific_humidity': {'value': 0., 'units': 'kg/kg', 'domain': 'atmosphere'},
-    'surface_specific_humidity': {'value': 0., 'units': 'kg/kg', 'grid': 'surface_air_pressure'},
     'mole_fraction_of_carbon_dioxide_in_air': {'value': 330e-6, 'units': 'dimensionless', 'domain': 'atmosphere'},
     'mole_fraction_of_methane_in_air': {'value': 0., 'units': 'dimensionless', 'domain': 'atmosphere'},
     'mole_fraction_of_nitrous_oxide_in_air': {'value': 0., 'units': 'dimensionless', 'domain': 'atmosphere'},
@@ -596,15 +705,16 @@ default_values = {
     'cloud_base_mass_flux': {'value': 0., 'units': 'kg m^-2 s^-1', 'domain': 'atmosphere_horizontal'},
     'zenith_angle': {'value': 0., 'units': 'radians', 'domain': 'atmosphere_horizontal'},
     'downwelling_shortwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'domain':
-                                          'atmosphere_interface_levels'},
+                                          'atmosphere_interface'},
     'downwelling_longwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'domain':
-                                         'atmosphere_interface_levels'},
+                                         'atmosphere_interface'},
     'upwelling_shortwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'domain':
-                                        'atmosphere_interface_levels'},
+                                        'atmosphere_interface'},
     'upwelling_longwave_flux_in_air': {'value': 0., 'units': 'W m^-2', 'domain':
-                                       'atmosphere_interface_levels'},
+                                       'atmosphere_interface'},
 
 
+    'surface_specific_humidity': {'value': 0., 'units': 'kg/kg', 'domain': 'surface'},
     'surface_temperature': {'value': 300., 'units': 'degK', 'domain': 'surface'},
     'soil_surface_temperature': {'value': 300., 'units': 'degK', 'domain': 'surface'},
     'surface_geopotential': {'value': 0., 'units': 'm^2 s^-2', 'domain': 'surface'},
@@ -632,7 +742,7 @@ default_values = {
     'sea_surface_temperature': {'value': 300., 'units': 'degK', 'domain': 'ocean_horizontal'},
     'ocean_mixed_layer_thickness': {'value': 50., 'units': 'm', 'domain': 'ocean_horizontal'},
 
-    'snow_and_ice_temperature': {'value': 270., 'units': 'degK', 'domain': 'ice'},
+    'snow_and_ice_temperature': {'value': 270., 'units': 'degK', 'domain': 'ice_interface'},
     'heat_flux_into_sea_water_due_to_sea_ice': {'value': 0., 'units': 'W m^-2', 'domain': 'ice_horizontal'},
     'land_ice_thickness': {'value': 0., 'units': 'm', 'domain': 'ice_horizontal'},
     'sea_ice_thickness': {'value': 0., 'units': 'm', 'domain': 'ice_horizontal'},
@@ -655,7 +765,7 @@ def aggregate_input_properties(component_list):
     return combine_component_properties(component_list, 'input_properties')
 
 
-def get_init_diagnostic(name):
+def get_init_diagnostic(name, grid_state):
     """
     Takes in a quantity name. Returns a DiagnosticComponent object which calculates that
     quantity from a grid state.
@@ -667,14 +777,16 @@ def get_init_diagnostic(name):
             name,
             default_values[name]['value'],
             default_values[name]['units'],
-            dtype=default_values[name].get('dtype', None)
+            dtype=default_values[name].get('dtype', None),
+            domain=default_values[name]['domain'],
         )
     elif name[-20:] == '_on_interface_levels' and name[:-20] in default_values:
         return ConstantDefaultValue(
             name,
             default_values[name[:-20]]['value'],
             default_values[name[:-20]]['units'],
-            dtype=default_values[name[:-20]].get('dtype', None)
+            dtype=default_values[name[:-20]].get('dtype', None),
+            domain=default_values[name[:-20]]['domain'] + '_interface',
         )
     # If it isn't, check if there is a diagnostic defined in some library of DiagnosticComponent
     # classes (probably a list stored here) that can calculate the quantity,
@@ -691,7 +803,7 @@ def get_diagnostics_for(input_properties, grid_state):
     diagnostic_list = []
     for name in input_properties.keys():
         if name not in grid_state.keys():
-            diagnostic_list.append(get_init_diagnostic(name))
+            diagnostic_list.append(get_init_diagnostic(name, grid_state))
     return diagnostic_list
 
 
@@ -726,76 +838,8 @@ def get_default_state(
     return_state = {}
     return_state.update(grid_state)
     return_state.update(compute_all_diagnostics(grid_state, diagnostic_list))
-    return_state = broadcast_dims_to_match_component_properties(return_state, component_list)
+    # return_state = broadcast_dims_to_match_component_properties(return_state, component_list)
     return return_state
-
-
-def get_dims_dict(component_list):
-    dims_dict_list = []
-    for component in component_list:
-        for dict_name in (
-                'tendency_properties', 'diagnostic_properties',
-                'output_properties', 'input_properties',
-        ):
-            if hasattr(component, dict_name):
-                dims_dict_list.append(
-                    get_dims_dict_from_properties(
-                        getattr(component, dict_name),
-                        component.input_properties
-                    )
-                )
-    return combine_dims_dict_list(dims_dict_list)
-
-
-def broadcast_dims_to_match_component_properties(state, component_list):
-    dims_dict = get_dims_dict(component_list)
-    dim_lengths = get_dim_lengths(state)
-    wildcard_dim_list = get_wildcard_dims(
-        dims_dict,
-        get_dims_dict_from_state(state),
-    )
-    wildcard_dim_list = sorted(wildcard_dim_list)
-    dims_dict = expand_wildcard_dim(dims_dict, wildcard_dim_list)
-    return broadcast_state(state, dims_dict, dim_lengths)
-
-
-# def broadcast_dims_to_match_properties(state, properties):
-#     dim_lengths = get_dim_lengths(state)
-#     for name, value in state.items():
-#         if name != 'time' and name in properties.keys():
-#             out_dims = list(properties[name]['dims'])
-#             if '*' in out_dims:
-#                 out_dims.remove('*')
-#             if len(set(out_dims).difference(value.dims)) != 0:
-#                 new_shape = tuple(dim_lengths[dim_name] for dim_name in out_dims)
-#                 new_value = DataArray(
-#                     np.empty(new_shape, dtype=value.dtype),
-#                     dims=out_dims,
-#                     attrs=value.attrs
-#                 )
-#                 _, broadcast_value = xr.broadcast(new_value, value)
-#                 new_value[:] = broadcast_value
-#                 state[name] = new_value
-#
-#
-# def get_dim_lengths(state):
-#     out_dict = {}
-#     for name, data_array in state.items():
-#         if name != 'time':
-#             for dim_name, length in zip(data_array.dims, data_array.shape):
-#                 if dim_name not in out_dict:
-#                     out_dict[dim_name] = length
-#                 else:
-#                     if out_dict[dim_name] != length:
-#                         raise InvalidStateError(
-#                             'Inconsistent lengths {} and {} for dimension {}'.format(
-#                                 out_dict[dim_name], length, dim_name)
-#                         )
-#     return out_dict
-#
-#
-# def get_initial_state_dims(input_dims, output_dims):
-#     pass
 
 
 def init_ozone(p, ps):

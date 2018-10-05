@@ -440,8 +440,8 @@ class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
     def get_3d_input_state(self):
         state = super(TestIceSheetLand, self).get_3d_input_state()
 
-        state['area_type'].values = 'land'
-        state['surface_snow_thickness'].values = 3
+        state['area_type'].values[:] = 'land'
+        state['surface_snow_thickness'].values[:] = 3
 
         return state
 #
