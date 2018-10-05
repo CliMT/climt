@@ -110,7 +110,7 @@ if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
     os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
     os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
     libraries = []
-    openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
+    # openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
     default_compile_args = ['-DMS_WIN64']
 
