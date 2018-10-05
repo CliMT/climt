@@ -16,18 +16,18 @@ def plot_function(fig, state):
     ax.set_title('Surface Temperature')
 
     ax = fig.add_subplot(2, 2, 3)
-    state['eastward_wind'].mean(dim='longitude').plot.contourf(
+    state['eastward_wind'].mean(dim='model_longitude').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 2)
     state['air_temperature_tendency_from_convection'].transpose().mean(
-        dim='longitude').plot.contourf(
+        dim='model_longitude').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Conv. Heating Rate')
 
     ax = fig.add_subplot(2, 2, 4)
-    state['air_temperature'].mean(dim='longitude').plot.contourf(
+    state['air_temperature'].mean(dim='model_longitude').plot.contourf(
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
@@ -75,18 +75,13 @@ longitudes = my_state['longitude'].values
 zenith_angle = np.radians(latitudes)
 surface_shape = [len(longitudes), len(latitudes)]
 
-my_state['zenith_angle'] = DataArray(
-    zenith_angle*np.ones(surface_shape), dims=['longitude', 'latitude'],
-    attrs={'units': 'radians'})
-
+my_state['zenith_angle'].values = zenith_angle
 my_state['eastward_wind'].values[:] = np.random.randn(
     *my_state['eastward_wind'].shape)
-my_state['ocean_mixed_layer_thickness'].values = 1
+my_state['ocean_mixed_layer_thickness'].values[:] = 1
 
 surf_temp_profile = 290 - (40*np.sin(zenith_angle)**2)
-my_state['surface_temperature'] = DataArray(
-    surf_temp_profile*np.ones(surface_shape), dims=['longitude', 'latitude'],
-    attrs={'units': 'degK'})
+my_state['surface_temperature'].values = surf_temp_profile
 
 for i in range(1500*24*6):
     diagnostics = insolation(my_state)

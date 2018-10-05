@@ -89,14 +89,14 @@ state = get_default_state([simple_physics, convection,
                            radiation_lw, radiation_sw, slab])
 
 state['air_temperature'].values[:] = 270
-state['surface_albedo_for_direct_shortwave'].values = 0.5
-state['surface_albedo_for_direct_near_infrared'].values = 0.5
-state['surface_albedo_for_diffuse_shortwave'].values = 0.5
+state['surface_albedo_for_direct_shortwave'].values[:] = 0.5
+state['surface_albedo_for_direct_near_infrared'].values[:] = 0.5
+state['surface_albedo_for_diffuse_shortwave'].values[:] = 0.5
 
-state['zenith_angle'].values = np.pi/2.5
-state['surface_temperature'].values = 300.
-state['ocean_mixed_layer_thickness'].values = 5
-state['area_type'].values = 'sea'
+state['zenith_angle'].values[:] = np.pi/2.5
+state['surface_temperature'].values[:] = 300.
+state['ocean_mixed_layer_thickness'].values[:] = 5
+state['area_type'].values[:] = 'sea'
 
 time_stepper = AdamsBashforth([convection, radiation_lw, radiation_sw, slab])
 
