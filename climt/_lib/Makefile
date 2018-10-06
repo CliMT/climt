@@ -27,7 +27,7 @@ ifeq ($(CLIMT_ARCH),Windows)
 	BASE_DIR = $(subst \,/,$(PWD))
 	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 	CLIMT_FFTW_FLAGS = --with-our-malloc --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --enable-static --with-g77-wrappers --with-windows-f77-mangling --enable-sse2 --enable-avx
-	CLIMT_LIB_TARGETS =
+	CLIMT_LIB_TARGETS = fftw_lib
 endif
 
 
