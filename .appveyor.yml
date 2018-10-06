@@ -50,7 +50,7 @@ build_script:
 
 test_script:
   - conda install pytest
-  - bash -c "cd /c/projects/climt; py.test"
+  - bash -c "cd /c/projects/climt; py.test -v"
 # - bash -c "cd /c/projects/climt; find . |grep _components"
 
 after_test:

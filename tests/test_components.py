@@ -511,7 +511,8 @@ class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
         return state
 
 
-@pytest.mark.skipif(sys.platform == 'win32', "fails on appveyor, no idea why")
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="fails on appveyor, no idea why")
 class TestGFSDycoreWithImplicitTendency(ComponentBase3D):
 
     def get_component_instance(self):
@@ -523,7 +524,8 @@ class TestGFSDycoreWithImplicitTendency(ComponentBase3D):
         return state
 
 
-@pytest.mark.skipif(sys.platform == 'win32', "fails on appveyor, no idea why")
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="fails on appveyor, no idea why")
 class TestGFSDycoreWithHeldSuarez(ComponentBase3D):
     def test_inputs_are_dry(self):
         component = self.get_component_instance()
@@ -540,7 +542,8 @@ class TestGFSDycoreWithHeldSuarez(ComponentBase3D):
         return state
 
 
-@pytest.mark.skipif(sys.platform == 'win32', "fails on appveyor, no idea why")
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="fails on appveyor, no idea why")
 class TestGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
 
     def get_component_instance(self):
@@ -553,7 +556,8 @@ class TestGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
         return state
 
 
-@pytest.mark.skipif(sys.platform == 'win32', "fails on appveyor, no idea why")
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="fails on appveyor, no idea why")
 class TestGFSDycoreWithRRTMGLongwave(ComponentBase3D):
 
     def get_component_instance(self):
