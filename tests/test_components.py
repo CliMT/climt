@@ -472,7 +472,6 @@ class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
         return DryConvectiveAdjustment()
 
 
-@pytest.mark.skip('Fails on CI, no idea why')
 class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
 
     def get_component_instance(self):
@@ -489,14 +488,12 @@ class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
         )
 
 
-@pytest.mark.skip('Fails on CI, no idea why')
 class TestGFSDycore(ComponentBase3D):
 
     def get_component_instance(self):
         return GFSDynamicalCore()
 
 
-@pytest.mark.skip('Fails on CI, no idea why')
 class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
 
     def get_component_instance(self):
