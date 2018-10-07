@@ -10,12 +10,12 @@ def plot_function(fig, state):
     fig.set_size_inches(10, 5)
 
     ax = fig.add_subplot(1, 2, 1)
-    state['air_temperature'].mean(dim='model_longitude').plot.contourf(
+    state['air_temperature'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
     ax = fig.add_subplot(1, 2, 2)
-    state['eastward_wind'].mean(dim='model_longitude').plot.contourf(
+    state['eastward_wind'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16)
     ax.set_title('Zonal Wind')
 

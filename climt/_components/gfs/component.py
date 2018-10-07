@@ -49,15 +49,15 @@ class GFSDynamicalCore(TendencyStepper):
     _gfs_input_properties = {
         'latitude': {
             'units': 'degrees_N',
-            'dims': ['model_latitude', 'model_longitude'],
+            'dims': ['lat', 'lon'],
         },
         'longitude': {
             'units': 'degrees_E',
-            'dims': ['model_latitude', 'model_longitude'],
+            'dims': ['lat', 'lon'],
         },
         'air_temperature': {
             'units': 'degK',
-            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
             'units': 'dimensionless',
@@ -70,47 +70,47 @@ class GFSDynamicalCore(TendencyStepper):
             'alias': 'b_coord',
         },
         'air_pressure': {
-            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['interface_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['interface_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'surface_air_pressure': {
             'units': 'Pa',
-            'dims': ['model_latitude', 'model_longitude'],
+            'dims': ['lat', 'lon'],
         },
         'eastward_wind': {
             'units': 'm s^-1',
-            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'northward_wind': {
             'units': 'm s^-1',
-            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'divergence_of_wind': {
             'units': 's^-1',
-            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'atmosphere_relative_vorticity': {
             'units': 's^-1',
-            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'surface_geopotential': {
             'units': 'm^2 s^-2',
-            'dims': ['model_latitude', 'model_longitude'],
+            'dims': ['lat', 'lon'],
         },
     }
 
     _gfs_output_properties = {
         'air_temperature': {'units': 'degK'},
         'air_pressure': {
-            'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['interface_levels', 'model_latitude', 'model_longitude'],
+            'dims': ['interface_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'surface_air_pressure': {'units': 'Pa'},
@@ -127,7 +127,7 @@ class GFSDynamicalCore(TendencyStepper):
     diagnostic_properties = None
 
     uses_tracers = True
-    tracer_dims = ('tracer', 'mid_levels', 'model_latitude', 'model_longitude')
+    tracer_dims = ('tracer', 'mid_levels', 'lat', 'lon')
     prepend_tracers = (('specific_humidity', 'kg/kg'),)
 
     @property
@@ -486,7 +486,7 @@ class GFSDynamicalCore(TendencyStepper):
         return self._get_tendencies(
             tendencies,
             ['air_temperature', 'eastward_wind', 'northward_wind'],
-            ['mid_levels', 'model_latitude', 'model_longitude'],
+            ['mid_levels', 'lat', 'lon'],
             T_shape
         )
 
@@ -494,7 +494,7 @@ class GFSDynamicalCore(TendencyStepper):
         return self._get_tendencies(
             tendencies,
             ['surface_air_pressure'],
-            ['model_latitude', 'model_longitude'],
+            ['lat', 'lon'],
             T_shape[1:]
         )
 
@@ -526,7 +526,7 @@ class GFSDynamicalCore(TendencyStepper):
             if name in tendencies:
                 property_dict = {
                     name: {
-                        'dims': ['mid_levels', 'model_latitude', 'model_longitude'],
+                        'dims': ['mid_levels', 'lat', 'lon'],
                         'units': tendencies[name].attrs['units'],
                     }
                 }

@@ -426,7 +426,7 @@ def get_grid(
         p_surf_in_Pa=None, p_toa_in_Pa=None,
         proportion_sigma_levels=0.1,
         proportion_isobaric_levels=0.25,
-        x_name='model_longitude', y_name='model_latitude',
+        x_name='lon', y_name='lat',
         latitude_grid='gaussian'):
     """
     Args:
