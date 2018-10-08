@@ -7,6 +7,7 @@ import os
 import subprocess
 import platform
 import re
+import glob
 try:
     from pip import main as pip_main
 except Exception:
@@ -50,6 +51,10 @@ test_requirements = [
 ]
 
 
+# Find first gcc directory
+def find_homebrew_gcc():
+     return glob.glob('/usr/local/Cellar/gcc*')[0]
+
 # Platform specific settings
 def guess_compiler_name(env_name):
 
@@ -59,7 +64,8 @@ def guess_compiler_name(env_name):
     if env_name == 'CC':
         search_string = 'gcc-\d$'
 
-    for root, dirs, files in os.walk('/usr/local/Cellar/gcc/'):
+    gcc_dir = find_homebrew_gcc()
+    for root, dirs, files in os.walk(gcc_dir):
 
         for line in files:
             if re.match(search_string, line):
@@ -84,10 +90,10 @@ if operating_system == 'Windows':
 
 dir_path = os.getcwd()
 compiled_path = os.path.join(dir_path, compiled_base_dir)
-lib_path = os.path.join(compiled_path, operating_system+'/')
+lib_path_list = [os.path.join(compiled_path, operating_system+'/')]
 inc_path = os.path.join(compiled_path, 'include')
 include_dirs.append(inc_path)
-openblas_path = lib_path+'/libopenblas.a'
+openblas_path = lib_path_list[0]+'/libopenblas.a'
 
 
 # Compile libraries
@@ -121,8 +127,16 @@ os.environ['FFLAGS'] = '-fPIC -fno-range-check ' + os.environ['CLIMT_OPT_FLAGS']
 os.environ['CFLAGS'] = '-fPIC ' + os.environ['CLIMT_OPT_FLAGS']
 
 if operating_system == 'Darwin':
+    gcc_dir = find_homebrew_gcc()
+    for root, dirs, files in os.walk(gcc_dir):
+        for line in files:
+            if re.match('libgfortran.a', line):
+                if not 'i386' in root:
+                    lib_path_list.append(root)
+
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
     os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
+    default_link_args = []
 
 print('Compilers: ', os.environ['CC'], os.environ['FC'])
 
@@ -142,12 +156,6 @@ def build_libraries():
     os.environ['PWD'] = curr_dir
 
 
-def patch_cython_binary():
-    if operating_system == 'Darwin':
-        subprocess.call(['python', 'mac_os_patch.py'])
-    return
-
-
 # Custom build class
 class climt_build_ext(native_build_ext):
 
@@ -161,7 +169,6 @@ class climt_bdist_wheel(native_bdist_wheel):
 
     def run(self):
         self.run_command('build')
-        # patch_cython_binary()
         native_bdist_wheel.run(self)
 
 
@@ -180,8 +187,8 @@ else:
             libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args,
-            library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/libsimple_physics.a'] + default_link_args),
+            library_dirs=lib_path_list,
+            extra_link_args=[lib_path_list[0]+'/libsimple_physics.a'] + default_link_args),
 
         Extension(
             'climt._components.emanuel._emanuel_convection',
@@ -189,8 +196,8 @@ else:
             libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args,
-            library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/libemanuel.a'] + default_link_args),
+            library_dirs=lib_path_list,
+            extra_link_args=[lib_path_list[0]+'/libemanuel.a'] + default_link_args),
 
         Extension(
             'climt._components.rrtmg.lw._rrtmg_lw',
@@ -198,8 +205,8 @@ else:
             libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args + ['-fopenmp'],
-            library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/librrtmg_lw.a', '-fopenmp'] + default_link_args),
+            library_dirs=lib_path_list,
+            extra_link_args=[lib_path_list[0]+'/librrtmg_lw.a', '-fopenmp'] + default_link_args),
 
         Extension(
             'climt._components.gfs._gfs_dynamics',
@@ -207,10 +214,10 @@ else:
             libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=['-fopenmp'] + default_compile_args,
-            library_dirs=[lib_path],
-            extra_link_args=['-fopenmp', lib_path+'/libgfs_dycore.a',
-                             lib_path+'/libshtns_omp.a', lib_path+'/libfftw3_omp.a',
-                             lib_path+'/libfftw3.a', openblas_path] + default_link_args),
+            library_dirs=lib_path_list,
+            extra_link_args=['-fopenmp', lib_path_list[0]+'/libgfs_dycore.a',
+                             lib_path_list[0]+'/libshtns_omp.a', lib_path_list[0]+'/libfftw3_omp.a',
+                             lib_path_list[0]+'/libfftw3.a', openblas_path] + default_link_args),
 
         # lib_path+'/libshtns_omp.a', openblas_path, os.environ['COMPILER_PATH']+'../lib/libfftw3.a'] + default_link_args),
 
@@ -220,8 +227,8 @@ else:
             libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args + ['-fopenmp'],
-            library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/librrtmg_sw.a', '-fopenmp'] + default_link_args),
+            library_dirs=lib_path_list,
+            extra_link_args=[lib_path_list[0]+'/librrtmg_sw.a', '-fopenmp'] + default_link_args),
 
         Extension(
             'climt._components.dcmip._dcmip',
@@ -229,8 +236,8 @@ else:
             libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args,
-            library_dirs=[lib_path],
-            extra_link_args=[lib_path+'/libdcmip.a'] + default_link_args),
+            library_dirs=lib_path_list,
+            extra_link_args=[lib_path_list[0]+'/libdcmip.a'] + default_link_args),
     ]
 
 setup(
