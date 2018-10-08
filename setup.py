@@ -37,7 +37,7 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'numpy==0.15.2',
+    'numpy==1.15.2',
     'pint>=0.7.0',
     'xarray>=0.8.0',
     'sympl==0.4.0',
@@ -53,7 +53,8 @@ test_requirements = [
 
 # Find first gcc directory
 def find_homebrew_gcc():
-     return glob.glob('/usr/local/Cellar/gcc*')[0]
+    return glob.glob('/usr/local/Cellar/gcc*')[0]
+
 
 # Platform specific settings
 def guess_compiler_name(env_name):
@@ -131,7 +132,7 @@ if operating_system == 'Darwin':
     for root, dirs, files in os.walk(gcc_dir):
         for line in files:
             if re.match('libgfortran.a', line):
-                if not 'i386' in root:
+                if not ('i386' in root):
                     lib_path_list.append(root)
 
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
