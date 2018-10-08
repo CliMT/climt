@@ -32,9 +32,16 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update                    ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask uninstall oclint     ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc@6             ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade python            ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python3 -m venv climt_venv     ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source climt_venv/bin/activate ; fi
+- if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  bash miniconda.sh -b -p $HOME/miniconda          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  export PATH="$HOME/miniconda/bin:$PATH"          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  hash -r                                          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  conda config --set always_yes yes --set changeps1 no          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then   conda info -a                                   ; fi
 
 install:
 - python -m pip install -r requirements_dev.txt
@@ -81,9 +88,14 @@ jobs:
           - tox -e ${TOXENV}
     - stage: big tests
       os: osx
-      env: TOXENV=py36 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
+      language: generic
+      env: PYTHON_VERSION=3.6 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
+      install:
+          - conda create -q -n test-environment python=$PYTHON_VERSION
+          - source activate test-environment
+          - python -m pip install -r requirements_dev.txt
       script:
-          - tox -e ${TOXENV}
+          - py.test
     - stage: wheels
       env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp35-* cp34-* cp37-* cp27-manylinux1_i686' CIBW_BEFORE_BUILD="{pip} install pandas==0.20.3"
       script:
