@@ -103,7 +103,7 @@ jobs:
           - source activate test-environment
           - python -m pip install -r requirements_dev.txt
           - python setup.py develop
-           - python -m pip install -U tox
+          - python -m pip install -U tox
       script:
           - tox -e ${TOXENV}
     - stage: wheels
