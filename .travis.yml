@@ -9,6 +9,7 @@ python: 3.6
 cache:
     - pip
     - directories: ~/build/CliMT/climt/climt/_lib/Linux
+    - directories: ~/build/CliMT/climt/climt/_lib/Darwin
 env:
     global:
       - TWINE_USERNAME=joy.merwin
@@ -102,7 +103,6 @@ jobs:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
           - python -m pip install -r requirements_dev.txt
-          - python setup.py develop
           - python -m pip install -U tox
       script:
           - tox -e ${TOXENV}
