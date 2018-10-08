@@ -12,23 +12,23 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 1)
     state['specific_humidity'].mean(
-        dim='model_longitude').plot.contourf(
+        dim='lon').plot.contourf(
             ax=ax, levels=16, robust=True)
     ax.set_title('Specific Humidity')
 
     ax = fig.add_subplot(2, 2, 3)
-    state['eastward_wind'].mean(dim='model_longitude').plot.contourf(
+    state['eastward_wind'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 2)
     state['air_temperature_tendency_from_convection'].transpose().mean(
-        dim='model_longitude').plot.contourf(
+        dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Conv. Heating Rate')
 
     ax = fig.add_subplot(2, 2, 4)
-    state['air_temperature'].mean(dim='model_longitude').plot.contourf(
+    state['air_temperature'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16)
     ax.set_title('Temperature')
 

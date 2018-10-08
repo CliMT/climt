@@ -54,8 +54,8 @@ class DryConvectiveAdjustment(Stepper):
             self.output_properties, state, self.input_properties
         )
 
-        output_temp = output_arrays['air_temperature']
-        output_temp[:] = state['air_temperature']
+        output_temperature = output_arrays['air_temperature']
+        output_temperature[:] = state['air_temperature']
 
         output_q = output_arrays['specific_humidity']
         output_q[:] = q
@@ -89,7 +89,7 @@ class DryConvectiveAdjustment(Stepper):
                 stable_level = level + convect_to_level
 
                 q_conv = output_q[level:stable_level, column]
-                t_conv = output_temp[level:stable_level, column]
+                t_conv = output_temperature[level:stable_level, column]
                 dp_conv = dp[level:stable_level]
                 p_conv_high = state['P_int'][level, column]
                 p_conv_low = state['P_int'][stable_level, column]
@@ -109,7 +109,7 @@ class DryConvectiveAdjustment(Stepper):
 
                 mean_theta = integral_enthalpy/integral_theta_den
 
-                output_temp[level:stable_level, column] = mean_theta*theta_coeff
+                output_temperature[level:stable_level, column] = mean_theta*theta_coeff
 
         return {}, output_arrays
 
