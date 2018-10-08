@@ -74,6 +74,8 @@ jobs:
       script:
           - tox -e ${TOXENV}
     - stage: big tests
+      dist: xenial
+      python: "3.7"
       env: TOXENV=py37 CLIMT_ARCH=Linux
       script:
           - tox -e ${TOXENV}
