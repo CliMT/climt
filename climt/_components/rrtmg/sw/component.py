@@ -14,11 +14,12 @@ from ..rrtmg_common import (
 import logging
 try:
     from . import _rrtmg_sw
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import failed. RRTMG Shortwave is likely not compiled and will not '
         'be available.'
     )
+    print(error)
 
 
 class RRTMGShortwave(TendencyComponent):

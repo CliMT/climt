@@ -105,6 +105,9 @@ if 'CC' not in os.environ:
     else:
         os.environ['CC'] = 'gcc'
 
+if 'CLIMT_OPT_FLAGS' not in os.environ:
+    os.environ['CLIMT_OPT_FLAGS'] = '-O3'
+
 if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
     os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
     os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
@@ -114,8 +117,12 @@ if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
     default_compile_args = ['-DMS_WIN64']
 
-os.environ['FFLAGS'] = '-fPIC -fno-range-check'
-os.environ['CFLAGS'] = '-fPIC'
+os.environ['FFLAGS'] = '-fPIC -fno-range-check ' + os.environ['CLIMT_OPT_FLAGS']
+os.environ['CFLAGS'] = '-fPIC ' + os.environ['CLIMT_OPT_FLAGS']
+
+if operating_system == 'Darwin':
+    os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
+    os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
 
 print('Compilers: ', os.environ['CC'], os.environ['FC'])
 

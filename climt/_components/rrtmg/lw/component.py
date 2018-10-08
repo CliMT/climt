@@ -12,11 +12,12 @@ from ..rrtmg_common import (
 import logging
 try:
     from . import _rrtmg_lw
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import failed. RRTMG Longwave is likely not compiled and '
         'will not be available.'
     )
+    print(error)
 
 
 class RRTMGLongwave(TendencyComponent):

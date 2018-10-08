@@ -10,11 +10,12 @@ import sys
 import logging
 try:
     from . import _gfs_dynamics
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import failed. GFS dynamical core is likely not compiled and will not '
         'be available.'
     )
+    print(error)
 
 
 class GFSError(Exception):

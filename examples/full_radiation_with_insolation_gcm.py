@@ -2,7 +2,6 @@ import climt
 from sympl import (
     PlotFunctionMonitor,
     TimeDifferencingWrapper, UpdateFrequencyWrapper,
-    DataArray
 )
 import numpy as np
 from datetime import timedelta

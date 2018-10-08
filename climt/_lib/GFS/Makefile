@@ -1,13 +1,7 @@
 OMPFLAG		 = -fopenmp
 DEBUGFLAGS   =-fimplicit-none
-FFLAGS		 =-O3 -march=native -ffast-math -pipe -fomit-frame-pointer -fbacktrace -fno-range-check -fPIC
-FREEFLAG	 =-ffree-form
-AUTOFLAG	 =-frecursive
-EXEC         = ../bin/gfs
-LDFLAGS      = $(OMPFLAG)
+GFS_FFLAGS	 = $(FFLAGS) -march=native -ffast-math -pipe -fomit-frame-pointer -fbacktrace
 SHAREFLAGS 	 = #-static
-LIBS         =  -lshtns_omp -L/usr/lib/ -llapack -lfftw3_omp -lfftw3 -lrt -lm 
-CFLAGS       = -O2# -DLINUX
 
 .SUFFIXES: .o .f90 .F90
 
@@ -43,13 +37,13 @@ clean: force_look
 
 
 .f90.o:
-	$(FC) -Wall $(FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS) $(OMPFLAG) -c $<
+	$(FC) -Wall $(GFS_FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS) $(OMPFLAG) -c $<
 
 .F90.o:
-	$(FC) -Wall $(FFLAGS) $(DEBUGFLAGS)  $(SHAREFLAGS) $(OMPFLAG) -c $<
+	$(FC) -Wall $(GFS_FFLAGS) $(DEBUGFLAGS)  $(SHAREFLAGS) $(OMPFLAG) -c $<
 
 .f.o:
-	$(FC) -Wall $(FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS)  $(OMPFLAG) -free -c $<
+	$(FC) -Wall $(GFS_FFLAGS) $(DEBUGFLAGS) $(SHAREFLAGS)  $(OMPFLAG) -free -c $<
 
 %.o : %.mod
 
@@ -78,14 +72,14 @@ grid_data.o:  	grid_data.f90 kinds.o params.o
 pressure_data.o:  	pressure_data.f90 kinds.o params.o physcons.o grid_data.o
 
 dyn_init.o:  	dyn_init.f90 params.o shtns.o spectral_data.o pressure_data.o physcons.o grid_data.o semimp_data.o 
-		$(FC) -Wall $(FFLAGS) $(OMPFLAG) -c dyn_init.f90
+		$(FC) -Wall $(GFS_FFLAGS) $(OMPFLAG) -c dyn_init.f90
 
 phy_init.o:     phy_init.f90 phy_data.o
 
 phy_finalize.o:     phy_finalize.f90 
 
 phy_run.o:      phy_run.f90 pressure_data.o shtns.o spectral_data.o physcons.o kinds.o params.o grid_data.o 
-		$(FC) -Wall $(FFLAGS) $(OMPFLAG) -c phy_run.f90
+		$(FC) -Wall $(GFS_FFLAGS) $(OMPFLAG) -c phy_run.f90
 	        
 dyn_finalize.o:  dyn_finalize.f90 shtns.o spectral_data.o pressure_data.o grid_data.o 
 
