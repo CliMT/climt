@@ -95,6 +95,7 @@ jobs:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
           - python -m pip install -r requirements_dev.txt
+          - python setup.py develop
       script:
           - py.test
     - stage: wheels
