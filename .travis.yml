@@ -27,22 +27,29 @@ allow_failures:
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -sSL https://rvm.io/mpapis.asc | gpg --import -; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rvm get stable                 ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update                    ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask uninstall oclint     ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc@6             ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install md5sha1sum        ; fi
+- |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; 
+    then curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+    rvm get stable
+    brew update
+    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.4"
+    brew cask uninstall oclint
+    brew install gcc@6
+    brew install md5sha1sum
+    fi
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  bash miniconda.sh -b -p $HOME/miniconda          ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  export PATH="$HOME/miniconda/bin:$PATH"          ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  hash -r                                          ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  conda config --set always_yes yes --set changeps1 no          ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then   conda info -a                                   ; fi
+- |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then  
+    bash miniconda.sh -b -p $HOME/miniconda
+    export PATH="$HOME/miniconda/bin:$PATH"
+    hash -r
+    conda config --set always_yes yes --set changeps1 no
+    conda info -a
+    fi
 
 install:
 - python -m pip install -r requirements_dev.txt
