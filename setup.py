@@ -137,6 +137,7 @@ if operating_system == 'Darwin':
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
     os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
     default_link_args = []
+    os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup -arch x86_64'
 
 print('Compilers: ', os.environ['CC'], os.environ['FC'])
 
