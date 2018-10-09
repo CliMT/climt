@@ -9,8 +9,8 @@ Welcome to climt's documentation!
    :align: center
 
    Background: **Approaching Thunderstorm** (Gustav Klimt).
-   
-   Image source: `Wikimedia Commons`_ 
+
+   Image source: `Wikimedia Commons`_
 
 
 .. _Wikimedia Commons:
@@ -44,6 +44,7 @@ Contents:
    component_types
    configuration
    components
+   component_manual
    initialisation
    utilities
    contributing
