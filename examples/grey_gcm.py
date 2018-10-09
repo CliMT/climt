@@ -12,23 +12,23 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 1)
     state['specific_humidity'].mean(
-        dim='longitude').plot.contourf(
+        dim='lon').plot.contourf(
             ax=ax, levels=16, robust=True)
     ax.set_title('Specific Humidity')
 
     ax = fig.add_subplot(2, 2, 3)
-    state['eastward_wind'].mean(dim='longitude').plot.contourf(
+    state['eastward_wind'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 2)
     state['air_temperature_tendency_from_convection'].transpose().mean(
-        dim='longitude').plot.contourf(
+        dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Conv. Heating Rate')
 
     ax = fig.add_subplot(2, 2, 4)
-    state['air_temperature'].mean(dim='longitude').plot.contourf(
+    state['air_temperature'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
@@ -61,13 +61,10 @@ my_state = climt.get_default_state([dycore], grid_state=grid)
 # Set initial/boundary conditions
 latitudes = my_state['latitude'].values
 longitudes = my_state['longitude'].values
+surface_shape = latitudes.shape
 
-surface_shape = [len(longitudes), len(latitudes)]
-
-# Set initial/boundary conditions
 temperature_equator = 300
 temperature_pole = 240
-latitudes = my_state['latitude'].values
 
 temperature_profile = temperature_equator - (
     (temperature_equator - temperature_pole)*(
@@ -75,10 +72,9 @@ temperature_profile = temperature_equator - (
 
 my_state['surface_temperature'] = DataArray(
     temperature_profile*np.ones(surface_shape),
-    dims=['longitude', 'latitude'], attrs={'units': 'degK'})
+    dims=['lat', 'lon'], attrs={'units': 'degK'})
 my_state['eastward_wind'].values[:] = np.random.randn(
     *my_state['eastward_wind'].shape)
-
 
 for i in range(1500*24*6):
     diag, my_state = dycore(my_state, model_time_step)

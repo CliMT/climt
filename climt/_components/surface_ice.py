@@ -117,6 +117,14 @@ class IceSheet(Stepper):
             'dims': ['*'],
             'units': 'W m^-2',
         },
+        'surface_albedo_for_direct_shortwave': {
+            'dims': ['*'],
+            'units': 'dimensionless'
+        },
+        'surface_albedo_for_diffuse_shortwave': {
+            'dims': ['*'],
+            'units': 'dimensionless'
+        },
     }
 
     def __init__(self, maximum_snow_ice_height=10, **kwargs):
@@ -129,7 +137,7 @@ class IceSheet(Stepper):
         """
         self._max_height = maximum_snow_ice_height
         self._update_constants()
-        self._epsilon = 1e-6
+        self._epsilon = 1e-5
         super(IceSheet, self).__init__(**kwargs)
 
     def _update_constants(self):
@@ -217,7 +225,7 @@ class IceSheet(Stepper):
             kappa_snow_ice[levels > snow_level] = self._Ksnow
 
             check_melting = True
-            if surface_temperature < self._melting_temperature:
+            if surface_temperature < self._melting_temperature - self._epsilon:
                 check_melting = False
 
             new_temperature = self.calculate_new_ice_temperature(
@@ -228,6 +236,28 @@ class IceSheet(Stepper):
                 surface_temperature,
                 net_heat_flux[col],
                 soil_surface_temperature)
+
+            # Cool down from melting temperature if
+            # heat flux through ice is greater than
+            # net forcing heat flux at surface
+            heat_flux_through_ice = ((new_temperature[-1] - new_temperature[-2]) *
+                                     (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/dz)
+
+            if temp_profile[-1] > self._melting_temperature - self._epsilon:
+                if heat_flux_through_ice > net_heat_flux[col]:
+                    surface_temperature = temp_profile[-1] - 10*self._epsilon
+                    temp_profile[-1] = temp_profile[-1] - 10*self._epsilon
+
+                    new_temperature = self.calculate_new_ice_temperature(
+                        rho_snow_ice, heat_capacity_snow_ice,
+                        kappa_snow_ice, temp_profile,
+                        timestep.total_seconds(), dz,
+                        num_layers,
+                        surface_temperature,
+                        net_heat_flux[col],
+                        soil_surface_temperature)
+
+                    check_melting = False
 
             # Energy balance for lower surface of snow/ice
             if area_type == 'sea_ice':
@@ -261,15 +291,18 @@ class IceSheet(Stepper):
                 continue
 
             # Energy balance at atmosphere surface
-            heat_flux_to_atmosphere = -((new_temperature[-1] - new_temperature[-2]) *
-                                        (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/dz)
-            diagnostics['surface_downward_heat_flux_in_sea_ice'][col] = heat_flux_to_atmosphere
+            heat_flux_through_ice = ((new_temperature[-1] - new_temperature[-2]) *
+                                     (kappa_snow_ice[-1] + kappa_snow_ice[-2])*0.5/dz)
+            diagnostics['surface_downward_heat_flux_in_sea_ice'][col] = heat_flux_through_ice
 
             height_of_melting_ice = 0
             # Surface is melting
             if check_melting:
-                energy_to_melt_ice = (net_heat_flux[col] + heat_flux_to_atmosphere)*timestep.total_seconds()
+                energy_to_melt_ice = (net_heat_flux[col] - heat_flux_through_ice)*timestep.total_seconds()
                 energy_to_melt_ice = round(energy_to_melt_ice, 6)
+                if energy_to_melt_ice < 0:
+                    print(net_heat_flux[col], heat_flux_through_ice)
+                    assert False
 
                 height_of_melting_ice = (energy_to_melt_ice / (rho_snow_ice[-1]*self._Lf))
 
@@ -293,6 +326,20 @@ class IceSheet(Stepper):
                 outputs['height_on_ice_interface_levels'].shape[0],
                 endpoint=True
             )
+
+            if outputs['surface_snow_thickness'][col] > 0:
+                diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.8
+                diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.8
+            elif area_type == 'sea_ice' and outputs['sea_ice_thickness'][col] > 0:
+                diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.5
+                diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.5
+            elif area_type == 'sea_ice' and outputs['sea_ice_thickness'][col] > 0:
+                diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.5
+                diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.5
+
+            if height_of_melting_ice > 0:
+                diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.2
+                diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.2
 
         return diagnostics, outputs
 

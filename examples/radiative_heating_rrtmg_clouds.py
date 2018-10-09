@@ -19,7 +19,7 @@ T = state_lw['air_temperature'][:]
 R = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
 g = get_constant('gravitational_acceleration', 'm s^-2')
 density = p / (R * T)
-dz = - np.diff(p_interface) / (density * g)  # [m]
+dz = - np.diff(p_interface, axis=0) / (density * g)  # [m]
 z = np.cumsum(dz) * 10**-3  # [km]
 ice_density = 0.5 * 10**-3  # [kg m^-3]
 cloud_base = 10  # [km]
@@ -40,8 +40,8 @@ for area_fraction in np.arange(0, 1.1, 0.25):
     else:
         label_sw = f'area fraction: {int(area_fraction*100)} %'
         label_lw = ''
-    plt.plot(sw_heating, z, label=label_sw, c=colors[i])
-    plt.plot(lw_heating, z, ls='--', label=label_lw, c=colors[i])
+    plt.plot(sw_heating.squeeze(), z.squeeze(), label=label_sw, c=colors[i])
+    plt.plot(lw_heating.squeeze(), z.squeeze(), ls='--', label=label_lw, c=colors[i])
     i += 1
 plt.axhspan(cloud_base, cloud_top, color='gray', alpha=0.5, label='cloud location')
 plt.ylabel('Altitude [km]')

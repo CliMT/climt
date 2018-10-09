@@ -6,11 +6,12 @@ import numpy as np
 import logging
 try:
     from . import _emanuel_convection
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import failed. Emanuel Convection is likely not compiled and will not '
         'be available.'
     )
+    print(error)
 
 
 class EmanuelConvection(ImplicitTendencyComponent):

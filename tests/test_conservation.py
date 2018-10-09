@@ -51,13 +51,10 @@ class ConservationTestBase(object):
         state = self.get_model_state(component)
         time_step = timedelta(seconds=1)
 
-        first_state = self.get_new_state_and_diagnostics(
-            state, component, time_step)
-
-        old_amount = self.get_quantity_amount(first_state)
+        old_amount = self.get_quantity_amount(state)
 
         new_state = self.get_new_state_and_diagnostics(
-            first_state, component, time_step)
+            state, component, time_step)
 
         new_amount = self.get_quantity_amount(new_state)
 
@@ -223,6 +220,17 @@ class TestRRTMGLongwaveConservationWithClouds(AtmosphereMoistEnthalpyConservatio
         return state
 
 
+class TestRRTMGLongwaveConservationWithCloudsAndMCICA(AtmosphereMoistEnthalpyConservation):
+
+    def get_component_instance(self):
+        return climt.RRTMGLongwave(mcica=True)
+
+    def modify_state(self, state):
+        state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
+        state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.5
+        return state
+
+
 class TestSimplePhysicsDryConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
@@ -274,7 +282,7 @@ class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
     def modify_state(self, state):
         unstable_level = 5
         state['air_temperature'][:unstable_level] += 10
-        state['specific_humidity'][:unstable_level] = 0.05
+        state['specific_humidity'][:unstable_level] = 0.07
         return state
 
     def get_quantity_amount(self, state):
@@ -288,8 +296,8 @@ class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
 class TestSlabSurfaceOnlySensibleHeat(SlabSurfaceConservation):
 
     def modify_state(self, state):
-        state['surface_upward_sensible_heat_flux'].values = 10.
-        state['ocean_mixed_layer_thickness'].values = 1.
+        state['surface_upward_sensible_heat_flux'].values[:] = 10.
+        state['ocean_mixed_layer_thickness'].values[:] = 1.
 
         return state
 
@@ -297,8 +305,8 @@ class TestSlabSurfaceOnlySensibleHeat(SlabSurfaceConservation):
 class TestSlabSurfaceOnlyLatentHeat(SlabSurfaceConservation):
 
     def modify_state(self, state):
-        state['surface_upward_latent_heat_flux'].values = 40.
-        state['ocean_mixed_layer_thickness'].values = 1.
+        state['surface_upward_latent_heat_flux'].values[:] = 40.
+        state['ocean_mixed_layer_thickness'].values[:] = 1.
 
         return state
 
@@ -310,6 +318,6 @@ class TestSlabSurfaceOnlyRadiative(SlabSurfaceConservation):
         state['upwelling_longwave_flux_in_air'].values[:] = 40.
         state['downwelling_shortwave_flux_in_air'].values[:] = 40.
         state['downwelling_longwave_flux_in_air'].values[:] = 40.
-        state['ocean_mixed_layer_thickness'].values = 1.
+        state['ocean_mixed_layer_thickness'].values[:] = 1.
 
         return state

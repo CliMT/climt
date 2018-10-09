@@ -2,7 +2,7 @@ import climt
 from sympl import (
     PlotFunctionMonitor, NetCDFMonitor,
     TimeDifferencingWrapper, UpdateFrequencyWrapper,
-    DataArray, set_constant
+    set_constant
 )
 import numpy as np
 from datetime import timedelta
@@ -12,23 +12,23 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 1)
     state['specific_humidity'].mean(
-        dim='longitude').plot.contourf(
+        dim='lon').plot.contourf(
             ax=ax, levels=16, robust=True)
     ax.set_title('Specific Humidity')
 
     ax = fig.add_subplot(2, 2, 3)
-    state['eastward_wind'].mean(dim='longitude').plot.contourf(
+    state['eastward_wind'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 2)
     state['air_temperature_tendency_from_convection'].transpose().mean(
-        dim='longitude').plot.contourf(
+        dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Conv. Heating Rate')
 
     ax = fig.add_subplot(2, 2, 4)
-    state['air_temperature'].mean(dim='longitude').plot.contourf(
+    state['air_temperature'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
@@ -79,20 +79,16 @@ latitudes = my_state['latitude'].values
 longitudes = my_state['longitude'].values
 
 zenith_angle = np.radians(latitudes)
-surface_shape = [len(longitudes), len(latitudes)]
+surface_shape = latitudes.shape
 
-my_state['zenith_angle'] = DataArray(
-    zenith_angle*np.ones(surface_shape), dims=['longitude', 'latitude'],
-    attrs={'units': 'radians'})
+my_state['zenith_angle'].values = zenith_angle
 
 my_state['eastward_wind'].values[:] = np.random.randn(
     *my_state['eastward_wind'].shape)
-my_state['ocean_mixed_layer_thickness'].values = 50
+my_state['ocean_mixed_layer_thickness'].values[:] = 50
 
 surf_temp_profile = 290 - (40*np.sin(zenith_angle)**2)
-my_state['surface_temperature'] = DataArray(
-    surf_temp_profile*np.ones(surface_shape), dims=['longitude', 'latitude'],
-    attrs={'units': 'degK'})
+my_state['surface_temperature'].values = surf_temp_profile
 
 for i in range(1500*24*6):
     diag, my_state = dycore(my_state, model_time_step)

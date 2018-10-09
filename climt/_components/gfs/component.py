@@ -10,81 +10,16 @@ import sys
 import logging
 try:
     from . import _gfs_dynamics
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import failed. GFS dynamical core is likely not compiled and will not '
         'be available.'
     )
+    print(error)
 
 
 class GFSError(Exception):
     pass
-
-
-'''
-class SelectiveTendencyComponent(ImplicitTendencyComponent):
-
-    @property
-    def input_properties(self):
-        return self.prognostic.input_properties
-
-    @property
-    def tendency_properties(self):
-        return_dict = {}
-        return_dict.update(self.prognostic.tendency_properties)
-        return self._filter_tendency_dict(return_dict)
-
-    def _filter_tendency_dict(self, tendency_dict):
-        return_dict = {}
-        if self.ignore_names is not None:
-            for name in set(tendency_dict.keys()).difference(self.ignore_names):
-                return_dict[name] = tendency_dict[name]
-        elif self.include_names is not None:
-            for name in set(tendency_dict.keys()).intersection(self.include_names):
-                return_dict[name] = tendency_dict[name]
-        return return_dict
-
-    @property
-    def diagnostic_properties(self):
-        return self.prognostic.diagnostic_properties
-
-    def __init__(self, prognostic, include_names=None, ignore_names=None):
-        """
-
-        Args:
-            prognostic: Prognostic
-                The Prognostic to be wrapped.
-            include_names: iterable of str, optional
-                If given, the tendency names for the wrapper to output.
-                Cannot be given with ignore_names.
-            ignore_names: iterable of str, optional
-                If given, the tendency names for the wrapper to suppress.
-                Cannot be given with include_names.
-        """
-        if not (include_names is None or ignore_names is None):
-            raise ValueError('Cannot give both include_names and ignore_names')
-        self.prognostic = prognostic
-        self.ignore_names = ignore_names
-        self.include_names = include_names
-        super(SelectiveTendencyComponent, self).__init__()
-
-    def __call__(self, *args, **kwargs):
-        tendencies, diagnostics = self.prognostic(*args, **kwargs)
-        return self._filter_tendency_dict(tendencies), diagnostics
-
-    def array_call(self, state, timestep=None):
-        if isinstance(self.prognostic, TendencyComponent):
-            tendencies, diagnostics = self.prognostic.array_call(state)
-        elif isinstance(self.prognostic, ImplicitTendencyComponent):
-            tendencies, diagnostics = self.prognostic.array_call(state, timestep)
-        else:
-            raise GFSError(
-                'Given a component to wrap of type {} that is not a '
-                'TendencyComponent or ImplicitTendencyComponent'.format(
-                    self.prognostic.__class__.__name__)
-            )
-        return self._filter_tendency_dict(tendencies), diagnostics
-'''
 
 
 def get_valid_properties(gfs_properties, prognostic_properties, property_type):
@@ -115,15 +50,15 @@ class GFSDynamicalCore(TendencyStepper):
     _gfs_input_properties = {
         'latitude': {
             'units': 'degrees_N',
-            'dims': ['latitude'],
+            'dims': ['lat', 'lon'],
         },
         'longitude': {
             'units': 'degrees_E',
-            'dims': ['longitude'],
+            'dims': ['lat', 'lon'],
         },
         'air_temperature': {
             'units': 'degK',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels': {
             'units': 'dimensionless',
@@ -136,47 +71,47 @@ class GFSDynamicalCore(TendencyStepper):
             'alias': 'b_coord',
         },
         'air_pressure': {
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['interface_levels', 'latitude', 'longitude'],
+            'dims': ['interface_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'surface_air_pressure': {
             'units': 'Pa',
-            'dims': ['latitude', 'longitude'],
+            'dims': ['lat', 'lon'],
         },
         'eastward_wind': {
             'units': 'm s^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'northward_wind': {
             'units': 'm s^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'divergence_of_wind': {
             'units': 's^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'atmosphere_relative_vorticity': {
             'units': 's^-1',
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
         },
         'surface_geopotential': {
             'units': 'm^2 s^-2',
-            'dims': ['latitude', 'longitude'],
+            'dims': ['lat', 'lon'],
         },
     }
 
     _gfs_output_properties = {
         'air_temperature': {'units': 'degK'},
         'air_pressure': {
-            'dims': ['mid_levels', 'latitude', 'longitude'],
+            'dims': ['mid_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'air_pressure_on_interface_levels': {
-            'dims': ['interface_levels', 'latitude', 'longitude'],
+            'dims': ['interface_levels', 'lat', 'lon'],
             'units': 'Pa'
         },
         'surface_air_pressure': {'units': 'Pa'},
@@ -193,7 +128,7 @@ class GFSDynamicalCore(TendencyStepper):
     diagnostic_properties = None
 
     uses_tracers = True
-    tracer_dims = ('tracer', 'mid_levels', 'latitude', 'longitude')
+    tracer_dims = ('tracer', 'mid_levels', 'lat', 'lon')
     prepend_tracers = (('specific_humidity', 'kg/kg'),)
 
     @property
@@ -326,8 +261,8 @@ class GFSDynamicalCore(TendencyStepper):
                 self._tau_damping,
                 self._toa_pressure)
 
-        np.testing.assert_allclose(latitudes[:, 0]*180./np.pi, state['latitude'])
-        np.testing.assert_allclose(longitudes[0, :]*180./np.pi, state['longitude'])
+        np.testing.assert_allclose(latitudes*180./np.pi, state['latitude'])
+        np.testing.assert_allclose(longitudes*180./np.pi, state['longitude'])
 
         logging.info('Done!')
 
@@ -552,7 +487,7 @@ class GFSDynamicalCore(TendencyStepper):
         return self._get_tendencies(
             tendencies,
             ['air_temperature', 'eastward_wind', 'northward_wind'],
-            ['mid_levels', 'latitude', 'longitude'],
+            ['mid_levels', 'lat', 'lon'],
             T_shape
         )
 
@@ -560,7 +495,7 @@ class GFSDynamicalCore(TendencyStepper):
         return self._get_tendencies(
             tendencies,
             ['surface_air_pressure'],
-            ['latitude', 'longitude'],
+            ['lat', 'lon'],
             T_shape[1:]
         )
 
@@ -592,7 +527,7 @@ class GFSDynamicalCore(TendencyStepper):
             if name in tendencies:
                 property_dict = {
                     name: {
-                        'dims': ['mid_levels', 'latitude', 'longitude'],
+                        'dims': ['mid_levels', 'lat', 'lon'],
                         'units': tendencies[name].attrs['units'],
                     }
                 }

@@ -1,12 +1,14 @@
+from ..._core import ensure_contiguous_state
 from sympl import Stepper, get_constant
 import logging
 try:
     from . import _simple_physics as phys
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import failed. Simple Physics is likely not compiled and will not be'
         'available.'
     )
+    print(error)
 
 
 class SimplePhysics(Stepper):
@@ -58,7 +60,7 @@ class SimplePhysics(Stepper):
         },
         'latitude': {
             'dims': ['*'],
-            'units': 'degrees_N',
+            'units': 'degrees_north',
         }
     }
 
@@ -192,6 +194,7 @@ class SimplePhysics(Stepper):
                                     self._delta_pbl, self._Ct, self._Cd0,
                                     self._Cd1, self._Cm)
 
+    @ensure_contiguous_state
     def array_call(self, state, timestep):
         '''
         Calculate surface and boundary layer tendencies.

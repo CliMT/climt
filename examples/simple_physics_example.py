@@ -10,8 +10,9 @@ def plot_function(fig, state):
         state['air_pressure'].values.flatten(), '-o')
     ax.axes.invert_yaxis()
     ax.set_ylim(1e5, 100.)
-    ax.set_xlabel('m/s')
+    ax.set_xlabel('kg/kg')
     ax.set_ylabel('Pa')
+    ax.set_title('Specific Humidity')
 
 
 monitor = PlotFunctionMonitor(plot_function)

@@ -5,9 +5,10 @@ import logging
 import numpy as np
 try:
     from . import _dcmip
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import Failed. DCMIP initial conditions will not be available.')
+    print(error)
 
 
 class DcmipInitialConditions(DiagnosticComponent):
