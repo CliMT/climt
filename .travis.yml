@@ -8,8 +8,9 @@ python: 3.6
 
 cache:
     - pip
-    - directories: ~/build/CliMT/climt/climt/_lib/Linux
-    - directories: ~/build/CliMT/climt/climt/_lib/Darwin
+    - directories:
+        - ~/build/CliMT/climt/climt/_lib/Linux
+        - ~/build/CliMT/climt/climt/_lib/Darwin
 env:
     global:
       - TWINE_USERNAME=joy.merwin

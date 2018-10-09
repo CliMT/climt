@@ -39,6 +39,7 @@ Let's create a 3-d model state to see how useful DataArrays are:
 
    # Create some components
    radiation = climt.GrayLongwaveRadiation()
+   convection = climt.DryConvectiveAdjustment()
 
 We need to tell climt what the model dimensions are. This is done
 by the :code:`get_grid` function. This function takes three arguments
@@ -50,11 +51,11 @@ climt aware of the dimensions required by the model:
 
 .. ipython:: python
 
-   grid = climt.get_grid(ny=3)
+   grid = climt.get_grid(ny=3, nz=5)
 
    # Get a state dictionary filled with required quantities
    # for the components to run
-   state = climt.get_default_state([radiation], grid_state=grid)
+   state = climt.get_default_state([radiation, convection], grid_state=grid)
 
    state['air_temperature']
 
@@ -100,7 +101,8 @@ and can also be modified easily:
 
     state['air_temperature'].values[:] = 291
 
-The right hand side can also be any numpy array, as long as it has the same dimensions as the
+The right hand side can also be any numpy array, as long as it has the same dimensions (or can
+be broadcasted to the same dimensions) as the
 current numpy array.
 
 .. note::
@@ -122,7 +124,6 @@ You can also directly plot DataArrays:
 .. ipython:: python
 
     state['air_temperature'].plot()
-    plt.show()
 
 DataArrays are a very powerful way of dealing with array-oriented data, and
 you should read more about `xarray`_, and not just for using climt!
@@ -149,11 +150,11 @@ interface level.
     # These are the diagnostics returned by radiation
     radiation.diagnostic_properties
 
-    # These are the outputs returned by Simple Physics
-    simple_physics.output_properties
+    # These are the outputs returned by convection
+    convection.output_properties
 
-    # These are the diagnostics returned by Simple Physics
-    simple_physics.diagnostic_properties
+    # convection returns no diagnostics
+    convection.diagnostic_properties
 
 No component will return **both** outputs and tendencies. The
 tendency of a quantity :math:`X` is given by :math:`\frac{dX}{dt}`, and so
