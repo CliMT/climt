@@ -5,7 +5,7 @@ History
 Latest
 ------
 
-
+* CI Testing for Mac and py37 added.
 * Refactored initialisation code
 * Enable the McICA version of RRTMG Longwave for consistency
   with the Shortwave component.
