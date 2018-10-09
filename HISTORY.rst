@@ -2,7 +2,7 @@
 History
 =======
 
-Latest
+v0.16.0
 ------
 
 * CI Testing for Mac and py37 added.
