@@ -12,9 +12,6 @@ Constants
 .. autosummary::
     :toctree: generated/
 
-    get_constant
-    set_constant
-    reset_constants
     list_available_constants
     set_constants_from_dict
 

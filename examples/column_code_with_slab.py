@@ -79,19 +79,19 @@ state = get_default_state(
 )
 
 state['air_temperature'].values[:] = 290
-state['surface_albedo_for_direct_shortwave'].values = 0.4
-state['surface_albedo_for_direct_near_infrared'].values = 0.4
-state['surface_albedo_for_diffuse_shortwave'].values = 0.4
+state['surface_albedo_for_direct_shortwave'].values[:] = 0.4
+state['surface_albedo_for_direct_near_infrared'].values[:] = 0.4
+state['surface_albedo_for_diffuse_shortwave'].values[:] = 0.4
 
 # Uncomment the following two lines to see how clouds change the radiative balance!
 
 # state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 0.03
 # state['cloud_area_fraction_in_atmosphere_layer'].loc[dict(mid_levels=slice(4, 8))] = 1.
 
-state['zenith_angle'].values = np.pi/2.5
-state['surface_temperature'].values = 300.
-state['ocean_mixed_layer_thickness'].values = 5
-state['area_type'].values = 'sea'
+state['zenith_angle'].values[:] = np.pi/2.5
+state['surface_temperature'].values[:] = 300.
+state['ocean_mixed_layer_thickness'].values[:] = 5
+state['area_type'].values[:] = 'sea'
 
 equilibrium_value = DataArray(
     np.ones(len(state['air_pressure']))*10.,
@@ -104,7 +104,6 @@ tau = DataArray(
 time_stepper = AdamsBashforth([convection, radiation_lw, radiation_sw, slab])
 
 for i in range(60000):
-    print('Surface Temperature: ', state['surface_temperature'].values.item())
     diagnostics, state = time_stepper(state, timestep)
     state.update(diagnostics)
 
@@ -115,9 +114,7 @@ for i in range(60000):
     # diagnostics, new_state = dry_convection(state, timestep)
     # state.update(diagnostics)
     if (i+1) % 100 == 0:
+        print('Surface Temperature: ', state['surface_temperature'].values.item())
         monitor.store(state)
-        print(state['air_temperature'][:5])
-        print(state['surface_upward_sensible_heat_flux'])
-        print(state['surface_upward_latent_heat_flux'])
     state.update(new_state)
     state['eastward_wind'].values[:] = 3.

@@ -1,8 +1,7 @@
 import climt
 from sympl import (
-    PlotFunctionMonitor, NetCDFMonitor,
-    TimeDifferencingWrapper, UpdateFrequencyWrapper,
-    DataArray
+    PlotFunctionMonitor,
+    TimeDifferencingWrapper,
 )
 import numpy as np
 from datetime import timedelta
@@ -12,22 +11,22 @@ def plot_function(fig, state):
 
     ax = fig.add_subplot(2, 2, 1)
     state['surface_temperature'].plot.contourf(
-            ax=ax, levels=16, robust=True)
+        ax=ax, levels=16, robust=True)
     ax.set_title('Surface Temperature')
 
     ax = fig.add_subplot(2, 2, 3)
-    state['eastward_wind'].mean(dim='longitude').plot.contourf(
+    state['eastward_wind'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Zonal Wind')
 
     ax = fig.add_subplot(2, 2, 2)
     state['air_temperature_tendency_from_convection'].transpose().mean(
-        dim='longitude').plot.contourf(
+        dim='lon').plot.contourf(
         ax=ax, levels=16, robust=True)
     ax.set_title('Conv. Heating Rate')
 
     ax = fig.add_subplot(2, 2, 4)
-    state['air_temperature'].mean(dim='longitude').plot.contourf(
+    state['air_temperature'].mean(dim='lon').plot.contourf(
         ax=ax, levels=16)
     ax.set_title('Temperature')
 
@@ -62,22 +61,18 @@ my_state = climt.get_default_state([dycore], grid_state=grid)
 latitudes = my_state['latitude'].values
 longitudes = my_state['longitude'].values
 
-surface_shape = [len(longitudes), len(latitudes)]
+surface_shape = latitudes.shape
 
 # Set initial/boundary conditions
 sw_flux_equator = 300
 sw_flux_pole = 0
-latitudes = my_state['latitude'].values
 
 sw_flux_profile = sw_flux_equator - (
     (sw_flux_equator - sw_flux_pole)*(np.sin(np.radians(latitudes))**2))
 
-my_state['downwelling_shortwave_flux_in_air'] =  DataArray(
-    sw_flux_profile*np.ones(surface_shape),
-    dims=['longitude', 'latitude'], attrs={'units': 'W m^-2'})
-
-my_state['surface_temperature'].values = 290.
-my_state['ocean_mixed_layer_thickness'].values = 5
+my_state['downwelling_shortwave_flux_in_air'].values[:] = sw_flux_profile[np.newaxis, :]
+my_state['surface_temperature'].values[:] = 290.
+my_state['ocean_mixed_layer_thickness'].values[:] = 5
 
 my_state['eastward_wind'].values[:] = np.random.randn(
     *my_state['eastward_wind'].shape)

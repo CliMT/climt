@@ -8,3 +8,4 @@ Initialisation
     :toctree: generated/
 
     get_default_state
+    get_grid

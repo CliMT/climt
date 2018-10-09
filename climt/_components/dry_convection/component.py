@@ -6,25 +6,26 @@ import numpy as np
 
 class DryConvectiveAdjustment(Stepper):
     """
-    Changes the temperature profile if it is super-adiabatic
+    A conservative scheme to keep the temperature profile close to the
+    dry adiabat if it is super-adiabatic.
     """
     input_properties = {
         'air_temperature': {
             'units': 'degK',
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
         },
         'air_pressure': {
             'units': 'Pa',
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
         },
         'air_pressure_on_interface_levels': {
             'units': 'Pa',
-            'dims': ['*', 'interface_levels'],
+            'dims': ['interface_levels', '*'],
             'alias': 'P_int',
         },
         'specific_humidity': {
             'units': 'kg/kg',
-            'dims': ['*', 'mid_levels'],
+            'dims': ['mid_levels', '*'],
         },
     }
 
@@ -53,8 +54,8 @@ class DryConvectiveAdjustment(Stepper):
             self.output_properties, state, self.input_properties
         )
 
-        output_temp = output_arrays['air_temperature']
-        output_temp[:] = state['air_temperature']
+        output_temperature = output_arrays['air_temperature']
+        output_temperature[:] = state['air_temperature']
 
         output_q = output_arrays['specific_humidity']
         output_q[:] = q
@@ -62,63 +63,53 @@ class DryConvectiveAdjustment(Stepper):
         rd_cp = self.gas_constant(q)/self.heat_capacity(q)
         theta = state['air_temperature']*(self._Pref/state['air_pressure'])**rd_cp
 
-        # print('initial theta:', theta)
+        num_levels = q.shape[0]
 
-        num_levels = q.shape[-1]
-
-        for column in range(q.shape[0]):
+        for column in range(q.shape[-1]):
             for level in range(num_levels-1, -1, -1):
 
-                dp = state['P_int'][column, :-1] - state['P_int'][column, 1:]
+                dp = state['P_int'][:-1, column] - state['P_int'][1:, column]
                 theta_q = theta*(1 + output_q*self._Rv/self._Rdair - output_q)
-                theta_sum = np.cumsum(theta_q[column, level::])
+                theta_sum = np.cumsum(theta_q[level::, column])
                 divisor = np.arange(1, num_levels - level+1)
 
                 theta_avg = (theta_sum/divisor)[1::]
 
-                theta_lesser = (theta_avg > theta_q[column, level+1::])
+                theta_lesser = (theta_avg > theta_q[level+1::, column])
                 if np.sum(theta_lesser) == 0:
                     continue
 
                 convect_to_level = len(theta_lesser) - np.argmax(theta_lesser[::-1])
 
                 if level == 0:
-                    convect_to_level = 1
+                    convect_to_level = max(convect_to_level, 1)
 
                 if convect_to_level == 0:
                     continue
                 stable_level = level + convect_to_level
 
-                q_conv = output_q[column, level:stable_level]
-                t_conv = output_temp[column, level:stable_level]
+                q_conv = output_q[level:stable_level, column]
+                t_conv = output_temperature[level:stable_level, column]
                 dp_conv = dp[level:stable_level]
-                p_conv_high = state['P_int'][column, level]
-                p_conv_low = state['P_int'][column, stable_level]
+                p_conv_high = state['P_int'][level, column]
+                p_conv_low = state['P_int'][stable_level, column]
 
                 enthalpy = self.heat_capacity(q_conv)*t_conv
                 integral_enthalpy = np.sum(enthalpy*dp_conv)
                 mean_conv_q = np.sum(q_conv*dp_conv)/(p_conv_high - p_conv_low)
 
-                output_q[column, level:stable_level] = mean_conv_q
+                output_q[level:stable_level, column] = mean_conv_q
 
                 rdcp_conv = self.gas_constant(mean_conv_q)/self.heat_capacity(mean_conv_q)
 
                 theta_coeff = (
-                    state['air_pressure'][column, level:stable_level]/self._Pref)**rdcp_conv
+                    state['air_pressure'][level:stable_level, column]/self._Pref)**rdcp_conv
 
                 integral_theta_den = np.sum(self.heat_capacity(q_conv)*theta_coeff*dp_conv)
 
                 mean_theta = integral_enthalpy/integral_theta_den
 
-                output_temp[column, level:stable_level] = mean_theta*theta_coeff
-
-        # dp = (state['P_int'][0, :-1] - state['P_int'][0, 1:])/(state['P_int'][0, 0] - state['P_int'][0, -1])
-        # print('Initial Enthalpy: ', np.sum(self.heat_capacity(state['specific_humidity'])*state['air_temperature']*dp))
-        # print('Final Enthalpy: ', np.sum(self.heat_capacity(output_q)*output_temp*dp))
-        # rd_cp = self.gas_constant(output_q)/self.heat_capacity(output_q)
-        # theta = output_temp*(self._Pref/state['air_pressure'])**rd_cp
-
-        # print('final theta: ', theta)
+                output_temperature[level:stable_level, column] = mean_theta*theta_coeff
 
         return {}, output_arrays
 

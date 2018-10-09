@@ -25,19 +25,19 @@ class HeldSuarez(TendencyComponent):
 
     input_properties = {
         'eastward_wind': {
-            'dims': ['*'],
+            'dims': ['*', 'mid_levels'],
             'units': 'm s^-1',
         },
         'northward_wind': {
-            'dims': ['*'],
+            'dims': ['*', 'mid_levels'],
             'units': 'm s^-1',
         },
         'air_temperature': {
-            'dims': ['*'],
+            'dims': ['*', 'mid_levels'],
             'units': 'degK',
         },
         'air_pressure': {
-            'dims': ['*'],
+            'dims': ['*', 'mid_levels'],
             'units': 'Pa',
         },
         'surface_air_pressure': {
@@ -46,7 +46,7 @@ class HeldSuarez(TendencyComponent):
         },
         'latitude': {
             'dims': ['*'],
-            'units': 'degrees_N',
+            'units': 'degrees_north',
         }
     }
 
@@ -140,10 +140,10 @@ class HeldSuarez(TendencyComponent):
               at the time of the input state.
         """
         self._update_constants()
-        sigma = raw_state['air_pressure'] / raw_state['surface_air_pressure']
+        sigma = raw_state['air_pressure'] / raw_state['surface_air_pressure'][:, np.newaxis]
 
-        Teq = self._get_Teq(raw_state['latitude'], raw_state['air_pressure'])
-        k_t = self._get_k_t(raw_state['latitude'], sigma)
+        Teq = self._get_Teq(raw_state['latitude'][:, np.newaxis], raw_state['air_pressure'])
+        k_t = self._get_k_t(raw_state['latitude'][:, np.newaxis], sigma)
         k_v = self._get_k_v(sigma)
 
         tendencies = {

@@ -5,23 +5,8 @@
 Components
 ==========
 
-This page documents the different components available through CliMT.
+This page documents the different components available through climt.
 
-Base Components
-----------------
-
-.. autosummary::
-    :toctree: generated/
-
-    ClimtPrognostic
-
-    ClimtDiagnostic
-
-    ClimtImplicit
-
-    ClimtImplicitPrognostic
-
-    ClimtSpectralDynamicalCore
 
 Dynamics
 ---------
@@ -58,6 +43,9 @@ Convection
 
     EmanuelConvection
     EmanuelConvection.__call__
+
+    DryConvectiveAdjustment
+    DryConvectiveAdjustment.__call__
 
 Surface Processes
 -----------------

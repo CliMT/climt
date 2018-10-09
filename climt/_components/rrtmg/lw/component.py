@@ -1,3 +1,4 @@
+import numpy as np
 from sympl import (
     get_constant, initialize_numpy_arrays_with_properties,
     TendencyComponent
@@ -11,11 +12,12 @@ from ..rrtmg_common import (
 import logging
 try:
     from . import _rrtmg_lw
-except ImportError:
+except ImportError as error:
     logging.warning(
         'Import failed. RRTMG Longwave is likely not compiled and '
         'will not be available.'
     )
+    print(error)
 
 
 class RRTMGLongwave(TendencyComponent):
@@ -27,6 +29,8 @@ class RRTMGLongwave(TendencyComponent):
     """
 
     num_longwave_bands = 16
+    num_reduced_g_intervals = 140
+    rrtm_iplon = 1
 
     input_properties = {
         'air_pressure': {
@@ -161,6 +165,9 @@ class RRTMGLongwave(TendencyComponent):
             cloud_ice_properties='ebert_curry_two',
             cloud_liquid_water_properties='radius_dependent_absorption',
             calculate_interface_temperature=True,
+            mcica=False,
+            random_number_generator=0,
+            permute_seed=112,
             **kwargs):
         """
 
@@ -213,6 +220,18 @@ class RRTMGLongwave(TendencyComponent):
                 :code:`air_temperature_on_interface_levels` in the input state needs to be manually
                 updated by user code.
 
+            mcica (bool):
+                * mcica = True: use the McICA version of the longwave component of RRTMG
+                * mcica = False: use the nomcica version of the longwave component of RRTMG
+
+            random_number_generator (int):
+                Different methods of generating random numbers for McICA.
+                * random_number_generator = 0: kissvec
+                * random_number_generator = 1: Mersenne Twister
+
+            permute_seed (int):
+                For McICA, permute the seed between each call to the cloud generator.
+
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
 
@@ -234,6 +253,11 @@ class RRTMGLongwave(TendencyComponent):
         self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties.lower()]
         self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
         self._calc_Tint = calculate_interface_temperature
+        self._mcica = mcica
+
+        if mcica:
+            self._random_number_generator = random_number_generator
+            self._permute_seed = permute_seed
 
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
         self._planck = get_constant('planck_constant', 'erg s')
@@ -263,14 +287,25 @@ class RRTMGLongwave(TendencyComponent):
             self._stef_boltz,
             self._secs_per_day)
 
-        # TODO Add all other flags as well
-        _rrtmg_lw.initialise_rrtm_radiation(
-            self._Cpd,
-            self._cloud_overlap,
-            self._calc_dflxdt,
-            self._cloud_optics,
-            self._ice_props,
-            self._liq_props)
+        if mcica:
+            _rrtmg_lw.initialise_rrtm_radiation_mcica(
+                self._Cpd,
+                self._cloud_overlap,
+                self._calc_dflxdt,
+                self._cloud_optics,
+                self._ice_props,
+                self._liq_props,
+                self._permute_seed,
+                self._random_number_generator)
+        else:
+            # TODO Add all other flags as well
+            _rrtmg_lw.initialise_rrtm_radiation(
+                self._Cpd,
+                self._cloud_overlap,
+                self._calc_dflxdt,
+                self._cloud_optics,
+                self._ice_props,
+                self._liq_props)
         super(RRTMGLongwave, self).__init__(**kwargs)
 
     @ensure_contiguous_state
@@ -295,38 +330,108 @@ class RRTMGLongwave(TendencyComponent):
             self.tendency_properties, state, self.input_properties
         )
 
-        _rrtmg_lw.rrtm_calculate_longwave_fluxes(
-            n_columns,
-            n_layers,
-            state['air_pressure'],
-            state['air_pressure_on_interface_levels'],
-            state['air_temperature'],
-            T_interface,
-            state['surface_temperature'],
-            Q,
-            state['mole_fraction_of_ozone_in_air'],
-            state['mole_fraction_of_carbon_dioxide_in_air'],
-            state['mole_fraction_of_methane_in_air'],
-            state['mole_fraction_of_nitrous_oxide_in_air'],
-            state['mole_fraction_of_oxygen_in_air'],
-            state['mole_fraction_of_cfc11_in_air'],
-            state['mole_fraction_of_cfc12_in_air'],
-            state['mole_fraction_of_cfc22_in_air'],
-            state['mole_fraction_of_carbon_tetrachloride_in_air'],
-            state['surface_longwave_emissivity'],
-            state['cloud_area_fraction_in_atmosphere_layer'],
-            state['longwave_optical_thickness_due_to_aerosol'],
-            diagnostics['upwelling_longwave_flux_in_air'],
-            diagnostics['downwelling_longwave_flux_in_air'],
-            tendencies['air_temperature'],
-            diagnostics['upwelling_longwave_flux_in_air_assuming_clear_sky'],
-            diagnostics['downwelling_longwave_flux_in_air_assuming_clear_sky'],
-            diagnostics['air_temperature_tendency_from_longwave_assuming_clear_sky'],
-            state['longwave_optical_thickness_due_to_cloud'],
-            state['mass_content_of_cloud_ice_in_atmosphere_layer'],
-            state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
-            state['cloud_ice_particle_size'],
-            state['cloud_water_droplet_radius'])
+        if self._mcica:
+
+            # First, define extra arrays needed for mcica.
+            # The values for these arrays are calculated from state in the
+            # first part of _rrtmg_sw.rrtm_calculate_longwave_fluxes_mcica.
+            # Specifically they are calculated by mcica_subcol_gen_lw.f90
+            # and are input to rrtmg_lw_rad.f90
+            num_reduced_g_intervals = self.num_reduced_g_intervals
+            mid_levels = state['air_pressure'].shape[0]
+
+            try:
+                num_cols = state['air_pressure'].shape[1]
+            except IndexError:
+                num_cols = 1
+
+            mcica_properties = {
+                'cloud_area_fraction_in_atmosphere_layer': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'mass_content_of_cloud_ice_in_atmosphere_layer': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'mass_content_of_cloud_liquid_water_in_atmosphere_layer': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'cloud_ice_particle_size': np.zeros((mid_levels, num_cols)),
+                'cloud_water_droplet_radius': np.zeros((mid_levels, num_cols)),
+                'longwave_optical_thickness_due_to_cloud': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals))
+            }
+
+            _rrtmg_lw.rrtm_calculate_longwave_fluxes_mcica(
+                self.rrtm_iplon,
+                n_columns,
+                n_layers,
+                state['air_pressure'],
+                state['air_pressure_on_interface_levels'],
+                state['air_temperature'],
+                T_interface,
+                state['surface_temperature'],
+                Q,
+                state['mole_fraction_of_ozone_in_air'],
+                state['mole_fraction_of_carbon_dioxide_in_air'],
+                state['mole_fraction_of_methane_in_air'],
+                state['mole_fraction_of_nitrous_oxide_in_air'],
+                state['mole_fraction_of_oxygen_in_air'],
+                state['mole_fraction_of_cfc11_in_air'],
+                state['mole_fraction_of_cfc12_in_air'],
+                state['mole_fraction_of_cfc22_in_air'],
+                state['mole_fraction_of_carbon_tetrachloride_in_air'],
+                state['surface_longwave_emissivity'],
+                state['cloud_area_fraction_in_atmosphere_layer'],
+                state['longwave_optical_thickness_due_to_aerosol'],
+                diagnostics['upwelling_longwave_flux_in_air'],
+                diagnostics['downwelling_longwave_flux_in_air'],
+                tendencies['air_temperature'],
+                diagnostics['upwelling_longwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['downwelling_longwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['air_temperature_tendency_from_longwave_assuming_clear_sky'],
+                state['longwave_optical_thickness_due_to_cloud'],
+                state['mass_content_of_cloud_ice_in_atmosphere_layer'],
+                state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+                state['cloud_ice_particle_size'],
+                state['cloud_water_droplet_radius'],
+                mcica_properties['cloud_area_fraction_in_atmosphere_layer'],
+                mcica_properties['longwave_optical_thickness_due_to_cloud'],
+                mcica_properties['mass_content_of_cloud_ice_in_atmosphere_layer'],
+                mcica_properties['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+                mcica_properties['cloud_ice_particle_size'],
+                mcica_properties['cloud_water_droplet_radius']
+            )
+
+        else:
+            _rrtmg_lw.rrtm_calculate_longwave_fluxes(
+                n_columns,
+                n_layers,
+                state['air_pressure'],
+                state['air_pressure_on_interface_levels'],
+                state['air_temperature'],
+                T_interface,
+                state['surface_temperature'],
+                Q,
+                state['mole_fraction_of_ozone_in_air'],
+                state['mole_fraction_of_carbon_dioxide_in_air'],
+                state['mole_fraction_of_methane_in_air'],
+                state['mole_fraction_of_nitrous_oxide_in_air'],
+                state['mole_fraction_of_oxygen_in_air'],
+                state['mole_fraction_of_cfc11_in_air'],
+                state['mole_fraction_of_cfc12_in_air'],
+                state['mole_fraction_of_cfc22_in_air'],
+                state['mole_fraction_of_carbon_tetrachloride_in_air'],
+                state['surface_longwave_emissivity'],
+                state['cloud_area_fraction_in_atmosphere_layer'],
+                state['longwave_optical_thickness_due_to_aerosol'],
+                diagnostics['upwelling_longwave_flux_in_air'],
+                diagnostics['downwelling_longwave_flux_in_air'],
+                tendencies['air_temperature'],
+                diagnostics['upwelling_longwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['downwelling_longwave_flux_in_air_assuming_clear_sky'],
+                diagnostics['air_temperature_tendency_from_longwave_assuming_clear_sky'],
+                state['longwave_optical_thickness_due_to_cloud'],
+                state['mass_content_of_cloud_ice_in_atmosphere_layer'],
+                state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
+                state['cloud_ice_particle_size'],
+                state['cloud_water_droplet_radius'])
 
         diagnostics['air_temperature_tendency_from_longwave'] = tendencies['air_temperature']
 
