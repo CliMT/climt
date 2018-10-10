@@ -356,7 +356,8 @@ class RRTMGShortwave(TendencyComponent):
                 if cloud_ice_properties.lower() == 'ebert_curry_one':
                     logging.warning(
                         "cloud_ice_properties should not be set to "
-                        "ebert_curry_one for shortwave calculations with McICA."
+                        "'ebert_curry_one' for shortwave calculations with "
+                        "McICA."
                     )
                 if cloud_liquid_water_properties.lower() == 'radius_independent_absorption':
                     logging.warning(
