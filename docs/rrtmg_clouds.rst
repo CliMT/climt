@@ -162,7 +162,7 @@ For the shortwave, the parameters (required for the optical depth, single scatte
 The choice of waveband is indicated by ``icx``.
 The particle size dependence comes from ``radice``, so each parameter consists of both a size independent and a size dependent contribution.
 
-.. figure:: ./docs/ice_cloud_optical_depth.png
+.. figure:: ./ice_cloud_optical_depth.png
 
     *The dependence of cloud optical depth, `taucmc`, on cloud ice particle size (with an ice water path of 1), with different lines representing the different wavebands.*
 
@@ -221,7 +221,7 @@ The look up tables have values for particle sizes in the range [2.5, 59.5] micro
 The shortwave parameter ``forwliq`` is calculated as the square of ``gliq``.
 
 
-.. figure:: ./docs/liquid_cloud_optical_depth.png
+.. figure:: ./liquid_cloud_optical_depth.png
 
     *The dependence of cloud optical depth, `taucmc`, on cloud liquid water particle size (with a liquid water path of 1), with different lines representing the different wavebands.*
 
