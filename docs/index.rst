@@ -2,19 +2,12 @@ Welcome to climt's documentation!
 =================================
 
 .. figure:: climt_logo.jpg
-   :width: 1500px
-   :height: 750px
+   :width: 1024px
+   :height: 1024px
    :scale: 50%
    :alt: climt logo
    :align: center
 
-   Background: **Approaching Thunderstorm** (Gustav Klimt).
-   
-   Image source: `Wikimedia Commons`_ 
-
-
-.. _Wikimedia Commons:
-    https://commons.wikimedia.org/wiki/File:Gustav_Klimt_-_Approaching_Thunderstorm_(The_Large_Poplar_II)_-_Google_Art_Project.jpg
 
 
 climt (Climate Modelling and Diagnostics Toolkit) is a Python based library which provides a
