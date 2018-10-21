@@ -5,6 +5,7 @@ History
 Latest
 -------
 
+* Changed logo!
 * Fixed failing docs build
 
 v0.16.0
