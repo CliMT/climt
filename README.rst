@@ -29,8 +29,8 @@ climt
 
 
 .. image:: ./docs/climt_logo.jpg
-    :height: 1024px
-    :width: 1024px
+    :height: 512px
+    :width: 512px
     :align: center
 
 **climt** is a Toolkit for building Earth system models in Python. climt stands for *Climate Modelling
