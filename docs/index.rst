@@ -9,7 +9,6 @@ Welcome to climt's documentation!
    :align: center
 
 
-
 climt (Climate Modelling and Diagnostics Toolkit) is a Python based library which provides a
 modular and intuitive approach to writing numerical models of the climate system. climt provides
 state-of-the art components and an easy-to-use interface to allow writing research quality models
@@ -37,6 +36,7 @@ Contents:
    component_types
    configuration
    components
+   component_manual
    initialisation
    utilities
    contributing

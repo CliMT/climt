@@ -191,7 +191,7 @@ class RRTMGShortwave(TendencyComponent):
 
     def __init__(
             self,
-            cloud_overlap_method='random',
+            cloud_overlap_method=None,
             cloud_optical_properties='liquid_and_ice_clouds',
             cloud_ice_properties='ebert_curry_two',
             cloud_liquid_water_properties='radius_dependent_absorption',
@@ -218,16 +218,24 @@ class RRTMGShortwave(TendencyComponent):
             cloud_optical_properties (string):
                 Choose how cloud optical properties are calculated:
 
-                * :code:`direct_input` = Both cloud fraction and cloud optical depth are input directly
+                * :code:`direct_input` = Cloud fraction, cloud optical depth, single scattering albedo, cloud
+                  asymmetry parameter and cloud forward scattering fraction are input. Cloud forward scattering
+                  fraction is used to scale the optical depth, single scattering albedo and asymmetry parameter.
+                  The latter three parameters are then used in the radiative transfer calculations.
+                  Other cloud properties (ie cloud particle size) are irrelevant.
                 * :code:`single_cloud_type` = Cloud fraction and cloud physical properties are input,
-                  ice and liquid clouds are treated together, cloud absorptivity is a constant value (0.060241)
+                  ice and liquid clouds are treated together, cloud absorptivity is a constant value (0.060241).
+                  Not available with McICA.
                 * :code:`liquid_and_ice_clouds` = Cloud fraction and cloud physical properties are input, ice and liquid
-                  clouds are treated separately
+                  clouds are treated separately. Cloud optical depth, single scattering albedo and cloud asymmetry
+                  parameter are calculated from the cloud ice and water particle sizes and the mass content of cloud
+                  ice and cloud water.
 
             cloud_ice_properties (string):
-                set bounds on ice particle size.
+                set bounds on ice particle size. This is not used if 'cloud_optical_properties' == 'direct_input'.
 
                 * :code:`ebert_curry_one` = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
+                  Not available with McICA.
                 * :code:`ebert_curry_two` = ice particle has effective radius between 13.0 and
                   130.0 micron `[Ebert and Curry 1992]`_
                 * :code:`key_streamer_manual` = ice particle has effective radius between 5.0 and 131.0 micron
@@ -238,9 +246,10 @@ class RRTMGShortwave(TendencyComponent):
                 Default value is 0.
 
             cloud_liquid_water_properties (string):
-                set treatment of cloud liquid water.
+                set treatment of cloud liquid water. This is not used if 'cloud_optical_properties' == 'direct_input'.
 
                 * :code:`radius_independent_absorption` = use radius independent absorption coefficient
+                  Not available with McICA.
                 * :code:`radius_dependent_absorption` = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
 
 
@@ -320,18 +329,52 @@ class RRTMGShortwave(TendencyComponent):
         .. _[Fu, 1996]:
              http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
             """
-
-        self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method.lower()]
-        self._cloud_optics = rrtmg_cloud_props_dict[cloud_optical_properties.lower()]
-        self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties.lower()]
-        self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
-        self._solar_var_flag = solar_variability_method
-        self._ignore_day_of_year = ignore_day_of_year
         self._mcica = mcica
 
         if mcica:
             self._random_number_generator = random_number_generator  # TODO: make dictionary
             self._permute_seed = permute_seed
+            if type(cloud_overlap_method) is str:
+                if cloud_overlap_method.lower() == 'clear_only':
+                    logging.info(
+                        "cloud_overlap_method == 'clear_only'."
+                        " This overrides all other properties. "
+                        "There are no clouds."
+                    )
+                elif cloud_overlap_method.lower() in rrtmg_cloud_overlap_method_dict.keys():
+                    logging.info(
+                        "With McICA, there is no difference in "
+                        "cloud_overlap_method between 'random',"
+                        " 'maximum_random' and 'maximum'.")
+            if cloud_optical_properties.lower() == 'single_cloud_type':
+                logging.warning(
+                    "cloud_optical_properties must be 'direct_input' or "
+                    "'liquid_and_ice_clouds' for radiative calculations with "
+                    "clouds using McICA."
+                )
+            if cloud_optical_properties.lower() == 'liquid_and_ice_clouds':
+                if cloud_ice_properties.lower() == 'ebert_curry_one':
+                    logging.warning(
+                        "cloud_ice_properties should not be set to "
+                        "'ebert_curry_one' for shortwave calculations with "
+                        "McICA."
+                    )
+                if cloud_liquid_water_properties.lower() == 'radius_independent_absorption':
+                    logging.warning(
+                        "cloud_liquid_water_properties must be set to "
+                        "'radius_dependent_absorption' for use with McICA in "
+                        "the shortwave."
+                    )
+
+        if cloud_overlap_method is None:
+            cloud_overlap_method = 'random'
+        self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method.lower()]
+
+        self._cloud_optics = rrtmg_cloud_props_dict[cloud_optical_properties.lower()]
+        self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties.lower()]
+        self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
+        self._solar_var_flag = solar_variability_method
+        self._ignore_day_of_year = ignore_day_of_year
 
         if facular_sunspot_amplitude is None:
             self._fac_sunspot_coeff = np.ones(2)

@@ -10,6 +10,7 @@ Latest
 v0.16.0
 ------
 
+* Added some documentation for using RRTMG with McICA
 * CI Testing for Mac and py37 added.
 * Refactored initialisation code
 * Enable the McICA version of RRTMG Longwave for consistency
