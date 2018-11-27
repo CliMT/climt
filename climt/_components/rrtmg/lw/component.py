@@ -263,11 +263,6 @@ class RRTMGLongwave(TendencyComponent):
                         " This overrides all other properties. "
                         "There are no clouds."
                     )
-                elif cloud_overlap_method.lower() in rrtmg_cloud_overlap_method_dict.keys():
-                    logging.info(
-                        "With McICA, there is no difference in "
-                        "cloud_overlap_method between 'random',"
-                        " 'maximum_random' and 'maximum'.")
             if cloud_optical_properties.lower() == 'single_cloud_type':
                 logging.warning(
                     "cloud_optical_properties must be 'direct_input' or "
