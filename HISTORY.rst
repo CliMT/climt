@@ -7,6 +7,7 @@ Latest
 
 * Changed logo!
 * Fixed failing docs build
+* Few changes in the dry convection component. Significantly improves the performance.
 
 v0.16.0
 ------
