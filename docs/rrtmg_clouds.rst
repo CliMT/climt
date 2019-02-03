@@ -1,6 +1,118 @@
-=======================
-RRMTG Clouds with McICA
-=======================
+******************************************
+RRTMG - The Rapid Radiative Transfer Model
+******************************************
+
+============
+Introduction
+============
+
+Treatment of Clouds
+===================
+
+There are two methods in RRTMG, which handle clouds in different ways.
+
+McICA
+-----
+
+McICA allows us to have fractional cloud areas,
+by randomly assigning some wavelengths to see cloud
+and other wavelengths to see no cloud.
+For example if we have a cloud fraction of 40%,
+then 40% of the wavelengths see cloud, while the other 60%
+do not.
+
+nomcica
+-------
+
+With nomcica, all of the wavelengths see some cloud.
+Using this method for the shortwave we can only have cloud area fractions of
+zero and one, representing clear and completely overcast skies.
+On the other hand, if we are calculating longwave fluxes, we can also use
+fractional cloud area fractions.
+
+
+===============================
+Calculation of radiative fluxes
+===============================
+
+Longwave
+========
+
+Two properties are needed to calculate the longwave radiative fluxes;
+the absorptivity (or transmittance which equals one minus the absorptivity)
+and the emissivity.
+Values of these two properties are needed for each model layer,
+for both cloudy and clear sky regimes and for each waveband.
+
+.. code-block:: fortran
+
+    radld = radld * (1 - atrans(lev)) * (1 - efclfrac(lev,ib)) + &
+            gassrc * (1 - cldfrac(lev)) + bbdtot * atot(lev) * cldfrac(lev)
+
+The radiative fluxes at each layer(``radld``
+on the left hand side of the equations) are calculated from the
+radiative fluxes from the layer above (``radld``
+on the right hand side of the equation) and the properties of
+the layer.
+The first term in the equation above is fraction of radiative
+flux from the layer above that is transmitted through the layer.
+``atrans(lev)`` is the gaseous absorptivity and
+``efclfrac`` is the absorptivity of the cloud weighted by the
+cloud area fraction (`here for nomcica`_).
+The other two terms in the above equation are emission terms.
+The first of these represents emission from gases in the area of clear sky
+and the second represents emission from gases and cloud from the area of cloud.
+The equation for the upward longwave flux ``radlu`` is very similar: the flux
+is calculated from the radiative flux from the layer below and the properties
+of the layer.
+
+These equations are used with ``nomcica`` when the ``rrtmg_cloud_overlap_method``
+is set to ``random`` and the cloud area fraction is greater
+than 10\ :sup:`-6`\. These calculations are in the ``rrtmg_lw_rtrn.f90`` file,
+in the `downward radiative transfer loop`_ and
+`upward radiative transfer loop`_ respectively.
+These equations are also used with ``McICA``. In this case, ``efclfrac`` is either zero or the non-weighted
+absorptivity of the cloud and this is allocated randomly to each waveband,
+with the number of waveband receiving each depending on the cloud area fraction.
+For ``McICA``, these calculations are in the ``rrtmg_lw_rtrnmc.f90`` file, in the
+`downward loop`_ and `upward loop`_ respectively.
+In both files, in the downward loop there are three different ways of calculating
+the absorptivity, which use different approximations for the exponential of the
+optical depth. The one that is used depends on the optical depth of the clear sky
+and of the total sky.
+
+.. _`here for nomcica`: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_lw/rrtmg_lw_rtrn.f90#L307
+.. _`downward radiative transfer loop`: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_lw/rrtmg_lw_rtrn.f90#L350-L417
+.. _`upward radiative transfer loop`: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_lw/rrtmg_lw_rtrn.f90#L482-L485
+.. _`downward loop`: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_lw/rrtmg_lw_rtrnmc.f90#L339-L406
+.. _`upward loop`: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_lw/rrtmg_lw_rtrnmc.f90#L471-L474
+
+With ``nomcica``, if the ``rrtmg_cloud_overlap_method`` is set to any of the
+other options except ``random``, the ``rrtmg_lw_rtrnmr.f90`` file
+is called. Then, the radiative fluxes are calculated as follows, `at the end of the
+downward radiative transfer loop`_.
+
+.. code-block:: fortran
+
+    cldradd = cldradd * (1._rb - atot(lev)) + cldfrac(lev) * bbdtot * atot(lev)
+    clrradd = clrradd * (1._rb-atrans(lev)) + (1._rb - cldfrac(lev)) * gassrc
+    radld = cldradd + clrradd
+
+The downward radiative flux is split into the clear sky and cloudy components,
+``clrradd`` and ``cldradd`` respectively.
+Both components contain a transmittance term from the clear or cloudy part,
+respectively, of the layer above and an emission term. The emission terms are
+identical to those described above.
+The fluxes ``clrradd`` and ``cldradd`` are modified by an amount that depends on the change in
+cloud fraction between layers before they are used for the calculation of fluxes
+in the layer below.
+
+.. _`at the end of the downward radiative transfer loop`: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_lw/rrtmg_lw_rtrnmr.f90#L571-L575
+
+
+=================
+Clouds with McICA
+=================
 
 A brief description of the different options that can be used in RRTMG with McICA and the input parameters required in each case.
 
@@ -22,6 +134,7 @@ There are three options for the RRTMG ``inflag``, as given in the ``climt`` dict
 With McICA, we cannot use ``single_cloud_type``, but can choose between ``direct_input`` and ``liquid_and_ice_clouds``.
 If we choose ``direct_input``, we input the ``longwave_optical_thickness_due_to_cloud``, ``shortwave_optical_thickness_due_to_cloud``, as well as the shortwave parameters ``single_scattering_albedo_due_to_cloud``, ``cloud_asymmetry_parameter`` and ``cloud_forward_scattering_fraction``.
 The ``cloud_forward_scattering_fraction`` is used to scale the other shortwave parameters (``shortwave_optical_thickness_due_to_cloud``, ``single_scattering_albedo_due_to_cloud`` and ``cloud_asymmetry_parameter``), but it is not directly used in the radiative transfer calculations.
+If the ``cloud_forward_scattering_fraction`` is set to zero, no scaling is applied.
 The other cloud properties, namely ``cloud_ice_particle_size`` and ``cloud_water_droplet_radius``, ``mass_content_of_cloud_ice_in_atmosphere_layer``, and ``mass_content_of_cloud_liquid_water_in_atmosphere_layer`` are completely unused.
 The RRTMG ``iceflag`` and ``liqflag`` are irrelevant.
 
@@ -30,6 +143,8 @@ any input values for ``longwave_optical_thickness_due_to_cloud``, ``shortwave_op
 Instead, these parameters are calculated from the cloud ice and water droplet particle sizes (``cloud_ice_particle_size`` and ``cloud_water_droplet_radius``), as well as the cloud ice and water paths (``mass_content_of_cloud_ice_in_atmosphere_layer``, ``mass_content_of_cloud_liquid_water_in_atmosphere_layer``).
 The methods used for the calculations depend on the cloud ice and water properties; ``iceflag`` and ``liqflag`` in RRTMG.
 
+Regardless of the other cloud input type, ``cloud_area_fraction_in_atmosphere_layer`` is required,
+and is used in McICA to determine how much of the wavelength spectrum sees cloud and how much does not.
 
 Calculation of cloud properties
 ===============================
@@ -164,7 +279,7 @@ The particle size dependence comes from ``radice``, so each parameter consists o
 
 .. figure:: ./ice_cloud_optical_depth.png
 
-    *The dependence of cloud optical depth, `taucmc`, on cloud ice particle size (with an ice water path of 1), with different lines representing the different wavebands.*
+    *The dependence of cloud optical depth* ``taucmc`` *on cloud ice particle size (with an ice water path of 1), with different lines representing the different wavebands.*
 
 key_streamer_manual
 -------------------
@@ -223,7 +338,7 @@ The shortwave parameter ``forwliq`` is calculated as the square of ``gliq``.
 
 .. figure:: ./liquid_cloud_optical_depth.png
 
-    *The dependence of cloud optical depth, `taucmc`, on cloud liquid water particle size (with a liquid water path of 1), with different lines representing the different wavebands.*
+    *The dependence of cloud optical depth* ``taucmc`` *on cloud liquid water particle size (with a liquid water path of 1), with different lines representing the different wavebands.*
 
 
 Cloud overlap method
@@ -242,6 +357,84 @@ This is the RRTMG ``icld`` and is given in the climt dictionary: rrtmg_cloud_ove
         'maximum': 3
     }
 
-
 If we choose ``clear_only``, there are no clouds, regardless of the other input.
-There is no difference between the other three options (``random``, ``maximum_random`` and ``maximum``) for the McICA version of RRTMG.
+If we choose ``random``, the g-intervals which see cloud are chosen randomly for
+each model layer. This means that there is a dependence on vertical resolution:
+if vertical resolution is increased, more layers contain the same cloud
+and a larger portion of the wavelength spectrum sees some of the cloud.
+With ``maximum_random``, the g-intervals that see cloud in one model layer are
+the same as those that see cloud in a neighbouring model layer.
+This maximises the cloud overlap between neighbouring layers (within a single
+cloud). If the cloud area fraction changes between layers, the additional
+g-intervals that see (or don't see) cloud are assigned randomly. Therefore, if
+there are two clouds at different altitudes, separated by clear sky, the two
+clouds overlap randomly with respect to each other. If ``maximum`` is selected,
+cloud overlap is maximised both within and between clouds.
+
+The implementation is in the `mcica_subcol_gen_sw`_ and `mcica_subcol_gen_lw`_
+files, and consists firstly of assigning each g-interval a random number in the
+range [0, 1]. For ``random``, and ``maximum_random`` (cases 1 and 2 in
+`mcica_subcol_gen_sw`_ and `mcica_subcol_gen_lw`_), random numbers are generated
+for each layer, whereas for ``maximum`` (case 3) only one set of random numbers
+is generated and applied to all the layers. For ``maximum_random``, the random
+numbers are recalculated to fulfill the assumption about overlap (this
+recalculation is described below).
+Whether a g-interval at a certain layer sees cloud depends on both the random
+number it has been assigned and the cloud fraction at that layer. For example,
+if the cloud area fraction is 30%, all g-intervals that have been assigned a
+random number > 0.7 (approximately 30% of the g-intervals) will see cloud.
+The other g-intervals will see clear-sky. If the cloud fraction is 20%, only
+g-intervals with a random number > 0.8 will see cloud.
+The recalculation of random numbers in the ``maximum_random`` case for a certain
+model layer (layer 2), considers the assigned random numbers and cloud area
+fraction of the layer above (layer 1).
+If the g-interval sees cloud in layer 1, its random number in layer 2 is
+changed so that it matches that in layer 1. This does not necessarily mean that
+it will see cloud in layer 2, because the cloud fraction could be smaller in
+layer 2 than layer 1 (so the requirement for seeing cloud would be increased).
+The random numbers for the g-intervals in layer 2, which do not see cloud in
+layer 1, are multiplied by one minus the cloud area fraction of layer 1, so that
+the set of random numbers assigned to layer 2 are still randomly distributed in
+the range [0, 1]. This is required so that the right proportion of g-intervals
+in layer 2 see cloud.
+
+.. _mcica_subcol_gen_lw: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_lw/mcica_subcol_gen_lw.f90#L347-L470
+.. _mcica_subcol_gen_sw: https://github.com/CliMT/climt/blob/b74d69003bc6c88e99580fa3ff05d4ca886da033/climt/_lib/rrtmg_sw/mcica_subcol_gen_sw.f90#L374-L497
+
+=======================================
+Differences in cloud input with nomcica
+=======================================
+
+Regarding the options that can be used with nomcica,
+there are a few differences to those that can be used with McICA.
+
+Cloud properties
+================
+
+For the longwave, we can choose ``single_cloud_type`` in the `rrtmg_cloud_props_dict`_.
+The longwave cloud optical depth is calculated as follows.
+
+.. code-block:: fortran
+
+    taucloud(lay,ib) = abscld1 * (ciwp(lay) + clwp(lay))
+
+This gives us a cloud optical depth based on a single constant value, ``abscld1``
+and the total cloud water path.
+Thus, for this option, the ``mass_content_of_cloud_ice_in_atmosphere_layer``, and
+``mass_content_of_cloud_liquid_water_in_atmosphere_layer`` are needed as input.
+``single_cloud_type`` is not available for the shortwave.
+
+If we choose ``liquid_and_ice_clouds``, the calculations of the longwave and shortwave
+optical properties from the cloud mass and particle sizes are the same as for McICA,
+but are calculated for each waveband instead of each g-interval.
+
+Cloud overlap method
+====================
+
+With nomcica choosing a cloud overlap of ``random`` in the
+`rrtmg_cloud_overlap_method_dict`_ is different to choosing either
+``maximum_random`` or ``maximum``. The latter two options do not differ.
+If we choose ``random``, the radiative flux transmitted from one layer to the next
+does not care if it came from cloud or clear sky,
+whereas with ``maximum_random``, the cloudy and clear fluxes are separated and
+treated separately from one model layer to the next.

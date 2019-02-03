@@ -5,6 +5,7 @@ History
 Latest
 -------
 
+* Few changes in the dry convection component. Significantly improves the performance.
 * Changed logo!
 * Fixed failing docs build
 

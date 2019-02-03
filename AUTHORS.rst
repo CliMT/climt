@@ -21,3 +21,4 @@ Contributors
 * Raymond Pierrehumbert <raymond.pierrehumbert@physics.ox.ac.uk>
 * Dargan Frierson <dargan@atmos.washington.edu>
 * Jonathan Mitchell <jonmitch@ucla.edu>
+* Suhas D L <suhasd@iisc.ac.in>
