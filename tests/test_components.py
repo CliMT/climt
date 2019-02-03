@@ -363,10 +363,6 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
         assert 'no clouds' in caplog.text
         caplog.clear()
 
-        RRTMGLongwave(mcica=True, cloud_overlap_method='random')
-        assert 'no difference' in caplog.text
-        caplog.clear()
-
         RRTMGLongwave(mcica=True, cloud_optical_properties='single_cloud_type')
         assert "must be 'direct_input' or " \
                "'liquid_and_ice_clouds'" in caplog.text
@@ -410,10 +406,6 @@ class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
         caplog.set_level(logging.INFO)
         RRTMGShortwave(mcica=True, cloud_overlap_method='clear_only')
         assert 'no clouds' in caplog.text
-        caplog.clear()
-
-        RRTMGShortwave(mcica=True, cloud_overlap_method='random')
-        assert 'no difference' in caplog.text
         caplog.clear()
 
         RRTMGShortwave(mcica=True, cloud_optical_properties='single_cloud_type')
