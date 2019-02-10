@@ -36,7 +36,13 @@ before_install:
     then curl -sSL https://rvm.io/mpapis.asc | gpg --import -
     rvm get stable
     brew update
-    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.4"
+    PROD=$(softwareupdate -l |
+    grep "\*.*Command Line" |
+    head -n 1 | awk -F"*" '{print $2}' |
+    sed -e 's/^ *//' |
+    tr -d '\n')
+    echo $(PROD)
+    sudo softwareupdate -i "$(PROD)" --verbose
     brew cask uninstall oclint
     brew install gcc@6
     brew install md5sha1sum
