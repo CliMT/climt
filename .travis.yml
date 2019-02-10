@@ -41,8 +41,8 @@ before_install:
     head -n 1 | awk -F"*" '{print $2}' |
     sed -e 's/^ *//' |
     tr -d '\n')
-    echo $(PROD)
-    sudo softwareupdate -i "$(PROD)" --verbose
+    echo $PROD
+    sudo softwareupdate -i "$PROD" --verbose
     brew cask uninstall oclint
     brew install gcc@6
     brew install md5sha1sum
