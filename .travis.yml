@@ -103,7 +103,7 @@ jobs:
           - tox -e ${TOXENV}
     - stage: big tests
       os: osx
-      osx_image: xcode9.4
+      osx_image: xcode10.1
       language: generic
       env: PYTHON_VERSION=3.6 TOXENV=py36 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
       install:
@@ -113,8 +113,8 @@ jobs:
           - python -m pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
+          - python -c 'import climt'
           # - python setup.py develop
-          # - python -c 'import climt'
           # - py.test
     - stage: big tests
       os: osx
