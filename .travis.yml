@@ -107,7 +107,8 @@ jobs:
       install:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
-          - while read requirement; do conda install --yes $requirement && pip install $requirement; done < requirements_dev.txt
+          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
+          - python -m pip install -r requirements_dev.txt
           - pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
@@ -122,7 +123,8 @@ jobs:
       install:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
-          - while read requirement; do conda install --yes $requirement && pip install $requirement; done < requirements_dev.txt
+          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
+          - python -m pip install -r requirements_dev.txt
           - pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
