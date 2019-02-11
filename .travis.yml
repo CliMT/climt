@@ -110,10 +110,10 @@ jobs:
           - python -m pip install -r requirements_dev.txt
           - python -m pip install -U tox
       script:
-          - python setup.py develop
-          - python -c 'import climt'
-          - py.test
-          # - travis_wait 50 tox -e ${TOXENV}
+          - travis_wait 50 tox -e ${TOXENV}
+          # - python setup.py develop
+          # - python -c 'import climt'
+          # - py.test
     - stage: big tests
       os: osx
       osx_image: xcode10.1
