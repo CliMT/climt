@@ -40,7 +40,6 @@ before_install:
     brew cask uninstall oclint
     brew install gcc@6
     brew install md5sha1sum
-    ls -la climt/_lib/*
     fi
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
@@ -110,7 +109,10 @@ jobs:
           - python -m pip install -r requirements_dev.txt
           - python -m pip install -U tox
       script:
-          - travis_wait 50 tox -e ${TOXENV}
+          - python setup.py develop
+          - python -c 'import climt'
+          - py.test
+          # - travis_wait 50 tox -e ${TOXENV}
     - stage: big tests
       os: osx
       osx_image: xcode10.1
