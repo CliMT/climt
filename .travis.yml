@@ -107,8 +107,8 @@ jobs:
       install:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
-          - conda install --yes --file requirements_dev.txt
-          - conda install --yes tox
+          - while read requirement; do conda install --yes $requirement && pip install $requirement; done < requirements_dev.txt
+          - pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
           - python -c 'import climt'
@@ -122,8 +122,8 @@ jobs:
       install:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
-          - python -m pip install -r requirements_dev.txt
-          - python -m pip install -U tox
+          - while read requirement; do conda install --yes $requirement && pip install $requirement; done < requirements_dev.txt
+          - pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
     - stage: wheels
