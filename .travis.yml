@@ -36,7 +36,8 @@ before_install:
     then curl -sSL https://rvm.io/mpapis.asc | gpg --import -
     rvm get stable
     brew update > /dev/null
-    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-10.1" --verbose
+    softwareupdate -l
+    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.4" --verbose
     brew cask uninstall oclint
     brew install gcc@6
     brew install md5sha1sum
@@ -100,7 +101,7 @@ jobs:
           - tox -e ${TOXENV}
     - stage: big tests
       os: osx
-      osx_image: xcode10.1
+      osx_image: xcode9.4
       language: generic
       env: PYTHON_VERSION=3.6 TOXENV=py36 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
       install:
