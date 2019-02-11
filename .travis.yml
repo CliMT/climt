@@ -36,12 +36,10 @@ before_install:
     then curl -sSL https://rvm.io/mpapis.asc | gpg --import -
     rvm get stable
     brew update > /dev/null
-    echo $DYLD_LIBRARY_PATH
-    ls /usr/local/opt/gcc\@6/lib/gcc/6/
-    softwareupdate -l
-    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.4" --verbose
+    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-10.1" --verbose
     brew cask uninstall oclint
     brew install gcc@6
+    ls /usr/local/opt/gcc\@6/lib/gcc/6/
     brew install md5sha1sum
     fi
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -109,8 +107,8 @@ jobs:
       install:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
-          - python -m pip install -r requirements_dev.txt
-          - python -m pip install -U tox
+          - conda install --yes --file requirements_dev.txt
+          - conda install --yes tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
           - python -c 'import climt'
