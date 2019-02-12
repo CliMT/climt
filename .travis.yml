@@ -38,7 +38,7 @@ before_install:
     brew update > /dev/null
     sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-10.1" --verbose
     brew cask uninstall oclint
-    brew uninstall gcc
+    brew uninstall --ignore-dependencies gcc
     brew install gcc@6
     ls /usr/local/opt/gcc\@6/lib/gcc/6/
     brew install md5sha1sum
