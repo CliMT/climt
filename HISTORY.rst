@@ -5,6 +5,7 @@ History
 Latest
 -------
 
+* Fixed issue with Mac build
 * Few changes in the dry convection component. Significantly improves the performance.
 * Changed logo!
 * Fixed failing docs build

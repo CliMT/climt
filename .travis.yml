@@ -40,7 +40,6 @@ before_install:
     brew cask uninstall oclint
     brew uninstall --ignore-dependencies gcc
     brew install gcc@6
-    ls /usr/local/opt/gcc\@6/lib/gcc/6/
     brew install md5sha1sum
     fi
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -113,9 +112,6 @@ jobs:
           - pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
-          - python -c 'import climt'
-          # - python setup.py develop
-          # - py.test
     - stage: big tests
       os: osx
       osx_image: xcode10.1
