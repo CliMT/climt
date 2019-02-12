@@ -40,6 +40,7 @@ install:
   - bash -c "cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe"
   - conda install pandas
   - conda install libpython
+  - conda install numpy==1.15.2 scipy>=0.18.1 cython>=0.25
   - python -m pip install -r requirements_dev.txt
   - conda upgrade pip setuptools wheel
 # - set COMPILER_PATH=C:\\msys64\\mingw64\\bin\\
