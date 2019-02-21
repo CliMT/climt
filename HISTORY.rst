@@ -2,6 +2,11 @@
 History
 =======
 
+v.0.16.2
+--------
+
+* Fix wheel build on Mac
+
 v.0.16.1
 -------
 
