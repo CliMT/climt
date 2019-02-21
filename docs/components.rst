@@ -35,6 +35,9 @@ Radiation
     Frierson06LongwaveOpticalDepth
     Frierson06LongwaveOpticalDepth.__call__
 
+    Instellation
+    Instellation.__call__
+
 Convection
 ----------
 
