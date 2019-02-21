@@ -2,7 +2,7 @@
 History
 =======
 
-Latest
+v.0.16.1
 -------
 
 * Fixed issue with Mac build
