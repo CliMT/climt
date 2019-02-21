@@ -97,7 +97,7 @@ class DcmipInitialConditions(DiagnosticComponent):
         if condition_type not in ['baroclinic_wave', 'tropical_cyclone']:
             raise ValueError("type_of_output has to be one \
                              of 'baroclinic_wave' or 'tropical_cyclone'")
-        if condition_type is 'tropical_cyclone' and moist is False:
+        if condition_type == 'tropical_cyclone' and moist is False:
             raise ValueError("moist_simulation must be True for tropical cyclone test")
         self._condition_type = condition_type
         self._add_perturbation = add_perturbation
@@ -116,13 +116,13 @@ class DcmipInitialConditions(DiagnosticComponent):
             self.diagnostic_properties, state, self.input_properties
         )
 
-        if self._condition_type is 'baroclinic_wave':
+        if self._condition_type == 'baroclinic_wave':
             u, v, t, q, p_surface, phi_surface = _dcmip.get_baroclinic_wave_ics(
                 state['air_pressure'],
                 longitude, latitude,
                 perturb=self._add_perturbation,
                 moist_sim=self._moist)
-        elif self._condition_type is 'tropical_cyclone':
+        elif self._condition_type == 'tropical_cyclone':
             u, v, t, q, p_surface, phi_surface = _dcmip.get_tropical_cyclone_ics(
                 state['air_pressure'],
                 longitude, latitude,

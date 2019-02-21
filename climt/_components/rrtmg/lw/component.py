@@ -160,7 +160,7 @@ class RRTMGLongwave(TendencyComponent):
     def __init__(
             self,
             calculate_change_up_flux=False,
-            cloud_overlap_method='random',
+            cloud_overlap_method=None,
             cloud_optical_properties='liquid_and_ice_clouds',
             cloud_ice_properties='ebert_curry_two',
             cloud_liquid_water_properties='radius_dependent_absorption',
@@ -190,14 +190,18 @@ class RRTMGLongwave(TendencyComponent):
             cloud_optical_properties (string):
                 Choose how cloud optical properties are calculated:
 
-                * :code:`direct_input` = Both cloud fraction and cloud optical depth are input directly
+                * :code:`direct_input` = Both cloud fraction and cloud optical depth are input directly.
+                  Other cloud properties (ie cloud particle size) are irrelevant.
                 * :code:`single_cloud_type` = Cloud fraction and cloud physical properties are input, ice
-                  and liquid clouds are treated together, cloud absorptivity is a constant value (0.060241)
+                  and liquid clouds are treated together, cloud absorptivity is a constant value (0.060241).
+                  Not available with McICA.
                 * :code:`liquid_and_ice_clouds` = Cloud fraction and cloud physical properties are input, ice and liquid
-                  clouds are treated separately
+                  clouds are treated separately. Cloud optical depth is calculated from the cloud ice and water particle
+                  sizes and the mass content of cloud ice and cloud water.
+
 
             cloud_ice_properties (string):
-                set bounds on ice particle size.
+                set bounds on ice particle size. This is not used if 'cloud_optical_properties' == 'direct_input'
 
                 * :code:`ebert_curry_one` = ice particle has effective radius >= 10.0 micron `[Ebert and Curry 1992]`_
                 * :code:`ebert_curry_two` = ice particle has effective radius between 13.0 and 130.0 micron `[Ebert and Curry 1992]`_
@@ -209,7 +213,7 @@ class RRTMGLongwave(TendencyComponent):
                 Default value is 0.
 
             cloud_liquid_water_properties (string):
-                set treatment of cloud liquid water.
+                set treatment of cloud liquid water. This is not used if 'cloud_optical_properties' == 'direct_input'.
 
                 * :code:`radius_independent_absorption` = use radius independent absorption coefficient
                 * :code:`radius_dependent_absorption` = use radius dependent absorption coefficient (radius between 2.5 and 60 micron)
@@ -248,16 +252,32 @@ class RRTMGLongwave(TendencyComponent):
         else:
             self._calc_dflxdt = 0
 
+        self._mcica = mcica
+        if mcica:
+            self._random_number_generator = random_number_generator
+            self._permute_seed = permute_seed
+            if type(cloud_overlap_method) is str:
+                if cloud_overlap_method.lower() == 'clear_only':
+                    logging.info(
+                        "cloud_overlap_method == 'clear_only'."
+                        " This overrides all other properties. "
+                        "There are no clouds."
+                    )
+            if cloud_optical_properties.lower() == 'single_cloud_type':
+                logging.warning(
+                    "cloud_optical_properties must be 'direct_input' or "
+                    "'liquid_and_ice_clouds' for radiative calculations with "
+                    "clouds using McICA."
+                )
+
+        if cloud_overlap_method is None:
+            cloud_overlap_method = 'random'
         self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method.lower()]
+
         self._cloud_optics = rrtmg_cloud_props_dict[cloud_optical_properties.lower()]
         self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties.lower()]
         self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
         self._calc_Tint = calculate_interface_temperature
-        self._mcica = mcica
-
-        if mcica:
-            self._random_number_generator = random_number_generator
-            self._permute_seed = permute_seed
 
         self._g = get_constant('gravitational_acceleration', 'm/s^2')
         self._planck = get_constant('planck_constant', 'erg s')

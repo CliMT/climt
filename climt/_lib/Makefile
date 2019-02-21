@@ -22,10 +22,6 @@ LDFLAGS = "-L$(LIB_DIR)"
 
 CLIMT_LIB_TARGETS = blas_lib fftw_lib
 
-# ifeq ($(CLIMT_ARCH),Darwin)
-#	CLIMT_LIB_TARGETS = 
-# endif
-
 ifeq ($(CLIMT_ARCH),Windows)
 	BASE_DIR = $(subst \,/,$(PWD))
 	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/

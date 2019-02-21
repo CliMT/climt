@@ -5,6 +5,7 @@ import sys
 from glob import glob
 import xarray as xr
 import numpy as np
+import logging
 from climt import (
     HeldSuarez, GrayLongwaveRadiation,
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
@@ -356,6 +357,16 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
         state['mass_content_of_cloud_ice_in_atmosphere_layer'][16:19] = 0.3
         return state
 
+    def test_rrtmg_logging(self, caplog):
+        caplog.set_level(logging.INFO)
+        RRTMGLongwave(mcica=True, cloud_overlap_method='clear_only')
+        assert 'no clouds' in caplog.text
+        caplog.clear()
+
+        RRTMGLongwave(mcica=True, cloud_optical_properties='single_cloud_type')
+        assert "must be 'direct_input' or " \
+               "'liquid_and_ice_clouds'" in caplog.text
+
 
 class TestRRTMGLongwaveWithClouds(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
@@ -390,6 +401,28 @@ class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
 
     def test_reversed_state_gives_same_output(self):
         return
+
+    def test_rrtmg_logging(self, caplog):
+        caplog.set_level(logging.INFO)
+        RRTMGShortwave(mcica=True, cloud_overlap_method='clear_only')
+        assert 'no clouds' in caplog.text
+        caplog.clear()
+
+        RRTMGShortwave(mcica=True, cloud_optical_properties='single_cloud_type')
+        assert "must be 'direct_input' or " \
+               "'liquid_and_ice_clouds'" in caplog.text
+        caplog.clear()
+
+        RRTMGShortwave(mcica=True,
+                       cloud_optical_properties='liquid_and_ice_clouds',
+                       cloud_ice_properties='ebert_curry_one')
+        assert "not be set to 'ebert_curry_one'" in caplog.text
+        caplog.clear()
+
+        RRTMGShortwave(mcica=True,
+                       cloud_optical_properties='liquid_and_ice_clouds',
+                       cloud_liquid_water_properties='radius_independent_absorption')
+        assert "must be set to 'radius_dependent_absorption'" in caplog.text
 
 
 class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):

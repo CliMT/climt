@@ -29,13 +29,16 @@ allow_failures:
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gfortran; fi
+- echo $PWD
+- ls -la climt/_lib/*
 - |
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; 
     then curl -sSL https://rvm.io/mpapis.asc | gpg --import -
     rvm get stable
-    brew update
-    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.4"
+    brew update > /dev/null
+    sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-10.1" --verbose
     brew cask uninstall oclint
+    brew uninstall --ignore-dependencies gcc
     brew install gcc@6
     brew install md5sha1sum
     fi
@@ -98,24 +101,28 @@ jobs:
           - tox -e ${TOXENV}
     - stage: big tests
       os: osx
+      osx_image: xcode10.1
       language: generic
       env: PYTHON_VERSION=3.6 TOXENV=py36 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
       install:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
+          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
           - python -m pip install -r requirements_dev.txt
-          - python -m pip install -U tox
+          - pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
     - stage: big tests
       os: osx
+      osx_image: xcode10.1
       language: generic
       env: PYTHON_VERSION=3.7 TOXENV=py37 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
       install:
           - conda create -q -n test-environment python=$PYTHON_VERSION
           - source activate test-environment
+          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
           - python -m pip install -r requirements_dev.txt
-          - python -m pip install -U tox
+          - pip install -U tox
       script:
           - travis_wait 50 tox -e ${TOXENV}
     - stage: wheels

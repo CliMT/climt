@@ -65,11 +65,13 @@ class DryConvectiveAdjustment(Stepper):
 
         num_levels = q.shape[0]
 
+        pdiff = state['P_int'][:-1, :] - state['P_int'][1:, :]
+        theta_q = theta*(1 + output_q*self._Rv/self._Rdair - output_q)
+
         for column in range(q.shape[-1]):
             for level in range(num_levels-1, -1, -1):
 
-                dp = state['P_int'][:-1, column] - state['P_int'][1:, column]
-                theta_q = theta*(1 + output_q*self._Rv/self._Rdair - output_q)
+                dp = pdiff[:, column]
                 theta_sum = np.cumsum(theta_q[level::, column])
                 divisor = np.arange(1, num_levels - level+1)
 
