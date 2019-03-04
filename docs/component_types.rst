@@ -15,8 +15,8 @@ or :py:class:`Stepper`.
 * :py:class:`Stepper` takes the model state, and returns new values for some some quantities
   in the model state. A dynamical core is a good example, which returns new values of winds,
   temperature and pressure.
-* :py:class:`ImplicitTendencyComponent`  takes the model state and outputs tendencies (like a :py:class:`ClimtPrognostic`)
-  but require the model timestep (like a :py:class:`ClimtImplicit`) for various reasons, including to ensure
+* :py:class:`ImplicitTendencyComponent`  takes the model state and outputs tendencies (like a :py:class:`TendencyComponent`)
+  but require the model timestep (like a :py:class:`Stepper`) for various reasons, including to ensure
   that a vertical CFL_ criterion is met.
 
 

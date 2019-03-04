@@ -2,6 +2,11 @@
 History
 =======
 
+Latest
+-------
+
+* Fix error in documentation
+
 v.0.16.2
 --------
 
