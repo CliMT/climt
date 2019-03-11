@@ -2,9 +2,10 @@
 History
 =======
 
-Latest
+v.0.16.3
 -------
 
+* update numpy requirement to avoid binary incompatibility error
 * Fix error in documentation
 
 v.0.16.2
