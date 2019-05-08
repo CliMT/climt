@@ -317,9 +317,6 @@ class RRTMGShortwave(TendencyComponent):
                 * random_number_generator = 0: kissvec
                 * random_number_generator = 1: Mersenne Twister
 
-            permute_seed (int):
-                For McICA, permute the seed between each call to the cloud generator.
-
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
 
@@ -332,8 +329,8 @@ class RRTMGShortwave(TendencyComponent):
         self._mcica = mcica
 
         if mcica:
+            self._permute_seed = None
             self._random_number_generator = random_number_generator  # TODO: make dictionary
-            self._permute_seed = permute_seed
             if type(cloud_overlap_method) is str:
                 if cloud_overlap_method.lower() == 'clear_only':
                     logging.info(
@@ -410,21 +407,7 @@ class RRTMGShortwave(TendencyComponent):
             self._stef_boltz,
             self._secs_per_day)
 
-        if mcica:
-            _rrtmg_sw.initialise_rrtm_radiation_mcica(
-                self._Cpd,
-                self._solar_const,
-                self._fac_sunspot_coeff,
-                self._solar_var_by_band,
-                self._cloud_overlap,
-                self._cloud_optics,
-                self._ice_props,
-                self._liq_props,
-                self._aerosol_type,
-                self._solar_var_flag,
-                self._random_number_generator,
-                self._permute_seed)
-        else:
+        if not mcica:
             _rrtmg_sw.initialise_rrtm_radiation(
                 self._Cpd,
                 self._solar_const,
@@ -514,6 +497,26 @@ class RRTMGShortwave(TendencyComponent):
                 'cloud_forward_scattering_fraction': np.zeros(
                     (mid_levels, num_cols, num_reduced_g_intervals))
             }
+
+            # Change parameter for random number generator - each time the
+            # radiation is called, with the same state / input properties,
+            # a different result is obtained, because the wavelengths which
+            # see cloud differ between each call.
+            self._permute_seed = int(np.random.rand()*500)
+
+            _rrtmg_sw.initialise_rrtm_radiation_mcica(
+                self._Cpd,
+                self._solar_const,
+                self._fac_sunspot_coeff,
+                self._solar_var_by_band,
+                self._cloud_overlap,
+                self._cloud_optics,
+                self._ice_props,
+                self._liq_props,
+                self._aerosol_type,
+                self._solar_var_flag,
+                self._random_number_generator,
+                self._permute_seed)
 
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica(
                 self.rrtm_iplon,
