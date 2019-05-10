@@ -74,6 +74,7 @@ def transpose_state(state, dims=None):
 
 def call_with_timestep_if_needed(
         component, state, timestep=timedelta(seconds=10.)):
+    np.random.seed(0)
     if isinstance(component, (Stepper, TendencyStepper, ImplicitTendencyComponent)):
         return component(state, timestep=timestep)
     else:
