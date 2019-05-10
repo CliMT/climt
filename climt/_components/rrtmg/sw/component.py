@@ -502,7 +502,7 @@ class RRTMGShortwave(TendencyComponent):
             # radiation is called, with the same state / input properties,
             # a different result is obtained, because the wavelengths which
             # see cloud differ between each call.
-            self._permute_seed = int(np.random.rand()*500)
+            self._permute_seed = np.random.randint(0, 500)
 
             _rrtmg_sw.initialise_rrtm_radiation_mcica(
                 self._Cpd,
