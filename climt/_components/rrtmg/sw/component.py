@@ -515,8 +515,8 @@ class RRTMGShortwave(TendencyComponent):
                 self._liq_props,
                 self._aerosol_type,
                 self._solar_var_flag,
-                self._random_number_generator,
-                self._permute_seed)
+                self._permute_seed,
+                self._random_number_generator)
 
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica(
                 self.rrtm_iplon,
