@@ -53,3 +53,13 @@ rrtmg_aerosol_input_dict = {
     'ecmwf': 6,
     'all_aerosol_properties': 10
 }
+
+"""
+Dictionary mapping input options of RRTMG radiative
+components to integers accepted by the RRTMG fortran
+code
+"""
+rrtmg_random_number_dict = {
+    'kissvec': 0,
+    'mersenne_twister': 1
+}
