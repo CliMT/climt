@@ -370,7 +370,15 @@ class RRTMGLongwave(TendencyComponent):
             # radiation is called, with the same state / input properties,
             # a different result is obtained, because the wavelengths which
             # see cloud differ between each call.
-            self._permute_seed = np.random.randint(0, 500)
+            if self._random_number_generator == 0:
+                # KISS algorithm: The seed determines the number of times
+                # the random number generator is called iteratively to create a
+                # new random number. The value range of the seed is limited to
+                # avoid a performance decrease.
+                self._permute_seed = np.random.randint(0, 1024)
+            elif self._random_number_generator == 1:
+                # Mersenne Twister: Use random seed from the full 32bit range.
+                self._permute_seed = np.random.randint(0, 2**31 -1)
 
             _rrtmg_lw.initialise_rrtm_radiation_mcica(
                 self._Cpd,
