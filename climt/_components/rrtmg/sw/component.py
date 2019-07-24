@@ -513,7 +513,7 @@ class RRTMGShortwave(TendencyComponent):
                 self._permute_seed = np.random.randint(0, 1024)
             elif self._random_number_generator == 1:
                 # Mersenne Twister: Use random seed from the full 32bit range.
-                self._permute_seed = np.random.randint(0, 2**31 -1)
+                self._permute_seed = np.random.randint(0, 2**31 - 1)
 
             _rrtmg_sw.initialise_rrtm_radiation_mcica(
                 self._Cpd,
