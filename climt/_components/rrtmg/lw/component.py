@@ -167,7 +167,7 @@ class RRTMGLongwave(TendencyComponent):
             cloud_liquid_water_properties='radius_dependent_absorption',
             calculate_interface_temperature=True,
             mcica=False,
-            random_number_generator='kissvec',
+            random_number_generator='mersenne_twister',
             **kwargs):
         """
 

@@ -204,7 +204,7 @@ class RRTMGShortwave(TendencyComponent):
             solar_variability_by_band=None,
             aerosol_type='no_aerosol',
             mcica=False,
-            random_number_generator='kissvec',
+            random_number_generator='mersenne_twister',
             **kwargs):
         """
         Args:
