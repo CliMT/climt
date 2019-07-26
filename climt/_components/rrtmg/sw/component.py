@@ -10,7 +10,9 @@ from numpy import pi as numpy_pi
 from ..rrtmg_common import (
     rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,
     rrtmg_cloud_ice_props_dict, rrtmg_cloud_liquid_props_dict,
-    rrtmg_aerosol_input_dict)
+    rrtmg_aerosol_input_dict,
+    rrtmg_random_number_dict,
+)
 import logging
 try:
     from . import _rrtmg_sw
@@ -202,8 +204,8 @@ class RRTMGShortwave(TendencyComponent):
             solar_variability_by_band=None,
             aerosol_type='no_aerosol',
             mcica=False,
-            random_number_generator=0,
-            permute_seed=112, **kwargs):
+            random_number_generator='mersenne_twister',
+            **kwargs):
         """
         Args:
 
@@ -312,10 +314,10 @@ class RRTMGShortwave(TendencyComponent):
                 * mcica = True: use the McICA version for the shortwave component of RRTMG
                 * mcica = False: use the nomcica version for the shortwave component of RRTMG
 
-            random_number_generator (int):
+            random_number_generator (string):
                 Different methods of generating random numbers for McICA.
-                * random_number_generator = 0: kissvec
-                * random_number_generator = 1: Mersenne Twister
+                * :code:`kissvec`
+                * :code:`mersenne_twister`
 
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
@@ -330,7 +332,8 @@ class RRTMGShortwave(TendencyComponent):
 
         if mcica:
             self._permute_seed = None
-            self._random_number_generator = random_number_generator  # TODO: make dictionary
+            self._random_number_generator = rrtmg_random_number_dict[
+                random_number_generator.lower()]
             if type(cloud_overlap_method) is str:
                 if cloud_overlap_method.lower() == 'clear_only':
                     logging.info(
@@ -502,7 +505,15 @@ class RRTMGShortwave(TendencyComponent):
             # radiation is called, with the same state / input properties,
             # a different result is obtained, because the wavelengths which
             # see cloud differ between each call.
-            self._permute_seed = np.random.randint(0, 500)
+            if self._random_number_generator == 0:
+                # KISS algorithm: The seed determines the number of times
+                # the random number generator is called iteratively to create a
+                # new random number. The value range of the seed is limited to
+                # avoid a performance decrease.
+                self._permute_seed = np.random.randint(0, 1024)
+            elif self._random_number_generator == 1:
+                # Mersenne Twister: Use random seed from the full 32bit range.
+                self._permute_seed = np.random.randint(0, 2**31 - 1)
 
             _rrtmg_sw.initialise_rrtm_radiation_mcica(
                 self._Cpd,
@@ -515,8 +526,8 @@ class RRTMGShortwave(TendencyComponent):
                 self._liq_props,
                 self._aerosol_type,
                 self._solar_var_flag,
-                self._random_number_generator,
-                self._permute_seed)
+                self._permute_seed,
+                self._random_number_generator)
 
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica(
                 self.rrtm_iplon,
