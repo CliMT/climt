@@ -167,7 +167,6 @@ class RRTMGLongwave(TendencyComponent):
             calculate_interface_temperature=True,
             mcica=False,
             random_number_generator=0,
-            permute_seed=112,
             **kwargs):
         """
 
@@ -233,9 +232,6 @@ class RRTMGLongwave(TendencyComponent):
                 * random_number_generator = 0: kissvec
                 * random_number_generator = 1: Mersenne Twister
 
-            permute_seed (int):
-                For McICA, permute the seed between each call to the cloud generator.
-
         .. _[Ebert and Curry 1992]:
             http://onlinelibrary.wiley.com/doi/10.1029/91JD02472/abstract
 
@@ -254,8 +250,8 @@ class RRTMGLongwave(TendencyComponent):
 
         self._mcica = mcica
         if mcica:
+            self._permute_seed = None
             self._random_number_generator = random_number_generator
-            self._permute_seed = permute_seed
             if type(cloud_overlap_method) is str:
                 if cloud_overlap_method.lower() == 'clear_only':
                     logging.info(
@@ -307,17 +303,7 @@ class RRTMGLongwave(TendencyComponent):
             self._stef_boltz,
             self._secs_per_day)
 
-        if mcica:
-            _rrtmg_lw.initialise_rrtm_radiation_mcica(
-                self._Cpd,
-                self._cloud_overlap,
-                self._calc_dflxdt,
-                self._cloud_optics,
-                self._ice_props,
-                self._liq_props,
-                self._permute_seed,
-                self._random_number_generator)
-        else:
+        if not mcica:
             # TODO Add all other flags as well
             _rrtmg_lw.initialise_rrtm_radiation(
                 self._Cpd,
@@ -377,6 +363,22 @@ class RRTMGLongwave(TendencyComponent):
                 'longwave_optical_thickness_due_to_cloud': np.zeros(
                     (mid_levels, num_cols, num_reduced_g_intervals))
             }
+
+            # Change parameter for random number generator - each time the
+            # radiation is called, with the same state / input properties,
+            # a different result is obtained, because the wavelengths which
+            # see cloud differ between each call.
+            self._permute_seed = np.random.randint(0, 500)
+
+            _rrtmg_lw.initialise_rrtm_radiation_mcica(
+                self._Cpd,
+                self._cloud_overlap,
+                self._calc_dflxdt,
+                self._cloud_optics,
+                self._ice_props,
+                self._liq_props,
+                self._permute_seed,
+                self._random_number_generator)
 
             _rrtmg_lw.rrtm_calculate_longwave_fluxes_mcica(
                 self.rrtm_iplon,
