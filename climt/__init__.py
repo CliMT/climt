@@ -28,4 +28,4 @@ __all__ = (
     EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions,
     IceSheet, Instellation, DryConvectiveAdjustment)
 
-__version__ = '0.16.8'
+__version__ = '0.16.9'
