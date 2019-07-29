@@ -10,7 +10,7 @@ v.0.16.4
 * Improvement of the user interface to control MCICA
 
 v.0.16.3
--------
+--------
 
 * update numpy requirement to avoid binary incompatibility error
 * Fix error in documentation
@@ -21,7 +21,7 @@ v.0.16.2
 * Fix wheel build on Mac
 
 v.0.16.1
--------
+--------
 
 * Fixed issue with Mac build
 * Few changes in the dry convection component. Significantly improves the performance.
@@ -29,7 +29,7 @@ v.0.16.1
 * Fixed failing docs build
 
 v0.16.0
-------
+-------
 
 * Added some documentation for using RRTMG with McICA
 * CI Testing for Mac and py37 added.

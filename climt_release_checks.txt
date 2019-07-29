@@ -1,0 +1,5 @@
+* ensure HISTORY is up to date
+* run bumpversion
+* create sdist and run twine check on it to ensure things are ok
+* push commit to github
+* manually tag new version
