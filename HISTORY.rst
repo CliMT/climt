@@ -2,6 +2,11 @@
 History
 =======
 
+v.0.16.5
+--------
+
+* Fix formatting errors which prevent pypi deployment
+
 v.0.16.4
 --------
 
