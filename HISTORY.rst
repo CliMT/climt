@@ -2,6 +2,11 @@
 History
 =======
 
+v.0.16.8
+--------
+
+* Fix timeout for all MAC builds
+
 v.0.16.6
 --------
 
