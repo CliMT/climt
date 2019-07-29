@@ -368,6 +368,12 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
         assert "must be 'direct_input' or " \
                "'liquid_and_ice_clouds'" in caplog.text
 
+    def test_transposed_state_gives_same_output(self):
+        return
+
+    def test_reversed_state_gives_same_output(self):
+        return
+
 
 class TestRRTMGLongwaveWithClouds(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):

@@ -2,6 +2,13 @@
 History
 =======
 
+v.0.16.4
+--------
+
+* Fix MCICA for the shortwave component of RRTMG
+* Revise random number generation for MCICA
+* Improvement of the user interface to control MCICA
+
 v.0.16.3
 -------
 
