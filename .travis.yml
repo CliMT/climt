@@ -99,32 +99,32 @@ jobs:
       env: TOXENV=py37 CLIMT_ARCH=Linux
       script:
           - tox -e ${TOXENV}
-    - stage: big tests
-      os: osx
-      osx_image: xcode10.1
-      language: generic
-      env: PYTHON_VERSION=3.6 TOXENV=py36 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
-      install:
-          - conda create -q -n test-environment python=$PYTHON_VERSION
-          - source activate test-environment
-          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
-          - python -m pip install -r requirements_dev.txt
-          - pip install -U tox
-      script:
-          - travis_wait 70 tox -e ${TOXENV}
-    - stage: big tests
-      os: osx
-      osx_image: xcode10.1
-      language: generic
-      env: PYTHON_VERSION=3.7 TOXENV=py37 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
-      install:
-          - conda create -q -n test-environment python=$PYTHON_VERSION
-          - source activate test-environment
-          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
-          - python -m pip install -r requirements_dev.txt
-          - pip install -U tox
-      script:
-          - travis_wait 70 tox -e ${TOXENV}
+            #- stage: big tests
+            #      os: osx
+            #      osx_image: xcode10.1
+            #      language: generic
+            #      env: PYTHON_VERSION=3.6 TOXENV=py36 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
+            #      install:
+            #          - conda create -q -n test-environment python=$PYTHON_VERSION
+            #          - source activate test-environment
+            #          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
+            #          - python -m pip install -r requirements_dev.txt
+            #          - pip install -U tox
+            #      script:
+            #          - travis_wait 70 tox -e ${TOXENV}
+            #    - stage: big tests
+            #      os: osx
+            #      osx_image: xcode10.1
+            #      language: generic
+            #      env: PYTHON_VERSION=3.7 TOXENV=py37 CLIMT_ARCH=Darwin OMP_NUM_THREADS=1
+            #      install:
+            #          - conda create -q -n test-environment python=$PYTHON_VERSION
+            #          - source activate test-environment
+            #          - conda install --yes numpy==1.15.2 scipy>=0.18.1 cython>=0.25
+            #          - python -m pip install -r requirements_dev.txt
+            #          - pip install -U tox
+            #      script:
+            #          - travis_wait 70 tox -e ${TOXENV}
     - stage: wheels
       env: CLIMT_ARCH=Linux CIBW_SKIP='cp33-* cp36-* cp35-* cp34-* cp37-* cp27-manylinux1_i686' CIBW_BEFORE_BUILD="{pip} install pandas==0.20.3"
       script:
@@ -165,32 +165,32 @@ jobs:
             python -m pip install twine
             python -m twine upload wheelhouse/*.whl
             fi
-    - stage: wheels
-      os: osx
-      osx_image: xcode10.1
-      language: generic
-      env: CLIMT_ARCH=Darwin CIBW_SKIP='cp33-* cp35-* cp34-* cp27-* cp37-*'
-      script:
-        - |
-            if [[ $TRAVIS_TAG ]]; then
-            python -m pip install cibuildwheel
-            travis_wait 70 cibuildwheel --output-dir wheelhouse
-            python -m pip install twine
-            python -m twine upload wheelhouse/*.whl
-            fi
-    - stage: wheels
-      os: osx
-      osx_image: xcode10.1
-      language: generic
-      env: CLIMT_ARCH=Darwin CIBW_SKIP='cp33-* cp35-* cp34-* cp27-* cp36-*'
-      script:
-        - |
-            if [[ $TRAVIS_TAG ]]; then
-            python -m pip install cibuildwheel
-            travis_wait 70 cibuildwheel --output-dir wheelhouse
-            python -m pip install twine
-            python -m twine upload wheelhouse/*.whl
-            fi
+            #- stage: wheels
+            #      os: osx
+            #      osx_image: xcode10.1
+            #      language: generic
+            #      env: CLIMT_ARCH=Darwin CIBW_SKIP='cp33-* cp35-* cp34-* cp27-* cp37-*'
+            #      script:
+            #        - |
+            #            if [[ $TRAVIS_TAG ]]; then
+            #            python -m pip install cibuildwheel
+            #            travis_wait 70 cibuildwheel --output-dir wheelhouse
+            #            python -m pip install twine
+            #            python -m twine upload wheelhouse/*.whl
+            #            fi
+            #    - stage: wheels
+            #      os: osx
+            #      osx_image: xcode10.1
+            #      language: generic
+            #      env: CLIMT_ARCH=Darwin CIBW_SKIP='cp33-* cp35-* cp34-* cp27-* cp36-*'
+            #      script:
+            #        - |
+            #            if [[ $TRAVIS_TAG ]]; then
+            #            python -m pip install cibuildwheel
+            #            travis_wait 70 cibuildwheel --output-dir wheelhouse
+            #            python -m pip install twine
+            #            python -m twine upload wheelhouse/*.whl
+            #            fi
 
 
 deploy:
