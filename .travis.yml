@@ -111,7 +111,7 @@ jobs:
           - python -m pip install -r requirements_dev.txt
           - pip install -U tox
       script:
-          - travis_wait 50 tox -e ${TOXENV}
+          - travis_wait 70 tox -e ${TOXENV}
     - stage: big tests
       os: osx
       osx_image: xcode10.1

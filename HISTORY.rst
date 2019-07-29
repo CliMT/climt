@@ -2,6 +2,11 @@
 History
 =======
 
+v.0.16.6
+--------
+
+* Prevent MAC OS builds from timing out
+
 v.0.16.5
 --------
 
