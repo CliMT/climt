@@ -2,7 +2,7 @@ from sympl import TendencyComponent, initialize_numpy_arrays_with_properties
 import numpy as np
 from math import *
 
-class SlabSurface(TendencyComponent):
+class BucketSurface(TendencyComponent):
     """
     Calculates the surface energy and the hydrology balance.
 
