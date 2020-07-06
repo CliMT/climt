@@ -1,6 +1,6 @@
 from sympl import TendencyComponent, initialize_numpy_arrays_with_properties
 import numpy as np
-from math import *
+from math import sqrt
 
 class BucketSurface(TendencyComponent):
     """
