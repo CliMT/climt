@@ -47,7 +47,7 @@ class BucketSurface(TendencyComponent):
         },
         'convective_precipitation_rate': {
             'dims': ['*'],
-            'units': 'mm day^-1 ',
+            'units': 'm s^-1 ',
         },
         'stratiform_precipitation_rate': {
             'dims': ['*'],
