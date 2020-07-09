@@ -11,7 +11,7 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GFSDynamicalCore,
+    DcmipInitialConditions, GFSDynamicalCore, BucketSurface,
     IceSheet, Instellation, DryConvectiveAdjustment,
     get_grid)
 import climt
@@ -435,6 +435,11 @@ class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
 class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return SlabSurface()
+
+
+class TestBucketSurface(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return BucketSurface()
 
 
 class TestEmanuel(ComponentBaseColumn, ComponentBase3D):
