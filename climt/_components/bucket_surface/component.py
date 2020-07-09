@@ -1,6 +1,6 @@
-from sympl import TendencyComponent, initialize_numpy_arrays_with_properties
-import numpy as np
 from math import sqrt
+from sympl import TendencyComponent, initialize_numpy_arrays_with_properties
+
 
 class BucketSurface(TendencyComponent):
     """
@@ -102,13 +102,14 @@ class BucketSurface(TendencyComponent):
     }
 
 
-    def __init__(self, soil_moisture_max = 0.15, beta = 0, g = 0.75, bulk_coefficient = 0.0011, **kwargs):
+    def __init__(self, soil_moisture_max=0.15, beta=0,
+                 g=0.75, bulk_coefficient=0.0011, **kwargs):
 
         self._smax = soil_moisture_max
         self._b = beta
         self._g = g
-        self._C = bulk_coefficient
-        super(SlabSurface, self).__init__(**kwargs)
+        self._c = bulk_coefficient
+        super(BucketSurface, self).__init__(**kwargs)
 
 
     def array_call(self, raw_state):
@@ -119,11 +120,14 @@ class BucketSurface(TendencyComponent):
             self.tendency_properties, raw_state, self.input_properties
         )
 
-        wind_speed = sqrt(pow(raw_state['northward_wind'][0],2) + pow(raw_state['eastward_wind'][0],2))
-        evaporation_rate_max = self._C * wind_speed * (raw_state['surface_specific_humidity'] - raw_state['specific_humidity'][0])
+        wind_speed = sqrt(pow(raw_state['northward_wind'][0], 2) + \
+           pow(raw_state['eastward_wind'][0], 2))
+        evaporation_rate_max = self._c * wind_speed * \
+           (raw_state['surface_specific_humidity'] - raw_state['specific_humidity'][0])
 
         diagnostics['surface_upward_latent_heat_flux'] = 2260 * 1000 * evaporation_rate_max
-        diagnostics['surface_upward_sensible_heat_flux'] = self._C* wind_speed * (raw_state['surface_temperature'] - raw_state['air_temperature'][0])
+        diagnostics['surface_upward_sensible_heat_flux'] = self._c * wind_speed * \
+        (raw_state['surface_temperature'] - raw_state['air_temperature'][0])
 
         net_heat_flux = (
             raw_state['downwelling_shortwave_flux_in_air'][:, 0] +
@@ -139,13 +143,13 @@ class BucketSurface(TendencyComponent):
             raw_state['soil_layer_thickness']
         heat_capacity_surface = mass_surface_slab * raw_state['heat_capacity_of_soil']
 
-
-        precipitation_rate = raw_state['convective_precipitation_rate'] + raw_state['stratiform_precipitation_rate']
+        precipitation_rate = raw_state['convective_precipitation_rate'] + \
+                             raw_state['stratiform_precipitation_rate']
 
 
         soil_moisture = raw_state['lwe_thickness_of_soil_moisture_content']
 
-        dS = 0
+        soil_moisture_tendency = 0
 
         if soil_moisture >= self._g*self._smax:
             self._b = 1
@@ -155,13 +159,13 @@ class BucketSurface(TendencyComponent):
         evaporation_rate = self._b * evaporation_rate_max
 
         if soil_moisture < self._smax or precipitation_rate <= evaporation_rate:
-            dS = precipitation_rate - evaporation_rate
+            soil_moisture_tendency = precipitation_rate - evaporation_rate
         else:
-            dS = 0
-        print(dS,evaporation_rate_max )
+            soil_moisture_tendency = 0
 
 
-        tendencies={'surface_temperature': net_heat_flux/heat_capacity_surface , 'lwe_thickness_of_soil_moisture_content' : dS }
+        tendencies = {'surface_temperature': net_heat_flux/heat_capacity_surface,
+                      'lwe_thickness_of_soil_moisture_content' : soil_moisture_tendency}
 
 
         return tendencies, diagnostics
