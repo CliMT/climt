@@ -106,12 +106,13 @@ class BucketSurface(TendencyComponent):
     }
 
 
-    def __init__(self, soil_moisture_max=0.15, g=0.75,
+    def __init__(self, soil_moisture_max=0.15, g=0.75, specific_latent_heat_of_water=2260000,
                  bulk_coefficient=0.0011, **kwargs):
 
         self._smax = soil_moisture_max
         self._g = g
         self._c = bulk_coefficient
+        self._l = specific_latent_heat_of_water
         super(BucketSurface, self).__init__(**kwargs)
 
 
@@ -130,7 +131,7 @@ class BucketSurface(TendencyComponent):
         evaporation_rate_max = self._c * wind_speed * \
            (raw_state['surface_specific_humidity'] - raw_state['specific_humidity'][0])
 
-        diagnostics['surface_upward_latent_heat_flux'] = 2260 * 1000 * evaporation_rate_max
+        diagnostics['surface_upward_latent_heat_flux'] = self._l * evaporation_rate_max
         diagnostics['surface_upward_sensible_heat_flux'] = self._c * wind_speed * \
         (raw_state['surface_temperature'] - raw_state['air_temperature'][0])
 
