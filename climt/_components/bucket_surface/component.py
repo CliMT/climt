@@ -99,14 +99,17 @@ class BucketSurface(TendencyComponent):
             'dims': ['*'],
             'units': 'W m^-2',
         },
+        'beta_factor': {
+            'dims': ['*'],
+            'units': 'dimensionless',
+        },
     }
 
 
-    def __init__(self, soil_moisture_max=0.15, beta=0,
-                 g=0.75, bulk_coefficient=0.0011, **kwargs):
+    def __init__(self, soil_moisture_max=0.15, g=0.75,
+                 bulk_coefficient=0.0011, **kwargs):
 
         self._smax = soil_moisture_max
-        self._b = beta
         self._g = g
         self._c = bulk_coefficient
         super(BucketSurface, self).__init__(**kwargs)
@@ -119,6 +122,8 @@ class BucketSurface(TendencyComponent):
         tendencies = initialize_numpy_arrays_with_properties(
             self.tendency_properties, raw_state, self.input_properties
         )
+
+        diagnostics['beta_factor'] = 0
 
         wind_speed = sqrt(pow(raw_state['northward_wind'][0], 2) + \
            pow(raw_state['eastward_wind'][0], 2))
@@ -152,11 +157,11 @@ class BucketSurface(TendencyComponent):
         soil_moisture_tendency = 0
 
         if soil_moisture >= self._g*self._smax:
-            self._b = 1
+            diagnostics['beta_factor'] = 1
         else:
-            self._b = soil_moisture/(self._g*self._smax)
+            diagnostics['beta_factor'] = soil_moisture/(self._g*self._smax)
 
-        evaporation_rate = self._b * evaporation_rate_max
+        evaporation_rate = diagnostics['beta_factor'] * evaporation_rate_max
 
         if soil_moisture < self._smax or precipitation_rate <= evaporation_rate:
             soil_moisture_tendency = precipitation_rate - evaporation_rate
