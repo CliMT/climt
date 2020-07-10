@@ -87,9 +87,9 @@ class BucketSurface(Stepper):
             'dims': ['*'],
             'units': 'W m^-2',
         },
-        'beta_factor': {
+        'evaporation_rate': {
             'dims': ['*'],
-            'units': 'dimensionless',
+            'units': 'm s^-1',
         },
     }
 
@@ -112,7 +112,7 @@ class BucketSurface(Stepper):
     def array_call(self, state, timestep):
 
 
-        state['beta_factor'] = 0
+        beta_factor = 0
 
         wind_speed = sqrt(pow(state['northward_wind'][0], 2) + \
            pow(state['eastward_wind'][0], 2))
@@ -129,19 +129,19 @@ class BucketSurface(Stepper):
         soil_moisture_tendency = 0
 
         if soil_moisture >= self._g * self._smax:
-            state['beta_factor'] = 1
+            beta_factor = 1
         else:
-            state['beta_factor'] = soil_moisture/(self._g*self._smax)
+            beta_factor = soil_moisture/(self._g*self._smax)
 
-        evaporation_rate = state['beta_factor'] * evaporation_rate_max
+        state['evaporation_rate'] = beta_factor * evaporation_rate_max
 
-        if soil_moisture < self._smax or state['precipitation_rate'] <= evaporation_rate:
-            soil_moisture_tendency = state['precipitation_rate'] - evaporation_rate
+        if soil_moisture < self._smax or state['precipitation_rate'] <= state['evaporation_rate']:
+            soil_moisture_tendency = state['precipitation_rate'] - state['evaporation_rate']
         else:
             soil_moisture_tendency = 0
 
 
-        state['surface_upward_latent_heat_flux'] = self._l * evaporation_rate
+        state['surface_upward_latent_heat_flux'] = self._l * state['evaporation_rate']
         state['surface_upward_sensible_heat_flux'] = self._c * wind_speed * \
         (state['surface_temperature'] - state['air_temperature'][0])
 
@@ -175,7 +175,7 @@ class BucketSurface(Stepper):
             'precipitation_rate': state['precipitation_rate'],
             'surface_upward_sensible_heat_flux': state['surface_upward_sensible_heat_flux'],
             'surface_upward_latent_heat_flux': state['surface_upward_latent_heat_flux'],
-            'beta_factor': state['beta_factor'],
+            'evaporation_rate': state['evaporation_rate'],
         }
 
         return diagnostics, new_state
