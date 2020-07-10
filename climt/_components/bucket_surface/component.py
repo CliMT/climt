@@ -171,7 +171,7 @@ class BucketSurface(TendencyComponent):
             raw_state['soil_layer_thickness']
         heat_capacity_surface = mass_surface_slab * raw_state['heat_capacity_of_soil']
 
-        
+
         tendencies = {'surface_temperature': net_heat_flux/heat_capacity_surface,
                       'lwe_thickness_of_soil_moisture_content' : soil_moisture_tendency}
 
