@@ -120,7 +120,7 @@ class BucketSurface(Stepper):
            (state['surface_specific_humidity'] - state['specific_humidity'][0])
 
 
-        precipitation_rate = state['convective_precipitation_rate'] + \
+        state['precipitation_rate'] = state['convective_precipitation_rate'] + \
                              state['stratiform_precipitation_rate']
 
 
@@ -135,8 +135,8 @@ class BucketSurface(Stepper):
 
         evaporation_rate = state['beta_factor'] * evaporation_rate_max
 
-        if soil_moisture < self._smax or precipitation_rate <= evaporation_rate:
-            soil_moisture_tendency = precipitation_rate - evaporation_rate
+        if soil_moisture < self._smax or state['precipitation_rate'] <= evaporation_rate:
+            soil_moisture_tendency = state['precipitation_rate'] - evaporation_rate
         else:
             soil_moisture_tendency = 0
 
@@ -172,7 +172,7 @@ class BucketSurface(Stepper):
         }
 
         diagnostics = {
-            'precipitation_rate': precipitation_rate,
+            'precipitation_rate': state['precipitation_rate'],
             'surface_upward_sensible_heat_flux': state['surface_upward_sensible_heat_flux'],
             'surface_upward_latent_heat_flux': state['surface_upward_latent_heat_flux'],
             'beta_factor': state['beta_factor'],
