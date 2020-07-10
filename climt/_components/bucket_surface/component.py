@@ -120,7 +120,7 @@ class BucketSurface(Stepper):
            (state['surface_specific_humidity'] - state['specific_humidity'][0])
 
 
-        state['precipitation_rate'] = state['convective_precipitation_rate'] + \
+        precipitation_rate = state['convective_precipitation_rate'] + \
                              state['stratiform_precipitation_rate']
 
 
@@ -133,16 +133,16 @@ class BucketSurface(Stepper):
         else:
             beta_factor = soil_moisture/(self._g*self._smax)
 
-        state['evaporation_rate'] = beta_factor * evaporation_rate_max
+        evaporation_rate = beta_factor * evaporation_rate_max
 
-        if soil_moisture < self._smax or state['precipitation_rate'] <= state['evaporation_rate']:
-            soil_moisture_tendency = state['precipitation_rate'] - state['evaporation_rate']
+        if soil_moisture < self._smax or precipitation_rate <= evaporation_rate:
+            soil_moisture_tendency = precipitation_rate - evaporation_rate
         else:
             soil_moisture_tendency = 0
 
 
-        state['surface_upward_latent_heat_flux'] = self._l * state['evaporation_rate']
-        state['surface_upward_sensible_heat_flux'] = self._c * wind_speed * \
+        surface_upward_latent_heat_flux = self._l * evaporation_rate
+        surface_upward_sensible_heat_flux = self._c * wind_speed * \
         (state['surface_temperature'] - state['air_temperature'][0])
 
         net_heat_flux = (
@@ -150,8 +150,8 @@ class BucketSurface(Stepper):
             state['downwelling_longwave_flux_in_air'][:, 0] -
             state['upwelling_shortwave_flux_in_air'][:, 0] -
             state['upwelling_longwave_flux_in_air'][:, 0] -
-            state['surface_upward_sensible_heat_flux'] -
-            state['surface_upward_latent_heat_flux']
+            surface_upward_sensible_heat_flux -
+            surface_upward_latent_heat_flux
         )
 
 
@@ -172,10 +172,10 @@ class BucketSurface(Stepper):
         }
 
         diagnostics = {
-            'precipitation_rate': state['precipitation_rate'],
-            'surface_upward_sensible_heat_flux': state['surface_upward_sensible_heat_flux'],
-            'surface_upward_latent_heat_flux': state['surface_upward_latent_heat_flux'],
-            'evaporation_rate': state['evaporation_rate'],
+            'precipitation_rate': precipitation_rate,
+            'surface_upward_sensible_heat_flux': surface_upward_sensible_heat_flux,
+            'surface_upward_latent_heat_flux': surface_upward_latent_heat_flux,
+            'evaporation_rate': evaporation_rate,
         }
 
         return diagnostics, new_state
