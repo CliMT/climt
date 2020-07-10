@@ -131,7 +131,29 @@ class BucketSurface(TendencyComponent):
         evaporation_rate_max = self._c * wind_speed * \
            (raw_state['surface_specific_humidity'] - raw_state['specific_humidity'][0])
 
-        diagnostics['surface_upward_latent_heat_flux'] = self._l * evaporation_rate_max
+
+        precipitation_rate = raw_state['convective_precipitation_rate'] + \
+                             raw_state['stratiform_precipitation_rate']
+
+
+        soil_moisture = raw_state['lwe_thickness_of_soil_moisture_content']
+
+        soil_moisture_tendency = 0
+
+        if soil_moisture >= self._g * self._smax:
+            diagnostics['beta_factor'] = 1
+        else:
+            diagnostics['beta_factor'] = soil_moisture/(self._g*self._smax)
+
+        evaporation_rate = diagnostics['beta_factor'] * evaporation_rate_max
+
+        if soil_moisture < self._smax or precipitation_rate <= evaporation_rate:
+            soil_moisture_tendency = precipitation_rate - evaporation_rate
+        else:
+            soil_moisture_tendency = 0
+
+
+        diagnostics['surface_upward_latent_heat_flux'] = self._l * evaporation_rate
         diagnostics['surface_upward_sensible_heat_flux'] = self._c * wind_speed * \
         (raw_state['surface_temperature'] - raw_state['air_temperature'][0])
 
@@ -149,27 +171,7 @@ class BucketSurface(TendencyComponent):
             raw_state['soil_layer_thickness']
         heat_capacity_surface = mass_surface_slab * raw_state['heat_capacity_of_soil']
 
-        precipitation_rate = raw_state['convective_precipitation_rate'] + \
-                             raw_state['stratiform_precipitation_rate']
-
-
-        soil_moisture = raw_state['lwe_thickness_of_soil_moisture_content']
-
-        soil_moisture_tendency = 0
-
-        if soil_moisture >= self._g*self._smax:
-            diagnostics['beta_factor'] = 1
-        else:
-            diagnostics['beta_factor'] = soil_moisture/(self._g*self._smax)
-
-        evaporation_rate = diagnostics['beta_factor'] * evaporation_rate_max
-
-        if soil_moisture < self._smax or precipitation_rate <= evaporation_rate:
-            soil_moisture_tendency = precipitation_rate - evaporation_rate
-        else:
-            soil_moisture_tendency = 0
-
-
+        
         tendencies = {'surface_temperature': net_heat_flux/heat_capacity_surface,
                       'lwe_thickness_of_soil_moisture_content' : soil_moisture_tendency}
 
