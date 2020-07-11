@@ -102,6 +102,18 @@ class BucketSurface(Stepper):
     def __init__(self, soil_moisture_max=0.15, g=0.75, specific_latent_heat_of_water=2260000,
                  bulk_coefficient=0.0011, **kwargs):
 
+
+    """
+    Args:
+
+        simulate_cyclone (bool):
+            Option indicating whether the package must
+            simulate a tropical cyclone. This was the original test case this
+            physics package was used for.
+            Default value is False.
+
+    """
+
         self._smax = soil_moisture_max
         self._g = g
         self._c = bulk_coefficient
@@ -110,6 +122,23 @@ class BucketSurface(Stepper):
 
 
     def array_call(self, state, timestep):
+
+        '''
+        Calculate surface and boundary layer tendencies.
+
+        Args:
+            state (dict):
+                The model state dictionary
+
+            timestep (timedelta):
+                The model timestep
+
+        Returns:
+            state (dict), diagnostics(dict) :
+
+            * The updated model state.
+            * diagnostics for Simple Physics
+        '''
 
 
         beta_factor = 0
