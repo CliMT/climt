@@ -104,8 +104,8 @@ class BucketSurface(Stepper):
 
     def __init__(self, soil_moisture_max=0.15, g=0.75, specific_latent_heat_of_water=2260000,
                  bulk_coefficient=0.0011, **kwargs):
-    """
-    Args:
+        """
+        Args:
 
         soil_moisture_max:
             The maximum moisture that can be held by the surface_temperature
@@ -114,7 +114,7 @@ class BucketSurface(Stepper):
         bulk_coefficient:
             The bulk transfer coeffiecient that is used to calculate
             maximum evaporation rate and sensible heat flux
-    """
+        """
         self._smax = soil_moisture_max
         self._g = g
         self._c = bulk_coefficient
@@ -125,7 +125,7 @@ class BucketSurface(Stepper):
     def array_call(self, state, timestep):
         '''
         Calculates sensible and latent heat flux and returns
-        surface temperature and soil moisture after timestep. 
+        surface temperature and soil moisture after timestep.
         '''
 
         beta_factor = 0
