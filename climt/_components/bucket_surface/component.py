@@ -3,7 +3,10 @@ from sympl import Stepper
 
 class BucketSurface(Stepper):
     """
-    Calculates the surface energy and the hydrology balance.
+    Manages surface energy and moisture balance
+
+    This component assumes that the surface is a slab with some heat capacity and moisture holding capacity.
+    Calculates the sensible and latent heat flux, takes precipitation values as input.
 
     """
 
@@ -101,19 +104,17 @@ class BucketSurface(Stepper):
 
     def __init__(self, soil_moisture_max=0.15, g=0.75, specific_latent_heat_of_water=2260000,
                  bulk_coefficient=0.0011, **kwargs):
-
-
     """
     Args:
 
-        simulate_cyclone (bool):
-            Option indicating whether the package must
-            simulate a tropical cyclone. This was the original test case this
-            physics package was used for.
-            Default value is False.
-
+        soil_moisture_max:
+            The maximum moisture that can be held by the surface_temperature
+        g:
+            A constant value that is used in the beta_factor calculation.
+        bulk_coefficient:
+            The bulk transfer coeffiecient that is used to calculate
+            maximum evaporation rate and sensible heat flux
     """
-
         self._smax = soil_moisture_max
         self._g = g
         self._c = bulk_coefficient
@@ -122,24 +123,10 @@ class BucketSurface(Stepper):
 
 
     def array_call(self, state, timestep):
-
         '''
-        Calculate surface and boundary layer tendencies.
-
-        Args:
-            state (dict):
-                The model state dictionary
-
-            timestep (timedelta):
-                The model timestep
-
-        Returns:
-            state (dict), diagnostics(dict) :
-
-            * The updated model state.
-            * diagnostics for Simple Physics
+        Calculates sensible and latent heat flux and returns
+        surface temperature and soil moisture after timestep. 
         '''
-
 
         beta_factor = 0
 
