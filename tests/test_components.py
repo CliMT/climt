@@ -11,7 +11,7 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GFSDynamicalCore, BucketSurface,
+    DcmipInitialConditions, GFSDynamicalCore, BucketHydrology,
     IceSheet, Instellation, DryConvectiveAdjustment,
     get_grid)
 import climt
@@ -437,9 +437,9 @@ class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):
         return SlabSurface()
 
 
-class TestBucketSurface(ComponentBaseColumn, ComponentBase3D):
+class TestBucketHydrology(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
-        return BucketSurface()
+        return BucketHydrology()
 
 
 class TestEmanuel(ComponentBaseColumn, ComponentBase3D):

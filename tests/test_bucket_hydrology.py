@@ -1,6 +1,6 @@
 from datetime import timedelta
 import numpy as np
-from climt import (BucketSurface, get_default_state)
+from climt import (BucketHydrology, get_default_state)
 
 def get_quantities(state):
     heat = state['surface_material_density'].values*state['soil_layer_thickness'].values*\
@@ -10,7 +10,7 @@ def get_quantities(state):
     return heat, moisture
 
 time_step = timedelta(seconds=1)
-state = get_default_state([BucketSurface()])
+state = get_default_state([BucketHydrology()])
 
 state['upwelling_shortwave_flux_in_air'].values[:] = 40.
 state['upwelling_longwave_flux_in_air'].values[:] = 40.
@@ -26,7 +26,7 @@ state['convective_precipitation_rate'].values[:] = 0.5
 state['lwe_thickness_of_soil_moisture_content'].values[:] = 0.07
 
 
-diag, new_state = BucketSurface()(state, time_step)
+diag, new_state = BucketHydrology()(state, time_step)
 
 
 surf_forcing = 0
@@ -71,12 +71,12 @@ new_heat, new_moisture = get_quantities(state)
 
 #Test starts
 
-class TestBucketSurfaceHeat():
+class TestBucketHydrologyHeat():
     forcing_amount = surf_forcing * time_step.total_seconds()
     assert np.isclose(new_heat - old_heat, forcing_amount,
                       rtol=0, atol=1e-3)
 
-class TestBucketSurfaceMoisture():
+class TestBucketHydrologyMoisture():
     forcing_amount = mois_forcing * time_step.total_seconds()
     assert np.isclose(new_moisture - old_moisture, forcing_amount,
                       rtol=0, atol=1e-3)
