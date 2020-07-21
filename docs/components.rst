@@ -62,8 +62,8 @@ Surface Processes
     SlabSurface
     SlabSurface.__call__
 
-    BucketSurface
-    BucketSurface.__call__
+    BucketHydrology
+    BucketHydrology.__call__
 
 Ice and Snow
 ------------

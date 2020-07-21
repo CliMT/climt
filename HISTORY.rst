@@ -5,8 +5,8 @@ History
 v.0.16.5
 --------
 
-* New component BucketSurface that implements Manabe first generation land model
-* BucketSurface calculates the sensible and latent heat flux within the component
+* New component BucketHydrology that implements Manabe first generation land model
+* BucketHydrology calculates the sensible and latent heat flux within the component
 * Conservation test for the component also added
 
 v.0.16.4
