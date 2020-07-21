@@ -1,7 +1,7 @@
 from math import sqrt
 from sympl import Stepper
 
-class BucketSurface(Stepper):
+class BucketHydrology(Stepper):
     """
     Manages surface energy and moisture balance
 
@@ -119,7 +119,7 @@ class BucketSurface(Stepper):
         self._g = g
         self._c = bulk_coefficient
         self._l = specific_latent_heat_of_water
-        super(BucketSurface, self).__init__(**kwargs)
+        super(BucketHydrology, self).__init__(**kwargs)
 
 
     def array_call(self, state, timestep):
