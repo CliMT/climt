@@ -102,8 +102,8 @@ class BucketHydrology(Stepper):
     }
 
 
-    def __init__(self, soil_moisture_max=0.15, beta_parameter=0.75, specific_latent_heat_of_water=2260000,
-                 bulk_coefficient=0.0011, **kwargs):
+    def __init__(self, soil_moisture_max=0.15, beta_parameter=0.75,
+                 specific_latent_heat_of_water=2260000, bulk_coefficient=0.0011, **kwargs):
         """
         Args:
 
