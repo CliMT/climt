@@ -102,21 +102,21 @@ class BucketHydrology(Stepper):
     }
 
 
-    def __init__(self, soil_moisture_max=0.15, g=0.75, specific_latent_heat_of_water=2260000,
+    def __init__(self, soil_moisture_max=0.15, beta_parameter=0.75, specific_latent_heat_of_water=2260000,
                  bulk_coefficient=0.0011, **kwargs):
         """
         Args:
 
         soil_moisture_max:
             The maximum moisture that can be held by the surface_temperature
-        g:
+        beta_parameter:
             A constant value that is used in the beta_factor calculation.
         bulk_coefficient:
             The bulk transfer coeffiecient that is used to calculate
             maximum evaporation rate and sensible heat flux
         """
         self._smax = soil_moisture_max
-        self._g = g
+        self._g = beta_parameter
         self._c = bulk_coefficient
         self._l = specific_latent_heat_of_water
         super(BucketHydrology, self).__init__(**kwargs)
@@ -132,7 +132,7 @@ class BucketHydrology(Stepper):
 
         wind_speed = sqrt(pow(state['northward_wind'][0], 2) + \
            pow(state['eastward_wind'][0], 2))
-        evaporation_rate_max = self._c * wind_speed * \
+        potential_evaporation = self._c * wind_speed * \
            (state['surface_specific_humidity'] - state['specific_humidity'][0])
 
 
@@ -149,7 +149,7 @@ class BucketHydrology(Stepper):
         else:
             beta_factor = soil_moisture/(self._g*self._smax)
 
-        evaporation_rate = beta_factor * evaporation_rate_max
+        evaporation_rate = beta_factor * potential_evaporation
 
         if soil_moisture < self._smax or precipitation_rate <= evaporation_rate:
             soil_moisture_tendency = precipitation_rate - evaporation_rate
