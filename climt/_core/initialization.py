@@ -750,9 +750,9 @@ default_values = {
 
     'solar_cycle_fraction': {'value': 0., 'units': 'dimensionless', 'domain': None},
     'flux_adjustment_for_earth_sun_distance': {'value': 1.0, 'units': 'dimensionless', 'domain': None},
-    'lwe_thickness_of_soil_moisture_content' : {'value':0,'units':'m', 'domain' :'surface'},
-    'convective_precipitation_rate': {'value':0.,'units':'mm day^-1', 'domain' :'surface'},
-    'stratiform_precipitation_rate': {'value':0.,'units':'m s^-1', 'domain' :'surface'},
+    'lwe_thickness_of_soil_moisture_content': {'value': 0, 'units': 'm', 'domain': 'surface'},
+    'convective_precipitation_rate': {'value': 0., 'units': 'mm day^-1', 'domain': 'surface'},
+    'stratiform_precipitation_rate': {'value': 0., 'units': 'm s^-1', 'domain': 'surface'},
 }
 for d in default_values.values():
     if 'grid' not in d.keys():

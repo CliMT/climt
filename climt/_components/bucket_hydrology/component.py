@@ -1,6 +1,7 @@
 from math import sqrt
 from sympl import Stepper
 
+
 class BucketHydrology(Stepper):
     """
     Manages surface energy and moisture balance
@@ -43,7 +44,7 @@ class BucketHydrology(Stepper):
             'dims': ['*'],
             'units': 'J kg^-1 degK^-1',
         },
-        'lwe_thickness_of_soil_moisture_content':{
+        'lwe_thickness_of_soil_moisture_content': {
             'dims': ['*'],
             'units': 'm',
         },
@@ -98,9 +99,8 @@ class BucketHydrology(Stepper):
 
     output_properties = {
         'surface_temperature': {'units': 'degK'},
-        'lwe_thickness_of_soil_moisture_content':{'units': 'm'},
+        'lwe_thickness_of_soil_moisture_content': {'units': 'm'},
     }
-
 
     def __init__(self, soil_moisture_max=0.15, beta_parameter=0.75,
                  specific_latent_heat_of_water=2260000, bulk_coefficient=0.0011, **kwargs):
@@ -121,7 +121,6 @@ class BucketHydrology(Stepper):
         self._l = specific_latent_heat_of_water
         super(BucketHydrology, self).__init__(**kwargs)
 
-
     def array_call(self, state, timestep):
         '''
         Calculates sensible and latent heat flux and returns
@@ -130,15 +129,11 @@ class BucketHydrology(Stepper):
 
         beta_factor = 0
 
-        wind_speed = sqrt(pow(state['northward_wind'][0], 2) + \
-           pow(state['eastward_wind'][0], 2))
-        potential_evaporation = self._c * wind_speed * \
-           (state['surface_specific_humidity'] - state['specific_humidity'][0])
+        wind_speed = sqrt(pow(state['northward_wind'][0], 2) +
+                          pow(state['eastward_wind'][0], 2))
+        potential_evaporation = self._c * wind_speed * (state['surface_specific_humidity'] - state['specific_humidity'][0])
 
-
-        precipitation_rate = state['convective_precipitation_rate'] + \
-                             state['stratiform_precipitation_rate']
-
+        precipitation_rate = state['convective_precipitation_rate'] + state['stratiform_precipitation_rate']
 
         soil_moisture = state['lwe_thickness_of_soil_moisture_content']
 
@@ -156,10 +151,8 @@ class BucketHydrology(Stepper):
         else:
             soil_moisture_tendency = 0
 
-
         surface_upward_latent_heat_flux = self._l * evaporation_rate
-        surface_upward_sensible_heat_flux = self._c * wind_speed * \
-        (state['surface_temperature'] - state['air_temperature'][0])
+        surface_upward_sensible_heat_flux = self._c * wind_speed * (state['surface_temperature'] - state['air_temperature'][0])
 
         net_heat_flux = (
             state['downwelling_shortwave_flux_in_air'][:, 0] +
@@ -169,7 +162,6 @@ class BucketHydrology(Stepper):
             surface_upward_sensible_heat_flux -
             surface_upward_latent_heat_flux
         )
-
 
         mass_surface_slab = state['surface_material_density'] * \
             state['soil_layer_thickness']
@@ -183,8 +175,8 @@ class BucketHydrology(Stepper):
         new_soil_moisture[new_soil_moisture > 0.15] = 0.15
 
         new_state = {
-            'surface_temperature' : new_surface_temperature,
-            'lwe_thickness_of_soil_moisture_content' : new_soil_moisture,
+            'surface_temperature': new_surface_temperature,
+            'lwe_thickness_of_soil_moisture_content': new_soil_moisture,
         }
 
         diagnostics = {
