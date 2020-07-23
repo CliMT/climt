@@ -71,12 +71,12 @@ new_heat, new_moisture = get_quantities(state)
 
 #Test starts
 
-class TestBucketHydrologyHeat():
+def test_bucket_hydrology_heat_conservation():
     forcing_amount = surf_forcing * time_step.total_seconds()
     assert np.isclose(new_heat - old_heat, forcing_amount,
                       rtol=0, atol=1e-3)
 
-class TestBucketHydrologyMoisture():
+def test_bucket_hydrology_moisture_conservation():
     forcing_amount = mois_forcing * time_step.total_seconds()
     assert np.isclose(new_moisture - old_moisture, forcing_amount,
                       rtol=0, atol=1e-3)
