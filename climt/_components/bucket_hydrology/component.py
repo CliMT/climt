@@ -138,7 +138,7 @@ class BucketHydrology(Stepper):
 
         precipitation_rate = state['convective_precipitation_rate'] + state['stratiform_precipitation_rate']
 
-        soil_moisture = state['lwe_thickness_of_soil_moisture_content']
+        soil_moisture = state['lwe_thickness_of_soil_moisture_content'][0]
 
         soil_moisture_tendency = 0
 
