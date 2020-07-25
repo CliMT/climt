@@ -129,8 +129,11 @@ class BucketHydrology(Stepper):
 
         beta_factor = 0
 
-        wind_speed = sqrt(pow(state['northward_wind'][0], 2) +
-                          pow(state['eastward_wind'][0], 2))
+        north_wind_speed = state['northward_wind'][0][0]
+        east_wind_speed = state['eastward_wind'][0][0]
+
+        wind_speed = sqrt(pow(north_wind_speed, 2) +
+                          pow(east_wind_speed, 2))
         potential_evaporation = self._c * wind_speed * (state['surface_specific_humidity'] - state['specific_humidity'][0])
 
         precipitation_rate = state['convective_precipitation_rate'] + state['stratiform_precipitation_rate']
