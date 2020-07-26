@@ -11,10 +11,11 @@ from .gfs import GFSDynamicalCore
 from .dcmip import DcmipInitialConditions
 from .instellation import Instellation
 from .dry_convection import DryConvectiveAdjustment
+from .bucket_hydrology import BucketHydrology
 
 __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
     HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
     RRTMGLongwave, RRTMGShortwave, EmanuelConvection, SlabSurface,
     GFSDynamicalCore, DcmipInitialConditions, IceSheet,
-    Instellation, DryConvectiveAdjustment)
+    Instellation, DryConvectiveAdjustment, BucketHydrology)
