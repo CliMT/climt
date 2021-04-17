@@ -50,7 +50,7 @@ build_script:
 #  - bash -c "cd /c/projects/climt/; python setup.py build --compiler=mingw32"
 
 test_script:
-  - conda install pytest
+#  - conda install pytest
   - bash -c "cd /c/projects/climt; py.test -v"
 # - bash -c "cd /c/projects/climt; find . |grep _components"
 
