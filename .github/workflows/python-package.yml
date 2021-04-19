@@ -12,17 +12,18 @@ on:
 jobs:
   build:
   
-   runs-on: ${{ matrix.os }}
-   strategy:
-     matrix:
-      os: [ubuntu-latest]
-      python-version: [3.6, 3.7, 3.8, 3.9]
 
-   steps:
-     - uses: actions/checkout@v2
-     - name: Set up Python ${{ matrix.python-version }}
-       uses: actions/setup-python@v2
-       with:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
         python-version: ${{ matrix.python-version }}
      - name: Install dependencies
        run: |
@@ -39,3 +40,4 @@ jobs:
         CLIMT_ARCH: Linux
        run: |
         python setup.py build
+
