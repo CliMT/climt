@@ -2,6 +2,7 @@ from ..._core import ensure_contiguous_state
 from sympl import Stepper, get_constant
 from . import _simple_physics as phys
 
+
 class SimplePhysics(Stepper):
     """
     Interface to the simple physics package.
