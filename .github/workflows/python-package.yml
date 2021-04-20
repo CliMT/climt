@@ -33,11 +33,11 @@ jobs:
     - name: Build climt
       run: |
            if [ "$RUNNER_OS" == "Linux" ]; then
-            CLIMT_ARCH=Linux python setup.py build
+            CLIMT_ARCH=Linux python setup.py develop
            elif [ "$RUNNER_OS"== "Windows" ]; then
-            CLIMT_ARCH=Windows python setup.py build 
+            CLIMT_ARCH=Windows python setup.py develop 
            elif [ "$RUNNER_OS"== "macOS" ]; then
-            CLIMT_ARCH=Darwin python setup.py build
+            CLIMT_ARCH=Darwin python setup.py develop
            else 
              echo "$RUNNER_OS not supported"
              exit 1
