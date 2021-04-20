@@ -1,6 +1,5 @@
 from ..._core import ensure_contiguous_state
 from sympl import Stepper, get_constant
-import logging
 from . import _simple_physics as phys
 
 class SimplePhysics(Stepper):
