@@ -19,17 +19,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 36
-      if: ${{ matrix.os }} == py36
+      if: ${{ matrix.os == py36 }} 
       uses: actions/setup-python@v2
       with:
         python-version: 3.6
     - name: Set up Python 37
-      if: ${{ matrix.os }} == py37
+      if: ${{ matrix.os == py37 }}
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
     - name: Set up Python 38
-      if: ${{ matrix.os }} == py38
+      if: ${{ matrix.os == py38 }}
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
