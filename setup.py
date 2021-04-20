@@ -37,7 +37,7 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'numpy==1.16.0',
+    'numpy>=1.16.0',
     'pint>=0.7.0',
     'xarray>=0.8.0',
     'sympl==0.4.0',
