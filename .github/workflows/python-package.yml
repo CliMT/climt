@@ -15,17 +15,17 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [py36] #, 3.7, 3.8, 3.9]
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.6
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install wheel
+        python -m pip install wheel tox
         if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
     - name: Lint with flake8
       run: |
@@ -33,7 +33,7 @@ jobs:
         flake8 climt/ --count --show-source --statistics
     - name: Build climt
       run: |
-             CLIMT_ARCH=Linux python setup.py develop
+             CLIMT_ARCH=Linux tox -e ${{ matrix.python-version }}
       #      if [ "$RUNNER_OS" == "Linux" ]; then
       #      CLIMT_ARCH=Linux python setup.py develop
       #      elif [ "$RUNNER_OS"== "Windows" ]; then
