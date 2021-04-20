@@ -46,7 +46,8 @@ jobs:
     - name: Build climt
       run: |
             if [ "$RUNNER_OS" == "Linux" ]; then
-              CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Linux tox -e ${{ matrix.python-version }}
+              gfortran --version
+              CC=gcc FC=gfortran CLIMT_ARCH=Linux tox -e ${{ matrix.python-version }}
             elif [ "$RUNNER_OS"== "Windows" ]; then
               CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Windows tox -e ${{ matrix.python-version }} 
             elif [ "$RUNNER_OS"== "macOS" ]; then
