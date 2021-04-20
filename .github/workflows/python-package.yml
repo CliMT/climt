@@ -33,8 +33,18 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 climt/ --count --show-source --statistics
     - name: Build climt
-      env:
-        CLIMT_ARCH: Linux
       run: |
-        python setup.py build
-
+           if [ "$RUNNER_OS" == "Linux" ]; then
+            CLIMT_ARCH=Linux python setup.py build
+           elif [ "$RUNNER_OS"== "Windows" ]; then
+            CLIMT_ARCH=Windows python setup.py build 
+           elif [ "$RUNNER_OS"== "macOS" ]; then
+            CLIMT_ARCH=Darwin python setup.py build
+           else 
+             echo "$RUNNER_OS not supported"
+             exit 1
+           fi
+      shell: bash   
+    - name: Test with pytest
+      run:  |
+       pytest
