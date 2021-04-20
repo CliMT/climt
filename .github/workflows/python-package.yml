@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-18.04]
         python-version: [py36] #, 3.7, 3.8, 3.9]
     steps:
     - uses: actions/checkout@v2
@@ -33,7 +33,7 @@ jobs:
         flake8 climt/ --count --show-source --statistics
     - name: Build climt
       run: |
-             CLIMT_ARCH=Linux tox -e ${{ matrix.python-version }}
+             CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Linux tox -e ${{ matrix.python-version }}
       #      if [ "$RUNNER_OS" == "Linux" ]; then
       #      CLIMT_ARCH=Linux python setup.py develop
       #      elif [ "$RUNNER_OS"== "Windows" ]; then
