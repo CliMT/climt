@@ -1,6 +1,14 @@
 from ..._core import ensure_contiguous_state
 from sympl import Stepper, get_constant
-from . import _simple_physics as phys
+import logging
+try:
+    from . import _simple_physics as phys
+except ImportError as error:
+    logging.warning(
+        'Import failed. Simple Physics is likely not compiled and will not be'
+        'available.'
+    )
+    print(error)
 
 
 class SimplePhysics(Stepper):
