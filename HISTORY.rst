@@ -2,6 +2,14 @@
 History
 =======
 
+Latest
+--------
+
+* New component BucketHydrology that implements Manabe first generation land model
+* BucketHydrology calculates the sensible and latent heat flux within the component
+* Conservation test for the component also added
+* Moving CI to Github Actions
+
 v.0.16.8
 --------
 
@@ -59,7 +67,7 @@ v0.16.0
   so that partial cloud fractions can be used.
 * Add GMD example scripts to repository.
 * Fix docs to reflect API changes after refactor.
-* Fix wrong initialisation to use sigma values instead of pressure values 
+* Fix wrong initialisation to use sigma values instead of pressure values
   of optical depth for GrayLongwaveRadiation
 
 Breaking Changes
