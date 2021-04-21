@@ -28,6 +28,10 @@ jobs:
         env:
           CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
 
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
       - name: Install twine
         run: python -m pip install twine
 
