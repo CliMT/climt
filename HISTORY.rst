@@ -8,6 +8,22 @@ Latest
 * New component BucketHydrology that implements Manabe first generation land model
 * BucketHydrology calculates the sensible and latent heat flux within the component
 * Conservation test for the component also added
+* Moving CI to Github Actions
+
+v.0.16.8
+--------
+
+* Fix timeout for all MAC builds
+
+v.0.16.6
+--------
+
+* Prevent MAC OS builds from timing out
+
+v.0.16.5
+--------
+
+* Fix formatting errors which prevent pypi deployment
 
 v.0.16.4
 --------
@@ -17,7 +33,7 @@ v.0.16.4
 * Improvement of the user interface to control MCICA
 
 v.0.16.3
--------
+--------
 
 * update numpy requirement to avoid binary incompatibility error
 * Fix error in documentation
@@ -28,7 +44,7 @@ v.0.16.2
 * Fix wheel build on Mac
 
 v.0.16.1
--------
+--------
 
 * Fixed issue with Mac build
 * Few changes in the dry convection component. Significantly improves the performance.
@@ -36,7 +52,7 @@ v.0.16.1
 * Fixed failing docs build
 
 v0.16.0
-------
+-------
 
 * Added some documentation for using RRTMG with McICA
 * CI Testing for Mac and py37 added.
