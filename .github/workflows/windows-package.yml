@@ -1,0 +1,27 @@
+# This workflow will install compilers and packges on windows platform
+
+name: windows package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  windows_package:
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: msys2/setup-msys2@v2
+      with:
+        install: 
+          gcc make gcc-fortran winpthreads-git openblas
+    - run:  gcc -v
+    - run: make CC=gcc
+    - run: gcc-fortran -v
+    - run: make CC=gcc-fortran
+    - run: which gcc-fortran 
