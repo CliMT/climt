@@ -23,5 +23,5 @@ jobs:
           make
           gcc-fortran
     - run: gcc -v
-    - run: gcc-fortran -v
+    - run: gfortran -v
     - run: which gfortran 
