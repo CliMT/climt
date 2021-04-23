@@ -22,10 +22,6 @@ jobs:
           gcc
           make
           gcc-fortran
-          winpthreads-git
-          openblas
-    - run:  gcc -v
-    - run: make CC=gcc
+    - run: gcc -v
     - run: gcc-fortran -v
-    - run: make CC=gcc-fortran
-    - run: which gcc-fortran 
+    - run: which gfortran 
