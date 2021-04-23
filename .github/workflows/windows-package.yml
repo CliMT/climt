@@ -22,6 +22,7 @@ jobs:
           gcc
           make
           gcc-fortran
+          mingw-w64-openblas
     - run: gcc -v
     - run: gfortran -v
     - run: which gfortran 
