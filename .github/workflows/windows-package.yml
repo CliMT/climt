@@ -22,7 +22,8 @@ jobs:
           gcc
           make
           gcc-fortran
-          mingw-w64-openblas
+    - run: pacman -Syu
+    - run: pacman -S mingw-w64-x86_64-openblas
     - run: gcc -v
     - run: gfortran -v
     - run: which gfortran 
