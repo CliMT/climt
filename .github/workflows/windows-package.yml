@@ -1,0 +1,36 @@
+# This workflow will install compilers and packges on windows platform
+
+name: windows package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master, develop ]
+
+name: windows
+jobs:
+  windows:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        compiler: [gcc, gcc-fortran]
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: msys2/setup-msys2@v2
+      with:
+        install: >-
+          gcc make
+          gcc-fortran make
+          make mingw-w64-i686-winpthreads-git
+          make mingw-w64-i686-openblas
+    - run: pacman --noconfirm -S gcc
+      if: ${{ matrix.compiler == 'gcc' }}
+    - run: pacman --noconfirm -S gcc-fortran 
+      if: ${{ matrix.compiler == 'gcc-fortran' }}
+    - run: ${{ matrix.compiler }} --version
+    - run: which gcc-fortran -v
+    - run: make CC=${{ matrix.compiler }}
