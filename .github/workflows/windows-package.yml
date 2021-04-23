@@ -20,12 +20,12 @@ jobs:
       with:
         update: true
         install: >- 
-          mingw-w64-gcc
+          mingw-w64-x86_64-gcc
           mingw-w64-x86_64-make
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-openblas
-    - run: pacman -Ql mingw-w64-gcc
-    - run: pacman -Ql mingw-w64-gcc-fortran
+    - run: pacman -Ql mingw-w64-x86_64-gcc
+    - run: pacman -Ql mmingw-w64-x86_64-gcc-fortran
     - run: pacman -Ql mingw-w64-x86_64-openblas
     - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
     - run: ls -l /mingw64/
