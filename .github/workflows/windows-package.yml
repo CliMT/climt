@@ -27,4 +27,4 @@ jobs:
     - run: gcc --version
     - run: gfortran -v
     - run: which gfortran
-    - run: cd /usr/; find .|grep openblas
+    - run: pacman -Ql mingw-w64-x86_64-openblas
