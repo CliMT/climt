@@ -29,4 +29,5 @@ jobs:
     - run: which gfortran
     - run: which ar
     - run: pacman -Ql mingw-w64-x86_64-openblas
+    - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
     - run: ls -l /mingw64/lib/
