@@ -24,20 +24,16 @@ jobs:
           mingw-w64-x86_64-make
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-openblas
-          mingw-w64-python
-    - run: echo $PATH
-    - name: Set up Python 36
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - run: echo $PATH
+    - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: "3.7"
     - run: which python
     - run: pacman -Ql mingw-w64-x86_64-gcc
     - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
     - run: pacman -Ql mingw-w64-x86_64-openblas
     - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
     - run: ls -l /mingw64/
-    - run: ls -l /c/hostedtoolcache/windows/Python/3.6.8/x64/
    # - run: export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
    # - run: |
   # PYPATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' )
