@@ -34,9 +34,9 @@ jobs:
         conda activate test
         which python
         echo $PATH
-        which gcc
+        which x86_64-w64-mingw32-gcc
         which ld
-        which gfortran
+        which x86_64-w64-mingw32-gfortran
     - run: pacman -Ql mingw-w64-x86_64-gcc
     - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
     - run: pacman -Ql mingw-w64-x86_64-openblas
