@@ -36,6 +36,7 @@ jobs:
         echo $PATH
         which x86_64-w64-mingw32-gcc
         which ld
+        ls -l /c/ProgramData/Chocolatey/bin/
         which x86_64-w64-mingw32-gfortran
     - run: pacman -Ql mingw-w64-x86_64-gcc
     - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
