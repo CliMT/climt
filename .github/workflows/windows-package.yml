@@ -13,17 +13,17 @@ jobs:
     runs-on: windows-2019
     defaults:
       run:
-        shell: msys2 {0}
+        shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: >- 
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-make
-          mingw-w64-x86_64-gcc-fortran
-          mingw-w64-x86_64-openblas
+    # - uses: msys2/setup-msys2@v2
+    #  with:
+    #    update: true
+    #    install: >- 
+    #      mingw-w64-x86_64-gcc
+    #      mingw-w64-x86_64-make
+    #      mingw-w64-x86_64-gcc-fortran
+    #      mingw-w64-x86_64-openblas
     - uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
@@ -33,16 +33,15 @@ jobs:
       run: |
         conda activate test
         which python
-        export PATH=/mingw64/bin/:$PATH
         echo $PATH
         which x86_64-w64-mingw32-gcc
         which ld
         which x86_64-w64-mingw32-gfortran
-    - run: pacman -Ql mingw-w64-x86_64-gcc
-    - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
-    - run: pacman -Ql mingw-w64-x86_64-openblas
-    - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
-    - run: ls -l /mingw64/bin/
+   # - run: pacman -Ql mingw-w64-x86_64-gcc
+   # - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
+   # - run: pacman -Ql mingw-w64-x86_64-openblas
+   # - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
+   # - run: ls -l /mingw64/bin/
    # - run: export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
    # - run: |
   # PYPATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' )
@@ -51,6 +50,7 @@ jobs:
       run: |
           conda activate test
           which python
+          conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
           python -m pip install -r requirements_dev.txt
           python setup.py develop
       #    py.test -v
