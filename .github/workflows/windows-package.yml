@@ -33,7 +33,7 @@ jobs:
     - run: pacman -Ql mingw-w64-x86_64-openblas
     - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
     - run: ls -l /mingw64/
-    - run: export PATH=${pythonLocation}:$PATH; echo $PATH
+    - run: export PATH=${subst \,/,${subst C:\,/c/,${pythonLocation}}}:$PATH; echo $PATH
     - run: |
           python -m pip install -r requirements_dev.txt
           python setup.py develop
