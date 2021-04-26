@@ -54,5 +54,5 @@ jobs:
           cp /c/Miniconda/envs/test/Library/bin/vcruntime140.dll /c/Miniconda/envs/test/Library/bin/msvcr140.dll
           ls -l
           python setup.py develop
-      #    py.test -v
-      #    python setup.py bdist_wheel
+          py.test -v
+          python setup.py bdist_wheel
