@@ -49,7 +49,7 @@ jobs:
           printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
           ls $HOME; cat $HOME/pydistutils.cfg          
           python -m pip install -r requirements_dev.txt
-          ar cru libmsvcr140.a
+          touch libmsvcr140.dll
           ls -l
           python setup.py develop
       #    py.test -v
