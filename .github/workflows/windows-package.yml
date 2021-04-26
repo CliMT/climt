@@ -51,7 +51,9 @@ jobs:
           conda activate test
           which python
           conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
-          python -m pip install -r requirements_dev.txt
-          python setup.py develop
+          which gcc
+          which gfortran
+      #    python -m pip install -r requirements_dev.txt
+      #    python setup.py develop
       #    py.test -v
       #    python setup.py bdist_wheel
