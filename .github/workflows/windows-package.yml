@@ -50,4 +50,4 @@ jobs:
       #   python -m pip install -r requirements_dev.txt
       #    python setup.py develop
       #    py.test -v
-          python setup.py bdist_wheel
+      #    python setup.py bdist_wheel
