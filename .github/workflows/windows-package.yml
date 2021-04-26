@@ -41,7 +41,6 @@ jobs:
       run: |
           export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
           conda activate test
-          cat /c/Miniconda/envs/test/conda-meta/vs2015_runtime*.json
           which python
           conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
           which gcc
@@ -51,6 +50,7 @@ jobs:
           ls $HOME; cat $HOME/pydistutils.cfg          
           python -m pip install -r requirements_dev.txt
           ar cru libmsvcr140.a
+          ls -l
           python setup.py develop
       #    py.test -v
       #    python setup.py bdist_wheel
