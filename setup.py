@@ -185,7 +185,7 @@ else:
         Extension(
             'climt._components._berger_solar_insolation',
             ['climt/_components/_berger_solar_insolation.pyx'],
-            extra_link_args=['-lvcruntime140'],
+            extra_link_args=['-LC:\Miniconda\envs\test\Library\bin\ -lvcruntime140'],
         ),
 
         Extension(
