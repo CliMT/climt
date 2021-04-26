@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-2019
     defaults:
       run:
-        shell: bash -l {0}
+        shell: msys2 {0}
     steps:
     - uses: actions/checkout@v2
     - uses: msys2/setup-msys2@v2
@@ -30,7 +30,10 @@ jobs:
         python-version: "3.7"
     - name: Check Python
       shell: bash
-      run: which python
+      run: |
+        conda activate test
+        which python
+        echo $PATH
     - run: pacman -Ql mingw-w64-x86_64-gcc
     - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
     - run: pacman -Ql mingw-w64-x86_64-openblas
