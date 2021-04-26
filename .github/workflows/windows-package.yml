@@ -47,8 +47,8 @@ jobs:
           which gcc
           which gfortran
           cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
-      #    python -m pip install -r requirements_dev.txt
-      #    python setup.py develop
+          python -m pip install -r requirements_dev.txt
+          python setup.py develop
       #    printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
       #    ls $HOME; cat $HOME/pydistutils.cfg
       #    py.test -v
