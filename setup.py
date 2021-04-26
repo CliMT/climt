@@ -123,7 +123,7 @@ if operating_system == 'Windows' :
     os.environ['FC'] = 'gfortran.exe'
     os.environ['AR'] = 'gcc-ar.exe'
     libraries = []
-    openblas_path = '/mingw64/lib/libopenblas.a'
+    openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
     default_compile_args = ['-DMS_WIN64']
 
@@ -184,7 +184,9 @@ else:
     ext_modules = [
         Extension(
             'climt._components._berger_solar_insolation',
-            ['climt/_components/_berger_solar_insolation.pyx']),
+            ['climt/_components/_berger_solar_insolation.pyx'],
+            extra_link_args=['-LC:\\Miniconda\\envs\\test\\Library\\bin\\', '-lvcruntime140'],
+        ),
 
         Extension(
             'climt._components.simple_physics._simple_physics',

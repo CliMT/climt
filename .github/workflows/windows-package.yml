@@ -13,29 +13,46 @@ jobs:
     runs-on: windows-2019
     defaults:
       run:
-        shell: msys2 {0}
+        shell: bash -l {0}
     steps:
-    - name: Set up Python 36
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6
     - uses: actions/checkout@v2
-    - uses: msys2/setup-msys2@v2
+    # - uses: msys2/setup-msys2@v2
+    #  with:
+    #    update: true
+    #    install: >- 
+    #      mingw-w64-x86_64-gcc
+    #      mingw-w64-x86_64-make
+    #      mingw-w64-x86_64-gcc-fortran
+    #      mingw-w64-x86_64-openblas
+    - uses: conda-incubator/setup-miniconda@v2
       with:
-        update: true
-        install: >- 
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-make
-          mingw-w64-x86_64-gcc-fortran
-          mingw-w64-x86_64-openblas
-    - run: pacman -Ql mingw-w64-x86_64-gcc
-    - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
-    - run: pacman -Ql mingw-w64-x86_64-openblas
-    - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
-    - run: ls -l /mingw64/
-    - run: export PATH=${pythonLocation}:$PATH
-    - run: |
+        auto-update-conda: true
+        python-version: "3.7"
+   # - run: pacman -Ql mingw-w64-x86_64-gcc
+   # - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
+   # - run: pacman -Ql mingw-w64-x86_64-openblas
+   # - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
+   # - run: ls -l /mingw64/bin/
+   # - run: export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
+   # - run: |
+  # PYPATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' )
+  #  export PATH=$PYPATH:$PYPATH/Scripts/:$PATH; echo $PATH
+    - shell: bash -l {0}
+      run: |
+          export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
+          conda activate test
+          which python
+          conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
+          conda install libpython
+          which gcc
+          which gfortran
+          cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
+          printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
+          ls $HOME; cat $HOME/pydistutils.cfg          
           python -m pip install -r requirements_dev.txt
+          touch libmsvcr140.dll
+          cp /c/Miniconda/envs/test/Library/bin/vcruntime140.dll /c/Miniconda/envs/test/Library/bin/msvcr140.dll
+          ls -l
           python setup.py develop
           py.test -v
           python setup.py bdist_wheel
