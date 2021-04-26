@@ -14,6 +14,9 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8"]
     steps:
     - uses: actions/checkout@v2
     # - uses: msys2/setup-msys2@v2
@@ -27,16 +30,7 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
-        python-version: "3.7"
-   # - run: pacman -Ql mingw-w64-x86_64-gcc
-   # - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
-   # - run: pacman -Ql mingw-w64-x86_64-openblas
-   # - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
-   # - run: ls -l /mingw64/bin/
-   # - run: export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
-   # - run: |
-  # PYPATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' )
-  #  export PATH=$PYPATH:$PYPATH/Scripts/:$PATH; echo $PATH
+        python-version: ${{ matrix.python-version }}
     - shell: bash -l {0}
       run: |
           export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
@@ -55,4 +49,6 @@ jobs:
           ls -l
           python setup.py develop
           py.test -v
+    - run:
           python setup.py bdist_wheel
+      if: ${{ github.event_name == 'release' }}
