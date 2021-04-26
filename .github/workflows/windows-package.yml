@@ -15,12 +15,6 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-    - run: echo $PATH
-    - name: Set up Python 36
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - run: echo $PATH
     - uses: actions/checkout@v2
     - uses: msys2/setup-msys2@v2
       with:
@@ -30,6 +24,12 @@ jobs:
           mingw-w64-x86_64-make
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-openblas
+    - run: echo $PATH
+    - name: Set up Python 36
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - run: echo $PATH
     - run: pacman -Ql mingw-w64-x86_64-gcc
     - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
     - run: pacman -Ql mingw-w64-x86_64-openblas
