@@ -15,10 +15,12 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
+    - run: echo $PATH
     - name: Set up Python 36
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+    - run: echo $PATH
     - uses: actions/checkout@v2
     - uses: msys2/setup-msys2@v2
       with:
