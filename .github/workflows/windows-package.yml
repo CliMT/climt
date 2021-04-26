@@ -30,6 +30,7 @@ jobs:
       with:
         python-version: 3.7
     - run: echo $PATH
+    - run: which python
     - run: pacman -Ql mingw-w64-x86_64-gcc
     - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
     - run: pacman -Ql mingw-w64-x86_64-openblas
