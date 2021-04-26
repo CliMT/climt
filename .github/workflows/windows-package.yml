@@ -41,14 +41,15 @@ jobs:
       run: |
           export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
           conda activate test
+          cat /c/Miniconda/envs/test/conda-meta/vs2015_runtime*.json
           which python
           conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
           which gcc
           which gfortran
-          printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
-          ls $HOME; cat $HOME/pydistutils.cfg
           cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
-          python -m pip install -r requirements_dev.txt
-          python setup.py develop
+      #    python -m pip install -r requirements_dev.txt
+      #    python setup.py develop
+      #    printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
+      #    ls $HOME; cat $HOME/pydistutils.cfg
       #    py.test -v
       #    python setup.py bdist_wheel
