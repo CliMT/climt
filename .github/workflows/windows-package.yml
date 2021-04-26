@@ -35,9 +35,10 @@ jobs:
     - run: ls -l /mingw64/
     - run: ls -l /c/hostedtoolcache/windows/Python/3.6.8/x64/
    # - run: export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
+   # - run: |
+  # PYPATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' )
+  #  export PATH=$PYPATH:$PYPATH/Scripts/:$PATH; echo $PATH
     - run: |
-          PYPATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' )
-          export PATH=$PYPATH:$PYPATH/Scripts/:$PATH; echo $PATH
           python -m pip install -r requirements_dev.txt
           python setup.py develop
           py.test -v
