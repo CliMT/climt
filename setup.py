@@ -118,12 +118,12 @@ if 'CC' not in os.environ:
 if 'CLIMT_OPT_FLAGS' not in os.environ:
     os.environ['CLIMT_OPT_FLAGS'] = '-O3'
 
-if operating_system == 'Windows' and os.environ.get('APPVEYOR') == 'True':
-    os.environ['CC'] = 'x86_64-w64-mingw32-gcc.exe'
-    os.environ['FC'] = 'x86_64-w64-mingw32-gfortran.exe'
-    os.environ['AR'] = 'x86_64-w64-mingw32-gcc-ar.exe'
+if operating_system == 'Windows' :
+    os.environ['CC'] = 'gcc.exe'
+    os.environ['FC'] = 'gfortran.exe'
+    os.environ['AR'] = 'gcc-ar.exe'
     libraries = []
-    openblas_path = os.path.join(os.environ['COMPILER_PATH'], '../lib/libopenblas.a')
+    openblas_path = '/mingw64/lib/libopenblas.a'
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
     default_compile_args = ['-DMS_WIN64']
 
