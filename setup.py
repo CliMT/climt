@@ -184,7 +184,9 @@ else:
     ext_modules = [
         Extension(
             'climt._components._berger_solar_insolation',
-            ['climt/_components/_berger_solar_insolation.pyx']),
+            ['climt/_components/_berger_solar_insolation.pyx'],
+            extra_link_args=['-lvcruntime140'],
+        ),
 
         Extension(
             'climt._components.simple_physics._simple_physics',
