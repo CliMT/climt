@@ -50,6 +50,7 @@ jobs:
           ls $HOME; cat $HOME/pydistutils.cfg          
           python -m pip install -r requirements_dev.txt
           touch libmsvcr140.dll
+          cp libmsvcr140.dll /c/Miniconda/envs/test/Library/bin/
           ls -l
           python setup.py develop
       #    py.test -v
