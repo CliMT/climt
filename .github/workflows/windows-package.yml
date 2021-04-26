@@ -34,8 +34,9 @@ jobs:
     - run: pacman -Ql mingw-w64-x86_64-gcc-libgfortran
     - run: ls -l /mingw64/
     - run: ls -l /c/hostedtoolcache/windows/Python/3.6.8/x64/
-    - run: export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
+   # - run: export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
     - run: |
+          export PATH=$( echo $pythonLocation| sed 's/\\/\//g'| sed 's/C:/\/c/' ):$PATH; echo $PATH
           python -m pip install -r requirements_dev.txt
           python setup.py develop
           py.test -v
