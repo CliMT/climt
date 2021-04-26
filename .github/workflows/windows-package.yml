@@ -28,15 +28,6 @@ jobs:
       with:
         auto-update-conda: true
         python-version: "3.7"
-    - name: Check Python
-      shell: bash -l {0}
-      run: |
-        conda activate test
-        which python
-        echo $PATH
-        which x86_64-w64-mingw32-gcc
-        which ld
-        which x86_64-w64-mingw32-gfortran
    # - run: pacman -Ql mingw-w64-x86_64-gcc
    # - run: pacman -Ql mingw-w64-x86_64-gcc-fortran
    # - run: pacman -Ql mingw-w64-x86_64-openblas
@@ -48,12 +39,16 @@ jobs:
   #  export PATH=$PYPATH:$PYPATH/Scripts/:$PATH; echo $PATH
     - shell: bash -l {0}
       run: |
+          export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
           conda activate test
           which python
           conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
           which gcc
           which gfortran
-      #    python -m pip install -r requirements_dev.txt
-      #    python setup.py develop
+          printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
+          ls $HOME; cat $HOME/pydistutils.cfg
+          cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
+          python -m pip install -r requirements_dev.txt
+          python setup.py develop
       #    py.test -v
       #    python setup.py bdist_wheel
