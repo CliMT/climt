@@ -119,8 +119,8 @@ if 'CLIMT_OPT_FLAGS' not in os.environ:
     os.environ['CLIMT_OPT_FLAGS'] = '-O3'
 
 if operating_system == 'Windows' :
-    os.environ['CC'] = 'gcc.exe'
-    os.environ['FC'] = 'gfortran.exe'
+    os.environ['CC'] = '/mingw64/bin/gcc.exe'
+    os.environ['FC'] = '/mingw64/bin/gfortran.exe'
     os.environ['AR'] = 'gcc-ar.exe'
     libraries = []
     openblas_path = '/mingw64/lib/libopenblas.a'
