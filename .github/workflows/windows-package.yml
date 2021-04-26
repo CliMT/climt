@@ -43,6 +43,7 @@ jobs:
           conda activate test
           which python
           conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
+          conda install libpython
           which gcc
           which gfortran
           cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
