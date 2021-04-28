@@ -39,7 +39,6 @@ jobs:
           if: ${{ runner.os == 'Linux'  }}
            CC=gcc-7 FC=gfortran-7  CIBW_ARCHS_LINUX=x86_64
 
-      
       - name: Build on macOS
         env:
           CIBW_BUILD: cp36-macosx_x86_64 cp37-macosx_x86_64 cp38-macosx_x86_64	
