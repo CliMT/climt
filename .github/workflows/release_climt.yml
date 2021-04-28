@@ -32,7 +32,7 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
       
-      - name: Build om Linux
+      - name: Build on Linux
         env:
           CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
         run: |
