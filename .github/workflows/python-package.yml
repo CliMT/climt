@@ -48,8 +48,6 @@ jobs:
             if [ "$RUNNER_OS" == "Linux" ]; then
               gfortran --version
               CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Linux tox -e ${{ matrix.python-version }}
-            elif [ "$RUNNER_OS" == "Windows" ]; then
-              CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Windows tox -e ${{ matrix.python-version }} 
             elif [ "$RUNNER_OS" == "macOS" ]; then
               CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin tox -e ${{ matrix.python-version }}
             else 
