@@ -37,7 +37,7 @@ jobs:
           CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
         run: |
           if: ${{ runner.os == 'Linux'  }}
-           CC=gcc-7 FC=gfortran-7  CIBW_ARCHS_LINUX=x86_64
+           CC=gcc-7 FC=gfortran-7 CIBW_ARCHS_LINUX=x86_64
 
       - name: Build on macOS
         env:
