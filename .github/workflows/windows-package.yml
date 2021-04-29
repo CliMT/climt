@@ -53,7 +53,7 @@ jobs:
           python setup.py bdist_wheel
       if: ${{ github.event_name == 'release' }}
            python -m pip install twine
+           twine upload  dist/*
       env:      
             TWINE_USERNAME: __token__
             TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-    -  run:  twine upload  dist/* 
