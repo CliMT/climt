@@ -35,16 +35,14 @@ jobs:
       - name: Build on Linux
         env:
           CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
-        run: |
-          if: ${{ runner.os == 'Linux'  }}
-           CC=gcc-7 FC=gfortran-7 CIBW_ARCHS_LINUX=x86_64
-
+        run:  if [ "$RUNNER_OS" == "Linux" ]; then
+               CC=gcc-7 FC=gfortran-7 CIBW_ARCHS_LINUX=x86_64
+           
       - name: Build on macOS
         env:
           CIBW_BUILD: cp36-macosx_x86_64 cp37-macosx_x86_64 cp38-macosx_x86_64	
-        run: |
-           if: ${{ runner.os == 'macOS'  }}
-           CC=gcc-8 FC=gfortran-8 CIBW_ARCHS_MACOS=x86_64
+        run: if [ "$RUNNER_OS" == "macOS" ]; then
+              CC=gcc-8 FC=gfortran-8 CIBW_ARCHS_MACOS=x86_64
            
       - name: Install twine
         run: python -m pip install twine
