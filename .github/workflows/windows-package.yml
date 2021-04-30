@@ -1,0 +1,54 @@
+# This workflow will install compilers and packges on windows platform
+
+name: windows package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  windows_package:
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      matrix:
+        python-version: ["3.6","3.7", "3.8"]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+    - shell: bash -l {0} 
+      run: |
+          export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
+          conda activate test
+          which python
+          conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
+          conda install libpython
+          which gcc
+          which gfortran
+          cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
+          printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
+          ls $HOME; cat $HOME/pydistutils.cfg          
+          python -m pip install -r requirements_dev.txt
+          touch libmsvcr140.dll
+          cp /c/Miniconda/envs/test/Library/bin/vcruntime140.dll /c/Miniconda/envs/test/Library/bin/msvcr140.dll
+          ls -l
+          python setup.py develop
+          py.test -v
+          
+    - if: ${{ github.event_name == 'release' }}
+      env:      
+            TWINE_USERNAME: __token__
+            TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      run: |
+           export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
+           python setup.py bdist_wheel
+           python setup.py sdist
+           python -m pip install twine
+           twine upload  dist/*
