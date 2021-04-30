@@ -42,11 +42,11 @@ jobs:
           python setup.py develop
           py.test -v
           
-    - run: |
-           python setup.py bdist_wheel
-           python -m pip install twine
-           twine upload  dist/*
-      if: ${{ github.event_name == 'release' }}
+    - if: ${{ github.event_name == 'release' }}
       env:      
             TWINE_USERNAME: __token__
             TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      run: |
+           python setup.py bdist_wheel
+           python -m pip install twine
+           twine upload  dist/*
