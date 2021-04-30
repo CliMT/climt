@@ -42,7 +42,9 @@ jobs:
           py.test -v
 
     - if: ${{ matrix.python-version == '3.6' }}
-      run: python setup.py sdist
+      run: |
+          export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
+          python setup.py sdist
           
     - if: ${{ github.event_name == 'release' }}
       env:      
