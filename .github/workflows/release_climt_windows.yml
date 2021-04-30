@@ -4,7 +4,7 @@ name: windows package
 
 on:
   release:
-    branches: [ master ]
+    types: [published]
 
 jobs:
   windows_package:
