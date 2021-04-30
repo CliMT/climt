@@ -49,5 +49,6 @@ jobs:
       run: |
            export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
            python setup.py bdist_wheel
+           python setup.py sdist
            python -m pip install twine
            twine upload  dist/*
