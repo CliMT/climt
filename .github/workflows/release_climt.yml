@@ -40,7 +40,8 @@ jobs:
       - name: Build on macOS
         env:
           CIBW_BUILD: cp36-macosx_x86_64 cp37-macosx_x86_64 cp38-macosx_x86_64
-          CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Darwin"
+          CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
+          CIBW_BEFORE_ALL_MACOS: brew install gcc@8
         if: ${{ runner.os == 'macOS' }}
         run: python -m cibuildwheel --output-dir wheelhouse
 
