@@ -41,9 +41,10 @@ jobs:
           ls -l
           python setup.py develop
           py.test -v
-    - run: |
-          python setup.py bdist_wheel
+          
       if: ${{ github.event_name == 'release' }}
+    - run: |
+           python setup.py bdist_wheel
            python -m pip install twine
            twine upload  dist/*
       env:      
