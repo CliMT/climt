@@ -16,22 +16,14 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ["3.7", "3.8"]
+        python-version: ["3.6","3.7", "3.8"]
     steps:
     - uses: actions/checkout@v2
-    # - uses: msys2/setup-msys2@v2
-    #  with:
-    #    update: true
-    #    install: >- 
-    #      mingw-w64-x86_64-gcc
-    #      mingw-w64-x86_64-make
-    #      mingw-w64-x86_64-gcc-fortran
-    #      mingw-w64-x86_64-openblas
     - uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
-    - shell: bash -l {0}
+    - shell: bash -l {0} 
       run: |
           export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
           conda activate test
@@ -49,6 +41,12 @@ jobs:
           ls -l
           python setup.py develop
           py.test -v
-    - run:
-          python setup.py bdist_wheel
+          
+    - run: |
+           python setup.py bdist_wheel
+           python -m pip install twine
+           twine upload  dist/*
       if: ${{ github.event_name == 'release' }}
+      env:      
+            TWINE_USERNAME: __token__
+            TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
