@@ -35,10 +35,10 @@ all: $(CLIMT_LIB_TARGETS) sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_l
 # FFTW3 Configuration
 
 $(CLIMT_ARCH)/.configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(CLIMT_FFTW_FLAGS) > log.config.fftw 2>&1 && touch ../$(CLIMT_ARCH)/.configured_fftw
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(CLIMT_FFTW_FLAGS) > log.config.fftw 2>&1; tail -n 100 log.config.fftw && touch ../$(CLIMT_ARCH)/.configured_fftw
 
 $(CLIMT_ARCH)/libfftw3_omp.a: $(CLIMT_ARCH)/.configured_fftw
-	cd $(FFTW_DIR); make install > log.install.fftw 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
+	cd $(FFTW_DIR); make install > log.install.fftw 2>&1; tail -n 100 log.install.fftw; cp ../lib/libfftw3_omp.a $(LIB_DIR)
 
 $(CLIMT_ARCH)/libfftw3.a: $(CLIMT_ARCH)/.configured_fftw
 	cp lib/libfftw3.a $(LIB_DIR)
