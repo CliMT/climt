@@ -47,6 +47,7 @@ jobs:
             TWINE_USERNAME: __token__
             TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       run: |
+           export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
            python setup.py bdist_wheel
            python -m pip install twine
            twine upload  dist/*
