@@ -24,6 +24,7 @@ jobs:
     - shell: bash -l {0} 
       run: |
           export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
+          export CLIMT_OPT_FLAGS=-fno-asynchronous-unwind-tables
           conda activate test
           which python
           conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
@@ -39,6 +40,9 @@ jobs:
           ls -l
           python setup.py develop
           py.test -v
+
+    - if: ${{ matrix.python-version == '3.6' }}
+      run: python setup.py sdist
           
     - if: ${{ github.event_name == 'release' }}
       env:      
@@ -46,7 +50,7 @@ jobs:
             TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       run: |
            export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
+           export CLIMT_OPT_FLAGS=-fno-asynchronous-unwind-tables
            python setup.py bdist_wheel
-           python setup.py sdist
            python -m pip install twine
            twine upload  dist/*
