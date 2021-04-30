@@ -32,7 +32,7 @@ jobs:
       - name: Build on Linux
         env:
           CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
-          CIBW_ENVIRONMENT: CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Linux 
+          CIBW_ENVIRONMENT: "CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Linux"
         if: ${{ runner.os == 'Linux' }}
         run: python -m cibuildwheel --output-dir wheelhouse
        
@@ -40,7 +40,7 @@ jobs:
       - name: Build on macOS
         env:
           CIBW_BUILD: cp36-macosx_x86_64 cp37-macosx_x86_64 cp38-macosx_x86_64
-          CIBW_ENVIRONMENT: CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin
+          CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
         if: ${{ runner.os == 'macOS' }}
         run: python -m cibuildwheel --output-dir wheelhouse
 
