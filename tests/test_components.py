@@ -13,7 +13,7 @@ from climt import (
     RRTMGShortwave, SlabSurface, EmanuelConvection,
     DcmipInitialConditions, GFSDynamicalCore, BucketHydrology,
     IceSheet, Instellation, DryConvectiveAdjustment,
-    get_grid)
+    SimpleBoundaryLayer, get_grid)
 import climt
 from sympl import (
     Stepper, TendencyStepper, TimeDifferencingWrapper,
@@ -331,6 +331,12 @@ class TestSimplePhysics(ComponentBaseColumn, ComponentBase3D):
 
     def get_component_instance(self):
         return SimplePhysics()
+
+
+class TestSimpleBoundaryLayer(ComponentBaseColumn, ComponentBase3D):
+
+    def get_component_instance(self):
+        return SimpleBoundaryLayer()
 
 
 class TestSimplePhysicsImplicitPrognostic(ComponentBaseColumn, ComponentBase3D):
