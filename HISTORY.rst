@@ -2,7 +2,7 @@
 History
 =======
 
-v.0.16.11
+Latest
 ---------
 
 * New component SimpleBoundaryLayer that implements a boundary layer.
