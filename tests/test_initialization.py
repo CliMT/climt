@@ -2,7 +2,7 @@ from climt import (
     get_default_state, Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
     EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions, IceSheet,
-    Instellation, get_grid
+    Instellation, SimpleBoundaryLayer, get_grid
 )
 import random
 from sympl import (
@@ -189,7 +189,7 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
         RRTMGShortwave,
         EmanuelConvection, SlabSurface,
         DcmipInitialConditions, IceSheet,
-        Instellation
+        Instellation, SimpleBoundaryLayer
     )
 
     pair_tests = 20
