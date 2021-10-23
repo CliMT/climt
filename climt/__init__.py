@@ -30,4 +30,4 @@ __all__ = (
     IceSheet, Instellation, DryConvectiveAdjustment, BucketHydrology,
     SimpleBoundaryLayer)
 
-__version__ = '0.16.3'
+__version__ = '0.16.14'

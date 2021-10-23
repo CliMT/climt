@@ -1,0 +1,57 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-10.15]
+        python-version: [py36 , py37, py38]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 36
+      if: ${{ matrix.python-version == 'py36' }} 
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+    - name: Set up Python 37
+      if: ${{ matrix.python-version == 'py37' }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Set up Python 38
+      if: ${{ matrix.python-version == 'py38' }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install wheel tox
+        if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 climt/ --count --show-source --statistics
+    - name: Build climt
+      run: |
+            if [ "$RUNNER_OS" == "Linux" ]; then
+              gfortran --version
+              CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Linux tox -e ${{ matrix.python-version }}
+            elif [ "$RUNNER_OS" == "macOS" ]; then
+              CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin tox -e ${{ matrix.python-version }}
+            else 
+              echo "$RUNNER_OS not supported"
+              exit 1
+            fi
+      shell: bash

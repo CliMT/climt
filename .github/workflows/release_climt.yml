@@ -1,0 +1,55 @@
+name: Publish in GitHub Package Registry
+
+on:  
+  release:
+    types: [published]
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04,macOS-10.15]
+        #, windows-2019, macOS-10.15]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v2
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==1.10.0
+
+     # - name: Build wheels
+     #  run: python -m cibuildwheel --output-dir wheelhouse
+        # to supply options, put them in 'env', like:
+     #   env:
+     #     CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
+
+          
+      - name: Build on Linux
+        env:
+          CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
+          CIBW_ENVIRONMENT: CC=gcc-7 FC=gfortran-7 CLIMT_ARCH=Linux 
+        if: ${{ runner.os == 'Linux' }}
+        run: python -m cibuildwheel --output-dir wheelhouse
+       
+           
+      - name: Build on macOS
+        env:
+          CIBW_BUILD: cp36-macosx_x86_64 cp37-macosx_x86_64 cp38-macosx_x86_64
+          CIBW_ENVIRONMENT: CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin
+        if: ${{ runner.os == 'macOS' }}
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+           
+      - name: Install twine
+        run: python -m pip install twine
+
+      - name: upload wheels
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        run: twine upload wheelhouse/* --verbose
