@@ -46,7 +46,7 @@ def load_dictionary(filename):
 def state_3d_to_1d(state):
     return_state = {}
     for name, value in state.items():
-        if name is 'time':
+        if name == 'time':
             return_state[name] = value
         else:
             dim_list = []
@@ -62,7 +62,7 @@ def state_3d_to_1d(state):
 def transpose_state(state, dims=None):
     return_state = {}
     for name, value in state.items():
-        if name is 'time':
+        if name == 'time':
             return_state[name] = state[name]
         else:
             if dims is None:
