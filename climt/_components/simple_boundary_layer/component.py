@@ -112,8 +112,8 @@ def Parallel_columns(air_temperature, surface_temperature, air_pressure,
         for i in range(1, n):
             z[i] = z[i-1]+(Rd*(1+0.608*col_specific_humidity[i]) *
                            col_air_temperature[i]/g) *\
-                           np.log(col_air_pressure_int[1:-1][i-1] /
-                                  col_air_pressure_int[1:-1][i])
+                   np.log(col_air_pressure_int[1:-1][i-1] /
+                          col_air_pressure_int[1:-1][i])
 
         wind_int = np.sqrt(np.power(col_north_wind_int, 2) +
                            np.power(col_east_wind_int, 2))
