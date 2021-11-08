@@ -276,7 +276,7 @@ class TestDryConvectionConservation(AtmosphereMoistEnthalpyConservation):
 class TestSimpleBoundaryLayerConservation(AtmosphereMoistEnthalpyConservation):
 
     def get_component_instance(self):
-        return climt.DryConvectiveAdjustment()
+        return climt.SimpleBoundaryLayer()
 
     def modify_state(self, state):
         state['eastward_wind'].values[:] = 3.
