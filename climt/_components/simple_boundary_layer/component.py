@@ -176,6 +176,16 @@ def Parallel_columns(air_temperature, surface_temperature, air_pressure,
 
 
 class SimpleBoundaryLayer(Stepper):
+    """
+    This is a simple boundary layer component that diffuses heat, humidity and
+    momemtum upwards from the lowest model level.
+
+    This component assumes that a surface flux component has been already run,
+    which has made the changes due to surface fluxes at the lowest model
+    level. This component then diffuses heat, humidity and momentum using
+    diffusion coefficients calculated using the simplified Monin-Obukhov
+    theory.
+    """
 
     input_properties = {
         'air_temperature': {
@@ -253,6 +263,19 @@ class SimpleBoundaryLayer(Stepper):
     def __init__(self, von_karman_constant=0.4, roughness_length=0.0000321,
                  specific_fraction=0.1, reference_pressure=100000,
                  critical_richardson_number=1, **kwargs):
+        """
+        Args:
+        roughness_length:
+            A measure of the surface roughness.
+        specific_fraction:
+            A parameter used in the calculation of diffusion coefficients.
+        reference_pressure:
+            The reference pressure used in the potential temperature
+            calculations.
+        critical_richardson_number:
+            A set threshold value which determines the diffusion coefficients
+            and the height of the boundary layer.
+        """
 
         self._k = von_karman_constant
         self._z0 = roughness_length
@@ -272,6 +295,10 @@ class SimpleBoundaryLayer(Stepper):
         self._g = get_constant('gravitational_acceleration', 'm s^-2')
 
     def array_call(self, state, timestep):
+        """
+        Takes temperature, humidty and wimd profiles for each column and
+        returns diffused temperature, humidty and wind profiles.
+        """
 
         num_cols = state['air_temperature'].shape[1]
 
