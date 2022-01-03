@@ -78,7 +78,7 @@
 !------------------------------------------------------------------
 
       subroutine rrtmg_lw &
-            (ncol    ,nlay    ,icld    ,idrv    , &
+            (ncol    ,nlay    ,icld    ,idrv    ,icalc_bnds, &
              play    ,plev    ,tlay    ,tlev    ,tsfc    , & 
              h2ovmr  ,o3vmr   ,co2vmr  ,ch4vmr  ,n2ovmr  ,o2vmr , &
              cfc11vmr,cfc12vmr,cfc22vmr,ccl4vmr ,emis    , &
@@ -86,6 +86,7 @@
              taucmcl ,ciwpmcl ,clwpmcl ,reicmcl ,relqmcl , &
              tauaer  , &
              uflx    ,dflx    ,hr      ,uflxc   ,dflxc,  hrc, &
+             uflx_bnd,dflx_bnd,hr_bnd  ,uflxc_bnd,dflxc_bnd,  hrc_bnd, &
              duflx_dt,duflxc_dt )
 
 ! -------- Description --------
@@ -207,7 +208,10 @@
                                                       !    0: Normal forward calculation
                                                       !    1: Normal forward calculation with
                                                       !       duflx_dt and duflxc_dt output
-
+      integer(kind=im), intent(in) :: icalc_bnds      ! Flag for output of fluxes by band
+                                                      !    0: Normal output
+                                                      !    1: Normal and band output
+      
       real(kind=rb), intent(in) :: play(:,:)          ! Layer pressures (hPa, mb)
                                                       !    Dimensions: (ncol,nlay)
       real(kind=rb), intent(in) :: plev(:,:)          ! Interface pressures (hPa, mb)
@@ -303,14 +307,31 @@
                                                       !    Dimensions: (ncol,nlay)
 
 ! ----- Optional Output -----
-      real(kind=rb), intent(out), optional :: duflx_dt(:,:)     
+      real(kind=rb), intent(out), optional :: uflx_bnd(:,:,:)
+                                                      ! Total sky longwave upward flux by band (W/m2)
+                                                      !    Dimensions: (ncol,nlay+1,nbndlw)
+      real(kind=rb), intent(out), optional :: dflx_bnd(:,:,:)
+                                                      ! Total sky longwave downward flux by band (W/m2)
+                                                      !    Dimensions: (ncol,nlay+1,nbndlw)
+      real(kind=rb), intent(out), optional :: hr_bnd(:,:,:)
+                                                      ! Total sky longwave radiative heating rate by band (K/d)
+                                                      !    Dimensions: (ncol,nlay,nbndlw)
+      real(kind=rb), intent(out), optional :: uflxc_bnd(:,:,:)
+                                                      ! Clear sky longwave upward flux by band (W/m2)
+                                                      !    Dimensions: (ncol,nlay+1,nbndlw)
+      real(kind=rb), intent(out), optional :: dflxc_bnd(:,:,:)
+                                                      ! Clear sky longwave downward flux by band (W/m2)
+                                                      !    Dimensions: (ncol,nlay+1,nbndlw)
+      real(kind=rb), intent(out), optional :: hrc_bnd(:,:,:)
+                                                      ! Clear sky longwave radiative heating rate by band (K/d)
+                                                      !    Dimensions: (ncol,nlay+1,nbndlw)
+      real(kind=rb), intent(out), optional :: duflx_dt(:,:)
                                                       ! change in upward longwave flux (w/m2/K)
                                                       ! with respect to surface temperature
                                                       !    Dimensions: (ncol,nlay+1)
-      real(kind=rb), intent(out), optional :: duflxc_dt(:,:)    
+      real(kind=rb), intent(out), optional :: duflxc_dt(:,:)
                                                       ! change in clear sky upward longwave flux (w/m2/K)
                                                       ! with respect to surface temperature
-                                                      !    Dimensions: (ncol,nlay+1)
 
 ! ----- Local -----
 
@@ -325,6 +346,7 @@
       integer(kind=im) :: ims                 ! value for changing mcica permute seed
       integer(kind=im) :: k                   ! layer loop index
       integer(kind=im) :: ig                  ! g-point loop index
+      integer(kind=im) :: iband               ! band index
 
 ! Atmosphere
       real(kind=rb) :: pavel(nlay+1)          ! layer pressures (mb) 
@@ -421,6 +443,22 @@
       real(kind=rb) :: totdclfl(0:nlay+1)     ! clear sky downward longwave flux (w/m2)
       real(kind=rb) :: fnetc(0:nlay+1)        ! clear sky net longwave flux (w/m2)
       real(kind=rb) :: htrc(0:nlay+1)         ! clear sky longwave heating rate (k/day)
+      real(kind=rb) :: totuflux_bnd(0:nlay+1,nbndlw)
+                                              ! upward longwave flux by band (w/m2)
+      real(kind=rb) :: totdflux_bnd(0:nlay+1,nbndlw)
+                                              ! downward longwave flux by band (w/m2)
+      real(kind=rb) :: fnet_bnd(0:nlay+1,nbndlw)
+                                              ! net longwave flux by band (w/m2)
+      real(kind=rb) :: htr_bnd(0:nlay+1,nbndlw)
+                                              ! longwave heating rate by band (k/day)
+      real(kind=rb) :: totuclfl_bnd(0:nlay+1,nbndlw)
+                                              ! clear sky upward longwave flux by band (w/m2)
+      real(kind=rb) :: totdclfl_bnd(0:nlay+1,nbndlw)
+                                              ! clear sky downward longwave flux by band (w/m2)
+      real(kind=rb) :: fnetc_bnd(0:nlay+1,nbndlw)
+                                              ! clear sky net longwave flux by band (w/m2)
+      real(kind=rb) :: htrc_bnd(0:nlay+1,nbndlw)
+                                              ! clear sky longwave heating rate by band (k/day)
       real(kind=rb) :: dtotuflux_dt(0:nlay+1) ! change in upward longwave flux (w/m2/k)
                                               ! with respect to surface temperature
       real(kind=rb) :: dtotuclfl_dt(0:nlay+1) ! change in clear sky upward longwave flux (w/m2/k)
@@ -545,6 +583,8 @@
                      pwvcm, fracs, taut, &
                      totuflux, totdflux, fnet, htr, &
                      totuclfl, totdclfl, fnetc, htrc, &
+                     totuflux_bnd, totdflux_bnd, fnet_bnd, htr_bnd, &
+                     totuclfl_bnd, totdclfl_bnd, fnetc_bnd, htrc_bnd, &
                      idrv, dplankbnd_dt, dtotuflux_dt, dtotuclfl_dt )
 
 !  Transfer up and down fluxes and heating rate to output arrays.
@@ -567,6 +607,22 @@
             do k = 0, nlayers
                duflx_dt(iplon,k+1) = dtotuflux_dt(k)
                duflxc_dt(iplon,k+1) = dtotuclfl_dt(k)
+            enddo
+         endif
+
+! If icalc_bnds=1 option is active, transfer fluxes by band to output arrays.
+         if (icalc_bnds .eq. 1) then
+            do iband = istart, iend
+               do k = 0, nlayers
+                  uflx_bnd(iplon,k+1,iband) = totuflux_bnd(k,iband)
+                  dflx_bnd(iplon,k+1,iband) = totdflux_bnd(k,iband)
+                  uflxc_bnd(iplon,k+1,iband) = totuclfl_bnd(k,iband)
+                  dflxc_bnd(iplon,k+1,iband) = totdclfl_bnd(k,iband)
+               enddo
+               do k = 0, nlayers-1
+                  hr_bnd(iplon,k+1,iband) = htr_bnd(k,iband)
+                  hrc_bnd(iplon,k+1,iband) = htrc_bnd(k,iband)
+               enddo
             enddo
          endif
 

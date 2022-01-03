@@ -34,6 +34,8 @@
                       pwvcm, fracs, taut, & 
                       totuflux, totdflux, fnet, htr, &
                       totuclfl, totdclfl, fnetc, htrc, &
+                      totuflux_bnd, totdflux_bnd, fnet_bnd, htr_bnd, &
+                      totuclfl_bnd, totdclfl_bnd, fnetc_bnd, htrc_bnd, &
                       idrv, dplankbnd_dt, dtotuflux_dt, dtotuclfl_dt )
 !-----------------------------------------------------------------------------
 !
@@ -112,6 +114,22 @@
                                                       !    Dimensions: (0:nlayers)
       real(kind=rb), intent(out) :: htrc(0:)          ! clear sky longwave heating rate (k/day)
                                                       !    Dimensions: (0:nlayers)
+      real(kind=rb), intent(out) :: totuflux_bnd(0:,:)! upward longwave flux by band (w/m2)
+                                                      !    Dimensions: (0:nlayers,nbndlw)
+      real(kind=rb), intent(out) :: totdflux_bnd(0:,:)! downward longwave flux by band (w/m2)
+                                                      !    Dimensions: (0:nlayers,nbndlw)
+      real(kind=rb), intent(out) :: fnet_bnd(0:,:)    ! net longwave flux by band (w/m2)
+                                                      !    Dimensions: (0:nlayers,nbndlw)
+      real(kind=rb), intent(out) :: htr_bnd(0:,:)     ! longwave heating rate by band (k/day)
+                                                      !    Dimensions: (0:nlayers,nbndlw)
+      real(kind=rb), intent(out) :: totuclfl_bnd(0:,:)! clear sky upward longwave flux by band (w/m2)
+                                                      !    Dimensions: (0:nlayers,nbndlw)
+      real(kind=rb), intent(out) :: totdclfl_bnd(0:,:)! clear sky downward longwave flux by band (w/m2)
+                                                      !    Dimensions: (0:nlayers,nbndlw)
+      real(kind=rb), intent(out) :: fnet_bnd(0:,:)    ! clear sky net longwave flux by band (w/m2)
+                                                      !    Dimensions: (0:nlayers,nbndlw)
+      real(kind=rb), intent(out) :: htrc_bnd(0:,:)    ! clear sky longwave heating rate by band (k/day)
+                                                      !    Dimensions: (0:nlayers, nbndlw)
       real(kind=rb), intent(out) :: dtotuflux_dt(0:)  ! change in upward longwave flux (w/m2/k)
                                                       ! with respect to surface temperature
                                                       !    Dimensions: (0:nlayers)
@@ -222,6 +240,14 @@
 !    totdclfl                     ! clear sky downward longwave flux (w/m2)
 !    fnetc                        ! clear sky net longwave flux (w/m2)
 !    htrc                         ! clear sky longwave heating rate (k/day)
+!    totuflux_bnd                 ! upward longwave flux by band (w/m2)
+!    totdflux_bnd                 ! downward longwave flux by band (w/m2)
+!    fnet_bnd                     ! net longwave flux by band (w/m2)
+!    htr_bnd                      ! longwave heating rate by band (k/day)
+!    totuclfl_bnd                 ! clear sky upward longwave flux by band (w/m2)
+!    totdclfl_bnd                 ! clear sky downward longwave flux by band (w/m2)
+!    fnetc_bnd                    ! clear sky net longwave flux by band (w/m2)
+!    htrc_bnd                     ! clear sky longwave heating rate by band (k/day)
 !    dtotuflux_dt                 ! change in upward longwave flux (w/m2/k)
 !                                 ! with respect to surface temperature
 !    dtotuclfl_dt                 ! change in clear sky upward longwave flux (w/m2/k)
@@ -276,6 +302,13 @@
       clrdrad(0) = 0.0_rb
       totuclfl(0) = 0.0_rb
       totdclfl(0) = 0.0_rb
+! Initialize arrays at surface by band
+      do ibnd = 1,nbndlw
+         totuflux_bnd(0,ibnd) = 0.0_rb
+         totdflux_bnd(0,ibnd) = 0.0_rb
+         totuclfl_bnd(0,ibnd) = 0.0_rb
+         totdclfl_bnd(0,ibnd) = 0.0_rb
+      enddo
       if (idrv .eq. 1) then
          d_urad_dt(0) = 0.0_rb
          d_clrurad_dt(0) = 0.0_rb
@@ -292,6 +325,13 @@
          clrdrad(lay) = 0.0_rb
          totuclfl(lay) = 0.0_rb
          totdclfl(lay) = 0.0_rb
+! Initialize arrays at levels by band
+         do ibnd = 1,nbndlw
+            totuflux_bnd(lay,ibnd) = 0.0_rb
+            totdflux_bnd(lay,ibnd) = 0.0_rb
+            totuclfl_bnd(lay,ibnd) = 0.0_rb
+            totdclfl_bnd(lay,ibnd) = 0.0_rb
+         enddo
          if (idrv .eq. 1) then
             d_urad_dt(lay) = 0.0_rb
             d_clrurad_dt(lay) = 0.0_rb
@@ -532,14 +572,20 @@
             dflux(lev) = drad(lev)*wtdiff
             urad(lev) = 0.0_rb
             drad(lev) = 0.0_rb
-            totuflux(lev) = totuflux(lev) + uflux(lev) * delwave(iband)
-            totdflux(lev) = totdflux(lev) + dflux(lev) * delwave(iband)
+! First calculate the fluxes by band.
+            totuflux_bnd(lev,iband) = uflux(lev) * delwave(iband)
+            totdflux_bnd(lev,iband) = dflux(lev) * delwave(iband)
+! Later accumulate them.
+            totuflux(lev) = totuflux(lev) + totuflux_bnd(lev,iband)
+            totdflux(lev) = totdflux(lev) + totdflux_bnd(lev,iband)
             uclfl(lev) = clrurad(lev)*wtdiff
             dclfl(lev) = clrdrad(lev)*wtdiff
             clrurad(lev) = 0.0_rb
             clrdrad(lev) = 0.0_rb
-            totuclfl(lev) = totuclfl(lev) + uclfl(lev) * delwave(iband)
-            totdclfl(lev) = totdclfl(lev) + dclfl(lev) * delwave(iband)
+            totuclfl_bnd(lev,iband) = uclfl(lev) * delwave(iband)
+            totdclfl_bnd(lev,iband) = dclfl(lev) * delwave(iband)
+            totuclfl(lev) = totuclfl(lev) + totuclfl_bnd(lev,iband)
+            totdclfl(lev) = totdclfl(lev) + totdclfl_bnd(lev,iband)
          enddo
 
 ! Calculate total change in upward flux wrt surface temperature
@@ -564,6 +610,15 @@
       totuclfl(0) = totuclfl(0) * fluxfac
       totdclfl(0) = totdclfl(0) * fluxfac
       fnetc(0) = totuclfl(0) - totdclfl(0)
+! Calculate fluxes at surface by band
+      do iband = 1, nbndlw
+         totuflux_bnd(0,iband) = totuflux_bnd(0,iband) * fluxfac
+         totdflux_bnd(0,iband) = totdflux_bnd(0,iband) * fluxfac
+         fnet_bnd(0,iband) = totuflux_bnd(0,iband) - totdflux_bnd(0,iband)
+         totuclfl_bnd(0,iband) = totuclfl_bnd(0,iband) * fluxfac
+         totdclfl_bnd(0,iband) = totdclfl_bnd(0,iband) * fluxfac
+         fnetc_bnd(0,iband) = totuclfl_bnd(0,iband) - totdclfl_bnd(0,iband)
+      enddo
 
 ! Calculate fluxes at model levels
       do lev = 1, nlayers
@@ -573,16 +628,35 @@
          totuclfl(lev) = totuclfl(lev) * fluxfac
          totdclfl(lev) = totdclfl(lev) * fluxfac
          fnetc(lev) = totuclfl(lev) - totdclfl(lev)
+! Calculate fluxes at model levels by band
+         do iband = 1, nbndlw
+            totuflux_bnd(lev,iband) = totuflux_bnd(lev,iband) * fluxfac
+            totdflux_bnd(lev,iband) = totdflux_bnd(lev,iband) * fluxfac
+            fnet_bnd(lev,iband) = totuflux_bnd(lev,iband) - totdflux_bnd(lev,iband)
+            totuclfl_bnd(lev,iband) = totuclfl_bnd(lev,iband) * fluxfac
+            totdclfl_bnd(lev,iband) = totdclfl_bnd(lev,iband) * fluxfac
+            fnetc_bnd(lev,iband) = totuclfl_bnd(lev,iband) - totdclfl_bnd(lev,iband)
+         enddo
          l = lev - 1
 
 ! Calculate heating rates at model layers
          htr(l)=heatfac*(fnet(l)-fnet(lev))/(pz(l)-pz(lev)) 
-         htrc(l)=heatfac*(fnetc(l)-fnetc(lev))/(pz(l)-pz(lev)) 
+         htrc(l)=heatfac*(fnetc(l)-fnetc(lev))/(pz(l)-pz(lev))
+! Calculate heating rates at model layers by band
+         do iband = 1, nbndlw
+            htr_bnd(l,iband)=heatfac*(fnet_bnd(l,iband)-fnet_bnd(lev,iband))/(pz(l)-pz(lev)) 
+            htrc_bnd(l,iband)=heatfac*(fnetc_bnd(l,iband)-fnetc_bnd(lev,iband))/(pz(l)-pz(lev))
+         enddo 
       enddo
 
 ! Set heating rate to zero in top layer
       htr(nlayers) = 0.0_rb
       htrc(nlayers) = 0.0_rb
+! Set heating rate to zero in top layer by band
+      do iband = 1, nbndlw
+         htr_bnd(nlayers,iband) = 0.0_rb
+         htrc_bnd(nlayers,iband) = 0.0_rb
+      enddo
 
       end subroutine rtrn
 

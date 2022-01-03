@@ -156,11 +156,36 @@ class RRTMGLongwave(TendencyComponent):
             'dims': ['mid_levels', '*'],
             'units': 'degK day^-1',
         },
+        'upwelling_longwave_flux_by_band_in_air': {
+            'dims': ['interface_levels', '*'],
+            'units': 'W m^-2',
+        },
+        'downwelling_longwave_flux_by_band_in_air': {
+            'dims': ['interface_levels', '*'],
+            'units': 'W m^-2',
+        },
+        'upwelling_longwave_flux_by_band_in_air_assuming_clear_sky': {
+            'dims': ['interface_levels', '*'],
+            'units': 'W m^-2',
+        },
+        'downwelling_longwave_flux_by_band_in_air_assuming_clear_sky': {
+            'dims': ['interface_levels', '*'],
+            'units': 'W m^-2',
+        },
+        'air_temperature_tendency_from_longwave_by_band_assuming_clear_sky': {
+            'dims': ['mid_levels', '*'],
+            'units': 'degK day^-1',
+        },
+        'air_temperature_tendency_from_longwave_by_band': {
+            'dims': ['mid_levels', '*'],
+            'units': 'degK day^-1',
+        },
     }
 
     def __init__(
             self,
             calculate_change_up_flux=False,
+            calculate_fluxes_by_band=False,
             cloud_overlap_method=None,
             cloud_optical_properties='liquid_and_ice_clouds',
             cloud_ice_properties='ebert_curry_two',
@@ -178,6 +203,11 @@ class RRTMGLongwave(TendencyComponent):
                 surface temperature alone. Can be used to adjust fluxes in between radiation calls
                 only due to change of surface temperature. Default value is :code:`False`, meaning this quantity
                 is not calculated.
+
+            calculate_fluxes_by_band (bool):
+                calculate radiative fluxes and heating rates in each spectral band in addition to the net
+                radiative fluxes and heating rates. Default value is :code:`False`, meaning that only the net fluxes
+                and heating rates are calculated.
 
             cloud_overlap_method (string):
                 Choose the method to do overlap with:
@@ -248,6 +278,11 @@ class RRTMGLongwave(TendencyComponent):
             self._calc_dflxdt = 1
         else:
             self._calc_dflxdt = 0
+        
+        if calculate_fluxes_by_band:
+            self._calc_flxbnd = 1
+        else:
+            self._calc_flxbnd = 0
 
         self._mcica = mcica
         if mcica:
@@ -311,6 +346,7 @@ class RRTMGLongwave(TendencyComponent):
                 self._Cpd,
                 self._cloud_overlap,
                 self._calc_dflxdt,
+                self._calc_flxbnd,
                 self._cloud_optics,
                 self._ice_props,
                 self._liq_props)
@@ -418,6 +454,12 @@ class RRTMGLongwave(TendencyComponent):
                 diagnostics['upwelling_longwave_flux_in_air_assuming_clear_sky'],
                 diagnostics['downwelling_longwave_flux_in_air_assuming_clear_sky'],
                 diagnostics['air_temperature_tendency_from_longwave_assuming_clear_sky'],
+                diagnostics['upwelling_longwave_flux_by_band_in_air'],
+                diagnostics['downwelling_longwave_flux_by_band_in_air'],
+                diagnostics['air_temperature_tendency_from_longwave_by_band'],,
+                diagnostics['upwelling_longwave_flux_by_band_in_air_assuming_clear_sky'],
+                diagnostics['downwelling_longwave_flux_by_band_in_air_assuming_clear_sky'],
+                diagnostics['air_temperature_tendency_from_longwave_by_band_assuming_clear_sky'],
                 state['longwave_optical_thickness_due_to_cloud'],
                 state['mass_content_of_cloud_ice_in_atmosphere_layer'],
                 state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
@@ -459,6 +501,12 @@ class RRTMGLongwave(TendencyComponent):
                 diagnostics['upwelling_longwave_flux_in_air_assuming_clear_sky'],
                 diagnostics['downwelling_longwave_flux_in_air_assuming_clear_sky'],
                 diagnostics['air_temperature_tendency_from_longwave_assuming_clear_sky'],
+                diagnostics['upwelling_longwave_flux_by_band_in_air'],
+                diagnostics['downwelling_longwave_flux_by_band_in_air'],
+                diagnostics['air_temperature_tendency_from_longwave_by_band'],,
+                diagnostics['upwelling_longwave_flux_by_band_in_air_assuming_clear_sky'],
+                diagnostics['downwelling_longwave_flux_by_band_in_air_assuming_clear_sky'],
+                diagnostics['air_temperature_tendency_from_longwave_by_band_assuming_clear_sky'],
                 state['longwave_optical_thickness_due_to_cloud'],
                 state['mass_content_of_cloud_ice_in_atmosphere_layer'],
                 state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],

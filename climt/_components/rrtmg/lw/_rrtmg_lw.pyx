@@ -7,6 +7,7 @@ from cython.parallel import prange
 #Flags
 cdef cnp.int32_t rrtm_cloud_overlap_method
 cdef cnp.int32_t rrtm_calculate_change_up_flux
+cdef cnp.int32_t rrtm_calculate_fluxes_by_band
 cdef cnp.int32_t rrtm_cloud_props_flag
 cdef cnp.int32_t rrtm_ice_props_flag
 cdef cnp.int32_t rrtm_liq_droplet_flag
@@ -41,6 +42,7 @@ cdef extern:
 cdef extern nogil:
     void rrtmg_lw_mcica_wrapper(cnp.int32_t *num_cols, cnp.int32_t *num_layers,
         cnp.int32_t *cld_overlap_method, cnp.int32_t *calculate_change_up_flux,
+	cnp.int32_t *calculate_fluxes_by_band,
         double *layer_pressure, double *interface_pressure,
         double *layer_temp, double *interface_temp, double *surface_temp,
         double *h2o_vmr, double *o3_vmr, double *co2_vmr,
@@ -57,19 +59,24 @@ cdef extern nogil:
         double *longwave_heating_rate, double *up_lw_flux_clearsky,
         double *down_lw_flux_clearsky, double *lw_heating_rate_clearsky,
         # Optional
+        double *upward_longwave_flux_by_band, double *downward_longwave_flux_by_band,
+        double *longwave_heating_rate_by_band, double *up_lw_flux_by_band_clearsky,
+        double *down_lw_flux_by_band_clearsky, double *lw_heating_rate_by_band_clearsky,
         double *duflx_dt, double *duflxc_dt)
 
 cdef extern nogil:
-    void rrtmg_lw_nomcica_wrapper(cnp.int32_t *num_cols,
-        cnp.int32_t *num_layers, cnp.int32_t *cld_overlap_method,
-        cnp.int32_t *calculate_change_up_flux, double *layer_pressure,
-        double *interface_pressure, double *layer_temp, double *interface_temp,
-        double *surface_temp, double *h2o_vmr, double *o3_vmr, double *co2_vmr,
-        double *ch4_vmr, double *n2o_vmr, double *o2_vmr, double *cfc11_vmr,
-        double *cfc12_vmr, double *cfc22_vmr, double *ccl4_vmr,
-        double *surf_emissivity, cnp.int32_t *cloud_props_flag,
-        cnp.int32_t *ice_props_flag, cnp.int32_t *liq_droplet_flag,
-        double *cloud_fraction, double *cloud_tau, double *cloud_ice_path,
+    void rrtmg_lw_nomcica_wrapper(cnp.int32_t *num_cols, cnp.int32_t *num_layers,
+        cnp.int32_t *cld_overlap_method, cnp.int32_t *calculate_change_up_flux,
+        cnp.int32_t *calculate_fluxes_by_band,
+	double *layer_pressure, double *interface_pressure,
+        double *layer_temp, double *interface_temp, double *surface_temp,
+        double *h2o_vmr, double *o3_vmr, double *co2_vmr,
+        double *ch4_vmr, double *n2o_vmr, double *o2_vmr,
+        double *cfc11_vmr, double *cfc12_vmr, double *cfc22_vmr,
+        double *ccl4_vmr, double *surf_emissivity,
+        cnp.int32_t *cloud_props_flag, cnp.int32_t *ice_props_flag,
+        cnp.int32_t *liq_droplet_flag, double *cloud_fraction,
+        double *cloud_tau, double *cloud_ice_path,
         double *cloud_liq_path, double *cloud_ice_eff_size,
         double *cloud_droplet_eff_radius, double *aerosol_tau,
         # Output
@@ -77,11 +84,15 @@ cdef extern nogil:
         double *longwave_heating_rate, double *up_lw_flux_clearsky,
         double *down_lw_flux_clearsky, double *lw_heating_rate_clearsky,
         # Optional
+        double *upward_longwave_flux_by_band, double *downward_longwave_flux_by_band,
+        double *longwave_heating_rate_by_band, double *up_lw_flux_by_band_clearsky,
+        double *down_lw_flux_by_band_clearsky, double *lw_heating_rate_by_band_clearsky,
         double *duflx_dt, double *duflxc_dt)
 
 def initialise_rrtm_radiation_mcica(double cp_d_air,
                                     cnp.int32_t cloud_overlap_method=1,
                                     cnp.int32_t calculate_change_up_flux=0,
+				    cnp.int32_t calculate_fluxes_by_band=0,
                                     cnp.int32_t cloud_props_flag=0,
                                     cnp.int32_t ice_props_flag=0,
                                     cnp.int32_t liq_droplet_flag=0,
@@ -89,6 +100,7 @@ def initialise_rrtm_radiation_mcica(double cp_d_air,
                                     cnp.int32_t random_number_generator=0):
 
     global rrtm_cloud_overlap_method, rrtm_calculate_change_up_flux,\
+        rrtm_calculate_fluxes_by_band,\
         rrtm_cloud_props_flag, rrtm_ice_props_flag, rrtm_liq_droplet_flag,\
         rrtm_permute_seed, rrtm_random_number_generator
 
@@ -96,6 +108,7 @@ def initialise_rrtm_radiation_mcica(double cp_d_air,
 
     rrtm_cloud_overlap_method = cloud_overlap_method
     rrtm_calculate_change_up_flux = calculate_change_up_flux
+    rrtm_calculate_fluxes_by_band = calculate_fluxes_by_band
     rrtm_cloud_props_flag = cloud_props_flag
     rrtm_ice_props_flag = ice_props_flag
     rrtm_liq_droplet_flag = liq_droplet_flag
@@ -103,9 +116,12 @@ def initialise_rrtm_radiation_mcica(double cp_d_air,
     rrtm_random_number_generator = random_number_generator
 
 #Use random cloud overlap model as default.
-def initialise_rrtm_radiation(double cp_d_air, cnp.int32_t cloud_overlap_method=1,
+def initialise_rrtm_radiation(double cp_d_air,
+			      cnp.int32_t cloud_overlap_method=1,
                               cnp.int32_t calculate_change_up_flux=0,
-                              cnp.int32_t cloud_props_flag=0, cnp.int32_t ice_props_flag=0,
+		              cnp.int32_t calculate_fluxes_by_band=0,
+                              cnp.int32_t cloud_props_flag=0,
+			      cnp.int32_t ice_props_flag=0,
                               cnp.int32_t liq_droplet_flag=0):
 
     global rrtm_cloud_overlap_method, rrtm_calculate_change_up_flux,\
@@ -115,6 +131,7 @@ def initialise_rrtm_radiation(double cp_d_air, cnp.int32_t cloud_overlap_method=
 
     rrtm_cloud_overlap_method = cloud_overlap_method
     rrtm_calculate_change_up_flux = calculate_change_up_flux
+    rrtm_calculate_fluxes_by_band = calculate_fluxes_by_band
     rrtm_cloud_props_flag = cloud_props_flag
     rrtm_ice_props_flag = ice_props_flag
     rrtm_liq_droplet_flag = liq_droplet_flag
@@ -156,6 +173,12 @@ cpdef void rrtm_calculate_longwave_fluxes(
     cnp.double_t[:,::1] up_lw_flux_clearsky,
     cnp.double_t[:,::1] down_lw_flux_clearsky,
     cnp.double_t[:,::1] lw_heating_rate_clearsky,
+    cnp.double_t[:,:,::1] upward_longwave_flux_by_band,
+    cnp.double_t[:,:,::1] downward_longwave_flux_by_band,
+    cnp.double_t[:,:,::1] longwave_heating_rate_by_band,
+    cnp.double_t[:,:,::1] up_lw_flux_by_band_clearsky,
+    cnp.double_t[:,:,::1] down_lw_flux_by_band_clearsky,
+    cnp.double_t[:,:,::1] lw_heating_rate_by_band_clearsky,
     cnp.double_t[:,:,::1] cloud_tau=None,
     cnp.double_t[:,::1] cloud_ice_path=None,
     cnp.double_t[:,::1] cloud_liq_path=None,
@@ -165,6 +188,7 @@ cpdef void rrtm_calculate_longwave_fluxes(
     cnp.double_t[:,::1] duflxc_dt=None):
 
     global rrtm_cloud_overlap_method, rrtm_calculate_change_up_flux,\
+    	rrtm_calculate_fluxes_by_band,\
         rrtm_cloud_props_flag, rrtm_ice_props_flag, rrtm_liq_droplet_flag
 
     if rrtm_calculate_change_up_flux == 0:
@@ -176,6 +200,7 @@ cpdef void rrtm_calculate_longwave_fluxes(
             &num_cols, &num_layers,
             &rrtm_cloud_overlap_method,
             &rrtm_calculate_change_up_flux,
+	    &rrtm_calculate_fluxes_by_band,
             <double *>&layer_pressure[0,0],
             <double *>&interface_pressure[0,0],
             <double *>&layer_temp[0,0],
@@ -208,6 +233,12 @@ cpdef void rrtm_calculate_longwave_fluxes(
             <double *>&up_lw_flux_clearsky[0,0],
             <double *>&down_lw_flux_clearsky[0,0],
             <double *>&lw_heating_rate_clearsky[0,0],
+            <double *>&upward_longwave_flux_by_band[0,0,0],
+            <double *>&downward_longwave_flux_by_band[0,0,0],
+            <double *>&longwave_heating_rate_by_band[0,0,0],
+            <double *>&up_lw_flux_by_band_clearsky[0,0,0],
+            <double *>&down_lw_flux_by_band_clearsky[0,0,0],
+            <double *>&lw_heating_rate_by_band_clearsky[0,0,0],
             <double *>&duflx_dt[0,0],
             <double *>&duflxc_dt[0,0])
 
@@ -240,6 +271,12 @@ cpdef void rrtm_calculate_longwave_fluxes_mcica(
     cnp.double_t[:,::1] up_lw_flux_clearsky,
     cnp.double_t[:,::1] down_lw_flux_clearsky,
     cnp.double_t[:,::1] lw_heating_rate_clearsky,
+    cnp.double_t[:,:,::1] upward_longwave_flux_by_band,
+    cnp.double_t[:,:,::1] downward_longwave_flux_by_band,
+    cnp.double_t[:,:,::1] longwave_heating_rate_by_band,
+    cnp.double_t[:,:,::1] up_lw_flux_by_band_clearsky,
+    cnp.double_t[:,:,::1] down_lw_flux_by_band_clearsky,
+    cnp.double_t[:,:,::1] lw_heating_rate_by_band_clearsky,
     cnp.double_t[:,:,::1] cloud_tau,
     cnp.double_t[:,::1] cloud_ice_path,
     cnp.double_t[:,::1] cloud_liq_path,
@@ -255,6 +292,7 @@ cpdef void rrtm_calculate_longwave_fluxes_mcica(
     cnp.double_t[:,::1] duflxc_dt=None):
 
     global rrtm_cloud_overlap_method, rrtm_calculate_change_up_flux,\
+        rrtm_calculate_fluxes_by_band,\
         rrtm_cloud_props_flag, rrtm_ice_props_flag, rrtm_liq_droplet_flag,\
         rrtm_permute_seed, rrtm_random_number_generator
 
@@ -316,5 +354,11 @@ cpdef void rrtm_calculate_longwave_fluxes_mcica(
             <double *>&up_lw_flux_clearsky[0,0],
             <double *>&down_lw_flux_clearsky[0,0],
             <double *>&lw_heating_rate_clearsky[0,0],
+            <double *>&upward_longwave_flux_by_band[0,0,0],
+            <double *>&downward_longwave_flux_by_band[0,0,0],
+            <double *>&longwave_heating_rate_by_band[0,0,0],
+            <double *>&up_lw_flux_by_band_clearsky[0,0,0],
+            <double *>&down_lw_flux_by_band_clearsky[0,0,0],
+            <double *>&lw_heating_rate_by_band_clearsky[0,0,0],
             <double *>&duflx_dt[0,0],
             <double *>&duflxc_dt[0,0])
