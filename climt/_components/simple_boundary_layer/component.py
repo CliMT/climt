@@ -6,14 +6,14 @@ from numba import jit
 
 
 @jit(nopython=True, parallel=True)
-def Parallel_columns(air_temperature, surface_temperature, air_pressure,
-                     air_pressure_int, surface_pressure, specific_humidity,
-                     surface_humidity, northward_wind, eastward_wind,
-                     new_air_temperature, new_specific_humidity,
-                     new_northward_wind, new_eastward_wind,
-                     north_wind_stress, east_wind_stress, boundary_height,
-                     Rd_val, Cp_val, g_val, k_val, z0_val, fb_val, P0_val,
-                     Ric_val, num_cols, timestep):
+def Parallel_boundary(air_temperature, surface_temperature, air_pressure,
+                      air_pressure_int, surface_pressure, specific_humidity,
+                      surface_humidity, northward_wind, eastward_wind,
+                      new_air_temperature, new_specific_humidity,
+                      new_northward_wind, new_eastward_wind,
+                      north_wind_stress, east_wind_stress, boundary_height,
+                      Rd_val, Cp_val, g_val, k_val, z0_val, fb_val, P0_val,
+                      Ric_val, num_cols, timestep):
 
     Rd = Rd_val
     Cp_dry = Cp_val
@@ -310,23 +310,23 @@ class SimpleBoundaryLayer(Stepper):
             self.diagnostic_properties, state, self.input_properties
         )
 
-        Parallel_columns(state['air_temperature'],
-                         state['surface_temperature'],
-                         state['air_pressure'],
-                         state['air_pressure_on_interface_levels'],
-                         state['surface_air_pressure'],
-                         state['specific_humidity'],
-                         state['surface_specific_humidity'],
-                         state['northward_wind'], state['eastward_wind'],
-                         new_state['air_temperature'],
-                         new_state['specific_humidity'],
-                         new_state['northward_wind'],
-                         new_state['eastward_wind'],
-                         diagnostics['northward_wind_stress'],
-                         diagnostics['eastward_wind_stress'],
-                         diagnostics['boundary_layer_height'],
-                         self._Rd, self._Cp, self._g, self._k, self._z0,
-                         self._fb, self._P0, self._Ric, num_cols,
-                         timestep.total_seconds())
+        Parallel_boundary(state['air_temperature'],
+                          state['surface_temperature'],
+                          state['air_pressure'],
+                          state['air_pressure_on_interface_levels'],
+                          state['surface_air_pressure'],
+                          state['specific_humidity'],
+                          state['surface_specific_humidity'],
+                          state['northward_wind'], state['eastward_wind'],
+                          new_state['air_temperature'],
+                          new_state['specific_humidity'],
+                          new_state['northward_wind'],
+                          new_state['eastward_wind'],
+                          diagnostics['northward_wind_stress'],
+                          diagnostics['eastward_wind_stress'],
+                          diagnostics['boundary_layer_height'],
+                          self._Rd, self._Cp, self._g, self._k, self._z0,
+                          self._fb, self._P0, self._Ric, num_cols,
+                          timestep.total_seconds())
 
         return diagnostics, new_state
