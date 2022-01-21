@@ -296,8 +296,8 @@ class SimpleBoundaryLayer(Stepper):
 
     def array_call(self, state, timestep):
         """
-        Takes temperature, humidty and wimd profiles for each column and
-        returns diffused temperature, humidty and wind profiles.
+        Takes temperature, humidty and wind profiles for each column and
+        returns diffused temperature, humidity and wind profiles.
         """
 
         num_cols = state['air_temperature'].shape[1]
