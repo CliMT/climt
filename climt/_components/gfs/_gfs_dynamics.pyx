@@ -1,7 +1,6 @@
 cimport numpy as cnp
 import numpy as np
 import cython
-import copy
 
 # Typedef for function pointer returning void and taking no arguments (for now)
 
@@ -401,8 +400,6 @@ def init_model(
 @cython.boundscheck(False)
 def init_spectral_arrays(spectral_dim, num_levs, num_tracers):
 
-    #print('Spectral arrays init PRINT')
-
     global pyTracerSpec, pyTracerSpecTend, pyTopoSpec, \
             pyLnPsSpec, pyLnPsSpecTend,\
             pyDissSpec, pyDmpProf, pyDiffProf,\
@@ -458,65 +455,10 @@ def init_spectral_arrays(spectral_dim, num_levs, num_tracers):
         <double complex *>&pyTracerSpecTend[0,0,0],
         <double complex *>&pyLnPsSpecTend[0])
 
-##################################################################### 
-def reconvert(A,B):
-    A[:] = 0
-    A[:] = (A + B)[:]
-       
-def reinit_spectral_arrays(data):
-    
-    #print('Spectral arrays REinit PRINT')
-    
-    global pyTracerSpec, pyTracerSpecTend, pyTopoSpec, \
-            pyLnPsSpec, pyLnPsSpecTend,\
-            pyDissSpec, pyDmpProf, pyDiffProf,\
-            pyVrtSpec, pyVrtSpecTend, pyDivSpec, pyDivSpecTend,\
-            pyVirtTempSpec, pyVirtTempSpecTend
-    
-    print(np.array(pyVirtTempSpec).mean())
-    print(pyVirtTempSpec.shape)
-    reconvert(pyVirtTempSpec,data[0])
-    print(pyVirtTempSpec.shape)
-    print(np.array(pyVirtTempSpec).mean())
-    reconvert(pyDivSpec,data[1])
-    reconvert(pyVrtSpec,data[2])
-    reconvert(pyTracerSpec,data[3])
-    reconvert(pyLnPsSpec,data[4])
-    reconvert(pyTopoSpec,data[5])
-    reconvert(pyDissSpec,data[6])
-    reconvert(pyDiffProf,data[7])
-    reconvert(pyDmpProf,data[8])
-    
-    #reconvert(pyVrtSpecTend,data[9])
-    #reconvert(pyDivSpecTend,data[10])
-    #reconvert(pyVirtTempSpecTend,data[11])
-    #reconvert(pyTracerSpecTend,data[12])
-    #reconvert(pyLnPsSpecTend,data[13])
-
-
-    #gfs_initialise_spectral_arrays(
-    #   <double complex *>&pyVrtSpec[0,0],
-    #   <double complex *>&pyDivSpec[0,0],
-    #    <double complex *>&pyVirtTempSpec[0,0],
-    #    <double complex *>&pyTracerSpec[0,0,0],
-    #    <double complex *>&pyTopoSpec[0],
-    #    <double complex *>&pyLnPsSpec[0],
-    #    <double complex *>&pyDissSpec[0],
-    #    <double complex *>&pyDmpProf[0],
-    #    <double complex *>&pyDiffProf[0])
-
-    #gfs_initialise_spectral_physics_arrays(
-    #    <double complex *>&pyVrtSpecTend[0,0],
-    #    <double complex *>&pyDivSpecTend[0,0],
-    #    <double complex *>&pyVirtTempSpecTend[0,0],
-    #    <double complex *>&pyTracerSpecTend[0,0,0],
-    #    <double complex *>&pyLnPsSpecTend[0])
 
 
 # Create the grid arrays (defined in grid_data.f90)
 def init_grid_arrays(num_lons, num_lats, num_levs, num_tracers):
-
-    #print('Grid arrays init PRINT')
 
     global pyDlnpdtg, pyEtaDotg, pyPhis, pyDPhisdx, pyDPhisdy, \
             pyDlnpsdt, pyPwat, tempVrtTend, tempDivTend
@@ -619,16 +561,13 @@ def assign_grid_arrays(
 
 
 def update_spectral_arrays():
-    print('Convert to spectral PRINT')
     gfs_convert_to_spectral()
 
 
 def take_one_step():
-    #print('Step PRINT')
     gfs_take_one_step()
 
 def convert_to_grid():
-    #print('Convert to grid PRINT')
     gfs_convert_to_grid()
 
 def calculate_pressure():
@@ -646,16 +585,3 @@ def shut_down_model():
     #Remember to set time to zero!
     gfs_finalise()
     gfs_set_model_time(&zero_model_time)
-    
-            
-def get_spectral_arrays():
-    
-    return np.asarray(pyVirtTempSpec, dtype=np.cfloat),np.asarray(pyDivSpec, dtype=np.cfloat),np.asarray(pyVrtSpec, dtype=np.cfloat),np.asarray(pyTracerSpec, dtype=np.cfloat),\
-           np.asarray(pyLnPsSpec, dtype=np.cfloat),np.asarray(pyTopoSpec, dtype=np.cfloat),np.asarray(pyDissSpec, dtype=np.cfloat),np.asarray(pyDiffProf, dtype=np.cfloat),np.asarray(pyDmpProf, dtype=np.cfloat),\
-           np.asarray(pyVrtSpecTend, dtype=np.cfloat),np.asarray(pyDivSpecTend, dtype=np.cfloat),np.asarray(pyVirtTempSpecTend, dtype=np.cfloat),np.asarray(pyTracerSpecTend, dtype=np.cfloat),np.asarray(pyLnPsSpecTend, dtype=np.cfloat)
-
-def get_spectral_arrays2():
-    
-    return pyVirtTempSpec,pyDivSpec,pyVrtSpec,pyTracerSpec,\
-           pyLnPsSpec,pyTopoSpec,pyDissSpec,pyDiffProf,pyDmpProf,\
-           pyVrtSpecTend,pyDivSpecTend,pyVirtTempSpecTend,pyTracerSpecTend,pyLnPsSpecTend
