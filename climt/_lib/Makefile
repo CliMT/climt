@@ -18,7 +18,7 @@ CLIMT_FFTW_FLAGS = --enable-openmp --enable-avx --enable-avx2
 
 LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 CLIMT_CFLAGS =  "-I$(BASE_DIR) -L$(LIB_DIR) $(CFLAGS)"
-LDFLAGS = "-L$(LIB_DIR)"
+CLIMT_LDFLAGS = "-L$(LIB_DIR) $(LDFLAGS)"
 
 CLIMT_LIB_TARGETS = blas_lib fftw_lib
 
@@ -28,6 +28,9 @@ ifeq ($(CLIMT_ARCH),Windows)
 	CLIMT_FFTW_FLAGS = --with-our-malloc --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --enable-static --with-g77-wrappers --with-windows-f77-mangling --enable-sse2 --enable-avx
 	CLIMT_LIB_TARGETS =
 endif
+ifeq ($(USE_SYSTEM_LIBS),1)
+	CLIMT_LIB_TARGETS = 
+endif
 
 
 all: $(CLIMT_LIB_TARGETS) sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
@@ -35,7 +38,7 @@ all: $(CLIMT_LIB_TARGETS) sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_l
 # FFTW3 Configuration
 
 $(CLIMT_ARCH)/.configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(CLIMT_FFTW_FLAGS) > log.config.fftw 2>&1 && touch ../$(CLIMT_ARCH)/.configured_fftw
+	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(CLIMT_LDFLAGS) --prefix="$(BASE_DIR)" $(CLIMT_FFTW_FLAGS) > log.config.fftw 2>&1 && touch ../$(CLIMT_ARCH)/.configured_fftw
 
 $(CLIMT_ARCH)/libfftw3_omp.a: $(CLIMT_ARCH)/.configured_fftw
 	cd $(FFTW_DIR); make install > log.install.fftw 2>&1; cp ../lib/libfftw3_omp.a $(LIB_DIR)
@@ -49,7 +52,7 @@ fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
 # SHTNS Configuration
 
 $(CLIMT_ARCH)/.configured_sht:
-	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) ; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp && touch ../$(CLIMT_ARCH)/.configured_sht
+	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) ; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(CLIMT_LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp && touch ../$(CLIMT_ARCH)/.configured_sht
 
 $(CLIMT_ARCH)/libshtns_omp.a: $(CLIMT_ARCH)/.configured_sht
 	cd $(SHT_DIR); make install > log 2>&1; cat log; cp ../lib/libshtns_omp.a $(LIB_DIR); ls -ltrh $(LIB_DIR)
