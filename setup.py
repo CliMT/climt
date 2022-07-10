@@ -137,9 +137,9 @@ elif operating_system == 'FreeBSD':
         os.environ['CFLAGS'] = f'-I{ports_prefix}/include'
         os.environ['LDFLAGS'] = f'-L{ports_prefix}/lib'
         lib_path_list.append(os.path.join(ports_prefix, 'lib'))
-        openblas_path = os.path.join(lib_path_list[-1], 'libopenblas.a')
-        fftw3_omp_path = os.path.join(lib_path_list[-1], 'libfftw3_omp.a')
-        fftw3_path = os.path.join(lib_path_list[-1], 'libfftw3.a')
+        openblas_path = os.path.join(lib_path_list[-1], 'libopenblas.so')
+        fftw3_omp_path = os.path.join(lib_path_list[-1], 'libfftw3_omp.so')
+        fftw3_path = os.path.join(lib_path_list[-1], 'libfftw3.so')
 elif operating_system == 'Windows' :
     os.environ['CC'] = 'gcc.exe'
     os.environ['FC'] = 'gfortran.exe'
