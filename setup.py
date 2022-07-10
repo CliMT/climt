@@ -225,7 +225,11 @@ def build_libraries():
     os.chdir(compiled_path)
     os.environ['PWD'] = compiled_path
 
-    if subprocess.call(['make', 'CLIMT_ARCH='+operating_system]):
+    if operating_system == 'FreeBSD':
+        make = 'gmake'
+    else:
+        make = 'make'
+    if subprocess.call([make, 'CLIMT_ARCH='+operating_system]):
         raise RuntimeError('Library build failed, exiting')
     os.chdir(curr_dir)
     os.environ['PWD'] = curr_dir
