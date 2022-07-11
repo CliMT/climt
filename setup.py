@@ -68,7 +68,7 @@ def find_macports_gcc(gcc, prefix='/opt/local'):
             return candidates[-1] # return latest
 
 def find_freebsd_gcc(gcc, prefix='/usr/local'):
-    candidates = glob.glob(os.path.join(prefix, 'bin', gcc) + '*')
+    candidates = glob.glob(os.path.join(prefix, 'bin', gcc) + '[0-9]*')
     if len(candidates) == 0:
         print(f"{gcc} does not exist in {prefix}")
         sys.exit()
