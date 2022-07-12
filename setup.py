@@ -55,6 +55,25 @@ test_requirements = [
 def find_homebrew_gcc():
     return glob.glob('/usr/local/Cellar/gcc*')[0]
 
+def find_macports_gcc(gcc, prefix='/opt/local'):
+    candidate = os.path.join(prefix, 'bin', gcc)
+    if os.path.exists(candidate):
+        return candidate
+    else:
+        candidates = glob.glob(candidate + '-mp-*')
+        if len(candidates) == 0:
+            print(f"{gcc} does not exist in {prefix}")
+            sys.exit()
+        else:
+            return candidates[-1] # return latest
+
+def find_freebsd_gcc(gcc, prefix='/usr/local'):
+    candidates = glob.glob(os.path.join(prefix, 'bin', gcc) + '[0-9]*')
+    if len(candidates) == 0:
+        print(f"{gcc} does not exist in {prefix}")
+        sys.exit()
+    else:
+        return candidates[-1] # return latest
 
 # Platform specific settings
 def guess_compiler_name(env_name):
@@ -95,30 +114,33 @@ lib_path_list = [os.path.join(compiled_path, operating_system+'/')]
 inc_path = os.path.join(compiled_path, 'include')
 include_dirs.append(inc_path)
 openblas_path = lib_path_list[0]+'/libopenblas.a'
-
+fftw3_omp_path = lib_path_list[0]+'/libfftw3_omp.a',
+fftw3_path = lib_path_list[0]+'/libfftw3.a',
 
 # Compile libraries
 
-if 'FC' not in os.environ:
-    if operating_system == 'Darwin':
-        # guess_compiler_name('FC')
-        os.environ['FC'] = 'gfortran-6'
-        os.environ['F77'] = 'gfortran-6'
-    else:
-        os.environ['FC'] = 'gfortran'
-        os.environ['F77'] = 'gfortran'
-
-if 'CC' not in os.environ:
-    if operating_system == 'Darwin':
-        # guess_compiler_name('CC')
-        os.environ['CC'] = 'gcc-6'
-    else:
-        os.environ['CC'] = 'gcc'
-
-if 'CLIMT_OPT_FLAGS' not in os.environ:
-    os.environ['CLIMT_OPT_FLAGS'] = '-O3'
-
-if operating_system == 'Windows' :
+if operating_system == 'Darwin':
+    if 'MACPORTS_PREFIX' not in os.environ:
+        macports_prefix = '/opt/local'
+    if os.path.exists(macports_prefix):
+        os.environ['USE_SYSTEM_LIBS'] = '1'
+        os.environ['CFLAGS'] = f'-I{macports_prefix}/include'
+        os.environ['LDFLAGS'] = f'-L{macports_prefix}/lib'
+        lib_path_list.append(os.path.join(macports_prefix, 'lib'))
+        openblas_path = os.path.join(lib_path_list[-1], 'libopenblas.a')
+        fftw3_omp_path = os.path.join(lib_path_list[-1], 'libfftw3_omp.a')
+        fftw3_path = os.path.join(lib_path_list[-1], 'libfftw3.a')
+elif operating_system == 'FreeBSD':
+    ports_prefix = '/usr/local'
+    if os.path.exists(ports_prefix):
+        os.environ['USE_SYSTEM_LIBS'] = '1'
+        os.environ['CFLAGS'] = f'-I{ports_prefix}/include'
+        os.environ['LDFLAGS'] = f'-L{ports_prefix}/lib'
+        lib_path_list.append(os.path.join(ports_prefix, 'lib'))
+        openblas_path = os.path.join(lib_path_list[-1], 'libopenblas.so')
+        fftw3_omp_path = os.path.join(lib_path_list[-1], 'libfftw3_omp.so')
+        fftw3_path = os.path.join(lib_path_list[-1], 'libfftw3.so')
+elif operating_system == 'Windows' :
     os.environ['CC'] = 'gcc.exe'
     os.environ['FC'] = 'gfortran.exe'
     os.environ['AR'] = 'gcc-ar.exe'
@@ -127,21 +149,68 @@ if operating_system == 'Windows' :
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
     default_compile_args = ['-DMS_WIN64']
 
+if 'FC' not in os.environ:
+    if operating_system == 'Darwin':
+        # guess_compiler_name('FC')
+        if os.path.exists(macports_prefix):
+            fc = find_macports_gcc('gfortran', macports_prefix)
+            os.environ['FC'] = fc
+            os.environ['F77'] = fc
+        else:
+            os.environ['FC'] = 'gfortran-6'
+            os.environ['F77'] = 'gfortran-6'
+    elif operating_system == 'FreeBSD':
+        fc = find_freebsd_gcc('gfortran', ports_prefix)
+        os.environ['FC'] = fc
+        os.environ['F77'] = fc
+    else:
+        os.environ['FC'] = 'gfortran'
+        os.environ['F77'] = 'gfortran'
+
+if 'CC' not in os.environ:
+    if operating_system == 'Darwin':
+        # guess_compiler_name('CC')
+        if os.path.exists(macports_prefix):
+            os.environ['CC'] = find_macports_gcc('gcc', macports_prefix)
+        else:
+            os.environ['CC'] = 'gcc-6'
+    elif operating_system == 'FreeBSD':
+        os.environ['CC'] = find_freebsd_gcc('gcc', ports_prefix)
+    else:
+        os.environ['CC'] = 'gcc'
+
+if 'CLIMT_OPT_FLAGS' not in os.environ:
+    os.environ['CLIMT_OPT_FLAGS'] = '-O3'
+
 os.environ['FFLAGS'] = '-fPIC -fno-range-check ' + os.environ['CLIMT_OPT_FLAGS']
-os.environ['CFLAGS'] = '-fPIC ' + os.environ['CLIMT_OPT_FLAGS']
+os.environ['CFLAGS'] += ' -fPIC ' + os.environ['CLIMT_OPT_FLAGS']
+
+gcc_major = subprocess.check_output(
+    '${CC} -dumpversion', shell=True).decode().strip().split('.')[0]
+gfortran_major = subprocess.check_output(
+    '${FC} -dumpversion', shell=True).decode().strip().split('.')[0]
+if int(gfortran_major) > 9:
+    os.environ['FFLAGS'] += ' -fno-range-check -std=legacy -fallow-argument-mismatch'
 
 if operating_system == 'Darwin':
-    gcc_dir = find_homebrew_gcc()
-    for root, dirs, files in os.walk(gcc_dir):
-        for line in files:
-            if re.match('libgfortran.a', line):
-                if not ('i386' in root):
-                    lib_path_list.append(root)
+    if os.path.exists(macports_prefix):
+        gcc_dir = glob.glob(os.path.join(lib_path_list[-1], 'gcc*'))[0]
+        lib_path_list.append(gcc_dir)
+        default_link_args = ['-Wl,-rpath,'+ gcc_dir]
+    else:
+        gcc_dir = find_homebrew_gcc()
+        for root, dirs, files in os.walk(gcc_dir):
+            for line in files:
+                if re.match('libgfortran.a', line):
+                    if not ('i386' in root):
+                        lib_path_list.append(root)
+        default_link_args = []
 
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
     os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
-    default_link_args = []
-    os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup -arch x86_64'
+    os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup -march=native'
+elif operating_system == 'FreeBSD':
+    lib_path_list.append(os.path.join(ports_prefix, 'lib', 'gcc'+gcc_major))
 
 print('Compilers: ', os.environ['CC'], os.environ['FC'])
 
@@ -155,7 +224,12 @@ def build_libraries():
     curr_dir = os.getcwd()
     os.chdir(compiled_path)
     os.environ['PWD'] = compiled_path
-    if subprocess.call(['make', 'CLIMT_ARCH='+operating_system]):
+
+    if operating_system == 'FreeBSD':
+        make = 'gmake'
+    else:
+        make = 'make'
+    if subprocess.call([make, 'CLIMT_ARCH='+operating_system]):
         raise RuntimeError('Library build failed, exiting')
     os.chdir(curr_dir)
     os.environ['PWD'] = curr_dir
@@ -222,8 +296,8 @@ else:
             extra_compile_args=['-fopenmp'] + default_compile_args,
             library_dirs=lib_path_list,
             extra_link_args=['-fopenmp', lib_path_list[0]+'/libgfs_dycore.a',
-                             lib_path_list[0]+'/libshtns_omp.a', lib_path_list[0]+'/libfftw3_omp.a',
-                             lib_path_list[0]+'/libfftw3.a', openblas_path] + default_link_args),
+                             lib_path_list[0]+'/libshtns_omp.a', fftw3_omp_path,
+                             fftw3_path, openblas_path] + default_link_args),
 
         # lib_path+'/libshtns_omp.a', openblas_path, os.environ['COMPILER_PATH']+'../lib/libfftw3.a'] + default_link_args),
 

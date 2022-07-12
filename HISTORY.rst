@@ -2,6 +2,11 @@
 History
 =======
 
+v.0.16.26
+---------
+
+* Add support for build with OpenBLAS and FFTW-3 installed by MacPorts or FreeBSD pkg/ports
+
 v.0.16.11
 ---------
 
