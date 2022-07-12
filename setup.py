@@ -60,7 +60,7 @@ def find_macports_gcc(gcc, prefix='/opt/local'):
     if os.path.exists(candidate):
         return candidate
     else:
-        candidates = glob.glob(candiate + '-mp-*')
+        candidates = glob.glob(candidate + '-mp-*')
         if len(candidates) == 0:
             print(f"{gcc} does not exist in {prefix}")
             sys.exit()
