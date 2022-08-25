@@ -120,8 +120,7 @@ def get_interface_values(
     """
 
     interface_values = np.zeros(
-        (mid_level_values.shape[0]+1, mid_level_values.shape[1]),
-        dtype=np.double)
+        (mid_level_values.shape[0]+1, mid_level_values.shape[1]), dtype=np.double)
 
     log_mid_p = np.log(mid_level_pressure)
 
@@ -150,13 +149,11 @@ def calculate_q_sat(surf_temp, surf_press, Rd, Rv):
 
     sat_vap_press[above_freezing] =\
         (1.0007 + 3.46e-8*surf_press[above_freezing])*611.21*np.exp(
-            17.966*(surf_temp[above_freezing] - 273.)/(247.15 +
-            (surf_temp[above_freezing] - 273.)))
+            17.966*(surf_temp[above_freezing] - 273.)/(247.15 + (surf_temp[above_freezing] - 273.)))
 
     sat_vap_press[below_freezing] = \
         (1.0003 + 4.18e-8*surf_press[below_freezing])*611.15*np.exp(
-            22.452*(surf_temp[below_freezing] - 273.)/(272.5 +
-            (surf_temp[below_freezing] - 273.)))
+            22.452*(surf_temp[below_freezing] - 273.)/(272.5 + (surf_temp[below_freezing] - 273.)))
 
     return eps*sat_vap_press/(surf_press - (1 - eps)*sat_vap_press)
 
