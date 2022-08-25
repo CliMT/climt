@@ -273,19 +273,6 @@ class TestDryConvectionConservation(AtmosphereMoistEnthalpyConservation):
         return 0
 
 
-class TestSimpleBoundaryLayerConservation(AtmosphereMoistEnthalpyConservation):
-
-    def get_component_instance(self):
-        return climt.SimpleBoundaryLayer()
-
-    def modify_state(self, state):
-        state['eastward_wind'].values[:] = 3.
-        unstable_level = 5
-        state['air_temperature'][:unstable_level] += 10
-        state['specific_humidity'][:unstable_level] = 0.05
-        return state
-
-
 class TestDryConvectionCondensibleConservation(AtmosphereTracerConservation):
 
     def get_component_instance(self):

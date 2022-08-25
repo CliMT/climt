@@ -2,15 +2,8 @@
 History
 =======
 
-Latest
+v.0.16.11
 ---------
-
-* New component SimpleBoundaryLayer that implements a boundary layer.
-* The boundary layer is created using the bulk Richardson number.
-* Diffusion is implemented using the simplified Monin-Obukhov theory.
-
-Latest
---------
 
 * New component BucketHydrology that implements Manabe first generation land model
 * BucketHydrology calculates the sensible and latent heat flux within the component

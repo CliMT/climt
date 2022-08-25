@@ -84,7 +84,7 @@ compiled_base_dir = 'climt/_lib'
 
 if operating_system == 'Linux':
     libraries = ['m', 'gfortran', 'rt']
-    default_link_args = ['-lgfortran']
+    default_link_args = ['-lgfortran','-lm']
 
 if operating_system == 'Windows':
     compiled_base_dir = 'climt\\_lib'
@@ -213,19 +213,6 @@ else:
             extra_compile_args=default_compile_args + ['-fopenmp'],
             library_dirs=lib_path_list,
             extra_link_args=[lib_path_list[0]+'/librrtmg_lw.a', '-fopenmp'] + default_link_args),
-
-        Extension(
-            'climt._components.gfs._gfs_dynamics',
-            sources=['climt/_components/gfs/_gfs_dynamics.pyx'],
-            libraries=libraries,
-            include_dirs=include_dirs,
-            extra_compile_args=['-fopenmp'] + default_compile_args,
-            library_dirs=lib_path_list,
-            extra_link_args=['-fopenmp', lib_path_list[0]+'/libgfs_dycore.a',
-                             lib_path_list[0]+'/libshtns_omp.a', lib_path_list[0]+'/libfftw3_omp.a',
-                             lib_path_list[0]+'/libfftw3.a', openblas_path] + default_link_args),
-
-        # lib_path+'/libshtns_omp.a', openblas_path, os.environ['COMPILER_PATH']+'../lib/libfftw3.a'] + default_link_args),
 
         Extension(
             'climt._components.rrtmg.sw._rrtmg_sw',
