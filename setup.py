@@ -84,7 +84,7 @@ compiled_base_dir = 'climt/_lib'
 
 if operating_system == 'Linux':
     libraries = ['m', 'gfortran', 'rt']
-    default_link_args = ['-lgfortran','-lm']
+    default_link_args = ['-lgfortran', '-lm']
 
 if operating_system == 'Windows':
     compiled_base_dir = 'climt\\_lib'
@@ -118,7 +118,7 @@ if 'CC' not in os.environ:
 if 'CLIMT_OPT_FLAGS' not in os.environ:
     os.environ['CLIMT_OPT_FLAGS'] = '-O3'
 
-if operating_system == 'Windows' :
+if operating_system == 'Windows':
     os.environ['CC'] = 'gcc.exe'
     os.environ['FC'] = 'gfortran.exe'
     os.environ['AR'] = 'gcc-ar.exe'

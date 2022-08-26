@@ -2,12 +2,14 @@ from datetime import timedelta
 import numpy as np
 from climt import (BucketHydrology, get_default_state)
 
+
 def get_quantities(state):
-    heat = state['surface_material_density'].values*state['soil_layer_thickness'].values*\
-           state['surface_temperature'].values*state['heat_capacity_of_soil'].values
+    heat = state['surface_material_density'].values * state['soil_layer_thickness'].values * \
+        state['surface_temperature'].values*state['heat_capacity_of_soil'].values
     moisture = state['lwe_thickness_of_soil_moisture_content'].values
 
     return heat, moisture
+
 
 time_step = timedelta(seconds=1)
 state = get_default_state([BucketHydrology()])
@@ -69,12 +71,13 @@ state.update(new_state)
 new_heat, new_moisture = get_quantities(state)
 
 
-#Test starts
+# Test starts
 
 def test_bucket_hydrology_heat_conservation():
     forcing_amount = surf_forcing * time_step.total_seconds()
     assert np.isclose(new_heat - old_heat, forcing_amount,
                       rtol=0, atol=1e-3)
+
 
 def test_bucket_hydrology_moisture_conservation():
     forcing_amount = mois_forcing * time_step.total_seconds()
