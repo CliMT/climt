@@ -1,4 +1,3 @@
-from math import sqrt
 from sympl import Stepper
 from sympl import initialize_numpy_arrays_with_properties
 import numpy as np
@@ -134,7 +133,7 @@ class BucketHydrology(Stepper):
         Calculates sensible and latent heat flux and returns
         surface temperature and soil moisture after timestep.
         '''
-        
+
         beta_factor = 0
 
         new_state = initialize_numpy_arrays_with_properties(
@@ -189,7 +188,7 @@ class BucketHydrology(Stepper):
 
         new_state['surface_temperature'] = state['surface_temperature'] + \
             (net_heat_flux/heat_capacity_surface * timestep.total_seconds())
-        new_state['lwe_thickness_of_soil_moisture_content'] = np.minimum(state['lwe_thickness_of_soil_moisture_content'] + \
+        new_state['lwe_thickness_of_soil_moisture_content'] = np.minimum(state['lwe_thickness_of_soil_moisture_content'] +
                                                                          (soil_moisture_tendency * timestep.total_seconds()), 0.15)
 
         return diagnostics, new_state
