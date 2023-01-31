@@ -172,14 +172,14 @@ class BucketHydrology(Stepper):
 
         surface_upward_latent_heat_flux = self._l * evaporation_rate
         surface_upward_sensible_heat_flux = self._c * wind_speed * (state['surface_temperature'] - state['air_temperature'][0])
-        diagnostics['surface_upward_sensible_heat_flux']=surface_upward_sensible_heat_flux
-        diagnostics['surface_upward_latent_heat_flux']=surface_upward_latent_heat_flux
+        diagnostics['surface_upward_sensible_heat_flux'] = surface_upward_sensible_heat_flux
+        diagnostics['surface_upward_latent_heat_flux'] = surface_upward_latent_heat_flux
 
         net_heat_flux = (
-            state['downwelling_shortwave_flux_in_air'][:,0] +
-            state['downwelling_longwave_flux_in_air'][:,0] -
-            state['upwelling_shortwave_flux_in_air'][:,0] -
-            state['upwelling_longwave_flux_in_air'][:,0] -
+            state['downwelling_shortwave_flux_in_air'][:, 0] +
+            state['downwelling_longwave_flux_in_air'][:, 0] -
+            state['upwelling_shortwave_flux_in_air'][:, 0] -
+            state['upwelling_longwave_flux_in_air'][:, 0] -
             surface_upward_sensible_heat_flux -
             surface_upward_latent_heat_flux)
 
@@ -188,8 +188,8 @@ class BucketHydrology(Stepper):
         heat_capacity_surface = mass_surface_slab * state['heat_capacity_of_soil']
 
         new_state['surface_temperature'] = state['surface_temperature'] + \
-                    (net_heat_flux/heat_capacity_surface * timestep.total_seconds())
+            (net_heat_flux/heat_capacity_surface * timestep.total_seconds())
         new_state['lwe_thickness_of_soil_moisture_content'] = np.minimum(state['lwe_thickness_of_soil_moisture_content'] + \
-                    (soil_moisture_tendency * timestep.total_seconds()), 0.15)
+                                                                         (soil_moisture_tendency * timestep.total_seconds()), 0.15)
 
         return diagnostics, new_state
