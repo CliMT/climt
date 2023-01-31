@@ -4,7 +4,7 @@ name: windows package
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, without-dycore ]
   pull_request:
     branches: [ master, develop ]
 
