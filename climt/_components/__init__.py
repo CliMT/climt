@@ -7,7 +7,6 @@ from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .emanuel import EmanuelConvection
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
-from .gfs import GFSDynamicalCore
 from .dcmip import DcmipInitialConditions
 from .instellation import Instellation
 from .dry_convection import DryConvectiveAdjustment
@@ -17,5 +16,5 @@ __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation,
     HeldSuarez, GridScaleCondensation, BergerSolarInsolation, SimplePhysics,
     RRTMGLongwave, RRTMGShortwave, EmanuelConvection, SlabSurface,
-    GFSDynamicalCore, DcmipInitialConditions, IceSheet,
+    DcmipInitialConditions, IceSheet,
     Instellation, DryConvectiveAdjustment, BucketHydrology)
