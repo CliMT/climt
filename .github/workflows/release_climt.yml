@@ -39,17 +39,23 @@ jobs:
            
       - name: Build on macOS
         env:
-          CIBW_BUILD: cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64 
-          CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
-          CIBW_BEFORE_ALL_MACOS: brew remove gcc; brew install gcc@8
+          CIBW_BUILD: cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
+          CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin"
+          # CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
+          # CIBW_BEFORE_ALL_MACOS: brew remove gcc; brew install gcc@8
         if: ${{ runner.os == 'macOS' }}
         run: python -m cibuildwheel --output-dir dist
 
+      - uses: actions/upload-artifact@v3
+        with:
+            name: my-artifact
+            path: dist/
+            if-no-files-found: error
            
       #- name: Install twine
       #  run: python -m pip install twine
 
-      - name: upload wheels
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-             password: ${{ secrets.PYPI_API_TOKEN }}
+      #- name: upload wheels
+      #  uses: pypa/gh-action-pypi-publish@release/v1
+      #  with:
+      #       password: ${{ secrets.PYPI_API_TOKEN }}
