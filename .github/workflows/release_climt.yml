@@ -46,16 +46,17 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: python -m cibuildwheel --output-dir dist
 
-      - uses: actions/upload-artifact@v3
-        with:
-            name: my-artifact
-            path: dist/
-            if-no-files-found: error
+          #- uses: actions/upload-artifact@v3
+          #with:
+          #  name: my-artifact
+          #  path: dist/
+          #  if-no-files-found: error
            
-      #- name: Install twine
-      #  run: python -m pip install twine
+      - name: Install twine
+        run: python -m pip install twine
 
-      #- name: upload wheels
-      #  uses: pypa/gh-action-pypi-publish@release/v1
-      #  with:
-      #       password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: upload wheels
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        run: twine upload wheelhouse/* --verbose
