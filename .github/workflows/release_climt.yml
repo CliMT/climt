@@ -34,7 +34,7 @@ jobs:
           CIBW_BUILD: cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64 
           CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
         if: ${{ runner.os == 'Linux' }}
-        run: python -m cibuildwheel --output-dir dist
+        run: python -m cibuildwheel --output-dir wheelhouse
        
            
       - name: Build on macOS
@@ -44,7 +44,7 @@ jobs:
           # CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
           # CIBW_BEFORE_ALL_MACOS: brew remove gcc; brew install gcc@8
         if: ${{ runner.os == 'macOS' }}
-        run: python -m cibuildwheel --output-dir dist
+        run: python -m cibuildwheel --output-dir wheelhouse
 
           #- uses: actions/upload-artifact@v3
           #with:
