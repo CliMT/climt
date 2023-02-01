@@ -29,7 +29,6 @@ endif
 
 all: simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
 
-
 # Simple Physics Configuration
 
 simple_physics_lib: $(CLIMT_ARCH)/libsimple_physics.a
