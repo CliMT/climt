@@ -57,6 +57,6 @@ jobs:
 
       - name: upload wheels
         env:
-          TWINE_USERNAME: __token__
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: twine upload wheelhouse/* --verbose
