@@ -1,7 +1,6 @@
 FFTW_DIR = fftw-3.3.6-pl2
 SHT_DIR = shtns-2.7-r557
 BLAS_DIR = OpenBLAS-0.2.19
-GFS_DIR = GFS
 SIM_PHYS_DIR = simple_physics
 EMAN_DIR = emanuel
 RRTMG_LW_DIR = rrtmg_lw
@@ -20,55 +19,15 @@ LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 CLIMT_CFLAGS =  "-I$(BASE_DIR) -L$(LIB_DIR) $(CFLAGS)"
 LDFLAGS = "-L$(LIB_DIR)"
 
-CLIMT_LIB_TARGETS = blas_lib fftw_lib
 
 ifeq ($(CLIMT_ARCH),Windows)
 	BASE_DIR = $(subst \,/,$(PWD))
 	LIB_DIR= $(BASE_DIR)/$(CLIMT_ARCH)/
 	CLIMT_FFTW_FLAGS = --with-our-malloc --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --enable-static --with-g77-wrappers --with-windows-f77-mangling --enable-sse2 --enable-avx
-	CLIMT_LIB_TARGETS =
 endif
 
 
-all: $(CLIMT_LIB_TARGETS) sht_lib gfs_lib simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
-
-# FFTW3 Configuration
-
-$(CLIMT_ARCH)/.configured_fftw:
-	if [ ! -d $(FFTW_DIR) ]; then tar -xvzf $(FFTW_GZ) > log 2>&1; fi; cd $(FFTW_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(LDFLAGS) --prefix="$(BASE_DIR)" $(CLIMT_FFTW_FLAGS) > log.config.fftw 2>&1; tail -n 100 log.config.fftw && touch ../$(CLIMT_ARCH)/.configured_fftw
-
-$(CLIMT_ARCH)/libfftw3_omp.a: $(CLIMT_ARCH)/.configured_fftw
-	cd $(FFTW_DIR); make install > log.install.fftw 2>&1; tail -n 100 log.install.fftw; cp ../lib/libfftw3_omp.a $(LIB_DIR)
-
-$(CLIMT_ARCH)/libfftw3.a: $(CLIMT_ARCH)/.configured_fftw
-	cp lib/libfftw3.a $(LIB_DIR)
-
-fftw_lib: $(CLIMT_ARCH)/libfftw3_omp.a $(CLIMT_ARCH)/libfftw3.a
-
-
-# SHTNS Configuration
-
-$(CLIMT_ARCH)/.configured_sht:
-	if [ ! -d $(SHT_DIR) ]; then tar -xvzf $(SHT_GZ) ; fi; cd $(SHT_DIR); ./configure CFLAGS=$(CLIMT_CFLAGS) LDFLAGS=$(LDFLAGS) --prefix=$(BASE_DIR) --disable-python --enable-openmp && touch ../$(CLIMT_ARCH)/.configured_sht
-
-$(CLIMT_ARCH)/libshtns_omp.a: $(CLIMT_ARCH)/.configured_sht
-	cd $(SHT_DIR); make install > log 2>&1; cat log; cp ../lib/libshtns_omp.a $(LIB_DIR); ls -ltrh $(LIB_DIR)
-
-sht_lib: $(CLIMT_ARCH)/libshtns_omp.a
-
-# BLAS Configuration
-
-blas_lib: $(CLIMT_ARCH)/libopenblas.a
-
-$(CLIMT_ARCH)/libopenblas.a:
-	if [ ! -d $(BLAS_DIR) ]; then tar -xvzf $(BLAS_GZ) > log 2>&1; fi; cd $(BLAS_DIR); CFLAGS=$(CLIMT_CFLAGS) make NO_SHARED=1 NO_LAPACK=0 > log 2>&1 ; make PREFIX=$(BASE_DIR) NO_SHARED=1 NO_LAPACK=0 install > log.install.blas 2>&1 ; tail -n 100 log.install.blas;  cp ../lib/libopenblas.a $(LIB_DIR)
-
-# GFS Configuration
-
-gfs_lib: $(CLIMT_ARCH)/libgfs_dycore.a
-
-$(CLIMT_ARCH)/libgfs_dycore.a: $(GFS_DIR)/*.f90
-	cd $(GFS_DIR); make python_lib; cp libgfs_dycore.a $(LIB_DIR); touch ../../_components/gfs/_gfs_dynamics.pyx
+all: simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
 
 # Simple Physics Configuration
 
@@ -111,7 +70,6 @@ clean:
 	if [ -d $(FFTW_DIR) ]; then rm -Rf $(FFTW_DIR); fi
 	if [ -d $(SHT_DIR) ]; then rm -Rf $(SHT_DIR); fi
 	if [ -d $(BLAS_DIR) ]; then rm -Rf $(BLAS_DIR); fi
-	cd $(GFS_DIR); make clean
 	cd $(SIM_PHYS_DIR); make clean
 	cd $(EMAN_DIR); make clean
 	cd $(RRTMG_LW_DIR); make clean

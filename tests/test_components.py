@@ -11,7 +11,7 @@ from climt import (
     Frierson06LongwaveOpticalDepth, GridScaleCondensation,
     BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, GFSDynamicalCore, BucketHydrology,
+    DcmipInitialConditions, BucketHydrology,
     IceSheet, Instellation, DryConvectiveAdjustment,
     get_grid)
 import climt
@@ -46,7 +46,7 @@ def load_dictionary(filename):
 def state_3d_to_1d(state):
     return_state = {}
     for name, value in state.items():
-        if name is 'time':
+        if name == 'time':
             return_state[name] = value
         else:
             dim_list = []
@@ -62,7 +62,7 @@ def state_3d_to_1d(state):
 def transpose_state(state, dims=None):
     return_state = {}
     for name, value in state.items():
-        if name is 'time':
+        if name == 'time':
             return_state[name] = state[name]
         else:
             if dims is None:
@@ -516,104 +516,6 @@ class TestInstellation(ComponentBaseColumn, ComponentBase3D):
 class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return DryConvectiveAdjustment()
-
-
-@pytest.mark.skip("fails on CI, no idea why")
-class TestFullMoistGFSDycoreWithPhysics(ComponentBase3D):
-
-    def get_component_instance(self):
-        # Create Radiation Prognostic
-        radiation = climt.RRTMGLongwave()
-        # Create Convection Prognostic
-        convection = climt.EmanuelConvection()
-        # Create a SimplePhysics Prognostic
-        boundary_layer = TimeDifferencingWrapper(
-            climt.SimplePhysics()
-        )
-        return GFSDynamicalCore(
-            [radiation, convection, boundary_layer]
-        )
-
-
-@pytest.mark.skip("fails on CI, no idea why")
-class TestGFSDycore(ComponentBase3D):
-
-    def get_component_instance(self):
-        return GFSDynamicalCore()
-
-
-@pytest.mark.skip("fails on CI, no idea why")
-class TestGFSDycoreWithDcmipInitialConditions(ComponentBase3D):
-
-    def get_component_instance(self):
-        return GFSDynamicalCore()
-
-    def get_3d_input_state(self):
-        state = climt.get_default_state(
-            [self.get_component_instance()], grid_state=get_grid(nx=32, ny=32, nz=28))
-        # state = super(TestGFSDycoreWithDcmipInitialConditions, self).get_3d_input_state()
-        state.update(climt.DcmipInitialConditions(add_perturbation=True)(state))
-        return state
-
-
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason="fails on appveyor, no idea why")
-class TestGFSDycoreWithImplicitTendency(ComponentBase3D):
-
-    def get_component_instance(self):
-        return GFSDynamicalCore([EmanuelConvection()])
-
-    def get_3d_input_state(self):
-        state = climt.get_default_state(
-            [self.get_component_instance()], grid_state=get_grid(nx=16, ny=16, nz=28))
-        return state
-
-
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason="fails on appveyor, no idea why")
-class TestGFSDycoreWithHeldSuarez(ComponentBase3D):
-    def test_inputs_are_dry(self):
-        component = self.get_component_instance()
-        assert 'specific_humidity' not in component.input_properties.keys()
-        assert 'specific_humidity_on_interface_levels' not in component.input_properties.keys()
-
-    def get_component_instance(self):
-        return GFSDynamicalCore([HeldSuarez()])
-
-    def get_3d_input_state(self):
-        state = climt.get_default_state(
-            [self.get_component_instance()],
-            grid_state=get_grid(nx=16, ny=16, nz=28))
-        return state
-
-
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason="fails on appveyor, no idea why")
-class TestGFSDycoreWithGrayLongwaveRadiation(ComponentBase3D):
-
-    def get_component_instance(self):
-        return GFSDynamicalCore([GrayLongwaveRadiation()])
-
-    def get_3d_input_state(self):
-        state = climt.get_default_state(
-            [self.get_component_instance()],
-            grid_state=get_grid(nx=16, ny=16, nz=28))
-        return state
-
-
-@pytest.mark.skipif(sys.platform == 'win32',
-                    reason="fails on appveyor, no idea why")
-class TestGFSDycoreWithRRTMGLongwave(ComponentBase3D):
-
-    def get_component_instance(self):
-        radiation = RRTMGLongwave()
-        return GFSDynamicalCore([radiation], moist=True)
-
-    def get_3d_input_state(self):
-        state = climt.get_default_state(
-            [self.get_component_instance()], grid_state=get_grid(nx=16, ny=16, nz=28))
-        return state
-
 
 def test_piecewise_constant_component():
 

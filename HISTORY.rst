@@ -2,6 +2,11 @@
 History
 =======
 
+Latest
+-------
+
+* Removed dycore to move it to independent package
+
 v.0.16.15
 ---------
 
