@@ -28,4 +28,4 @@ __all__ = (
     EmanuelConvection, SlabSurface, DcmipInitialConditions,
     IceSheet, Instellation, DryConvectiveAdjustment, BucketHydrology)
 
-__version__ = '0.17.3'
+__version__ = '0.17.4'
