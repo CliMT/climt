@@ -31,26 +31,25 @@ jobs:
           
       - name: Build on Linux
         env:
-          CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
+          CIBW_BUILD: cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64 
           CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
         if: ${{ runner.os == 'Linux' }}
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: python -m cibuildwheel --output-dir dist
        
            
       - name: Build on macOS
         env:
-          CIBW_BUILD: cp36-macosx_x86_64 cp37-macosx_x86_64 cp38-macosx_x86_64
+          CIBW_BUILD: cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64 
           CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
           CIBW_BEFORE_ALL_MACOS: brew remove gcc; brew install gcc@8
         if: ${{ runner.os == 'macOS' }}
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: python -m cibuildwheel --output-dir dist
 
            
-      - name: Install twine
-        run: python -m pip install twine
+      #- name: Install twine
+      #  run: python -m pip install twine
 
       - name: upload wheels
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-        run: twine upload wheelhouse/* --verbose
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+             password: ${{ secrets.PYPI_API_TOKEN }}
