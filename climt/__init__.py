@@ -11,7 +11,7 @@ from ._components import (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave,
-    EmanuelConvection, SlabSurface, GFSDynamicalCore,
+    EmanuelConvection, SlabSurface,
     DcmipInitialConditions, IceSheet, Instellation, DryConvectiveAdjustment, BucketHydrology)
 
 
@@ -25,7 +25,7 @@ __all__ = (
     Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
     RRTMGShortwave,
-    EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions,
+    EmanuelConvection, SlabSurface, DcmipInitialConditions,
     IceSheet, Instellation, DryConvectiveAdjustment, BucketHydrology)
 
 __version__ = '0.16.14'

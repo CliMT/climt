@@ -4,7 +4,7 @@ name: windows package
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, without-dycore ]
   pull_request:
     branches: [ master, develop ]
 
@@ -16,7 +16,7 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ["3.6","3.7", "3.8"]
+        python-version: ["3.6"]
     steps:
     - uses: actions/checkout@v2
     - uses: conda-incubator/setup-miniconda@v2
@@ -25,20 +25,20 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - shell: bash -l {0} 
       run: |
-          export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
+          # export COMPILER_PATH=/c/Miniconda/envs/test/Library/mingw-w64/bin/
           conda activate test
           which python
-          conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
+          # conda install -c msys2 m2w64-gcc m2w64-gcc-fortran m2w64-winpthreads-git m2w64-openblas
           conda install libpython
-          which gcc
-          which gfortran
-          cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
-          printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
-          ls $HOME; cat $HOME/pydistutils.cfg          
+          # which gcc
+          # which gfortran
+          # cp $COMPILER_PATH/x86_64-w64-mingw32-gcc-ar.exe $COMPILER_PATH/x86_64-w64-mingw32-ar.exe
+          # printf '[build]\r\ncompiler=mingw32\r\n' > $HOME/pydistutils.cfg
+          # ls $HOME; cat $HOME/pydistutils.cfg          
           python -m pip install -r requirements_dev.txt
           touch libmsvcr140.dll
-          cp /c/Miniconda/envs/test/Library/bin/vcruntime140.dll /c/Miniconda/envs/test/Library/bin/msvcr140.dll
-          ls -l
+          # cp /c/Miniconda/envs/test/Library/bin/vcruntime140.dll /c/Miniconda/envs/test/Library/bin/msvcr140.dll
+          # ls -l
           python setup.py develop
           py.test -v
           

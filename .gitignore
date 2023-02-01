@@ -72,3 +72,5 @@ target/
 
 # pyenv python configuration file
 .python-version
+
+.vscode/

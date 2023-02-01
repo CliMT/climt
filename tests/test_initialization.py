@@ -1,7 +1,7 @@
 from climt import (
     get_default_state, Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
     GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave, RRTMGShortwave,
-    EmanuelConvection, SlabSurface, GFSDynamicalCore, DcmipInitialConditions, IceSheet,
+    EmanuelConvection, SlabSurface, DcmipInitialConditions, IceSheet,
     Instellation, get_grid
 )
 import random
@@ -205,12 +205,6 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
         func = create_3d_grid_test_for(cls)
         locals()[func.__name__] = func
 
-    def test_GFSDynamicalCore(self):
-        grid = get_grid(nx=12, ny=16, nz=28)
-        component = GFSDynamicalCore()
-        state = get_default_state([component], grid_state=grid)
-        call_component(component, state)
-
     def test_component_pairs(self):
         random.seed(0)
         for _ in range(self.pair_tests):
@@ -234,40 +228,6 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
             call_component(component1, state)
             call_component(component2, state)
             call_component(component3, state)
-
-
-class TestFullMoistGFSDycoreWithPhysics(unittest.TestCase):
-
-    def get_component_instance(self):
-        # Create Radiation Prognostic
-        radiation = RRTMGLongwave()
-        # Create Convection Prognostic
-        convection = EmanuelConvection()
-        # Create a SimplePhysics Prognostic
-        boundary_layer = TimeDifferencingWrapper(
-            SimplePhysics()
-        )
-        return GFSDynamicalCore(
-            [radiation, convection, boundary_layer]
-        )
-
-    def test_component_3d_grid(self):
-        grid = get_grid(nx=16, ny=16, nz=16)
-        component = self.get_component_instance()
-        state = get_default_state([component], grid_state=grid)
-        call_component(component, state)
-
-
-class TestGFSDycoreWith32VerticalLevels(unittest.TestCase):
-
-    def get_component_instance(self):
-        return GFSDynamicalCore()
-
-    def test_component_3d_grid(self):
-        grid = get_grid(nx=16, ny=16, nz=32)
-        component = self.get_component_instance()
-        state = get_default_state([component], grid_state=grid)
-        call_component(component, state)
 
 
 def test_3d_initialization_is_full_based_on_wildcard():
