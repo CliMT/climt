@@ -236,7 +236,7 @@ else:
 
 setup(
     name='climt',
-    version='0.17.9',
+    version='0.17.10',
     description='CliMT is a Toolkit for building Earth system models in Python.',
     long_description=readme + '\n\n' + history,
     author="Rodrigo Caballero",
