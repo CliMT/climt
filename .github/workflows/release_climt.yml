@@ -32,7 +32,7 @@ jobs:
       - name: Build on Linux
         env:
           # CIBW_BUILD: cp310-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
-          CIBW_SKIP: "cp36-* cp37-*"
+          CIBW_SKIP: "cp27-* cp36-* cp35-* cp37-*"
           CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
         if: ${{ runner.os == 'Linux' }}
         run: python -m cibuildwheel --output-dir wheelhouse
@@ -41,8 +41,8 @@ jobs:
       - name: Build on macOS
         env:
           # CIBW_BUILD: cp310-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64 cp39-macosx_arm64
-          CIBW_SKIP: "cp36-* cp37-*"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_SKIP: "cp27-* cp35-* cp36-* cp37-*"
+          CIBW_ARCHS_MACOS: "x86_64"
           CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin"
           # CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
           # CIBW_BEFORE_ALL_MACOS: brew remove gcc; brew install gcc@8
