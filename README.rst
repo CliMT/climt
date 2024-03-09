@@ -71,6 +71,13 @@ should work on most systems. From version 0.9.2 onwards, this command will
 install binary wheels, eliminating the requirement of a compiler on your
 system.
 
+.. NOTE::
+    The GFS dynamical core has been made into a seperate package called 
+    gfs_dynamical_core_ for ease of maintenance. If you need the dynamical core, 
+    please install this package from source or directly using pip.
+
+        pip install gfs_dynamical_core
+
 Detailed instructions for Mac and Linux systems are available in the `documentation`_.
 
 Features
