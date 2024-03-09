@@ -6,7 +6,7 @@ on:
   push:
     branches: [ master, without-dycore ]
   pull_request:
-    branches: [ develop ]
+    branches: [ master ]
 
 jobs:
   windows_package:
