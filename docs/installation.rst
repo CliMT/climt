@@ -7,6 +7,17 @@ Installation
 Stable release
 --------------
 
+.. NOTE::
+
+    The GFS dynamical core has been made into a seperate package called 
+    gfs_dynamical_core_ for ease of maintenance. If you need the dynamical core, 
+    please install this package from source or directly using pip. Doing this will
+    automatically install climt as well.
+
+    .. code-block:: console
+
+        $ install gfs_dynamical_core
+
 You can install climt by simply typing
 
 .. code-block:: console
