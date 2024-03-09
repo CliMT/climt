@@ -40,7 +40,7 @@ requirements = [
     'numpy>=1.16.0',
     'pint>=0.7.0',
     'xarray>=0.8.0',
-    'sympl==0.4.0',
+    'sympl==0.4.1',
     'cython>=0.25',
     'scipy>=0.18.1',
 ]
@@ -236,7 +236,7 @@ else:
 
 setup(
     name='climt',
-    version='0.16.25',
+    version='0.17.12',
     description='CliMT is a Toolkit for building Earth system models in Python.',
     long_description=readme + '\n\n' + history,
     author="Rodrigo Caballero",
