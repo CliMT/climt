@@ -8,15 +8,15 @@ Stable release
 --------------
 
 .. NOTE::
-
     The GFS dynamical core has been made into a seperate package called 
-    gfs_dynamical_core_ for ease of maintenance. If you need the dynamical core, 
-    please install this package from source or directly using pip. Doing this will
-    automatically install climt as well.
+    gfs_dynamical_core_ for ease of maintenance.
+    
+If you need the dynamical core, please install this package from source or
+directly using pip. Doing this will automatically install climt as well.
 
-    .. code-block:: console
+.. code-block:: console
 
-        $ install gfs_dynamical_core
+    $ pip install gfs_dynamical_core
 
 You can install climt by simply typing
 
@@ -108,3 +108,4 @@ compile OpenMP programs, like the dynamical core in climt.
 .. _Github repo: https://github.com/climt/climt
 .. _tarball: https://github.com/CliMT/climt/tarball/master
 .. _anaconda: https://www.continuum.io/downloads
+.. _gfs_dynamical_core: https://github.com/Ai33L/gfs_dynamical_core
