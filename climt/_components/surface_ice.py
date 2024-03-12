@@ -125,6 +125,14 @@ class IceSheet(Stepper):
             'dims': ['*'],
             'units': 'dimensionless'
         },
+        'surface_albedo_for_direct_near_infrared': {
+            'dims': ['*'],
+            'units': 'dimensionless'
+        },
+        'surface_albedo_for_diffuse_near_infrared': {
+            'dims': ['*'],
+            'units': 'dimensionless'
+        },
     }
 
     def __init__(self, maximum_snow_ice_height=10, **kwargs):
@@ -330,16 +338,24 @@ class IceSheet(Stepper):
             if outputs['surface_snow_thickness'][col] > 0:
                 diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.8
                 diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.8
+                diagnostics['surface_albedo_for_direct_near_infrared'][col] = 0.8
+                diagnostics['surface_albedo_for_diffuse_near_infrared'][col] = 0.8
             elif area_type == 'sea_ice' and outputs['sea_ice_thickness'][col] > 0:
                 diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.5
                 diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.5
+                diagnostics['surface_albedo_for_direct_near_infrared'][col] = 0.5
+                diagnostics['surface_albedo_for_diffuse_near_infrared'][col] = 0.5
             elif area_type == 'sea_ice' and outputs['sea_ice_thickness'][col] > 0:
                 diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.5
                 diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.5
+                diagnostics['surface_albedo_for_direct_near_infrared'][col] = 0.5
+                diagnostics['surface_albedo_for_diffuse_near_infrared'][col] = 0.5
 
             if height_of_melting_ice > 0:
                 diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.2
                 diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.2
+                diagnostics['surface_albedo_for_direct_near_infrared'][col] = 0.2
+                diagnostics['surface_albedo_for_diffuse_near_infrared'][col] = 0.2
 
         return diagnostics, outputs
 
