@@ -63,6 +63,13 @@ https://sympl.readthedocs.io.
 Installation
 -------------
 
+Note - The GFS dynamical core has been made into a seperate package called 
+gfs_dynamical_core_ for ease of maintenance. If you need the dynamical core, 
+please install this package from source or directly using pip. Doing this will
+automatically install climt as well.
+
+    pip install gfs_dynamical_core
+
 climt can be installed directly from the python package index using pip.
 
     pip install climt
@@ -102,3 +109,5 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Pint: https://pint.readthedocs.io
 .. _xarray: http://xarray.pydata.org
 .. _documentation: http://climt.readthedocs.io/en/latest/installation.html
+.. _gfs_dynamical_core: https://github.com/Ai33L/gfs_dynamical_core
+

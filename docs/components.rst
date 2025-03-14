@@ -8,15 +8,6 @@ Components
 This page documents the different components available through climt.
 
 
-Dynamics
----------
-
-.. autosummary::
-    :toctree: generated/
-
-    GFSDynamicalCore
-    GFSDynamicalCore.__call__
-
 Radiation
 ---------
 

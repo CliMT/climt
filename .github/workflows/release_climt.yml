@@ -31,7 +31,7 @@ jobs:
           
       - name: Build on Linux
         env:
-          CIBW_BUILD: cp310-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
+          CIBW_BUILD: cp311-manylinux_x86_64 cp310-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
           CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
         if: ${{ runner.os == 'Linux' }}
         run: python -m cibuildwheel --output-dir wheelhouse
