@@ -34,7 +34,7 @@ jobs:
           CIBW_BUILD: cp311-manylinux_x86_64 cp310-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
           CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
         if: ${{ runner.os == 'Linux' }}
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: python -m cibuildwheel --output-dir dist
        
            
       - name: Build on macOS
@@ -45,7 +45,7 @@ jobs:
           # CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
           # CIBW_BEFORE_ALL_MACOS: brew remove gcc; brew install gcc@8
         if: ${{ runner.os == 'macOS' }}
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: python -m cibuildwheel --output-dir dist
 
           #- uses: actions/upload-artifact@v3
           #with:
@@ -56,28 +56,33 @@ jobs:
       - name: Install twine
         run: python -m pip install twine
 
-      - name: mint API token
-        id: mint-token
-        run: |
-          # retrieve the ambient OIDC token
-          resp=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=pypi")
-          oidc_token=$(jq -r '.value' <<< "${resp}")
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+  publish-to-pypi:
+    name: Publishing to PyPI
+    needs:
+    - build_wheels
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/climt  # Replace <package-name> with your PyPI project name
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish wheels to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+    #   # - name: upload wheels
+    #   #   env:
+    #   #     TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+    #   #     TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    #   #   run: twine upload wheelhouse/* --verbose
 
-          # exchange the OIDC token for an API token
-          resp=$(curl -X POST https://pypi.org/_/oidc/mint-token -d "{\"token\": \"${oidc_token}\"}")
-          api_token=$(jq -r '.token' <<< "${resp}")
-
-          # mask the newly minted API token, so that we don't accidentally leak it
-          echo "::add-mask::${api_token}"
-
-          # see the next step in the workflow for an example of using this step output
-          echo "api-token=${api_token}" >> "${GITHUB_OUTPUT}"
-
-          TWINE_USERNAME=__token__ TWINE_PASSWORD=${api_token} twine upload wheelhouse/* --verbose
-
-      # - name: upload wheels
-      #   env:
-      #     TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-      #     TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-      #   run: twine upload wheelhouse/* --verbose
+   
