@@ -1,5 +1,6 @@
 import climt
 from sympl import PlotFunctionMonitor
+from gfs_dynamical_core import GFSDynamicalCore
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
@@ -28,7 +29,7 @@ monitor = PlotFunctionMonitor(plot_function)
 grid = climt.get_grid(nx=128, ny=62)
 
 held_suarez = climt.HeldSuarez()
-dycore = climt.GFSDynamicalCore([held_suarez])
+dycore = GFSDynamicalCore([held_suarez])
 my_state = climt.get_default_state([dycore], grid_state=grid)
 
 my_state['eastward_wind'].values[:] = np.random.randn(*my_state['eastward_wind'].shape)

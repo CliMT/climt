@@ -2,6 +2,7 @@ import climt
 from sympl import PlotFunctionMonitor, set_constant
 from datetime import timedelta
 import matplotlib.pyplot as plt
+from gfs_dynamical_core import GFSDynamicalCore
 
 
 def plot_function(fig, state):
@@ -16,7 +17,7 @@ def plot_function(fig, state):
 monitor = PlotFunctionMonitor(plot_function)
 
 set_constant('reference_air_pressure', value=1e5, units='Pa')
-dycore = climt.GFSDynamicalCore()
+dycore = GFSDynamicalCore()
 dcmip = climt.DcmipInitialConditions(add_perturbation=True)
 
 grid = climt.get_grid(nx=128, ny=64, nz=20)

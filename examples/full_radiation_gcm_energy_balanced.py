@@ -3,6 +3,7 @@ from sympl import (
     PlotFunctionMonitor, NetCDFMonitor,
     TimeDifferencingWrapper, UpdateFrequencyWrapper,
 )
+from gfs_dynamical_core import GFSDynamicalCore
 import numpy as np
 from datetime import timedelta
 
@@ -66,7 +67,7 @@ radiation_sw = UpdateFrequencyWrapper(
 
 slab_surface = climt.SlabSurface()
 
-dycore = climt.GFSDynamicalCore(
+dycore = GFSDynamicalCore(
     [simple_physics, slab_surface, radiation_sw,
      radiation_lw, convection], number_of_damped_levels=5
 )
