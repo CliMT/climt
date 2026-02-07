@@ -8,6 +8,8 @@ import inspect
 # Import sympl and climt
 import sympl
 import climt
+from sympl import DataArray
+from sympl._core.util import get_numpy_array
 
 # ----------------------------------------------------------------------
 # Monkey-patching / Decoration Logic
@@ -157,6 +159,34 @@ my_state['surface_temperature'].values = surf_temp_profile
 if 'solar_cycle_fraction' in my_state:
     pass
 
+def run_issue_46_microbenchmarks():
+    """
+    Microbenchmarks addressing concerns from https://github.com/mcgibbon/sympl/issues/46
+    """
+    print("\nRunning Issue #46 Micro-benchmarks...")
+    # Create a dummy DataArray
+    dummy_data = np.random.rand(100, 100)
+    da = DataArray(dummy_data, dims=('a', 'b'), attrs={'units': 'm'})
+
+    print("1. Testing DataArray.__init__ overhead (1000 iter)...")
+    for _ in range(1000):
+        _ = DataArray(dummy_data, dims=('a', 'b'), attrs={'units': 'm'})
+
+    print("2. Testing get_numpy_array overhead (with transpose) (1000 iter)...")
+    # This forces a transpose if input dims differ from out_dims order
+    for _ in range(1000):
+        # Transpose from (a, b) to (b, a)
+        _ = get_numpy_array(da, out_dims=('b', 'a'))
+
+    print("3. Testing DataArray.transpose overhead (1000 iter)...")
+    for _ in range(1000):
+        _ = da.transpose('b', 'a')
+
+    print("4. Testing attribute access overhead (.values, .dims) (10000 iter)...")
+    for _ in range(10000):
+        _ = da.values
+        _ = da.dims
+
 # ----------------------------------------------------------------------
 # Profiling Execution
 # ----------------------------------------------------------------------
@@ -172,6 +202,9 @@ for i in range(40):
 
     # if i % 5 == 0:
     #     netcdf_monitor.store(my_state)
+
+# Run the microbenchmarks
+run_issue_46_microbenchmarks()
 
 profiler.stop()
 

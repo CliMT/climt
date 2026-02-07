@@ -1,75 +1,65 @@
-# Profiling Report for CliMT and Sympl Core
+# Profiling Report for CliMT and Sympl Core (Issue #46 Analysis)
 
 ## Methodology
 The profiling was conducted using `pyinstrument` on a modified version of the `examples/full_radiation_gcm_energy_balanced.py` script. The simulation ran for 40 time steps.
 
-To isolate the overhead of the `sympl` and `climt` framework, "decorators" (monkey-patching wrappers) were applied to all functions and methods within the `sympl` and `climt` modules. This ensures they appear explicitly in the profiling call stack, although `pyinstrument` captures the full stack regardless.
+To isolate the overhead of the `sympl` and `climt` framework, "decorators" (monkey-patching wrappers) were applied to all functions and methods within the `sympl` and `climt` modules. This ensures they appear explicitly in the profiling call stack.
 
-The `climt.GFSDynamicalCore` was replaced with `sympl.AdamsBashforth` to drive the physics components.
+Micro-benchmarks addressing specific concerns from **GitHub Issue #46** were added to the end of the profiling run.
 
 ## Results
 
-### Top Level Breakdown
-Total CPU time: **41.5s**
+### Top Level Breakdown (Main Loop)
+Total CPU time: **47.5s**
 
-1.  **RRTMGShortwave (Radiation): ~32s (77%)**
-    *   Most of this time is spent in the `wrapper` logic which eventually calls `RRTMGShortwave.array_call`.
-    *   Inside `RRTMGShortwave.array_call` (23.08s), the actual computation happens.
-    *   However, a significant portion (~9s) appears to be overhead *before* or *around* the core computation, or shared with `RRTMGLongwave`.
-    *   Wait, the tree shows `RRTMGLongwave.array_call` (8.79s) is *inside* `RRTMGShortwave`'s call stack? No, that's likely an artifact of how `ImplicitTendencyComponentComposite` calls components sequentially or how pyinstrument groups them if they are in the same loop. Actually, looking at the text output:
-        ```
-        RRTMGShortwave.__call__
-         └─ RRTMGShortwave.wrapper
-             ├─ RRTMGShortwave.array_call (23.08s)
-             └─ RRTMGLongwave.array_call (8.79s)
-        ```
-        This nesting suggests `RRTMGShortwave` might be wrapping another component or they are being called in a way that pyinstrument attributes one to the other (unlikely unless one calls the other).
-        Actually, `profile_run.py` (and the original script) defines:
-        ```python
-        radiation_lw = UpdateFrequencyWrapper(climt.RRTMGLongwave(), ...)
-        radiation_sw = UpdateFrequencyWrapper(climt.RRTMGShortwave(), ...)
-        ```
-        And they are passed to the dycore (AdamsBashforth -> Composite).
-        The composite calls them sequentially.
-        The pyinstrument output indentation might be misleading in text mode if they are siblings.
-        However, `UpdateFrequencyWrapper.__call__` is taking 32.1s.
+1.  **RRTMGShortwave (Radiation): ~36s (76%)**
+    *   `UpdateFrequencyWrapper` dominates, managing the calls to `RRTMGShortwave`.
+    *   Core physics (`RRTMGShortwave.array_call`) takes ~26s.
+    *   Framework overhead (wrappers, unit checks) is significant around this call.
 
-2.  **SimplePhysics: ~5s (12%)**
-    *   `SimplePhysics.__call__` takes 4.35s.
-    *   `SimplePhysics.array_call` takes 4.00s.
-    *   Overhead is relatively low here (~0.35s wrapper overhead).
+2.  **SimplePhysics: ~5.5s (11.5%)**
+    *   `SimplePhysics.array_call` takes ~4.5s.
+    *   Framework overhead is visible but proportionally smaller than for faster components.
 
-3.  **EmanuelConvection: ~1.8s (4%)**
-    *   `EmanuelConvection.__call__` takes 1.85s.
-    *   `EmanuelConvection.array_call` takes 1.33s.
-    *   **Significant Overhead:** `EmanuelConvection._set_fortran_constants` takes 0.42s (23% of component time). This calls `get_constant` -> `DataArray.to_units` -> `pint`. This is done *every call*.
+3.  **SlabSurface: ~0.8s (1.7%)**
+    *   `SlabSurface.__call__` takes 0.84s.
+    *   **Major Overhead:** `get_numpy_arrays_with_properties` takes **0.65s (77% of component time)**.
+    *   This confirms that for lightweight components, the framework cost dominates the physics cost.
+    *   Deep dive into `get_numpy_arrays_with_properties`:
+        *   Calls `DataArray.to_units` (0.57s)
+        *   Calls `data_array_to_units` (0.57s)
+        *   Calls `pint.UnitRegistry.parse_expression` (0.54s)
+    *   **Finding:** Unit parsing is extremely expensive and happens on every call.
 
-4.  **SlabSurface: ~0.8s (2%)**
-    *   `SlabSurface.__call__` takes 0.77s.
-    *   **Major Overhead:** `get_numpy_arrays_with_properties` takes 0.61s (79% of the component time!).
-    *   This function calls `DataArray.to_units` -> `pint`, which is very slow.
+### Issue #46 Micro-benchmark Analysis
 
-### Framework Overhead Analysis
+The micro-benchmarks (Total ~0.88s) specifically tested the concerns raised in Issue #46.
 
-The profiling clearly highlights `sympl` core functions that contribute significantly to runtime, especially for fast components like `SlabSurface` and `EmanuelConvection`.
+1.  **`get_numpy_array` Overhead (0.69s total for 1000 calls)**
+    *   This is the most expensive operation in the micro-benchmark suite.
+    *   It takes ~0.69ms per call.
+    *   The overhead comes from `DataArray.transpose` (which is called internally) and the subsequent slicing/reshaping logic.
+    *   **Confirmation:** The issue's claim that `get_numpy_array` is slow is supported. It is a significant cost when called thousands of times (as it is in the main loop for every component input).
 
-#### 1. `get_numpy_arrays_with_properties` / `DataArray.to_units` / `pint`
-This path is a major bottleneck.
-*   **Context:** `sympl` components automatically validate and convert units of input states using `get_numpy_arrays_with_properties` (called via `__call__` wrapper).
-*   **Cost:** In `SlabSurface`, it consumes ~80% of execution time. In `EmanuelConvection`, setting constants (which uses similar unit logic) consumes ~23%.
-*   **Root Cause:** `pint.UnitRegistry.parse_expression` and `to_units` are expensive operations to perform on every timestep for every component.
+2.  **`DataArray.__init__` Overhead**
+    *   While not explicitly separated in the summary, `DataArray` creation is ubiquitous.
+    *   In the main loop, `update_dict_by_adding_another` (0.67s) involves unit conversions and potentially new array creation.
+    *   `DataArray.to_units` (0.57s in SlabSurface) creates new DataArrays.
 
-#### 2. `UpdateFrequencyWrapper`
-*   This wrapper is efficient (it just delegates), but it organizes the heavy radiation calls.
+3.  **Property Access Overhead**
+    *   Attribute access (`.values`, `.dims`) was tested but is fast enough that it doesn't appear as a primary hotspot in the sampling profiler compared to `pint` parsing or `get_numpy_array`.
 
-#### 3. Initialization (`climt.get_default_state`)
-*   Not explicitly shown in the main loop profile (as it runs before), but `init_ozone` and `CubicSpline` usage was noted during debugging.
+## Conclusion & Recommendations
 
-## Recommendations for Optimization
+The profiling confirms the concerns raised in **Issue #46** and identifies `sympl` core functions as a major bottleneck for fast physics components.
 
-1.  **Cache Unit Conversions:** `sympl` should cache the result of `parse_expression` or the conversion factors if the units and input types haven't changed.
-2.  **Optimize `get_numpy_arrays_with_properties`:** Avoid full unit parsing if the input `DataArray` already has the correct units (string comparison might be faster than full pint parsing).
-3.  **Optimize `_set_fortran_constants`:** In `climt` components like `EmanuelConvection`, constants are fetched and converted every single call. These should be cached in `__init__` or only updated if they change.
+1.  **Unit Parsing is the #1 Framework Bottleneck:** `get_numpy_arrays_with_properties` spends the vast majority of its time in `pint.UnitRegistry.parse_expression`.
+    *   **Fix:** Cache parsed units or avoiding repeated parsing for the same variable/component pairs.
 
-## Conclusion
-While radiation physics (`RRTMG`) dominate the total runtime, the **framework overhead** (specifically `sympl`'s unit handling and input processing) is disproportionately high for faster components (~80% overhead for `SlabSurface`). Optimizing `DataArray.to_units` and reducing `pint` calls in the hot loop would significantly improve the efficiency of the core driver.
+2.  **`get_numpy_array` is Slow:** Consumes significant time (0.6ms/call) due to internal transpose and reshaping logic.
+    *   **Fix:** Optimize `get_numpy_array` to avoid full `DataArray.transpose` if possible, or use numpy-only operations as suggested in the issue.
+
+3.  **`DataArray` Creation/Conversion:** Creating new `DataArray`s during unit conversion (`to_units`) is expensive.
+    *   **Fix:** In-place unit modification where possible, or optimizing `__init__`.
+
+For `climt` users, this means that simple components (like `SlabSurface` or `EmanuelConvection`) are paying a "framework tax" that is often larger than their actual physical computation time.
