@@ -8,24 +8,8 @@ import subprocess
 import platform
 import re
 import glob
-try:
-    from pip import main as pip_main
-except Exception:
-    from pip._internal import main as pip_main
-
-try:
-    from Cython.Build.Distutils import build_ext as native_build_ext
-except ImportError:
-    print('Suitable Cython unavailable, installing...')
-    pip_main(['install', 'cython'])
-    from Cython.Build.Distutils import build_ext as native_build_ext
-
-try:
-    import numpy as np
-except ImportError:
-    print('Suitable numpy unavailable, installing...')
-    pip_main(['install', 'numpy'])
-    import numpy as np
+from Cython.Build.Distutils import build_ext as native_build_ext
+import numpy as np
 
 
 include_dirs = [np.get_include()]
@@ -41,7 +25,6 @@ requirements = [
     'pint>=0.7.0',
     'xarray>=0.8.0',
     'sympl==0.4.1',
-    'cython>=0.25',
     'scipy>=0.18.1',
 ]
 
