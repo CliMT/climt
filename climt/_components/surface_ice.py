@@ -333,9 +333,6 @@ class IceSheet(Stepper):
             elif area_type == 'sea_ice' and outputs['sea_ice_thickness'][col] > 0:
                 diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.5
                 diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.5
-            elif area_type == 'sea_ice' and outputs['sea_ice_thickness'][col] > 0:
-                diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.5
-                diagnostics['surface_albedo_for_diffuse_shortwave'][col] = 0.5
 
             if height_of_melting_ice > 0:
                 diagnostics['surface_albedo_for_direct_shortwave'][col] = 0.2
