@@ -1,0 +1,56 @@
+{% set name = "climt" %}
+{% set version = "0.17.13" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . -vv"
+  skip: true  # [win]
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('fortran') }}
+    - llvm-openmp  # [osx]
+  host:
+    - python
+    - pip
+    - cython >=0.25
+    - numpy >=1.16.0
+    - llvm-openmp  # [osx]
+  run:
+    - python
+    - {{ pin_compatible('numpy') }}
+    - pint >=0.7.0
+    - xarray >=0.8.0
+    - sympl ==0.4.1
+    - scipy >=0.18.1
+    - llvm-openmp  # [osx]
+
+test:
+  imports:
+    - climt
+  requires:
+    - pytest >=2.9.2
+    - mock >=2.0.0
+  commands:
+    - pytest --pyargs climt
+
+about:
+  home: https://github.com/CliMT/climt
+  license: BSD-3-Clause
+  license_family: BSD
+  license_file: LICENSE
+  summary: CliMT is a Toolkit for building Earth system models in Python.
+  doc_url: https://climt.readthedocs.io/
+  dev_url: https://github.com/CliMT/climt
+
+extra:
+  recipe-maintainers:
+    - your-github-username

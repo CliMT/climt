@@ -53,7 +53,10 @@ test_requirements = [
 
 # Find first gcc directory
 def find_homebrew_gcc():
-    return glob.glob('/usr/local/Cellar/gcc*')[0]
+    gcc_dirs = glob.glob('/usr/local/Cellar/gcc*')
+    if gcc_dirs:
+        return gcc_dirs[0]
+    return None
 
 
 # Platform specific settings
@@ -61,11 +64,15 @@ def guess_compiler_name(env_name):
 
     search_string = ''
     if env_name == 'FC':
-        search_string = 'gfortran-\d$'
+        search_string = r'gfortran-\d$'
     if env_name == 'CC':
-        search_string = 'gcc-\d$'
+        search_string = r'gcc-\d$'
 
     gcc_dir = find_homebrew_gcc()
+
+    if gcc_dir is None:
+        return
+
     for root, dirs, files in os.walk(gcc_dir):
 
         for line in files:
@@ -125,24 +132,34 @@ if operating_system == 'Windows':
     default_link_args = ['-l:libgfortran.a', '-l:libquadmath.a', '-l:libm.a']
     default_compile_args = ['-DMS_WIN64']
 
-os.environ['FFLAGS'] = '-fPIC -fno-range-check ' + os.environ['CLIMT_OPT_FLAGS']
-os.environ['CFLAGS'] = '-fPIC ' + os.environ['CLIMT_OPT_FLAGS']
+# Check for existing flags
+if 'FFLAGS' in os.environ:
+    os.environ['FFLAGS'] += ' -fPIC -fno-range-check ' + os.environ['CLIMT_OPT_FLAGS']
+else:
+    os.environ['FFLAGS'] = '-fPIC -fno-range-check ' + os.environ['CLIMT_OPT_FLAGS']
+
+if 'CFLAGS' in os.environ:
+    os.environ['CFLAGS'] += ' -fPIC ' + os.environ['CLIMT_OPT_FLAGS']
+else:
+    os.environ['CFLAGS'] = '-fPIC ' + os.environ['CLIMT_OPT_FLAGS']
 
 if operating_system == 'Darwin':
     gcc_dir = find_homebrew_gcc()
-    # print('gcc_dir', gcc_dir)
-    for root, dirs, files in os.walk(gcc_dir):
-        for line in files:
-            if re.match('libgfortran.a', line):
-                if not ('i386' in root):
-                    lib_path_list.append(root)
+    if gcc_dir is not None:
+        # print('gcc_dir', gcc_dir)
+        for root, dirs, files in os.walk(gcc_dir):
+            for line in files:
+                if re.match('libgfortran.a', line):
+                    if not ('i386' in root):
+                        lib_path_list.append(root)
 
     # print(lib_path_list)
 
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
     os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
     default_link_args = []
-    os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup -arch x86_64'
+    if 'LDSHARED' not in os.environ:
+        os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup -arch x86_64'
 
 print('Compilers: ', os.environ['CC'], os.environ['FC'])
 
