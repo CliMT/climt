@@ -53,7 +53,25 @@ test_requirements = [
 
 # Find first gcc directory
 def find_homebrew_gcc():
-    return glob.glob('/usr/local/Cellar/gcc*')[0]
+    # Check both standard Homebrew locations
+    paths = ['/opt/homebrew/Cellar/gcc*', '/usr/local/Cellar/gcc*']
+    for path in paths:
+        found = glob.glob(path)
+        if found:
+            return found[0]
+    # Fallback to raising index error or return None handled later if list empty
+    # Existing behavior was to index [0] directly, implying assumption of existence.
+    # We'll stick to attempting to return one, but if none found, let it fail naturally
+    # or return an empty string if that was the intent, but previous code would crash.
+    # Let's return glob result if found.
+    candidates = []
+    for path in paths:
+        candidates.extend(glob.glob(path))
+
+    if candidates:
+        return candidates[0]
+
+    raise RuntimeError("Could not find Homebrew GCC in /opt/homebrew or /usr/local")
 
 
 # Platform specific settings
@@ -61,9 +79,9 @@ def guess_compiler_name(env_name):
 
     search_string = ''
     if env_name == 'FC':
-        search_string = 'gfortran-\d$'
+        search_string = r'gfortran-\d$'
     if env_name == 'CC':
-        search_string = 'gcc-\d$'
+        search_string = r'gcc-\d$'
 
     gcc_dir = find_homebrew_gcc()
     for root, dirs, files in os.walk(gcc_dir):
@@ -142,7 +160,8 @@ if operating_system == 'Darwin':
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
     os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
     default_link_args = []
-    os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup -arch x86_64'
+    # Removed -arch x86_64 to allow building on ARM64 (Apple Silicon)
+    os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup'
 
 print('Compilers: ', os.environ['CC'], os.environ['FC'])
 
