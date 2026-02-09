@@ -6,7 +6,12 @@ from .._components import RRTMGShortwave, RRTMGLongwave
 import numpy as np
 from datetime import datetime
 from scipy.interpolate import CubicSpline
-import pkg_resources
+import sys
+
+if sys.version_info < (3, 9):
+    import importlib_resources
+else:
+    import importlib.resources as importlib_resources
 
 
 def get_atmosphere_grid(grid_state,
@@ -597,7 +602,7 @@ def get_hybrid_sigma_pressure_levels(num_levels=28,
             dictionary containing ak, bk, and sigma levels
 
     Reference:
-        Eckermann, S: Hybrid \sigma-p Coordinate Choices for a Global Model,
+        Eckermann, S: Hybrid \\sigma-p Coordinate Choices for a Global Model,
         Monthly Weather Review Jan 2009.
 
     .. _[Eckermann]:
@@ -847,9 +852,10 @@ def get_default_state(
 
 def init_ozone(p, ps):
     p_ref = 1e5*np.linspace(0.998, 0.001, 30)
-    ozone_ref = np.load(
-        pkg_resources.resource_filename('climt._data', 'ozone_profile.npy')
-    )
+
+    with importlib_resources.files('climt._data').joinpath('ozone_profile.npy').open('rb') as f:
+        ozone_ref = np.load(f)
+
     spline = CubicSpline(p_ref[::-1], ozone_ref[::-1])  # x must be increasing
     return spline(p)
 

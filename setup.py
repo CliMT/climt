@@ -166,8 +166,8 @@ if operating_system == 'Darwin':
                         if root not in lib_path_list:
                             lib_path_list.append(root)
 
-    os.environ['FFLAGS'] += ' -mmacosx-version-min=10.11'
-    os.environ['CFLAGS'] += ' -mmacosx-version-min=10.11'
+    os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
+    os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
     default_link_args = []
     os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup'
 
