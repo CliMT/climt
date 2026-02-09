@@ -60,11 +60,12 @@ def find_homebrew_gcc():
         candidates.extend(glob.glob(path))
 
     if candidates:
+        # Prefer the newest version if multiple are found (glob order might vary, but usually sorted)
+        # Assuming glob returns absolute paths.
+        candidates.sort(reverse=True)
+        print(f"Found Homebrew GCC candidates: {candidates}")
         return candidates[0]
 
-    # If no glob found, return None (handled by caller if needed) or just don't crash yet.
-    # The original code assumed index [0] exists.
-    # If we are here, we didn't find it.
     print("Warning: Could not find Homebrew GCC in standard locations.")
     return None
 
@@ -74,17 +75,22 @@ def guess_compiler_name(env_name):
 
     search_string = ''
     if env_name == 'FC':
-        search_string = r'gfortran-\d$'
+        search_string = r'gfortran-\d+$'
     if env_name == 'CC':
-        search_string = r'gcc-\d$'
+        search_string = r'gcc-\d+$'
 
     gcc_dir = find_homebrew_gcc()
     if gcc_dir:
+        # Search deeply in the found gcc directory for bin/
         for root, dirs, files in os.walk(gcc_dir):
+            if not root.endswith('/bin'): # Optimization: Only look in bin directories
+                 continue
+
             for line in files:
                 if re.match(search_string, line):
-                    print('Using ', env_name, '= ', line)
-                    os.environ[env_name] = line
+                    print(f"Guessing {env_name} = {line} from {root}")
+                    os.environ[env_name] = os.path.join(root, line)
+                    return # Stop after finding one
 
 
 operating_system = platform.system()
@@ -111,9 +117,15 @@ include_dirs.append(inc_path)
 
 # Compile libraries
 
+# Attempt to guess compilers on Darwin if not set
+if operating_system == 'Darwin':
+    if 'FC' not in os.environ:
+        guess_compiler_name('FC')
+    if 'CC' not in os.environ:
+        guess_compiler_name('CC')
+
 if 'FC' not in os.environ:
     if operating_system == 'Darwin':
-        # Default to 'gfortran' instead of 'gfortran-10' which is too specific
         os.environ['FC'] = 'gfortran'
         os.environ['F77'] = 'gfortran'
     else:
@@ -122,7 +134,6 @@ if 'FC' not in os.environ:
 
 if 'CC' not in os.environ:
     if operating_system == 'Darwin':
-        # Default to 'gcc' instead of 'gcc-10'
         os.environ['CC'] = 'gcc'
     else:
         os.environ['CC'] = 'gcc'
@@ -144,21 +155,26 @@ os.environ['CFLAGS'] = '-fPIC ' + os.environ['CLIMT_OPT_FLAGS']
 if operating_system == 'Darwin':
     gcc_dir = find_homebrew_gcc()
     if gcc_dir:
+        # Also need to find libgfortran.a to link against it?
+        # The original code did this.
         for root, dirs, files in os.walk(gcc_dir):
+            if 'lib' not in root: continue # Optimization
             for line in files:
-                if re.match('libgfortran.a', line):
+                if re.match(r'libgfortran\.a', line):
+                     # Avoid i386 libs on 64bit systems
                     if not ('i386' in root):
-                        lib_path_list.append(root)
+                        if root not in lib_path_list:
+                            lib_path_list.append(root)
 
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
     os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
     default_link_args = []
     os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup'
 
-# Debug print
 print('Compilers: ', os.environ.get('CC'), os.environ.get('FC'))
 print('LDSHARED: ', os.environ.get('LDSHARED'))
 print('FFLAGS: ', os.environ.get('FFLAGS'))
+print('Lib Paths: ', lib_path_list)
 
 
 # Create a custom build class to build libraries, and patch cython extensions
@@ -171,14 +187,19 @@ def build_libraries():
     os.chdir(compiled_path)
     os.environ['PWD'] = compiled_path
 
-    # Debug info before calling make
+    cmd = ['make', 'CLIMT_ARCH='+operating_system]
     print(f"Building libraries in {compiled_path}")
-    print(f"CLIMT_ARCH={operating_system}")
+    print(f"Command: {cmd}")
 
-    if subprocess.call(['make', 'CLIMT_ARCH='+operating_system]):
-        raise RuntimeError('Library build failed, exiting')
+    # Use subprocess.run to capture output if needed, or just let it stream to stdout/stderr
+    # call() streams to stdout/stderr by default.
+    ret = subprocess.call(cmd)
+
     os.chdir(curr_dir)
     os.environ['PWD'] = curr_dir
+
+    if ret != 0:
+        raise RuntimeError(f'Library build failed with exit code {ret}')
 
 
 # Custom build class
@@ -201,6 +222,8 @@ class climt_bdist_wheel(native_bdist_wheel):
 if os.environ.get('READTHEDOCS') == 'True':
     ext_modules = []
 else:
+    # Use the lib_path_list populated earlier
+
     ext_modules = [
         Extension(
             'climt._components._berger_solar_insolation',
@@ -214,7 +237,7 @@ else:
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args,
             library_dirs=lib_path_list,
-            extra_link_args=[lib_path_list[0]+'/libsimple_physics.a'] + default_link_args),
+            extra_link_args=[os.path.join(lib_path_list[0], 'libsimple_physics.a')] + default_link_args),
 
         Extension(
             'climt._components.emanuel._emanuel_convection',
@@ -223,7 +246,7 @@ else:
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args,
             library_dirs=lib_path_list,
-            extra_link_args=[lib_path_list[0]+'/libemanuel.a'] + default_link_args),
+            extra_link_args=[os.path.join(lib_path_list[0], 'libemanuel.a')] + default_link_args),
 
         Extension(
             'climt._components.rrtmg.lw._rrtmg_lw',
@@ -232,7 +255,7 @@ else:
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args + ['-fopenmp'],
             library_dirs=lib_path_list,
-            extra_link_args=[lib_path_list[0]+'/librrtmg_lw.a', '-fopenmp'] + default_link_args),
+            extra_link_args=[os.path.join(lib_path_list[0], 'librrtmg_lw.a'), '-fopenmp'] + default_link_args),
 
         Extension(
             'climt._components.rrtmg.sw._rrtmg_sw',
@@ -241,7 +264,7 @@ else:
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args + ['-fopenmp'],
             library_dirs=lib_path_list,
-            extra_link_args=[lib_path_list[0]+'/librrtmg_sw.a', '-fopenmp'] + default_link_args),
+            extra_link_args=[os.path.join(lib_path_list[0], 'librrtmg_sw.a'), '-fopenmp'] + default_link_args),
 
         Extension(
             'climt._components.dcmip._dcmip',
@@ -250,7 +273,7 @@ else:
             include_dirs=include_dirs,
             extra_compile_args=default_compile_args,
             library_dirs=lib_path_list,
-            extra_link_args=[lib_path_list[0]+'/libdcmip.a'] + default_link_args),
+            extra_link_args=[os.path.join(lib_path_list[0], 'libdcmip.a')] + default_link_args),
     ]
 
 setup(
