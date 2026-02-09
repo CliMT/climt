@@ -55,15 +55,6 @@ test_requirements = [
 def find_homebrew_gcc():
     # Check both standard Homebrew locations
     paths = ['/opt/homebrew/Cellar/gcc*', '/usr/local/Cellar/gcc*']
-    for path in paths:
-        found = glob.glob(path)
-        if found:
-            return found[0]
-    # Fallback to raising index error or return None handled later if list empty
-    # Existing behavior was to index [0] directly, implying assumption of existence.
-    # We'll stick to attempting to return one, but if none found, let it fail naturally
-    # or return an empty string if that was the intent, but previous code would crash.
-    # Let's return glob result if found.
     candidates = []
     for path in paths:
         candidates.extend(glob.glob(path))
@@ -71,7 +62,11 @@ def find_homebrew_gcc():
     if candidates:
         return candidates[0]
 
-    raise RuntimeError("Could not find Homebrew GCC in /opt/homebrew or /usr/local")
+    # If no glob found, return None (handled by caller if needed) or just don't crash yet.
+    # The original code assumed index [0] exists.
+    # If we are here, we didn't find it.
+    print("Warning: Could not find Homebrew GCC in standard locations.")
+    return None
 
 
 # Platform specific settings
@@ -84,12 +79,12 @@ def guess_compiler_name(env_name):
         search_string = r'gcc-\d$'
 
     gcc_dir = find_homebrew_gcc()
-    for root, dirs, files in os.walk(gcc_dir):
-
-        for line in files:
-            if re.match(search_string, line):
-                print('Using ', env_name, '= ', line)
-                os.environ[env_name] = line
+    if gcc_dir:
+        for root, dirs, files in os.walk(gcc_dir):
+            for line in files:
+                if re.match(search_string, line):
+                    print('Using ', env_name, '= ', line)
+                    os.environ[env_name] = line
 
 
 operating_system = platform.system()
@@ -118,17 +113,17 @@ include_dirs.append(inc_path)
 
 if 'FC' not in os.environ:
     if operating_system == 'Darwin':
-        # guess_compiler_name('FC')
-        os.environ['FC'] = 'gfortran-10'
-        os.environ['F77'] = 'gfortran-10'
+        # Default to 'gfortran' instead of 'gfortran-10' which is too specific
+        os.environ['FC'] = 'gfortran'
+        os.environ['F77'] = 'gfortran'
     else:
         os.environ['FC'] = 'gfortran'
         os.environ['F77'] = 'gfortran'
 
 if 'CC' not in os.environ:
     if operating_system == 'Darwin':
-        # guess_compiler_name('CC')
-        os.environ['CC'] = 'gcc-10'
+        # Default to 'gcc' instead of 'gcc-10'
+        os.environ['CC'] = 'gcc'
     else:
         os.environ['CC'] = 'gcc'
 
@@ -148,22 +143,22 @@ os.environ['CFLAGS'] = '-fPIC ' + os.environ['CLIMT_OPT_FLAGS']
 
 if operating_system == 'Darwin':
     gcc_dir = find_homebrew_gcc()
-    # print('gcc_dir', gcc_dir)
-    for root, dirs, files in os.walk(gcc_dir):
-        for line in files:
-            if re.match('libgfortran.a', line):
-                if not ('i386' in root):
-                    lib_path_list.append(root)
-
-    # print(lib_path_list)
+    if gcc_dir:
+        for root, dirs, files in os.walk(gcc_dir):
+            for line in files:
+                if re.match('libgfortran.a', line):
+                    if not ('i386' in root):
+                        lib_path_list.append(root)
 
     os.environ['FFLAGS'] += ' -mmacosx-version-min=10.7'
     os.environ['CFLAGS'] += ' -mmacosx-version-min=10.7'
     default_link_args = []
-    # Removed -arch x86_64 to allow building on ARM64 (Apple Silicon)
     os.environ['LDSHARED'] = os.environ['CC']+' -bundle -undefined dynamic_lookup'
 
-print('Compilers: ', os.environ['CC'], os.environ['FC'])
+# Debug print
+print('Compilers: ', os.environ.get('CC'), os.environ.get('FC'))
+print('LDSHARED: ', os.environ.get('LDSHARED'))
+print('FFLAGS: ', os.environ.get('FFLAGS'))
 
 
 # Create a custom build class to build libraries, and patch cython extensions
@@ -175,6 +170,11 @@ def build_libraries():
     curr_dir = os.getcwd()
     os.chdir(compiled_path)
     os.environ['PWD'] = compiled_path
+
+    # Debug info before calling make
+    print(f"Building libraries in {compiled_path}")
+    print(f"CLIMT_ARCH={operating_system}")
+
     if subprocess.call(['make', 'CLIMT_ARCH='+operating_system]):
         raise RuntimeError('Library build failed, exiting')
     os.chdir(curr_dir)
