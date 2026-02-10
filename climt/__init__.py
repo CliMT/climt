@@ -1,31 +1,76 @@
 # -*- coding: utf-8 -*-
 import sympl
 
-from ._core import (
-    get_default_state, get_grid, mass_to_volume_mixing_ratio,
-    get_interface_values, numpy_version_of,
-    bolton_q_sat, bolton_dqsat_dT, calculate_q_sat,
-    list_available_constants, set_constants_from_dict)
-
 from ._components import (
-    Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
-    GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
+    BergerSolarInsolation,
+    BucketHydrology,
+    DcmipInitialConditions,
+    DryConvectiveAdjustment,
+    EmanuelConvection,
+    Frierson06LongwaveOpticalDepth,
+    GrayLongwaveRadiation,
+    GridScaleCondensation,
+    HeldSuarez,
+    IceSheet,
+    Instellation,
+    RRTMGLongwave,
     RRTMGShortwave,
-    EmanuelConvection, SlabSurface,
-    DcmipInitialConditions, IceSheet, Instellation, DryConvectiveAdjustment, BucketHydrology)
+    SimplePhysics,
+    SlabSurface,
+)
+from ._core import (
+    UnytBackend,
+    UnytStateContainer,
+    UnytTimeDelta,
+    JaxBackend,
+    JaxStateContainer,
+    JaxTimeDelta,
+    bolton_dqsat_dT,
+    bolton_q_sat,
+    calculate_q_sat,
+    get_default_state,
+    get_grid,
+    get_interface_values,
+    list_available_constants,
+    mass_to_volume_mixing_ratio,
+    numpy_version_of,
+    set_constants_from_dict,
+)
 
-
-sympl.set_constant('top_of_model_pressure', 20., 'Pa')
+sympl.set_constant("top_of_model_pressure", 20.0, "Pa")
 
 __all__ = (
-    get_default_state, get_grid, mass_to_volume_mixing_ratio, numpy_version_of,
-    get_interface_values, list_available_constants,
+    get_default_state,
+    get_grid,
+    mass_to_volume_mixing_ratio,
+    numpy_version_of,
+    get_interface_values,
+    list_available_constants,
     set_constants_from_dict,
-    bolton_q_sat, bolton_dqsat_dT, calculate_q_sat,
-    Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, HeldSuarez,
-    GridScaleCondensation, BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
+    bolton_q_sat,
+    bolton_dqsat_dT,
+    calculate_q_sat,
+    UnytBackend,
+    UnytStateContainer,
+    UnytTimeDelta,
+    JaxBackend,
+    JaxStateContainer,
+    JaxTimeDelta,
+    Frierson06LongwaveOpticalDepth,
+    GrayLongwaveRadiation,
+    HeldSuarez,
+    GridScaleCondensation,
+    BergerSolarInsolation,
+    SimplePhysics,
+    RRTMGLongwave,
     RRTMGShortwave,
-    EmanuelConvection, SlabSurface, DcmipInitialConditions,
-    IceSheet, Instellation, DryConvectiveAdjustment, BucketHydrology)
+    EmanuelConvection,
+    SlabSurface,
+    DcmipInitialConditions,
+    IceSheet,
+    Instellation,
+    DryConvectiveAdjustment,
+    BucketHydrology,
+)
 
-__version__ = '0.17.13'
+__version__ = "0.18.0"

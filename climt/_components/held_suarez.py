@@ -70,24 +70,24 @@ class HeldSuarez(TendencyComponent):
 
         Args:
             sigma_boundary_layer_top (float): The height of the boundary
-                layer top in sigma coordinates. Corresponds to $\sigma_b$
+                layer top in sigma coordinates. Corresponds to $\\sigma_b$
                 in Held and Suarez, 1994. Default is 0.7.
 
             k_f (float):
                 Velocity damping coefficient at the surface in :math:`s^{-1}`.
-                Default is :math:`1\ day^{-1}`.
+                Default is :math:`1\\ day^{-1}`.
 
             k_a (float):
                 Parameter used in defining vertical profile of the
                 temperature damping in :math:`s^{-1}`, as outlined in
                 Held and Suarez, 1994.
-                Default is :math:`1/40\ day^{-1}`.
+                Default is :math:`1/40\\ day^{-1}`.
 
             k_s (float):
                 Parameter used in defining vertical profile of the
                 temperature damping in :math:`s^{-1}`, as outlined in
                 Held and Suarez, 1994.
-                Default is :math:`1/4\ day^{-1}`.
+                Default is :math:`1/4\\ day^{-1}`.
 
             equator_pole_temperature_difference (float):
                 Equator to pole

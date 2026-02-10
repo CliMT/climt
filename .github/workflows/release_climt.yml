@@ -15,45 +15,29 @@ jobs:
         #, windows-2019, macOS-10.15]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Used to host cibuildwheel
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
 
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.12.0
+        run: python -m pip install cibuildwheel==2.16.5
 
-     # - name: Build wheels
-     #  run: python -m cibuildwheel --output-dir wheelhouse
-        # to supply options, put them in 'env', like:
-     #   env:
-     #     CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64
-
-          
       - name: Build on Linux
         env:
-          CIBW_BUILD: cp311-manylinux_x86_64 cp310-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
+          CIBW_BUILD: cp39-manylinux_x86_64 cp310-manylinux_x86_64 cp311-manylinux_x86_64 cp312-manylinux_x86_64
           CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
         if: ${{ runner.os == 'Linux' }}
         run: python -m cibuildwheel --output-dir dist
        
-           
       - name: Build on macOS
         env:
-          CIBW_BUILD: cp310-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
+          CIBW_BUILD: cp39-macosx_x86_64 cp310-macosx_x86_64 cp311-macosx_x86_64 cp312-macosx_x86_64
           CIBW_ARCHS_MACOS: "x86_64"
           CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin"
-          # CIBW_ENVIRONMENT: "CC=gcc-8 FC=gfortran-8 CLIMT_ARCH=Darwin"
-          # CIBW_BEFORE_ALL_MACOS: brew remove gcc; brew install gcc@8
         if: ${{ runner.os == 'macOS' }}
         run: python -m cibuildwheel --output-dir dist
 
-          #- uses: actions/upload-artifact@v3
-          #with:
-          #  name: my-artifact
-          #  path: dist/
-          #  if-no-files-found: error
-           
       - name: Install twine
         run: python -m pip install twine
 

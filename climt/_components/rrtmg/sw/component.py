@@ -423,7 +423,39 @@ class RRTMGShortwave(TendencyComponent):
                 self._aerosol_type,
                 self._solar_var_flag)
 
+        self._mcica_cache = {}
         super(RRTMGShortwave, self).__init__(**kwargs)
+
+    def _get_mcica_arrays(self, mid_levels, num_cols):
+
+        cache_key = (mid_levels, num_cols)
+
+        if cache_key not in self._mcica_cache:
+            num_reduced_g_intervals = self.num_reduced_g_intervals
+            self._mcica_cache[cache_key] = {
+                'cloud_area_fraction_in_atmosphere_layer': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'mass_content_of_cloud_ice_in_atmosphere_layer': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'mass_content_of_cloud_liquid_water_in_atmosphere_layer': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'cloud_ice_particle_size': np.zeros((mid_levels, num_cols)),
+                'cloud_water_droplet_radius': np.zeros((mid_levels, num_cols)),
+                'shortwave_optical_thickness_due_to_cloud': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'single_scattering_albedo_due_to_cloud': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'cloud_asymmetry_parameter': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)),
+                'cloud_forward_scattering_fraction': np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals))
+            }
+        else:
+            # Re-zero the arrays for reuse
+            for arr in self._mcica_cache[cache_key].values():
+                arr.fill(0.0)
+
+        return self._mcica_cache[cache_key]
 
     @ensure_contiguous_state
     def array_call(self, state):
@@ -475,31 +507,13 @@ class RRTMGShortwave(TendencyComponent):
             # first part of _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica.
             # Specifically they are calculated by mcica_subcol_gen_sw.f90
             # and are input to rrtmg_sw_rad.f90
-            num_reduced_g_intervals = self.num_reduced_g_intervals
             mid_levels = state['air_pressure'].shape[0]
             try:
                 num_cols = state['air_pressure'].shape[1]
             except IndexError:
                 num_cols = 1
 
-            mcica_properties = {
-                'cloud_area_fraction_in_atmosphere_layer': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'mass_content_of_cloud_ice_in_atmosphere_layer': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'mass_content_of_cloud_liquid_water_in_atmosphere_layer': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'cloud_ice_particle_size': np.zeros((mid_levels, num_cols)),
-                'cloud_water_droplet_radius': np.zeros((mid_levels, num_cols)),
-                'shortwave_optical_thickness_due_to_cloud': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'single_scattering_albedo_due_to_cloud': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'cloud_asymmetry_parameter': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'cloud_forward_scattering_fraction': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals))
-            }
+            mcica_properties = self._get_mcica_arrays(mid_levels, num_cols)
 
             # Change parameter for random number generator - each time the
             # radiation is called, with the same state / input properties,
@@ -534,8 +548,8 @@ class RRTMGShortwave(TendencyComponent):
                 state['air_temperature'].shape[1],
                 state['air_temperature'].shape[0],
                 day_of_year,
-                state['solar_cycle_fraction'],
-                state['flux_adjustment_for_earth_sun_distance'],
+                state['solar_cycle_fraction'].item(),
+                state['flux_adjustment_for_earth_sun_distance'].item(),
                 state['air_pressure'],
                 state['air_pressure_on_interface_levels'],
                 state['air_temperature'],
@@ -586,8 +600,8 @@ class RRTMGShortwave(TendencyComponent):
                 state['air_temperature'].shape[1],
                 state['air_temperature'].shape[0],
                 day_of_year,
-                state['solar_cycle_fraction'],
-                state['flux_adjustment_for_earth_sun_distance'],
+                state['solar_cycle_fraction'].item(),
+                state['flux_adjustment_for_earth_sun_distance'].item(),
                 state['air_pressure'],
                 state['air_pressure_on_interface_levels'],
                 state['air_temperature'],
