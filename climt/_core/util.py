@@ -10,6 +10,7 @@ def ensure_contiguous_state(func):
             if isinstance(value, np.ndarray):
                 state[name] = np.ascontiguousarray(value)
         return func(self, state, *args, **kwargs)
+
     return wrapper
 
 
@@ -43,9 +44,8 @@ def numpy_version_of(state):
 
 
 def mass_to_volume_mixing_ratio(
-        mass_mixing_ratio,
-        molecular_weight=None,
-        molecular_weight_air=28.964):
+    mass_mixing_ratio, molecular_weight=None, molecular_weight_air=28.964
+):
     """
     g/g or g/kg to mole/mole
 
@@ -78,18 +78,16 @@ def mass_to_volume_mixing_ratio(
     """
 
     if molecular_weight is None:
-        raise ValueError('The molecular weight must be provided')
+        raise ValueError("The molecular weight must be provided")
 
-    volume_mixing_ratio = mass_mixing_ratio*molecular_weight_air/molecular_weight
+    volume_mixing_ratio = mass_mixing_ratio * molecular_weight_air / molecular_weight
 
     return volume_mixing_ratio
 
 
 def get_interface_values(
-        mid_level_values,
-        surface_value,
-        mid_level_pressure,
-        interface_level_pressure):
+    mid_level_values, surface_value, mid_level_pressure, interface_level_pressure
+):
     """
     Calculate interface values given mid-level values.
 
@@ -124,17 +122,18 @@ def get_interface_values(
     """
 
     interface_values = np.zeros(
-        (mid_level_values.shape[0]+1, mid_level_values.shape[1]), dtype=np.double)
+        (mid_level_values.shape[0] + 1, mid_level_values.shape[1]), dtype=np.double
+    )
 
     log_mid_p = np.log(mid_level_pressure)
 
-    interp_weight = (
-        np.log(interface_level_pressure[1:-1, :]) - log_mid_p[1:, :]) / (
-        log_mid_p[:-1, :] - log_mid_p[1::, :])
+    interp_weight = (np.log(interface_level_pressure[1:-1, :]) - log_mid_p[1:, :]) / (
+        log_mid_p[:-1, :] - log_mid_p[1::, :]
+    )
 
-    interface_values[1:-1, :] = \
-        mid_level_values[1:, :] - interp_weight*(
-            mid_level_values[1:, :] - mid_level_values[0:-1, :])
+    interface_values[1:-1, :] = mid_level_values[1:, :] - interp_weight * (
+        mid_level_values[1:, :] - mid_level_values[0:-1, :]
+    )
 
     interface_values[0, :] = surface_value[:]
     interface_values[-1, :] = mid_level_values[-1, :]
@@ -149,28 +148,40 @@ def calculate_q_sat(surf_temp, surf_press, Rd, Rv):
 
     sat_vap_press = np.zeros(surf_temp.shape)
 
-    eps = Rd/Rv
+    eps = Rd / Rv
 
-    sat_vap_press[above_freezing] =\
-        (1.0007 + 3.46e-8*surf_press[above_freezing])*611.21*np.exp(
-            17.966*(surf_temp[above_freezing] - 273.)/(247.15 + (surf_temp[above_freezing] - 273.)))
+    sat_vap_press[above_freezing] = (
+        (1.0007 + 3.46e-8 * surf_press[above_freezing])
+        * 611.21
+        * np.exp(
+            17.966
+            * (surf_temp[above_freezing] - 273.0)
+            / (247.15 + (surf_temp[above_freezing] - 273.0))
+        )
+    )
 
-    sat_vap_press[below_freezing] = \
-        (1.0003 + 4.18e-8*surf_press[below_freezing])*611.15*np.exp(
-            22.452*(surf_temp[below_freezing] - 273.)/(272.5 + (surf_temp[below_freezing] - 273.)))
+    sat_vap_press[below_freezing] = (
+        (1.0003 + 4.18e-8 * surf_press[below_freezing])
+        * 611.15
+        * np.exp(
+            22.452
+            * (surf_temp[below_freezing] - 273.0)
+            / (272.5 + (surf_temp[below_freezing] - 273.0))
+        )
+    )
 
-    return eps*sat_vap_press/(surf_press - (1 - eps)*sat_vap_press)
+    return eps * sat_vap_press / (surf_press - (1 - eps) * sat_vap_press)
 
 
 @jit(nopython=True)
 def bolton_q_sat(T, p, Rd, Rh2O):
     es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
-    epsilon = Rd/Rh2O
-    return epsilon*es/(p - (1 - epsilon)*es)
+    epsilon = Rd / Rh2O
+    return epsilon * es / (p - (1 - epsilon) * es)
 
 
 @jit(nopython=True)
 def bolton_dqsat_dT(T, Lv, Rh2O, q_sat):
     """Uses the assumptions of equation 12 in Reed and Jablonowski, 2012. In
     particular, assumes d(qsat)/dT is approximately epsilon/p*d(es)/dT"""
-    return Lv*q_sat/(Rh2O*T**2)
+    return Lv * q_sat / (Rh2O * T**2)

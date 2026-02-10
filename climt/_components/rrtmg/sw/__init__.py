@@ -1,3 +1,3 @@
 from .component import RRTMGShortwave
 
-__all__ = (RRTMGShortwave)
+__all__ = RRTMGShortwave

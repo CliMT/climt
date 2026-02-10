@@ -1,3 +1,3 @@
 from .component import Instellation
 
-__all__ = (Instellation)
+__all__ = Instellation

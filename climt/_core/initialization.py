@@ -3,7 +3,6 @@ from datetime import datetime
 import numpy as np
 from scipy.interpolate import CubicSpline
 from sympl import (
-    DataArray,
     DiagnosticComponent,
     combine_component_properties,
     get_backend,
