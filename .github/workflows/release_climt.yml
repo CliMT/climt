@@ -49,7 +49,7 @@ jobs:
             - name: Store the distribution packages
               uses: actions/upload-artifact@v4
               with:
-                  name: python-package-distributions
+                  name: python-package-distributions-${{ matrix.os }}
                   path: dist/
     publish-to-pypi:
         name: Publishing to PyPI
@@ -65,7 +65,8 @@ jobs:
             - name: Download all the dists
               uses: actions/download-artifact@v4
               with:
-                  name: python-package-distributions
+                  pattern: python-package-distributions-*
+                  merge-multiple: true
                   path: dist/
             - name: Publish wheels to PyPI
               uses: pypa/gh-action-pypi-publish@release/v1
