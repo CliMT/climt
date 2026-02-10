@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import numpy as np
-import importlib.resources
 from scipy.interpolate import CubicSpline
 from sympl import (
     DataArray,
@@ -11,6 +10,12 @@ from sympl import (
     get_constant,
     set_constant,
 )
+import sys
+
+if sys.version_info < (3, 9):
+    import importlib_resources
+else:
+    import importlib.resources as importlib_resources
 
 
 def get_atmosphere_grid(grid_state, interface=False, horizontal=False):
@@ -604,7 +609,7 @@ def get_hybrid_sigma_pressure_levels(
             dictionary containing ak, bk, and sigma levels
 
     Reference:
-        Eckermann, S: Hybrid \sigma-p Coordinate Choices for a Global Model,
+        Eckermann, S: Hybrid \\sigma-p Coordinate Choices for a Global Model,
         Monthly Weather Review Jan 2009.
 
     .. _[Eckermann]:
@@ -1032,10 +1037,18 @@ def get_default_state(component_list, grid_state=None, n_ice_interface_levels=30
 
 
 def init_ozone(p, ps):
+<<<<<<< HEAD
     p_ref = 1e5 * np.linspace(0.998, 0.001, 30)
     data_path = importlib.resources.files("climt._data").joinpath("ozone_profile.npy")
     with importlib.resources.as_file(data_path) as f:
         ozone_ref = np.load(f)
+=======
+    p_ref = 1e5*np.linspace(0.998, 0.001, 30)
+
+    with importlib_resources.files('climt._data').joinpath('ozone_profile.npy').open('rb') as f:
+        ozone_ref = np.load(f)
+
+>>>>>>> e3fd3252b8883a47d96b8ed45eb1a3d9e965f6c4
     spline = CubicSpline(p_ref[::-1], ozone_ref[::-1])  # x must be increasing
     return spline(p)
 

@@ -139,7 +139,7 @@ class EmanuelConvection(ImplicitTendencyComponent):
                 the :code:`autoconversion_temperature_threshold`.
 
             autoconversion_temperature_threshold (float, optional):
-                The temperature in :math:`^\circ C` below which
+                The temperature in :math:`^\\circ C` below which
                 all water vapour is converted to rain/snow.
 
             entrainment_mixing_coefficient (float, optional):
