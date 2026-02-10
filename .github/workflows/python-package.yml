@@ -4,49 +4,49 @@
 name: Python package
 
 on:
-  push:
-    branches: [ master, without-dycore ]
-  pull_request:
-    branches: [ master, develop ]
+    push:
+        branches: [master, without-dycore]
+    pull_request:
+        branches: [master, develop]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest]
+                python-version: ["3.9", "3.10", "3.11", "3.12"]
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install wheel tox
-        if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 --ignore=E501,E226,W504,W605 climt/ --count --show-source --statistics
-    - name: Build climt
-      run: |
-            # Create tox environment string (e.g., 3.9 -> py39)
-            py_ver="${{ matrix.python-version }}"
-            tox_env="py${py_ver//./}"
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  python -m pip install wheel tox
+                  if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
+            - name: Lint with flake8
+              run: |
+                  # stop the build if there are Python syntax errors or undefined names
+                  flake8 climt --config=tox.ini
+            - name: Build climt
+              run: |
+                  # Create tox environment string (e.g., 3.9 -> py39)
+                  py_ver="${{ matrix.python-version }}"
+                  tox_env="py${py_ver//./}"
 
-            if [ "$RUNNER_OS" == "Linux" ]; then
-              gfortran --version
-              CLIMT_ARCH=Linux tox -e $tox_env
-            elif [ "$RUNNER_OS" == "macOS" ]; then
-              # which gcc #/usr/bin/gcc
-              # which gfortran
-              CLIMT_ARCH=Darwin tox -e $tox_env
-            else 
-              echo "$RUNNER_OS not supported"
-              exit 1
-            fi
-      shell: bash
+                  if [ "$RUNNER_OS" == "Linux" ]; then
+                    gfortran --version
+                    CLIMT_ARCH=Linux tox -e $tox_env
+                  elif [ "$RUNNER_OS" == "macOS" ]; then
+                    # which gcc #/usr/bin/gcc
+                    # which gfortran
+                    CLIMT_ARCH=Darwin tox -e $tox_env
+                  else
+                    echo "$RUNNER_OS not supported"
+                    exit 1
+                  fi
+              shell: bash
