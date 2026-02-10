@@ -39,6 +39,7 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     'numpy>=1.16.0',
     'pint>=0.7.0',
+    'unyt',
     'xarray>=0.8.0',
     'sympl @ git+https://github.com/JoyMonteiro/sympl.git',
     'cython>=0.25',

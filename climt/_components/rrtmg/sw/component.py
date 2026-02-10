@@ -1,25 +1,32 @@
 from sympl import (
-    TendencyComponent, get_constant, initialize_numpy_arrays_with_properties
+    TendencyComponent,
+    get_constant,
+    initialize_numpy_arrays_with_properties,
 )
 from ...._core import (
-    mass_to_volume_mixing_ratio, get_interface_values, ensure_contiguous_state
+    mass_to_volume_mixing_ratio,
+    get_interface_values,
+    ensure_contiguous_state,
 )
 import numpy as np
 from numpy import pi as numpy_pi
 
 from ..rrtmg_common import (
-    rrtmg_cloud_overlap_method_dict, rrtmg_cloud_props_dict,
-    rrtmg_cloud_ice_props_dict, rrtmg_cloud_liquid_props_dict,
+    rrtmg_cloud_overlap_method_dict,
+    rrtmg_cloud_props_dict,
+    rrtmg_cloud_ice_props_dict,
+    rrtmg_cloud_liquid_props_dict,
     rrtmg_aerosol_input_dict,
     rrtmg_random_number_dict,
 )
 import logging
+
 try:
     from . import _rrtmg_sw
 except ImportError as error:
     logging.warning(
-        'Import failed. RRTMG Shortwave is likely not compiled and will not '
-        'be available.'
+        "Import failed. RRTMG Shortwave is likely not compiled and will not "
+        "be available."
     )
     print(error)
 
@@ -39,173 +46,154 @@ class RRTMGShortwave(TendencyComponent):
     rrtm_iplon = 1
 
     input_properties = {
-        'air_pressure': {
-            'dims': ['mid_levels', '*'],
-            'units': 'mbar'
+        "air_pressure": {"dims": ["mid_levels", "*"], "units": "mbar"},
+        "air_pressure_on_interface_levels": {
+            "dims": ["interface_levels", "*"],
+            "units": "mbar",
         },
-        'air_pressure_on_interface_levels': {
-            'dims': ['interface_levels', '*'],
-            'units': 'mbar'
+        "air_temperature": {"dims": ["mid_levels", "*"], "units": "degK"},
+        "specific_humidity": {"dims": ["mid_levels", "*"], "units": "dimensionless"},
+        "mole_fraction_of_ozone_in_air": {
+            "dims": ["mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'air_temperature': {
-            'dims': ['mid_levels', '*'],
-            'units': 'degK'
+        "mole_fraction_of_carbon_dioxide_in_air": {
+            "dims": ["mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'specific_humidity': {
-            'dims': ['mid_levels', '*'],
-            'units': 'dimensionless'
+        "mole_fraction_of_methane_in_air": {
+            "dims": ["mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'mole_fraction_of_ozone_in_air': {
-            'dims': ['mid_levels', '*'],
-            'units': 'dimensionless'
+        "mole_fraction_of_nitrous_oxide_in_air": {
+            "dims": ["mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'mole_fraction_of_carbon_dioxide_in_air': {
-            'dims': ['mid_levels', '*'],
-            'units': 'dimensionless'
+        "mole_fraction_of_oxygen_in_air": {
+            "dims": ["mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'mole_fraction_of_methane_in_air': {
-            'dims': ['mid_levels', '*'],
-            'units': 'dimensionless'
+        "mass_content_of_cloud_ice_in_atmosphere_layer": {
+            "dims": ["mid_levels", "*"],
+            "units": "g m^-2",
         },
-        'mole_fraction_of_nitrous_oxide_in_air': {
-            'dims': ['mid_levels', '*'],
-            'units': 'dimensionless'
+        "mass_content_of_cloud_liquid_water_in_atmosphere_layer": {
+            "dims": ["mid_levels", "*"],
+            "units": "g m^-2",
         },
-        'mole_fraction_of_oxygen_in_air': {
-            'dims': ['mid_levels', '*'],
-            'units': 'dimensionless'
+        "cloud_ice_particle_size": {"dims": ["mid_levels", "*"], "units": "micrometer"},
+        "cloud_water_droplet_radius": {
+            "dims": ["mid_levels", "*"],
+            "units": "micrometer",
         },
-        'mass_content_of_cloud_ice_in_atmosphere_layer': {
-            'dims': ['mid_levels', '*'],
-            'units': 'g m^-2'
+        "cloud_area_fraction_in_atmosphere_layer": {
+            "dims": ["mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'mass_content_of_cloud_liquid_water_in_atmosphere_layer': {
-            'dims': ['mid_levels', '*'],
-            'units': 'g m^-2'
+        "surface_temperature": {"dims": ["*"], "units": "degK"},
+        "zenith_angle": {"dims": ["*"], "units": "radians"},
+        "surface_albedo_for_direct_shortwave": {
+            "dims": ["*"],
+            "units": "dimensionless",
         },
-        'cloud_ice_particle_size': {
-            'dims': ['mid_levels', '*'],
-            'units': 'micrometer'
+        "surface_albedo_for_direct_near_infrared": {
+            "dims": ["*"],
+            "units": "dimensionless",
         },
-        'cloud_water_droplet_radius': {
-            'dims': ['mid_levels', '*'],
-            'units': 'micrometer'
+        "surface_albedo_for_diffuse_near_infrared": {
+            "dims": ["*"],
+            "units": "dimensionless",
         },
-        'cloud_area_fraction_in_atmosphere_layer': {
-            'dims': ['mid_levels', '*'],
-            'units': 'dimensionless',
+        "surface_albedo_for_diffuse_shortwave": {
+            "dims": ["*"],
+            "units": "dimensionless",
         },
-        'surface_temperature': {
-            'dims': ['*'],
-            'units': 'degK'
+        "shortwave_optical_thickness_due_to_cloud": {
+            "dims": ["mid_levels", "*", "num_shortwave_bands"],
+            "units": "dimensionless",
         },
-        'zenith_angle': {
-            'dims': ['*'],
-            'units': 'radians'
+        "shortwave_optical_thickness_due_to_aerosol": {
+            "dims": ["num_shortwave_bands", "mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'surface_albedo_for_direct_shortwave': {
-            'dims': ['*'],
-            'units': 'dimensionless'
+        "single_scattering_albedo_due_to_cloud": {
+            "dims": ["mid_levels", "*", "num_shortwave_bands"],
+            "units": "dimensionless",
         },
-        'surface_albedo_for_direct_near_infrared': {
-            'dims': ['*'],
-            'units': 'dimensionless'
+        "single_scattering_albedo_due_to_aerosol": {
+            "dims": ["num_shortwave_bands", "mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'surface_albedo_for_diffuse_near_infrared': {
-            'dims': ['*'],
-            'units': 'dimensionless'},
-        'surface_albedo_for_diffuse_shortwave': {
-            'dims': ['*'],
-            'units': 'dimensionless'
+        "cloud_asymmetry_parameter": {
+            "dims": ["mid_levels", "*", "num_shortwave_bands"],
+            "units": "dimensionless",
         },
-        'shortwave_optical_thickness_due_to_cloud': {
-            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
-            'units': 'dimensionless'
+        "aerosol_asymmetry_parameter": {
+            "dims": ["num_shortwave_bands", "mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'shortwave_optical_thickness_due_to_aerosol': {
-            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
-            'units': 'dimensionless'
+        "cloud_forward_scattering_fraction": {
+            "dims": ["mid_levels", "*", "num_shortwave_bands"],
+            "units": "dimensionless",
         },
-        'single_scattering_albedo_due_to_cloud': {
-            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
-            'units': 'dimensionless'
+        "aerosol_optical_depth_at_55_micron": {
+            "dims": ["num_ecmwf_aerosols", "mid_levels", "*"],
+            "units": "dimensionless",
         },
-        'single_scattering_albedo_due_to_aerosol': {
-            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
-            'units': 'dimensionless'
-        },
-        'cloud_asymmetry_parameter': {
-            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
-            'units': 'dimensionless'
-        },
-        'aerosol_asymmetry_parameter': {
-            'dims': ['num_shortwave_bands', 'mid_levels', '*'],
-            'units': 'dimensionless'
-        },
-        'cloud_forward_scattering_fraction': {
-            'dims': ['mid_levels', '*', 'num_shortwave_bands'],
-            'units': 'dimensionless'
-        },
-        'aerosol_optical_depth_at_55_micron': {
-            'dims': ['num_ecmwf_aerosols', 'mid_levels', '*'],
-            'units': 'dimensionless'
-        },
-        'solar_cycle_fraction': {
-            'dims': [],
-            'units': 'dimensionless'
-        },
-        'flux_adjustment_for_earth_sun_distance': {
-            'dims': [],
-            'units': 'dimensionless'
+        "solar_cycle_fraction": {"dims": [], "units": "dimensionless"},
+        "flux_adjustment_for_earth_sun_distance": {
+            "dims": [],
+            "units": "dimensionless",
         },
     }
 
     tendency_properties = {
-        'air_temperature': {'units': 'degK day^-1'},
+        "air_temperature": {"units": "degK day^-1"},
     }
 
     diagnostic_properties = {
-        'upwelling_shortwave_flux_in_air': {
-            'dims': ['interface_levels', '*'],
-            'units': 'W m^-2',
+        "upwelling_shortwave_flux_in_air": {
+            "dims": ["interface_levels", "*"],
+            "units": "W m^-2",
         },
-        'downwelling_shortwave_flux_in_air': {
-            'dims': ['interface_levels', '*'],
-            'units': 'W m^-2',
+        "downwelling_shortwave_flux_in_air": {
+            "dims": ["interface_levels", "*"],
+            "units": "W m^-2",
         },
-        'upwelling_shortwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['interface_levels', '*'],
-            'units': 'W m^-2',
+        "upwelling_shortwave_flux_in_air_assuming_clear_sky": {
+            "dims": ["interface_levels", "*"],
+            "units": "W m^-2",
         },
-        'downwelling_shortwave_flux_in_air_assuming_clear_sky': {
-            'dims': ['interface_levels', '*'],
-            'units': 'W m^-2',
+        "downwelling_shortwave_flux_in_air_assuming_clear_sky": {
+            "dims": ["interface_levels", "*"],
+            "units": "W m^-2",
         },
-        'air_temperature_tendency_from_shortwave_assuming_clear_sky': {
-            'dims': ['mid_levels', '*'],
-            'units': 'degK day^-1',
+        "air_temperature_tendency_from_shortwave_assuming_clear_sky": {
+            "dims": ["mid_levels", "*"],
+            "units": "degK day^-1",
         },
-        'air_temperature_tendency_from_shortwave': {
-            'dims': ['mid_levels', '*'],
-            'units': 'degK day^-1',
+        "air_temperature_tendency_from_shortwave": {
+            "dims": ["mid_levels", "*"],
+            "units": "degK day^-1",
         },
     }
 
     def __init__(
-            self,
-            cloud_overlap_method=None,
-            cloud_optical_properties='liquid_and_ice_clouds',
-            cloud_ice_properties='ebert_curry_two',
-            cloud_liquid_water_properties='radius_dependent_absorption',
-            solar_variability_method=0,
-            use_solar_constant_from_fortran=False,
-            ignore_day_of_year=False,
-            facular_sunspot_amplitude=None,
-            solar_variability_by_band=None,
-            aerosol_type='no_aerosol',
-            mcica=False,
-            random_number_generator='mersenne_twister',
-            **kwargs):
+        self,
+        cloud_overlap_method=None,
+        cloud_optical_properties="liquid_and_ice_clouds",
+        cloud_ice_properties="ebert_curry_two",
+        cloud_liquid_water_properties="radius_dependent_absorption",
+        solar_variability_method=0,
+        use_solar_constant_from_fortran=False,
+        ignore_day_of_year=False,
+        facular_sunspot_amplitude=None,
+        solar_variability_by_band=None,
+        aerosol_type="no_aerosol",
+        mcica=False,
+        random_number_generator="mersenne_twister",
+        **kwargs
+    ):
         """
         Args:
 
@@ -327,34 +315,38 @@ class RRTMGShortwave(TendencyComponent):
 
         .. _[Fu, 1996]:
              http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
-            """
+        """
         self._mcica = mcica
 
         if mcica:
             self._permute_seed = None
             self._random_number_generator = rrtmg_random_number_dict[
-                random_number_generator.lower()]
+                random_number_generator.lower()
+            ]
             if type(cloud_overlap_method) is str:
-                if cloud_overlap_method.lower() == 'clear_only':
+                if cloud_overlap_method.lower() == "clear_only":
                     logging.info(
                         "cloud_overlap_method == 'clear_only'."
                         " This overrides all other properties. "
                         "There are no clouds."
                     )
-            if cloud_optical_properties.lower() == 'single_cloud_type':
+            if cloud_optical_properties.lower() == "single_cloud_type":
                 logging.warning(
                     "cloud_optical_properties must be 'direct_input' or "
                     "'liquid_and_ice_clouds' for radiative calculations with "
                     "clouds using McICA."
                 )
-            if cloud_optical_properties.lower() == 'liquid_and_ice_clouds':
-                if cloud_ice_properties.lower() == 'ebert_curry_one':
+            if cloud_optical_properties.lower() == "liquid_and_ice_clouds":
+                if cloud_ice_properties.lower() == "ebert_curry_one":
                     logging.warning(
                         "cloud_ice_properties should not be set to "
                         "'ebert_curry_one' for shortwave calculations with "
                         "McICA."
                     )
-                if cloud_liquid_water_properties.lower() == 'radius_independent_absorption':
+                if (
+                    cloud_liquid_water_properties.lower()
+                    == "radius_independent_absorption"
+                ):
                     logging.warning(
                         "cloud_liquid_water_properties must be set to "
                         "'radius_dependent_absorption' for use with McICA in "
@@ -362,12 +354,16 @@ class RRTMGShortwave(TendencyComponent):
                     )
 
         if cloud_overlap_method is None:
-            cloud_overlap_method = 'random'
-        self._cloud_overlap = rrtmg_cloud_overlap_method_dict[cloud_overlap_method.lower()]
+            cloud_overlap_method = "random"
+        self._cloud_overlap = rrtmg_cloud_overlap_method_dict[
+            cloud_overlap_method.lower()
+        ]
 
         self._cloud_optics = rrtmg_cloud_props_dict[cloud_optical_properties.lower()]
         self._ice_props = rrtmg_cloud_ice_props_dict[cloud_ice_properties.lower()]
-        self._liq_props = rrtmg_cloud_liquid_props_dict[cloud_liquid_water_properties.lower()]
+        self._liq_props = rrtmg_cloud_liquid_props_dict[
+            cloud_liquid_water_properties.lower()
+        ]
         self._solar_var_flag = solar_variability_method
         self._ignore_day_of_year = ignore_day_of_year
 
@@ -386,21 +382,24 @@ class RRTMGShortwave(TendencyComponent):
         if use_solar_constant_from_fortran:
             self._solar_const = 0
         else:
-            self._solar_const = get_constant('stellar_irradiance', 'W/m^2')
+            self._solar_const = get_constant("stellar_irradiance", "W/m^2")
 
-        self._g = get_constant('gravitational_acceleration', 'm/s^2')
-        self._planck = get_constant('planck_constant', 'erg s')
-        self._boltzmann = get_constant('boltzmann_constant', 'erg K^-1')
-        self._c = get_constant('speed_of_light', 'cm s^-1')
-        self._Na = get_constant('avogadro_constant', 'mole^-1')
-        self._loschmidt = get_constant('loschmidt_constant', 'cm^-3')
-        self._R = get_constant('universal_gas_constant', 'erg mol^-1 K^-1')
-        self._stef_boltz = get_constant('stefan_boltzmann_constant', 'W cm^-2 K^-4')
-        self._secs_per_day = get_constant('seconds_per_day', 'dimensionless')
-        self._Cpd = get_constant('heat_capacity_of_dry_air_at_constant_pressure', 'J/kg/K')
+        self._g = get_constant("gravitational_acceleration", "m/s^2")
+        self._planck = get_constant("planck_constant", "erg s")
+        self._boltzmann = get_constant("boltzmann_constant", "erg K^-1")
+        self._c = get_constant("speed_of_light", "cm s^-1")
+        self._Na = get_constant("avogadro_constant", "mole^-1")
+        self._loschmidt = get_constant("loschmidt_constant", "cm^-3")
+        self._R = get_constant("universal_gas_constant", "erg mol^-1 K^-1")
+        self._stef_boltz = get_constant("stefan_boltzmann_constant", "W cm^-2 K^-4")
+        self._secs_per_day = get_constant("seconds_per_day", "dimensionless")
+        self._Cpd = get_constant(
+            "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K"
+        )
 
         _rrtmg_sw.set_constants(
-            numpy_pi, self._g,
+            numpy_pi,
+            self._g,
             self._planck,
             self._boltzmann,
             self._c,
@@ -408,7 +407,8 @@ class RRTMGShortwave(TendencyComponent):
             self._loschmidt,
             self._R,
             self._stef_boltz,
-            self._secs_per_day)
+            self._secs_per_day,
+        )
 
         if not mcica:
             _rrtmg_sw.initialise_rrtm_radiation(
@@ -421,7 +421,8 @@ class RRTMGShortwave(TendencyComponent):
                 self._ice_props,
                 self._liq_props,
                 self._aerosol_type,
-                self._solar_var_flag)
+                self._solar_var_flag,
+            )
 
         self._mcica_cache = {}
         super(RRTMGShortwave, self).__init__(**kwargs)
@@ -433,22 +434,29 @@ class RRTMGShortwave(TendencyComponent):
         if cache_key not in self._mcica_cache:
             num_reduced_g_intervals = self.num_reduced_g_intervals
             self._mcica_cache[cache_key] = {
-                'cloud_area_fraction_in_atmosphere_layer': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'mass_content_of_cloud_ice_in_atmosphere_layer': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'mass_content_of_cloud_liquid_water_in_atmosphere_layer': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'cloud_ice_particle_size': np.zeros((mid_levels, num_cols)),
-                'cloud_water_droplet_radius': np.zeros((mid_levels, num_cols)),
-                'shortwave_optical_thickness_due_to_cloud': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'single_scattering_albedo_due_to_cloud': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'cloud_asymmetry_parameter': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals)),
-                'cloud_forward_scattering_fraction': np.zeros(
-                    (mid_levels, num_cols, num_reduced_g_intervals))
+                "cloud_area_fraction_in_atmosphere_layer": np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)
+                ),
+                "mass_content_of_cloud_ice_in_atmosphere_layer": np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)
+                ),
+                "mass_content_of_cloud_liquid_water_in_atmosphere_layer": np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)
+                ),
+                "cloud_ice_particle_size": np.zeros((mid_levels, num_cols)),
+                "cloud_water_droplet_radius": np.zeros((mid_levels, num_cols)),
+                "shortwave_optical_thickness_due_to_cloud": np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)
+                ),
+                "single_scattering_albedo_due_to_cloud": np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)
+                ),
+                "cloud_asymmetry_parameter": np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)
+                ),
+                "cloud_forward_scattering_fraction": np.zeros(
+                    (mid_levels, num_cols, num_reduced_g_intervals)
+                ),
             }
         else:
             # Re-zero the arrays for reuse
@@ -476,14 +484,17 @@ class RRTMGShortwave(TendencyComponent):
                   sky conditions.
 
         """
-        Q = mass_to_volume_mixing_ratio(state['specific_humidity'], 18.02)
-        assert state['air_pressure'].shape[0] + 1 == state['air_pressure_on_interface_levels'].shape[0]
+        Q = mass_to_volume_mixing_ratio(state["specific_humidity"], 18.02)
+        assert (
+            state["air_pressure"].shape[0] + 1
+            == state["air_pressure_on_interface_levels"].shape[0]
+        )
 
         Tint = get_interface_values(
-            state['air_temperature'],
-            state['surface_temperature'],
-            state['air_pressure'],
-            state['air_pressure_on_interface_levels']
+            state["air_temperature"],
+            state["surface_temperature"],
+            state["air_pressure"],
+            state["air_pressure_on_interface_levels"],
         )
 
         diagnostics = initialize_numpy_arrays_with_properties(
@@ -493,12 +504,12 @@ class RRTMGShortwave(TendencyComponent):
             self.tendency_properties, state, self.input_properties
         )
 
-        model_time = state['time']
+        model_time = state["time"]
         if self._ignore_day_of_year:
             day_of_year = 0
         else:
             day_of_year = model_time.timetuple().tm_yday
-        cos_zenith_angle = np.cos(state['zenith_angle'])
+        cos_zenith_angle = np.cos(state["zenith_angle"])
 
         if self._mcica:
 
@@ -507,9 +518,9 @@ class RRTMGShortwave(TendencyComponent):
             # first part of _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica.
             # Specifically they are calculated by mcica_subcol_gen_sw.f90
             # and are input to rrtmg_sw_rad.f90
-            mid_levels = state['air_pressure'].shape[0]
+            mid_levels = state["air_pressure"].shape[0]
             try:
-                num_cols = state['air_pressure'].shape[1]
+                num_cols = state["air_pressure"].shape[1]
             except IndexError:
                 num_cols = 1
 
@@ -541,104 +552,113 @@ class RRTMGShortwave(TendencyComponent):
                 self._aerosol_type,
                 self._solar_var_flag,
                 self._permute_seed,
-                self._random_number_generator)
+                self._random_number_generator,
+            )
 
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica(
                 self.rrtm_iplon,
-                state['air_temperature'].shape[1],
-                state['air_temperature'].shape[0],
+                state["air_temperature"].shape[1],
+                state["air_temperature"].shape[0],
                 day_of_year,
-                state['solar_cycle_fraction'].item(),
-                state['flux_adjustment_for_earth_sun_distance'].item(),
-                state['air_pressure'],
-                state['air_pressure_on_interface_levels'],
-                state['air_temperature'],
+                state["solar_cycle_fraction"].item(),
+                state["flux_adjustment_for_earth_sun_distance"].item(),
+                state["air_pressure"],
+                state["air_pressure_on_interface_levels"],
+                state["air_temperature"],
                 Tint,
-                state['surface_temperature'],
+                state["surface_temperature"],
                 Q,
-                state['mole_fraction_of_ozone_in_air'],
-                state['mole_fraction_of_carbon_dioxide_in_air'],
-                state['mole_fraction_of_methane_in_air'],
-                state['mole_fraction_of_nitrous_oxide_in_air'],
-                state['mole_fraction_of_oxygen_in_air'],
-                state['surface_albedo_for_direct_shortwave'],
-                state['surface_albedo_for_direct_near_infrared'],
-                state['surface_albedo_for_diffuse_shortwave'],
-                state['surface_albedo_for_diffuse_near_infrared'],
+                state["mole_fraction_of_ozone_in_air"],
+                state["mole_fraction_of_carbon_dioxide_in_air"],
+                state["mole_fraction_of_methane_in_air"],
+                state["mole_fraction_of_nitrous_oxide_in_air"],
+                state["mole_fraction_of_oxygen_in_air"],
+                state["surface_albedo_for_direct_shortwave"],
+                state["surface_albedo_for_direct_near_infrared"],
+                state["surface_albedo_for_diffuse_shortwave"],
+                state["surface_albedo_for_diffuse_near_infrared"],
                 cos_zenith_angle,
-                state['cloud_area_fraction_in_atmosphere_layer'],
-                diagnostics['upwelling_shortwave_flux_in_air'],
-                diagnostics['downwelling_shortwave_flux_in_air'],
-                tendencies['air_temperature'],
-                diagnostics['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
-                diagnostics['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
-                diagnostics['air_temperature_tendency_from_shortwave_assuming_clear_sky'],
-                state['shortwave_optical_thickness_due_to_aerosol'],
-                state['single_scattering_albedo_due_to_aerosol'],
-                state['aerosol_asymmetry_parameter'],
-                state['aerosol_optical_depth_at_55_micron'],
-                state['shortwave_optical_thickness_due_to_cloud'],
-                state['single_scattering_albedo_due_to_cloud'],
-                state['cloud_asymmetry_parameter'],
-                state['cloud_forward_scattering_fraction'],
-                state['mass_content_of_cloud_ice_in_atmosphere_layer'],
-                state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
-                state['cloud_ice_particle_size'],
-                state['cloud_water_droplet_radius'],
-                mcica_properties['cloud_area_fraction_in_atmosphere_layer'],
-                mcica_properties['shortwave_optical_thickness_due_to_cloud'],
-                mcica_properties['single_scattering_albedo_due_to_cloud'],
-                mcica_properties['cloud_asymmetry_parameter'],
-                mcica_properties['cloud_forward_scattering_fraction'],
-                mcica_properties['mass_content_of_cloud_ice_in_atmosphere_layer'],
-                mcica_properties['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
-                mcica_properties['cloud_ice_particle_size'],
-                mcica_properties['cloud_water_droplet_radius']
+                state["cloud_area_fraction_in_atmosphere_layer"],
+                diagnostics["upwelling_shortwave_flux_in_air"],
+                diagnostics["downwelling_shortwave_flux_in_air"],
+                tendencies["air_temperature"],
+                diagnostics["upwelling_shortwave_flux_in_air_assuming_clear_sky"],
+                diagnostics["downwelling_shortwave_flux_in_air_assuming_clear_sky"],
+                diagnostics[
+                    "air_temperature_tendency_from_shortwave_assuming_clear_sky"
+                ],
+                state["shortwave_optical_thickness_due_to_aerosol"],
+                state["single_scattering_albedo_due_to_aerosol"],
+                state["aerosol_asymmetry_parameter"],
+                state["aerosol_optical_depth_at_55_micron"],
+                state["shortwave_optical_thickness_due_to_cloud"],
+                state["single_scattering_albedo_due_to_cloud"],
+                state["cloud_asymmetry_parameter"],
+                state["cloud_forward_scattering_fraction"],
+                state["mass_content_of_cloud_ice_in_atmosphere_layer"],
+                state["mass_content_of_cloud_liquid_water_in_atmosphere_layer"],
+                state["cloud_ice_particle_size"],
+                state["cloud_water_droplet_radius"],
+                mcica_properties["cloud_area_fraction_in_atmosphere_layer"],
+                mcica_properties["shortwave_optical_thickness_due_to_cloud"],
+                mcica_properties["single_scattering_albedo_due_to_cloud"],
+                mcica_properties["cloud_asymmetry_parameter"],
+                mcica_properties["cloud_forward_scattering_fraction"],
+                mcica_properties["mass_content_of_cloud_ice_in_atmosphere_layer"],
+                mcica_properties[
+                    "mass_content_of_cloud_liquid_water_in_atmosphere_layer"
+                ],
+                mcica_properties["cloud_ice_particle_size"],
+                mcica_properties["cloud_water_droplet_radius"],
             )
         else:
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
-                state['air_temperature'].shape[1],
-                state['air_temperature'].shape[0],
+                state["air_temperature"].shape[1],
+                state["air_temperature"].shape[0],
                 day_of_year,
-                state['solar_cycle_fraction'].item(),
-                state['flux_adjustment_for_earth_sun_distance'].item(),
-                state['air_pressure'],
-                state['air_pressure_on_interface_levels'],
-                state['air_temperature'],
+                state["solar_cycle_fraction"].item(),
+                state["flux_adjustment_for_earth_sun_distance"].item(),
+                state["air_pressure"],
+                state["air_pressure_on_interface_levels"],
+                state["air_temperature"],
                 Tint,
-                state['surface_temperature'],
+                state["surface_temperature"],
                 Q,
-                state['mole_fraction_of_ozone_in_air'],
-                state['mole_fraction_of_carbon_dioxide_in_air'],
-                state['mole_fraction_of_methane_in_air'],
-                state['mole_fraction_of_nitrous_oxide_in_air'],
-                state['mole_fraction_of_oxygen_in_air'],
-                state['surface_albedo_for_direct_shortwave'],
-                state['surface_albedo_for_direct_near_infrared'],
-                state['surface_albedo_for_diffuse_shortwave'],
-                state['surface_albedo_for_diffuse_near_infrared'],
+                state["mole_fraction_of_ozone_in_air"],
+                state["mole_fraction_of_carbon_dioxide_in_air"],
+                state["mole_fraction_of_methane_in_air"],
+                state["mole_fraction_of_nitrous_oxide_in_air"],
+                state["mole_fraction_of_oxygen_in_air"],
+                state["surface_albedo_for_direct_shortwave"],
+                state["surface_albedo_for_direct_near_infrared"],
+                state["surface_albedo_for_diffuse_shortwave"],
+                state["surface_albedo_for_diffuse_near_infrared"],
                 cos_zenith_angle,
-                state['cloud_area_fraction_in_atmosphere_layer'],
-                diagnostics['upwelling_shortwave_flux_in_air'],
-                diagnostics['downwelling_shortwave_flux_in_air'],
-                tendencies['air_temperature'],
-                diagnostics['upwelling_shortwave_flux_in_air_assuming_clear_sky'],
-                diagnostics['downwelling_shortwave_flux_in_air_assuming_clear_sky'],
-                diagnostics['air_temperature_tendency_from_shortwave_assuming_clear_sky'],
-                state['shortwave_optical_thickness_due_to_aerosol'],
-                state['single_scattering_albedo_due_to_aerosol'],
-                state['aerosol_asymmetry_parameter'],
-                state['aerosol_optical_depth_at_55_micron'],
-                state['shortwave_optical_thickness_due_to_cloud'],
-                state['single_scattering_albedo_due_to_cloud'],
-                state['cloud_asymmetry_parameter'],
-                state['cloud_forward_scattering_fraction'],
-                state['mass_content_of_cloud_ice_in_atmosphere_layer'],
-                state['mass_content_of_cloud_liquid_water_in_atmosphere_layer'],
-                state['cloud_ice_particle_size'],
-                state['cloud_water_droplet_radius']
+                state["cloud_area_fraction_in_atmosphere_layer"],
+                diagnostics["upwelling_shortwave_flux_in_air"],
+                diagnostics["downwelling_shortwave_flux_in_air"],
+                tendencies["air_temperature"],
+                diagnostics["upwelling_shortwave_flux_in_air_assuming_clear_sky"],
+                diagnostics["downwelling_shortwave_flux_in_air_assuming_clear_sky"],
+                diagnostics[
+                    "air_temperature_tendency_from_shortwave_assuming_clear_sky"
+                ],
+                state["shortwave_optical_thickness_due_to_aerosol"],
+                state["single_scattering_albedo_due_to_aerosol"],
+                state["aerosol_asymmetry_parameter"],
+                state["aerosol_optical_depth_at_55_micron"],
+                state["shortwave_optical_thickness_due_to_cloud"],
+                state["single_scattering_albedo_due_to_cloud"],
+                state["cloud_asymmetry_parameter"],
+                state["cloud_forward_scattering_fraction"],
+                state["mass_content_of_cloud_ice_in_atmosphere_layer"],
+                state["mass_content_of_cloud_liquid_water_in_atmosphere_layer"],
+                state["cloud_ice_particle_size"],
+                state["cloud_water_droplet_radius"],
             )
 
-        diagnostics['air_temperature_tendency_from_shortwave'][:] = tendencies['air_temperature']
+        diagnostics["air_temperature_tendency_from_shortwave"][:] = tendencies[
+            "air_temperature"
+        ]
 
         return tendencies, diagnostics

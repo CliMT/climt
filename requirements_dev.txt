@@ -13,6 +13,7 @@ pytest>=2.9.2
 pytest-cov>=2.4.0
 mock>=2.0.0
 xarray>=0.8.2
+unyt
 scipy>=0.18.1
 numpy>=1.16.0
 cython>=0.25

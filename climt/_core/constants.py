@@ -29,7 +29,7 @@ def set_constants_from_dict(constant_descriptions):
 
     for name in constant_descriptions.keys():
 
-        value = constant_descriptions[name]['value']
-        units = constant_descriptions[name]['units']
+        value = constant_descriptions[name]["value"]
+        units = constant_descriptions[name]["units"]
 
         set_constant(name, value, units)
