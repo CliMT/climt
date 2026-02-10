@@ -1037,18 +1037,10 @@ def get_default_state(component_list, grid_state=None, n_ice_interface_levels=30
 
 
 def init_ozone(p, ps):
-<<<<<<< HEAD
     p_ref = 1e5 * np.linspace(0.998, 0.001, 30)
-    data_path = importlib.resources.files("climt._data").joinpath("ozone_profile.npy")
-    with importlib.resources.as_file(data_path) as f:
+    data_path = importlib_resources.files("climt._data").joinpath("ozone_profile.npy")
+    with importlib_resources.as_file(data_path) as f:
         ozone_ref = np.load(f)
-=======
-    p_ref = 1e5*np.linspace(0.998, 0.001, 30)
-
-    with importlib_resources.files('climt._data').joinpath('ozone_profile.npy').open('rb') as f:
-        ozone_ref = np.load(f)
-
->>>>>>> e3fd3252b8883a47d96b8ed45eb1a3d9e965f6c4
     spline = CubicSpline(p_ref[::-1], ozone_ref[::-1])  # x must be increasing
     return spline(p)
 
