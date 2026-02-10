@@ -73,4 +73,4 @@ __all__ = (
     BucketHydrology,
 )
 
-__version__ = "0.17.13"
+__version__ = "0.18.0"
