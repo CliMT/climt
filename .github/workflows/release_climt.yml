@@ -20,8 +20,14 @@ jobs:
       # Used to host cibuildwheel
       - uses: actions/setup-python@v5
 
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.16.5
+        run: python -m pip install cibuildwheel==2.22.1
 
       - name: Build on Linux
         env:
@@ -39,9 +45,6 @@ jobs:
           CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin"
         if: ${{ runner.os == 'macOS' }}
         run: python -m cibuildwheel --output-dir dist
-
-      - name: Install twine
-        run: python -m pip install twine
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
