@@ -35,7 +35,7 @@ jobs:
       - name: Build on macOS
         env:
           CIBW_BUILD: cp39-* cp310-* cp311-* cp312-*
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_ARCHS_MACOS: "arm64"
           CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin"
         if: ${{ runner.os == 'macOS' }}
         run: python -m cibuildwheel --output-dir dist
