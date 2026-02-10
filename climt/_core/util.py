@@ -32,7 +32,11 @@ def numpy_version_of(state):
     for quantity in state.keys():
         if isinstance(state[quantity], DataArray):
             raw_arrays[quantity] = state[quantity].values
+        elif hasattr(state[quantity], "data"):  # UnytStateContainer
+            raw_arrays[quantity] = np.asarray(state[quantity].data)
         elif isinstance(state[quantity], np.ndarray):
+            raw_arrays[quantity] = state[quantity]
+        else:
             raw_arrays[quantity] = state[quantity]
 
     return raw_arrays
