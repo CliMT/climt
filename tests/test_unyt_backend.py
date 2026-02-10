@@ -27,7 +27,7 @@ def test_unyt_backend_get_array_simple():
     container = UnytStateContainer(unyt_arr, ("z",))
 
     # Test valid extraction
-    result = backend.get_array(container, "temp", "degC", ("z",), {})
+    result = backend.get_array(container, "temp", "degC", ("z",), {"z": 2})
     expected = np.array([0.0, 10.0])
 
     np.testing.assert_allclose(result, expected)
@@ -41,7 +41,7 @@ def test_unyt_backend_get_array_transpose():
     container = UnytStateContainer(unyt_arr, ("y", "x"))
 
     # Request (x, y) -> shape (3, 2)
-    result = backend.get_array(container, "height", "m", ("x", "y"), {})
+    result = backend.get_array(container, "height", "m", ("x", "y"), {"x": 3, "y": 2})
 
     expected = data.T
     np.testing.assert_array_equal(result, expected)

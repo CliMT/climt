@@ -864,7 +864,7 @@ default_values = {
     "area_type": {
         "value": "sea",
         "units": "dimensionless",
-        "dtype": "a100",
+        "dtype": "S100",
         "domain": "surface",
     },
     "surface_upward_sensible_heat_flux": {
@@ -880,7 +880,7 @@ default_values = {
     "soil_type": {
         "value": "clay",
         "units": "dimensionless",
-        "dtype": "a100",
+        "dtype": "S100",
         "domain": "land_horizontal",
     },
     "soil_temperature": {"value": 274.0, "units": "degK", "domain": "land_horizontal"},
