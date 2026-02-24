@@ -43,7 +43,7 @@ requirements = [
     "pint>=0.7.0",
     "unyt",
     "xarray>=0.8.0",
-    "sympl @ git+https://github.com/JoyMonteiro/sympl.git",
+    "sympl==0.5.0",
     "cython>=0.25",
     "scipy>=0.18.1",
 ]
@@ -166,7 +166,7 @@ if operating_system == "Darwin":
             for line in files:
                 if re.match(r"libgfortran\.a", line):
                     # Avoid i386 libs on 64bit systems
-                    if not ("i386" in root):
+                    if "i386" not in root:
                         if root not in lib_path_list:
                             lib_path_list.append(root)
 
