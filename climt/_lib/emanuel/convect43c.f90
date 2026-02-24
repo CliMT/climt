@@ -475,6 +475,7 @@ MODULE emanuel
           AHMAX=HM(I)
          END IF
    42   CONTINUE
+        print *, 'DEBUG FORTRAN: nk = ', NK
 !
 !  ***  CHECK WHETHER PARCEL LEVEL TEMPERATURE AND SPECIFIC HUMIDITY   ***
 !  ***                          ARE REASONABLE                         ***
@@ -484,6 +485,7 @@ MODULE emanuel
         !print *, T
         !print *, 'Tmax: ', T(NK), 'Qmax: ', Q(NK)
         !print *, IHMIN, NL
+        print *, 'DEBUG_F: NK = ', NK
         IF(T(NK).LT.250.0.OR.Q(NK).LE.0.0.OR.IHMIN.EQ.(NL-1))THEN
          IFLAG=0
          CBMF=0.0
@@ -498,6 +500,7 @@ MODULE emanuel
         RH=Q(NK)/QS(NK)
         CHI=T(NK)/(1669.0-122.0*RH-T(NK))
         PLCL=P(NK)*(RH**CHI)
+        print *, 'DEBUG_F: PLCL = ', PLCL
         !print *, 'Q: ', Q(NK), 'QS: ', QS(NK)
         !print *, 'RH: ', RH, 'CHI: ', CHI
         !print *, 'P(NK): ', P(NK)
@@ -518,6 +521,7 @@ MODULE emanuel
           ICB=MIN(ICB,I)
          END IF
    50   CONTINUE
+        print *, 'DEBUG_F: ICB = ', ICB
         IF(ICB.GE.(NL-1))THEN
          IFLAG=3
          CBMF=0.0
@@ -540,7 +544,7 @@ MODULE emanuel
 !   ***  If there was no convection at last time step and parcel    ***
 !   ***       is stable at ICB then skip rest of calculation        ***
 !
-        !print *, 'TVP, TV at ICB: ', TVP(ICB), TV(ICB)
+        print *, 'DEBUG_F: TVP(ICB) = ', TVP(ICB), ' TV(ICB) = ', TV(ICB)
         IF(CBMF.EQ.0.0.AND.TVP(ICB).LE.(TV(ICB)-DTMAX))THEN
          IFLAG=0
          RETURN
@@ -555,6 +559,10 @@ MODULE emanuel
 !   ***  FIND THE REST OF THE LIFTED PARCEL TEMPERATURES          ***
 !
         CALL TLIFT(P,T,Q,QS,GZ,ICB,NK,TVP,TP,CLW,ND,NL,2)
+        print *, 'DEBUG_F: Post-Lift TVP values:'
+        DO I=NK, NL
+           print *, 'DEBUG_F: I=', I, ' TVP=', TVP(I), ' TP=', TP(I), ' CLW=', CLW(I)
+        END DO
 !
 !   ***  SET THE PRECIPITATION EFFICIENCIES AND THE FRACTION OF   ***
 !   ***          PRECIPITATION FALLING OUTSIDE OF CLOUD           ***
@@ -631,9 +639,11 @@ MODULE emanuel
         INB=ICB+1
         INB1=INB
 	  BYP=0.0
+        print *, 'DEBUG_F: CAPE Loop Start. ICB=', ICB, ' NL=', NL
         DO 82 I=ICB+1,NL-1
          BY=(TVP(I)-TV(I))*(PH(I)-PH(I+1))/P(I)
          CAPE=CAPE+BY
+         print *, 'DEBUG_F: I=', I, ' TVP=', TVP(I), ' TV=', TV(I), ' BY=', BY, ' CAPE=', CAPE
          IF(BY.GE.0.0)INB1=I+1
          IF(CAPE.GT.0.0)THEN
           INB=I+1
@@ -650,8 +660,9 @@ MODULE emanuel
         FRAC=MAX(FRAC,0.0)
         OUTCAPE = CAPE
 
-        !print *, 'CAPE: ', OUTCAPE
-        !print *, 'highest level of +ve CAPE: ', INB
+        print *, 'DEBUG_F: CAPE = ', OUTCAPE
+        print *, 'DEBUG_F: INB = ', INB
+        print *, 'DEBUG_F: FRAC = ', FRAC
 !
 !   ***   CALCULATE LIQUID WATER STATIC ENERGY OF LIFTED PARCEL   ***
 !
@@ -681,7 +692,7 @@ MODULE emanuel
 !
 !   ***  ADJUST CLOUD BASE MASS FLUX   ***
 !
-      !print *, 'DTMA: ', DTMA
+      print *, 'DEBUG_F: DTMA = ', DTMA
       !print *, 'CBMF: ', CBMF
       CBMFOLD=CBMF
       DAMPS=DAMP*DELT/DELT0 
@@ -690,6 +701,7 @@ MODULE emanuel
       !print *, 'Term 1: ', (1.-DAMPS)*CBMF
       !print *, 'Term 2: ', 0.1*ALPHA*DTMA
       CBMF=(1.-DAMPS)*CBMF+0.1*ALPHA*DTMA 
+      print *, 'DEBUG_F: CBMF = ', CBMF
       !print *, 'DELT: ', DELT
       CBMF=MAX(CBMF,0.0)
 !
@@ -712,7 +724,11 @@ MODULE emanuel
   103 CONTINUE
       DO 110 I=ICB+1,INB
        M(I)=M(I)/DBOSUM  
-  110 CONTINUE     
+  110 CONTINUE
+      print *, 'DEBUG_F: M profile (ICB to INB):'
+      do i=icb, inb
+        print *, i, M(i)
+      end do
 !
 !   ***  CALCULATE ENTRAINED AIR MASS FLUX (MENT), TOTAL WATER MIXING  ***
 !   ***     RATIO (QENT), TOTAL CONDENSED WATER (ELIJ), AND MIXING     ***
@@ -837,6 +853,12 @@ MODULE emanuel
          END IF
         END IF
   200   CONTINUE
+
+        print *, 'DEBUG_F: MENT Diagonal (MENT(I,I))'
+        DO I=ICB+1, INB
+           print *, 'I=', I, ' MENT(I,I)=', MENT(I,I)
+        END DO
+
 !
 !   ***  CHECK WHETHER EP(INB)=0, IF SO, SKIP PRECIPITATING    ***
 !   ***             DOWNDRAFT CALCULATION                      ***
@@ -948,6 +970,11 @@ MODULE emanuel
 !
         PRECIP=PRECIP+WT(1)*SIGD*WATER(1)*3600.*24000./(ROWL*G)
 !
+        print *, 'DEBUG_F: MP max = ', MAXVAL(MP)
+        print *, 'DEBUG_F: MP(1:5) = ', MP(1:5)
+        do i=1, ND
+             print *, 'DEBUG_F: MP(', i, ') = ', MP(i)
+        end do
   405   CONTINUE
 !
 !   ***  CALCULATE DOWNDRAFT VELOCITY SCALE AND SURFACE TEMPERATURE AND  ***
@@ -1014,6 +1041,7 @@ MODULE emanuel
         DO 470 J=I,INB
          AD=AD+MENT(J,K)
   470   CONTINUE
+        print *, 'DEBUG_F: Level', I, ' AMP1=', AMP1, ' AD=', AD
         FT(I)=FT(I)+G*DPINV*(AMP1*(T(I+1)-T(I)+(GZ(I+1)-GZ(I))*&
             CPINV)-AD*(T(I)-T(I-1)+(GZ(I)-GZ(I-1))*CPINV))&
             -SIGD*LVCP(I)*EVAP(I)
@@ -1124,6 +1152,11 @@ MODULE emanuel
           FTRA(I,K)=FTRA(I,K)-TRAAV
   695    CONTINUE
   700	CONTINUE
+
+        print *, 'DEBUG_F: FT and FQ tendencies:'
+        DO I=1, ND
+           print *, 'I=', I, ' FT=', FT(I), ' FQ=', FQ(I)
+        END DO
 !
 !   ***           RETURN           ***
 !

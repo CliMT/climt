@@ -1,426 +1,598 @@
+# -*- coding: utf-8 -*-
 import numpy as np
-from sympl import ImplicitTendencyComponent, get_constant
 
-from ..._core import bolton_q_sat
+class EmanuelConvectionPython(object):
+    def __init__(self, **kwargs):
+        # Default parameters from Fortran code
+        self.IPBL = 0
+        self.MINORIG = 1
+        self.ELCRIT = 0.0011
+        self.TLCRIT = -55.0
+        self.ENTP = 1.5
+        self.SIGD = 0.05
+        self.SIGS = 0.12
+        self.OMTRAIN = 50.0
+        self.OMTSNOW = 5.5
+        self.COEFFR = 1.0
+        self.COEFFS = 0.8
+        self.CU = 0.7
+        self.BETA = 10.0
+        self.DTMAX = 0.9
+        self.ALPHA = 0.1
+        self.DAMP = 0.1
+        self.CPD = 1005.7
+        self.CPV = 1870.0
+        self.CL = 2500.0
+        self.RV = 461.5
+        self.RD = 287.04
+        self.LV0 = 2.501e6
+        self.G = 9.8
+        self.ROWL = 1000.0
+        self.DELT0 = 300.0
 
+        # Update with kwargs
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
-class EmanuelConvectionPython(ImplicitTendencyComponent):
-    """
-    Pure Python implementation of the Emanuel Convection scheme (version 4.3c).
-    """
+    def _tlift(self, P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW):
+        # ND, NL, NK, KK, ICB are 0-based indices
+        CPVMCL = self.CL - self.CPV
+        EPS = self.RD / self.RV
+        EPSI = 1.0 / EPS
 
-    input_properties = {
-        "air_temperature": {"dims": ["mid_levels", "*"], "units": "degK"},
-        "specific_humidity": {"dims": ["mid_levels", "*"], "units": "g/g"},
-        "air_pressure": {"dims": ["mid_levels", "*"], "units": "mbar"},
-        "air_pressure_on_interface_levels": {
-            "dims": ["interface_levels", "*"],
-            "units": "mbar",
-        },
-        "eastward_wind": {"dims": ["mid_levels", "*"], "units": "m s^-1"},
-        "northward_wind": {"dims": ["mid_levels", "*"], "units": "m s^-1"},
-    }
+        AH0 = (self.CPD * (1. - Q[NK]) + self.CL * Q[NK]) * T[NK] + \
+              Q[NK] * (self.LV0 - CPVMCL * (T[NK] - 273.15)) + GZ[NK]
+        CPP = self.CPD * (1. - Q[NK]) + Q[NK] * self.CPV
+        CPINV = 1.0 / CPP
 
-    tendency_properties = {
-        "air_temperature": {"units": "degK s^-1"},
-        "specific_humidity": {"units": "g g^-1 s^-1"},
-        "eastward_wind": {"units": "m s^-2"},
-        "northward_wind": {"units": "m s^-2"},
-    }
+        if KK == 1:
+            for i in range(ICB):
+                CLW[i] = 0.0
+            for i in range(NK, ICB):
+                TPK[i] = T[NK] - (GZ[i] - GZ[NK]) * CPINV
+                TVP[i] = TPK[i] * (1. + Q[NK] * EPSI)
 
-    diagnostic_properties = {
-        "convective_precipitation_rate": {"dims": ["*"], "units": "mm day^-1"},
-    }
+        NST = ICB
+        NSB = ICB
+        if KK == 2:
+            NST = NL
+            NSB = ICB + 1
 
-    def __init__(
-        self,
-        elcrit=0.0011,
-        tlcrit=-55.0,
-        entp=1.5,
-        sigd=0.05,
-        sigs=0.12,
-        omtrain=50.0,
-        omtsnow=5.5,
-        coeffr=1.0,
-        coeffs=0.8,
-        cu=0.7,
-        beta=10.0,
-        dtmax=0.9,
-        alpha=0.1,
-        damp=0.1,
-        ipbl=0,
-        minorig=1,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.params = {
-            "elcrit": elcrit,
-            "tlcrit": tlcrit,
-            "entp": entp,
-            "sigd": sigd,
-            "sigs": sigs,
-            "omtrain": omtrain,
-            "omtsnow": omtsnow,
-            "coeffr": coeffr,
-            "coeffs": coeffs,
-            "cu": cu,
-            "beta": beta,
-            "dtmax": dtmax,
-            "alpha": alpha,
-            "damp": damp,
-            "ipbl": ipbl,
-            "minorig": minorig,
-        }
-        self._update_constants()
-        self.cbmf = None  # Persistent cloud base mass flux
+        for i in range(NSB, NST + 1):
+            TG = T[i]
+            QG = QS[i]
+            ALV = self.LV0 - CPVMCL * (T[i] - 273.15)
+            for j in range(2):
+                S = self.CPD + ALV * ALV * QG / (self.RV * T[i] * T[i])
+                S = 1.0 / S
+                AHG = self.CPD * TG + (self.CL - self.CPD) * Q[NK] * T[i] + ALV * QG + GZ[i]
+                TG = TG + S * (AH0 - AHG)
+                TG = max(TG, 35.0)
+                TC = TG - 273.15
+                DENOM = 243.5 + TC
+                if TC >= 0.0:
+                    ES = 6.112 * np.exp(17.67 * TC / DENOM)
+                else:
+                    ES = np.exp(23.33086 - 6111.72784 / TG + 0.15215 * np.log(TG))
+                QG = EPS * ES / (P[i] - ES * (1. - EPS))
 
-    def _update_constants(self):
-        self.CPD = get_constant(
-            "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"
-        )
-        self.CPV = get_constant("heat_capacity_of_vapor_phase", "J/kg/degK")
-        self.CL = 2500.0  # Specific heat of liquid water (Note: Artificially small value from Emanuel Scheme)
-        self.RV = get_constant("gas_constant_of_vapor_phase", "J/kg/degK")
-        self.RD = get_constant("gas_constant_of_dry_air", "J/kg/degK")
-        self.LV0 = get_constant("latent_heat_of_condensation", "J/kg")
-        self.G = get_constant("gravitational_acceleration", "m/s^2")
-        self.ROWL = 1000.0  # Density of liquid water
-        self.DELT0 = 300.0  # Reference time scale for relaxation
+            TPK[i] = (AH0 - (self.CL - self.CPD) * Q[NK] * T[i] - GZ[i] - ALV * QG) / self.CPD
+            CLW[i] = Q[NK] - QG
+            CLW[i] = max(0.0, CLW[i])
+            RG = QG / (1. - Q[NK])
+            TVP[i] = TPK[i] * (1. + RG * EPSI)
+
+        return TVP, TPK, CLW
+
+    def _convect(self, T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in, ND, NL, NTRA, DELT, CBMF_in, TRA_in):
+        T = T_in.copy()
+        Q = Q_in.copy()
+        QS = QS_in.copy()
+        U = U_in.copy()
+        V = V_in.copy()
+        P = P_in.copy()
+        PH = PH_in.copy()
+        TRA = TRA_in.copy()
+        CBMF = CBMF_in
+
+        FT = np.zeros(ND)
+        FQ = np.zeros(ND)
+        FU = np.zeros(ND)
+        FV = np.zeros(ND)
+        FTRA = np.zeros((ND, max(1, NTRA)))
+
+        CPVMCL = self.CL - self.CPV
+        EPS = self.RD / self.RV
+        EPSI = 1.0 / EPS
+        GINV = 1.0 / self.G
+        DELTI = 1.0 / DELT
+
+        TH = np.zeros(NL + 1)
+        for i in range(NL + 1):
+            RDCP = (self.RD * (1. - Q[i]) + Q[i] * self.RV) / (self.CPD * (1. - Q[i]) + Q[i] * self.CPV)
+            TH[i] = T[i] * (1000.0 / P[i])**RDCP
+
+        PRECIP = 0.0
+        WD = 0.0
+        TPRIME = 0.0
+        QPRIME = 0.0
+        IFLAG = 0
+        OUTCAPE = 0.0
+
+        if self.IPBL != 0:
+            JC = 0
+            for i in range(NL - 1, -1, -1):
+                JN = -1
+                SUM1 = TH[i] * (1. + Q[i] * EPSI - Q[i])
+                for j in range(i + 1, NL):
+                    SUM1 += TH[j] * (1. + Q[j] * EPSI - Q[j])
+                    THBAR = SUM1 / float(j + 1 - i)
+                    if (TH[j] * (1. + Q[j] * EPSI - Q[j])) < THBAR:
+                        JN = j
+                if i == 0:
+                    JN = max(JN, 1)
+                if JN == -1:
+                    continue
+
+                while True:
+                    AHM = 0.0
+                    RM = 0.0
+                    UM = 0.0
+                    VM = 0.0
+                    TRATM = np.zeros(max(1, NTRA))
+                    for j in range(i, JN + 1):
+                        dp = PH[j] - PH[j+1]
+                        AHM += (self.CPD * (1. - Q[j]) + Q[j] * self.CPV) * T[j] * dp
+                        RM += Q[j] * dp
+                        UM += U[j] * dp
+                        VM += V[j] * dp
+                        for k in range(NTRA):
+                            TRATM[k] += TRA[j, k] * dp
+
+                    DPHINV = 1.0 / (PH[i] - PH[JN+1])
+                    RM *= DPHINV
+                    UM *= DPHINV
+                    VM *= DPHINV
+                    for k in range(NTRA):
+                        TRATM[k] *= DPHINV
+
+                    A2 = 0.0
+                    TOLD_slice = T[i:JN+1].copy()
+                    for j in range(i, JN + 1):
+                        Q[j] = RM
+                        U[j] = UM
+                        V[j] = VM
+                        for k in range(NTRA):
+                            TRA[j, k] = TRATM[k]
+                        RDCP = (self.RD * (1. - Q[j]) + Q[j] * self.RV) / (self.CPD * (1. - Q[j]) + Q[j] * self.CPV)
+                        X = (0.001 * P[j])**RDCP
+                        T[j] = X
+                        A2 += (self.CPD * (1. - Q[j]) + Q[j] * self.CPV) * X * (PH[j] - PH[j+1])
+
+                    for idx, j in enumerate(range(i, JN + 1)):
+                        TH_val = AHM / A2
+                        T[j] = T[j] * TH_val
+                        TH[j] = TH_val
+                        TOLD_j = TOLD_slice[idx]
+                        TC = TOLD_j - 273.15
+                        ALV = self.LV0 - CPVMCL * TC
+                        QS[j] = QS[j] + QS[j] * (1. + QS[j] * (EPSI - 1.)) * ALV * (T[j] - TOLD_j) / (self.RV * TOLD_j * TOLD_j)
+
+                    if JN < NL - 1:
+                        if (TH[JN+1] * (1. + Q[JN+1] * EPSI - Q[JN+1])) < (TH[JN] * (1. + Q[JN] * EPSI - Q[JN])):
+                            JN += 1
+                            continue
+                    if i == 0:
+                        JC = JN + 1
+                    break
+
+            if JC > 0:
+                for j in range(JC):
+                    if QS[j] < Q[j]:
+                        ALV = self.LV0 - CPVMCL * (T[j] - 273.15)
+                        denom_qs = (self.CPD * (1. - Q[j]) + self.CL * Q[j] + QS[j] * (self.CPV - self.CL + ALV * ALV / (self.RV * T[j] * T[j])))
+                        TNEW = T[j] + ALV * (Q[j] - QS[j]) / denom_qs
+                        ALVNEW = self.LV0 - CPVMCL * (TNEW - 273.15)
+                        QNEW = (ALV * Q[j] - (TNEW - T[j]) * (self.CPD * (1. - Q[j]) + self.CL * Q[j])) / ALVNEW
+                        PRECIP += 24. * 3600. * 1.0E5 * (PH[j] - PH[j+1]) * (Q[j] - QNEW) / (self.G * DELT * self.ROWL)
+                        T[j] = TNEW
+                        Q[j] = QNEW
+                        QS[j] = QNEW
+
+        GZ = np.zeros(ND + 1)
+        CPN = np.zeros(ND + 1)
+        H = np.zeros(ND + 1)
+        LV = np.zeros(ND + 1)
+        HM = np.zeros(ND + 1)
+        TV = np.zeros(ND + 1)
+
+        GZ[0] = 0.0
+        CPN[0] = self.CPD * (1. - Q[0]) + Q[0] * self.CPV
+        H[0] = T[0] * CPN[0]
+        LV[0] = self.LV0 - CPVMCL * (T[0] - 273.15)
+        HM[0] = LV[0] * Q[0]
+        TV[0] = T[0] * (1. + Q[0] * EPSI - Q[0])
+
+        AHMIN = 1.0E12
+        IHMIN = NL
+
+        for i in range(1, NL + 1):
+            TVX = T[i] * (1. + Q[i] * EPSI - Q[i])
+            TVY = T[i-1] * (1. + Q[i-1] * EPSI - Q[i-1])
+            GZ[i] = GZ[i-1] + 0.5 * self.RD * (TVX + TVY) * (P[i-1] - P[i]) / PH[i]
+            CPN[i] = self.CPD * (1. - Q[i]) + self.CPV * Q[i]
+            H[i] = T[i] * CPN[i] + GZ[i]
+            LV[i] = self.LV0 - CPVMCL * (T[i] - 273.15)
+            HM[i] = (self.CPD * (1. - Q[i]) + self.CL * Q[i]) * (T[i] - T[0]) + LV[i] * Q[i] + GZ[i]
+            TV[i] = T[i] * (1. + Q[i] * EPSI - Q[i])
+            if (i+1) >= self.MINORIG and HM[i] < AHMIN and HM[i] < HM[i-1]:
+                AHMIN = HM[i]
+                IHMIN = i
+
+        IHMIN = min(IHMIN, NL - 1)
+        AHMAX = 0.0
+        NK = 0
+        for i in range(self.MINORIG - 1, IHMIN + 1):
+            if HM[i] > AHMAX:
+                NK = i
+                AHMAX = HM[i]
+        
+        print(f"DEBUG_PY: NK = {NK+1}") # +1 to match Fortran 1-based
+
+        if T[NK] < 250.0 or Q[NK] <= 0.0 or IHMIN == (NL - 1):
+            IFLAG = 0
+            CBMF = 0.0
+            return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+            
+        RH = Q[NK] / QS[NK]
+        CHI = T[NK] / (1669.0 - 122.0 * RH - T[NK])
+        PLCL = P[NK] * (RH**CHI)
+        print(f"DEBUG_PY: PLCL = {PLCL}")
+
+        if PLCL < 200.0 or PLCL >= 2000.0:
+            IFLAG = 2
+            CBMF = 0.0
+            return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+            
+        ICB = NL - 1
+        for i in range(NK + 1, NL + 1):
+            if P[i] < PLCL:
+                ICB = min(ICB, i)
+        
+        print(f"DEBUG_PY: ICB = {ICB+1}") # +1 to match Fortran 1-based
+        if ICB >= (NL - 1):
+            IFLAG = 3
+            CBMF = 0.0
+            return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+        TVP = np.zeros(ND)
+        TP = np.zeros(ND)
+        CLW = np.zeros(ND)
+        TVP, TP, CLW = self._tlift(P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW)
+        for i in range(NK, ICB + 1):
+            TVP[i] -= TP[i] * Q[NK]
+
+        print(f"DEBUG_PY: TVP(ICB) = {TVP[ICB]} TV(ICB) = {TV[ICB]}")
+
+        if CBMF == 0.0 and TVP[ICB] <= (TV[ICB] - self.DTMAX):
+            IFLAG = 0
+            return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+            
+        if IFLAG != 4:
+            IFLAG = 1
+
+        TVP, TP, CLW = self._tlift(P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW)
+        print("DEBUG_PY: Post-Lift TVP values:")
+        for i in range(NK, NL + 1):
+            print(f"DEBUG_PY: I={i+1} TVP={TVP[i]} TP={TP[i]} CLW={CLW[i]}")
+
+        EP = np.zeros(ND)
+        SIGP = np.zeros(ND)
+        for i in range(NK + 1):
+            EP[i] = 0.0
+            SIGP[i] = self.SIGS
+        for i in range(NK + 1, NL + 1):
+            TCA = TP[i] - 273.15
+            ELACRIT = self.ELCRIT if TCA >= 0.0 else self.ELCRIT * (1.0 - TCA / self.TLCRIT)
+            ELACRIT = max(ELACRIT, 0.0)
+            EPMAX = 0.999
+            EP[i] = EPMAX * (1.0 - ELACRIT / max(CLW[i], 1.0E-8))
+            EP[i] = max(min(EP[i], EPMAX), 0.0)
+            SIGP[i] = self.SIGS
+
+        for i in range(ICB + 1, NL + 1):
+            TVP[i] -= TP[i] * Q[NK]
+
+        HP = H.copy()
+        NENT = np.zeros(ND + 1, dtype=np.int32)
+        WATER = np.zeros(ND + 1)
+        EVAP = np.zeros(ND + 1)
+        WT = np.full(ND + 1, self.OMTSNOW)
+        MP = np.zeros(ND + 1)
+        M = np.zeros(ND + 1)
+        LVCP = LV / CPN
+
+        QENT = np.zeros((ND + 1, ND + 1))
+        ELIJ = np.zeros((ND + 1, ND + 1))
+        MENT = np.zeros((ND + 1, ND + 1))
+        SIJ = np.zeros((ND + 1, ND + 1))
+        UENT = np.zeros((ND + 1, ND + 1))
+        VENT = np.zeros((ND + 1, ND + 1))
+        TRAENT = np.zeros((ND + 1, ND + 1, max(1, NTRA)))
+
+        for i in range(NL + 1):
+            for j in range(NL + 1):
+                QENT[i, j] = Q[j]
+                UENT[i, j] = U[j]
+                VENT[i, j] = V[j]
+                for k in range(NTRA):
+                    TRAENT[i, j, k] = TRA[j, k]
+
+        QP = np.zeros(ND + 1)
+        UP = np.zeros(ND + 1)
+        VP = np.zeros(ND + 1)
+        TRAP = np.zeros((ND + 1, max(1, NTRA)))
+
+        QP[0] = Q[0]; UP[0] = U[0]; VP[0] = V[0]
+        for i in range(NTRA): TRAP[0, i] = TRA[0, i]
+        for i in range(1, NL + 1):
+            QP[i] = Q[i-1]; UP[i] = U[i-1]; VP[i] = V[i-1]
+            for j in range(NTRA): TRAP[i, j] = TRA[i-1, j]
+
+        CAPE = 0.0; CAPEM = 0.0; INB = ICB; INB1 = INB; BYP = 0.0
+        for i in range(ICB + 1, NL):
+            BY = (TVP[i] - TV[i]) * (PH[i] - PH[i+1]) / P[i]
+            CAPE += BY
+            if BY >= 0.0: INB1 = i
+            if CAPE > 0.0:
+                INB = i
+                BYP = (TVP[i+1] - TV[i+1]) * (PH[i+1] - PH[i+2]) / P[i+1]
+                CAPEM = CAPE
+        INB = max(INB, INB1)
+        CAPE = CAPEM + BYP
+        DEFRAC = max(CAPEM - CAPE, 0.001)
+        FRAC = min(max(-CAPE / DEFRAC, 0.0), 1.0)
+        OUTCAPE = CAPE
+
+        for i in range(ICB, INB + 1):
+            HP[i] = H[NK] + (LV[i] + (self.CPD - self.CPV) * T[i]) * EP[i] * CLW[i]
+
+        TVPPLCL = TVP[ICB-1] - self.RD * TVP[ICB-1] * (P[ICB-1] - PLCL) / (CPN[ICB-1] * P[ICB-1])
+        TVAPLCL = TV[ICB] + (TVP[ICB] - TVP[ICB+1]) * (PLCL - P[ICB]) / (P[ICB] - P[ICB+1])
+        DTPBL = 0.0
+        for i in range(NK, ICB):
+            DTPBL += (TVP[i] - TV[i]) * (PH[i] - PH[i+1])
+        DTPBL /= (PH[NK] - PH[ICB])
+        DTMA = TVPPLCL - TVAPLCL + self.DTMAX + DTPBL
+        print(f"DEBUG_PY: DTMA = {DTMA}")
+
+        CBMFOLD = CBMF
+        DAMPS = self.DAMP * DELT / self.DELT0
+        CBMF = (1. - DAMPS) * CBMF + 0.1 * self.ALPHA * DTMA
+        print(f"DEBUG_PY: CBMF = {CBMF}")
+        CBMF = max(CBMF, 0.0)
+
+        if CBMF == 0.0 and CBMFOLD == 0.0:
+            return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+        M[ICB] = 0.0; DBOSUM = 0.0
+        for i in range(ICB + 1, INB + 1):
+            k = min(i, INB1)
+            DBO = abs(TV[k] - TVP[k]) + self.ENTP * 0.02 * (PH[k] - PH[k+1])
+            DBOSUM += DBO
+            M[i] = CBMF * DBO
+        if DBOSUM > 0:
+            for i in range(ICB + 1, INB + 1): M[i] /= DBOSUM
+
+        for i in range(ICB + 1, INB + 1):
+            QTI = Q[NK] - EP[i] * CLW[i]
+            for j in range(ICB, INB + 1):
+                BF2 = 1. + LV[j] * LV[j] * QS[j] / (self.RV * T[j] * T[j] * self.CPD)
+                ANUM = H[j] - HP[i] + (self.CPV - self.CPD) * T[j] * (QTI - Q[j])
+                DENOM = H[i] - HP[i] + (self.CPD - self.CPV) * (Q[i] - QTI) * T[j]
+                DEI = DENOM
+                if abs(DEI) < 0.01: DEI = 0.01
+                SIJ[i, j] = ANUM / DEI
+                SIJ[i, i] = 1.0
+                ALTEM = (SIJ[i, j] * Q[i] + (1. - SIJ[i, j]) * QTI - QS[j]) / BF2
+                CWAT = CLW[j] * (1. - EP[j])
+                if (SIJ[i, j] < 0.0 or SIJ[i, j] > 1.0 or ALTEM > CWAT) and j > i:
+                    ANUM -= LV[j] * (QTI - QS[j] - CWAT * BF2)
+                    DENOM += LV[j] * (Q[i] - QTI)
+                    if abs(DENOM) < 0.01: DENOM = 0.01
+                    SIJ[i, j] = ANUM / DENOM
+                    ALTEM = SIJ[i, j] * Q[i] + (1. - SIJ[i, j]) * QTI - QS[j] - (BF2 - 1.) * CWAT
+                if 0.0 < SIJ[i, j] < 0.9:
+                    QENT[i, j] = SIJ[i, j] * Q[i] + (1. - SIJ[i, j]) * QTI
+                    UENT[i, j] = SIJ[i, j] * U[i] + (1. - SIJ[i, j]) * U[NK]
+                    VENT[i, j] = SIJ[i, j] * V[i] + (1. - SIJ[i, j]) * V[NK]
+                    for k in range(NTRA): TRAENT[i, j, k] = SIJ[i, j] * TRA[i, k] + (1. - SIJ[i, j]) * TRA[NK, k]
+                    ELIJ[i, j] = max(0.0, ALTEM)
+                    MENT[i, j] = M[i] / (1. - SIJ[i, j])
+                    NENT[i] += 1
+                SIJ[i, j] = min(max(SIJ[i, j], 0.0), 1.0)
+            if NENT[i] == 0:
+                MENT[i, i] = M[i]; QENT[i, i] = Q[NK] - EP[i] * CLW[i]; UENT[i, i] = U[NK]; VENT[i, i] = V[NK]
+                for k in range(NTRA): TRAENT[i, i, k] = TRA[NK, k]
+                ELIJ[i, i] = CLW[i]; SIJ[i, i] = 1.0
+        SIJ[INB, INB] = 1.0
+
+        for i in range(ICB + 1, INB + 1):
+            if NENT[i] != 0:
+                QP1 = Q[NK] - EP[i] * CLW[i]
+                ANUM = H[i] - HP[i] - LV[i] * (QP1 - QS[i])
+                DENOM = H[i] - HP[i] + LV[i] * (Q[i] - QP1)
+                if abs(DENOM) < 0.01: DENOM = 0.01
+                SCRIT = max(ANUM / DENOM, 0.0)
+                if (QP1 - QS[i] + SCRIT * (Q[i] - QP1)) < 0.0: SCRIT = 1.0
+                ASIJ = 0.0; SMIN = 1.0
+                for j in range(ICB, INB + 1):
+                    if 0.0 < SIJ[i, j] < 0.9:
+                        if j > i:
+                            SMID = min(SIJ[i, j], SCRIT)
+                            SJMAX = SMID; SJMIN = SMID
+                            if SMID < SMIN and SIJ[i, j+1] < SMID:
+                                SMIN = SMID; SJMAX = min(SIJ[i, j+1], SIJ[i, j], SCRIT)
+                                SJMIN = min(max(SIJ[i, j-1], SIJ[i, j]), SCRIT)
+                        else:
+                            SJMAX = max(SIJ[i, j+1], SCRIT); SMID = max(SIJ[i, j], SCRIT)
+                            SJMIN = max(SIJ[i, j-1] if j > 0 else 0.0, SCRIT)
+                        ASIJ += (abs(SJMAX - SMID) + abs(SJMIN - SMID)) * (PH[j] - PH[j+1])
+                        MENT[i, j] *= (abs(SJMAX - SMID) + abs(SJMIN - SMID)) * (PH[j] - PH[j+1])
+                ASIJ = max(1.0E-21, ASIJ)
+                for j in range(ICB, INB + 1): MENT[i, j] /= ASIJ
+                if sum(MENT[i, ICB:INB+1]) < 1.0E-18:
+                    NENT[i] = 0; MENT[i, i] = M[i]; QENT[i, i] = Q[NK] - EP[i] * CLW[i]; UENT[i, i] = U[NK]; VENT[i, i] = V[NK]
+                    for k in range(NTRA): TRAENT[i, i, k] = TRA[NK, k]
+                    ELIJ[i, i] = CLW[i]; SIJ[i, i] = 1.0
+
+        if EP[INB] >= 0.0001:
+            JTT = 0
+            for i in range(INB, -1, -1):
+                WDTRAIN = self.G * EP[i] * M[i] * CLW[i]
+                if i > 0:
+                    for j in range(i):
+                        WDTRAIN += self.G * max(0.0, ELIJ[j, i] - (1. - EP[i]) * CLW[i]) * MENT[j, i]
+                COEFF = self.COEFFR if T[i] > 273.0 else self.COEFFS
+                WT[i] = self.OMTRAIN if T[i] > 273.0 else self.OMTSNOW
+                AFAC = max(COEFF * PH[i] * (QS[i] - 0.5 * (Q[i] + QP[i+1])) / (1.0E4 + 2.0E3 * PH[i] * QS[i]), 0.0)
+                SIGT = min(max(SIGP[i], 0.0), 1.0)
+                B6 = 100. * (PH[i] - PH[i+1]) * SIGT * AFAC / WT[i]
+                C6 = (WATER[i+1] * WT[i+1] + WDTRAIN / self.SIGD) / WT[i]
+                REVAP = 0.5 * (-B6 + np.sqrt(B6 * B6 + 4. * C6))
+                EVAP[i] = SIGT * AFAC * REVAP
+                WATER[i] = REVAP * REVAP
+                if i > 0:
+                    DHDP = max((H[i] - H[i-1]) / (P[i-1] - P[i]), 10.0)
+                    MP[i] = 100. * GINV * LV[i] * self.SIGD * EVAP[i] / DHDP
+                    FAC = 20.0 / (PH[i-1] - PH[i])
+                    MP[i] = (FAC * MP[i+1] + MP[i]) / (1. + FAC)
+                    if P[i] > (0.949 * P[0]):
+                        JTT = max(JTT, i)
+                        MP[i] = MP[JTT] * (P[0] - P[i]) / (P[0] - P[JTT])
+                if i != INB:
+                    QSTM = QS[0] if i == 0 else QS[i-1]
+                    if MP[i] > MP[i+1]:
+                        RAT = MP[i+1] / MP[i]
+                        QP[i] = QP[i+1] * RAT + Q[i] * (1.0 - RAT) + 100. * GINV * self.SIGD * (PH[i] - PH[i+1]) * (EVAP[i] / MP[i])
+                        UP[i] = UP[i+1] * RAT + U[i] * (1. - RAT); VP[i] = VP[i+1] * RAT + V[i] * (1. - RAT)
+                        for k in range(NTRA): TRAP[i, k] = TRAP[i+1, k] * RAT + TRAP[i, k] * (1. - RAT)
+                    elif MP[i+1] > 0.0:
+                        QP[i] = (GZ[i+1] - GZ[i] + QP[i+1] * (LV[i+1] + T[i+1] * (self.CL - self.CPD)) + self.CPD * (T[i+1] - T[i])) / (LV[i] + T[i] * (self.CL - self.CPD))
+                        UP[i] = UP[i+1]; VP[i] = VP[i+1]
+                        for k in range(NTRA): TRAP[i, k] = TRAP[i+1, k]
+                    QP[i] = max(min(QP[i], QSTM), 0.0)
+            PRECIP += WT[0] * self.SIGD * WATER[0] * 3600. * 24000. / (self.ROWL * self.G)
+
+        WD = self.BETA * abs(MP[ICB]) * 0.01 * self.RD * T[ICB] / (self.SIGD * P[ICB])
+        QPRIME = 0.5 * (QP[0] - Q[0]); TPRIME = self.LV0 * QPRIME / self.CPD
+        DPINV = 0.01 / (PH[0] - PH[1]); AM = 0.0
+        if NK == 0: AM = sum(M[1:INB+1])
+        if (2. * self.G * DPINV * AM) >= DELTI: IFLAG = 4
+        FT[0] += self.G * DPINV * AM * (T[1] - T[0] + (GZ[1] - GZ[0]) / CPN[0]) - LVCP[0] * self.SIGD * EVAP[0] + self.SIGD * WT[1] * (self.CL - self.CPD) * WATER[1] * (T[1] - T[0]) * DPINV / CPN[0]
+        FQ[0] += self.G * MP[1] * (QP[1] - Q[0]) * DPINV + self.SIGD * EVAP[0] + self.G * AM * (Q[1] - Q[0]) * DPINV
+        FU[0] += self.G * DPINV * (MP[1] * (UP[1] - U[0]) + AM * (U[1] - U[0]))
+        FV[0] += self.G * DPINV * (MP[1] * (VP[1] - V[0]) + AM * (V[1] - V[0]))
+        for j in range(NTRA): FTRA[0, j] += self.G * DPINV * (MP[1] * (TRAP[1, j] - TRA[0, j]) + AM * (TRA[1, j] - TRA[0, j]))
+        for j in range(1, INB + 1):
+            FQ[0] += self.G * DPINV * MENT[j, 0] * (QENT[j, 0] - Q[0])
+            FU[0] += self.G * DPINV * MENT[j, 0] * (UENT[j, 0] - U[0])
+            FV[0] += self.G * DPINV * MENT[j, 0] * (VENT[j, 0] - V[0])
+            for k in range(NTRA): FTRA[0, k] += self.G * DPINV * MENT[j, 0] * (TRAENT[j, 0, k] - TRA[0, k])
+
+        for i in range(1, INB + 1):
+            DPINV = 0.01 / (PH[i] - PH[i+1]); CPINV = 1.0 / CPN[i]
+            AMP1 = sum(M[i+1:INB+2]) if i >= NK else 0.0
+            for k in range(i + 1): AMP1 += sum(MENT[k, i+1:INB+2])
+            if (2. * self.G * DPINV * AMP1) >= DELTI: IFLAG = 4
+            AD = 0.0
+            for k in range(i): AD += sum(MENT[i:INB+1, k])
+            FT[i] += self.G * DPINV * (AMP1 * (T[i+1] - T[i] + (GZ[i+1] - GZ[i]) * CPINV) - AD * (T[i] - T[i-1] + (GZ[i] - GZ[i-1]) * CPINV)) - self.SIGD * LVCP[i] * EVAP[i]
+            FT[i] += self.G * DPINV * MENT[i, i] * (HP[i] - H[i] + T[i] * (self.CPV - self.CPD) * (Q[i] - QENT[i, i])) * CPINV
+            FT[i] += self.SIGD * WT[i+1] * (self.CL - self.CPD) * WATER[i+1] * (T[i+1] - T[i]) * DPINV * CPINV
+            FQ[i] += self.G * DPINV * (AMP1 * (Q[i+1] - Q[i]) - AD * (Q[i] - Q[i-1]))
+            FU[i] += self.G * DPINV * (AMP1 * (U[i+1] - U[i]) - AD * (U[i] - U[i-1]))
+            FV[i] += self.G * DPINV * (AMP1 * (V[i+1] - V[i]) - AD * (V[i] - V[i-1]))
+            for k in range(NTRA): FTRA[i, k] += self.G * DPINV * (AMP1 * (TRA[i+1, k] - TRA[i, k]) - AD * (TRA[i, k] - TRA[i-1, k]))
+            for k in range(i):
+                AWAT = max(ELIJ[k, i] - (1. - EP[i]) * CLW[i], 0.0)
+                FQ[i] += self.G * DPINV * MENT[k, i] * (QENT[k, i] - AWAT - Q[i])
+                FU[i] += self.G * DPINV * MENT[k, i] * (UENT[k, i] - U[i]); FV[i] += self.G * DPINV * MENT[k, i] * (VENT[k, i] - V[i])
+                for j in range(NTRA): FTRA[i, j] += self.G * DPINV * MENT[k, i] * (TRAENT[k, i, j] - TRA[i, j])
+            for k in range(i, INB + 1):
+                FQ[i] += self.G * DPINV * MENT[k, i] * (QENT[k, i] - Q[i])
+                FU[i] += self.G * DPINV * MENT[k, i] * (UENT[k, i] - U[i]); FV[i] += self.G * DPINV * MENT[k, i] * (VENT[k, i] - V[i])
+                for j in range(NTRA): FTRA[i, j] += self.G * DPINV * MENT[k, i] * (TRAENT[k, i, j] - TRA[i, j])
+            FQ[i] += self.SIGD * EVAP[i] + self.G * (MP[i+1] * (QP[i+1] - Q[i]) - MP[i] * (QP[i] - Q[i-1])) * DPINV
+            FU[i] += self.G * (MP[i+1] * (UP[i+1] - U[i]) - MP[i] * (UP[i] - U[i-1])) * DPINV
+            FV[i] += self.G * (MP[i+1] * (VP[i+1] - V[i]) - MP[i] * (VP[i] - V[i-1])) * DPINV
+            for j in range(NTRA): FTRA[i, j] += self.G * DPINV * (MP[i+1] * (TRAP[i+1, j] - TRA[i, j]) - MP[i] * (TRAP[i, j] - TRA[i-1, j]))
+
+        FQOLD = FQ[INB]; FQ[INB] *= (1. - FRAC)
+        FQ[INB-1] += FRAC * FQOLD * ((PH[INB] - PH[INB+1]) / (PH[INB-1] - PH[INB])) * LV[INB] / LV[INB-1]
+        FTOLD = FT[INB]; FT[INB] *= (1. - FRAC)
+        FT[INB-1] += FRAC * FTOLD * ((PH[INB] - PH[INB+1]) / (PH[INB-1] - PH[INB])) * CPN[INB] / CPN[INB-1]
+        FUOLD = FU[INB]; FU[INB] *= (1. - FRAC)
+        FU[INB-1] += FRAC * FUOLD * ((PH[INB] - PH[INB+1]) / (PH[INB-1] - PH[INB]))
+        FVOLD = FV[INB]; FV[INB] *= (1. - FRAC)
+        FV[INB-1] += FRAC * FVOLD * ((PH[INB] - PH[INB+1]) / (PH[INB-1] - PH[INB]))
+        for k in range(NTRA):
+            FTRAOLD = FTRA[INB, k]; FTRA[INB, k] *= (1. - FRAC)
+            FTRA[INB-1, k] += FRAC * FTRAOLD * (PH[INB] - PH[INB+1]) / (PH[INB-1] - PH[INB])
+
+        ENTS = sum((CPN[:INB+1] * FT[:INB+1] + LV[:INB+1] * FQ[:INB+1]) * (PH[:INB+1] - PH[1:INB+2])) / (PH[0] - PH[INB+1])
+        UAV = sum(FU[:INB+1] * (PH[:INB+1] - PH[1:INB+2])) / (PH[0] - PH[INB+1])
+        VAV = sum(FV[:INB+1] * (PH[:INB+1] - PH[1:INB+2])) / (PH[0] - PH[INB+1])
+        for i in range(INB + 1):
+            FT[i] -= ENTS / CPN[i]
+            FU[i] = (1. - self.CU) * (FU[i] - UAV)
+            FV[i] = (1. - self.CU) * (FV[i] - VAV)
+        for k in range(NTRA):
+            TRAAV = sum(FTRA[:INB+1, k] * (PH[:INB+1] - PH[1:INB+2])) / (PH[0] - PH[INB+1])
+            FTRA[:INB+1, k] -= TRAAV
+
+        return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
 
     def array_call(self, state, timestep):
-        """
-        Step the Emanuel Convection scheme.
-        """
-        self._update_constants()
-        nlev, ncol = state["air_temperature"].shape
+        t = state['air_temperature']
+        q = state['specific_humidity']
+        u = state['eastward_wind']
+        v = state['northward_wind']
+        p = state['air_pressure']
+        ph = state['air_pressure_on_interface_levels']
 
-        # Initialize persistent state
-        if self.cbmf is None or self.cbmf.shape[0] != ncol:
-            self.cbmf = np.zeros(ncol)
+        nlev, ncol = t.shape
 
-        # 1. Thermodynamics
-        p = state["air_pressure"]
-        ph = state["air_pressure_on_interface_levels"]
-        t = state["air_temperature"]
-        q = state["specific_humidity"]
+        try:
+            from climt._core import bolton_q_sat
+        except ImportError:
+            def bolton_q_sat(T, p, Rd, Rv):
+                tc = T - 273.15
+                es = 611.2 * np.exp(17.67 * tc / (tc + 243.5))
+                return (Rd/Rv) * es / (p - es * (1 - Rd/Rv))
 
-        # Calculate Saturation Specific Humidity using Bolton's formula (as in Fortran)
-        qs = bolton_q_sat(t, p * 100.0, self.RD, self.RV)
+        qs = bolton_q_sat(t, p * 100, self.RD, self.RV)
 
-        eps = self.RD / self.RV
-        epsi = 1.0 / eps
+        ft = np.zeros_like(t); fq = np.zeros_like(q); fu = np.zeros_like(u); fv = np.zeros_like(v)
+        precip = np.zeros(ncol); wd = np.zeros(ncol); tprime = np.zeros(ncol); qprime = np.zeros(ncol)
+        outcape = np.zeros(ncol); iflag = np.zeros(ncol, dtype=np.int32)
 
-        # Virtual Temperature
-        tv = t * (1.0 + q * epsi - q)
+        cbmf = state.get('cloud_base_mass_flux', np.zeros(ncol)).copy()
+        ntra = 0; tra = np.zeros((nlev, 1)); delt = timestep.total_seconds()
 
-        # Geopotential (hydrostatic)
-        gz = np.zeros((nlev + 1, ncol))
-        for i in range(1, nlev + 1):
-            tvx = tv[i - 1]
-            tvy = tv[i - 2] if i > 1 else tv[i - 1]
-            p_prev = p[i - 2] if i > 1 else ph[0]
-            gz[i] = (
-                gz[i - 1]
-                + 0.5 * self.RD * (tvx + tvy) * (p_prev - p[i - 1]) / ph[i - 1]
+        for col in range(ncol):
+            (ft[:, col], fq[:, col], fu[:, col], fv[:, col], precip[col], wd[col], tprime[col], qprime[col],
+             cbmf[col], outcape[col], iflag[col]) = self._convect(
+                t[:, col], q[:, col], qs[:, col], u[:, col], v[:, col],
+                p[:, col], ph[:, col], nlev, nlev-3, ntra, delt, cbmf[col], tra
             )
 
-        # Moist Static Energy (h_m) and Enthalpy (h)
-        lv = self.LV0 - (self.CL - self.CPV) * (t - 273.15)
-        cpn = self.CPD * (1.0 - q) + self.CPV * q
-        h = t * cpn + gz[:nlev]
-        hm = (self.CPD * (1.0 - q) + self.CL * q) * (t - t[0]) + lv * q + gz[:nlev]
-
-        # 2. Find Parcel Origin Level (NK)
-        nk = self._find_parcel_origin(hm, self.params["minorig"], nlev, ncol)
-
-        # 3. Calculate LCL
-        plcl = self._calculate_lcl(p, t, q, qs, nk, ncol)
-
-        # 4. Find Cloud Base (ICB)
-        icb = self._find_icb(p, plcl, nk, nlev, ncol)
-
-        # 5. Parcel Lifting (TLIFT)
-        tp, qp, clw, tvp = self._tlift(state, nk, icb, tv, gz)
-
-        # Relaxation rate and damping (normalized by timestep)
-        damps = self.params["damp"] * timestep.total_seconds() / self.params["beta"]
-        alpha_eff = 0.1 * self.params["alpha"]
-
-        # Buoyancy at LCL
-        dtma = np.zeros(ncol)
-        for c in range(ncol):
-            idx = icb[c]
-            if idx < nlev:
-                dtma[c] = tvp[idx, c] - tv[idx, c] + self.params["dtmax"]
-            else:
-                dtma[c] = 0.0
-
-        # Update persistent CBMF
-        self.cbmf = (1.0 - damps) * self.cbmf + alpha_eff * dtma
-        self.cbmf = np.maximum(self.cbmf, 0.0)
-
-        # --- Simplified Mixing and Tendency (Preserved for now) ---
-        m_rates = np.zeros_like(t)
-        for i in range(1, nlev):
-            b_curr = tvp[i] - tv[i]
-            b_prev = tvp[i - 1] - tv[i - 1]
-            db = np.abs(b_curr - b_prev)
-            dp = np.abs(p[i] - p[i - 1])
-            m_rates[i] = db + self.params["entp"] * 0.02 * dp
-
-        dbosum = np.sum(m_rates, axis=0)
-        dbosum = np.maximum(dbosum, 1e-20)
-
-        m_flux = np.zeros_like(t)
-        for i in range(nlev):
-            m_flux[i] = self.cbmf * m_rates[i] / dbosum
-
-        ep = np.zeros_like(t)
-        elcrit = self.params["elcrit"]
-        tlcrit = self.params["tlcrit"]
-        epmax = 0.999
-
-        for i in range(nlev):
-            tca = tp[i] - 273.15
-            elacrit = np.where(tca >= 0.0, elcrit, elcrit * (1.0 - tca / tlcrit))
-            elacrit = np.maximum(elacrit, 0.0)
-            ep[i] = epmax * (1.0 - elacrit / np.maximum(clw[i], 1e-8))
-            ep[i] = np.clip(ep[i], 0.0, epmax)
-
-        mp = np.zeros_like(t)
-        evap = np.zeros_like(t)
-        water = np.zeros_like(t)
-
-        sigd = self.params["sigd"]
-        sigs = self.params["sigs"]
-        ginv = 1.0 / self.G
-
-        inb_idx = nlev - 1
-
-        for i in range(inb_idx, -1, -1):
-            wd_train = self.G * ep[i] * m_flux[i] * clw[i]
-            is_rain = t[i] > 273.15
-            coeff = np.where(is_rain, self.params["coeffr"], self.params["coeffs"])
-            wt_vel = np.where(is_rain, self.params["omtrain"], self.params["omtsnow"])
-
-            # Use calculated qs
-            qs_local = qs[i]
-            qsm = 0.5 * (q[i] + qp[i])
-            afac = (
-                coeff
-                * p[i]
-                * np.maximum(qs_local - qsm, 0.0)
-                / (1.0e4 + 2.0e3 * p[i] * qs_local)
-            )
-
-            b6 = 100.0 * (ph[i] - ph[i + 1]) * sigs * afac / wt_vel
-            water_prev = water[i + 1] if i < inb_idx else 0.0
-            c6 = (water_prev * wt_vel + wd_train / sigd) / wt_vel
-            revap = 0.5 * (-b6 + np.sqrt(b6 * b6 + 4.0 * c6))
-
-            evap[i] = sigs * afac * revap
-            water[i] = revap * revap
-
-            if i > 0:
-                dhdp = np.maximum((h[i] - h[i - 1]) / (p[i - 1] - p[i]), 10.0)
-                mp[i] = 100.0 * ginv * lv[i] * sigd * evap[i] / dhdp
-
-        precip = wt_vel * sigd * water[0] * 3600.0 * 24000.0 / (self.ROWL * self.G)
-
-        ft = np.zeros_like(t)
-        fq = np.zeros_like(q)
-        fu = np.zeros_like(state["eastward_wind"])
-        fv = np.zeros_like(state["northward_wind"])
-
-        for i in range(nlev):
-            dp = ph[i] - ph[i + 1]
-            dpinv = 0.01 / dp
-
-            ft[i] = self.G * dpinv * m_flux[i] * (tp[i] - t[i])
-            fq[i] = self.G * dpinv * m_flux[i] * (qp[i] - q[i])
-
-            ft[i] += self.G * dpinv * mp[i] * (t[i] - t[i])
-            fq[i] += self.G * dpinv * mp[i] * (qp[i] - q[i])
-
-        for c in range(ncol):
-            column_enthalpy_tendency = np.sum(
-                (self.CPD * ft[:, c] + lv[:, c] * fq[:, c]) * (ph[:-1, c] - ph[1:, c])
-            )
-            correction = column_enthalpy_tendency / np.sum(ph[:-1, c] - ph[1:, c])
-            ft[:, c] -= correction / self.CPD
-
-        return {
-            "air_temperature": ft,
-            "specific_humidity": fq,
-            "eastward_wind": fu,
-            "northward_wind": fv,
-        }, {
-            "convective_precipitation_rate": precip,
+        tendencies = {'air_temperature': ft, 'specific_humidity': fq, 'eastward_wind': fu, 'northward_wind': fv}
+        diagnostics = {
+            'convective_state': iflag, 'convective_precipitation_rate': precip,
+            'convective_downdraft_velocity_scale': wd, 'convective_downdraft_temperature_scale': tprime,
+            'convective_downdraft_specific_humidity_scale': qprime, 'cloud_base_mass_flux': cbmf,
+            'atmosphere_convective_available_potential_energy': outcape
         }
-
-        return {
-            "air_temperature": ft,
-            "specific_humidity": fq,
-            "eastward_wind": fu,
-            "northward_wind": fv,
-        }, {
-            "convective_precipitation_rate": precip,
-        }
-
-    def _tlift(self, state, nk, icb, tv, gz):
-        """
-        Calculates lifted parcel properties using an iterative Newton-Raphson solver.
-        """
-        nlev, ncol = state["air_temperature"].shape
-        p = state["air_pressure"]
-        t = state["air_temperature"]
-        q = state["specific_humidity"]
-        qs = state.get("saturation_specific_humidity", q)  # Fallback to environment q
-
-        tp = np.zeros_like(t)
-        qp = np.zeros_like(q)
-        clw = np.zeros_like(q)
-        tvp = np.zeros_like(t)
-
-        eps = self.RD / self.RV
-        epsi = 1.0 / eps
-        cpvmcl = self.CL - self.CPV
-
-        # Vectorized scalar properties at parcel origin (NK)
-        rows = np.arange(ncol)
-        t_nk = t[nk, rows]
-        q_nk = q[nk, rows]
-        gz_nk = gz[nk, rows]
-
-        # Static Energy at source (Eq. from Fortran)
-        ah0 = (
-            (self.CPD * (1.0 - q_nk) + self.CL * q_nk) * t_nk
-            + q_nk * (self.LV0 - cpvmcl * (t_nk - 273.15))
-            + gz_nk
-        )
-
-        cpp = self.CPD * (1.0 - q_nk) + q_nk * self.CPV
-        cpinv = 1.0 / cpp
-
-        # Loop over all levels
-        for i in range(nlev):
-            # Mask for levels below ICB (Dry Adiabatic)
-            # Since i is fixed, we check which columns have icb > i
-
-            # Dry Adiabatic (i < icb)
-            is_dry = i < icb
-
-            if np.any(is_dry):
-                # TPK(I) = T(NK) - (GZ(I)-GZ(NK))*CPINV
-                tp_dry = t_nk - (gz[i] - gz_nk) * cpinv
-                # TVP(I) = TPK(I)*(1.+Q(NK)*EPSI)
-                tvp_dry = tp_dry * (1.0 + q_nk * epsi)
-
-                # Apply to dry columns
-                tp[i] = np.where(is_dry, tp_dry, tp[i])
-                qp[i] = np.where(is_dry, q_nk, qp[i])  # Conserved q
-                clw[i] = np.where(is_dry, 0.0, clw[i])
-                tvp[i] = np.where(is_dry, tvp_dry, tvp[i])
-
-            # Moist Adiabatic (i >= icb)
-            is_moist = ~is_dry
-            if np.any(is_moist):
-                # Trial values
-                tg = t[i]
-                qg = q[i]  # Initial guess is environment
-
-                # Iterate 2 times
-                for _ in range(2):
-                    alv = self.LV0 - cpvmcl * (tg - 273.15)
-                    s = 1.0 / (self.CPD + alv * alv * qg / (self.RV * tg * tg))
-                    ahg = (
-                        self.CPD * tg
-                        + (self.CL - self.CPD) * q_nk * tg
-                        + alv * qg
-                        + gz[i]
-                    )
-
-                    tg = tg + s * (ah0 - ahg)
-                    tg = np.maximum(tg, 35.0)
-
-                    tc = tg - 273.15
-                    denom = 243.5 + tc
-                    # Saturation vapor pressure
-                    es = np.where(
-                        tc >= 0.0,
-                        6.112 * np.exp(17.67 * tc / denom),
-                        np.exp(23.33086 - 6111.72784 / tg + 0.15215 * np.log(tg)),
-                    )
-
-                    qg = eps * es / (p[i] - es * (1.0 - eps))
-
-                # Final values for moist
-                tp_moist = (
-                    ah0 - (self.CL - self.CPD) * q_nk * tg - gz[i] - alv * qg
-                ) / self.CPD
-                qp_moist = qg
-                clw_moist = np.maximum(0.0, q_nk - qg)
-                rg = qg / (1.0 - q_nk)
-                tvp_moist = tp_moist * (1.0 + rg * epsi)
-
-                tp[i] = np.where(is_moist, tp_moist, tp[i])
-                qp[i] = np.where(is_moist, qp_moist, qp[i])
-                clw[i] = np.where(is_moist, clw_moist, clw[i])
-                tvp[i] = np.where(is_moist, tvp_moist, tvp[i])
-
-        return tp, qp, clw, tvp
-
-    def _find_parcel_origin(self, hm, minorig, nlev, ncol):
-        """Find the level of maximum moist static energy (NK) below the level of minimum MSE."""
-        nk = np.zeros(ncol, dtype=int)
-
-        # 1. Find level of minimum MSE (IHMIN)
-        # Search from minorig upwards to find local minimum
-        ahmin = np.full(ncol, 1.0e12)
-        ihmin = np.full(ncol, nlev - 1, dtype=int)
-
-        for i in range(minorig, nlev):
-            is_new_min = (hm[i] < ahmin) & (hm[i] < hm[i - 1])
-            ahmin = np.where(is_new_min, hm[i], ahmin)
-            ihmin = np.where(is_new_min, i, ihmin)
-
-        # 2. Find Max MSE below IHMIN
-        ahmax = np.zeros(ncol)
-        nk[:] = minorig
-
-        for i in range(minorig, nlev):
-            is_below_min = i <= ihmin
-            is_new_max = (hm[i] > ahmax) & is_below_min
-
-            ahmax = np.where(is_new_max, hm[i], ahmax)
-            nk = np.where(is_new_max, i, nk)
-
-        return nk
-
-    def _calculate_lcl(self, p, t, q, qs, nk, ncol):
-        """Calculate LCL using Bolton's approximation."""
-        rows = np.arange(ncol)
-        t_nk = t[nk, rows]
-        q_nk = q[nk, rows]
-        qs_nk = qs[nk, rows]
-        p_nk = p[nk, rows]
-
-        rh = q_nk / qs_nk
-        chi = t_nk / (1669.0 - 122.0 * rh - t_nk)
-        plcl = p_nk * (rh**chi)
-
-        return plcl
-
-    def _find_icb(self, p, plcl, nk, nlev, ncol):
-        """Find the first level above LCL (ICB)."""
-        icb = np.full(ncol, nlev - 1, dtype=int)
-
-        for i in range(nlev):
-            is_above_origin = i > nk
-            is_above_lcl = p[i] < plcl
-
-            # Update to minimum index satisfying condition
-            update_mask = is_above_origin & is_above_lcl
-            icb = np.where(update_mask, np.minimum(icb, i), icb)
-
-        return icb
+        return tendencies, diagnostics
