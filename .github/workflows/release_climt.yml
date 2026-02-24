@@ -33,7 +33,7 @@ jobs:
               env:
                   CIBW_BUILD: cp39-* cp310-* cp311-* cp312-*
                   CIBW_SKIP: "*-musllinux_*"
-                  CIBW_ARCHS_LINUX: "x86_64 aarch64"
+                  CIBW_ARCHS_LINUX: "x86_64"
                   CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
               if: ${{ runner.os == 'Linux' }}
               run: python -m cibuildwheel --output-dir dist
