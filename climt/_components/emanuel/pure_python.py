@@ -237,8 +237,6 @@ class EmanuelConvectionPython(object):
             if HM[i] > AHMAX:
                 NK = i
                 AHMAX = HM[i]
-        
-        print(f"DEBUG_PY: NK = {NK+1}") # +1 to match Fortran 1-based
 
         if T[NK] < 250.0 or Q[NK] <= 0.0 or IHMIN == (NL - 1):
             IFLAG = 0
@@ -248,7 +246,6 @@ class EmanuelConvectionPython(object):
         RH = Q[NK] / QS[NK]
         CHI = T[NK] / (1669.0 - 122.0 * RH - T[NK])
         PLCL = P[NK] * (RH**CHI)
-        print(f"DEBUG_PY: PLCL = {PLCL}")
 
         if PLCL < 200.0 or PLCL >= 2000.0:
             IFLAG = 2
@@ -260,7 +257,6 @@ class EmanuelConvectionPython(object):
             if P[i] < PLCL:
                 ICB = min(ICB, i)
         
-        print(f"DEBUG_PY: ICB = {ICB+1}") # +1 to match Fortran 1-based
         if ICB >= (NL - 1):
             IFLAG = 3
             CBMF = 0.0
@@ -273,8 +269,6 @@ class EmanuelConvectionPython(object):
         for i in range(NK, ICB + 1):
             TVP[i] -= TP[i] * Q[NK]
 
-        print(f"DEBUG_PY: TVP(ICB) = {TVP[ICB]} TV(ICB) = {TV[ICB]}")
-
         if CBMF == 0.0 and TVP[ICB] <= (TV[ICB] - self.DTMAX):
             IFLAG = 0
             return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
@@ -283,9 +277,6 @@ class EmanuelConvectionPython(object):
             IFLAG = 1
 
         TVP, TP, CLW = self._tlift(P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW)
-        print("DEBUG_PY: Post-Lift TVP values:")
-        for i in range(NK, NL + 1):
-            print(f"DEBUG_PY: I={i+1} TVP={TVP[i]} TP={TP[i]} CLW={CLW[i]}")
 
         EP = np.zeros(ND)
         SIGP = np.zeros(ND)
@@ -311,7 +302,8 @@ class EmanuelConvectionPython(object):
         WT = np.full(ND + 1, self.OMTSNOW)
         MP = np.zeros(ND + 1)
         M = np.zeros(ND + 1)
-        LVCP = LV / CPN
+        LVCP = np.zeros(ND + 1)
+        LVCP[:NL+1] = LV[:NL+1] / CPN[:NL+1]
 
         QENT = np.zeros((ND + 1, ND + 1))
         ELIJ = np.zeros((ND + 1, ND + 1))
@@ -340,13 +332,13 @@ class EmanuelConvectionPython(object):
             QP[i] = Q[i-1]; UP[i] = U[i-1]; VP[i] = V[i-1]
             for j in range(NTRA): TRAP[i, j] = TRA[i-1, j]
 
-        CAPE = 0.0; CAPEM = 0.0; INB = ICB; INB1 = INB; BYP = 0.0
+        CAPE = 0.0; CAPEM = 0.0; INB = ICB + 1; INB1 = INB; BYP = 0.0
         for i in range(ICB + 1, NL):
             BY = (TVP[i] - TV[i]) * (PH[i] - PH[i+1]) / P[i]
             CAPE += BY
-            if BY >= 0.0: INB1 = i
+            if BY >= 0.0: INB1 = i + 1
             if CAPE > 0.0:
-                INB = i
+                INB = i + 1
                 BYP = (TVP[i+1] - TV[i+1]) * (PH[i+1] - PH[i+2]) / P[i+1]
                 CAPEM = CAPE
         INB = max(INB, INB1)
@@ -365,12 +357,10 @@ class EmanuelConvectionPython(object):
             DTPBL += (TVP[i] - TV[i]) * (PH[i] - PH[i+1])
         DTPBL /= (PH[NK] - PH[ICB])
         DTMA = TVPPLCL - TVAPLCL + self.DTMAX + DTPBL
-        print(f"DEBUG_PY: DTMA = {DTMA}")
 
         CBMFOLD = CBMF
         DAMPS = self.DAMP * DELT / self.DELT0
         CBMF = (1. - DAMPS) * CBMF + 0.1 * self.ALPHA * DTMA
-        print(f"DEBUG_PY: CBMF = {CBMF}")
         CBMF = max(CBMF, 0.0)
 
         if CBMF == 0.0 and CBMFOLD == 0.0:
@@ -403,6 +393,7 @@ class EmanuelConvectionPython(object):
                     if abs(DENOM) < 0.01: DENOM = 0.01
                     SIJ[i, j] = ANUM / DENOM
                     ALTEM = SIJ[i, j] * Q[i] + (1. - SIJ[i, j]) * QTI - QS[j] - (BF2 - 1.) * CWAT
+
                 if 0.0 < SIJ[i, j] < 0.9:
                     QENT[i, j] = SIJ[i, j] * Q[i] + (1. - SIJ[i, j]) * QTI
                     UENT[i, j] = SIJ[i, j] * U[i] + (1. - SIJ[i, j]) * U[NK]
@@ -424,8 +415,10 @@ class EmanuelConvectionPython(object):
                 ANUM = H[i] - HP[i] - LV[i] * (QP1 - QS[i])
                 DENOM = H[i] - HP[i] + LV[i] * (Q[i] - QP1)
                 if abs(DENOM) < 0.01: DENOM = 0.01
-                SCRIT = max(ANUM / DENOM, 0.0)
-                if (QP1 - QS[i] + SCRIT * (Q[i] - QP1)) < 0.0: SCRIT = 1.0
+                SCRIT = ANUM / DENOM
+                ALT = QP1 - QS[i] + SCRIT * (Q[i] - QP1)
+                if ALT < 0.0: SCRIT = 1.0
+                SCRIT = max(SCRIT, 0.0)
                 ASIJ = 0.0; SMIN = 1.0
                 for j in range(ICB, INB + 1):
                     if 0.0 < SIJ[i, j] < 0.9:
