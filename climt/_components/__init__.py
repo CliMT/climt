@@ -4,7 +4,7 @@ from .grid_scale_condensation import GridScaleCondensation
 from .berger_solar_insolation import BergerSolarInsolation
 from .simple_physics import SimplePhysics
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
-from .emanuel import EmanuelConvection
+from .emanuel import EmanuelConvection, EmanuelConvectionPython
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
 from .dcmip import DcmipInitialConditions
@@ -22,6 +22,7 @@ __all__ = (
     RRTMGLongwave,
     RRTMGShortwave,
     EmanuelConvection,
+    EmanuelConvectionPython,
     SlabSurface,
     DcmipInitialConditions,
     IceSheet,
