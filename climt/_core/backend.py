@@ -62,24 +62,48 @@ if HAS_NUMBA:
         return impl
 
 def vectorize_component(single_column_func, backend=np, **kwargs):
-    if HAS_JAX and backend is jnp:
+    """
+    Orchestrates the vectorization of a single-column function.
+    """
+    use_jit = kwargs.get("jit", True)
+
+    if HAS_JAX and backend is jnp and use_jit:
         in_axes = kwargs.get("in_axes", 0)
         out_axes = kwargs.get("out_axes", 0)
         return jax.vmap(single_column_func, in_axes=in_axes, out_axes=out_axes)
         
     def manual_vectorization(*args, **kwargs):
+        # Determine ncol from the first array argument
+        # Check if it's a JAX array or NumPy array
         first_array = args[0]
-        ncol = first_array.shape[-1]
+        # Handle sympl wrappers
+        data = getattr(first_array, "values", first_array)
+        data = getattr(data, "data", data)
+        
+        # Determine ncol axis based on in_axes if provided
+        in_axes = kwargs.get("in_axes", None) # This won't work easily here
+        # Assume last dimension is ncol for now as a convention if not specified
+        ncol = data.shape[-1]
+        
         results = []
         for i in range(ncol):
-            col_args = [
-                arg[..., i] if isinstance(arg, np.ndarray) and arg.ndim > 0 else arg 
-                for arg in args
-            ]
+            col_args = []
+            for arg in args:
+                if hasattr(arg, "shape") and arg.ndim > 0:
+                    # Very simple slicing, might need more robustness for in_axes
+                    col_args.append(arg[..., i])
+                else:
+                    col_args.append(arg)
+            
             results.append(single_column_func(*col_args, **kwargs))
+            
         if not results: return None
+        
+        xp = get_array_namespace(*args)
+
         if isinstance(results[0], tuple):
-            return tuple(np.stack(res, axis=-1) for res in zip(*results))
+            return tuple(xp.stack(res, axis=-1) for res in zip(*results))
         else:
-            return np.stack(results, axis=-1)
+            return xp.stack(results, axis=-1)
+            
     return manual_vectorization

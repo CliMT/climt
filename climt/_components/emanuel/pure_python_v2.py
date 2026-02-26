@@ -3,6 +3,13 @@ import numpy as np
 from typing import NamedTuple
 from ..._core.backend import get_array_namespace, set_item, jit_compile, vectorize_component, prange
 
+try:
+    from numba import njit
+    HAS_NUMBA = True
+except ImportError:
+    HAS_NUMBA = False
+    njit = lambda x: x
+
 class EmanuelParams(NamedTuple):
     IPBL: int
     MINORIG: int
@@ -88,14 +95,7 @@ class EmanuelConvectionPythonV2(object):
         nlev, ncol = t.shape
         xp = get_array_namespace(t)
 
-        try:
-            from climt._core import bolton_q_sat
-        except ImportError:
-            def bolton_q_sat(T, p, Rd, Rv):
-                tc = T - 273.15
-                es = 611.2 * xp.exp(17.67 * tc / (tc + 243.5))
-                return (Rd/Rv) * es / (p - es * (1 - Rd/Rv))
-
+        from climt._core import bolton_q_sat
         qs = bolton_q_sat(t, p * 100, self.RD, self.RV)
 
         cbmf = state.get('cloud_base_mass_flux', xp.zeros(ncol)).copy()
@@ -105,15 +105,18 @@ class EmanuelConvectionPythonV2(object):
         tra_vector = xp.broadcast_to(tra[:, :, xp.newaxis], (nlev, 1, ncol))
 
         if xp is np:
+            # Use explicitly compiled numba versions
             results = _numpy_vectorized_convect(
-                t, q, qs, u, v, p, ph, nlev, nlev-3, ntra, delt, cbmf, tra_vector, self._params
+                t, q, qs, u, v, p, ph, nlev, nlev-3, ntra, delt, cbmf, tra_vector, self._params,
+                _convect_functional_numba, _tlift_functional_numba
             )
         else:
-            # JAX path - needs functional wrapper
+            # JAX path - use plain Python functions
             def jax_column_wrapper(T, Q, QS, U, V, P, PH, CBMF, TRA):
-                return _convect_functional(xp, T, Q, QS, U, V, P, PH, nlev, nlev-3, ntra, delt, CBMF, TRA, self._params)
+                return _convect_functional(xp, _tlift_functional, T, Q, QS, U, V, P, PH, nlev, nlev-3, ntra, delt, CBMF, TRA, self._params)
             
-            vectorized_convect = vectorize_component(jax_column_wrapper, backend=xp)
+            # Disable JIT/vmap for JAX for now to allow Python branches
+            vectorized_convect = vectorize_component(jax_column_wrapper, backend=xp, jit=False)
             results = vectorized_convect(t, q, qs, u, v, p, ph, cbmf, tra_vector)
         
         ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results
@@ -127,33 +130,6 @@ class EmanuelConvectionPythonV2(object):
         }
         return tendencies, diagnostics
 
-@jit_compile(backend=np, parallel=True)
-def _numpy_vectorized_convect(t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params):
-    nlev, ncol = t.shape
-    
-    ft = np.zeros(t.shape)
-    fq = np.zeros(q.shape)
-    fu = np.zeros(u.shape)
-    fv = np.zeros(v.shape)
-    precip = np.zeros(ncol)
-    wd = np.zeros(ncol)
-    tprime = np.zeros(ncol)
-    qprime = np.zeros(ncol)
-    cbmf_new = np.zeros(ncol)
-    outcape = np.zeros(ncol)
-    iflag = np.zeros(ncol, dtype=np.int32)
-
-    for i in prange(ncol):
-        res = _convect_functional(
-            np, t[:, i], q[:, i], qs[:, i], u[:, i], v[:, i],
-            p[:, i], ph[:, i], ND, NL, NTRA, DELT, cbmf[i], tra[:, :, i], params
-        )
-        (ft[:, i], fq[:, i], fu[:, i], fv[:, i], precip[i], 
-         wd[i], tprime[i], qprime[i], cbmf_new[i], outcape[i], iflag[i]) = res
-            
-    return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag
-
-@jit_compile(backend=np)
 def _tlift_functional(xp, P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, params):
     # ND, NL, NK, KK, ICB are 0-based indices
     CPVMCL = params.CL - params.CPV
@@ -204,16 +180,15 @@ def _tlift_functional(xp, P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, p
 
     return TVP, TPK, CLW
 
-@jit_compile(backend=np)
-def _convect_functional(xp, T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in, ND, NL, NTRA, DELT, CBMF_in, TRA_in, params):
-    T = T_in
-    Q = Q_in
-    QS = QS_in
-    U = U_in
-    V = V_in
-    P = P_in
-    PH = PH_in
-    TRA = TRA_in
+def _convect_functional(xp, tlift_func, T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in, ND, NL, NTRA, DELT, CBMF_in, TRA_in, params):
+    T = T_in.copy()
+    Q = Q_in.copy()
+    QS = QS_in.copy()
+    U = U_in.copy()
+    V = V_in.copy()
+    P = P_in.copy()
+    PH = PH_in.copy()
+    TRA = TRA_in.copy()
     CBMF = CBMF_in
 
     FT = xp.zeros(ND)
@@ -305,7 +280,7 @@ def _convect_functional(xp, T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in, ND, NL, 
     TVP = xp.zeros(ND)
     TP = xp.zeros(ND)
     CLW = xp.zeros(ND)
-    TVP, TP, CLW = _tlift_functional(xp, P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params)
+    TVP, TP, CLW = tlift_func(xp, P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params)
     for i in range(NK, ICB + 1):
         TVP = set_item(TVP, i, TVP[i] - TP[i] * Q[NK])
 
@@ -316,7 +291,7 @@ def _convect_functional(xp, T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in, ND, NL, 
     if IFLAG != 4:
         IFLAG = 1
 
-    TVP, TP, CLW = _tlift_functional(xp, P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params)
+    TVP, TP, CLW = tlift_func(xp, P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params)
 
     EP = xp.zeros(ND)
     SIGP = xp.zeros(ND)
@@ -470,7 +445,7 @@ def _convect_functional(xp, T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in, ND, NL, 
                             SJMIN = xp.minimum(xp.maximum(SIJ[i, j-1], SIJ[i, j]), SCRIT)
                     else:
                         SJMAX = xp.maximum(SIJ[i, j+1], SCRIT); SMID = xp.maximum(SIJ[i, j], SCRIT)
-                        SJMIN = xp.maximum(SJMIN if SJMIN > 0 else 0.0, xp.maximum(SIJ[i, j-1] if j > 0 else 0.0, SCRIT))
+                        SJMIN = xp.maximum(SIJ[i, j-1] if j > 0 else 0.0, SCRIT)
                     ASIJ += (xp.abs(SJMAX - SMID) + xp.abs(SJMIN - SMID)) * (PH[j] - PH[j+1])
                     MENT = set_item(MENT, (i, j), MENT[i, j] * (xp.abs(SJMAX - SMID) + xp.abs(SJMIN - SMID)) * (PH[j] - PH[j+1]))
             ASIJ = xp.maximum(1.0E-21, ASIJ)
@@ -586,3 +561,37 @@ def _convect_functional(xp, T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in, ND, NL, 
         FTRA = set_item(FTRA, (slice(0, INB+1), k), FTRA[:INB+1, k] - TRAAV)
 
     return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+if HAS_NUMBA:
+    _tlift_functional_numba = njit(_tlift_functional)
+    _convect_functional_numba = njit(_convect_functional)
+else:
+    _tlift_functional_numba = _tlift_functional
+    _convect_functional_numba = _convect_functional
+
+@jit_compile(backend=np, parallel=True)
+def _numpy_vectorized_convect(t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params, convect_func, tlift_func):
+    nlev, ncol = t.shape
+    
+    ft = np.zeros(t.shape)
+    fq = np.zeros(q.shape)
+    fu = np.zeros(u.shape)
+    fv = np.zeros(v.shape)
+    precip = np.zeros(ncol)
+    wd = np.zeros(ncol)
+    tprime = np.zeros(ncol)
+    qprime = np.zeros(ncol)
+    cbmf_new = np.zeros(ncol)
+    outcape = np.zeros(ncol)
+    iflag = np.zeros(ncol, dtype=np.int32)
+
+    for i in prange(ncol):
+        # Explicitly call numba version
+        res = convect_func(
+            np, tlift_func, t[:, i], q[:, i], qs[:, i], u[:, i], v[:, i],
+            p[:, i], ph[:, i], ND, NL, NTRA, DELT, cbmf[i], tra[:, :, i], params
+        )
+        (ft[:, i], fq[:, i], fu[:, i], fv[:, i], precip[i], 
+         wd[i], tprime[i], qprime[i], cbmf_new[i], outcape[i], iflag[i]) = res
+            
+    return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag

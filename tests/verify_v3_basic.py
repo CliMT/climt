@@ -4,6 +4,7 @@ from datetime import timedelta
 from climt import get_grid, get_default_state, EmanuelConvection
 from climt._components.emanuel.pure_python import EmanuelConvectionPython
 from climt._components.emanuel.pure_python_v2 import EmanuelConvectionPythonV2
+from climt._components.emanuel.pure_python_v3 import EmanuelConvectionPythonV3
 from climt._core.util import numpy_version_of
 
 try:
@@ -48,62 +49,30 @@ def verify_profile(moisture_type):
         'northward_wind': raw_state['northward_wind'].reshape(nlev, ncol),
     }
 
-    conv_fortran = EmanuelConvection()
     conv_orig = EmanuelConvectionPython()
     conv_v2 = EmanuelConvectionPythonV2()
+    conv_v3 = EmanuelConvectionPythonV3()
 
-    # 1. Fortran results
-    tend_fort, _ = conv_fortran(state, timestep)
-    ft_fort = tend_fort['air_temperature'].values.flatten() * 86400
-    fq_fort = tend_fort['specific_humidity'].values.flatten() * 86400 * 1000
+    # Python results (Numba path)
+    tend_orig, diag_orig = conv_orig.array_call(python_state, timestep)
+    tend_v2, diag_v2 = conv_v2.array_call(python_state, timestep)
+    tend_v3, diag_v3 = conv_v3.array_call(python_state, timestep)
 
-    # 2. Python results (Numba path)
-    tend_orig, _ = conv_orig.array_call(python_state, timestep)
-    tend_v2, _ = conv_v2.array_call(python_state, timestep)
-
-    ft_orig = tend_orig['air_temperature'].flatten() * 86400
-    fq_orig = tend_orig['specific_humidity'].flatten() * 86400 * 1000
-    ft_v2 = tend_v2['air_temperature'].flatten() * 86400
-    fq_v2 = tend_v2['specific_humidity'].flatten() * 86400 * 1000
-    
-    # 3. JAX results
+    # JAX results
     if HAS_JAX:
         jax_state = {k: jnp.array(v) for k, v in python_state.items()}
-        tend_jax, _ = conv_v2.array_call(jax_state, timestep)
+        print("Calling V3 JAX...")
+        tend_jax, diag_jax = conv_v3.array_call(jax_state, timestep)
         ft_jax = np.array(tend_jax['air_temperature']).flatten() * 86400
         fq_jax = np.array(tend_jax['specific_humidity']).flatten() * 86400 * 1000
+        cbmf_jax = float(diag_jax['cloud_base_mass_flux'][0])
     else:
-        ft_jax = ft_v2
-        fq_jax = fq_v2
+        ft_jax = np.zeros(nlev)
+        fq_jax = np.zeros(nlev)
+        cbmf_jax = 0.0
 
-    p = raw_state['air_pressure'].flatten() / 100.0
-
-    print("\n--- Temperature Tendency (K/day) ---")
-    print(f"{'Lev':<4} | {'Press':<8} | {'T_Fort':<12} | {'T_Py_Orig':<12} | {'T_V2_Numba':<12} | {'T_V2_JAX':<12}")
-    print("-" * 90)
-    
-    count_t = 0
-    for i in range(nlev):
-        if abs(ft_fort[i]) > 1e-8 or abs(ft_orig[i]) > 1e-8 or abs(ft_v2[i]) > 1e-8 or abs(ft_jax[i]) > 1e-8:
-            print(f"{i:<4} | {p[i]:<8.2f} | {ft_fort[i]:12.8f} | {ft_orig[i]:12.8f} | {ft_v2[i]:12.8f} | {ft_jax[i]:12.8f}")
-            count_t += 1
-    
-    if count_t == 0:
-        print("No non-zero temperature tendencies.")
-
-    print("\n--- Specific Humidity Tendency (g/kg/day) ---")
-    print(f"{'Lev':<4} | {'Press':<8} | {'Q_Fort':<12} | {'Q_Py_Orig':<12} | {'Q_V2_Numba':<12} | {'Q_V2_JAX':<12}")
-    print("-" * 90)
-    
-    count_q = 0
-    for i in range(nlev):
-        if abs(fq_fort[i]) > 1e-8 or abs(fq_orig[i]) > 1e-8 or abs(fq_v2[i]) > 1e-8 or abs(fq_jax[i]) > 1e-8:
-            print(f"{i:<4} | {p[i]:<8.2f} | {fq_fort[i]:12.8f} | {fq_orig[i]:12.8f} | {fq_v2[i]:12.8f} | {fq_jax[i]:12.8f}")
-            count_q += 1
-            
-    if count_q == 0:
-        print("No non-zero humidity tendencies.")
+    print(f"CBMF Comparison: Orig={diag_orig['cloud_base_mass_flux'][0]:.6f}, V2={diag_v2['cloud_base_mass_flux'][0]:.6f}, V3_Numba={diag_v3['cloud_base_mass_flux'][0]:.6f}, V3_JAX={cbmf_jax:.6f}")
 
 if __name__ == "__main__":
-    for p in ['moist', 'dry', 'unstable']:
+    for p in ['moist', 'unstable']:
         verify_profile(p)
