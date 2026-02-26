@@ -47,6 +47,10 @@ class JaxStateContainer:
     @property
     def attrs(self): return {"units": self.units}
 
+    def to_units(self, units):
+        # Placeholder: assume units are already correct or handle identity
+        return self
+
     def _align_and_op(self, other, op_func):
         if isinstance(other, JaxStateContainer):
             if self.dims != other.dims:
@@ -83,18 +87,34 @@ class JaxBackend(StateBackend):
         if not HAS_JAX: raise ImportError("JAX is required for JaxBackend")
 
     def get_array(self, state_value, name, target_units, target_dims, dim_lengths):
-        if not isinstance(state_value, JaxStateContainer):
-            if isinstance(state_value, (jax.Array, jnp.ndarray)): return state_value
-            raise TypeError(f"Expected JaxStateContainer for '{name}', got {type(state_value)}")
-        data = state_value.data
-        if state_value.dims == target_dims: return data
-        src_indices = {dim: i for i, dim in enumerate(state_value.dims)}
-        perm = [src_indices[dim] for dim in target_dims if dim in state_value.dims]
+        # Extract the raw data from the container or tracer
+        if isinstance(state_value, JaxStateContainer):
+            data = state_value.data
+            current_dims = state_value.dims
+        elif hasattr(state_value, "data") and hasattr(state_value, "dims"):
+            # Handle generic containers that might be used by sympl internal
+            data = state_value.data
+            current_dims = state_value.dims
+        elif isinstance(state_value, (jax.Array, jnp.ndarray, np.ndarray)):
+            data = state_value
+            current_dims = target_dims # Default
+        else:
+            # Check if it's a JAX tracer by looking for __jax_array__
+            if hasattr(state_value, "__jax_array__"):
+                 data = state_value.__jax_array__()
+                 current_dims = target_dims
+            else:
+                 raise TypeError(f"Expected JaxStateContainer or array for '{name}', got {type(state_value)}")
+        
+        if current_dims == target_dims: return data
+        
+        src_indices = {dim: i for i, dim in enumerate(current_dims)}
+        perm = [src_indices[dim] for dim in target_dims if dim in current_dims]
         aligned_data = data.transpose(perm)
         reshape_shape = []
         current_axis_idx = 0
         for dim in target_dims:
-            if dim in state_value.dims:
+            if dim in current_dims:
                 reshape_shape.append(aligned_data.shape[current_axis_idx]); current_axis_idx += 1
             else:
                 reshape_shape.append(1)
@@ -109,4 +129,6 @@ class JaxBackend(StateBackend):
 
     def get_shape(self, state_value):
         if hasattr(state_value, "shape"): return state_value.shape
-        return getattr(state_value, "data", state_value).shape
+        data = getattr(state_value, "data", state_value)
+        if hasattr(data, "shape"): return data.shape
+        return jnp.array(data).shape
