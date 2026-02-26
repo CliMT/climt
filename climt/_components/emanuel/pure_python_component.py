@@ -7,13 +7,13 @@ from sympl import (
 )
 
 from ..._core import bolton_q_sat, ensure_contiguous_state
-from .pure_python import EmanuelConvectionPython
+from .pure_python_v2 import EmanuelConvectionPythonV2
 
 
 class EmanuelConvectionPythonComponent(ImplicitTendencyComponent):
     """
     The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_
-    implemented in pure Python.
+    implemented in pure Python with support for various array backends.
 
     .. _[Emanuel and Zivkovic-Rothman]:
             http://journals.ametsoc.org/doi/abs/10.1175/1520-0469(1999)056%3C1766%3ADAEOAC%3E2.0.CO%3B2
@@ -144,7 +144,7 @@ class EmanuelConvectionPythonComponent(ImplicitTendencyComponent):
         self._Cl = get_constant("specific_enthalpy_of_vapor_phase", "J/kg")
 
         # Create the internal logic object
-        self._python_scheme = EmanuelConvectionPython(
+        self._python_scheme = EmanuelConvectionPythonV2(
             MINORIG=self._min_conv_layer,
             ELCRIT=self._crit_humidity,
             TLCRIT=self._crit_temp,
