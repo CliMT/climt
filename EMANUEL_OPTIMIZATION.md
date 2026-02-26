@@ -8,40 +8,34 @@ This document details the refactoring and optimization of the Emanuel convection
 A universal abstraction layer was introduced to handle backend-specific operations transparently:
 *   **`get_array_namespace(*arrays)`**: Dynamically identifies the correct API (`numpy` or `jax.numpy`) based on input data.
 *   **`set_item(arr, idx, val)`**: A unified interface for updating arrays. It uses Numba `overload` for high-performance in-place updates on NumPy, and functional updates (`at[idx].set(val)`) for JAX.
-*   **`jit_compile(backend=...)`**: A unified decorator that applies the appropriate JIT compiler (`numba.njit` or `jax.jit`).
-*   **`vectorize_component(...)`**: Orchestrates high-level parallelization (e.g., via `jax.vmap`).
+*   **`JaxBackend`**: A new `sympl` StateBackend that allows the entire model to run on JAX arrays, enabling differentiability through the `sympl` interface.
 
 ### Functional Refactoring Versions
 *   **V2 (`pure_python_v2.py`)**: Optimized for Numba JIT on NumPy/Unyt. Uses standard Python control flow. Highly performant on CPU.
-*   **V3 (`pure_python_v3.py`)**: Optimized for JAX JIT/XLA. Replaces vertical loops with `jax.lax.scan` and branches with `jnp.where`. Enables full differentiability and hardware acceleration.
+*   **V3 (`pure_python_v3.py`)**: Dual-path implementation optimized for both Numba and JAX XLA. Replaces vertical loops with `jax.lax.scan` and branches with `jnp.where` for the JAX path.
 
-## 2. Optimization Strategy
+## 2. Optimization Strategy & Performance
 
-### Numba JIT (NumPy/Unyt Path)
-On CPU, performance is achieved through Numba:
-1.  **Strict No-Python Mode**: All core routines are compiled to machine code.
-2.  **Parallel Vertical Loops**: Horizontal columns are processed in parallel using Numba's `prange`.
+### Multi-Backend Performance (1000 Columns, 30 Levels, Apple M3 Pro)
+| Backend | Platform | Time per Call (s) | Relative Speedup |
+| :--- | :--- | :--- | :--- |
+| Original Python | CPU (Serial) | 0.6607 | 1.0x |
+| Fortran | CPU (Serial) | 0.0039 | ~170x |
+| **V3 Numba JIT** | **CPU (Parallel)** | **0.0012** | **~550x** |
+| **V3 JAX JIT** | **METAL (GPU)** | **0.2660** | **~2.5x** |
 
-### JAX JIT (Differentiable Path)
-Performance and differentiability are achieved through XLA:
-1.  **Loop Fusion**: Vertical profiles are processed using `lax.scan` to keep the XLA graph size manageable.
-2.  **Vectorization**: Horizontal columns are automatically vectorized using `jax.vmap`.
+**Note on GPU Performance**: The Emanuel scheme's high logic complexity results in many small kernels. On Apple Silicon, the dispatch latency for these kernels currently makes the CPU/Numba path significantly faster than the GPU path for this specific algorithm. However, the JAX path provides full differentiability.
 
-### Performance Gains (10 Columns, 30 Levels, ARM64)
-| Version | Time per Call (s) | Relative Speedup |
-| :--- | :--- | :--- |
-| Fortran | 0.0014 | 1.0x |
-| Original Python | 0.0068 | 0.2x |
-| **V3 Numba JIT** | **0.0005** | **~2.8x vs Fortran / ~13x vs Python** |
-| **V3 JAX JIT** | **0.3029** | **Initial JIT Path (X64 enabled)** |
-
-*Note: JAX performance is currently limited by the complex logic requiring many `where` operations on CPU. Future GPU acceleration will significantly improve these numbers.*
-
-## 3. Verification and Benchmarking
+## 3. Verification and Differentiability
 
 ### Continuous Parity Check
-*   **Tolerance**: A strict tolerance of `1e-12` is enforced.
-*   **JAX x64**: Precision was verified using `jax_enable_x64=True`, achieving perfect bit-wise parity with Numba and the original implementation.
+*   **Tolerance**: A strict tolerance of `1e-12` is enforced between Numba and Original Python.
+*   **JAX x64**: Precision was verified using `jax_enable_x64=True` on CPU, achieving perfect bit-wise parity. Note that METAL GPU currently only supports `float32`.
 
-## 4. Future Directions
-The infrastructure is now ready for other components. V3 serves as the prototype for a fully differentiable physics suite in `climt`.
+### Differentiability
+The `V3` implementation is fully differentiable. Sensitivities can be computed using `jax.grad` through the `array_call` interface, providing a foundation for parameter optimization and sensitivity analysis.
+
+## 4. Summary of New Components
+*   `climt/_core/jax_backend.py`: JAX-native state handling.
+*   `climt/_components/emanuel/pure_python_v3.py`: High-performance differentiable physics.
+*   `tests/test_jax_differentiation.py`: Verification of gradient flow.

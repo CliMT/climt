@@ -3,6 +3,7 @@ from sympl import get_constant, reset_constants, set_constant
 from .constants import list_available_constants, set_constants_from_dict
 from .initialization import get_default_state, get_grid
 from .unyt_backend import UnytBackend, UnytStateContainer, UnytTimeDelta
+from .jax_backend import JaxBackend, JaxStateContainer, JaxTimeDelta
 from .util import (
     bolton_dqsat_dT,
     bolton_q_sat,
@@ -31,4 +32,7 @@ __all__ = (
     UnytBackend,
     UnytStateContainer,
     UnytTimeDelta,
+    JaxBackend,
+    JaxStateContainer,
+    JaxTimeDelta,
 )
