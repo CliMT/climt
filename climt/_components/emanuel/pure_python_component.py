@@ -5,8 +5,10 @@ from sympl import (
     get_constant,
     initialize_numpy_arrays_with_properties,
 )
+
+from ..._core import bolton_q_sat, ensure_contiguous_state
 from .pure_python import EmanuelConvectionPython
-from ..._core import ensure_contiguous_state, bolton_q_sat
+
 
 class EmanuelConvectionPythonComponent(ImplicitTendencyComponent):
     """
@@ -167,7 +169,7 @@ class EmanuelConvectionPythonComponent(ImplicitTendencyComponent):
             G=self._g,
             ROWL=self._rho_condensible,
             DELT0=self._mf_timescale,
-            **kwargs
+            **kwargs,
         )
 
         super(EmanuelConvectionPythonComponent, self).__init__(**kwargs)
@@ -185,13 +187,15 @@ class EmanuelConvectionPythonComponent(ImplicitTendencyComponent):
 
         # EmanuelConvectionPython expects (nlev, ncol) while raw_state is (ncol, nlev)
         python_state = {
-            'air_temperature': raw_state['air_temperature'].T,
-            'specific_humidity': raw_state['specific_humidity'].T,
-            'eastward_wind': raw_state['eastward_wind'].T,
-            'northward_wind': raw_state['northward_wind'].T,
-            'air_pressure': raw_state['air_pressure'].T,
-            'air_pressure_on_interface_levels': raw_state['air_pressure_on_interface_levels'].T,
-            'cloud_base_mass_flux': raw_state['cloud_base_mass_flux'],
+            "air_temperature": raw_state["air_temperature"].T,
+            "specific_humidity": raw_state["specific_humidity"].T,
+            "eastward_wind": raw_state["eastward_wind"].T,
+            "northward_wind": raw_state["northward_wind"].T,
+            "air_pressure": raw_state["air_pressure"].T,
+            "air_pressure_on_interface_levels": raw_state[
+                "air_pressure_on_interface_levels"
+            ].T,
+            "cloud_base_mass_flux": raw_state["cloud_base_mass_flux"],
         }
 
         python_tendencies, python_diagnostics = self._python_scheme.array_call(
@@ -201,15 +205,16 @@ class EmanuelConvectionPythonComponent(ImplicitTendencyComponent):
         # Map back to sympl tendencies and diagnostics (transpose back)
         for key in tendencies:
             tendencies[key][:] = python_tendencies[key].T
-        
+
         for key in diagnostics:
-            if diagnostics[key].ndim == 2:
-                diagnostics[key][:] = python_diagnostics[key].T
-            else:
-                diagnostics[key][:] = python_diagnostics[key]
+            if key != "air_temperature_tendency_from_convection":
+                if diagnostics[key].ndim == 2:
+                    diagnostics[key][:] = python_diagnostics[key].T
+                else:
+                    diagnostics[key][:] = python_diagnostics[key]
 
         diagnostics["air_temperature_tendency_from_convection"][:] = (
             tendencies["air_temperature"] * 86400.0
         )
-        
+
         return tendencies, diagnostics

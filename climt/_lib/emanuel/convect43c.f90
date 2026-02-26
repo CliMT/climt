@@ -20,7 +20,7 @@ MODULE emanuel
 !   ***      be the first model level at which T is defined above    ***
 !   ***                      the surface layer)                      ***
 !
- 
+
     integer(c_int) :: IPBL=0
     integer(c_int) :: MINORIG=1
 !------------------------------------------------------------------------------
@@ -58,13 +58,13 @@ MODULE emanuel
     real(c_double) :: SIGD=0.05
     real(c_double) :: SIGS=0.12
     real(c_double) :: OMTRAIN=50.0
-    real(c_double) :: OMTSNOW=5.5 
+    real(c_double) :: OMTSNOW=5.5
     real(c_double) :: COEFFR=1.0
     real(c_double) :: COEFFS=0.8
     real(c_double) :: CU=0.7
     real(c_double) :: BETA=10.0
-    real(c_double) :: DTMAX=0.9 
-    real(c_double) :: ALPHA=0.1   
+    real(c_double) :: DTMAX=0.9
+    real(c_double) :: ALPHA=0.1
     real(c_double) :: DAMP=0.1
 !
 !   ***        ASSIGN VALUES OF THERMODYNAMIC CONSTANTS,        ***
@@ -75,11 +75,11 @@ MODULE emanuel
 !
     real(c_double) :: CPD=1005.7
     real(c_double) :: CPV=1870.0
-    real(c_double) :: CL=2500.0 
+    real(c_double) :: CL=2500.0
     real(c_double) :: RV=461.5
     real(c_double) :: RD=287.04
     real(c_double) :: LV0=2.501E6
-    real(c_double) :: G=9.8  
+    real(c_double) :: G=9.8
     real(c_double) :: ROWL=1000.0
     real(c_double) :: DELT0=300.0
 
@@ -94,7 +94,7 @@ MODULE emanuel
         Cpd, Cpv, Cl, gas_const_vapour, gas_const_air,&
         lat_heat, grav, density_water,&
         relaxation_ref_time_scale)bind(c, name='init_emanuel_convection_fortran')
-        
+
         integer(c_int) :: pbl, least_conv_level
         real(c_double) :: thresh_water_level, crit_temp, entrain_coeff
         real(c_double) :: downdraft_frac_area, precip_frac_outside_cloud
@@ -198,7 +198,7 @@ MODULE emanuel
 !
 !     NTRA:The number of different tracers. If no tracer transport
 !            is needed, set this equal to 1. (On most compilers, setting
-!            NTRA to 0 will bypass tracer calculation, saving some CPU.)  
+!            NTRA to 0 will bypass tracer calculation, saving some CPU.)
 !
 !     DELT: The model time step (sec) between calls to CONVECT
 !
@@ -266,7 +266,7 @@ MODULE emanuel
 !    ***  THE PARAMETER NA SHOULD IN GENERAL BE GREATER THAN   ***
 !    ***                OR EQUAL TO  ND + 1                    ***
 !
-      integer, parameter :: NA=70           
+      integer, parameter :: NA=70
 !
       integer(c_int), dimension(NA) :: NENT
       integer(c_int), intent(in) :: ND,NTRA,NL
@@ -304,13 +304,13 @@ MODULE emanuel
       real(c_double) :: TNEW, TRAAV, TVAPLCL, TVPPLCL, TVX, TVY, UAV, UM, VAV, VM, WDTRAIN, X
 
       integer(c_int) :: I, ICB, IHMIN, INB, INB1, J, JC, K
-      integer(c_int) :: JIT, JN, NK, JTT 
+      integer(c_int) :: JIT, JN, NK, JTT
 !
 
         !print *, 'Entering scheme'
 !
 !
-      CPVMCL=CL-CPV 
+      CPVMCL=CL-CPV
       EPS=RD/RV
       EPSI=1./EPS
       GINV=1.0/G
@@ -384,7 +384,7 @@ MODULE emanuel
           DO K=1,NTRA
            TRA(J,K)=TRATM(K)
           END DO
-          RDCP=(RD*(1.-Q(J))+Q(J)*RV)/(CPD*(1.-Q(J))+Q(J)*CPV)  
+          RDCP=(RD*(1.-Q(J))+Q(J)*RV)/(CPD*(1.-Q(J))+Q(J)*CPV)
           X=(0.001*P(J))**RDCP
           TOLD(J)=T(J)
           T(J)=X
@@ -404,15 +404,15 @@ MODULE emanuel
           JN=JN+1
           GOTO 12
          END IF
-         IF(I.EQ.1)JC=JN 
+         IF(I.EQ.1)JC=JN
    30   CONTINUE
 !
 !   ***   Remove any supersaturation that results from adjustment ***
 !
       IF(JC.GT.1)THEN
        DO 38 J=1,JC
-          IF(QS(J).LT.Q(J))THEN 
-           ALV=LV0-CPVMCL*(T(J)-273.15)  
+          IF(QS(J).LT.Q(J))THEN
+           ALV=LV0-CPVMCL*(T(J)-273.15)
            TNEW=T(J)+ALV*(Q(J)-QS(J))/(CPD*(1.-Q(J))+ &
                      CL*Q(J)+QS(J)*(CPV-CL+ALV*ALV/(RV*T(J)*T(J))))
 
@@ -423,14 +423,14 @@ MODULE emanuel
            T(J)=TNEW
            Q(J)=QNEW
            QS(J)=QNEW
-          END IF     
-   38  CONTINUE  
+          END IF
+   38  CONTINUE
       END IF
 !
       END IF
 !
 !  *** CALCULATE ARRAYS OF GEOPOTENTIAL, HEAT CAPACITY AND STATIC ENERGY
-!  
+!
         GZ(1)=0.0
         CPN(1)=CPD*(1.-Q(1))+Q(1)*CPV
         H(1)=T(1)*CPN(1)
@@ -560,7 +560,7 @@ MODULE emanuel
 !   ***  SET THE PRECIPITATION EFFICIENCIES AND THE FRACTION OF   ***
 !   ***          PRECIPITATION FALLING OUTSIDE OF CLOUD           ***
 !   ***      THESE MAY BE FUNCTIONS OF TP(I), P(I) AND CLW(I)     ***
-!                 
+!
         DO 57 I=1,NK
          EP(I)=0.0
          SIGP(I)=SIGS
@@ -656,16 +656,16 @@ MODULE emanuel
 !
         DO 95 I=ICB,INB
          HP(I)=H(NK)+(LV(I)+(CPD-CPV)*T(I))*EP(I)*CLW(I)
-   95   CONTINUE                  
+   95   CONTINUE
 !
 !   ***  CALCULATE CLOUD BASE MASS FLUX AND RATES OF MIXING, M(I),  ***
 !   ***                   AT EACH MODEL LEVEL                       ***
 !
         DBOSUM=0.0
-!   
+!
 !   ***     INTERPOLATE DIFFERENCE BETWEEN LIFTED PARCEL AND      ***
 !   ***  ENVIRONMENTAL TEMPERATURES TO LIFTED CONDENSATION LEVEL  ***
-!	
+!
         TVPPLCL=TVP(ICB-1)-RD*TVP(ICB-1)*(P(ICB-1)-PLCL)/&
                 (CPN(ICB-1)*P(ICB-1))
         TVAPLCL=TV(ICB)+(TVP(ICB)-TVP(ICB+1))*(PLCL-P(ICB))/&
@@ -682,12 +682,12 @@ MODULE emanuel
 !
       !print *, 'CBMF: ', CBMF
       CBMFOLD=CBMF
-      DAMPS=DAMP*DELT/DELT0 
+      DAMPS=DAMP*DELT/DELT0
       !CBMF=(1.-DAMPS)*CBMF+0.1*ALPHA*DTMA
       !JOY testing
       !print *, 'Term 1: ', (1.-DAMPS)*CBMF
       !print *, 'Term 2: ', 0.1*ALPHA*DTMA
-      CBMF=(1.-DAMPS)*CBMF+0.1*ALPHA*DTMA 
+      CBMF=(1.-DAMPS)*CBMF+0.1*ALPHA*DTMA
       !print *, 'DELT: ', DELT
       CBMF=MAX(CBMF,0.0)
 !
@@ -709,11 +709,11 @@ MODULE emanuel
        M(I)=CBMF*DBO
   103 CONTINUE
       DO 110 I=ICB+1,INB
-       M(I)=M(I)/DBOSUM  
+       M(I)=M(I)/DBOSUM
   110 CONTINUE
-      do i=icb, inb
-        print *, i, M(i)
-      end do
+!      do i=icb, inb
+!        print *, i, M(i)
+!      end do
 !
 !   ***  CALCULATE ENTRAINED AIR MASS FLUX (MENT), TOTAL WATER MIXING  ***
 !   ***     RATIO (QENT), TOTAL CONDENSED WATER (ELIJ), AND MIXING     ***
@@ -771,7 +771,7 @@ MODULE emanuel
           END DO
           ELIJ(I,I)=CLW(I)
           SIJ(I,I)=1.0
-         END IF 
+         END IF
   170   CONTINUE
         SIJ(INB,INB)=1.0
 !
@@ -839,9 +839,9 @@ MODULE emanuel
         END IF
   200   CONTINUE
 
-        DO I=ICB+1, INB
-           print *, 'I=', I, ' MENT(I,I)=', MENT(I,I)
-        END DO
+!        DO I=ICB+1, INB
+!           print *, 'I=', I, ' MENT(I,I)=', MENT(I,I)
+!        END DO
 
 !
 !   ***  CHECK WHETHER EP(INB)=0, IF SO, SKIP PRECIPITATING    ***
@@ -870,13 +870,13 @@ MODULE emanuel
 !
 !    ***    FIND RAIN WATER AND EVAPORATION USING PROVISIONAL   ***
 !    ***              ESTIMATES OF QP(I)AND QP(I-1)             ***
-!     
+!
 !
 !  ***  Value of terminal velocity and coefficient of evaporation for snow   ***
-! 
+!
         COEFF=COEFFS
         WT(I)=OMTSNOW
-!      
+!
 !  ***  Value of terminal velocity and coefficient of evaporation for rain   ***
 !
         IF(T(I).GT.273.0)THEN
@@ -897,7 +897,7 @@ MODULE emanuel
 !
 !    ***  CALCULATE PRECIPITATING DOWNDRAFT MASS FLUX UNDER     ***
 !    ***              HYDROSTATIC APPROXIMATION                 ***
-!   
+!
         IF(I.EQ.1)GOTO 360
         DHDP=(H(I)-H(I-1))/(P(I-1)-P(I))
         DHDP=MAX(DHDP,10.0)
@@ -908,14 +908,14 @@ MODULE emanuel
 !
         FAC=20.0/(PH(I-1)-PH(I))
         MP(I)=(FAC*MP(I+1)+MP(I))/(1.+FAC)
-!   
+!
 !    ***      FORCE MP TO DECREASE LINEARLY TO ZERO                 ***
 !    ***      BETWEEN ABOUT 950 MB AND THE SURFACE                  ***
 !
           IF(P(I).GT.(0.949*P(1)))THEN
            JTT=MAX(JTT,I)
            MP(I)=MP(JTT)*(P(1)-P(I))/(P(1)-P(JTT))
-          END IF              
+          END IF
   360   CONTINUE
 !
 !    ***       FIND MIXING RATIO OF PRECIPITATING DOWNDRAFT     ***
@@ -1110,7 +1110,7 @@ MODULE emanuel
         UAV=0.0
         VAV=0.0
         DO 680 I=1,INB
-         ENTS=ENTS+(CPN(I)*FT(I)+LV(I)*FQ(I))*(PH(I)-PH(I+1))	
+         ENTS=ENTS+(CPN(I)*FT(I)+LV(I)*FQ(I))*(PH(I)-PH(I+1))
          UAV=UAV+FU(I)*(PH(I)-PH(I+1))
          VAV=VAV+FV(I)*(PH(I)-PH(I+1))
   680	CONTINUE
@@ -1133,9 +1133,9 @@ MODULE emanuel
   695    CONTINUE
   700	CONTINUE
 
-        DO I=1, ND
-           print *, 'I=', I, ' FT=', FT(I), ' FQ=', FQ(I)
-        END DO
+!        DO I=1, ND
+!           print *, 'I=', I, ' FT=', FT(I), ' FQ=', FQ(I)
+!        END DO
 !
 !   ***           RETURN           ***
 !
@@ -1186,7 +1186,7 @@ MODULE emanuel
 !
         NST=ICB
         NSB=ICB
-        IF(KK.EQ.2)THEN  
+        IF(KK.EQ.2)THEN
          NST=NL
          NSB=ICB+1
         END IF
@@ -1202,11 +1202,11 @@ MODULE emanuel
           TG=MAX(TG,35.0)
           TC=TG-273.15
           DENOM=243.5+TC
-          IF(TC.GE.0.0)THEN  
+          IF(TC.GE.0.0)THEN
            ES=6.112*EXP(17.67*TC/DENOM)
-          ELSE  
+          ELSE
            ES=EXP(23.33086-6111.72784/TG+0.15215*LOG(TG))
-          END IF  
+          END IF
           QG=EPS*ES/(P(I)-ES*(1.-EPS))
   200    CONTINUE
          TPK(I)=(AH0-(CL-CPD)*Q(NK)*T(I)-GZ(I)-ALV*QG)/CPD
