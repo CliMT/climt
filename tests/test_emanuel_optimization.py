@@ -13,7 +13,10 @@ def create_test_state(nlev, ncol, moisture_type='moist'):
     state = get_default_state([EmanuelConvection()], grid_state=grid)
     
     # Base temperature profile (isothermal)
-    state['air_temperature'].values[:] = 300.0
+    if hasattr(state['air_temperature'].values, "at"):
+        state['air_temperature'].data = state['air_temperature'].data.at[:].set(300.0)
+    else:
+        state['air_temperature'].values[:] = 300.0
     
     q = np.zeros_like(state['specific_humidity'].values)
     if moisture_type == 'moist':
@@ -24,11 +27,18 @@ def create_test_state(nlev, ncol, moisture_type='moist'):
         q[:] = 1e-6
     elif moisture_type == 'unstable':
         # Lapse rate that encourages instability
-        for i in range(nlev):
-            state['air_temperature'].values[i, :, :] = 310.0 - (i * 2.0)
+        if hasattr(state['air_temperature'].values, "at"):
+            for i in range(nlev):
+                state['air_temperature'].data = state['air_temperature'].data.at[i, :, :].set(310.0 - (i * 2.0))
+        else:
+            for i in range(nlev):
+                state['air_temperature'].values[i, :, :] = 310.0 - (i * 2.0)
         q[0:10, :, :] = 0.015
         
-    state['specific_humidity'].values[:] = q
+    if hasattr(state['specific_humidity'].values, "at"):
+        state['specific_humidity'].data = q
+    else:
+        state['specific_humidity'].values[:] = q
     return state
 
 @pytest.mark.parametrize("ncol", [1, 4])

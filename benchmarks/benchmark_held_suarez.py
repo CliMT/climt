@@ -1,73 +1,51 @@
-# -*- coding: utf-8 -*-
 import time
 import numpy as np
-from datetime import timedelta
+import climt
+from climt import HeldSuarez, get_grid, get_default_state
 import sympl
-from climt import get_grid, get_default_state, HeldSuarez, JaxBackend, UnytBackend
 
-try:
-    import jax
-    import jax.numpy as jnp
-    DEVICE = jax.devices()[0]
-    PLATFORM = DEVICE.platform.upper()
-    if PLATFORM == "METAL":
-        jax.config.update("jax_enable_x64", False)
-    else:
-        jax.config.update("jax_enable_x64", True)
-    HAS_JAX = True
-except ImportError:
-    HAS_JAX = False
-    PLATFORM = "NONE"
-
-def benchmark_held_suarez(ncol=1000, n_iter=100):
-    nlev = 30
-    print(f"\nBenchmarking Held-Suarez with {ncol} columns, {nlev} levels...")
-    print(f"JAX Platform: {PLATFORM}")
-
+def benchmark_held_suarez(ncol=8192, nlev=30, iterations=100):
     grid = get_grid(nx=ncol, ny=1, nz=nlev)
     hs = HeldSuarez()
-
-    # 1. Numba Performance (using UnytBackend)
-    unyt_backend = UnytBackend()
-    sympl.set_backend(unyt_backend)
-    # Re-call get_grid to ensure it uses the new backend if it creates quantities
-    grid = get_grid(nx=ncol, ny=1, nz=nlev)
-    state_unyt = get_default_state([hs], grid_state=grid)
     
-    # Warmup Numba
-    hs(state_unyt)
+    # NumPy/Numba path
+    sympl.set_backend(sympl.DataArrayBackend())
+    state = get_default_state([hs], grid_state=grid)
     
-    start = time.time()
-    for _ in range(n_iter):
-        hs(state_unyt)
-    numba_time = (time.time() - start) / float(n_iter)
-    print(f"V2 Numba JIT (Unyt CPU):    {numba_time:.6f} s per call")
+    # Set some non-zero winds and varied temperature
+    state['eastward_wind'].values[:] = 10.0
+    state['air_temperature'].values[:] = 300.0
+    
+    # Run once to JIT
+    hs(state)
+    
+    print(f"Benchmarking Held-Suarez with {ncol} columns, {iterations} iterations")
 
-    # 2. JAX JIT Performance
-    if HAS_JAX:
-        jax_backend = JaxBackend()
-        sympl.set_backend(jax_backend)
-        grid = get_grid(nx=ncol, ny=1, nz=nlev)
-        jax_state = get_default_state([hs], grid_state=grid)
-        
-        # Warmup JAX
-        hs(jax_state)
-        
-        start = time.time()
-        for _ in range(n_iter):
-            res_tend, _ = hs(jax_state)
-            # block_until_ready for accurate timing on GPU
-            res_tend['air_temperature'].values.block_until_ready()
-        jax_time = (time.time() - start) / float(n_iter)
-        print(f"V2 JAX JIT ({PLATFORM}):       {jax_time:.6f} s per call")
-    else:
-        jax_time = None
+    start = time.perf_counter()
+    for _ in range(iterations):
+        hs(state)
+    end = time.perf_counter()
+    print(f"Held-Suarez Numba: {end - start:.4f}s")
 
-    print("-" * 40)
-    if jax_time:
-        print(f"JAX ({PLATFORM}) is {numba_time/jax_time:.1f}x faster than Numba (Unyt CPU)")
+    # JAX path
+    try:
+        from climt import JaxBackend
+        import jax
+        jax.config.update("jax_enable_x64", True)
+        jax.config.update('jax_platform_name', 'cpu')
+        sympl.set_backend(JaxBackend())
+        state_jax = get_default_state([hs], grid_state=grid)
+        
+        # Run once to JIT
+        hs(state_jax)
+        
+        start = time.perf_counter()
+        for _ in range(iterations):
+            hs(state_jax)
+        end = time.perf_counter()
+        print(f"Held-Suarez JAX:   {end - start:.4f}s")
+    except ImportError:
+        print("JAX not available")
 
 if __name__ == "__main__":
-    benchmark_held_suarez(ncol=1000, n_iter=100)
-    benchmark_held_suarez(ncol=10000, n_iter=50)
-    benchmark_held_suarez(ncol=100000, n_iter=10)
+    benchmark_held_suarez()

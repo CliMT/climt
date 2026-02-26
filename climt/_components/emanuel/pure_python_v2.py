@@ -569,7 +569,7 @@ else:
     _tlift_functional_numba = _tlift_functional
     _convect_functional_numba = _convect_functional
 
-@jit_compile(backend=np, parallel=True)
+@jit_compile(backend=np)
 def _numpy_vectorized_convect(t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params, convect_func, tlift_func):
     nlev, ncol = t.shape
     

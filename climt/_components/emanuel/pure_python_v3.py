@@ -61,8 +61,10 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
         # Handle sympl (ncol, nlev) -> Emanuel (nlev, ncol)
         # Note: if array_call is called directly with (nlev, ncol) this might fail.
         # But sympl calls always provide (ncol, nlev).
+        transposed = False
         if t.shape[0] != ph.shape[0]-1: # Heuristic to detect if transpose is needed
              t = t.T; q = q.T; u = u.T; v = v.T; p = p.T; ph = ph.T
+             transposed = True
         
         nlev, ncol = t.shape; xp = get_array_namespace(t); from climt._core import bolton_q_sat
         qs = bolton_q_sat(t, p * 100, self.RD, self.RV); cbmf = state.get('cloud_base_mass_flux', xp.zeros(ncol)).copy()
@@ -80,7 +82,8 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
         
         ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results
         # Transpose back if we transposed in
-        ft = ft.T; fq = fq.T; fu = fu.T; fv = fv.T
+        if transposed:
+            ft = ft.T; fq = fq.T; fu = fu.T; fv = fv.T
         tendencies = {'air_temperature': ft, 'specific_humidity': fq, 'eastward_wind': fu, 'northward_wind': fv}
         diagnostics = {'convective_state': iflag, 'convective_precipitation_rate': precip, 'convective_downdraft_velocity_scale': wd, 'convective_downdraft_temperature_scale': tprime, 'convective_downdraft_specific_humidity_scale': qprime, 'cloud_base_mass_flux': cbmf_new, 'atmosphere_convective_available_potential_energy': outcape}
         diagnostics['air_temperature_tendency_from_convection'] = ft * 86400.0

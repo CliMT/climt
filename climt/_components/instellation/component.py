@@ -1,7 +1,7 @@
 from sympl import DiagnosticComponent
 import datetime
 import numpy as np
-
+from ..._core.backend import get_array_namespace, jit_compile, prange
 
 class Instellation(DiagnosticComponent):
     """
@@ -41,12 +41,24 @@ class Instellation(DiagnosticComponent):
                 state dictionary
 
         """
-        lat_radians = np.deg2rad(state["latitude"])
-        lon_radians = np.deg2rad(state["longitude"])
-        zen_angle = sun_zenith_angle(state["time"], lon=lon_radians, lat=lat_radians)
-        zen_angle[zen_angle > np.pi / 2] = np.pi / 2
-        zen_angle[zen_angle < -np.pi / 2] = -np.pi / 2
-        return {"zenith_angle": zen_angle}
+        lat = state["latitude"]
+        lon = state["longitude"]
+        xp = get_array_namespace(lat)
+        
+        # Flatten inputs
+        lat_flat = xp.reshape(lat, (-1,))
+        lon_flat = xp.reshape(lon, (-1,))
+        
+        # All time-based params are scalar for a single array_call
+        julian_centuries = days_from_2000(state["time"]) / 36525.0
+        fractional_day_val = fractional_day(state["time"])
+        
+        if xp is np:
+            zen_angle = _instellation_kernel_np(lat_flat, lon_flat, julian_centuries, fractional_day_val)
+        else:
+            zen_angle = _instellation_kernel_jax(lat_flat, lon_flat, julian_centuries, fractional_day_val)
+            
+        return {"zenith_angle": xp.reshape(zen_angle, lat.shape)}
 
 
 def days_from_2000(model_time):
@@ -62,48 +74,100 @@ def total_days(time_diff):
         time_diff.seconds + time_diff.microseconds / (1000000.0)
     ) / (24 * 3600.0)
 
+def fractional_day(dt):
+    day_start = type(dt)(dt.year, dt.month, dt.day)
+    return (dt - day_start).total_seconds() / (24.0 * 60.0 * 60.0)
 
-def greenwich_mean_sidereal_time(model_time):
-    """
-    Greenwich mean sidereal time, in radians.
+@jit_compile(backend=np, parallel=True)
+def _instellation_kernel_np(lat_deg, lon_deg, julian_centuries, frac_day):
+    ncol = lat_deg.size
+    zenith = np.zeros(ncol)
+    
+    # 1. Earth orbit params
+    eps = _obliquity_star_jit(julian_centuries)
+    eclon = _sun_ecliptic_longitude_jit(julian_centuries)
+    
+    # 2. Right ascension / declination
+    x = np.cos(eclon)
+    y = np.cos(eps) * np.sin(eclon)
+    z = np.sin(eps) * np.sin(eclon)
+    r = np.sqrt(1.0 - z * z)
+    declination = np.arctan2(z, r)
+    right_ascension = 2.0 * np.arctan2(y, (x + r))
+    
+    # 3. Greenwich sidereal time
+    gmst = _gmst_jit(julian_centuries)
+    
+    sin_lat = np.sin(np.deg2rad(lat_deg))
+    cos_lat = np.cos(np.deg2rad(lat_deg))
+    sin_dec = np.sin(declination)
+    cos_dec = np.cos(declination)
+    
+    pi2 = 2.0 * np.pi
+    deg_to_rad = np.pi / 180.0
+    
+    for i in prange(ncol):
+        lmst = gmst + lon_deg[i] * deg_to_rad
+        h_angle = lmst - right_ascension
+        
+        cos_mu = sin_lat[i] * sin_dec + cos_lat[i] * cos_dec * np.cos(h_angle)
+        
+        # Clamp cos_mu to [-1, 1]
+        if cos_mu > 1.0: cos_mu = 1.0
+        elif cos_mu < -1.0: cos_mu = -1.0
+        
+        z_angle = np.arccos(cos_mu)
+        
+        # Clamp zenith angle to [-PI/2, PI/2]
+        if z_angle > np.pi / 2.0: z_angle = np.pi / 2.0
+        elif z_angle < -np.pi / 2.0: z_angle = -np.pi / 2.0
+        
+        zenith[i] = z_angle
+        
+    return zenith
 
-    Reference:
-        The AIAA 2006 implementation:
-            http://www.celestrak.com/publications/AIAA/2006-6753/
-    """
-    jul_centuries = days_from_2000(model_time) / 36525.0
-    theta = 67310.54841 + jul_centuries * (
-        876600 * 3600
-        + 8640184.812866
-        + jul_centuries * (0.093104 - jul_centuries * 6.2 * 10e-6)
+def _instellation_kernel_jax(lat_deg, lon_deg, julian_centuries, frac_day):
+    import jax.numpy as jnp
+    
+    eps = _obliquity_star_jit(julian_centuries)
+    eclon = _sun_ecliptic_longitude_jit(julian_centuries)
+    
+    x = jnp.cos(eclon); y = jnp.cos(eps) * jnp.sin(eclon)
+    z = jnp.sin(eps) * jnp.sin(eclon); r = jnp.sqrt(1.0 - z * z)
+    declination = jnp.arctan2(z, r); right_ascension = 2.0 * jnp.arctan2(y, (x + r))
+    
+    gmst = _gmst_jit(julian_centuries)
+    
+    deg_to_rad = jnp.pi / 180.0
+    lat_rad = lat_deg * deg_to_rad
+    lon_rad = lon_deg * deg_to_rad
+    
+    lmst = gmst + lon_rad
+    h_angle = lmst - right_ascension
+    
+    cos_mu = jnp.sin(lat_rad) * jnp.sin(declination) + jnp.cos(lat_rad) * jnp.cos(declination) * jnp.cos(h_angle)
+    zenith = jnp.arccos(jnp.clip(cos_mu, -1.0, 1.0))
+    
+    return jnp.clip(zenith, -jnp.pi/2.0, jnp.pi/2.0)
+
+@jit_compile
+def _obliquity_star_jit(julian_centuries):
+    return np.deg2rad(
+        23.0
+        + 26.0 / 60
+        + 21.406 / 3600.0
+        - (
+            46.836769 * julian_centuries
+            - 0.0001831 * (julian_centuries**2)
+            + 0.00200340 * (julian_centuries**3)
+            - 0.576e-6 * (julian_centuries**4)
+            - 4.34e-8 * (julian_centuries**5)
+        )
+        / 3600.0
     )
 
-    theta_radians = np.deg2rad(theta / 240.0) % (2 * np.pi)
-
-    if theta_radians < 0:
-        theta_radians += 2 * np.pi
-
-    return theta_radians
-
-
-def local_mean_sidereal_time(model_time, longitude):
-    """
-    Local mean sidereal time. requires longitude in radians.
-    Ref:
-        http://www.setileague.org/askdr/lmst.htm
-    """
-    return greenwich_mean_sidereal_time(model_time) + longitude
-
-
-def sun_ecliptic_longitude(model_time):
-    """
-    Ecliptic longitude of the sun.
-
-    Reference:
-        http://www.geoastro.de/elevaz/basics/meeus.htm
-    """
-    julian_centuries = days_from_2000(model_time) / 36525.0
-
+@jit_compile
+def _sun_ecliptic_longitude_jit(julian_centuries):
     # mean anomaly calculation
     mean_anomaly = np.deg2rad(
         357.52910
@@ -127,91 +191,15 @@ def sun_ecliptic_longitude(model_time):
     # true longitude
     return mean_longitude + d_l
 
-
-def obliquity_star(julian_centuries):
-    """
-    return obliquity of the sun
-    Use 5th order equation from
-    https://en.wikipedia.org/wiki/Ecliptic#Obliquity_of_the_ecliptic
-    """
-    return np.deg2rad(
-        23.0
-        + 26.0 / 60
-        + 21.406 / 3600.0
-        - (
-            46.836769 * julian_centuries
-            - 0.0001831 * (julian_centuries**2)
-            + 0.00200340 * (julian_centuries**3)
-            - 0.576e-6 * (julian_centuries**4)
-            - 4.34e-8 * (julian_centuries**5)
-        )
-        / 3600.0
+@jit_compile
+def _gmst_jit(julian_centuries):
+    theta = 67310.54841 + julian_centuries * (
+        876600 * 3600
+        + 8640184.812866
+        + julian_centuries * (0.093104 - julian_centuries * 6.2 * 10e-6)
     )
-
-
-def right_ascension_declination(model_time):
-    """
-    Right ascension and declination of the sun.
-    Ref:
-        http://www.geoastro.de/elevaz/basics/meeus.htm
-    """
-    julian_centuries = days_from_2000(model_time) / 36525.0
-    eps = obliquity_star(julian_centuries)
-
-    eclon = sun_ecliptic_longitude(model_time)
-    x = np.cos(eclon)
-    y = np.cos(eps) * np.sin(eclon)
-    z = np.sin(eps) * np.sin(eclon)
-    r = np.sqrt(1.0 - z * z)
-    # sun declination
-    declination = np.arctan2(z, r)
-    # right ascension
-    right_ascension = 2 * np.arctan2(y, (x + r))
-    return right_ascension, declination
-
-
-def local_hour_angle(model_time, longitude, right_ascension):
-    """
-    Hour angle at model_time for the given longitude and right_ascension
-    longitude in radians
-
-    Ref:
-        https://en.wikipedia.org/wiki/Hour_angle#Relation_with_the_right_ascension
-    """
-    return local_mean_sidereal_time(model_time, longitude) - right_ascension
-
-
-def star_zenith_azimuth(model_time, lon, lat):
-    """
-    Return star Zenith and azimuth
-    lon,lat in radians
-    Ref:
-        Azimuth:
-            https://en.wikipedia.org/wiki/Solar_azimuth_angle#Formulas
-        Zenith:
-            https://en.wikipedia.org/wiki/Solar_zenith_angle
-
-    """
-
-    ra, dec = right_ascension_declination(model_time)
-    h_angle = local_hour_angle(model_time, lon, ra)
-
-    zenith = np.arccos(
-        np.sin(lat) * np.sin(dec) + np.cos(lat) * np.cos(dec) * np.cos(h_angle)
-    )
-
-    azimuth = np.arctan2(
-        -np.sin(h_angle), (np.cos(lat) * np.tan(dec) - np.sin(lat) * np.cos(h_angle))
-    )
-
-    return zenith, azimuth
-
-
-def sun_zenith_angle(model_time, lon, lat):
-    """
-    Sun-zenith angle for lon, lat at model_time.
-    lon,lat in radians.
-    The angle returned is in radians
-    """
-    zenith, azimuth = star_zenith_azimuth(model_time, lon, lat)
-    return zenith
+    theta_radians = np.deg2rad(theta / 240.0) % (2.0 * np.pi)
+    # Handle negative result of modulo
+    if theta_radians < 0:
+        theta_radians += 2.0 * np.pi
+    return theta_radians

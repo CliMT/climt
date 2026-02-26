@@ -25,7 +25,15 @@ class JaxTimeDelta(timedelta):
 
 class JaxStateContainer:
     def __init__(self, data, dims, units="dimensionless"):
-        self.data = jnp.array(data) if HAS_JAX else np.array(data)
+        if HAS_JAX:
+            # Only convert to JAX array if it's numeric
+            data_np = np.asarray(data)
+            if np.issubdtype(data_np.dtype, np.number) or np.issubdtype(data_np.dtype, np.bool_):
+                self.data = jnp.array(data)
+            else:
+                self.data = data_np
+        else:
+            self.data = np.array(data)
         self.dims = tuple(dims)
         self.units = units
 
@@ -48,11 +56,10 @@ class JaxStateContainer:
     def attrs(self): return {"units": self.units}
 
     def to_units(self, units):
-        # Placeholder: assume units are already correct or handle identity
         return self
 
     def _align_and_op(self, other, op_func):
-        if isinstance(other, JaxStateContainer):
+        if hasattr(other, "data") and hasattr(other, "dims"):
             if self.dims != other.dims:
                 other_indices = {dim: i for i, dim in enumerate(other.dims)}
                 perm = [other_indices[dim] for dim in self.dims]
@@ -87,25 +94,15 @@ class JaxBackend(StateBackend):
         if not HAS_JAX: raise ImportError("JAX is required for JaxBackend")
 
     def get_array(self, state_value, name, target_units, target_dims, dim_lengths):
-        # Extract the raw data from the container or tracer
-        if isinstance(state_value, JaxStateContainer):
-            data = state_value.data
-            current_dims = state_value.dims
-        elif hasattr(state_value, "data") and hasattr(state_value, "dims"):
-            # Handle generic containers that might be used by sympl internal
-            data = state_value.data
-            current_dims = state_value.dims
-        elif isinstance(state_value, (jax.Array, jnp.ndarray, np.ndarray)):
-            data = state_value
-            current_dims = target_dims # Default
-        else:
-            # Check if it's a JAX tracer by looking for __jax_array__
-            if hasattr(state_value, "__jax_array__"):
-                 data = state_value.__jax_array__()
-                 current_dims = target_dims
-            else:
-                 raise TypeError(f"Expected JaxStateContainer or array for '{name}', got {type(state_value)}")
+        data = getattr(state_value, "data", state_value)
+        current_dims = getattr(state_value, "dims", target_dims)
         
+        # Detect namespace for broadcasting/transposing
+        if isinstance(data, (np.ndarray, np.generic)):
+            xp = np
+        else:
+            xp = jnp
+            
         if current_dims == target_dims: return data
         
         src_indices = {dim: i for i, dim in enumerate(current_dims)}
@@ -118,17 +115,13 @@ class JaxBackend(StateBackend):
                 reshape_shape.append(aligned_data.shape[current_axis_idx]); current_axis_idx += 1
             else:
                 reshape_shape.append(1)
-        return jnp.broadcast_to(aligned_data.reshape(reshape_shape), tuple([dim_lengths[dim] for dim in target_dims]))
+        return xp.broadcast_to(aligned_data.reshape(reshape_shape), tuple([dim_lengths[dim] for dim in target_dims]))
 
     def create_quantity(self, data, name, units, dims, reference_state=None):
         return JaxStateContainer(data, dims, units)
 
     def get_dims(self, state_value):
-        if hasattr(state_value, "dims"): return state_value.dims
-        return None
+        return getattr(state_value, "dims", None)
 
     def get_shape(self, state_value):
-        if hasattr(state_value, "shape"): return state_value.shape
-        data = getattr(state_value, "data", state_value)
-        if hasattr(data, "shape"): return data.shape
-        return jnp.array(data).shape
+        return getattr(state_value, "shape", jnp.shape(state_value))

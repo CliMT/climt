@@ -2,7 +2,7 @@
 from sympl import TendencyComponent, get_constant
 import numpy as np
 from typing import NamedTuple
-from .._core.backend import get_array_namespace, jit_compile
+from .._core.backend import get_array_namespace, jit_compile, prange
 
 try:
     from numba import njit
@@ -57,13 +57,21 @@ def _held_suarez_kernel_np(u, v, t, p, ps, lat, params):
     # p, u, v, t are (ncol, nlev)
     ncol, nlev = u.shape
     tend_u = np.zeros(u.shape); tend_v = np.zeros(v.shape); tend_t = np.zeros(t.shape)
-    for i in range(ncol):
-        ps_val = ps[i]; lat_val = lat[i]; lat_rad = np.deg2rad(lat_val)
+    
+    deg_to_rad = np.pi / 180.0
+    
+    for i in prange(ncol):
+        ps_val = ps[i]; lat_val = lat[i]
+        lat_rad = lat_val * deg_to_rad
+        sin_lat_sq = np.sin(lat_rad)**2
+        cos_lat_sq = np.cos(lat_rad)**2
+        cos_lat_q = cos_lat_sq**2
+        
         for j in range(nlev):
             sigma = p[i, j] / ps_val; p_norm = p[i, j] / params.p0
-            Teq = max(200.0, (315.0 - params.delta_T_y * np.sin(lat_rad)**2 - params.delta_theta_z * np.log(p_norm) * np.cos(lat_rad)**2) * p_norm**params.kappa)
+            Teq = max(200.0, (315.0 - params.delta_T_y * sin_lat_sq - params.delta_theta_z * np.log(p_norm) * cos_lat_sq) * p_norm**params.kappa)
             sigma_fac = max(0.0, (sigma - params.sigma_b) / (1.0 - params.sigma_b))
-            k_t = params.k_a + (params.k_s - params.k_a) * sigma_fac * np.cos(lat_rad)**4
+            k_t = params.k_a + (params.k_s - params.k_a) * sigma_fac * cos_lat_q
             k_v = params.k_f * sigma_fac
             tend_u[i, j] = -k_v * u[i, j]; tend_v[i, j] = -k_v * v[i, j]; tend_t[i, j] = -k_t * (t[i, j] - Teq)
     return tend_u, tend_v, tend_t
