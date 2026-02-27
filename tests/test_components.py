@@ -22,7 +22,7 @@ from sympl import (
 )
 from sympl._core.tracers import reset_tracers, reset_packers
 from datetime import datetime, timedelta
-os.environ['NUMBA_DISABLE_JIT'] = '1'
+# os.environ['NUMBA_DISABLE_JIT'] = '1'
 
 vertical_dimension_names = [
     'interface_levels', 'mid_levels', 'full_levels']
