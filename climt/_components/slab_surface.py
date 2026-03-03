@@ -1,5 +1,5 @@
-from sympl import TendencyComponent, initialize_numpy_arrays_with_properties
 import numpy as np
+from sympl import TendencyComponent, initialize_numpy_arrays_with_properties
 
 
 class SlabSurface(TendencyComponent):
