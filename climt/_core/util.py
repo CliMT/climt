@@ -1,7 +1,7 @@
 import functools
 
 import numpy as np
-from sympl import DataArray, jit
+from sympl import DataArray  # pyright: ignore[reportMissingImports]
 
 
 def ensure_contiguous_state(func):
