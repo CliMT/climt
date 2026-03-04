@@ -18,6 +18,7 @@ from sympl import (
     TendencyStepper,
     TimeDifferencingWrapper,
     UpdateFrequencyWrapper,
+    set_backend,
 )
 from sympl._core.tracers import reset_packers, reset_tracers
 
@@ -42,6 +43,8 @@ from climt import (
     get_grid,
 )
 from climt._core.unyt_backend import UnytBackend, UnytStateContainer
+
+set_backend(UnytBackend())
 
 os.environ["NUMBA_DISABLE_JIT"] = "1"
 

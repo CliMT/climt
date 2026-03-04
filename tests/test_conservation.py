@@ -1,11 +1,17 @@
-from datetime import timedelta
-
 import numpy as np
 import unyt
-from sympl import AdamsBashforth, TendencyComponent, TendencyStepper, get_constant
+from sympl import (
+    AdamsBashforth,
+    TendencyComponent,
+    TendencyStepper,
+    get_constant,
+    set_backend,
+)
 
 import climt
-from climt import UnytTimeDelta
+from climt import UnytBackend, UnytTimeDelta
+
+set_backend(UnytBackend())
 
 
 class ConservationTestBase(object):
