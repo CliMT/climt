@@ -1,5 +1,5 @@
 from sympl import jit, DataArray
-from .backend import jit_compile, get_array_namespace
+from .backend import jit_compile
 import numpy as np
 import functools
 
@@ -175,8 +175,7 @@ def calculate_q_sat(surf_temp, surf_press, Rd, Rv):
 
 
 def bolton_q_sat(T, p, Rd, Rh2O):
-    xp = get_array_namespace(T, p)
-    es = 611.2 * xp.exp(17.67 * (T - 273.15) / (T - 29.65))
+    es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
     epsilon = Rd / Rh2O
     return epsilon * es / (p - (1 - epsilon) * es)
 

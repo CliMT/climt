@@ -2,7 +2,7 @@
 from sympl import TendencyComponent, get_constant
 import numpy as np
 from typing import NamedTuple
-from .._core.backend import get_array_namespace, jit_compile, prange
+from .._core.backend import jit_compile, prange
 
 try:
     from numba import njit
@@ -42,13 +42,9 @@ class HeldSuarez(TendencyComponent):
         self._params = HeldSuarezParams(sigma_b=float(self._sigma_b), k_f=float(self._k_f), k_a=float(self._k_a), k_s=float(self._k_s), delta_T_y=float(self._delta_T_y), delta_theta_z=float(self._delta_theta_z), p0=float(self._p0), kappa=float(self._kappa))
 
     def array_call(self, raw_state):
-        t = raw_state["air_temperature"]; xp = get_array_namespace(t)
+        t = raw_state["air_temperature"]
         u = raw_state["eastward_wind"]; v = raw_state["northward_wind"]; p = raw_state["air_pressure"]; ps = raw_state["surface_air_pressure"]; lat = raw_state["latitude"]
-        if xp is np:
-            tend_u, tend_v, tend_t = _held_suarez_kernel_np(u, v, t, p, ps, lat, self._params)
-        else:
-            import jax
-            tend_u, tend_v, tend_t = _held_suarez_kernel_jax(u, v, t, p, ps, lat, self._params)
+        tend_u, tend_v, tend_t = _held_suarez_kernel_np(u, v, t, p, ps, lat, self._params)
         return {"eastward_wind": tend_u, "northward_wind": tend_v, "air_temperature": tend_t}, {}
 
 @njit
@@ -76,11 +72,3 @@ def _held_suarez_kernel_np(u, v, t, p, ps, lat, params):
             tend_u[i, j] = -k_v * u[i, j]; tend_v[i, j] = -k_v * v[i, j]; tend_t[i, j] = -k_t * (t[i, j] - Teq)
     return tend_u, tend_v, tend_t
 
-def _held_suarez_kernel_jax(u, v, t, p, ps, lat, params):
-    import jax.numpy as jnp
-    ps_expanded = jnp.expand_dims(ps, -1); lat_expanded = jnp.expand_dims(lat, -1)
-    sigma = p / ps_expanded; lat_rad = jnp.deg2rad(lat_expanded); p_norm = p / params.p0
-    Teq = jnp.maximum(200.0, (315.0 - params.delta_T_y * jnp.sin(lat_rad)**2 - params.delta_theta_z * jnp.log(p_norm) * jnp.cos(lat_rad)**2) * p_norm**params.kappa)
-    sigma_fac = jnp.maximum(0.0, (sigma - params.sigma_b) / (1.0 - params.sigma_b))
-    k_t = params.k_a + (params.k_s - params.k_a) * sigma_fac * jnp.cos(lat_rad)**4; k_v = params.k_f * sigma_fac
-    return -k_v * u, -k_v * v, -k_t * (t - Teq)

@@ -1,7 +1,7 @@
 from sympl import DiagnosticComponent
 import datetime
 import numpy as np
-from ..._core.backend import get_array_namespace, jit_compile, prange
+from ..._core.backend import jit_compile, prange
 
 class Instellation(DiagnosticComponent):
     """
@@ -43,22 +43,18 @@ class Instellation(DiagnosticComponent):
         """
         lat = state["latitude"]
         lon = state["longitude"]
-        xp = get_array_namespace(lat)
-        
+
         # Flatten inputs
-        lat_flat = xp.reshape(lat, (-1,))
-        lon_flat = xp.reshape(lon, (-1,))
-        
+        lat_flat = np.reshape(lat, (-1,))
+        lon_flat = np.reshape(lon, (-1,))
+
         # All time-based params are scalar for a single array_call
         julian_centuries = days_from_2000(state["time"]) / 36525.0
         fractional_day_val = fractional_day(state["time"])
-        
-        if xp is np:
-            zen_angle = _instellation_kernel_np(lat_flat, lon_flat, julian_centuries, fractional_day_val)
-        else:
-            zen_angle = _instellation_kernel_jax(lat_flat, lon_flat, julian_centuries, fractional_day_val)
-            
-        return {"zenith_angle": xp.reshape(zen_angle, lat.shape)}
+
+        zen_angle = _instellation_kernel_np(lat_flat, lon_flat, julian_centuries, fractional_day_val)
+
+        return {"zenith_angle": np.reshape(zen_angle, lat.shape)}
 
 
 def days_from_2000(model_time):
@@ -126,29 +122,6 @@ def _instellation_kernel_np(lat_deg, lon_deg, julian_centuries, frac_day):
         
     return zenith
 
-def _instellation_kernel_jax(lat_deg, lon_deg, julian_centuries, frac_day):
-    import jax.numpy as jnp
-    
-    eps = _obliquity_star_jit(julian_centuries)
-    eclon = _sun_ecliptic_longitude_jit(julian_centuries)
-    
-    x = jnp.cos(eclon); y = jnp.cos(eps) * jnp.sin(eclon)
-    z = jnp.sin(eps) * jnp.sin(eclon); r = jnp.sqrt(1.0 - z * z)
-    declination = jnp.arctan2(z, r); right_ascension = 2.0 * jnp.arctan2(y, (x + r))
-    
-    gmst = _gmst_jit(julian_centuries)
-    
-    deg_to_rad = jnp.pi / 180.0
-    lat_rad = lat_deg * deg_to_rad
-    lon_rad = lon_deg * deg_to_rad
-    
-    lmst = gmst + lon_rad
-    h_angle = lmst - right_ascension
-    
-    cos_mu = jnp.sin(lat_rad) * jnp.sin(declination) + jnp.cos(lat_rad) * jnp.cos(declination) * jnp.cos(h_angle)
-    zenith = jnp.arccos(jnp.clip(cos_mu, -1.0, 1.0))
-    
-    return jnp.clip(zenith, -jnp.pi/2.0, jnp.pi/2.0)
 
 @jit_compile
 def _obliquity_star_jit(julian_centuries):

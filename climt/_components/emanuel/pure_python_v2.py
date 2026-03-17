@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from typing import NamedTuple
-from ..._core.backend import get_array_namespace, set_item, jit_compile, vectorize_component, prange
+from ..._core.backend import jit_compile, prange
+
+
+def set_item(arr, idx, val):
+    arr[idx] = val
+    return arr
 
 try:
     from numba import njit
@@ -93,31 +98,20 @@ class EmanuelConvectionPythonV2(object):
         ph = state['air_pressure_on_interface_levels']
 
         nlev, ncol = t.shape
-        xp = get_array_namespace(t)
 
         from climt._core import bolton_q_sat
         qs = bolton_q_sat(t, p * 100, self.RD, self.RV)
 
-        cbmf = state.get('cloud_base_mass_flux', xp.zeros(ncol)).copy()
-        ntra = 0; tra = xp.zeros((nlev, 1)); delt = timestep.total_seconds()
+        cbmf = state.get('cloud_base_mass_flux', np.zeros(ncol)).copy()
+        ntra = 0; tra = np.zeros((nlev, 1)); delt = timestep.total_seconds()
 
         # Call vectorized function
-        tra_vector = xp.broadcast_to(tra[:, :, xp.newaxis], (nlev, 1, ncol))
+        tra_vector = np.broadcast_to(tra[:, :, np.newaxis], (nlev, 1, ncol))
 
-        if xp is np:
-            # Use explicitly compiled numba versions
-            results = _numpy_vectorized_convect(
-                t, q, qs, u, v, p, ph, nlev, nlev-3, ntra, delt, cbmf, tra_vector, self._params,
-                _convect_functional_numba, _tlift_functional_numba
-            )
-        else:
-            # JAX path - use plain Python functions
-            def jax_column_wrapper(T, Q, QS, U, V, P, PH, CBMF, TRA):
-                return _convect_functional(xp, _tlift_functional, T, Q, QS, U, V, P, PH, nlev, nlev-3, ntra, delt, CBMF, TRA, self._params)
-            
-            # Disable JIT/vmap for JAX for now to allow Python branches
-            vectorized_convect = vectorize_component(jax_column_wrapper, backend=xp, jit=False)
-            results = vectorized_convect(t, q, qs, u, v, p, ph, cbmf, tra_vector)
+        results = _numpy_vectorized_convect(
+            t, q, qs, u, v, p, ph, nlev, nlev-3, ntra, delt, cbmf, tra_vector, self._params,
+            _convect_functional_numba, _tlift_functional_numba
+        )
         
         ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results
 
