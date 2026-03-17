@@ -1,7 +1,7 @@
 from sympl import DiagnosticComponent, get_constant
 import logging
 import numpy as np
-from .._core.backend import get_array_namespace, jit_compile, prange
+from .._core.backend import jit_compile, prange
 
 try:
     from ._berger_solar_insolation import get_solar_parameters, get_orbital_parameters
@@ -242,103 +242,87 @@ class BergerSolarInsolation(DiagnosticComponent):
         solar_constant = get_constant("stellar_irradiance", "W/m^2")
         lat = state["latitude"]
         lon = state["longitude"]
-        xp = get_array_namespace(lat)
-        
+
         # Flatten inputs
-        lat_flat = xp.reshape(lat, (-1,))
-        lon_flat = xp.reshape(lon, (-1,))
-        
+        lat_flat = np.reshape(lat, (-1,))
+        lon_flat = np.reshape(lon, (-1,))
+
         solar_insolation, solar_zenith_angle, obliquity, eccentricity, rho = (
             self._driver(
-                state["time"], lat_flat, lon_flat, solar_constant, xp
+                state["time"], lat_flat, lon_flat, solar_constant
             )
         )
         return {
-            "solar_insolation": xp.reshape(solar_insolation, lat.shape),
-            "solar_zenith_angle": xp.reshape(solar_zenith_angle, lat.shape),
+            "solar_insolation": np.reshape(solar_insolation, lat.shape),
+            "solar_zenith_angle": np.reshape(solar_zenith_angle, lat.shape),
             "obliquity": obliquity,
             "eccentricity": eccentricity,
             "normalized_earth_sun_distance": rho,
         }
 
-    def _driver(self, time, lat, lon, solar_constant, xp):
-        # We can compute orbital parameters yearly because they change very
-        # slowly
+    def _driver(self, time, lat, lon, solar_constant):
         year = time.year
         if year not in self._orbital_parameters:
-            self._orbital_parameters[year] = _get_orbital_parameters_functional(float(year - 1950), xp)
+            self._orbital_parameters[year] = _get_orbital_parameters_functional(float(year - 1950))
         lambda_m0, eccentricity, omega_tilde, obliquity = self._orbital_parameters[year]
-        
-        if xp is np:
-            return _get_solar_parameters_np(
-                lambda_m0,
-                eccentricity,
-                omega_tilde,
-                obliquity,
-                years_since_vernal_equinox(time),
-                fractional_day(time),
-                lat,
-                lon,
-                solar_constant,
-            )
-        else:
-            return _get_solar_parameters_jax(
-                lambda_m0,
-                eccentricity,
-                omega_tilde,
-                obliquity,
-                years_since_vernal_equinox(time),
-                fractional_day(time),
-                lat,
-                lon,
-                solar_constant,
-            )
 
-def _get_orbital_parameters_functional(years_since_jan_1_1950, xp):
+        return _get_solar_parameters_np(
+            lambda_m0,
+            eccentricity,
+            omega_tilde,
+            obliquity,
+            years_since_vernal_equinox(time),
+            fractional_day(time),
+            lat,
+            lon,
+            solar_constant,
+        )
+
+def _get_orbital_parameters_functional(years_since_jan_1_1950):
     t = years_since_jan_1_1950
     # Equation 1
     obliquity = 23.320556
-    obliquity += xp.sum(A * arcsec_to_degree * xp.cos((f * arcsec_to_degree * t + delta) * np.pi/180.))
+    obliquity += np.sum(A * arcsec_to_degree * np.cos((f * arcsec_to_degree * t + delta) * np.pi/180.))
     obliquity = obliquity * np.pi/180.
-    
+
     # Equations 2-3
-    cos_sum = xp.sum(P * xp.cos((alpha * arcsec_to_degree * t + zeta) * np.pi/180.))
-    sin_sum = xp.sum(P * xp.sin((alpha * arcsec_to_degree * t + zeta) * np.pi/180.))
-    
+    # zeta is in radians (from CAM 3.0 shr_orb_mod.f90), not degrees —
+    # do NOT apply the * pi/180 degree conversion here.
+    cos_sum = np.sum(P * np.cos(alpha * arcsec_to_degree * t + zeta))
+    sin_sum = np.sum(P * np.sin(alpha * arcsec_to_degree * t + zeta))
+
     eccentricity_squared = cos_sum*cos_sum + sin_sum*sin_sum
-    eccentricity = xp.sqrt(eccentricity_squared)
+    eccentricity = np.sqrt(eccentricity_squared)
     eccentricity_cubed = eccentricity*eccentricity_squared
-    
+
     # Equation 4
-    pi_val = _get_fixed_vernal_equinox_longitude_of_perihelion(cos_sum, sin_sum, xp)
-    
+    pi_val = _get_fixed_vernal_equinox_longitude_of_perihelion(cos_sum, sin_sum)
+
     # Equation 6
     omega_tilde = (
         pi_val * 180./np.pi +
         50.439273*arcsec_to_degree*t +
         3.392506
     )
-    omega_tilde += xp.sum(F * xp.sin((f_prime * arcsec_to_degree * t + delta_prime) * np.pi/180.))
-    
-    # In JAX/NumPy, we can use modulo instead of while loops
+    omega_tilde += np.sum(F * np.sin((f_prime * arcsec_to_degree * t + delta_prime) * np.pi/180.))
+
     omega_tilde = omega_tilde % 360.0
     omega_tilde = omega_tilde * np.pi/180.
 
-    beta = xp.sqrt(1.0 - eccentricity_squared)
+    beta = np.sqrt(1.0 - eccentricity_squared)
 
     # Bullet points 1-4 on page 2365
     lambda_m0 = 2.*(
-        (0.5*eccentricity + 0.125*eccentricity_cubed)*(1. + beta)*xp.sin(omega_tilde + np.pi) -
-        0.25*eccentricity_squared*(0.5 + beta)*xp.sin(2*(omega_tilde + np.pi)) +
-        0.125*eccentricity_cubed*(1./3. + beta)*xp.sin(3*(omega_tilde + np.pi))
+        (0.5*eccentricity + 0.125*eccentricity_cubed)*(1. + beta)*np.sin(omega_tilde + np.pi) -
+        0.25*eccentricity_squared*(0.5 + beta)*np.sin(2*(omega_tilde + np.pi)) +
+        0.125*eccentricity_cubed*(1./3. + beta)*np.sin(3*(omega_tilde + np.pi))
     )
     return lambda_m0, eccentricity, omega_tilde, obliquity
 
-def _get_fixed_vernal_equinox_longitude_of_perihelion(cos_sum, sin_sum, xp):
-    # Using xp.where for JAX compatibility
-    pi_val = xp.arctan2(sin_sum, cos_sum)
-    # Ensure it's in 0 to 2*PI range
-    pi_val = xp.where(pi_val < 0, pi_val + 2.0*np.pi, pi_val)
+def _get_fixed_vernal_equinox_longitude_of_perihelion(cos_sum, sin_sum):
+    pi_val = np.arctan2(sin_sum, cos_sum)
+    if pi_val < 0:
+        pi_val += 2.0*np.pi
     return pi_val
 
 @jit_compile(backend=np, parallel=True)
@@ -377,36 +361,6 @@ def _get_solar_parameters_np(
         
     return solar_insolation, solar_zenith_angle, obliquity, eccentricity, rho
 
-def _get_solar_parameters_jax(
-        lambda_m0, eccentricity, omega_tilde, obliquity,
-        years_since_vernal_equinox, fractional_day,
-        lat, lon, solar_constant):
-    import jax.numpy as jnp
-    
-    eccentricity_squared = eccentricity*eccentricity
-    lambda_m = lambda_m0 + years_since_vernal_equinox*2.*np.pi
-    temp = lambda_m - (omega_tilde + np.pi)
-    sin_temp = jnp.sin(temp)
-    lmbda = lambda_m + eccentricity*(
-        2.*sin_temp + eccentricity*(
-            1.25*jnp.sin(2*temp) + eccentricity * (
-                (13./12.)*jnp.sin(3*temp) - 0.25*sin_temp)))
-    inverse_rho = (
-        (1 + eccentricity*jnp.cos(lmbda - (omega_tilde + np.pi))) / (
-        1 - eccentricity_squared))
-    rho = 1./inverse_rho
-    inverse_rho_squared = inverse_rho*inverse_rho
-    solar_declination_angle = jnp.arcsin(jnp.sin(obliquity)*jnp.sin(lmbda))
-    
-    sin_delta = jnp.sin(solar_declination_angle)
-    cos_delta = jnp.cos(solar_declination_angle)
-    
-    H = 2*np.pi*(fractional_day + lon/360.0)
-    cos_mu = jnp.sin(lat)*sin_delta - jnp.cos(lat)*cos_delta*jnp.cos(H)
-    solar_zenith_angle = jnp.arccos(cos_mu)
-    solar_insolation = solar_constant * inverse_rho_squared * cos_mu
-        
-    return solar_insolation, solar_zenith_angle, obliquity, eccentricity, rho
 
 def years_since_vernal_equinox(dt):
     """Fractional years since last March 20, noon UTC (assumed time of

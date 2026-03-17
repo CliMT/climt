@@ -436,6 +436,38 @@ class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return SlabSurface()
 
+    def test_column_stepping_output_matches_cached_output(self):
+        component = self.get_component_instance()
+        if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
+            component = AdamsBashforth(self.get_component_instance())
+            state = self.get_1d_input_state(component)
+            state["surface_material_density"].values[:] = state["sea_water_density"]
+            output = call_with_timestep_if_needed(component, state)
+            cached_output = self.get_cached_output("column_stepping")
+            if cached_output is None:
+                self.cache_output(output, "column_stepping")
+                raise AssertionError(
+                    "Failed due to no cached output, cached current output."
+                )
+            else:
+                compare_outputs(output, cached_output)
+
+    def test_3d_stepping_output_matches_cached_output(self):
+        component = self.get_component_instance()
+        if isinstance(component, (TendencyComponent, ImplicitTendencyComponent)):
+            component = AdamsBashforth(component)
+            state = self.get_3d_input_state(component)
+            state["surface_material_density"].values[:] = state["sea_water_density"]
+            output = call_with_timestep_if_needed(component, state)
+            cached_output = self.get_cached_output("3d_stepping")
+            if cached_output is None:
+                self.cache_output(output, "3d_stepping")
+                raise AssertionError(
+                    "Failed due to no cached output, cached current output."
+                )
+            else:
+                compare_outputs(output, cached_output)
+
 
 class TestBucketHydrology(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
