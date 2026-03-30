@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import numpy as np
 import unyt
 from sympl import StateBackend
@@ -126,6 +128,12 @@ class UnytStateContainer:
         return np.asarray(self.data, dtype=dtype)
 
     __array_priority__ = 100.0
+
+    def copy(self, deep=False):
+        if deep:
+            return UnytStateContainer(deepcopy(self.data), self.dims)
+        else:
+            return UnytStateContainer(self.data.copy(), self.dims)
 
     @property
     def shape(self):

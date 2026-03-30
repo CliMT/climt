@@ -1,9 +1,21 @@
-from sympl import TendencyComponent, DiagnosticComponent, get_constant
+# -*- coding: utf-8 -*-
 import numpy as np
+from sympl import DiagnosticComponent, TendencyComponent, get_constant
+
+from .._core.backend import prange
+
+try:
+    from numba import njit
+
+    HAS_NUMBA = True
+except ImportError:
+    HAS_NUMBA = False
+
+    def njit(x, **kwargs):
+        return x
 
 
 class GrayLongwaveRadiation(TendencyComponent):
-
     input_properties = {
         "longwave_optical_depth_on_interface_levels": {
             "dims": ["interface_levels", "*"],
@@ -51,45 +63,61 @@ class GrayLongwaveRadiation(TendencyComponent):
     }
 
     def array_call(self, state):
-        downward_flux, upward_flux, net_lw_flux, lw_temperature_tendency, tau = (
-            get_longwave_fluxes(
-                state["sl"],
-                state["p_interface"],
-                state["T_surface"],
-                state["tau"],
-                get_constant("stefan_boltzmann_constant", "W/m^2/K^4"),
-                get_constant("gravitational_acceleration", "m/s^2"),
-                get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K"),
-            )
+        t = getattr(state["sl"], "data", state["sl"])
+        tau = getattr(state["tau"], "data", state["tau"])
+        t_surf = getattr(state["T_surface"], "data", state["T_surface"])
+        p_int = getattr(state["p_interface"], "data", state["p_interface"])
+
+        orig_shape_t = t.shape
+        orig_shape_p_int = p_int.shape
+
+        t_flat = np.reshape(t, (t.shape[0], -1))
+        tau_flat = np.reshape(tau, (tau.shape[0], -1))
+        t_surf_flat = np.reshape(t_surf, (-1,))
+        p_int_flat = np.reshape(p_int, (p_int.shape[0], -1))
+
+        sigma_sb = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
+        g = get_constant("gravitational_acceleration", "m/s^2")
+        cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
+
+        t_flat = np.asarray(t_flat)
+        tau_flat = np.asarray(tau_flat)
+        t_surf_flat = np.asarray(t_surf_flat)
+        p_int_flat = np.asarray(p_int_flat)
+        downward_flux, upward_flux = _gray_lw_kernel_np(
+            t_flat, p_int_flat, t_surf_flat, tau_flat, sigma_sb
         )
-        tendencies = {
-            "sl": lw_temperature_tendency,
-        }
-        diagnostics = {
+
+        # Compute tendency in numpy so that float32 fluxes are upcast to float64
+        # (matching the original pure-Python implementation's output dtype).
+        net_lw_flux = upward_flux - downward_flux
+        lw_temperature_tendency = (
+            g
+            / cpd
+            * (net_lw_flux[1:, :] - net_lw_flux[:-1, :])
+            / (p_int_flat[1:, :] - p_int_flat[:-1, :])
+        )
+
+        downward_flux = np.reshape(downward_flux, orig_shape_p_int)
+        upward_flux = np.reshape(upward_flux, orig_shape_p_int)
+        lw_temperature_tendency = np.reshape(lw_temperature_tendency, orig_shape_t)
+
+        return {"sl": lw_temperature_tendency}, {
             "lw_down": downward_flux,
             "lw_up": upward_flux,
             "longwave_heating_rate": lw_temperature_tendency * 86400.0,
         }
-        return tendencies, diagnostics
 
 
 class Frierson06LongwaveOpticalDepth(DiagnosticComponent):
-
     input_properties = {
         "air_pressure_on_interface_levels": {
             "dims": ["interface_levels", "*"],
             "units": "Pa",
         },
-        "surface_air_pressure": {
-            "dims": ["*"],
-            "units": "Pa",
-        },
-        "latitude": {
-            "dims": ["*"],
-            "units": "degrees_N",
-        },
+        "surface_air_pressure": {"dims": ["*"], "units": "Pa"},
+        "latitude": {"dims": ["*"], "units": "degrees_N"},
     }
-
     diagnostic_properties = {
         "longwave_optical_depth_on_interface_levels": {
             "dims": ["interface_levels", "*"],
@@ -102,113 +130,77 @@ class Frierson06LongwaveOpticalDepth(DiagnosticComponent):
         linear_optical_depth_parameter=0.1,
         longwave_optical_depth_at_equator=6,
         longwave_optical_depth_at_poles=1.5,
-        **kwargs
+        **kwargs,
     ):
-        """
-        Args:
-
-            linear_optical_depth_parameter (float, optional): The constant :math:`f_l` which
-                determines how much of the variation of :math:`\\tau` with pressure
-                is linear rather than quartic.
-                :math:`\\tau = \\tau_0 [f_l \\frac{p}{p_s} + (1 - f_l) (\\frac{p}{p_s})^4]`
-                Default is 0.1 as in `[Frierson et al., 2006]`_.
-
-            longwave_optical_depth_at_equator (float, optional): The value of :math:`\\tau_0`
-                at the equator.
-                Default is 6 as in `[Frierson et al., 2006]`_.
-
-            longwave_optical_depth_at_poles (float, optional): The value of :math:`\\tau_0`
-                at the poles.
-                Default is 1.5 as in `[Frierson et al., 2006]`_.
-
-        .. _[Frierson et al., 2006]:
-            http://journals.ametsoc.org/doi/abs/10.1175/JAS3753.1
-
-        """
         self._fl = linear_optical_depth_parameter
         self._tau0e = longwave_optical_depth_at_equator
         self._tau0p = longwave_optical_depth_at_poles
         super(Frierson06LongwaveOpticalDepth, self).__init__(**kwargs)
 
     def array_call(self, state):
+        p_int = state["air_pressure_on_interface_levels"]
+        ps = getattr(
+            state["surface_air_pressure"], "data", state["surface_air_pressure"]
+        )
+        lat = getattr(state["latitude"], "data", state["latitude"])
+        p_int_raw = getattr(p_int, "data", p_int)
+        orig_shape = p_int_raw.shape
+        p_int_flat = np.reshape(p_int_raw, (p_int_raw.shape[0], -1))
+        ps_flat = np.reshape(ps, (-1,))
+        lat_flat = np.reshape(lat, (-1,))
+        p_int_flat = np.asarray(p_int_flat)
+        ps_flat = np.asarray(ps_flat)
+        lat_flat = np.asarray(lat_flat)
+        tau = _frierson_tau_kernel_np(
+            lat_flat, p_int_flat, ps_flat, self._tau0e, self._tau0p, self._fl
+        )
         return {
-            "longwave_optical_depth_on_interface_levels": get_frierson_06_tau(
-                state["latitude"],
-                state["air_pressure_on_interface_levels"]
-                / state["surface_air_pressure"][None, :],
-                self._tau0e,
-                self._tau0p,
-                self._fl,
-            )
+            "longwave_optical_depth_on_interface_levels": np.reshape(tau, orig_shape)
         }
 
 
-# @jit(nopython=True)
-def integrate_upward_longwave(T, T_surface, tau, sigma):
-    """
-    Args:
-        T: 3D x-y-z air temperature array in Kelvin where z starts at the
-            bottom, and z is on mid levels.
-        T_surface: 2D x-y surface temperature array in Kelvin
-        tau: 3D x-y-z optical depth array where z starts at the bottom, and z
-            is on interface levels.
-        sigma: Stefann-Boltzmann constant
+@njit
+def _gray_lw_kernel_np(T, p_interface, T_surface, tau, sigma):
+    nlev, ncol = T.shape
+    upward_flux = np.zeros((nlev + 1, ncol))
+    downward_flux = np.zeros((nlev + 1, ncol))
 
-    Returns:
-        upward_flux: 3D x-y-z longwave radiative flux array where z starts
-            at the bottom, and z is on interface levels. Positive means
-            upward.
-    """
-    upward_flux = np.zeros((T.shape[0] + 1, T.shape[1]), dtype=np.float32)
-    upward_flux[0, :] = sigma * T_surface**4
-    for k in range(1, T.shape[0] + 1):
-        dtau = tau[k, :] - tau[k - 1, :]
-        upward_flux[k, :] = upward_flux[k - 1, :] * np.exp(-dtau) + sigma * T[
-            k - 1, :
-        ] ** 4 * (1.0 - np.exp(-dtau))
-    return upward_flux
+    # Pre-calculate sigma * T**4
+    T4 = sigma * T**4
 
+    for i in prange(ncol):
+        # Upward flux (surface to TOA)
+        upward_flux[0, i] = sigma * T_surface[i] ** 4
+        for k in range(1, nlev + 1):
+            dtau = tau[k, i] - tau[k - 1, i]
+            trans = np.exp(-dtau)
+            upward_flux[k, i] = upward_flux[k - 1, i] * trans + T4[k - 1, i] * (
+                1.0 - trans
+            )
 
-# @jit(nopython=True)
-def integrate_downward_longwave(T, tau, sigma):
-    """
-    Args:
-        T: 3D x-y-z air temperature array in Kelvin where z starts at the
-            bottom, and z is on mid levels.
-        tau: 3D x-y-z optical depth array where z starts at the bottom, and z
-            is on interface levels.
-        sigma: Stefann-Boltzmann constant
+        # Downward flux (TOA to surface)
+        downward_flux[nlev, i] = 0.0
+        for k in range(nlev - 1, -1, -1):
+            dtau = tau[k + 1, i] - tau[k, i]
+            trans = np.exp(-dtau)
+            downward_flux[k, i] = downward_flux[k + 1, i] * trans + T4[k, i] * (
+                1.0 - trans
+            )
 
-    Returns:
-        downward_flux: 3D x-y-z longwave radiative flux array where z starts
-            at the bottom, and z is on interface levels (interfaces). Positive means
-            downward.
-    """
-    downward_flux = np.zeros((T.shape[0] + 1, T.shape[1]), dtype=np.float32)
-    for k in range(T.shape[0] - 1, -1, -1):
-        dtau = tau[k + 1, :] - tau[k, :]
-        downward_flux[k, :] = downward_flux[k + 1, :] * np.exp(-dtau) + sigma * T[
-            k, :
-        ] ** 4 * (1 - np.exp(-dtau))
-    return downward_flux
+    return downward_flux, upward_flux
 
 
-# @jit(nopython=True)
-def get_longwave_fluxes(T, p_interface, T_surface, tau, sigma, g, Cpd):
-    upward_flux = integrate_upward_longwave(T, T_surface, tau, sigma)
-    downward_flux = integrate_downward_longwave(T, tau, sigma)
-    net_lw_flux = upward_flux - downward_flux
-    longwave_temperature_tendency = (
-        g
-        / Cpd
-        * (net_lw_flux[1:, :] - net_lw_flux[:-1, :])
-        / (p_interface[1:, :] - p_interface[:-1, :])
-    )
-    return (downward_flux, upward_flux, net_lw_flux, longwave_temperature_tendency, tau)
+@njit
+def _frierson_tau_kernel_np(latitude, p_interface, ps, tau0e, tau0p, fl):
+    nlev_plus_1, ncol = p_interface.shape
+    tau = np.zeros((nlev_plus_1, ncol))
+    deg_to_rad = np.pi / 180.0
 
-
-# @jit(nopython=True)
-def get_frierson_06_tau(latitude, sigma, tau0e, tau0p, fl):
-    tau_0 = tau0e + (tau0p - tau0e) * np.sin(latitude * np.pi / 180.0) ** 2
-    tau = tau_0 * (1 - (fl * sigma + (1 - fl) * sigma**4))
+    for i in prange(ncol):
+        lat_rad = latitude[i] * deg_to_rad
+        tau_0 = tau0e + (tau0p - tau0e) * np.sin(lat_rad) ** 2
+        ps_val = ps[i]
+        for k in range(nlev_plus_1):
+            sigma = p_interface[k, i] / ps_val
+            tau[k, i] = tau_0 * (1.0 - (fl * sigma + (1.0 - fl) * sigma**4))
     return tau

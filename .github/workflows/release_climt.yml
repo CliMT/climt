@@ -31,7 +31,7 @@ jobs:
 
             - name: Build on Linux
               env:
-                  CIBW_BUILD: cp39-* cp310-* cp311-* cp312-*
+                  CIBW_BUILD: cp310-* cp311-* cp312-*
                   CIBW_SKIP: "*-musllinux_*"
                   CIBW_ARCHS_LINUX: "x86_64"
                   CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
@@ -40,7 +40,7 @@ jobs:
 
             - name: Build on macOS
               env:
-                  CIBW_BUILD: cp39-* cp310-* cp311-* cp312-*
+                  CIBW_BUILD: cp310-* cp311-* cp312-*
                   CIBW_ARCHS_MACOS: "arm64"
                   CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin MACOSX_DEPLOYMENT_TARGET=15.0"
               if: ${{ runner.os == 'macOS' }}
