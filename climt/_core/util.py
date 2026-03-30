@@ -3,6 +3,9 @@ from .backend import jit_compile
 import numpy as np
 import functools
 
+import numpy as np
+from sympl import DataArray  # pyright: ignore[reportMissingImports]
+
 
 def ensure_contiguous_state(func):
     @functools.wraps(func)
