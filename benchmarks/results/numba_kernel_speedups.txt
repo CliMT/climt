@@ -1,0 +1,44 @@
+OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
+Numba speedup benchmark — 8192 columns, 30 levels
+=======================================================
+
+HeldSuarez  (8192 cols, 50 iters)
+  Python : 18.462s  (369.24 ms/call)
+  Numba  : 0.153s  (3.06 ms/call)
+  Speedup: 120.8x
+
+GrayLongwaveRadiation  (8192 cols, 50 iters)
+  Python : 17.977s  (359.53 ms/call)
+  Numba  : 0.232s  (4.65 ms/call)
+  Speedup: 77.4x
+
+Frierson06LongwaveOpticalDepth  (8192 cols, 50 iters)
+  Python : 3.875s  (77.49 ms/call)
+  Numba  : 0.063s  (1.25 ms/call)
+  Speedup: 61.9x
+
+GridScaleCondensation  (8192 cols, 20 iters)
+  Python : 5.871s  (293.53 ms/call)
+  Numba  : 0.181s  (9.03 ms/call)
+  Speedup: 32.5x
+
+DryConvectiveAdjustment  (8192 cols, 10 iters)
+  Python : 83.671s  (8367.08 ms/call)
+  Numba  : 1.089s  (108.93 ms/call)
+  Speedup: 76.8x
+
+BergerSolarInsolation  (8192 cols, 100 iters)
+  Python : 1.368s  (13.68 ms/call)
+  Numba  : 0.018s  (0.18 ms/call)
+  Speedup: 76.6x
+
+SlabSurface  (8192 cols, 50 iters)
+  Python : 0.295s  (5.90 ms/call)
+  Numba  : 0.010s  (0.19 ms/call)
+  Speedup: 30.8x
+
+Instellation  (8192 cols, 100 iters)
+  Python : 0.857s  (8.57 ms/call)
+  Numba  : 0.026s  (0.26 ms/call)
+  Speedup: 33.0x
+
