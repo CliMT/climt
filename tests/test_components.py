@@ -46,7 +46,9 @@ from climt._core.unyt_backend import UnytBackend, UnytStateContainer
 
 set_backend(UnytBackend())
 
-os.environ["NUMBA_DISABLE_JIT"] = "1"
+# Note: NUMBA_DISABLE_JIT must NOT be set here — the components use @njit
+# kernels that are decorated at import time but compiled lazily. Setting
+# NUMBA_DISABLE_JIT after import corrupts Numba's internal state.
 
 vertical_dimension_names = ["interface_levels", "mid_levels", "full_levels"]
 
