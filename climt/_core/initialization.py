@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 
 import numpy as np
@@ -9,7 +10,6 @@ from sympl import (
     get_constant,
     set_constant,
 )
-import sys
 
 if sys.version_info < (3, 9):
     import importlib_resources

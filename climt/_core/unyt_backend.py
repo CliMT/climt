@@ -93,15 +93,33 @@ class UnytStateContainer:
         dims (tuple of str): The names of the dimensions.
     """
 
-    def __init__(self, data, dims):
-        if not isinstance(data, (unyt.unyt_array, np.ndarray)):
+    def __init__(self, data, dims=None, attrs=None):
+        if not isinstance(
+            data, (unyt.unyt_array, np.ndarray, float, int, np.floating, np.integer)
+        ):
             # Ideally strict, but helpful to be flexible if easy.
             # For now, strict to match design.
             raise TypeError(
                 f"Data must be a unyt.unyt_array or numpy.ndarray, got {type(data)}"
             )
+
+        if (
+            attrs is not None
+            and "units" in attrs
+            and not isinstance(data, unyt.unyt_array)
+        ):
+            try:
+                sanitized_units = attrs["units"].replace("^", "**").replace(" ", "*")
+                data = unyt.unyt_array(data, sanitized_units)
+            except Exception:
+                pass
+
         self.data = data
-        self.dims = tuple(dims)
+        self.dims = tuple(dims) if dims is not None else ()
+
+    def rename(self, name_dict):
+        new_dims = [name_dict.get(d, d) for d in self.dims]
+        return UnytStateContainer(self.data, new_dims)
 
     def __repr__(self):
         return f"UnytStateContainer(data={self.data}, dims={self.dims})"
@@ -130,6 +148,68 @@ class UnytStateContainer:
         if hasattr(self.data, "units"):
             return {"units": str(self.data.units)}
         return {}
+
+    class _LocIndexer:
+        def __init__(self, container):
+            self.container = container
+
+        def __getitem__(self, key):
+            if isinstance(key, dict):
+                slices = []
+                for dim in self.container.dims:
+                    if dim in key:
+                        slices.append(key[dim])
+                    else:
+                        slices.append(slice(None))
+                return self.container[tuple(slices)]
+            return self.container[key]
+
+        def __setitem__(self, key, value):
+            if isinstance(key, dict):
+                slices = []
+                for dim in self.container.dims:
+                    if dim in key:
+                        slices.append(key[dim])
+                    else:
+                        slices.append(slice(None))
+                self.container[tuple(slices)] = value
+            else:
+                self.container[key] = value
+
+    @property
+    def loc(self):
+        return self._LocIndexer(self)
+
+    def transpose(self, *dims):
+        if len(dims) == 1 and isinstance(dims[0], (tuple, list)):
+            dims = dims[0]
+        # map dim names to axis indices
+        perm = [self.dims.index(dim) for dim in dims]
+        return UnytStateContainer(self.data.transpose(perm), dims)
+
+    def __getitem__(self, key):
+        sliced_data = self.data[key]
+        if isinstance(sliced_data, (unyt.unyt_array, np.ndarray)):
+            if sliced_data.ndim == len(self.dims):
+                return UnytStateContainer(sliced_data, self.dims)
+            else:
+                # Provide dummy dimensions or just truncate if we cannot infer dropped dimension easily
+                # Truncate to match ndim for now
+                return UnytStateContainer(sliced_data, self.dims[: sliced_data.ndim])
+        return sliced_data
+
+    def __eq__(self, other):
+        if isinstance(other, UnytStateContainer):
+            return self.data == other.data
+        return self.data == other
+
+    def __setitem__(self, key, value):
+        if isinstance(value, UnytStateContainer):
+            self.data[key] = value.data
+        elif isinstance(value, unyt.unyt_array) and hasattr(self.data, "units"):
+            self.data[key] = value.to(self.data.units)
+        else:
+            self.data[key] = value
 
     def to_units(self, units):
         if not isinstance(self.data, unyt.unyt_array):

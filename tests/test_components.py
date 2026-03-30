@@ -1,52 +1,106 @@
-import pytest
 import abc
+import logging
 import os
 import sys
-from glob import glob
-import xarray as xr
-import numpy as np
-import logging
-from climt import (
-    HeldSuarez, GrayLongwaveRadiation,
-    Frierson06LongwaveOpticalDepth, GridScaleCondensation,
-    BergerSolarInsolation, SimplePhysics, RRTMGLongwave,
-    RRTMGShortwave, SlabSurface, EmanuelConvection,
-    DcmipInitialConditions, BucketHydrology,
-    IceSheet, Instellation, DryConvectiveAdjustment,
-    get_grid)
-import climt
-from sympl import (
-    Stepper, TendencyStepper, TimeDifferencingWrapper,
-    ImplicitTendencyComponent, UpdateFrequencyWrapper, DataArray,
-    TendencyComponent, AdamsBashforth
-)
-from sympl._core.tracers import reset_tracers, reset_packers
 from datetime import datetime, timedelta
-# os.environ['NUMBA_DISABLE_JIT'] = '1'
+from glob import glob
 
-vertical_dimension_names = [
-    'interface_levels', 'mid_levels', 'full_levels']
+import numpy as np
+import pytest
+import unyt
+import xarray as xr
+from sympl import (
+    AdamsBashforth,
+    DataArray,
+    ImplicitTendencyComponent,
+    Stepper,
+    TendencyComponent,
+    TendencyStepper,
+    TimeDifferencingWrapper,
+    UpdateFrequencyWrapper,
+    set_backend,
+)
+from sympl._core.tracers import reset_packers, reset_tracers
+
+import climt
+from climt import (
+    BergerSolarInsolation,
+    BucketHydrology,
+    DcmipInitialConditions,
+    DryConvectiveAdjustment,
+    EmanuelConvection,
+    Frierson06LongwaveOpticalDepth,
+    GrayLongwaveRadiation,
+    GridScaleCondensation,
+    HeldSuarez,
+    IceSheet,
+    Instellation,
+    RRTMGLongwave,
+    RRTMGShortwave,
+    SimplePhysics,
+    SlabSurface,
+    UnytTimeDelta,
+    get_grid,
+)
+from climt._core.unyt_backend import UnytBackend, UnytStateContainer
+
+set_backend(UnytBackend())
+
+os.environ["NUMBA_DISABLE_JIT"] = "1"
+
+vertical_dimension_names = ["interface_levels", "mid_levels", "full_levels"]
 
 cache_folder = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 'cached_component_output')
+    os.path.dirname(os.path.realpath(__file__)), "cached_component_output"
+)
 
 
 def cache_dictionary(dictionary, filename):
-    dataset = xr.Dataset(dictionary)
-    dataset.to_netcdf(filename, engine='scipy')
+    xr_dict = {}
+    for key, value in dictionary.items():
+        if key == "time":
+            xr_dict[key] = value
+        elif hasattr(value, "dims") and hasattr(value, "values"):
+            xr_dict[key] = xr.DataArray(
+                value.values, dims=value.dims, attrs=value.attrs
+            )
+        else:
+            xr_dict[key] = value
+    dataset = xr.Dataset(xr_dict)
+    dataset.to_netcdf(filename, engine="scipy")
 
 
 def load_dictionary(filename):
-    dataset = xr.open_dataset(filename, engine='scipy')
-    return_dict = dict(dataset.data_vars)
-    return_dict.update(dataset.coords)
+    import pandas as pd
+    import sympl
+
+    dataset = xr.open_dataset(filename, engine="scipy")
+    return_dict = {}
+    backend = sympl.get_backend()
+
+    for name, var in dataset.variables.items():
+        if name == "time":
+            val = var.values
+            if getattr(val, "ndim", 1) == 0 and isinstance(val, np.datetime64):
+                return_dict[name] = pd.Timestamp(val).to_pydatetime()
+            else:
+                return_dict[name] = val
+        else:
+            units = var.attrs.get("units", "")
+            if hasattr(backend, "create_quantity"):
+                return_dict[name] = backend.create_quantity(
+                    var.values, name, units, var.dims
+                )
+            else:
+                return_dict[name] = var
+
     return return_dict
 
 
 def state_3d_to_1d(state):
     return_state = {}
     for name, value in state.items():
-        if name == 'time':
+        if name == "time":
             return_state[name] = value
         else:
             dim_list = []
@@ -62,7 +116,7 @@ def state_3d_to_1d(state):
 def transpose_state(state, dims=None):
     return_state = {}
     for name, value in state.items():
-        if name == 'time':
+        if name == "time":
             return_state[name] = state[name]
         else:
             if dims is None:
@@ -73,7 +127,8 @@ def transpose_state(state, dims=None):
 
 
 def call_with_timestep_if_needed(
-        component, state, timestep=timedelta(seconds=10.)):
+    component, state, timestep=UnytTimeDelta(seconds=10.0)
+):
     np.random.seed(0)
     if isinstance(component, (Stepper, TendencyStepper, ImplicitTendencyComponent)):
         return component(state, timestep=timestep)
@@ -82,7 +137,6 @@ def call_with_timestep_if_needed(
 
 
 class ComponentBase(object):
-
     def setUp(self):
         reset_tracers()
         reset_packers()
@@ -93,13 +147,12 @@ class ComponentBase(object):
         pass
 
     def get_cache_filename(self, descriptor, i):
-        return '{}-{}-{}.cache'.format(self.__class__.__name__, descriptor, i)
+        return "{}-{}-{}.cache".format(self.__class__.__name__, descriptor, i)
 
     def get_cached_output(self, descriptor):
-        cache_filename_list = sorted(glob(
-            os.path.join(
-                cache_folder,
-                self.get_cache_filename(descriptor, '*'))))
+        cache_filename_list = sorted(
+            glob(os.path.join(cache_folder, self.get_cache_filename(descriptor, "*")))
+        )
         if len(cache_filename_list) > 0:
             return_list = []
             for filename in cache_filename_list:
@@ -116,7 +169,8 @@ class ComponentBase(object):
             output = (output,)
         for i in range(len(output)):
             cache_filename = os.path.join(
-                cache_folder, self.get_cache_filename(descriptor, i))
+                cache_folder, self.get_cache_filename(descriptor, i)
+            )
             cache_dictionary(output[i], cache_filename)
 
     def assert_valid_output(self, output):
@@ -125,30 +179,32 @@ class ComponentBase(object):
         for i, out_dict in enumerate(output):
             for name, value in out_dict.items():
                 try:
-                    if name != 'time' and np.any(np.isnan(value)):
+                    if name != "time" and np.any(np.isnan(value)):
                         raise AssertionError(
-                            'NaN produced in output {} from dict {}'.format(name, i))
+                            "NaN produced in output {} from dict {}".format(name, i)
+                        )
                 except TypeError:  # raised if cannot run isnan on dtype of value
                     pass
 
 
 class ComponentBaseColumn(ComponentBase):
-
     def get_1d_input_state(self, component=None):
         if component is None:
             component = self.get_component_instance()
         return climt.get_default_state(
-            [component], grid_state=get_grid(nx=None, ny=None, nz=30))
+            [component], grid_state=get_grid(nx=None, ny=None, nz=30)
+        )
 
     def test_column_output_matches_cached_output(self):
         state = self.get_1d_input_state()
         component = self.get_component_instance()
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output('column')
+        cached_output = self.get_cached_output("column")
         if cached_output is None:
-            self.cache_output(output, 'column')
+            self.cache_output(output, "column")
             raise AssertionError(
-                'Failed due to no cached output, cached current output.')
+                "Failed due to no cached output, cached current output."
+            )
         else:
             compare_outputs(output, cached_output)
 
@@ -164,32 +220,34 @@ class ComponentBaseColumn(ComponentBase):
             component = AdamsBashforth(self.get_component_instance())
             state = self.get_1d_input_state(component)
             output = call_with_timestep_if_needed(component, state)
-            cached_output = self.get_cached_output('column_stepping')
+            cached_output = self.get_cached_output("column_stepping")
             if cached_output is None:
-                self.cache_output(output, 'column_stepping')
+                self.cache_output(output, "column_stepping")
                 raise AssertionError(
-                    'Failed due to no cached output, cached current output.')
+                    "Failed due to no cached output, cached current output."
+                )
             else:
                 compare_outputs(output, cached_output)
 
 
 class ComponentBase3D(ComponentBase):
-
     def get_3d_input_state(self, component=None):
         if component is None:
             component = self.get_component_instance()
         return climt.get_default_state(
-            [component], grid_state=get_grid(nx=32, ny=16, nz=28))
+            [component], grid_state=get_grid(nx=32, ny=16, nz=28)
+        )
 
     def test_3d_output_matches_cached_output(self):
         state = self.get_3d_input_state()
         component = self.get_component_instance()
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output('3d')
+        cached_output = self.get_cached_output("3d")
         if cached_output is None:
-            self.cache_output(output, '3d')
+            self.cache_output(output, "3d")
             raise AssertionError(
-                'Failed due to no cached output, cached current output.')
+                "Failed due to no cached output, cached current output."
+            )
         else:
             compare_outputs(output, cached_output)
 
@@ -199,11 +257,12 @@ class ComponentBase3D(ComponentBase):
             component = AdamsBashforth(component)
             state = self.get_3d_input_state(component)
             output = call_with_timestep_if_needed(component, state)
-            cached_output = self.get_cached_output('3d_stepping')
+            cached_output = self.get_cached_output("3d_stepping")
             if cached_output is None:
-                self.cache_output(output, '3d_stepping')
+                self.cache_output(output, "3d_stepping")
                 raise AssertionError(
-                    'Failed due to no cached output, cached current output.')
+                    "Failed due to no cached output, cached current output."
+                )
             else:
                 compare_outputs(output, cached_output)
 
@@ -219,15 +278,16 @@ class ComponentBase3D(ComponentBase):
             if isinstance(value, (timedelta, datetime)):
                 pass
             elif len(value.dims) == 3:
-                state[name] = value.transpose(value.dims[2], value.dims[1], value.dims[0])
+                state[name] = value.transpose(
+                    value.dims[2], value.dims[1], value.dims[0]
+                )
             elif len(value.dims) == 2:
                 state[name] = value.transpose(value.dims[1], value.dims[0])
         component = self.get_component_instance()
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output('3d')
+        cached_output = self.get_cached_output("3d")
         if cached_output is None:
-            raise AssertionError(
-                'Failed due to no cached output.')
+            raise AssertionError("Failed due to no cached output.")
         else:
             compare_outputs(output, cached_output)
 
@@ -237,15 +297,16 @@ class ComponentBase3D(ComponentBase):
             if isinstance(value, (timedelta, datetime)):
                 pass
             elif len(value.dims) == 3:
-                state[name] = value.transpose(value.dims[2], value.dims[0], value.dims[1])
+                state[name] = value.transpose(
+                    value.dims[2], value.dims[0], value.dims[1]
+                )
             elif len(value.dims) == 2:
                 state[name] = value.transpose(value.dims[1], value.dims[0])
         component = self.get_component_instance()
         output = call_with_timestep_if_needed(component, state)
-        cached_output = self.get_cached_output('3d')
+        cached_output = self.get_cached_output("3d")
         if cached_output is None:
-            raise AssertionError(
-                'Failed due to no cached output.')
+            raise AssertionError("Failed due to no cached output.")
         else:
             compare_outputs(output, cached_output)
 
@@ -257,69 +318,86 @@ def compare_outputs(current, cached):
     elif (not isinstance(current, tuple)) and (not isinstance(cached, tuple)):
         compare_one_state_pair(current, cached)
     else:
-        raise AssertionError('Different number of dicts returned than cached.')
+        raise AssertionError("Different number of dicts returned than cached.")
 
 
 def compare_one_state_pair(current, cached):
     for key in current.keys():
-        if key == 'time':
+        if key == "time":
             assert key in cached.keys()
         else:
             try:
-                if not np.all(current[key] == cached[key]):
-                    assert np.all(np.isclose(current[key] - cached[key], 0.))
+                curr_arr = np.asarray(current[key])
+                cach_arr = np.asarray(cached[key])
+                if (
+                    set(current[key].dims) == set(cached[key].dims)
+                    and current[key].dims != cached[key].dims
+                ):
+                    perm = [current[key].dims.index(d) for d in cached[key].dims]
+                    curr_arr = curr_arr.transpose(perm)
+
+                if not np.all(curr_arr == cach_arr):
+                    assert np.all(np.isclose(curr_arr - cach_arr, 0.0))
                 for attr in current[key].attrs:
-                    assert current[key].attrs[attr] == cached[key].attrs[attr]
+                    if attr == "units":
+                        sanitized_curr = (
+                            str(current[key].attrs[attr])
+                            .replace("^", "**")
+                            .replace(" ", "*")
+                        )
+                        sanitized_cach = (
+                            str(cached[key].attrs[attr])
+                            .replace("^", "**")
+                            .replace(" ", "*")
+                        )
+                        assert unyt.Unit(sanitized_curr) == unyt.Unit(sanitized_cach)
+                    else:
+                        assert current[key].attrs[attr] == cached[key].attrs[attr]
                 for attr in cached[key].attrs:
                     assert attr in current[key].attrs
                 assert set(current[key].dims) == set(cached[key].dims)
             except AssertionError as err:
-                raise AssertionError('Error for {}: {}'.format(key, err))
+                raise AssertionError("Error for {}: {}".format(key, err))
     for key in cached.keys():
         assert key in current.keys()
 
 
 class TestHeldSuarez(ComponentBase3D, ComponentBaseColumn):
-
     def get_component_instance(self):
         return HeldSuarez()
 
 
 class TestFrierson06LongwaveOpticalDepth(ComponentBaseColumn, ComponentBase3D):
-
     def get_component_instance(self):
         return Frierson06LongwaveOpticalDepth()
 
 
 class TestGrayLongwaveRadiation(ComponentBaseColumn, ComponentBase3D):
-
     def get_component_instance(self):
         return GrayLongwaveRadiation()
 
 
 class TestGridScaleCondensation(ComponentBaseColumn, ComponentBase3D):
-
     def get_component_instance(self):
         return GridScaleCondensation()
 
 
 class TestBergerSolarInsolation(ComponentBaseColumn, ComponentBase3D):
-
     def get_component_instance(self):
         return BergerSolarInsolation()
 
     def test_no_nans_in_2d_output(self):
         state = {
-            'time': datetime(1998, 7, 13),
-            'latitude': DataArray(
+            "time": datetime(1998, 7, 13),
+            "latitude": UnytStateContainer(
                 np.linspace(-90, 90, 30),
-                dims=['latitude'],
-                attrs={'units': 'degrees_N'}
+                dims=["latitude"],
+                attrs={"units": "degrees_N"},
             ),
-            'longitude': DataArray(
+            "longitude": UnytStateContainer(
                 np.linspace(0, 360, 60),
-                dims=['longitude'],
-                attrs={'units': 'degrees_E'}
+                dims=["longitude"],
+                attrs={"units": "degrees_E"},
             ),
         }
         component = self.get_component_instance()
@@ -328,13 +406,11 @@ class TestBergerSolarInsolation(ComponentBaseColumn, ComponentBase3D):
 
 
 class TestSimplePhysics(ComponentBaseColumn, ComponentBase3D):
-
     def get_component_instance(self):
         return SimplePhysics()
 
 
 class TestSimplePhysicsImplicitPrognostic(ComponentBaseColumn, ComponentBase3D):
-
     def get_component_instance(self):
         component = TimeDifferencingWrapper(SimplePhysics())
         return component
@@ -352,21 +428,21 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
     def get_3d_input_state(self, component=None):
         if component is None:
             component = self.get_component_instance()
-        state = climt.get_default_state([component],
-                                        grid_state=climt.get_grid(nx=10, ny=5))
-        state['cloud_area_fraction_in_atmosphere_layer'][16:19] = 0.5
-        state['mass_content_of_cloud_ice_in_atmosphere_layer'][16:19] = 0.3
+        state = climt.get_default_state(
+            [component], grid_state=climt.get_grid(nx=10, ny=5)
+        )
+        state["cloud_area_fraction_in_atmosphere_layer"][16:19] = 0.5
+        state["mass_content_of_cloud_ice_in_atmosphere_layer"][16:19] = 0.3
         return state
 
     def test_rrtmg_logging(self, caplog):
         caplog.set_level(logging.INFO)
-        RRTMGLongwave(mcica=True, cloud_overlap_method='clear_only')
-        assert 'no clouds' in caplog.text
+        RRTMGLongwave(mcica=True, cloud_overlap_method="clear_only")
+        assert "no clouds" in caplog.text
         caplog.clear()
 
-        RRTMGLongwave(mcica=True, cloud_optical_properties='single_cloud_type')
-        assert "must be 'direct_input' or " \
-               "'liquid_and_ice_clouds'" in caplog.text
+        RRTMGLongwave(mcica=True, cloud_optical_properties="single_cloud_type")
+        assert "must be 'direct_input' or 'liquid_and_ice_clouds'" in caplog.text
 
     def test_transposed_state_gives_same_output(self):
         return
@@ -377,10 +453,12 @@ class TestRRTMGLongwaveMCICA(ComponentBaseColumn, ComponentBase3D):
 
 class TestRRTMGLongwaveWithClouds(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
-        return RRTMGLongwave(cloud_optical_properties='single_cloud_type')
+        return RRTMGLongwave(cloud_optical_properties="single_cloud_type")
 
 
-class TestRRTMGLongwaveWithExternalInterfaceTemperature(ComponentBaseColumn, ComponentBase3D):
+class TestRRTMGLongwaveWithExternalInterfaceTemperature(
+    ComponentBaseColumn, ComponentBase3D
+):
     def get_component_instance(self):
         return RRTMGLongwave(calculate_interface_temperature=False)
 
@@ -397,10 +475,11 @@ class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
     def get_3d_input_state(self, component=None):
         if component is None:
             component = self.get_component_instance()
-        state = climt.get_default_state([component],
-                                        grid_state=climt.get_grid(nx=3, ny=2, nz=15))
-        state['cloud_area_fraction_in_atmosphere_layer'][10:12] = 0.5
-        state['mass_content_of_cloud_ice_in_atmosphere_layer'][10:12] = 0.3
+        state = climt.get_default_state(
+            [component], grid_state=climt.get_grid(nx=3, ny=2, nz=15)
+        )
+        state["cloud_area_fraction_in_atmosphere_layer"][10:12] = 0.5
+        state["mass_content_of_cloud_ice_in_atmosphere_layer"][10:12] = 0.3
         return state
 
     def test_transposed_state_gives_same_output(self):
@@ -411,24 +490,27 @@ class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
 
     def test_rrtmg_logging(self, caplog):
         caplog.set_level(logging.INFO)
-        RRTMGShortwave(mcica=True, cloud_overlap_method='clear_only')
-        assert 'no clouds' in caplog.text
+        RRTMGShortwave(mcica=True, cloud_overlap_method="clear_only")
+        assert "no clouds" in caplog.text
         caplog.clear()
 
-        RRTMGShortwave(mcica=True, cloud_optical_properties='single_cloud_type')
-        assert "must be 'direct_input' or " \
-               "'liquid_and_ice_clouds'" in caplog.text
+        RRTMGShortwave(mcica=True, cloud_optical_properties="single_cloud_type")
+        assert "must be 'direct_input' or 'liquid_and_ice_clouds'" in caplog.text
         caplog.clear()
 
-        RRTMGShortwave(mcica=True,
-                       cloud_optical_properties='liquid_and_ice_clouds',
-                       cloud_ice_properties='ebert_curry_one')
+        RRTMGShortwave(
+            mcica=True,
+            cloud_optical_properties="liquid_and_ice_clouds",
+            cloud_ice_properties="ebert_curry_one",
+        )
         assert "not be set to 'ebert_curry_one'" in caplog.text
         caplog.clear()
 
-        RRTMGShortwave(mcica=True,
-                       cloud_optical_properties='liquid_and_ice_clouds',
-                       cloud_liquid_water_properties='radius_independent_absorption')
+        RRTMGShortwave(
+            mcica=True,
+            cloud_optical_properties="liquid_and_ice_clouds",
+            cloud_liquid_water_properties="radius_independent_absorption",
+        )
         assert "must be set to 'radius_dependent_absorption'" in caplog.text
 
 
@@ -487,22 +569,39 @@ class TestDcmip(ComponentBaseColumn, ComponentBase3D):
 
 def test_dcmip_options():
 
-    state = climt.get_default_state([DcmipInitialConditions()],
-                                    grid_state=get_grid(nx=64, ny=64, nz=10))
+    state = climt.get_default_state(
+        [DcmipInitialConditions()], grid_state=get_grid(nx=64, ny=64, nz=10)
+    )
 
     dry_state = DcmipInitialConditions(moist=False)(state)
     moist_state = DcmipInitialConditions(moist=True)(state)
-    not_perturbed_state = DcmipInitialConditions(moist=False, add_perturbation=False)(state)
-    tropical_cyclone_state = DcmipInitialConditions(moist=True, condition_type='tropical_cyclone')(state)
+    not_perturbed_state = DcmipInitialConditions(moist=False, add_perturbation=False)(
+        state
+    )
+    tropical_cyclone_state = DcmipInitialConditions(
+        moist=True, condition_type="tropical_cyclone"
+    )(state)
 
-    assert not np.all(np.isclose(dry_state['specific_humidity'].values,
-                                 moist_state['specific_humidity'].values))
+    assert not np.all(
+        np.isclose(
+            dry_state["specific_humidity"].values,
+            moist_state["specific_humidity"].values,
+        )
+    )
 
-    assert not np.all(np.isclose(dry_state['eastward_wind'].values,
-                                 not_perturbed_state['eastward_wind'].values))
+    assert not np.all(
+        np.isclose(
+            dry_state["eastward_wind"].values,
+            not_perturbed_state["eastward_wind"].values,
+        )
+    )
 
-    assert not np.all(np.isclose(tropical_cyclone_state['surface_air_pressure'].values - 1.015e5,
-                                 np.zeros(not_perturbed_state['surface_air_pressure'].values.shape)))
+    assert not np.all(
+        np.isclose(
+            tropical_cyclone_state["surface_air_pressure"].values - 1.015e5,
+            np.zeros(not_perturbed_state["surface_air_pressure"].values.shape),
+        )
+    )
 
 
 class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
@@ -518,10 +617,12 @@ class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
     def get_3d_input_state(self):
         state = super(TestIceSheetLand, self).get_3d_input_state()
 
-        state['area_type'].values[:] = 'land'
-        state['surface_snow_thickness'].values[:] = 3
+        state["area_type"].values[:] = "land"
+        state["surface_snow_thickness"].values[:] = 3
 
         return state
+
+
 #
 #
 # def test_ice_sheet_too_high():
@@ -549,29 +650,31 @@ class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return DryConvectiveAdjustment()
 
-def test_piecewise_constant_component():
+    def test_piecewise_constant_component(self):
+        radiation = UpdateFrequencyWrapper(RRTMGLongwave(), UnytTimeDelta(seconds=1000))
+        state = climt.get_default_state([radiation])
+        current_tendency, current_diagnostic = radiation(state)
+        # Perturb state_array
+        state["air_temperature"] += unyt.unyt_array(
+            3, state["air_temperature"].attrs["units"]
+        )
 
-    radiation = UpdateFrequencyWrapper(RRTMGLongwave(), timedelta(seconds=1000))
+        new_tendency, new_diagnostic = radiation(state)
 
-    state = climt.get_default_state([radiation])
+        assert np.all(
+            current_tendency["air_temperature"].values
+            == new_tendency["air_temperature"].values
+        )
 
-    current_tendency, current_diagnostic = radiation(state)
+        state["time"] += timedelta(seconds=1500)
 
-    # Perturb state_array
-    state['air_temperature'] += 3
+        new_tendency, new_diagnostic = radiation(state)
 
-    new_tendency, new_diagnostic = radiation(state)
-
-    assert np.all(current_tendency['air_temperature'].values ==
-                  new_tendency['air_temperature'].values)
-
-    state['time'] += timedelta(seconds=1500)
-
-    new_tendency, new_diagnostic = radiation(state)
-
-    assert np.any(current_tendency['air_temperature'].values !=
-                  new_tendency['air_temperature'].values)
+        assert np.any(
+            current_tendency["air_temperature"].values
+            != new_tendency["air_temperature"].values
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
