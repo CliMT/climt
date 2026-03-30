@@ -242,7 +242,7 @@ class EmanuelConvection(ImplicitTendencyComponent):
         self._Cl = get_constant("specific_enthalpy_of_vapor_phase", "J/kg")
         # Fix: Pass min_conv_layer for MINORIG
         _emanuel_convection.init_emanuel_convection(
-            self._min_conv_layer, # MINORIG
+            self._min_conv_layer,  # MINORIG
             self._crit_humidity,
             self._crit_temp,
             self._entrain_coeff,

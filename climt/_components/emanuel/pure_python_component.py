@@ -6,7 +6,7 @@ from sympl import (
     initialize_numpy_arrays_with_properties,
 )
 
-from ..._core import bolton_q_sat, ensure_contiguous_state
+from ..._core import ensure_contiguous_state
 from .pure_python_v2 import EmanuelConvectionPythonV2
 
 

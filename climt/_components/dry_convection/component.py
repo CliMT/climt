@@ -1,17 +1,18 @@
-from sympl import get_constant, Stepper
-import numpy as np
 from typing import NamedTuple
+
+import numpy as np
+from sympl import Stepper, get_constant
+
 from ..._core.backend import jit_compile, prange
 
-try:
-    from numba import njit
-    HAS_NUMBA = True
-except ImportError:
-    HAS_NUMBA = False
-    njit = lambda x, **kwargs: x
 
 class DryAdjParams(NamedTuple):
-    Cpd: float; Cvap: float; Rdair: float; Pref: float; Rv: float
+    Cpd: float
+    Cvap: float
+    Rdair: float
+    Pref: float
+    Rv: float
+
 
 class DryConvectiveAdjustment(Stepper):
     """
@@ -51,8 +52,10 @@ class DryConvectiveAdjustment(Stepper):
     diagnostic_properties = {}
 
     def array_call(self, state, time_step):
-        t = state["air_temperature"]; q = state["specific_humidity"]
-        p = state["air_pressure"]; p_int = state["P_int"]
+        t = state["air_temperature"]
+        q = state["specific_humidity"]
+        p = state["air_pressure"]
+        p_int = state["P_int"]
 
         orig_shape = t.shape
         t_flat = np.reshape(t, (t.shape[0], -1))
@@ -61,21 +64,24 @@ class DryConvectiveAdjustment(Stepper):
         p_int_flat = np.reshape(p_int, (p_int.shape[0], -1))
 
         params = DryAdjParams(
-            Cpd=get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"),
+            Cpd=get_constant(
+                "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"
+            ),
             Cvap=get_constant("heat_capacity_of_vapor_phase", "J/kg/K"),
             Rdair=get_constant("gas_constant_of_dry_air", "J/kg/degK"),
             Pref=get_constant("reference_air_pressure", "Pa"),
-            Rv=get_constant("gas_constant_of_vapor_phase", "J/kg/K")
+            Rv=get_constant("gas_constant_of_vapor_phase", "J/kg/K"),
         )
 
         t_new, q_new = _dry_adj_kernel_np(t_flat, q_flat, p_flat, p_int_flat, params)
 
         return {}, {
             "air_temperature": np.reshape(t_new, orig_shape),
-            "specific_humidity": np.reshape(q_new, orig_shape)
+            "specific_humidity": np.reshape(q_new, orig_shape),
         }
 
-@njit
+
+@jit_compile
 def _dry_adj_kernel_np(T, q, p, p_int, params):
     nlev, ncol = T.shape
     T_new = T.copy()
@@ -88,18 +94,21 @@ def _dry_adj_kernel_np(T, q, p, p_int, params):
         p_int_col = p_int[:, i]
         pdiff = np.zeros(nlev)
         for m in range(nlev):
-            pdiff[m] = p_int_col[m] - p_int_col[m+1]
+            pdiff[m] = p_int_col[m] - p_int_col[m + 1]
 
         # TOA to Surface
         for k in range(nlev - 1, -1, -1):
-
             rd_cp = np.zeros(nlev)
             theta_q = np.zeros(nlev)
             for m in range(nlev):
-                rd_cp[m] = (params.Rdair * (1.0 - q_new[m, i]) + params.Rv * q_new[m, i]) / \
-                           (params.Cpd * (1.0 - q_new[m, i]) + params.Cvap * q_new[m, i])
-                theta_q[m] = T_new[m, i] * (params.Pref / p_col[m]) ** rd_cp[m] * \
-                             (1.0 + q_new[m, i] * eps - q_new[m, i])
+                rd_cp[m] = (
+                    params.Rdair * (1.0 - q_new[m, i]) + params.Rv * q_new[m, i]
+                ) / (params.Cpd * (1.0 - q_new[m, i]) + params.Cvap * q_new[m, i])
+                theta_q[m] = (
+                    T_new[m, i]
+                    * (params.Pref / p_col[m]) ** rd_cp[m]
+                    * (1.0 + q_new[m, i] * eps - q_new[m, i])
+                )
 
             current_theta_sum = 0.0
             max_unstable_idx = -1

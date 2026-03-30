@@ -1,7 +1,10 @@
-from sympl import DiagnosticComponent
 import datetime
+
 import numpy as np
+from sympl import DiagnosticComponent
+
 from ..._core.backend import jit_compile, prange
+
 
 class Instellation(DiagnosticComponent):
     """
@@ -52,7 +55,9 @@ class Instellation(DiagnosticComponent):
         julian_centuries = days_from_2000(state["time"]) / 36525.0
         fractional_day_val = fractional_day(state["time"])
 
-        zen_angle = _instellation_kernel_np(lat_flat, lon_flat, julian_centuries, fractional_day_val)
+        zen_angle = _instellation_kernel_np(
+            lat_flat, lon_flat, julian_centuries, fractional_day_val
+        )
 
         return {"zenith_angle": np.reshape(zen_angle, lat.shape)}
 
@@ -70,19 +75,21 @@ def total_days(time_diff):
         time_diff.seconds + time_diff.microseconds / (1000000.0)
     ) / (24 * 3600.0)
 
+
 def fractional_day(dt):
     day_start = type(dt)(dt.year, dt.month, dt.day)
     return (dt - day_start).total_seconds() / (24.0 * 60.0 * 60.0)
+
 
 @jit_compile(backend=np, parallel=True)
 def _instellation_kernel_np(lat_deg, lon_deg, julian_centuries, frac_day):
     ncol = lat_deg.size
     zenith = np.zeros(ncol)
-    
+
     # 1. Earth orbit params
     eps = _obliquity_star_jit(julian_centuries)
     eclon = _sun_ecliptic_longitude_jit(julian_centuries)
-    
+
     # 2. Right ascension / declination
     x = np.cos(eclon)
     y = np.cos(eps) * np.sin(eclon)
@@ -90,36 +97,40 @@ def _instellation_kernel_np(lat_deg, lon_deg, julian_centuries, frac_day):
     r = np.sqrt(1.0 - z * z)
     declination = np.arctan2(z, r)
     right_ascension = 2.0 * np.arctan2(y, (x + r))
-    
+
     # 3. Greenwich sidereal time
     gmst = _gmst_jit(julian_centuries)
-    
+
     sin_lat = np.sin(np.deg2rad(lat_deg))
     cos_lat = np.cos(np.deg2rad(lat_deg))
     sin_dec = np.sin(declination)
     cos_dec = np.cos(declination)
-    
-    pi2 = 2.0 * np.pi
+
+    # pi2 = 2.0 * np.pi
     deg_to_rad = np.pi / 180.0
-    
+
     for i in prange(ncol):
         lmst = gmst + lon_deg[i] * deg_to_rad
         h_angle = lmst - right_ascension
-        
+
         cos_mu = sin_lat[i] * sin_dec + cos_lat[i] * cos_dec * np.cos(h_angle)
-        
+
         # Clamp cos_mu to [-1, 1]
-        if cos_mu > 1.0: cos_mu = 1.0
-        elif cos_mu < -1.0: cos_mu = -1.0
-        
+        if cos_mu > 1.0:
+            cos_mu = 1.0
+        elif cos_mu < -1.0:
+            cos_mu = -1.0
+
         z_angle = np.arccos(cos_mu)
-        
+
         # Clamp zenith angle to [-PI/2, PI/2]
-        if z_angle > np.pi / 2.0: z_angle = np.pi / 2.0
-        elif z_angle < -np.pi / 2.0: z_angle = -np.pi / 2.0
-        
+        if z_angle > np.pi / 2.0:
+            z_angle = np.pi / 2.0
+        elif z_angle < -np.pi / 2.0:
+            z_angle = -np.pi / 2.0
+
         zenith[i] = z_angle
-        
+
     return zenith
 
 
@@ -138,6 +149,7 @@ def _obliquity_star_jit(julian_centuries):
         )
         / 3600.0
     )
+
 
 @jit_compile
 def _sun_ecliptic_longitude_jit(julian_centuries):
@@ -163,6 +175,7 @@ def _sun_ecliptic_longitude_jit(julian_centuries):
 
     # true longitude
     return mean_longitude + d_l
+
 
 @jit_compile
 def _gmst_jit(julian_centuries):

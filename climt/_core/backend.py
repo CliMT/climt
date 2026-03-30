@@ -7,7 +7,10 @@ try:
     HAS_NUMBA = True
 except ImportError:
     HAS_NUMBA = False
-    njit = lambda x, **kwargs: x
+
+    def njit(x, **kwargs):
+        return x
+
     prange = range
 
 

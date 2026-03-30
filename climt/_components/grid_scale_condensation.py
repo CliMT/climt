@@ -1,18 +1,30 @@
-from sympl import Stepper, get_constant
-from .._core import bolton_q_sat, bolton_dqsat_dT
-import numpy as np
 from typing import NamedTuple
-from .._core.backend import jit_compile, prange
+
+import numpy as np
+from sympl import Stepper, get_constant
+
+# from .._core import bolton_dqsat_dT, bolton_q_sat
+from .._core.backend import prange
 
 try:
     from numba import njit
+
     HAS_NUMBA = True
 except ImportError:
     HAS_NUMBA = False
-    njit = lambda x, **kwargs: x
+
+    def njit(x, **kwargs):
+        return x
+
 
 class GSCParams(NamedTuple):
-    Cpd: float; Lv: float; Rd: float; Rh2O: float; g: float; rhow: float
+    Cpd: float
+    Lv: float
+    Rd: float
+    Rh2O: float
+    g: float
+    rhow: float
+
 
 class GridScaleCondensation(Stepper):
     """
@@ -64,13 +76,19 @@ class GridScaleCondensation(Stepper):
         self._g = get_constant("gravitational_acceleration", "m/s^2")
         self._rhow = get_constant("density_of_liquid_phase", "kg/m^3")
         self._params = GSCParams(
-            Cpd=float(self._Cpd), Lv=float(self._Lv), Rd=float(self._Rd),
-            Rh2O=float(self._Rh2O), g=float(self._g), rhow=float(self._rhow)
+            Cpd=float(self._Cpd),
+            Lv=float(self._Lv),
+            Rd=float(self._Rd),
+            Rh2O=float(self._Rh2O),
+            g=float(self._g),
+            rhow=float(self._rhow),
         )
 
     def array_call(self, state, timestep):
-        t = state["air_temperature"]; q = state["specific_humidity"]
-        p = state["air_pressure"]; p_int = state["air_pressure_on_interface_levels"]
+        t = state["air_temperature"]
+        q = state["specific_humidity"]
+        p = state["air_pressure"]
+        p_int = state["air_pressure_on_interface_levels"]
 
         orig_shape = t.shape
 
@@ -79,12 +97,15 @@ class GridScaleCondensation(Stepper):
         p_flat = np.reshape(p, (p.shape[0], -1))
         p_int_flat = np.reshape(p_int, (p_int.shape[0], -1))
 
-        t_new, q_new, precip = _gsc_kernel_np(t_flat, q_flat, p_flat, p_int_flat, self._params)
+        t_new, q_new, precip = _gsc_kernel_np(
+            t_flat, q_flat, p_flat, p_int_flat, self._params
+        )
 
         return {"precipitation_amount": np.reshape(precip, orig_shape[1:])}, {
             "air_temperature": np.reshape(t_new, orig_shape),
-            "specific_humidity": np.reshape(q_new, orig_shape)
+            "specific_humidity": np.reshape(q_new, orig_shape),
         }
+
 
 @njit
 def _gsc_kernel_np(T, q, p, p_int, params):
@@ -107,13 +128,15 @@ def _gsc_kernel_np(T, q, p, p_int, params):
             q_sat_k = eps_val * es / (p_col[k] - (1.0 - eps_val) * es)
 
             if q_col[k] > q_sat_k:
-                dqsat_dT = params.Lv * q_sat_k / (params.Rh2O * T_col[k]**2)
-                condensed_q = (q_col[k] - q_sat_k) / (1.0 + params.Lv / params.Cpd * dqsat_dT)
+                dqsat_dT = params.Lv * q_sat_k / (params.Rh2O * T_col[k] ** 2)
+                condensed_q = (q_col[k] - q_sat_k) / (
+                    1.0 + params.Lv / params.Cpd * dqsat_dT
+                )
 
                 new_q[k, i] = q_col[k] - condensed_q
                 new_T[k, i] = T_col[k] + params.Lv / params.Cpd * condensed_q
 
-                dp = p_int_col[k+1] - p_int_col[k]
+                dp = p_int_col[k + 1] - p_int_col[k]
                 mass = dp / (params.g * params.rhow)
                 col_precip += condensed_q * mass
 

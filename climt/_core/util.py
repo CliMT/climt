@@ -1,7 +1,8 @@
-from sympl import jit, DataArray
-from .backend import jit_compile
-import numpy as np
 import functools
+
+# from .backend import jit_compile
+import numpy as np
+from sympl import DataArray
 
 
 def ensure_contiguous_state(func):
