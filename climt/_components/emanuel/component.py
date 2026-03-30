@@ -240,8 +240,9 @@ class EmanuelConvection(ImplicitTendencyComponent):
         self._Lv = get_constant("latent_heat_of_condensation", "J/kg")
         self._rho_condensible = get_constant("density_of_liquid_phase", "kg/m^3")
         self._Cl = get_constant("specific_enthalpy_of_vapor_phase", "J/kg")
+        # Fix: Pass min_conv_layer for MINORIG
         _emanuel_convection.init_emanuel_convection(
-            self._min_conv_layer,
+            self._min_conv_layer,  # MINORIG
             self._crit_humidity,
             self._crit_temp,
             self._entrain_coeff,
@@ -300,8 +301,8 @@ class EmanuelConvection(ImplicitTendencyComponent):
         q_sat = bolton_q_sat(
             raw_state["air_temperature"],
             raw_state["air_pressure"] * 100,
-            self._Cpd,
-            self._Cpv,
+            self._Rdair,
+            self._Rcond,
         )
 
         _emanuel_convection.convect(

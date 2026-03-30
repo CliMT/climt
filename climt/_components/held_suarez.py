@@ -1,61 +1,47 @@
-from sympl import TendencyComponent, get_constant
+# -*- coding: utf-8 -*-
+from typing import NamedTuple
+
 import numpy as np
+from sympl import TendencyComponent, get_constant
+
+from .._core.backend import prange
+
+try:
+    from numba import njit
+
+    HAS_NUMBA = True
+except ImportError:
+    HAS_NUMBA = False
+
+    def njit(x, **kwargs):
+        return x
+
+
+class HeldSuarezParams(NamedTuple):
+    sigma_b: float
+    k_f: float
+    k_a: float
+    k_s: float
+    delta_T_y: float
+    delta_theta_z: float
+    p0: float
+    kappa: float
 
 
 class HeldSuarez(TendencyComponent):
-    """
-    Provide the Held-Suarez forcing.
-
-    Produces the forcings proposed by Held and Suarez for the intercomparison
-    of dynamical cores of AGCMs. Relaxes the temperature field to a zonally
-    symmetric equilibrium state, and uses Rayleigh damping of low-level winds
-    to represent boundary-layer friction. Details can be found in
-    `[Held and Suarez (1994)]`_.
-
-    References:
-        Held, I. and M. Suarez, 1994:
-            A Proposal for the Intercomparison of the
-            Dynamical Cores of Atmospheric General Circulation Models.
-            Bull. Amer. Meteor. Soc., 75, 1825-1830,
-            doi: 10.1175/1520-0477(1994)075<1825:APFTIO>2.0.CO;2.
-
-    .. _[Held and Suarez (1994)]:
-        http://journals.ametsoc.org/doi/pdf/10.1175/1520-0477(1994)075%3C1825%3AAPFTIO%3E2.0.CO%3B2
-    """
-
     input_properties = {
-        "eastward_wind": {
-            "dims": ["*", "mid_levels"],
-            "units": "m s^-1",
-        },
-        "northward_wind": {
-            "dims": ["*", "mid_levels"],
-            "units": "m s^-1",
-        },
-        "air_temperature": {
-            "dims": ["*", "mid_levels"],
-            "units": "degK",
-        },
-        "air_pressure": {
-            "dims": ["*", "mid_levels"],
-            "units": "Pa",
-        },
-        "surface_air_pressure": {
-            "dims": ["*"],
-            "units": "Pa",
-        },
-        "latitude": {
-            "dims": ["*"],
-            "units": "degrees_north",
-        },
+        "eastward_wind": {"dims": ["*", "mid_levels"], "units": "m s^-1"},
+        "northward_wind": {"dims": ["*", "mid_levels"], "units": "m s^-1"},
+        "air_temperature": {"dims": ["*", "mid_levels"], "units": "degK"},
+        "air_pressure": {"dims": ["*", "mid_levels"], "units": "Pa"},
+        "surface_air_pressure": {"dims": ["*"], "units": "Pa"},
+        "latitude": {"dims": ["*"], "units": "degrees_north"},
     }
-
     tendency_properties = {
         "eastward_wind": {"units": "m s^-2"},
         "northward_wind": {"units": "m s^-2"},
         "air_temperature": {"units": "degK s^-1"},
     }
-
     diagnostic_properties = {}
 
     def __init__(
@@ -66,52 +52,15 @@ class HeldSuarez(TendencyComponent):
         k_s=1 / 4.0 / 86400.0,
         equator_pole_temperature_difference=60,
         delta_theta_z=10,
-        **kwargs
+        **kwargs,
     ):
-        """
-
-        Args:
-            sigma_boundary_layer_top (float): The height of the boundary
-                layer top in sigma coordinates. Corresponds to $\\sigma_b$
-                in Held and Suarez, 1994. Default is 0.7.
-
-            k_f (float):
-                Velocity damping coefficient at the surface in :math:`s^{-1}`.
-                Default is :math:`1\\ day^{-1}`.
-
-            k_a (float):
-                Parameter used in defining vertical profile of the
-                temperature damping in :math:`s^{-1}`, as outlined in
-                Held and Suarez, 1994.
-                Default is :math:`1/40\\ day^{-1}`.
-
-            k_s (float):
-                Parameter used in defining vertical profile of the
-                temperature damping in :math:`s^{-1}`, as outlined in
-                Held and Suarez, 1994.
-                Default is :math:`1/4\\ day^{-1}`.
-
-            equator_pole_temperature_difference (float):
-                Equator to pole
-                temperature difference, in K.
-                Default is 60K.
-
-            delta_theta_z (float):
-                Parameter used in defining the equilibrium
-                temperature profile as outlined in Held and Suarez, 1994, in K.
-                Default is 10K.
-
-        """
-
         self._sigma_b = sigma_boundary_layer_top
         self._k_f = k_f
         self._k_a = k_a
         self._k_s = k_s
         self._delta_T_y = equator_pole_temperature_difference
         self._delta_theta_z = delta_theta_z
-
         self._update_constants()
-
         super(HeldSuarez, self).__init__(**kwargs)
 
     def _update_constants(self):
@@ -121,67 +70,69 @@ class HeldSuarez(TendencyComponent):
         )
         self._R_d = get_constant("gas_constant_of_dry_air", "J/kg/degK")
         self._kappa = self._R_d / self._Cpd
-        self._Omega = get_constant("planetary_rotation_rate", "s^-1")
-        self._g = get_constant("gravitational_acceleration", "m/s^2")
-        self._r_planet = get_constant("planetary_radius", "m")
+        self._params = HeldSuarezParams(
+            sigma_b=float(self._sigma_b),
+            k_f=float(self._k_f),
+            k_a=float(self._k_a),
+            k_s=float(self._k_s),
+            delta_T_y=float(self._delta_T_y),
+            delta_theta_z=float(self._delta_theta_z),
+            p0=float(self._p0),
+            kappa=float(self._kappa),
+        )
 
     def array_call(self, raw_state):
-        """
-        Get the Held-Suarez forcing tendencies
-
-        Args:
-            raw_state (dict): A model state dictionary of numpy arrays
-                satisfying input_properties.
-
-        Returns:
-            tendencies (dict), diagnostics (dict):
-
-            * A dictionary whose keys are strings indicating
-              state quantities and values are the time derivative of those
-              quantities at the time of the input state.
-            * A dictionary whose keys are strings indicating
-              state quantities and values are the value of those quantities
-              at the time of the input state.
-        """
-        self._update_constants()
-        sigma = (
-            raw_state["air_pressure"] / raw_state["surface_air_pressure"][:, np.newaxis]
+        t = raw_state["air_temperature"]
+        u = raw_state["eastward_wind"]
+        v = raw_state["northward_wind"]
+        p = raw_state["air_pressure"]
+        ps = raw_state["surface_air_pressure"]
+        lat = raw_state["latitude"]
+        tend_u, tend_v, tend_t = _held_suarez_kernel_np(
+            u, v, t, p, ps, lat, self._params
         )
+        return {
+            "eastward_wind": tend_u,
+            "northward_wind": tend_v,
+            "air_temperature": tend_t,
+        }, {}
 
-        Teq = self._get_Teq(
-            raw_state["latitude"][:, np.newaxis], raw_state["air_pressure"]
-        )
-        k_t = self._get_k_t(raw_state["latitude"][:, np.newaxis], sigma)
-        k_v = self._get_k_v(sigma)
 
-        tendencies = {
-            "eastward_wind": -k_v * raw_state["eastward_wind"],
-            "northward_wind": -k_v * raw_state["northward_wind"],
-            "air_temperature": -k_t * (raw_state["air_temperature"] - Teq),
-        }
+@njit
+def _held_suarez_kernel_np(u, v, t, p, ps, lat, params):
+    # ps and lat are (ncol,)
+    # p, u, v, t are (ncol, nlev)
+    ncol, nlev = u.shape
+    tend_u = np.zeros(u.shape)
+    tend_v = np.zeros(v.shape)
+    tend_t = np.zeros(t.shape)
 
-        return tendencies, {}
+    deg_to_rad = np.pi / 180.0
 
-    def _get_Teq(self, latitude, air_pressure):
-        return np.maximum(
-            200,
-            (
-                315
-                - self._delta_T_y * np.sin(np.radians(latitude)) ** 2
-                - self._delta_theta_z
-                * np.log(air_pressure / self._p0)
-                * np.cos(np.radians(latitude)) ** 2
+    for i in prange(ncol):
+        ps_val = ps[i]
+        lat_val = lat[i]
+        lat_rad = lat_val * deg_to_rad
+        sin_lat_sq = np.sin(lat_rad) ** 2
+        cos_lat_sq = np.cos(lat_rad) ** 2
+        cos_lat_q = cos_lat_sq**2
+
+        for j in range(nlev):
+            sigma = p[i, j] / ps_val
+            p_norm = p[i, j] / params.p0
+            Teq = max(
+                200.0,
+                (
+                    315.0
+                    - params.delta_T_y * sin_lat_sq
+                    - params.delta_theta_z * np.log(p_norm) * cos_lat_sq
+                )
+                * p_norm**params.kappa,
             )
-            * (air_pressure / self._p0) ** self._kappa,
-        )
-
-    def _get_k_t(self, latitude, sigma):
-        return (
-            self._k_a
-            + (self._k_s - self._k_a)
-            * np.maximum(0, (sigma - self._sigma_b) / (1 - self._sigma_b))
-            * np.cos(np.radians(latitude)) ** 4
-        )
-
-    def _get_k_v(self, sigma):
-        return self._k_f * np.maximum(0, (sigma - self._sigma_b) / (1 - self._sigma_b))
+            sigma_fac = max(0.0, (sigma - params.sigma_b) / (1.0 - params.sigma_b))
+            k_t = params.k_a + (params.k_s - params.k_a) * sigma_fac * cos_lat_q
+            k_v = params.k_f * sigma_fac
+            tend_u[i, j] = -k_v * u[i, j]
+            tend_v[i, j] = -k_v * v[i, j]
+            tend_t[i, j] = -k_t * (t[i, j] - Teq)
+    return tend_u, tend_v, tend_t

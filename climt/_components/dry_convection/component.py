@@ -1,5 +1,17 @@
-from sympl import get_constant, Stepper, initialize_numpy_arrays_with_properties
+from typing import NamedTuple
+
 import numpy as np
+from sympl import Stepper, get_constant
+
+from ..._core.backend import jit_compile, prange
+
+
+class DryAdjParams(NamedTuple):
+    Cpd: float
+    Cvap: float
+    Rdair: float
+    Pref: float
+    Rv: float
 
 
 class DryConvectiveAdjustment(Stepper):
@@ -40,99 +52,101 @@ class DryConvectiveAdjustment(Stepper):
     diagnostic_properties = {}
 
     def array_call(self, state, time_step):
-
-        self._Cpd = get_constant(
-            "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"
-        )
-        self._Cvap = get_constant("heat_capacity_of_vapor_phase", "J/kg/K")
-        self._Rdair = get_constant("gas_constant_of_dry_air", "J/kg/degK")
-        self._Pref = get_constant("reference_air_pressure", "Pa")
-        self._Rv = get_constant("gas_constant_of_vapor_phase", "J/kg/K")
-
+        t = state["air_temperature"]
         q = state["specific_humidity"]
+        p = state["air_pressure"]
+        p_int = state["P_int"]
 
-        output_arrays = initialize_numpy_arrays_with_properties(
-            self.output_properties, state, self.input_properties
+        orig_shape = t.shape
+        t_flat = np.reshape(t, (t.shape[0], -1))
+        q_flat = np.reshape(q, (q.shape[0], -1))
+        p_flat = np.reshape(p, (p.shape[0], -1))
+        p_int_flat = np.reshape(p_int, (p_int.shape[0], -1))
+
+        params = DryAdjParams(
+            Cpd=get_constant(
+                "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"
+            ),
+            Cvap=get_constant("heat_capacity_of_vapor_phase", "J/kg/K"),
+            Rdair=get_constant("gas_constant_of_dry_air", "J/kg/degK"),
+            Pref=get_constant("reference_air_pressure", "Pa"),
+            Rv=get_constant("gas_constant_of_vapor_phase", "J/kg/K"),
         )
 
-        output_temperature = output_arrays["air_temperature"]
-        output_temperature[:] = state["air_temperature"]
+        t_new, q_new = _dry_adj_kernel_np(t_flat, q_flat, p_flat, p_int_flat, params)
 
-        output_q = output_arrays["specific_humidity"]
-        output_q[:] = q
+        return {}, {
+            "air_temperature": np.reshape(t_new, orig_shape),
+            "specific_humidity": np.reshape(q_new, orig_shape),
+        }
 
-        rd_cp = self.gas_constant(q) / self.heat_capacity(q)
-        theta = state["air_temperature"] * (self._Pref / state["air_pressure"]) ** rd_cp
 
-        num_levels = q.shape[0]
+@jit_compile
+def _dry_adj_kernel_np(T, q, p, p_int, params):
+    nlev, ncol = T.shape
+    T_new = T.copy()
+    q_new = q.copy()
 
-        pdiff = state["P_int"][:-1, :] - state["P_int"][1:, :]
-        theta_q = theta * (1 + output_q * self._Rv / self._Rdair - output_q)
+    eps = params.Rv / params.Rdair
 
-        for column in range(q.shape[-1]):
-            for level in range(num_levels - 1, -1, -1):
+    for i in prange(ncol):
+        p_col = p[:, i]
+        p_int_col = p_int[:, i]
+        pdiff = np.zeros(nlev)
+        for m in range(nlev):
+            pdiff[m] = p_int_col[m] - p_int_col[m + 1]
 
-                dp = pdiff[:, column]
-                theta_sum = np.cumsum(theta_q[level::, column])
-                divisor = np.arange(1, num_levels - level + 1)
-
-                theta_avg = (theta_sum / divisor)[1::]
-
-                theta_lesser = theta_avg > theta_q[level + 1 : :, column]
-                if np.sum(theta_lesser) == 0:
-                    continue
-
-                convect_to_level = len(theta_lesser) - np.argmax(theta_lesser[::-1])
-
-                if level == 0:
-                    convect_to_level = max(convect_to_level, 1)
-
-                if convect_to_level == 0:
-                    continue
-                stable_level = level + convect_to_level
-
-                q_conv = output_q[level:stable_level, column]
-                t_conv = output_temperature[level:stable_level, column]
-                dp_conv = dp[level:stable_level]
-                p_conv_high = state["P_int"][level, column]
-                p_conv_low = state["P_int"][stable_level, column]
-
-                enthalpy = self.heat_capacity(q_conv) * t_conv
-                integral_enthalpy = np.sum(enthalpy * dp_conv)
-                mean_conv_q = np.sum(q_conv * dp_conv) / (p_conv_high - p_conv_low)
-
-                output_q[level:stable_level, column] = mean_conv_q
-
-                rdcp_conv = self.gas_constant(mean_conv_q) / self.heat_capacity(
-                    mean_conv_q
+        # TOA to Surface
+        for k in range(nlev - 1, -1, -1):
+            rd_cp = np.zeros(nlev)
+            theta_q = np.zeros(nlev)
+            for m in range(nlev):
+                rd_cp[m] = (
+                    params.Rdair * (1.0 - q_new[m, i]) + params.Rv * q_new[m, i]
+                ) / (params.Cpd * (1.0 - q_new[m, i]) + params.Cvap * q_new[m, i])
+                theta_q[m] = (
+                    T_new[m, i]
+                    * (params.Pref / p_col[m]) ** rd_cp[m]
+                    * (1.0 + q_new[m, i] * eps - q_new[m, i])
                 )
 
-                theta_coeff = (
-                    state["air_pressure"][level:stable_level, column] / self._Pref
-                ) ** rdcp_conv
+            current_theta_sum = 0.0
+            max_unstable_idx = -1
 
-                integral_theta_den = np.sum(
-                    self.heat_capacity(q_conv) * theta_coeff * dp_conv
-                )
+            for m in range(k, nlev):
+                current_theta_sum += theta_q[m]
+                theta_avg = current_theta_sum / (m - k + 1)
 
-                mean_theta = integral_enthalpy / integral_theta_den
+                if m > k and theta_avg > theta_q[m]:
+                    max_unstable_idx = m
 
-                output_temperature[level:stable_level, column] = (
-                    mean_theta * theta_coeff
-                )
+            if max_unstable_idx != -1:
+                # Mix from k to max_unstable_idx
+                p_high = p_int_col[k]
+                p_low = p_int_col[max_unstable_idx + 1]
 
-        return {}, output_arrays
+                sum_enthalpy = 0.0
+                sum_q_dp = 0.0
+                for m in range(k, max_unstable_idx + 1):
+                    cp_m = params.Cpd * (1.0 - q_new[m, i]) + params.Cvap * q_new[m, i]
+                    sum_enthalpy += cp_m * T_new[m, i] * pdiff[m]
+                    sum_q_dp += q_new[m, i] * pdiff[m]
 
-    def heat_capacity(self, q):
-        """
-        Calculate heat capacity based on amount of q
-        """
+                mean_q = sum_q_dp / (p_high - p_low)
+                cp_mixed = params.Cpd * (1.0 - mean_q) + params.Cvap * mean_q
+                rd_mixed = params.Rdair * (1.0 - mean_q) + params.Rv * mean_q
+                rdcp_mixed = rd_mixed / cp_mixed
 
-        return self._Cpd * (1 - q) + self._Cvap * q
+                sum_theta_den = 0.0
+                for m in range(k, max_unstable_idx + 1):
+                    theta_coeff = (p_col[m] / params.Pref) ** rdcp_mixed
+                    sum_theta_den += cp_mixed * theta_coeff * pdiff[m]
 
-    def gas_constant(self, q):
-        """
-        Calculate gas constant based on amount of q
-        """
+                mean_theta = sum_enthalpy / sum_theta_den
 
-        return self._Rdair * (1 - q) + self._Rv * q
+                for m in range(k, max_unstable_idx + 1):
+                    q_new[m, i] = mean_q
+                    theta_coeff = (p_col[m] / params.Pref) ** rdcp_mixed
+                    T_new[m, i] = mean_theta * theta_coeff
+
+    return T_new, q_new

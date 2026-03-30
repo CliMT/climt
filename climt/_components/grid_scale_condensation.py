@@ -1,6 +1,29 @@
-from sympl import Stepper, get_constant
-from .._core import bolton_q_sat, bolton_dqsat_dT
+from typing import NamedTuple
+
 import numpy as np
+from sympl import Stepper, get_constant
+
+# from .._core import bolton_dqsat_dT, bolton_q_sat
+from .._core.backend import prange
+
+try:
+    from numba import njit
+
+    HAS_NUMBA = True
+except ImportError:
+    HAS_NUMBA = False
+
+    def njit(x, **kwargs):
+        return x
+
+
+class GSCParams(NamedTuple):
+    Cpd: float
+    Lv: float
+    Rd: float
+    Rh2O: float
+    g: float
+    rhow: float
 
 
 class GridScaleCondensation(Stepper):
@@ -52,55 +75,71 @@ class GridScaleCondensation(Stepper):
         self._Rh2O = get_constant("gas_constant_of_vapor_phase", "J/kg/degK")
         self._g = get_constant("gravitational_acceleration", "m/s^2")
         self._rhow = get_constant("density_of_liquid_phase", "kg/m^3")
-
-    def array_call(self, raw_state, timestep):
-        """
-        Gets diagnostics from the current model state and steps the state
-        forward in time according to the timestep.
-
-        Args:
-            raw_state (dict): A model state dictionary of numpy arrays
-                satisfying input_properties. Will be updated with any
-                diagnostic quantities produced by this object for the time of
-                the input state.
-
-        Returns:
-            next_state (dict): A dictionary whose keys are strings indicating
-                state quantities and values are the value of those quantities
-                at the timestep after input state.
-
-        Raises:
-            KeyError: If a required quantity is missing from the state.
-            InvalidStateException: If state is not a value input for the
-                Stepper instance for other reasons.
-        """
-        self._update_constants()
-        T = raw_state["air_temperature"]
-        q = raw_state["specific_humidity"]
-        p = raw_state["air_pressure"]
-        p_interface = raw_state["air_pressure_on_interface_levels"]
-
-        q_sat = bolton_q_sat(T, p, self._Rd, self._Rh2O)
-        saturated = q > q_sat
-        dqsat_dT = bolton_dqsat_dT(T[saturated], self._Lv, self._Rh2O, q_sat[saturated])
-
-        condensed_q = np.zeros_like(q)
-        condensed_q[saturated] = (q[saturated] - q_sat[saturated]) / (
-            1 + self._Lv / self._Cpd * dqsat_dT
+        self._params = GSCParams(
+            Cpd=float(self._Cpd),
+            Lv=float(self._Lv),
+            Rd=float(self._Rd),
+            Rh2O=float(self._Rh2O),
+            g=float(self._g),
+            rhow=float(self._rhow),
         )
-        new_q = q.copy()
-        new_T = T.copy()
-        new_q[saturated] -= condensed_q[saturated]
-        new_T[saturated] += self._Lv / self._Cpd * condensed_q[saturated]
-        mass = (p_interface[1:, :] - p_interface[:-1, :]) / (self._g * self._rhow)
-        precipitation = np.sum(condensed_q * mass, axis=0)
 
-        diagnostics = {
-            "precipitation_amount": precipitation,
-        }
-        outputs = {
-            "air_temperature": new_T,
-            "specific_humidity": new_q,
+    def array_call(self, state, timestep):
+        t = state["air_temperature"]
+        q = state["specific_humidity"]
+        p = state["air_pressure"]
+        p_int = state["air_pressure_on_interface_levels"]
+
+        orig_shape = t.shape
+
+        t_flat = np.reshape(t, (t.shape[0], -1))
+        q_flat = np.reshape(q, (q.shape[0], -1))
+        p_flat = np.reshape(p, (p.shape[0], -1))
+        p_int_flat = np.reshape(p_int, (p_int.shape[0], -1))
+
+        t_new, q_new, precip = _gsc_kernel_np(
+            t_flat, q_flat, p_flat, p_int_flat, self._params
+        )
+
+        return {"precipitation_amount": np.reshape(precip, orig_shape[1:])}, {
+            "air_temperature": np.reshape(t_new, orig_shape),
+            "specific_humidity": np.reshape(q_new, orig_shape),
         }
 
-        return diagnostics, outputs
+
+@njit
+def _gsc_kernel_np(T, q, p, p_int, params):
+    nlev, ncol = T.shape
+    new_T = T.copy()
+    new_q = q.copy()
+    precip = np.zeros(ncol)
+
+    for i in prange(ncol):
+        p_col = p[:, i]
+        p_int_col = p_int[:, i]
+        T_col = T[:, i]
+        q_col = q[:, i]
+
+        col_precip = 0.0
+        for k in range(nlev):
+            # Bolton q_sat logic
+            es = 611.2 * np.exp(17.67 * (T_col[k] - 273.15) / (T_col[k] - 29.65))
+            eps_val = params.Rd / params.Rh2O
+            q_sat_k = eps_val * es / (p_col[k] - (1.0 - eps_val) * es)
+
+            if q_col[k] > q_sat_k:
+                dqsat_dT = params.Lv * q_sat_k / (params.Rh2O * T_col[k] ** 2)
+                condensed_q = (q_col[k] - q_sat_k) / (
+                    1.0 + params.Lv / params.Cpd * dqsat_dT
+                )
+
+                new_q[k, i] = q_col[k] - condensed_q
+                new_T[k, i] = T_col[k] + params.Lv / params.Cpd * condensed_q
+
+                dp = p_int_col[k + 1] - p_int_col[k]
+                mass = dp / (params.g * params.rhow)
+                col_precip += condensed_q * mass
+
+        precip[i] = col_precip
+
+    return new_T, new_q, precip

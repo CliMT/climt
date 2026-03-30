@@ -1,0 +1,17 @@
+Benchmark: 4096 cols, 30 levels, 5 iters
+=========================================================================================================================
+Component                           |     DA+noJIT |     DA+Numba |   Unyt+noJIT |   Unyt+Numba |  Numba spd |   Unyt spd
+-------------------------------------------------------------------------------------------------------------------------
+HeldSuarez                          |      0.856s |      0.011s |      0.870s |      0.011s |      75.0x |       1.1x
+GrayLongwaveRadiation               |      0.819s |      0.015s |      0.864s |      0.015s |      56.0x |       1.0x
+Frierson06LongwaveOpticalDepth      |      0.180s |      0.004s |      0.178s |      0.004s |      47.0x |       1.0x
+GridScaleCondensation               |      0.458s |      0.022s |      0.487s |      0.022s |      20.8x |       1.0x
+DryConvectiveAdjustment             |     18.588s |      0.250s |     18.831s |      0.241s |      74.3x |       1.0x
+BergerSolarInsolation               |      0.035s |      0.003s |      0.033s |      0.002s |      11.7x |       1.3x
+SlabSurface                         |      0.028s |      0.015s |      0.019s |      0.006s |       1.9x |       2.5x
+Instellation                        |      0.020s |      0.002s |      0.020s |      0.002s |       8.4x |       1.4x
+BucketHydrology                     |      0.012s |      0.012s |      0.005s |      0.005s |       1.0x |       2.6x
+EmanuelConvectionPythonV3           |      1.861s |      0.034s |      1.828s |      0.029s |      55.3x |       1.2x
+
+Numba spd = DA+noJIT / DA+Numba (kernel speedup from Numba)
+Unyt spd  = DA+Numba / Unyt+Numba (backend speedup from Unyt over DataArray)

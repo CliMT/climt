@@ -1,0 +1,15 @@
+Held-Suarez GCM benchmark: 300 steps, 128x62 grid, UnytBackend
+======================================================================
+
+Running Numba OFF...
+  Warmup (1 step):  19.89s
+  Timed (300 steps): 124.71s
+  Per step:         0.4157s
+  Wall clock total: 146.3s
+
+Running Numba ON...
+  Warmup (1 step):  19.73s
+  Timed (300 steps): 24.68s
+  Per step:         0.0823s
+  Wall clock total: 46.1s
+

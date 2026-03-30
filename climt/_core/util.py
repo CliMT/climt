@@ -174,14 +174,12 @@ def calculate_q_sat(surf_temp, surf_press, Rd, Rv):
     return eps * sat_vap_press / (surf_press - (1 - eps) * sat_vap_press)
 
 
-# @jit(nopython=True)
 def bolton_q_sat(T, p, Rd, Rh2O):
     es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
     epsilon = Rd / Rh2O
     return epsilon * es / (p - (1 - epsilon) * es)
 
 
-# @jit(nopython=True)
 def bolton_dqsat_dT(T, Lv, Rh2O, q_sat):
     """Uses the assumptions of equation 12 in Reed and Jablonowski, 2012. In
     particular, assumes d(qsat)/dT is approximately epsilon/p*d(es)/dT"""
