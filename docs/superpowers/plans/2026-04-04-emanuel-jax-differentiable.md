@@ -479,7 +479,7 @@ The downdraft loop runs from INB down to 0 (reversed). Each level depends on the
 
 - [x] **Step 3: Verify parity** ✓ 6/6 passed.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit** ✓ da84ad1
 
 ---
 
@@ -495,7 +495,7 @@ Block 13 (FT, FQ, FU, FV computation) has the structure:
 Block 14: FRAC smoothing between INB and INB-1
 Block 15: Conservation correction (ENTS, UAV, VAV averages subtracted)
 
-- [ ] **Step 1: Compute AM, AMP1, AD as prefix sums**
+- [x] **Step 1: Compute AM, AMP1, AD as prefix sums**
 
 ```python
 # AM = sum of M[1:INB+1] (only when NK==0)
@@ -520,7 +520,7 @@ MENT_upper = jnp.triu(MENT, k=1)  # entries where j > i
 
 The exact formulation needs careful linear-algebra equivalents of the nested sums. The pattern is: each sum over a triangular region of MENT can be expressed as a cumulative sum of row/column sums.
 
-- [ ] **Step 2: Compute FT, FQ, FU, FV for all levels**
+- [x] **Step 2: Compute FT, FQ, FU, FV for all levels**
 
 Once AMP1 and AD are computed as arrays, the tendency formulas are element-wise:
 ```python
@@ -540,7 +540,7 @@ FT_interior = (
 # These are column sums of MENT * (QENT - Q) matrices
 ```
 
-- [ ] **Step 3: FRAC smoothing (Block 14)**
+- [x] **Step 3: FRAC smoothing (Block 14)**
 
 ```python
 # Smooth between INB and INB-1
@@ -557,7 +557,7 @@ FQ = FQ.at[INB].set(FQOLD * (1.0 - FRAC))
 FQ = FQ.at[INB-1].add(FRAC * FQOLD * ph_ratio * LV[INB] / LV[INB-1])
 ```
 
-- [ ] **Step 4: Conservation correction (Block 15)**
+- [x] **Step 4: Conservation correction (Block 15)**
 
 ```python
 active_levels = lvl[:ND] <= INB
@@ -571,7 +571,7 @@ FU = jnp.where(active_levels, (1.0 - params.CU) * (FU - UAV), FU)
 FV = jnp.where(active_levels, (1.0 - params.CU) * (FV - VAV), FV)
 ```
 
-- [ ] **Step 5: Apply the `active` mask to final outputs**
+- [x] **Step 5: Apply the `active` mask to final outputs** (N/A — early returns handle this)
 
 All tendency outputs should be zeroed when `active` is False (no convection):
 ```python
@@ -582,13 +582,13 @@ FV = jnp.where(active & (CBMF > 0), FV, 0.0)
 PRECIP = jnp.where(active & (CBMF > 0), PRECIP, 0.0)
 ```
 
-- [ ] **Step 6: Verify parity**
+- [x] **Step 6: Verify parity**
 
 ```bash
 conda activate climt && python -m pytest tests/test_emanuel_jax_parity.py -v
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git commit -am "feat(emanuel): differentiable tendency accumulation and conservation"

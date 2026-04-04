@@ -1505,143 +1505,161 @@ def _convect_functional_jax(
             * 3600.0 * 24000.0 / (params.ROWL * params.G)
         )
 
-    # --- Blocks 13–15: Tendency accumulation ---
-    WD = params.BETA * abs(float(MP[ICB])) * 0.01 * params.RD * float(T[ICB]) / (params.SIGD * float(P[ICB]))
-    QPRIME = 0.5 * (float(QP[0]) - float(Q[0]))
+    # --- Blocks 13–15: Tendency accumulation (differentiable) ---
+    WD = params.BETA * jnp.abs(MP[ICB]) * 0.01 * params.RD * T_pad[ICB] / (params.SIGD * P[ICB])
+    QPRIME = 0.5 * (QP[0] - Q_pad[0])
     TPRIME = params.LV0 * QPRIME / params.CPD
 
-    DPINV = 0.01 / (float(PH[0]) - float(PH[1]))
-    AM = 0.0
-    if NK == 0:
-        for ii in range(1, INB + 1):
-            AM += float(M[ii])
+    # --- Block 13: FT, FQ, FU, FV computation ---
+    # Precompute DPINV for all ND levels: 0.01 / (PH[i] - PH[i+1])
+    DPINV_all = 0.01 / (PH[:ND] - PH[1:ND + 1])  # (ND,)
+    CPINV_all = 1.0 / CPN[:ND]  # (ND,)
 
-    if (2.0 * params.G * DPINV * AM) >= DELTI:
+    # --- Surface level (i=0) ---
+    DPINV_0 = DPINV_all[0]
+    # AM = sum of M[1:INB+1] when NK==0
+    lvl_m = jnp.arange(ND + 1)
+    AM = jnp.where(NK == 0, jnp.sum(jnp.where((lvl_m >= 1) & (lvl_m <= INB), M, 0.0)), 0.0)
+
+    if (2.0 * params.G * float(DPINV_0) * float(AM)) >= DELTI:
         IFLAG = 4
 
     FT = FT.at[0].add(
-        params.G * DPINV * AM * (float(T[1]) - float(T[0]) + (float(GZ[1]) - float(GZ[0])) / float(CPN[0]))
-        - float(LVCP[0]) * params.SIGD * float(EVAP[0])
-        + params.SIGD * float(WT[1]) * (params.CL - params.CPD) * float(WATER[1])
-        * (float(T[1]) - float(T[0])) * DPINV / float(CPN[0])
+        params.G * DPINV_0 * AM * (T_pad[1] - T_pad[0] + (GZ[1] - GZ[0]) / CPN[0])
+        - LVCP[0] * params.SIGD * EVAP[0]
+        + params.SIGD * WT[1] * (params.CL - params.CPD) * WATER[1]
+        * (T_pad[1] - T_pad[0]) * DPINV_0 / CPN[0]
     )
     FQ = FQ.at[0].add(
-        params.G * float(MP[1]) * (float(QP[1]) - float(Q[0])) * DPINV
-        + params.SIGD * float(EVAP[0])
-        + params.G * AM * (float(Q[1]) - float(Q[0])) * DPINV
+        params.G * MP[1] * (QP[1] - Q_pad[0]) * DPINV_0
+        + params.SIGD * EVAP[0]
+        + params.G * AM * (Q_pad[1] - Q_pad[0]) * DPINV_0
     )
-    FU = FU.at[0].add(params.G * DPINV * (float(MP[1]) * (float(UP[1]) - float(U[0])) + AM * (float(U[1]) - float(U[0]))))
-    FV = FV.at[0].add(params.G * DPINV * (float(MP[1]) * (float(VP[1]) - float(V[0])) + AM * (float(V[1]) - float(V[0]))))
+    FU = FU.at[0].add(params.G * DPINV_0 * (MP[1] * (UP[1] - U_pad[0]) + AM * (U_pad[1] - U_pad[0])))
+    FV = FV.at[0].add(params.G * DPINV_0 * (MP[1] * (VP[1] - V_pad[0]) + AM * (V_pad[1] - V_pad[0])))
 
-    for j in range(1, INB + 1):
-        FQ = FQ.at[0].add(params.G * DPINV * float(MENT[j, 0]) * (float(QENT[j, 0]) - float(Q[0])))
-        FU = FU.at[0].add(params.G * DPINV * float(MENT[j, 0]) * (float(UENT[j, 0]) - float(U[0])))
-        FV = FV.at[0].add(params.G * DPINV * float(MENT[j, 0]) * (float(VENT[j, 0]) - float(V[0])))
+    # MENT column sums for surface level: sum over j=1..INB of MENT[j,0]*(XENT[j,0]-X[0])
+    j_mask_surf = (lvl_m >= 1) & (lvl_m <= INB)  # (ND+1,)
+    FQ = FQ.at[0].add(params.G * DPINV_0 * jnp.sum(
+        jnp.where(j_mask_surf, MENT[:, 0] * (QENT[:, 0] - Q_pad[0]), 0.0)))
+    FU = FU.at[0].add(params.G * DPINV_0 * jnp.sum(
+        jnp.where(j_mask_surf, MENT[:, 0] * (UENT[:, 0] - U_pad[0]), 0.0)))
+    FV = FV.at[0].add(params.G * DPINV_0 * jnp.sum(
+        jnp.where(j_mask_surf, MENT[:, 0] * (VENT[:, 0] - V_pad[0]), 0.0)))
+
+    # --- Interior levels (i=1..INB) ---
+    # Precompute AMP1[i] and AD[i] for all levels i=1..INB as arrays.
+    #
+    # AMP1[i] = sum of M[ii] for ii in [i+1, INB+1] (when i >= NK)
+    #         + sum of MENT[k, jj] for k in [0..i], jj in [i+1, INB+1]
+    #
+    # AD[i] = sum of MENT[jj, k] for k in [0..i-1], jj in [i, INB]
 
     for i in range(1, INB + 1):
-        DPINV = 0.01 / (float(PH[i]) - float(PH[i + 1]))
-        CPINV = 1.0 / float(CPN[i])
-        AMP1 = 0.0
-        if i >= NK:
-            for ii in range(i + 1, INB + 2):
-                AMP1 += float(M[ii])
-        for k in range(i + 1):
-            for jj in range(i + 1, INB + 2):
-                AMP1 += float(MENT[k, jj])
-        if (2.0 * params.G * DPINV * AMP1) >= DELTI:
+        DPINV_i = DPINV_all[i]
+        CPINV_i = CPINV_all[i]
+
+        # AMP1: mass flux part
+        AMP1_mass = jnp.where(i >= NK,
+            jnp.sum(jnp.where((lvl_m >= i + 1) & (lvl_m <= INB + 1), M, 0.0)),
+            0.0)
+        # AMP1: entrainment part — sum MENT[k, jj] for k<=i, jj>i, jj<=INB+1
+        k_le_i = (lvl_m[:, None] <= i)           # (ND+1, 1) broadcast
+        jj_gt_i = (lvl_m[None, :] >= i + 1) & (lvl_m[None, :] <= INB + 1)  # (1, ND+1)
+        AMP1_ent = jnp.sum(jnp.where(k_le_i & jj_gt_i, MENT, 0.0))
+        AMP1 = AMP1_mass + AMP1_ent
+
+        if (2.0 * params.G * float(DPINV_i) * float(AMP1)) >= DELTI:
             IFLAG = 4
-        AD = 0.0
-        for k in range(i):
-            for jj in range(i, INB + 1):
-                AD += float(MENT[jj, k])
 
+        # AD: sum MENT[jj, k] for k < i, jj in [i, INB]
+        k_lt_i = (lvl_m[None, :] < i)            # columns k < i
+        jj_ge_i = (lvl_m[:, None] >= i) & (lvl_m[:, None] <= INB)  # rows jj >= i, jj <= INB
+        AD = jnp.sum(jnp.where(jj_ge_i & k_lt_i, MENT, 0.0))
+
+        # FT: advection + evaporation + self-entrainment + water loading
         FT = FT.at[i].add(
-            params.G * DPINV * (
-                AMP1 * (float(T[i + 1]) - float(T[i]) + (float(GZ[i + 1]) - float(GZ[i])) * CPINV)
-                - AD * (float(T[i]) - float(T[i - 1]) + (float(GZ[i]) - float(GZ[i - 1])) * CPINV)
+            params.G * DPINV_i * (
+                AMP1 * (T_pad[i + 1] - T_pad[i] + (GZ[i + 1] - GZ[i]) * CPINV_i)
+                - AD * (T_pad[i] - T_pad[i - 1] + (GZ[i] - GZ[i - 1]) * CPINV_i)
             )
-            - params.SIGD * float(LVCP[i]) * float(EVAP[i])
+            - params.SIGD * LVCP[i] * EVAP[i]
         )
         FT = FT.at[i].add(
-            params.G * DPINV * float(MENT[i, i])
-            * (float(HP[i]) - float(H[i]) + float(T[i]) * (params.CPV - params.CPD) * (float(Q[i]) - float(QENT[i, i])))
-            * CPINV
+            params.G * DPINV_i * MENT[i, i]
+            * (HP[i] - H[i] + T_pad[i] * (params.CPV - params.CPD) * (Q_pad[i] - QENT[i, i]))
+            * CPINV_i
         )
         FT = FT.at[i].add(
-            params.SIGD * float(WT[i + 1]) * (params.CL - params.CPD)
-            * float(WATER[i + 1]) * (float(T[i + 1]) - float(T[i]))
-            * DPINV * CPINV
+            params.SIGD * WT[i + 1] * (params.CL - params.CPD)
+            * WATER[i + 1] * (T_pad[i + 1] - T_pad[i])
+            * DPINV_i * CPINV_i
         )
-        FQ = FQ.at[i].add(params.G * DPINV * (AMP1 * (float(Q[i + 1]) - float(Q[i])) - AD * (float(Q[i]) - float(Q[i - 1]))))
-        FU = FU.at[i].add(params.G * DPINV * (AMP1 * (float(U[i + 1]) - float(U[i])) - AD * (float(U[i]) - float(U[i - 1]))))
-        FV = FV.at[i].add(params.G * DPINV * (AMP1 * (float(V[i + 1]) - float(V[i])) - AD * (float(V[i]) - float(V[i - 1]))))
 
-        for k in range(i):
-            AWAT = max(float(ELIJ[k, i]) - (1.0 - float(EP[i])) * float(CLW[i]), 0.0)
-            FQ = FQ.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(QENT[k, i]) - AWAT - float(Q[i])))
-            FU = FU.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(UENT[k, i]) - float(U[i])))
-            FV = FV.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(VENT[k, i]) - float(V[i])))
+        # FQ, FU, FV: advection terms
+        FQ = FQ.at[i].add(params.G * DPINV_i * (AMP1 * (Q_pad[i + 1] - Q_pad[i]) - AD * (Q_pad[i] - Q_pad[i - 1])))
+        FU = FU.at[i].add(params.G * DPINV_i * (AMP1 * (U_pad[i + 1] - U_pad[i]) - AD * (U_pad[i] - U_pad[i - 1])))
+        FV = FV.at[i].add(params.G * DPINV_i * (AMP1 * (V_pad[i + 1] - V_pad[i]) - AD * (V_pad[i] - V_pad[i - 1])))
 
-        for k in range(i, INB + 1):
-            FQ = FQ.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(QENT[k, i]) - float(Q[i])))
-            FU = FU.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(UENT[k, i]) - float(U[i])))
-            FV = FV.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(VENT[k, i]) - float(V[i])))
+        # MENT contributions for k < i (with AWAT water term in FQ)
+        k_below = (lvl_m < i)  # (ND+1,)
+        AWAT_vec = jnp.maximum(ELIJ[:, i] - (1.0 - EP_pad[i]) * CLW_pad[i], 0.0)  # (ND+1,)
+        FQ = FQ.at[i].add(params.G * DPINV_i * jnp.sum(
+            jnp.where(k_below, MENT[:, i] * (QENT[:, i] - AWAT_vec - Q_pad[i]), 0.0)))
+        FU = FU.at[i].add(params.G * DPINV_i * jnp.sum(
+            jnp.where(k_below, MENT[:, i] * (UENT[:, i] - U_pad[i]), 0.0)))
+        FV = FV.at[i].add(params.G * DPINV_i * jnp.sum(
+            jnp.where(k_below, MENT[:, i] * (VENT[:, i] - V_pad[i]), 0.0)))
 
+        # MENT contributions for k >= i (no AWAT)
+        k_above = (lvl_m >= i) & (lvl_m <= INB)  # (ND+1,)
+        FQ = FQ.at[i].add(params.G * DPINV_i * jnp.sum(
+            jnp.where(k_above, MENT[:, i] * (QENT[:, i] - Q_pad[i]), 0.0)))
+        FU = FU.at[i].add(params.G * DPINV_i * jnp.sum(
+            jnp.where(k_above, MENT[:, i] * (UENT[:, i] - U_pad[i]), 0.0)))
+        FV = FV.at[i].add(params.G * DPINV_i * jnp.sum(
+            jnp.where(k_above, MENT[:, i] * (VENT[:, i] - V_pad[i]), 0.0)))
+
+        # Downdraft mass flux contributions
         FQ = FQ.at[i].add(
-            params.SIGD * float(EVAP[i])
-            + params.G * (float(MP[i + 1]) * (float(QP[i + 1]) - float(Q[i])) - float(MP[i]) * (float(QP[i]) - float(Q[i - 1])))
-            * DPINV
+            params.SIGD * EVAP[i]
+            + params.G * (MP[i + 1] * (QP[i + 1] - Q_pad[i]) - MP[i] * (QP[i] - Q_pad[i - 1]))
+            * DPINV_i
         )
         FU = FU.at[i].add(
-            params.G * (float(MP[i + 1]) * (float(UP[i + 1]) - float(U[i])) - float(MP[i]) * (float(UP[i]) - float(U[i - 1])))
-            * DPINV
+            params.G * (MP[i + 1] * (UP[i + 1] - U_pad[i]) - MP[i] * (UP[i] - U_pad[i - 1]))
+            * DPINV_i
         )
         FV = FV.at[i].add(
-            params.G * (float(MP[i + 1]) * (float(VP[i + 1]) - float(V[i])) - float(MP[i]) * (float(VP[i]) - float(V[i - 1])))
-            * DPINV
+            params.G * (MP[i + 1] * (VP[i + 1] - V_pad[i]) - MP[i] * (VP[i] - V_pad[i - 1]))
+            * DPINV_i
         )
 
-    # --- Block 14: FRAC smoothing at INB ---
-    FQOLD = float(FQ[INB])
+    # --- Block 14: FRAC smoothing at INB (differentiable) ---
+    ph_ratio = (PH[INB] - PH[INB + 1]) / (PH[INB - 1] - PH[INB])
+    FQOLD = FQ[INB]
     FQ = FQ.at[INB].set(FQOLD * (1.0 - FRAC))
-    FQ = FQ.at[INB - 1].add(
-        FRAC * FQOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
-        * float(LV[INB]) / float(LV[INB - 1])
-    )
-    FTOLD = float(FT[INB])
+    FQ = FQ.at[INB - 1].add(FRAC * FQOLD * ph_ratio * LV[INB] / LV[INB - 1])
+    FTOLD = FT[INB]
     FT = FT.at[INB].set(FTOLD * (1.0 - FRAC))
-    FT = FT.at[INB - 1].add(
-        FRAC * FTOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
-        * float(CPN[INB]) / float(CPN[INB - 1])
-    )
-    FUOLD = float(FU[INB])
+    FT = FT.at[INB - 1].add(FRAC * FTOLD * ph_ratio * CPN[INB] / CPN[INB - 1])
+    FUOLD = FU[INB]
     FU = FU.at[INB].set(FUOLD * (1.0 - FRAC))
-    FU = FU.at[INB - 1].add(
-        FRAC * FUOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
-    )
-    FVOLD = float(FV[INB])
+    FU = FU.at[INB - 1].add(FRAC * FUOLD * ph_ratio)
+    FVOLD = FV[INB]
     FV = FV.at[INB].set(FVOLD * (1.0 - FRAC))
-    FV = FV.at[INB - 1].add(
-        FRAC * FVOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
-    )
+    FV = FV.at[INB - 1].add(FRAC * FVOLD * ph_ratio)
 
-    # --- Block 15: Conservation correction ---
-    ENTS = 0.0
-    UAV = 0.0
-    VAV = 0.0
-    DENOM2 = float(PH[0]) - float(PH[INB + 1])
-    for i in range(INB + 1):
-        dp = float(PH[i]) - float(PH[i + 1])
-        ENTS += (float(CPN[i]) * float(FT[i]) + float(LV[i]) * float(FQ[i])) * dp
-        UAV += float(FU[i]) * dp
-        VAV += float(FV[i]) * dp
-    ENTS /= DENOM2
-    UAV /= DENOM2
-    VAV /= DENOM2
-    for i in range(INB + 1):
-        FT = FT.at[i].set(float(FT[i]) - ENTS / float(CPN[i]))
-        FU = FU.at[i].set((1.0 - params.CU) * (float(FU[i]) - UAV))
-        FV = FV.at[i].set((1.0 - params.CU) * (float(FV[i]) - VAV))
+    # --- Block 15: Conservation correction (differentiable) ---
+    active_levels = jnp.arange(ND) <= INB  # (ND,) mask for levels 0..INB
+    dp = PH[:ND] - PH[1:ND + 1]  # (ND,)
+    DENOM2 = PH[0] - PH[INB + 1]
+    ENTS = jnp.sum(jnp.where(active_levels, (CPN[:ND] * FT + LV[:ND] * FQ) * dp, 0.0)) / DENOM2
+    UAV = jnp.sum(jnp.where(active_levels, FU * dp, 0.0)) / DENOM2
+    VAV = jnp.sum(jnp.where(active_levels, FV * dp, 0.0)) / DENOM2
+    FT = jnp.where(active_levels, FT - ENTS / CPN[:ND], FT)
+    FU = jnp.where(active_levels, (1.0 - params.CU) * (FU - UAV), FU)
+    FV = jnp.where(active_levels, (1.0 - params.CU) * (FV - VAV), FV)
 
     return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
 
