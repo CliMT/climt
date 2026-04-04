@@ -1377,71 +1377,132 @@ def _convect_functional_jax(
         ELIJ = ELIJ.at[i, :].set(jnp.where(tiny, ELIJ_fallback, ELIJ[i, :]))
         SIJ = SIJ.at[i, :].set(jnp.where(tiny, SIJ_fallback, SIJ[i, :]))
 
-    # --- Block 12: Downdraft ---
-    if float(EP[INB]) >= 0.0001:
-        JTT = 0
-        for i in range(INB, -1, -1):
-            WDTRAIN = params.G * float(EP[i]) * float(M[i]) * float(CLW[i])
-            if i > 0:
-                for j in range(i):
-                    WDTRAIN += (
-                        params.G
-                        * max(0.0, float(ELIJ[j, i]) - (1.0 - float(EP[i])) * float(CLW[i]))
-                        * float(MENT[j, i])
-                    )
-            COEFF = params.COEFFR if float(T[i]) > 273.0 else params.COEFFS
-            WT = WT.at[i].set(params.OMTRAIN if float(T[i]) > 273.0 else params.OMTSNOW)
-            AFAC = max(
-                COEFF
-                * float(PH[i])
-                * (float(QS[i]) - 0.5 * (float(Q[i]) + float(QP[i + 1])))
-                / (1.0e4 + 2.0e3 * float(PH[i]) * float(QS[i])),
-                0.0,
-            )
-            SIGT = min(max(float(SIGP[i]), 0.0), 1.0)
-            B6 = 100.0 * (float(PH[i]) - float(PH[i + 1])) * SIGT * AFAC / float(WT[i])
-            C6 = (float(WATER[i + 1]) * float(WT[i + 1]) + WDTRAIN / params.SIGD) / float(WT[i])
-            REVAP = 0.5 * (-B6 + float(jnp.sqrt(B6 * B6 + 4.0 * C6)))
-            EVAP = EVAP.at[i].set(SIGT * AFAC * REVAP)
-            WATER = WATER.at[i].set(REVAP * REVAP)
+    # --- Block 12: Downdraft (differentiable) ---
+    # Pre-compute WDTRAIN for all levels as a vectorized operation.
+    # WDTRAIN[i] = G*EP[i]*M[i]*CLW[i] + sum_{j<i} G*max(0, ELIJ[j,i]-(1-EP[i])*CLW[i])*MENT[j,i]
+    WDTRAIN_base = params.G * EP_pad * M * CLW_pad  # (ND+1,)
+    elij_term = ELIJ - (1.0 - EP_pad[None, :]) * CLW_pad[None, :]  # (ND+1, ND+1)
+    wdtrain_contrib = params.G * jnp.maximum(0.0, elij_term) * MENT  # (ND+1, ND+1)
+    j_lt_i = jnp.arange(ND + 1)[:, None] < jnp.arange(ND + 1)[None, :]
+    WDTRAIN_sum = jnp.sum(jnp.where(j_lt_i, wdtrain_contrib, 0.0), axis=0)  # (ND+1,)
+    lvl = jnp.arange(ND + 1)
+    WDTRAIN_all = WDTRAIN_base + jnp.where(lvl > 0, WDTRAIN_sum, 0.0)
 
-            if i > 0:
-                DHDP = max((float(H[i]) - float(H[i - 1])) / (float(P[i - 1]) - float(P[i])), 10.0)
-                mp_i = 100.0 * GINV * float(LV[i]) * params.SIGD * float(EVAP[i]) / DHDP
-                FAC = 20.0 / (float(PH[i - 1]) - float(PH[i]))
-                mp_i = (FAC * float(MP[i + 1]) + mp_i) / (1.0 + FAC)
-                MP = MP.at[i].set(mp_i)
-                if float(P[i]) > (0.949 * float(P[0])):
-                    JTT = max(JTT, i)
-                    mp_i = float(MP[JTT]) * (float(P[0]) - float(P[i])) / (float(P[0]) - float(P[JTT]))
-                    MP = MP.at[i].set(mp_i)
+    # Pre-compute per-level quantities for the downdraft
+    SIGP_pad = jnp.concatenate([SIGP, _z1])
+    WT_dd = jnp.where(T_pad > 273.0, params.OMTRAIN, params.OMTSNOW)  # (ND+1,)
+    COEFF_dd = jnp.where(T_pad > 273.0, params.COEFFR, params.COEFFS)  # (ND+1,)
+    SIGT_dd = jnp.clip(SIGP_pad, 0.0, 1.0)  # (ND+1,)
+    QS_pad = jnp.concatenate([QS, _z1])
 
-            if i != INB:
-                QSTM = float(QS[0]) if i == 0 else float(QS[i - 1])
-                if float(MP[i]) > float(MP[i + 1]):
-                    RAT = float(MP[i + 1]) / float(MP[i])
-                    QP = QP.at[i].set(
-                        float(QP[i + 1]) * RAT
-                        + float(Q[i]) * (1.0 - RAT)
-                        + 100.0 * GINV * params.SIGD
-                        * (float(PH[i]) - float(PH[i + 1]))
-                        * (float(EVAP[i]) / float(MP[i]))
-                    )
-                    UP = UP.at[i].set(float(UP[i + 1]) * RAT + float(U[i]) * (1.0 - RAT))
-                    VP = VP.at[i].set(float(VP[i + 1]) * RAT + float(V[i]) * (1.0 - RAT))
-                elif float(MP[i + 1]) > 0.0:
-                    QP = QP.at[i].set(
-                        (float(GZ[i + 1]) - float(GZ[i])
-                         + float(QP[i + 1]) * (float(LV[i + 1]) + float(T[i + 1]) * (params.CL - params.CPD))
-                         + params.CPD * (float(T[i + 1]) - float(T[i]))
-                        ) / (float(LV[i]) + float(T[i]) * (params.CL - params.CPD))
-                    )
-                    UP = UP.at[i].set(float(UP[i + 1]))
-                    VP = VP.at[i].set(float(VP[i + 1]))
-                QP = QP.at[i].set(max(min(float(QP[i]), QSTM), 0.0))
+    def downdraft_step(carry, i_rev):
+        """Scan from INB down to 0."""
+        (WATER_above, WT_above, MP_above, QP_above, UP_above, VP_above,
+         JTT, MP_JTT, P_JTT) = carry
+        i = INB - i_rev
+
+        # AFAC depends on QP_above (= QP[i+1] from previous step)
+        SIGT_i = SIGT_dd[i]
+        COEFF_i = COEFF_dd[i]
+        WT_i = WT_dd[i]
+        AFAC = jnp.maximum(
+            COEFF_i * PH[i] * (QS_pad[i] - 0.5 * (Q_pad[i] + QP_above))
+            / (1.0e4 + 2.0e3 * PH[i] * QS_pad[i]),
+            0.0,
+        )
+        B6 = 100.0 * (PH[i] - PH[i + 1]) * SIGT_i * AFAC / WT_i
+        C6 = (WATER_above * WT_above + WDTRAIN_all[i] / params.SIGD) / WT_i
+        REVAP = 0.5 * (-B6 + jnp.sqrt(jnp.maximum(B6 * B6 + 4.0 * C6, 0.0)))
+        EVAP_i = SIGT_i * AFAC * REVAP
+        WATER_i = REVAP * REVAP
+
+        # MP[i]: smoothed downdraft mass flux (only when i > 0)
+        im1 = jnp.maximum(i - 1, 0)
+        DHDP = jnp.maximum((H[i] - H[im1]) / jnp.maximum(P[im1] - P[i], 1e-30), 10.0)
+        MP_raw = 100.0 * GINV * LV[i] * params.SIGD * EVAP_i / DHDP
+        FAC = 20.0 / jnp.maximum(PH[im1] - PH[i], 1e-30)
+        MP_smooth = (FAC * MP_above + MP_raw) / (1.0 + FAC)
+
+        # Boundary-layer correction: JTT tracks first BL level
+        in_bl = (i > 0) & (P[i] > 0.949 * P[0])
+        first_bl = in_bl & (JTT == 0)
+        JTT_new = jnp.where(first_bl, jnp.int32(i), JTT)
+        MP_JTT_new = jnp.where(first_bl, MP_smooth, MP_JTT)
+        P_JTT_new = jnp.where(first_bl, P[i], P_JTT)
+        MP_bl = MP_JTT_new * (P[0] - P[i]) / jnp.maximum(P[0] - P_JTT_new, 1e-30)
+        MP_i = jnp.where(i > 0, jnp.where(in_bl, MP_bl, MP_smooth), 0.0)
+
+        # QP/UP/VP updates (when i != INB)
+        not_inb = (i != INB)
+        mp_increasing = MP_i > MP_above
+        RAT = jnp.where(mp_increasing & (MP_i > 0), MP_above / MP_i, 1.0)
+
+        ip1 = jnp.minimum(i + 1, ND - 1)
+        QP_inc = (
+            QP_above * RAT + Q_pad[i] * (1.0 - RAT)
+            + 100.0 * GINV * params.SIGD
+            * (PH[i] - PH[i + 1]) * EVAP_i / jnp.maximum(MP_i, 1e-30)
+        )
+        QP_dec = (
+            (GZ[i + 1] - GZ[i]
+             + QP_above * (LV[i + 1] + T_pad[ip1] * (params.CL - params.CPD))
+             + params.CPD * (T_pad[ip1] - T_pad[i]))
+            / jnp.maximum(LV[i] + T_pad[i] * (params.CL - params.CPD), 1e-30)
+        )
+        QP_i = jnp.where(
+            not_inb & mp_increasing, QP_inc,
+            jnp.where(not_inb & (MP_above > 0.0), QP_dec, QP_above),
+        )
+        QSTM_i = jnp.where(i == 0, QS_pad[0], QS_pad[im1])
+        QP_i = jnp.where(not_inb, jnp.clip(QP_i, 0.0, QSTM_i), QP_above)
+
+        UP_i = jnp.where(
+            not_inb & mp_increasing,
+            UP_above * RAT + U_pad[i] * (1.0 - RAT),
+            UP_above,
+        )
+        VP_i = jnp.where(
+            not_inb & mp_increasing,
+            VP_above * RAT + V_pad[i] * (1.0 - RAT),
+            VP_above,
+        )
+
+        new_carry = (WATER_i, WT_i, MP_i, QP_i, UP_i, VP_i,
+                     JTT_new, MP_JTT_new, P_JTT_new)
+        outputs = (WATER_i, WT_i, MP_i, EVAP_i, QP_i, UP_i, VP_i)
+        return new_carry, outputs
+
+    ep_active = (EP[INB] >= 0.0001) if INB < len(EP) else False
+    if ep_active:
+        init_carry = (
+            jnp.array(0.0),               # WATER[INB+1] = 0
+            jnp.array(params.OMTSNOW),    # WT[INB+1] initial
+            jnp.array(0.0),               # MP[INB+1] = 0
+            QP[INB + 1],                  # QP[INB+1]
+            UP[INB + 1],                  # UP[INB+1]
+            VP[INB + 1],                  # VP[INB+1]
+            jnp.array(0, dtype=jnp.int32),  # JTT
+            jnp.array(0.0),               # MP_JTT
+            P[0],                          # P_JTT (safe default)
+        )
+        _, scan_out = jax.lax.scan(downdraft_step, init_carry, jnp.arange(INB + 1))
+        # scan_out arrays are indexed [i_rev] where i_rev=0 → level INB, i_rev=INB → level 0
+        WATER_sc, WT_sc, MP_sc, EVAP_sc, QP_sc, UP_sc, VP_sc = scan_out
+
+        # Scatter scan results into the full arrays (reverse i_rev to get level order)
+        for i_rev in range(INB + 1):
+            i = INB - i_rev
+            WATER = WATER.at[i].set(WATER_sc[i_rev])
+            WT = WT.at[i].set(WT_sc[i_rev])
+            MP = MP.at[i].set(MP_sc[i_rev])
+            EVAP = EVAP.at[i].set(EVAP_sc[i_rev])
+            QP = QP.at[i].set(QP_sc[i_rev])
+            UP = UP.at[i].set(UP_sc[i_rev])
+            VP = VP.at[i].set(VP_sc[i_rev])
 
         PRECIP += (
-            float(WT[0]) * params.SIGD * float(WATER[0]) * 3600.0 * 24000.0 / (params.ROWL * params.G)
+            float(WT_sc[INB]) * params.SIGD * float(WATER_sc[INB])
+            * 3600.0 * 24000.0 / (params.ROWL * params.G)
         )
 
     # --- Blocks 13–15: Tendency accumulation ---

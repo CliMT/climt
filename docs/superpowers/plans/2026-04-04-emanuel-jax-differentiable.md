@@ -462,11 +462,7 @@ This can be done as:
 
 - [x] **Step 3: Verify parity** ✓ 6/6 passed.
 
-- [ ] **Step 4: Commit**
-
-```bash
-git commit -am "feat(emanuel): differentiable entrainment/detrainment SIJ/MENT"
-```
+- [x] **Step 4: Commit** ✓ 8462894
 
 ---
 
@@ -477,107 +473,13 @@ git commit -am "feat(emanuel): differentiable entrainment/detrainment SIJ/MENT"
 
 The downdraft loop runs from INB down to 0 (reversed). Each level depends on the level above: `WATER[i]` depends on `WATER[i+1]`, `MP[i]` depends on `MP[i+1]`, `QP[i]` depends on `QP[i+1]`. This is a natural fit for `jax.lax.scan` running in reverse.
 
-- [ ] **Step 1: Write the reverse scan for downdraft**
+- [x] **Step 1: Write the reverse scan for downdraft** ✓ `jax.lax.scan` with 9-element carry (WATER, WT, MP, QP, UP, VP, JTT, MP_JTT, P_JTT). WDTRAIN pre-computed as vectorized 2D operation. BL correction carries MP_JTT/P_JTT through scan.
 
-```python
-def downdraft_step(carry, i_rev):
-    """Scan from INB down to 0."""
-    WATER_above, MP_above, QP_above, UP_above, VP_above, JTT, PRECIP_acc = carry
-    # i_rev counts from 0; actual level = INB - i_rev
-    i = INB - i_rev
-    is_active = (i >= 0) & (i <= INB) & (EP[i] >= 0.0001)
+- [x] **Step 2: Compute PRECIP from WATER[0]** ✓ Integrated into scan output (WT_sc[INB], WATER_sc[INB] = level 0 values).
 
-    # WDTRAIN: sum over j < i of ELIJ contributions + EP[i]*M[i]*CLW[i]
-    j_range = jnp.arange(ND + 1)
-    wdtrain_sum = jnp.sum(
-        jnp.where(j_range < i,
-            params.G * jnp.maximum(0.0, ELIJ[j_range, i] - (1.0 - EP[i]) * CLW[i]) * MENT[j_range, i],
-            0.0)
-    )
-    WDTRAIN = params.G * EP[i] * M[i] * CLW[i] + jnp.where(i > 0, wdtrain_sum, 0.0)
-
-    # COEFF, WT
-    COEFF = jnp.where(T[i] > 273.0, params.COEFFR, params.COEFFS)
-    WT_i = jnp.where(T[i] > 273.0, params.OMTRAIN, params.OMTSNOW)
-    WT_above = jnp.where(T[jnp.minimum(i+1, ND-1)] > 273.0, params.OMTRAIN, params.OMTSNOW)
-
-    # AFAC, B6, C6, REVAP
-    QSTM_half = 0.5 * (Q[i] + QP_above)
-    AFAC = jnp.maximum(COEFF * PH[i] * (QS[i] - QSTM_half) / (1e4 + 2e3 * PH[i] * QS[i]), 0.0)
-    SIGT = jnp.clip(params.SIGS, 0.0, 1.0)
-    B6 = 100.0 * (PH[i] - PH[i+1]) * SIGT * AFAC / WT_i
-    C6 = (WATER_above * WT_above + WDTRAIN / params.SIGD) / WT_i
-    REVAP = 0.5 * (-B6 + jnp.sqrt(B6 * B6 + 4.0 * C6))
-    EVAP_i = SIGT * AFAC * REVAP
-    WATER_i = REVAP * REVAP
-
-    # MP
-    DHDP = jnp.where(i > 0, jnp.maximum((H[i] - H[i-1]) / (P[i-1] - P[i]), 10.0), 10.0)
-    MP_i = jnp.where(i > 0, 100.0 * GINV * LV[i] * params.SIGD * EVAP_i / DHDP, 0.0)
-    FAC = jnp.where(i > 0, 20.0 / (PH[i-1] - PH[i]), 0.0)
-    MP_i = (FAC * MP_above + MP_i) / (1.0 + FAC)
-    # JTT boundary layer correction
-    in_bl = (i > 0) & (P[i] > 0.949 * P[0])
-    JTT_new = jnp.where(in_bl, jnp.maximum(JTT, i), JTT)
-    MP_i = jnp.where(in_bl, MP[JTT_new] * (P[0] - P[i]) / (P[0] - P[JTT_new]), MP_i)
-
-    # QP, UP, VP updates (when i != INB)
-    not_inb = (i != INB)
-    mp_increasing = MP_i > MP_above
-    RAT = jnp.where(mp_increasing & (MP_i > 0), MP_above / MP_i, 1.0)
-    QP_i = jnp.where(
-        not_inb & mp_increasing,
-        QP_above * RAT + Q[i] * (1.0 - RAT) + 100.0 * GINV * params.SIGD * (PH[i] - PH[i+1]) * EVAP_i / MP_i,
-        jnp.where(
-            not_inb & (MP_above > 0),
-            (GZ[i+1] - GZ[i] + QP_above * (LV[i+1] + T[i+1] * (params.CL - params.CPD)) + params.CPD * (T[i+1] - T[i])) / (LV[i] + T[i] * (params.CL - params.CPD)),
-            QP_above
-        )
-    )
-    QSTM = jnp.where(i == 0, QS[0], QS[jnp.maximum(i-1, 0)])
-    QP_i = jnp.where(not_inb, jnp.clip(QP_i, 0.0, QSTM), QP_above)
-    UP_i = jnp.where(not_inb & mp_increasing, UP_above * RAT + U[i] * (1.0 - RAT),
-                      jnp.where(not_inb, UP_above, UP_above))
-    VP_i = jnp.where(not_inb & mp_increasing, VP_above * RAT + V[i] * (1.0 - RAT),
-                      jnp.where(not_inb, VP_above, VP_above))
-
-    # Apply active mask
-    WATER_out = jnp.where(is_active, WATER_i, 0.0)
-    MP_out = jnp.where(is_active, MP_i, 0.0)
-    QP_out = jnp.where(is_active, QP_i, QP_above)
-    UP_out = jnp.where(is_active, UP_i, UP_above)
-    VP_out = jnp.where(is_active, VP_i, VP_above)
-
-    return (WATER_out, MP_out, QP_out, UP_out, VP_out, JTT_new, PRECIP_acc), (WATER_out, MP_out, EVAP_i * is_active, QP_out, UP_out, VP_out)
-
-init_carry = (jnp.array(0.0), jnp.array(0.0), QP[INB+1], UP[INB+1], VP[INB+1], jnp.array(0, dtype=jnp.int32), jnp.array(0.0))
-final_carry, scan_results = jax.lax.scan(downdraft_step, init_carry, jnp.arange(INB + 1))
-# Unpack and reverse scan_results to get level-indexed arrays
-WATER_arr, MP_arr, EVAP_arr, QP_arr, UP_arr, VP_arr = scan_results
-# These are indexed [scan_step] where scan_step=0 is INB, need to reverse
-```
-
-Note: The exact indexing will need careful work. The pseudocode above shows the pattern; the actual implementation must match `_convect_functional_np` line-for-line.
-
-- [ ] **Step 2: Compute PRECIP from WATER[0]**
-
-```python
-PRECIP = jnp.where(EP[INB] >= 0.0001,
-    WT[0] * params.SIGD * WATER[0] * 3600.0 * 24000.0 / (params.ROWL * params.G),
-    0.0)
-```
-
-- [ ] **Step 3: Verify parity**
-
-```bash
-conda activate climt && python -m pytest tests/test_emanuel_jax_parity.py -v
-```
+- [x] **Step 3: Verify parity** ✓ 6/6 passed.
 
 - [ ] **Step 4: Commit**
-
-```bash
-git commit -am "feat(emanuel): differentiable downdraft via reverse lax.scan"
-```
 
 ---
 
