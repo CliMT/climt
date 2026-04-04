@@ -1204,116 +1204,178 @@ def _convect_functional_jax(
     if CBMF == 0.0 and CBMFOLD == 0.0:
         return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
 
-    # --- Block 10: Updraft mass flux M ---
+    # --- Block 10: Updraft mass flux M (differentiable) ---
     M = M.at[ICB].set(0.0)
-    DBOSUM = 0.0
-    for i in range(ICB + 1, INB + 1):
-        k = min(i, INB1)
-        DBO = abs(float(TV[k]) - float(TVP[k])) + params.ENTP * 0.02 * (float(PH[k]) - float(PH[k + 1]))
-        DBOSUM += DBO
-        M = M.at[i].set(CBMF * DBO)
-    if DBOSUM > 0:
-        for i in range(ICB + 1, INB + 1):
-            M = M.at[i].set(float(M[i]) / DBOSUM)
+    lvl = jnp.arange(ND + 1)
+    k_idx = jnp.minimum(lvl, INB1)
+    DBO_all = jnp.abs(TV[k_idx] - TVP[k_idx]) + params.ENTP * 0.02 * (PH[k_idx] - PH[k_idx + 1])
+    mass_mask = (lvl >= ICB + 1) & (lvl <= INB)
+    DBO_masked = jnp.where(mass_mask, DBO_all, 0.0)
+    DBOSUM = jnp.sum(DBO_masked)
+    M = jnp.where(mass_mask, CBMF * DBO_masked / jnp.maximum(DBOSUM, 1e-30), 0.0)
 
-    # --- Block 11: Entrainment/detrainment (SIJ/MENT) ---
-    for i in range(ICB + 1, INB + 1):
-        QTI = float(Q[NK]) - float(EP[i]) * float(CLW[i])
-        for j in range(ICB, INB + 1):
-            BF2 = 1.0 + float(LV[j]) * float(LV[j]) * float(QS[j]) / (params.RV * float(T[j]) * float(T[j]) * params.CPD)
-            ANUM = float(H[j]) - float(HP[i]) + (params.CPV - params.CPD) * float(T[j]) * (QTI - float(Q[j]))
-            DENOM = float(H[i]) - float(HP[i]) + (params.CPD - params.CPV) * (float(Q[i]) - QTI) * float(T[j])
-            DEI = DENOM
-            if abs(DEI) < 0.01:
-                DEI = 0.01
-            SIJ = SIJ.at[i, j].set(ANUM / DEI)
-            SIJ = SIJ.at[i, i].set(1.0)
-            sij_ij = float(SIJ[i, j])  # re-read: 1.0 when j==i
-            ALTEM = (sij_ij * float(Q[i]) + (1.0 - sij_ij) * QTI - float(QS[j])) / BF2
-            CWAT = float(CLW[j]) * (1.0 - float(EP[j]))
-            if (sij_ij < 0.0 or sij_ij > 1.0 or ALTEM > CWAT) and j > i:
-                ANUM -= float(LV[j]) * (QTI - float(QS[j]) - CWAT * BF2)
-                DENOM += float(LV[j]) * (float(Q[i]) - QTI)
-                if abs(DENOM) < 0.01:
-                    DENOM = 0.01
-                SIJ = SIJ.at[i, j].set(ANUM / DENOM)
-                sij_ij = float(SIJ[i, j])
-                ALTEM = (
-                    sij_ij * float(Q[i])
-                    + (1.0 - sij_ij) * QTI
-                    - float(QS[j])
-                    - (BF2 - 1.0) * CWAT
-                )
-            if 0.0 < sij_ij < 0.9:
-                QENT = QENT.at[i, j].set(sij_ij * float(Q[i]) + (1.0 - sij_ij) * QTI)
-                UENT = UENT.at[i, j].set(sij_ij * float(U[i]) + (1.0 - sij_ij) * float(U[NK]))
-                VENT = VENT.at[i, j].set(sij_ij * float(V[i]) + (1.0 - sij_ij) * float(V[NK]))
-                ELIJ = ELIJ.at[i, j].set(max(0.0, ALTEM))
-                MENT = MENT.at[i, j].set(float(M[i]) / (1.0 - sij_ij))
-                NENT = NENT.at[i].add(1)
-            SIJ = SIJ.at[i, j].set(min(max(sij_ij, 0.0), 1.0))
+    # --- Block 11: Entrainment/detrainment (SIJ/MENT) (differentiable) ---
+    # Pad ND-sized arrays to ND+1 for 2D broadcasting
+    _z1 = jnp.zeros(1)
+    T_pad = jnp.concatenate([T, _z1])
+    Q_pad = jnp.concatenate([Q, _z1])
+    QS_pad = jnp.concatenate([QS, _z1])
+    U_pad = jnp.concatenate([U, _z1])
+    V_pad = jnp.concatenate([V, _z1])
+    EP_pad = jnp.concatenate([EP, _z1])
+    CLW_pad = jnp.concatenate([CLW, _z1])
 
-        if int(NENT[i]) == 0:
-            MENT = MENT.at[i, i].set(float(M[i]))
-            QENT = QENT.at[i, i].set(float(Q[NK]) - float(EP[i]) * float(CLW[i]))
-            UENT = UENT.at[i, i].set(float(U[NK]))
-            VENT = VENT.at[i, i].set(float(V[NK]))
-            ELIJ = ELIJ.at[i, i].set(float(CLW[i]))
-            SIJ = SIJ.at[i, i].set(1.0)
+    # 2D index arrays: ii = updraft level, jj = environment level
+    ii = jnp.arange(ND + 1)[:, None]  # (ND+1, 1)
+    jj = jnp.arange(ND + 1)[None, :]  # (1, ND+1)
+
+    # Active masks
+    i_active = (ii >= ICB + 1) & (ii <= INB)
+    j_active = (jj >= ICB) & (jj <= INB)
+    ij_active = i_active & j_active
+
+    # QTI[i] = Q[NK] - EP[i] * CLW[i]
+    QTI_vec = Q_pad[NK] - EP_pad * CLW_pad  # (ND+1,)
+
+    # BF2[j]
+    BF2_vec = 1.0 + LV * LV * QS_pad / (params.RV * T_pad * T_pad * params.CPD)  # (ND+1,)
+
+    # First-pass SIJ computation for all (i,j) pairs
+    # ANUM[i,j] = H[j] - HP[i] + (CPV - CPD) * T[j] * (QTI[i] - Q[j])
+    ANUM_2d = H[None, :] - HP[:, None] + (params.CPV - params.CPD) * T_pad[None, :] * (QTI_vec[:, None] - Q_pad[None, :])
+    # DENOM[i,j] = H[i] - HP[i] + (CPD - CPV) * (Q[i] - QTI[i]) * T[j]
+    DENOM_2d = H[:, None] - HP[:, None] + (params.CPD - params.CPV) * (Q_pad[:, None] - QTI_vec[:, None]) * T_pad[None, :]
+    DEI_2d = jnp.where(jnp.abs(DENOM_2d) < 0.01, 0.01, DENOM_2d)
+    SIJ_first = ANUM_2d / DEI_2d
+
+    # For diagonal (j==i), SIJ = 1.0 — but we compute off-diagonal first, then set diagonal
+    diag_mask = (ii == jj)
+    SIJ_first = jnp.where(diag_mask, 1.0, SIJ_first)
+
+    # ALTEM and CWAT for first pass
+    ALTEM_first = (SIJ_first * Q_pad[:, None] + (1.0 - SIJ_first) * QTI_vec[:, None] - QS_pad[None, :]) / BF2_vec[None, :]
+    CWAT_2d = CLW_pad[None, :] * (1.0 - EP_pad[None, :])
+
+    # Recalculation condition: (SIJ < 0 or SIJ > 1 or ALTEM > CWAT) and j > i
+    recalc_cond = ((SIJ_first < 0.0) | (SIJ_first > 1.0) | (ALTEM_first > CWAT_2d)) & (jj > ii)
+
+    # Second-pass ANUM/DENOM for recalculation
+    ANUM_recalc = ANUM_2d - LV[None, :] * (QTI_vec[:, None] - QS_pad[None, :] - CWAT_2d * BF2_vec[None, :])
+    DENOM_recalc = DENOM_2d + LV[None, :] * (Q_pad[:, None] - QTI_vec[:, None])
+    DENOM_recalc = jnp.where(jnp.abs(DENOM_recalc) < 0.01, 0.01, DENOM_recalc)
+    SIJ_second = ANUM_recalc / DENOM_recalc
+
+    # Pick recalculated or first-pass SIJ
+    SIJ_raw = jnp.where(recalc_cond & ~diag_mask, SIJ_second, SIJ_first)
+
+    # Recompute ALTEM with final SIJ
+    ALTEM_final_norec = (SIJ_raw * Q_pad[:, None] + (1.0 - SIJ_raw) * QTI_vec[:, None] - QS_pad[None, :]) / BF2_vec[None, :]
+    ALTEM_final_rec = (SIJ_raw * Q_pad[:, None] + (1.0 - SIJ_raw) * QTI_vec[:, None] - QS_pad[None, :] - (BF2_vec[None, :] - 1.0) * CWAT_2d)
+    ALTEM_final = jnp.where(recalc_cond & ~diag_mask, ALTEM_final_rec, ALTEM_final_norec)
+
+    # Entrainment condition: 0 < SIJ < 0.9 (and not diagonal)
+    ent_cond = (SIJ_raw > 0.0) & (SIJ_raw < 0.9) & ~diag_mask & ij_active
+
+    # Compute entrained quantities
+    QENT_ij = SIJ_raw * Q_pad[:, None] + (1.0 - SIJ_raw) * QTI_vec[:, None]
+    UENT_ij = SIJ_raw * U_pad[:, None] + (1.0 - SIJ_raw) * U_pad[NK]
+    VENT_ij = SIJ_raw * V_pad[:, None] + (1.0 - SIJ_raw) * V_pad[NK]
+    ELIJ_ij = jnp.maximum(0.0, ALTEM_final)
+    MENT_ij = M[:, None] / jnp.maximum(1.0 - SIJ_raw, 1e-30)
+
+    # Apply entrainment condition
+    QENT = jnp.where(ent_cond, QENT_ij, QENT)
+    UENT = jnp.where(ent_cond, UENT_ij, UENT)
+    VENT = jnp.where(ent_cond, VENT_ij, VENT)
+    ELIJ = jnp.where(ent_cond, ELIJ_ij, ELIJ)
+    MENT = jnp.where(ent_cond, MENT_ij, MENT)
+
+    # Count entraining levels per updraft level i
+    NENT_count = jnp.sum(ent_cond.astype(jnp.int32), axis=1)  # (ND+1,)
+
+    # Clamp SIJ to [0, 1] for non-diagonal active entries
+    SIJ_clamped = jnp.clip(SIJ_raw, 0.0, 1.0)
+    SIJ = jnp.where(ij_active & ~diag_mask, SIJ_clamped, SIJ)
+    # Set diagonal to 1.0 for active i levels
+    SIJ = jnp.where(diag_mask & i_active, 1.0, SIJ)
+
+    # Fallback for levels with no entraining levels (NENT==0)
+    no_ent = (NENT_count == 0) & (ii[:, 0] >= ICB + 1) & (ii[:, 0] <= INB)
+    for i in range(ND + 1):
+        if i < ICB + 1 or i > INB:
+            continue
+        is_no_ent = (NENT_count[i] == 0)
+        MENT = jnp.where(is_no_ent & (jnp.arange(ND + 1) == i)[None, :] & (jnp.arange(ND + 1) == i)[:, None], M[i], MENT)
+        QENT = jnp.where(is_no_ent & (jnp.arange(ND + 1) == i)[None, :] & (jnp.arange(ND + 1) == i)[:, None], Q[NK] - EP[i] * CLW[i], QENT)
+        UENT = jnp.where(is_no_ent & (jnp.arange(ND + 1) == i)[None, :] & (jnp.arange(ND + 1) == i)[:, None], U[NK], UENT)
+        VENT = jnp.where(is_no_ent & (jnp.arange(ND + 1) == i)[None, :] & (jnp.arange(ND + 1) == i)[:, None], V[NK], VENT)
+        ELIJ = jnp.where(is_no_ent & (jnp.arange(ND + 1) == i)[None, :] & (jnp.arange(ND + 1) == i)[:, None], CLW[i], ELIJ)
+        SIJ = jnp.where(is_no_ent & (jnp.arange(ND + 1) == i)[None, :] & (jnp.arange(ND + 1) == i)[:, None], 1.0, SIJ)
 
     SIJ = SIJ.at[INB, INB].set(1.0)
 
+    # --- Block 11 second half: SCRIT normalization (differentiable) ---
+    # For each active i with NENT > 0, compute SCRIT and normalize MENT
     for i in range(ICB + 1, INB + 1):
-        if int(NENT[i]) != 0:
-            QP1 = float(Q[NK]) - float(EP[i]) * float(CLW[i])
-            ANUM = float(H[i]) - float(HP[i]) - float(LV[i]) * (QP1 - float(QS[i]))
-            DENOM = float(H[i]) - float(HP[i]) + float(LV[i]) * (float(Q[i]) - QP1)
-            if abs(DENOM) < 0.01:
-                DENOM = 0.01
-            SCRIT = ANUM / DENOM
-            ALT = QP1 - float(QS[i]) + SCRIT * (float(Q[i]) - QP1)
-            if ALT < 0.0:
-                SCRIT = 1.0
-            SCRIT = max(SCRIT, 0.0)
-            ASIJ = 0.0
-            SMIN = 1.0
-            for j in range(ICB, INB + 1):
-                sij_ij = float(SIJ[i, j])
-                if 0.0 < sij_ij < 0.9:
-                    if j > i:
-                        SMID = min(sij_ij, SCRIT)
-                        SJMAX = SMID
-                        SJMIN = SMID
-                        if SMID < SMIN and float(SIJ[i, j + 1]) < SMID:
-                            SMIN = SMID
-                            SJMAX = min(min(float(SIJ[i, j + 1]), sij_ij), SCRIT)
-                            SJMIN = min(max(float(SIJ[i, j - 1]), sij_ij), SCRIT)
-                    else:
-                        SJMAX = max(float(SIJ[i, j + 1]), SCRIT)
-                        SMID = max(sij_ij, SCRIT)
-                        SJMIN = max(float(SIJ[i, j - 1]) if j > 0 else 0.0, SCRIT)
-                    ASIJ += (abs(SJMAX - SMID) + abs(SJMIN - SMID)) * (
-                        float(PH[j]) - float(PH[j + 1])
-                    )
-                    MENT = MENT.at[i, j].set(
-                        float(MENT[i, j]) * (abs(SJMAX - SMID) + abs(SJMIN - SMID)) * (
-                            float(PH[j]) - float(PH[j + 1])
-                        )
-                    )
-            ASIJ = max(1.0e-21, ASIJ)
-            for j in range(ICB, INB + 1):
-                MENT = MENT.at[i, j].set(float(MENT[i, j]) / ASIJ)
-            s = 0.0
-            for j in range(ICB, INB + 1):
-                s += float(MENT[i, j])
-            if s < 1.0e-18:
-                NENT = NENT.at[i].set(0)
-                MENT = MENT.at[i, i].set(float(M[i]))
-                QENT = QENT.at[i, i].set(float(Q[NK]) - float(EP[i]) * float(CLW[i]))
-                UENT = UENT.at[i, i].set(float(U[NK]))
-                VENT = VENT.at[i, i].set(float(V[NK]))
-                ELIJ = ELIJ.at[i, i].set(float(CLW[i]))
-                SIJ = SIJ.at[i, i].set(1.0)
+        has_ent = (NENT_count[i] > 0)
+        if not has_ent:
+            continue
+        QP1 = Q[NK] - EP[i] * CLW[i]
+        ANUM_s = H[i] - HP[i] - LV[i] * (QP1 - QS[i])
+        DENOM_s = H[i] - HP[i] + LV[i] * (Q[i] - QP1)
+        DENOM_s = jnp.where(jnp.abs(DENOM_s) < 0.01, 0.01, DENOM_s)
+        SCRIT = ANUM_s / DENOM_s
+        ALT = QP1 - QS[i] + SCRIT * (Q[i] - QP1)
+        SCRIT = jnp.where(ALT < 0.0, 1.0, SCRIT)
+        SCRIT = jnp.maximum(SCRIT, 0.0)
+
+        ASIJ_acc = 0.0
+        SMIN = 1.0
+        weights = jnp.zeros(ND + 1)
+        for j in range(ICB, INB + 1):
+            sij_ij = SIJ[i, j]
+            is_ent_j = (sij_ij > 0.0) & (sij_ij < 0.9)
+            if j > i:
+                SMID = jnp.minimum(sij_ij, SCRIT)
+                SJMAX = SMID
+                SJMIN = SMID
+                sij_next = SIJ[i, min(j + 1, ND)]
+                sij_prev = SIJ[i, max(j - 1, 0)]
+                update_minmax = (SMID < SMIN) & (sij_next < SMID)
+                SJMAX = jnp.where(update_minmax, jnp.minimum(jnp.minimum(sij_next, sij_ij), SCRIT), SJMAX)
+                SJMIN = jnp.where(update_minmax, jnp.minimum(jnp.maximum(sij_prev, sij_ij), SCRIT), SJMIN)
+                SMIN = jnp.where(update_minmax & is_ent_j, SMID, SMIN)
+            else:
+                sij_next = SIJ[i, min(j + 1, ND)]
+                sij_prev = SIJ[i, max(j - 1, 0)] if j > 0 else 0.0
+                SJMAX = jnp.maximum(sij_next, SCRIT)
+                SMID = jnp.maximum(sij_ij, SCRIT)
+                SJMIN = jnp.maximum(sij_prev, SCRIT)
+
+            w = (jnp.abs(SJMAX - SMID) + jnp.abs(SJMIN - SMID)) * (PH[j] - PH[j + 1])
+            w = jnp.where(is_ent_j, w, 0.0)
+            weights = weights.at[j].set(w)
+            ASIJ_acc = ASIJ_acc + w
+
+        ASIJ_acc = jnp.maximum(ASIJ_acc, 1.0e-21)
+        MENT_row = MENT[i, :] * weights / ASIJ_acc
+        ment_sum = jnp.sum(MENT_row)
+
+        # If sum of MENT is tiny, fall back to diagonal
+        tiny = (ment_sum < 1.0e-18)
+        MENT_fallback = jnp.zeros(ND + 1).at[i].set(M[i])
+        QENT_fallback = QENT[i, :].at[i].set(Q[NK] - EP[i] * CLW[i])
+        UENT_fallback = UENT[i, :].at[i].set(U[NK])
+        VENT_fallback = VENT[i, :].at[i].set(V[NK])
+        ELIJ_fallback = ELIJ[i, :].at[i].set(CLW[i])
+        SIJ_fallback = SIJ[i, :].at[i].set(1.0)
+
+        MENT = MENT.at[i, :].set(jnp.where(tiny, MENT_fallback, MENT_row))
+        QENT = QENT.at[i, :].set(jnp.where(tiny, QENT_fallback, QENT[i, :]))
+        UENT = UENT.at[i, :].set(jnp.where(tiny, UENT_fallback, UENT[i, :]))
+        VENT = VENT.at[i, :].set(jnp.where(tiny, VENT_fallback, VENT[i, :]))
+        ELIJ = ELIJ.at[i, :].set(jnp.where(tiny, ELIJ_fallback, ELIJ[i, :]))
+        SIJ = SIJ.at[i, :].set(jnp.where(tiny, SIJ_fallback, SIJ[i, :]))
 
     # --- Block 12: Downdraft ---
     if float(EP[INB]) >= 0.0001:
