@@ -21,6 +21,15 @@ except ImportError:
     def njit(x, **kwargs):
         return x
 
+try:
+    import jax
+    jax.config.update("jax_enable_x64", True)
+    import jax.numpy as jnp
+
+    HAS_JAX = True
+except ImportError:
+    HAS_JAX = False
+
 
 class EmanuelParams(NamedTuple):
     IPBL: int
@@ -171,30 +180,27 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
             ph = ph.T
             transposed = True
         nlev, ncol = t.shape
-        from climt._core import bolton_q_sat
-
-        qs = bolton_q_sat(t, p * 100, self.RD, self.RV)
-        cbmf = state.get("cloud_base_mass_flux", np.zeros(ncol)).copy()
-        ntra = 0
-        tra = np.zeros((nlev, 1))
         delt = timestep.total_seconds()
-        tra_vector = np.broadcast_to(tra[:, :, np.newaxis], (nlev, 1, ncol))
-        results = _numpy_vectorized_convect(
-            t,
-            q,
-            qs,
-            u,
-            v,
-            p,
-            ph,
-            nlev,
-            nlev - 3,
-            ntra,
-            delt,
-            cbmf,
-            tra_vector,
-            self._params,
-        )
+        _use_jax = HAS_JAX and isinstance(t, jax.Array)
+        if _use_jax:
+            qs = _bolton_q_sat_jax(t, p * 100, self.RD, self.RV)
+            cbmf_val = state.get("cloud_base_mass_flux", None)
+            cbmf = jnp.zeros(ncol) if cbmf_val is None else jnp.array(cbmf_val)
+            results = _jax_vectorized_convect(
+                t, q, qs, u, v, p, ph,
+                nlev, nlev - 3, 0, delt, cbmf, self._params,
+            )
+        else:
+            from climt._core import bolton_q_sat
+            qs = bolton_q_sat(t, p * 100, self.RD, self.RV)
+            cbmf = state.get("cloud_base_mass_flux", np.zeros(ncol)).copy()
+            ntra = 0
+            tra = np.zeros((nlev, 1))
+            tra_vector = np.broadcast_to(tra[:, :, np.newaxis], (nlev, 1, ncol))
+            results = _numpy_vectorized_convect(
+                t, q, qs, u, v, p, ph,
+                nlev, nlev - 3, ntra, delt, cbmf, tra_vector, self._params,
+            )
         ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results
         if transposed:
             ft = ft.T
@@ -891,4 +897,665 @@ def _numpy_vectorized_convect(
             outcape[i],
             iflag[i],
         ) = res
+    return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag
+
+
+# ---------------------------------------------------------------------------
+# JAX path (Phase 2: Python loops, not JIT-able)
+# ---------------------------------------------------------------------------
+
+
+def _bolton_q_sat_jax(T, p, Rd, Rh2O):
+    es = 611.2 * jnp.exp(17.67 * (T - 273.15) / (T - 29.65))
+    epsilon = Rd / Rh2O
+    return epsilon * es / (p - (1 - epsilon) * es)
+
+
+def _tlift_functional_jax(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, params):
+    CPVMCL = params.CL - params.CPV
+    EPS = params.RD / params.RV
+    EPSI = 1.0 / EPS
+    qNK = float(Q[NK])
+    tNK = float(T[NK])
+    gzNK = float(GZ[NK])
+    AH0 = (
+        (params.CPD * (1.0 - qNK) + params.CL * qNK) * tNK
+        + qNK * (params.LV0 - CPVMCL * (tNK - 273.15))
+        + gzNK
+    )
+    CPP = params.CPD * (1.0 - qNK) + qNK * params.CPV
+    CPINV = 1.0 / CPP
+    if KK == 1:
+        for i in range(ICB):
+            CLW = CLW.at[i].set(0.0)
+        for i in range(NK, ICB):
+            tpk_i = tNK - (float(GZ[i]) - gzNK) * CPINV
+            TPK = TPK.at[i].set(tpk_i)
+            TVP = TVP.at[i].set(tpk_i * (1.0 + qNK * EPSI))
+    NST = NL if KK == 2 else ICB
+    NSB = ICB + 1 if KK == 2 else ICB
+    for i in range(NSB, NST + 1):
+        TG = float(T[i])
+        QG = float(QS[i])
+        ALV = params.LV0 - CPVMCL * (float(T[i]) - 273.15)
+        ti = float(T[i])
+        gzi = float(GZ[i])
+        pi = float(P[i])
+        for j in range(2):
+            S = 1.0 / (params.CPD + ALV * ALV * QG / (params.RV * ti * ti))
+            AHG = (
+                params.CPD * TG
+                + (params.CL - params.CPD) * qNK * ti
+                + ALV * QG
+                + gzi
+            )
+            TG = max(TG + S * (AH0 - AHG), 35.0)
+            TC = TG - 273.15
+            DENOM = 243.5 + TC
+            if TC >= 0.0:
+                ES = 6.112 * float(jnp.exp(17.67 * TC / DENOM))
+            else:
+                ES = float(jnp.exp(23.33086 - 6111.72784 / TG + 0.15215 * jnp.log(TG)))
+            QG = EPS * ES / (pi - ES * (1.0 - EPS))
+        tpk_i = (AH0 - (params.CL - params.CPD) * qNK * ti - gzi - ALV * QG) / params.CPD
+        TPK = TPK.at[i].set(tpk_i)
+        CLW = CLW.at[i].set(max(0.0, qNK - QG))
+        TVP = TVP.at[i].set(tpk_i * (1.0 + (QG / (1.0 - qNK)) * EPSI))
+    return TVP, TPK, CLW
+
+
+def _convect_functional_jax(
+    T_in, Q_in, QS_in, U_in, V_in, P_in, PH_in,
+    ND, NL, NTRA, DELT, CBMF_in, params,
+):
+    T = jnp.array(T_in)
+    Q = jnp.array(Q_in)
+    QS = jnp.array(QS_in)
+    U = jnp.array(U_in)
+    V = jnp.array(V_in)
+    P = jnp.array(P_in)
+    PH = jnp.array(PH_in)
+    CBMF = float(CBMF_in)
+
+    FT = jnp.zeros(ND)
+    FQ = jnp.zeros(ND)
+    FU = jnp.zeros(ND)
+    FV = jnp.zeros(ND)
+    FTRA = jnp.zeros((ND, 1))
+
+    CPVMCL = params.CL - params.CPV
+    EPS = params.RD / params.RV
+    EPSI = 1.0 / EPS
+    GINV = 1.0 / params.G
+    DELTI = 1.0 / DELT
+    PRECIP = 0.0
+    WD = 0.0
+    TPRIME = 0.0
+    QPRIME = 0.0
+    IFLAG = 0
+    OUTCAPE = 0.0
+
+    # --- Block 2: Thermodynamic profiles ---
+    TH = jnp.zeros(NL + 1)
+    for i in range(NL + 1):
+        qi = float(Q[i])
+        RDCP = (params.RD * (1.0 - qi) + qi * params.RV) / (
+            params.CPD * (1.0 - qi) + qi * params.CPV
+        )
+        TH = TH.at[i].set(float(T[i]) * (1000.0 / float(P[i])) ** RDCP)
+
+    GZ = jnp.zeros(ND + 1)
+    CPN = jnp.zeros(ND + 1)
+    H = jnp.zeros(ND + 1)
+    LV = jnp.zeros(ND + 1)
+    HM = jnp.zeros(ND + 1)
+    TV = jnp.zeros(ND + 1)
+
+    q0 = float(Q[0])
+    t0 = float(T[0])
+    cpn0 = params.CPD * (1.0 - q0) + q0 * params.CPV
+    CPN = CPN.at[0].set(cpn0)
+    H = H.at[0].set(t0 * cpn0)
+    lv0 = params.LV0 - CPVMCL * (t0 - 273.15)
+    LV = LV.at[0].set(lv0)
+    HM = HM.at[0].set(lv0 * q0)
+    TV = TV.at[0].set(t0 * (1.0 + q0 * EPSI - q0))
+
+    AHMIN = 1.0e12
+    IHMIN = NL
+    for i in range(1, NL + 1):
+        qi = float(Q[i])
+        ti = float(T[i])
+        qim1 = float(Q[i - 1])
+        tim1 = float(T[i - 1])
+        TVX = ti * (1.0 + qi * EPSI - qi)
+        TVY = tim1 * (1.0 + qim1 * EPSI - qim1)
+        gz_i = float(GZ[i - 1]) + 0.5 * params.RD * (TVX + TVY) * (float(P[i - 1]) - float(P[i])) / float(PH[i])
+        GZ = GZ.at[i].set(gz_i)
+        cpn_i = params.CPD * (1.0 - qi) + params.CPV * qi
+        CPN = CPN.at[i].set(cpn_i)
+        H = H.at[i].set(ti * cpn_i + gz_i)
+        lv_i = params.LV0 - CPVMCL * (ti - 273.15)
+        LV = LV.at[i].set(lv_i)
+        hm_i = (
+            (params.CPD * (1.0 - qi) + params.CL * qi) * (ti - t0)
+            + lv_i * qi
+            + gz_i
+        )
+        HM = HM.at[i].set(hm_i)
+        TV = TV.at[i].set(TVX)
+        if (i + 1) >= params.MINORIG and hm_i < AHMIN and hm_i < float(HM[i - 1]):
+            AHMIN = hm_i
+            IHMIN = i
+
+    IHMIN = min(IHMIN, NL - 1)
+
+    # --- Block 3: Launch level NK ---
+    AHMAX = 0.0
+    NK = 0
+    for i in range(params.MINORIG - 1, IHMIN + 1):
+        hm_i = float(HM[i])
+        if hm_i > AHMAX:
+            NK = i
+            AHMAX = hm_i
+
+    # --- Block 4: Early exits ---
+    if float(T[NK]) < 250.0 or float(Q[NK]) <= 0.0 or IHMIN == (NL - 1):
+        CBMF = 0.0
+        return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+    RH = float(Q[NK]) / float(QS[NK])
+    CHI = float(T[NK]) / (1669.0 - 122.0 * RH - float(T[NK]))
+    PLCL = float(P[NK]) * (RH ** CHI)
+
+    if PLCL < 200.0 or PLCL >= 2000.0:
+        IFLAG = 2
+        CBMF = 0.0
+        return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+    ICB = NL - 1
+    for i in range(NK + 1, NL + 1):
+        if float(P[i]) < PLCL:
+            ICB = min(ICB, i)
+
+    if ICB >= (NL - 1):
+        IFLAG = 3
+        CBMF = 0.0
+        return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+    # --- Block 5: TLIFT ---
+    TVP = jnp.zeros(ND)
+    TP = jnp.zeros(ND)
+    CLW = jnp.zeros(ND)
+    TVP, TP, CLW = _tlift_functional_jax(
+        P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params
+    )
+    for i in range(NK, ICB + 1):
+        TVP = TVP.at[i].set(float(TVP[i]) - float(TP[i]) * float(Q[NK]))
+
+    if CBMF == 0.0 and float(TVP[ICB]) <= (float(TV[ICB]) - params.DTMAX):
+        return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+    if IFLAG != 4:
+        IFLAG = 1
+
+    TVP, TP, CLW = _tlift_functional_jax(
+        P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params
+    )
+
+    # --- Block 6: EP/SIGP ---
+    EP = jnp.zeros(ND)
+    SIGP = jnp.zeros(ND)
+    for i in range(NK + 1):
+        EP = EP.at[i].set(0.0)
+        SIGP = SIGP.at[i].set(params.SIGS)
+
+    for i in range(NK + 1, NL + 1):
+        TCA = float(TP[i]) - 273.15
+        ELACRIT = params.ELCRIT if TCA >= 0.0 else params.ELCRIT * (1.0 - TCA / params.TLCRIT)
+        ELACRIT = max(ELACRIT, 0.0)
+        EPMAX = 0.999
+        ep_i = EPMAX * (1.0 - ELACRIT / max(float(CLW[i]), 1.0e-8))
+        ep_i = max(min(ep_i, EPMAX), 0.0)
+        EP = EP.at[i].set(ep_i)
+        SIGP = SIGP.at[i].set(params.SIGS)
+
+    for i in range(ICB + 1, NL + 1):
+        TVP = TVP.at[i].set(float(TVP[i]) - float(TP[i]) * float(Q[NK]))
+
+    # --- Block 7: Setup matrices ---
+    HP = jnp.array(H)
+    NENT = jnp.zeros(ND + 1, dtype=jnp.int32)
+    WATER = jnp.zeros(ND + 1)
+    EVAP = jnp.zeros(ND + 1)
+    WT = jnp.full(ND + 1, params.OMTSNOW)
+    MP = jnp.zeros(ND + 1)
+    M = jnp.zeros(ND + 1)
+    LVCP = jnp.zeros(ND + 1)
+    for i in range(NL + 1):
+        LVCP = LVCP.at[i].set(float(LV[i]) / float(CPN[i]))
+
+    QENT = jnp.zeros((ND + 1, ND + 1))
+    ELIJ = jnp.zeros((ND + 1, ND + 1))
+    MENT = jnp.zeros((ND + 1, ND + 1))
+    SIJ = jnp.zeros((ND + 1, ND + 1))
+    UENT = jnp.zeros((ND + 1, ND + 1))
+    VENT = jnp.zeros((ND + 1, ND + 1))
+    for i in range(NL + 1):
+        for j in range(NL + 1):
+            QENT = QENT.at[i, j].set(float(Q[j]))
+            UENT = UENT.at[i, j].set(float(U[j]))
+            VENT = VENT.at[i, j].set(float(V[j]))
+
+    QP = jnp.zeros(ND + 1)
+    UP = jnp.zeros(ND + 1)
+    VP = jnp.zeros(ND + 1)
+    QP = QP.at[0].set(float(Q[0]))
+    UP = UP.at[0].set(float(U[0]))
+    VP = VP.at[0].set(float(V[0]))
+    for i in range(1, NL + 1):
+        QP = QP.at[i].set(float(Q[i - 1]))
+        UP = UP.at[i].set(float(U[i - 1]))
+        VP = VP.at[i].set(float(V[i - 1]))
+
+    # --- Block 8: CAPE loop → INB ---
+    CAPE = 0.0
+    CAPEM = 0.0
+    INB = ICB + 1
+    INB1 = INB
+    BYP = 0.0
+    for i in range(ICB + 1, NL):
+        BY = (float(TVP[i]) - float(TV[i])) * (float(PH[i]) - float(PH[i + 1])) / float(P[i])
+        CAPE += BY
+        if BY >= 0.0:
+            INB1 = i + 1
+        if CAPE > 0.0:
+            INB = i + 1
+            BYP = (float(TVP[i + 1]) - float(TV[i + 1])) * (float(PH[i + 1]) - float(PH[i + 2])) / float(P[i + 1])
+            CAPEM = CAPE
+    INB = max(INB, INB1)
+    CAPE = CAPEM + BYP
+    DEFRAC = max(CAPEM - CAPE, 0.001)
+    FRAC = min(max(-CAPE / DEFRAC, 0.0), 1.0)
+    OUTCAPE = CAPE
+
+    # --- Block 9: HP update, CBMF ---
+    for i in range(ICB, INB + 1):
+        HP = HP.at[i].set(
+            float(H[NK]) + (float(LV[i]) + (params.CPD - params.CPV) * float(T[i])) * float(EP[i]) * float(CLW[i])
+        )
+
+    TVPPLCL = float(TVP[ICB - 1]) - params.RD * float(TVP[ICB - 1]) * (float(P[ICB - 1]) - PLCL) / (
+        float(CPN[ICB - 1]) * float(P[ICB - 1])
+    )
+    TVAPLCL = float(TV[ICB]) + (float(TVP[ICB]) - float(TVP[ICB + 1])) * (PLCL - float(P[ICB])) / (
+        float(P[ICB]) - float(P[ICB + 1])
+    )
+    DTPBL = 0.0
+    for i in range(NK, ICB):
+        DTPBL += (float(TVP[i]) - float(TV[i])) * (float(PH[i]) - float(PH[i + 1]))
+    DTPBL /= float(PH[NK]) - float(PH[ICB])
+    DTMA = TVPPLCL - TVAPLCL + params.DTMAX + DTPBL
+    CBMFOLD = CBMF
+    DAMPS = params.DAMP * DELT / params.DELT0
+    CBMF = (1.0 - DAMPS) * CBMF + 0.1 * params.ALPHA * DTMA
+    CBMF = max(CBMF, 0.0)
+
+    if CBMF == 0.0 and CBMFOLD == 0.0:
+        return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+    # --- Block 10: Updraft mass flux M ---
+    M = M.at[ICB].set(0.0)
+    DBOSUM = 0.0
+    for i in range(ICB + 1, INB + 1):
+        k = min(i, INB1)
+        DBO = abs(float(TV[k]) - float(TVP[k])) + params.ENTP * 0.02 * (float(PH[k]) - float(PH[k + 1]))
+        DBOSUM += DBO
+        M = M.at[i].set(CBMF * DBO)
+    if DBOSUM > 0:
+        for i in range(ICB + 1, INB + 1):
+            M = M.at[i].set(float(M[i]) / DBOSUM)
+
+    # --- Block 11: Entrainment/detrainment (SIJ/MENT) ---
+    for i in range(ICB + 1, INB + 1):
+        QTI = float(Q[NK]) - float(EP[i]) * float(CLW[i])
+        for j in range(ICB, INB + 1):
+            BF2 = 1.0 + float(LV[j]) * float(LV[j]) * float(QS[j]) / (params.RV * float(T[j]) * float(T[j]) * params.CPD)
+            ANUM = float(H[j]) - float(HP[i]) + (params.CPV - params.CPD) * float(T[j]) * (QTI - float(Q[j]))
+            DENOM = float(H[i]) - float(HP[i]) + (params.CPD - params.CPV) * (float(Q[i]) - QTI) * float(T[j])
+            DEI = DENOM
+            if abs(DEI) < 0.01:
+                DEI = 0.01
+            SIJ = SIJ.at[i, j].set(ANUM / DEI)
+            SIJ = SIJ.at[i, i].set(1.0)
+            sij_ij = float(SIJ[i, j])  # re-read: 1.0 when j==i
+            ALTEM = (sij_ij * float(Q[i]) + (1.0 - sij_ij) * QTI - float(QS[j])) / BF2
+            CWAT = float(CLW[j]) * (1.0 - float(EP[j]))
+            if (sij_ij < 0.0 or sij_ij > 1.0 or ALTEM > CWAT) and j > i:
+                ANUM -= float(LV[j]) * (QTI - float(QS[j]) - CWAT * BF2)
+                DENOM += float(LV[j]) * (float(Q[i]) - QTI)
+                if abs(DENOM) < 0.01:
+                    DENOM = 0.01
+                SIJ = SIJ.at[i, j].set(ANUM / DENOM)
+                sij_ij = float(SIJ[i, j])
+                ALTEM = (
+                    sij_ij * float(Q[i])
+                    + (1.0 - sij_ij) * QTI
+                    - float(QS[j])
+                    - (BF2 - 1.0) * CWAT
+                )
+            if 0.0 < sij_ij < 0.9:
+                QENT = QENT.at[i, j].set(sij_ij * float(Q[i]) + (1.0 - sij_ij) * QTI)
+                UENT = UENT.at[i, j].set(sij_ij * float(U[i]) + (1.0 - sij_ij) * float(U[NK]))
+                VENT = VENT.at[i, j].set(sij_ij * float(V[i]) + (1.0 - sij_ij) * float(V[NK]))
+                ELIJ = ELIJ.at[i, j].set(max(0.0, ALTEM))
+                MENT = MENT.at[i, j].set(float(M[i]) / (1.0 - sij_ij))
+                NENT = NENT.at[i].add(1)
+            SIJ = SIJ.at[i, j].set(min(max(sij_ij, 0.0), 1.0))
+
+        if int(NENT[i]) == 0:
+            MENT = MENT.at[i, i].set(float(M[i]))
+            QENT = QENT.at[i, i].set(float(Q[NK]) - float(EP[i]) * float(CLW[i]))
+            UENT = UENT.at[i, i].set(float(U[NK]))
+            VENT = VENT.at[i, i].set(float(V[NK]))
+            ELIJ = ELIJ.at[i, i].set(float(CLW[i]))
+            SIJ = SIJ.at[i, i].set(1.0)
+
+    SIJ = SIJ.at[INB, INB].set(1.0)
+
+    for i in range(ICB + 1, INB + 1):
+        if int(NENT[i]) != 0:
+            QP1 = float(Q[NK]) - float(EP[i]) * float(CLW[i])
+            ANUM = float(H[i]) - float(HP[i]) - float(LV[i]) * (QP1 - float(QS[i]))
+            DENOM = float(H[i]) - float(HP[i]) + float(LV[i]) * (float(Q[i]) - QP1)
+            if abs(DENOM) < 0.01:
+                DENOM = 0.01
+            SCRIT = ANUM / DENOM
+            ALT = QP1 - float(QS[i]) + SCRIT * (float(Q[i]) - QP1)
+            if ALT < 0.0:
+                SCRIT = 1.0
+            SCRIT = max(SCRIT, 0.0)
+            ASIJ = 0.0
+            SMIN = 1.0
+            for j in range(ICB, INB + 1):
+                sij_ij = float(SIJ[i, j])
+                if 0.0 < sij_ij < 0.9:
+                    if j > i:
+                        SMID = min(sij_ij, SCRIT)
+                        SJMAX = SMID
+                        SJMIN = SMID
+                        if SMID < SMIN and float(SIJ[i, j + 1]) < SMID:
+                            SMIN = SMID
+                            SJMAX = min(min(float(SIJ[i, j + 1]), sij_ij), SCRIT)
+                            SJMIN = min(max(float(SIJ[i, j - 1]), sij_ij), SCRIT)
+                    else:
+                        SJMAX = max(float(SIJ[i, j + 1]), SCRIT)
+                        SMID = max(sij_ij, SCRIT)
+                        SJMIN = max(float(SIJ[i, j - 1]) if j > 0 else 0.0, SCRIT)
+                    ASIJ += (abs(SJMAX - SMID) + abs(SJMIN - SMID)) * (
+                        float(PH[j]) - float(PH[j + 1])
+                    )
+                    MENT = MENT.at[i, j].set(
+                        float(MENT[i, j]) * (abs(SJMAX - SMID) + abs(SJMIN - SMID)) * (
+                            float(PH[j]) - float(PH[j + 1])
+                        )
+                    )
+            ASIJ = max(1.0e-21, ASIJ)
+            for j in range(ICB, INB + 1):
+                MENT = MENT.at[i, j].set(float(MENT[i, j]) / ASIJ)
+            s = 0.0
+            for j in range(ICB, INB + 1):
+                s += float(MENT[i, j])
+            if s < 1.0e-18:
+                NENT = NENT.at[i].set(0)
+                MENT = MENT.at[i, i].set(float(M[i]))
+                QENT = QENT.at[i, i].set(float(Q[NK]) - float(EP[i]) * float(CLW[i]))
+                UENT = UENT.at[i, i].set(float(U[NK]))
+                VENT = VENT.at[i, i].set(float(V[NK]))
+                ELIJ = ELIJ.at[i, i].set(float(CLW[i]))
+                SIJ = SIJ.at[i, i].set(1.0)
+
+    # --- Block 12: Downdraft ---
+    if float(EP[INB]) >= 0.0001:
+        JTT = 0
+        for i in range(INB, -1, -1):
+            WDTRAIN = params.G * float(EP[i]) * float(M[i]) * float(CLW[i])
+            if i > 0:
+                for j in range(i):
+                    WDTRAIN += (
+                        params.G
+                        * max(0.0, float(ELIJ[j, i]) - (1.0 - float(EP[i])) * float(CLW[i]))
+                        * float(MENT[j, i])
+                    )
+            COEFF = params.COEFFR if float(T[i]) > 273.0 else params.COEFFS
+            WT = WT.at[i].set(params.OMTRAIN if float(T[i]) > 273.0 else params.OMTSNOW)
+            AFAC = max(
+                COEFF
+                * float(PH[i])
+                * (float(QS[i]) - 0.5 * (float(Q[i]) + float(QP[i + 1])))
+                / (1.0e4 + 2.0e3 * float(PH[i]) * float(QS[i])),
+                0.0,
+            )
+            SIGT = min(max(float(SIGP[i]), 0.0), 1.0)
+            B6 = 100.0 * (float(PH[i]) - float(PH[i + 1])) * SIGT * AFAC / float(WT[i])
+            C6 = (float(WATER[i + 1]) * float(WT[i + 1]) + WDTRAIN / params.SIGD) / float(WT[i])
+            REVAP = 0.5 * (-B6 + float(jnp.sqrt(B6 * B6 + 4.0 * C6)))
+            EVAP = EVAP.at[i].set(SIGT * AFAC * REVAP)
+            WATER = WATER.at[i].set(REVAP * REVAP)
+
+            if i > 0:
+                DHDP = max((float(H[i]) - float(H[i - 1])) / (float(P[i - 1]) - float(P[i])), 10.0)
+                mp_i = 100.0 * GINV * float(LV[i]) * params.SIGD * float(EVAP[i]) / DHDP
+                FAC = 20.0 / (float(PH[i - 1]) - float(PH[i]))
+                mp_i = (FAC * float(MP[i + 1]) + mp_i) / (1.0 + FAC)
+                MP = MP.at[i].set(mp_i)
+                if float(P[i]) > (0.949 * float(P[0])):
+                    JTT = max(JTT, i)
+                    mp_i = float(MP[JTT]) * (float(P[0]) - float(P[i])) / (float(P[0]) - float(P[JTT]))
+                    MP = MP.at[i].set(mp_i)
+
+            if i != INB:
+                QSTM = float(QS[0]) if i == 0 else float(QS[i - 1])
+                if float(MP[i]) > float(MP[i + 1]):
+                    RAT = float(MP[i + 1]) / float(MP[i])
+                    QP = QP.at[i].set(
+                        float(QP[i + 1]) * RAT
+                        + float(Q[i]) * (1.0 - RAT)
+                        + 100.0 * GINV * params.SIGD
+                        * (float(PH[i]) - float(PH[i + 1]))
+                        * (float(EVAP[i]) / float(MP[i]))
+                    )
+                    UP = UP.at[i].set(float(UP[i + 1]) * RAT + float(U[i]) * (1.0 - RAT))
+                    VP = VP.at[i].set(float(VP[i + 1]) * RAT + float(V[i]) * (1.0 - RAT))
+                elif float(MP[i + 1]) > 0.0:
+                    QP = QP.at[i].set(
+                        (float(GZ[i + 1]) - float(GZ[i])
+                         + float(QP[i + 1]) * (float(LV[i + 1]) + float(T[i + 1]) * (params.CL - params.CPD))
+                         + params.CPD * (float(T[i + 1]) - float(T[i]))
+                        ) / (float(LV[i]) + float(T[i]) * (params.CL - params.CPD))
+                    )
+                    UP = UP.at[i].set(float(UP[i + 1]))
+                    VP = VP.at[i].set(float(VP[i + 1]))
+                QP = QP.at[i].set(max(min(float(QP[i]), QSTM), 0.0))
+
+        PRECIP += (
+            float(WT[0]) * params.SIGD * float(WATER[0]) * 3600.0 * 24000.0 / (params.ROWL * params.G)
+        )
+
+    # --- Blocks 13–15: Tendency accumulation ---
+    WD = params.BETA * abs(float(MP[ICB])) * 0.01 * params.RD * float(T[ICB]) / (params.SIGD * float(P[ICB]))
+    QPRIME = 0.5 * (float(QP[0]) - float(Q[0]))
+    TPRIME = params.LV0 * QPRIME / params.CPD
+
+    DPINV = 0.01 / (float(PH[0]) - float(PH[1]))
+    AM = 0.0
+    if NK == 0:
+        for ii in range(1, INB + 1):
+            AM += float(M[ii])
+
+    if (2.0 * params.G * DPINV * AM) >= DELTI:
+        IFLAG = 4
+
+    FT = FT.at[0].add(
+        params.G * DPINV * AM * (float(T[1]) - float(T[0]) + (float(GZ[1]) - float(GZ[0])) / float(CPN[0]))
+        - float(LVCP[0]) * params.SIGD * float(EVAP[0])
+        + params.SIGD * float(WT[1]) * (params.CL - params.CPD) * float(WATER[1])
+        * (float(T[1]) - float(T[0])) * DPINV / float(CPN[0])
+    )
+    FQ = FQ.at[0].add(
+        params.G * float(MP[1]) * (float(QP[1]) - float(Q[0])) * DPINV
+        + params.SIGD * float(EVAP[0])
+        + params.G * AM * (float(Q[1]) - float(Q[0])) * DPINV
+    )
+    FU = FU.at[0].add(params.G * DPINV * (float(MP[1]) * (float(UP[1]) - float(U[0])) + AM * (float(U[1]) - float(U[0]))))
+    FV = FV.at[0].add(params.G * DPINV * (float(MP[1]) * (float(VP[1]) - float(V[0])) + AM * (float(V[1]) - float(V[0]))))
+
+    for j in range(1, INB + 1):
+        FQ = FQ.at[0].add(params.G * DPINV * float(MENT[j, 0]) * (float(QENT[j, 0]) - float(Q[0])))
+        FU = FU.at[0].add(params.G * DPINV * float(MENT[j, 0]) * (float(UENT[j, 0]) - float(U[0])))
+        FV = FV.at[0].add(params.G * DPINV * float(MENT[j, 0]) * (float(VENT[j, 0]) - float(V[0])))
+
+    for i in range(1, INB + 1):
+        DPINV = 0.01 / (float(PH[i]) - float(PH[i + 1]))
+        CPINV = 1.0 / float(CPN[i])
+        AMP1 = 0.0
+        if i >= NK:
+            for ii in range(i + 1, INB + 2):
+                AMP1 += float(M[ii])
+        for k in range(i + 1):
+            for jj in range(i + 1, INB + 2):
+                AMP1 += float(MENT[k, jj])
+        if (2.0 * params.G * DPINV * AMP1) >= DELTI:
+            IFLAG = 4
+        AD = 0.0
+        for k in range(i):
+            for jj in range(i, INB + 1):
+                AD += float(MENT[jj, k])
+
+        FT = FT.at[i].add(
+            params.G * DPINV * (
+                AMP1 * (float(T[i + 1]) - float(T[i]) + (float(GZ[i + 1]) - float(GZ[i])) * CPINV)
+                - AD * (float(T[i]) - float(T[i - 1]) + (float(GZ[i]) - float(GZ[i - 1])) * CPINV)
+            )
+            - params.SIGD * float(LVCP[i]) * float(EVAP[i])
+        )
+        FT = FT.at[i].add(
+            params.G * DPINV * float(MENT[i, i])
+            * (float(HP[i]) - float(H[i]) + float(T[i]) * (params.CPV - params.CPD) * (float(Q[i]) - float(QENT[i, i])))
+            * CPINV
+        )
+        FT = FT.at[i].add(
+            params.SIGD * float(WT[i + 1]) * (params.CL - params.CPD)
+            * float(WATER[i + 1]) * (float(T[i + 1]) - float(T[i]))
+            * DPINV * CPINV
+        )
+        FQ = FQ.at[i].add(params.G * DPINV * (AMP1 * (float(Q[i + 1]) - float(Q[i])) - AD * (float(Q[i]) - float(Q[i - 1]))))
+        FU = FU.at[i].add(params.G * DPINV * (AMP1 * (float(U[i + 1]) - float(U[i])) - AD * (float(U[i]) - float(U[i - 1]))))
+        FV = FV.at[i].add(params.G * DPINV * (AMP1 * (float(V[i + 1]) - float(V[i])) - AD * (float(V[i]) - float(V[i - 1]))))
+
+        for k in range(i):
+            AWAT = max(float(ELIJ[k, i]) - (1.0 - float(EP[i])) * float(CLW[i]), 0.0)
+            FQ = FQ.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(QENT[k, i]) - AWAT - float(Q[i])))
+            FU = FU.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(UENT[k, i]) - float(U[i])))
+            FV = FV.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(VENT[k, i]) - float(V[i])))
+
+        for k in range(i, INB + 1):
+            FQ = FQ.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(QENT[k, i]) - float(Q[i])))
+            FU = FU.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(UENT[k, i]) - float(U[i])))
+            FV = FV.at[i].add(params.G * DPINV * float(MENT[k, i]) * (float(VENT[k, i]) - float(V[i])))
+
+        FQ = FQ.at[i].add(
+            params.SIGD * float(EVAP[i])
+            + params.G * (float(MP[i + 1]) * (float(QP[i + 1]) - float(Q[i])) - float(MP[i]) * (float(QP[i]) - float(Q[i - 1])))
+            * DPINV
+        )
+        FU = FU.at[i].add(
+            params.G * (float(MP[i + 1]) * (float(UP[i + 1]) - float(U[i])) - float(MP[i]) * (float(UP[i]) - float(U[i - 1])))
+            * DPINV
+        )
+        FV = FV.at[i].add(
+            params.G * (float(MP[i + 1]) * (float(VP[i + 1]) - float(V[i])) - float(MP[i]) * (float(VP[i]) - float(V[i - 1])))
+            * DPINV
+        )
+
+    # --- Block 14: FRAC smoothing at INB ---
+    FQOLD = float(FQ[INB])
+    FQ = FQ.at[INB].set(FQOLD * (1.0 - FRAC))
+    FQ = FQ.at[INB - 1].add(
+        FRAC * FQOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
+        * float(LV[INB]) / float(LV[INB - 1])
+    )
+    FTOLD = float(FT[INB])
+    FT = FT.at[INB].set(FTOLD * (1.0 - FRAC))
+    FT = FT.at[INB - 1].add(
+        FRAC * FTOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
+        * float(CPN[INB]) / float(CPN[INB - 1])
+    )
+    FUOLD = float(FU[INB])
+    FU = FU.at[INB].set(FUOLD * (1.0 - FRAC))
+    FU = FU.at[INB - 1].add(
+        FRAC * FUOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
+    )
+    FVOLD = float(FV[INB])
+    FV = FV.at[INB].set(FVOLD * (1.0 - FRAC))
+    FV = FV.at[INB - 1].add(
+        FRAC * FVOLD * ((float(PH[INB]) - float(PH[INB + 1])) / (float(PH[INB - 1]) - float(PH[INB])))
+    )
+
+    # --- Block 15: Conservation correction ---
+    ENTS = 0.0
+    UAV = 0.0
+    VAV = 0.0
+    DENOM2 = float(PH[0]) - float(PH[INB + 1])
+    for i in range(INB + 1):
+        dp = float(PH[i]) - float(PH[i + 1])
+        ENTS += (float(CPN[i]) * float(FT[i]) + float(LV[i]) * float(FQ[i])) * dp
+        UAV += float(FU[i]) * dp
+        VAV += float(FV[i]) * dp
+    ENTS /= DENOM2
+    UAV /= DENOM2
+    VAV /= DENOM2
+    for i in range(INB + 1):
+        FT = FT.at[i].set(float(FT[i]) - ENTS / float(CPN[i]))
+        FU = FU.at[i].set((1.0 - params.CU) * (float(FU[i]) - UAV))
+        FV = FV.at[i].set((1.0 - params.CU) * (float(FV[i]) - VAV))
+
+    return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
+
+
+def _jax_vectorized_convect(
+    t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, params,
+):
+    nlev, ncol = t.shape
+    ft_list, fq_list, fu_list, fv_list = [], [], [], []
+    precip_list, wd_list, tprime_list, qprime_list = [], [], [], []
+    cbmf_list, outcape_list, iflag_list = [], [], []
+    for i in range(ncol):
+        res = _convect_functional_jax(
+            t[:, i], q[:, i], qs[:, i], u[:, i], v[:, i],
+            p[:, i], ph[:, i],
+            ND, NL, NTRA, DELT, cbmf[i], params,
+        )
+        ft_list.append(res[0])
+        fq_list.append(res[1])
+        fu_list.append(res[2])
+        fv_list.append(res[3])
+        precip_list.append(res[4])
+        wd_list.append(res[5])
+        tprime_list.append(res[6])
+        qprime_list.append(res[7])
+        cbmf_list.append(res[8])
+        outcape_list.append(res[9])
+        iflag_list.append(res[10])
+    ft = jnp.stack(ft_list, axis=1)
+    fq = jnp.stack(fq_list, axis=1)
+    fu = jnp.stack(fu_list, axis=1)
+    fv = jnp.stack(fv_list, axis=1)
+    precip = jnp.array(precip_list)
+    wd = jnp.array(wd_list)
+    tprime = jnp.array(tprime_list)
+    qprime = jnp.array(qprime_list)
+    cbmf_new = jnp.array(cbmf_list)
+    outcape = jnp.array(outcape_list)
+    iflag = jnp.array(iflag_list, dtype=jnp.int32)
     return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag
