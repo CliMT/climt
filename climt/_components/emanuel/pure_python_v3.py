@@ -1164,10 +1164,10 @@ def _convect_functional_jax(
     UENT = jnp.broadcast_to(U_pad_init[None, :], (ND + 1, ND + 1)).copy()
     VENT = jnp.broadcast_to(V_pad_init[None, :], (ND + 1, ND + 1)).copy()
 
-    # QP[0] = Q[0], QP[i] = Q[i-1] for i>=1; same for UP, VP
-    QP = jnp.concatenate([Q[:1], Q[:ND]])  # length ND+1: [Q[0], Q[0], Q[1], ..., Q[ND-1]]
-    UP = jnp.concatenate([U[:1], U[:ND]])
-    VP = jnp.concatenate([V[:1], V[:ND]])
+    # QP[0] = Q[0], QP[i] = Q[i-1] for i>=1 to NL; zero beyond NL
+    QP = jnp.concatenate([Q[:1], Q[:NL], jnp.zeros(ND - NL)])
+    UP = jnp.concatenate([U[:1], U[:NL], jnp.zeros(ND - NL)])
+    VP = jnp.concatenate([V[:1], V[:NL], jnp.zeros(ND - NL)])
 
     # --- Block 8: CAPE loop → INB (JIT-compatible vectorized) ---
     # Compute buoyancy BY for all levels
@@ -1486,20 +1486,20 @@ def _convect_functional_jax(
         )
         QP_i = jnp.where(
             not_inb & mp_increasing, QP_inc,
-            jnp.where(not_inb & (MP_above > 0.0), QP_dec, QP_above),
+            jnp.where(not_inb & (MP_above > 0.0), QP_dec, QP[i]),
         )
         QSTM_i = jnp.where(i == 0, QS_pad[0], QS_pad[im1])
-        QP_i = jnp.where(not_inb, jnp.clip(QP_i, 0.0, QSTM_i), QP_above)
+        QP_i = jnp.where(not_inb, jnp.clip(QP_i, 0.0, QSTM_i), QP[i])
 
         UP_i = jnp.where(
             not_inb & mp_increasing,
             UP_above * RAT + U_pad[i] * (1.0 - RAT),
-            UP_above,
+            jnp.where(not_inb & (MP_above > 0.0), UP_above, UP[i])
         )
         VP_i = jnp.where(
             not_inb & mp_increasing,
             VP_above * RAT + V_pad[i] * (1.0 - RAT),
-            VP_above,
+            jnp.where(not_inb & (MP_above > 0.0), VP_above, VP[i])
         )
 
         # Gate carry and outputs by validity (no-op for out-of-range steps)
