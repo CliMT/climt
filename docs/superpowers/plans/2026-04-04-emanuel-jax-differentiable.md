@@ -600,40 +600,173 @@ git commit -am "feat(emanuel): differentiable tendency accumulation and conserva
 
 **Files:**
 - Modify: `climt/_components/emanuel/pure_python_v3.py`
+- Modify: `tests/test_emanuel_jax_parity.py`
 
-- [ ] **Step 1: Wrap `_convect_functional_jax` with `@jax.jit`**
+**Overview:** The current `_convect_functional_jax` (lines 967–1664) and `_tlift_functional_jax` (lines 914–964) use Python `float()` extraction, Python `if/else` on traced values, and data-dependent loop bounds (`ICB`, `NK`, `INB`). These all break `jax.jit` tracing. This task rewrites blocks 2–9 and `_tlift_functional_jax` to be trace-safe, then wraps with `@jax.jit` and replaces the column loop with `jax.vmap`.
 
-At this point, the function should have no Python control flow on traced values. Test:
+**Strategy:**
+- `ND`, `NL`, `NTRA` are passed as `static_argnums` — loops over `range(NL)` are fine.
+- `ICB`, `NK`, `INB`, `IHMIN` are data-dependent integers used as indices → keep as JAX integers, use `jnp.where` masks instead of `range(ICB, INB)`.
+- Early returns → accumulate an `active` flag, compute everything unconditionally, multiply results by `active` at the end.
+- Python `float()` on traced values → remove (JAX scalar ops work directly).
+- Python `max()`/`min()` on traced values → `jnp.maximum()`/`jnp.minimum()`.
+- Python `if cond:` on traced values → `jnp.where(cond, ...)`.
+
+---
+
+#### Step 9a: Remove all `float()` calls from `_convect_functional_jax`
+
+~50 `float()` calls extract concrete values from traced arrays. Remove them all — JAX scalar indexing (`T[i]`, `Q[NK]`) returns JAX scalars that work in arithmetic.
+
+Also replace Python `max()`/`min()` with `jnp.maximum()`/`jnp.minimum()` where arguments may be traced.
+
+- [x] Remove `float()` calls in blocks 2–9 (lines 978–1205)
+- [x] Replace `max()`/`min()` with `jnp.maximum()`/`jnp.minimum()` on traced values
+- [x] Remove `float()` calls in blocks 13–15 (lines 1504, 1524, 1572)
+
+---
+
+#### Step 9b: Make `_tlift_functional_jax` JIT-compatible
+
+Current issues (lines 914–964):
+- `float(Q[NK])`, `float(T[NK])`, `float(GZ[NK])` — remove `float()`
+- `if KK == 1:` — `KK` is always a Python literal (called with `1` or `2`), so this is fine if KK is static
+- `for i in range(ICB):` and `for i in range(NK, ICB):` — `ICB`/`NK` are traced → iterate over `range(NL+1)` with `(i < ICB)` mask
+- `for i in range(NSB, NST + 1):` — `NSB`/`NST` depend on `ICB` → full range + mask
+- `if TC >= 0.0:` on traced value → `jnp.where`
+- `max(TG + ..., 35.0)` → `jnp.maximum`
+- `max(0.0, qNK - QG)` → `jnp.maximum`
+
+- [x] Rewrite `_tlift_functional_jax` with full-range loops and masks
+- [x] Replace Python `if TC >= 0.0` with `jnp.where` for ES computation
+- [x] Make `KK` a static argument (it's always literal 1 or 2)
+
+---
+
+#### Step 9c: Rewrite Block 2 (thermodynamic profiles) for JIT
+
+Current: Python loop `for i in range(NL+1)` with `float()` — loop bound is static so only need to remove `float()`.
+
+- [x] Remove `float()` calls (already done in 9a, verify correctness) ✓ verified
+
+---
+
+#### Step 9d: Rewrite Block 3 (IHMIN/NK) for JIT
+
+Current (lines 1024–1060): Two Python loops that compute `IHMIN` (argmin of HM with conditions) and `NK` (argmax of HM in a subrange), using Python `if` on traced values.
+
+Approach:
+- Vectorize IHMIN: compute a masked array where invalid entries are `+inf`, then `jnp.argmin`
+- Vectorize NK: compute a masked array where invalid entries are `-inf`, then `jnp.argmax`
+
+- [x] Replace IHMIN loop with `jnp.argmin` + mask
+- [x] Replace NK loop with `jnp.argmax` + mask
+
+---
+
+#### Step 9e: Rewrite Block 4 (early exits) for JIT
+
+Current (lines 1062–1084): Three `if`/`return` blocks based on traced conditions (`T[NK] < 250`, `PLCL` range, `ICB >= NL-1`).
+
+Approach: Accumulate a boolean `active` flag. Compute everything unconditionally. At the end (before return), select between zeros and computed values based on `active`.
+
+- `ICB` computation (lines 1076–1079): Python loop with `if float(P[i]) < PLCL` → vectorize with `jnp.argmax(P < PLCL)` or similar.
+
+- [x] Convert ICB search to vectorized `jnp.where` + index computation
+- [x] Replace early returns with `active` flag accumulation
+- [x] Track `IFLAG` values for each exit condition
+
+---
+
+#### Step 9f: Rewrite Block 5 (TLIFT calls) + Block 6 (EP/SIGP) for JIT
+
+Block 5 (lines 1086–1104): Calls `_tlift_functional_jax` (fixed in 9b), then loops `for i in range(NK, ICB+1)` and `for i in range(ICB+1, NL+1)` with traced bounds.
+
+Block 6 (lines 1106–1125): Loops with traced bounds (`NK`, `ICB`, `NL`), Python `if` on TCA.
+
+- [x] Convert variable-bound loops to full-range loops with `jnp.where` masks
+- [x] Replace `if TCA >= 0.0` / `max`/`min` with `jnp.where`/`jnp.maximum`/`jnp.minimum`
+- [x] Replace `if CBMF == 0.0 and TVP[ICB] <= ...` early return with `active` flag
+
+---
+
+#### Step 9g: Rewrite Block 7 (setup matrices) for JIT
+
+Current (lines 1126–1159): Loops with traced bounds to fill QENT, UENT, VENT, QP, UP, VP.
+
+Approach: Use broadcasting. `QENT[i,j] = Q[j]` for all i,j → `QENT = jnp.broadcast_to(Q[None,:], ...)` etc.
+
+- [x] Replace matrix-fill loops with broadcasting
+- [x] Replace QP/UP/VP init loops with array ops
+
+---
+
+#### Step 9h: Rewrite Block 8 (CAPE → INB) for JIT
+
+Current (lines 1161–1180): Loop `for i in range(ICB+1, NL)` computing CAPE, INB, BYP with Python `if` on traced values.
+
+Approach: Iterate over full range with masks. Use `jnp.where` for conditional updates to INB, CAPE, etc.
+
+- [x] Convert to full-range loop (0 to NL) with `(i > ICB) & (i < NL)` mask
+- [x] Replace Python `if BY >= 0` / `if CAPE > 0` with `jnp.where`
+
+---
+
+#### Step 9i: Rewrite Block 9 (HP update, CBMF) for JIT
+
+Current (lines 1182–1205): Loop with traced bounds, final early return `if CBMF == 0.0 and CBMFOLD == 0.0`.
+
+- [x] Convert HP update loop to full-range + mask
+- [x] Replace TVPPLCL/TVAPLCL/DTPBL computations (use dynamic indexing, already works)
+- [x] Replace final early return with `active` flag update
+
+---
+
+#### Step 9j: Fix remaining JIT issues in Blocks 10–15
+
+Blocks 10–15 are already differentiable but still have a few issues:
+- Line 1304–1313: Python `for` loop with `if` on `NENT_count[i]` (traced) in Block 11
+- Line 1319–1378: Python `for` loop with `if not has_ent` (traced) — Block 11 SCRIT normalization
+- Line 1335–1358: Nested Python `for` with `if j > i` — Block 11 inner loop
+- Line 1475–1476: `if ep_active` where `EP[INB]` is traced — Block 12 entry
+- Line 1493–1501: Python `for` scattering scan results — Block 12
+- Line 1524, 1572: `if` on traced value for IFLAG=4 — Block 13
+
+- [x] Replace Block 11 fallback loop (lines 1304–1313) with vectorized `jnp.where`
+- [x] Replace Block 11 SCRIT normalization loop with vectorized or `lax.scan` approach
+- [x] Replace Block 12 `if ep_active` with unconditional compute + `jnp.where`
+- [x] Replace Block 12 scatter loop with array indexing
+- [ ] Replace Block 13 IFLAG checks with `jnp.where`
+
+---
+
+#### Step 9k: Add `@jax.jit` and test
+
+- [x] Add `@functools.partial(jax.jit, static_argnums=(7, 8, 9))` to `_convect_functional_jax`
+- [x] Run single-column JIT test to verify no tracing errors
+- [x] Run parity test: `conda activate climt && python -m pytest tests/test_emanuel_jax_parity.py -v`
+
+---
+
+#### Step 9l: Replace column loop with `jax.vmap`
+
+Replace `_jax_vectorized_convect` (lines 1667–1702) which loops over columns with a `jax.vmap` call:
+
 ```python
-jitted = jax.jit(_convect_functional_jax, static_argnums=(7, 8, 9))
-# static_argnums for ND, NL, NTRA (integer shape params)
+def _jax_vectorized_convect(t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, params):
+    def column_call(T, Q, QS, U, V, P, PH, CBMF):
+        return _convect_functional_jax(T, Q, QS, U, V, P, PH, ND, NL, NTRA, DELT, CBMF, params)
+    results = jax.vmap(column_call, in_axes=(1, 1, 1, 1, 1, 1, 1, 0))(
+        t, q, qs, u, v, p, ph, cbmf)
+    # vmap returns (ncol, nlev) for 1D outputs → transpose to (nlev, ncol)
+    ft, fq, fu, fv = results[0].T, results[1].T, results[2].T, results[3].T
+    precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results[4:]
+    return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag
 ```
 
-If JIT fails, the error will indicate which operation uses Python control flow on a traced value. Fix each one using `jnp.where` or `lax.cond`.
-
-- [ ] **Step 2: Use `jax.vmap` for column vectorization**
-
-The `array_call` method should use `jax.vmap` over columns:
-```python
-@jax.jit
-def vectorized_jax_call(t, q, qs, u, v, p, ph, cbmf, tra_vector):
-    def column_call(T, Q, QS, U, V, P, PH, CBMF, TRA):
-        return _convect_functional_jax(T, Q, QS, U, V, P, PH, ND, NL, 0, delt, CBMF, TRA, self._params)
-    return jax.vmap(column_call, in_axes=(1, 1, 1, 1, 1, 1, 1, 0, 2))(
-        t, q, qs, u, v, p, ph, cbmf, tra_vector)
-```
-
-- [ ] **Step 3: Verify parity still holds**
-
-```bash
-conda activate climt && python -m pytest tests/test_emanuel_jax_parity.py -v
-```
-
-- [ ] **Step 4: Commit**
-
-```bash
-git commit -am "feat(emanuel): JIT + vmap integration for JAX kernel"
-```
+- [x] Replace `_jax_vectorized_convect` with `vmap` version
+- [x] Run parity test
+- [x] Commit: `feat(emanuel): JIT + vmap integration for JAX kernel`
 
 ---
 
@@ -642,7 +775,7 @@ git commit -am "feat(emanuel): JIT + vmap integration for JAX kernel"
 **Files:**
 - Modify: `tests/test_jax_differentiation.py`
 
-- [ ] **Step 1: Update the existing gradient test**
+- [x] **Step 1: Update the existing gradient test**
 
 The existing test in `tests/test_jax_differentiation.py` computes `jax.grad` of a loss over temperature tendencies. Now that the kernel is complete, it should produce non-zero gradients for unstable profiles.
 
@@ -680,13 +813,13 @@ def test_emanuel_jax_gradient():
     assert not jnp.any(jnp.isnan(gradient)), "Gradient contains NaNs"
 ```
 
-- [ ] **Step 2: Run gradient test**
+- [x] **Step 2: Run gradient test**
 
 ```bash
 conda activate climt && python -m pytest tests/test_jax_differentiation.py -v
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -am "test(emanuel): gradient test with complete differentiable kernel"

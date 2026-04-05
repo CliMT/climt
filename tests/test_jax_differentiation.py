@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import pytest
 from datetime import timedelta
 import sympl
-from climt import get_grid, get_default_state, EmanuelConvectionPythonV3, JaxBackend
+from climt import get_grid, get_default_state, EmanuelConvectionPythonV3
 
 # 1. Enable x64 for scientific precision
 jax.config.update("jax_enable_x64", True)
