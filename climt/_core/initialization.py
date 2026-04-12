@@ -943,6 +943,16 @@ default_values = {
         "units": "m s^-1",
         "domain": "surface",
     },
+    "irradiation_temperature": {
+        "value": 0.0,
+        "units": "degK",
+        "domain": "atmosphere_horizontal",
+    },
+    "internal_temperature": {
+        "value": 0.0,
+        "units": "degK",
+        "domain": "atmosphere_horizontal",
+    },
 }
 for d in default_values.values():
     if "grid" not in d.keys():
