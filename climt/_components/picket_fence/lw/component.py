@@ -26,7 +26,12 @@ class PicketFenceLongwave(TendencyComponent):
             self._coefficients = load_parmentier_coefficients(coefficients)
             self._num_bands = 2
         elif optics == "correlated_k":
-            raise NotImplementedError("Correlated-k mode not yet implemented")
+            from ..optics.correlated_k import load_k_table
+
+            self._table = load_k_table(table)
+            self._num_bands = self._table["k_coefficients"].shape[1]
+            self._num_gpts = self._table["k_coefficients"].shape[2]
+            self._gas_names = list(self._table["gas_names"])
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
@@ -67,6 +72,18 @@ class PicketFenceLongwave(TendencyComponent):
                 "units": "degK",
                 "alias": "T_int",
             }
+        elif self._optics_mode == "correlated_k":
+            gas_name_map = {
+                "h2o": "specific_humidity",
+                "co2": "mole_fraction_of_carbon_dioxide_in_air",
+            }
+            for gas in self._gas_names:
+                cf_name = gas_name_map.get(gas, f"mole_fraction_of_{gas}_in_air")
+                props[cf_name] = {
+                    "dims": ["mid_levels", "*"],
+                    "units": "kg/kg",
+                    "alias": gas,
+                }
         return props
 
     @property
@@ -139,13 +156,25 @@ class PicketFenceLongwave(TendencyComponent):
                 sigma,
                 g,
             )
+            weights = np.ones((tau.shape[0], tau.shape[1]))
+        elif self._optics_mode == "correlated_k":
+            ngas = len(self._gas_names)
+            gas_amounts = np.zeros((ngas, nlev, ncol))
+            for ig, gas in enumerate(self._gas_names):
+                q_gas = np.asarray(getattr(state[gas], "data", state[gas]))
+                q_gas_flat = q_gas.reshape(nlev, -1)
+                gas_amounts[ig, :, :] = compute_column_amount(q_gas_flat, p_int_flat, g)
+
+            tau, planck_src, surf_src = self._correlated_k_optics(
+                T_flat, p_flat, gas_amounts, T_surf_flat, sigma
+            )
+            weights = self._table["gpoint_weights"]
         else:
             raise NotImplementedError
 
         nband = tau.shape[0]
         ngpt = tau.shape[1]
         emissivity = np.ones((nband, ncol))
-        weights = np.ones((nband, ngpt))
 
         up_band, down_band, up_broad, down_broad = lw_transport(
             T_flat,
@@ -231,5 +260,56 @@ class PicketFenceLongwave(TendencyComponent):
             surf_planck = sigma * T_surf[i] ** 4
             surf_src[0, 0, i] = beta * surf_planck
             surf_src[1, 0, i] = (1.0 - beta) * surf_planck
+
+        return tau, planck_src, surf_src
+
+    def _correlated_k_optics(self, T, p, gas_amounts, T_surf, sigma):
+        from ..optics.correlated_k import compute_ck_optical_depth
+
+        nlev, ncol = T.shape
+        nband = self._num_bands
+        ngpt = self._num_gpts
+
+        tau = compute_ck_optical_depth(self._table, T, p, gas_amounts)
+        planck_frac = self._table["planck_fraction"]  # (nband, ngpt, nT)
+        T_grid = self._table["temperature_grid"]
+        nT = len(T_grid)
+
+        planck_src = np.zeros((nband, ngpt, nlev, ncol))
+        surf_src = np.zeros((nband, ngpt, ncol))
+
+        for icol in range(ncol):
+            # Surface source
+            T_s = T_surf[icol]
+            iTs = np.searchsorted(T_grid, T_s) - 1
+            iTs = max(0, min(iTs, nT - 2))
+            fTs = (T_s - T_grid[iTs]) / (T_grid[iTs + 1] - T_grid[iTs])
+            fTs = max(0.0, min(1.0, fTs))
+
+            surf_planck = sigma * T_s**4
+            for ib in range(nband):
+                for igp in range(ngpt):
+                    frac_s = (
+                        planck_frac[ib, igp, iTs] * (1 - fTs)
+                        + planck_frac[ib, igp, iTs + 1] * fTs
+                    )
+                    surf_src[ib, igp, icol] = frac_s * surf_planck
+
+            # Layer source
+            for k in range(nlev):
+                T_l = T[k, icol]
+                iTl = np.searchsorted(T_grid, T_l) - 1
+                iTl = max(0, min(iTl, nT - 2))
+                fTl = (T_l - T_grid[iTl]) / (T_grid[iTl + 1] - T_grid[iTl])
+                fTl = max(0.0, min(1.0, fTl))
+
+                layer_planck = sigma * T_l**4
+                for ib in range(nband):
+                    for igp in range(ngpt):
+                        frac_l = (
+                            planck_frac[ib, igp, iTl] * (1 - fTl)
+                            + planck_frac[ib, igp, iTl + 1] * fTl
+                        )
+                        planck_src[ib, igp, k, icol] = frac_l * layer_planck
 
         return tau, planck_src, surf_src
