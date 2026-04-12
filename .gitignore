@@ -79,4 +79,4 @@ target/
 .DS_Store
 
 # Jupyter Notebook checkpoints
-.ipynb_checkpoints/
+.ipynb_checkpoints/.worktrees/
