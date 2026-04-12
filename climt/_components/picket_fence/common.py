@@ -54,6 +54,6 @@ def compute_column_amount(q, p_interface, g):
     amount = np.zeros((nlev, ncol))
     for i in prange(ncol):
         for k in range(nlev):
-            dp = p_interface[k + 1, i] - p_interface[k, i]
+            dp = abs(p_interface[k + 1, i] - p_interface[k, i])
             amount[k, i] = q[k, i] * dp / g
     return amount
