@@ -98,3 +98,56 @@ def test_lw_transport_two_bands():
     np.testing.assert_allclose(
         down_band[0, :, :] + down_band[1, :, :], down_broad, rtol=1e-12
     )
+
+
+def test_sw_two_stream_no_atmosphere():
+    """With zero optical depth, direct beam reaches surface unattenuated."""
+    from climt._components.picket_fence.sw.kernels import sw_two_stream
+
+    nlev = 10
+    ncol = 1
+    nband = 1
+    ngpt = 1
+
+    tau = np.zeros((nband, ngpt, nlev, ncol))
+    ssa = np.zeros((nband, ngpt, nlev, ncol))
+    asymmetry = np.zeros((nband, ngpt, nlev, ncol))
+    zenith = np.array([np.pi / 3])  # 60 degrees
+    albedo = np.array([0.0])
+    solar_flux = np.array([[100.0]])  # (nband, ngpt) W/m^2
+    weights = np.ones((nband, ngpt))
+
+    up_band, down_band, up_broad, down_broad = sw_two_stream(
+        tau, ssa, asymmetry, zenith, albedo, solar_flux, weights
+    )
+
+    mu0 = np.cos(zenith[0])
+    # With no atmosphere, downward flux at surface = solar_flux * mu0
+    np.testing.assert_allclose(down_broad[0, 0], 100.0 * mu0, rtol=1e-10)
+    # Upward flux everywhere = 0 (zero albedo)
+    np.testing.assert_allclose(up_broad[:, 0], 0.0, atol=1e-10)
+
+
+def test_sw_two_stream_total_absorption():
+    """With very large optical depth and zero scattering, no flux reaches surface."""
+    from climt._components.picket_fence.sw.kernels import sw_two_stream
+
+    nlev = 5
+    ncol = 1
+    nband = 1
+    ngpt = 1
+
+    tau = 100.0 * np.ones((nband, ngpt, nlev, ncol))
+    ssa = np.zeros((nband, ngpt, nlev, ncol))  # pure absorption
+    asymmetry = np.zeros((nband, ngpt, nlev, ncol))
+    zenith = np.array([np.pi / 4])
+    albedo = np.array([0.3])
+    solar_flux = np.array([[1000.0]])
+    weights = np.ones((nband, ngpt))
+
+    up_band, down_band, up_broad, down_broad = sw_two_stream(
+        tau, ssa, asymmetry, zenith, albedo, solar_flux, weights
+    )
+
+    # Nearly all radiation absorbed before reaching surface
+    np.testing.assert_allclose(down_broad[0, 0], 0.0, atol=1e-6)
