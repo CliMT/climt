@@ -152,9 +152,8 @@ class PicketFenceShortwave(TendencyComponent):
             tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights
         )
 
-        net_flux = up_broad - down_broad  # net is negative (downward)
-        heating_rate = compute_heating_rate(-net_flux, p_int_flat, g_const, cpd)
-        # Note: SW heating is from absorbed flux, sign convention: absorbed = down - up
+        net_flux = up_broad - down_broad
+        heating_rate = compute_heating_rate(net_flux, p_int_flat, g_const, cpd)
 
         tendency = heating_rate.reshape(orig_shape_T)
         up_broad_out = up_broad.reshape(orig_shape_pint)
