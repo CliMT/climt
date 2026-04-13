@@ -54,6 +54,37 @@ def test_parmentier_rosseland_mean():
     np.testing.assert_allclose(kappa_R_reconstructed, kappa_R, rtol=1e-10)
 
 
+def test_freedman2014_opacity_physical_range():
+    """Freedman 2014 kappa_R should be in a physically plausible range for gas opacity."""
+    from climt._components.picket_fence.optics.parmentier import (
+        compute_rosseland_mean_opacity,
+        load_freedman2014_coefficients,
+    )
+
+    coeffs = load_freedman2014_coefficients()
+
+    # At T=1500 K, P=1e5 Pa (1 bar): typical hot Jupiter photosphere
+    # Freedman et al. 2014 gas opacity is roughly 0.001-0.1 m^2/kg in this regime
+    kappa = compute_rosseland_mean_opacity(1500.0, 1e5, coeffs)
+    assert 1e-4 < kappa < 1.0, f"kappa_R={kappa:.2e} m^2/kg outside plausible range"
+
+    # kappa should increase with temperature (more thermal opacity at higher T)
+    kappa_hot = compute_rosseland_mean_opacity(2000.0, 1e5, coeffs)
+    kappa_cool = compute_rosseland_mean_opacity(1000.0, 1e5, coeffs)
+    assert kappa_hot > kappa_cool, (
+        f"opacity should increase with T: kappa(2000K)={kappa_hot:.2e}, "
+        f"kappa(1000K)={kappa_cool:.2e}"
+    )
+
+    # kappa should increase with pressure (collision-induced absorption)
+    kappa_highp = compute_rosseland_mean_opacity(1500.0, 1e6, coeffs)
+    kappa_lowp = compute_rosseland_mean_opacity(1500.0, 1e4, coeffs)
+    assert kappa_highp > kappa_lowp, (
+        f"opacity should increase with P: kappa(1e6)={kappa_highp:.2e}, "
+        f"kappa(1e4)={kappa_lowp:.2e}"
+    )
+
+
 def test_parmentier_lookup_coefficients():
     """Lookup of ratio coefficients from T_eff should return plausible values."""
     from climt._components.picket_fence.optics.parmentier import (
@@ -109,6 +140,41 @@ def test_correlated_k_interpolation():
     # result shape: (ngas, nband, ngpt, 1)
     expected = k[:, :, :, 1, 1]
     np.testing.assert_allclose(result[:, :, :, 0], expected, rtol=1e-6)
+
+
+def test_correlated_k_lw_co2_units_are_mole_fraction(tmp_path):
+    """CO2 and other non-H2O gases must be declared as mole/mole, not kg/kg."""
+    from climt._components.picket_fence import PicketFenceLongwave
+
+    # Build a minimal 2-gas table (h2o + co2) for this test
+    table_file = str(tmp_path / "two_gas_lw.npz")
+    ngas, nband, ngpt, nT, nP = 2, 2, 2, 5, 5
+    np.savez(
+        table_file,
+        k_coefficients=np.ones((ngas, nband, ngpt, nT, nP)) * 0.01,
+        gpoint_weights=np.full((nband, ngpt), 0.5),
+        planck_fraction=np.full((nband, ngpt, nT), 0.5),
+        band_wavenumber_limits=np.array([[200.0, 800.0], [800.0, 1400.0]]),
+        temperature_grid=np.linspace(200.0, 400.0, nT),
+        pressure_grid_log=np.linspace(np.log(100.0), np.log(1e5), nP),
+        gas_names=np.array(["h2o", "co2"]),
+        overlap_method=np.array("additive"),
+        resolution=np.array("low"),
+    )
+
+    lw = PicketFenceLongwave(optics="correlated_k", table=table_file)
+    props = lw.input_properties
+
+    # H2O uses mass mixing ratio
+    assert props["specific_humidity"]["units"] == "kg/kg", (
+        f"H2O units should be kg/kg, got {props['specific_humidity']['units']}"
+    )
+    # CO2 is a mole fraction — must NOT be kg/kg
+    co2_key = "mole_fraction_of_carbon_dioxide_in_air"
+    assert co2_key in props, "CO2 input property missing"
+    assert props[co2_key]["units"] == "mole/mole", (
+        f"CO2 units should be mole/mole, got {props[co2_key]['units']}"
+    )
 
 
 def test_correlated_k_optical_depth():

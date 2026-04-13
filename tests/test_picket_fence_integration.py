@@ -55,14 +55,16 @@ def test_cloud_optical_depth_modifies_fluxes():
 
     # Now add cloud in the middle of the atmosphere
     state_cloudy = get_default_state([lw], grid_state=grid)
-    if "longwave_optical_thickness_due_to_cloud" in state_cloudy:
-        cloud_tau = state_cloudy["longwave_optical_thickness_due_to_cloud"].values
-        cloud_tau[10, :, :] = 5.0  # thick cloud at level 10
+    assert "longwave_optical_thickness_due_to_cloud" in state_cloudy, (
+        "Cloud tau not in default state — input_properties missing it"
+    )
+    cloud_tau = state_cloudy["longwave_optical_thickness_due_to_cloud"].values
+    cloud_tau[10, ...] = 5.0  # thick cloud at level 10, all columns, all bands
 
     _, diag_cloudy = lw(state_cloudy)
     olr_cloudy = diag_cloudy["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
 
     # Cloud should reduce OLR (more LW trapped)
-    # Note: this test only works if cloud input is wired up. If not yet wired,
-    # mark as expected failure and revisit.
-    # assert olr_cloudy < olr_clear
+    assert olr_cloudy < olr_clear, (
+        f"Cloud should reduce OLR: clear={olr_clear:.2f}, cloudy={olr_cloudy:.2f}"
+    )

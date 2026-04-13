@@ -3,7 +3,12 @@ import numpy as np
 from sympl import TendencyComponent, get_constant
 
 from ..common import compute_column_amount, compute_heating_rate, njit, prange
-from ..optics.parmentier import load_parmentier_coefficients, lookup_ratio_coefficients
+from ..optics.parmentier import (
+    compute_rosseland_mean_opacity,
+    load_freedman2014_coefficients,
+    load_parmentier_coefficients,
+    lookup_ratio_coefficients,
+)
 from .kernels import sw_two_stream
 
 
@@ -21,6 +26,7 @@ class PicketFenceShortwave(TendencyComponent):
 
         if optics == "parmentier":
             self._coefficients = load_parmentier_coefficients(coefficients)
+            self._freedman_coeffs = load_freedman2014_coefficients()
             self._num_bands = 3
             # Solar flux per band is computed dynamically from T_irr in array_call.
             # For Earth (non-irradiated) fallback, we store a default.
@@ -30,6 +36,8 @@ class PicketFenceShortwave(TendencyComponent):
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
+        from climt._core.initialization import set_num_shortwave_bands
+        set_num_shortwave_bands(self._num_bands)
         super(PicketFenceShortwave, self).__init__(**kwargs)
 
     @property
@@ -52,6 +60,11 @@ class PicketFenceShortwave(TendencyComponent):
                 "dims": ["*"],
                 "units": "dimensionless",
                 "alias": "albedo",
+            },
+            "flux_adjustment_for_earth_sun_distance": {
+                "dims": ["*"],
+                "units": "dimensionless",
+                "alias": "earth_sun_factor",
             },
         }
         if self._optics_mode == "parmentier":
@@ -101,11 +114,9 @@ class PicketFenceShortwave(TendencyComponent):
         return self._num_bands
 
     def array_call(self, state):
-        T = np.asarray(getattr(state["T"], "data", state["T"]))
-        p = np.asarray(getattr(state["p"], "data", state["p"]))
-        p_int = np.asarray(getattr(state["p_int"], "data", state["p_int"]))
-        zenith = np.asarray(getattr(state["zenith"], "data", state["zenith"]))
-        albedo = np.asarray(getattr(state["albedo"], "data", state["albedo"]))
+        T = state["T"]
+        p = state["p"]
+        p_int = state["p_int"]
 
         orig_shape_T = T.shape
         orig_shape_pint = p_int.shape
@@ -114,8 +125,8 @@ class PicketFenceShortwave(TendencyComponent):
         T_flat = T.reshape(nlev, -1)
         p_flat = p.reshape(nlev, -1)
         p_int_flat = p_int.reshape(nlev + 1, -1)
-        zenith_flat = zenith.reshape(-1)
-        albedo_flat = albedo.reshape(-1)
+        zenith_flat = state["zenith"].reshape(-1)
+        albedo_flat = state["albedo"].reshape(-1)
         ncol = T_flat.shape[1]
 
         sigma = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
@@ -126,10 +137,8 @@ class PicketFenceShortwave(TendencyComponent):
         ngpt = 1  # Parmentier mode: 1 g-point per band
 
         if self._optics_mode == "parmentier":
-            T_irr = np.asarray(getattr(state["T_irr"], "data", state["T_irr"]))
-            T_int = np.asarray(getattr(state["T_int"], "data", state["T_int"]))
-            T_irr_flat = T_irr.reshape(-1)
-            T_int_flat = T_int.reshape(-1)
+            T_irr_flat = state["T_irr"].reshape(-1)
+            T_int_flat = state["T_int"].reshape(-1)
             tau, ssa, asym = self._parmentier_sw_optics(
                 T_flat, p_flat, p_int_flat, T_irr_flat, T_int_flat, g_const
             )
@@ -145,7 +154,8 @@ class PicketFenceShortwave(TendencyComponent):
         else:
             raise NotImplementedError
 
-        solar_flux = solar_flux_per_band.reshape(nband, 1) * np.ones((nband, ngpt))
+        earth_sun_factor = float(state["earth_sun_factor"].reshape(-1)[0])
+        solar_flux = solar_flux_per_band.reshape(nband, 1) * np.ones((nband, ngpt)) * earth_sun_factor
         weights = np.ones((nband, ngpt))
 
         up_band, down_band, up_broad, down_broad = sw_two_stream(
@@ -198,7 +208,9 @@ class PicketFenceShortwave(TendencyComponent):
             gamma_vs = [gv1, gv2, gv3]
 
             for k in range(nlev):
-                kappa_R = 1e-4  # placeholder Rosseland mean
+                kappa_R = compute_rosseland_mean_opacity(
+                    T[k, i], p[k, i], self._freedman_coeffs
+                )
                 dp = abs(p_int[k + 1, i] - p_int[k, i])
                 mass = dp / g
 

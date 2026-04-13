@@ -61,7 +61,7 @@ tests/
 - Create: `climt/_components/picket_fence/sw/__init__.py`
 - Create: `climt/_components/picket_fence/optics/__init__.py`
 
-- [ ] **Step 1: Create the package structure**
+- [x] **Step 1: Create the package structure**
 
 ```python
 # climt/_components/picket_fence/__init__.py
@@ -146,14 +146,14 @@ def compute_column_amount(q, p_interface, g):
     return amount
 ```
 
-- [ ] **Step 2: Verify the package imports**
+- [x] **Step 2: Verify the package imports**
 
 Run: `cd /Users/joymonteiro/github/climt && python -c "from climt._components.picket_fence.common import compute_heating_rate, compute_column_amount; print('OK')"`
 Expected: `OK`
 
 Note: The top-level `__init__.py` will fail to import until the component modules exist. That's expected — we'll fix it in Task 3.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add climt/_components/picket_fence/
@@ -168,7 +168,7 @@ git commit -m "feat(picket-fence): add package skeleton and shared utilities"
 - Create: `climt/_components/picket_fence/lw/kernels.py`
 - Create: `tests/test_picket_fence_kernels.py`
 
-- [ ] **Step 1: Write the failing test for the LW kernel**
+- [x] **Step 1: Write the failing test for the LW kernel**
 
 ```python
 # tests/test_picket_fence_kernels.py
@@ -273,12 +273,12 @@ def test_lw_transport_two_bands():
     )
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_kernels.py -v`
 Expected: FAIL with `ModuleNotFoundError` or `ImportError`
 
-- [ ] **Step 3: Implement the LW transport kernel**
+- [x] **Step 3: Implement the LW transport kernel**
 
 ```python
 # climt/_components/picket_fence/lw/kernels.py
@@ -292,6 +292,10 @@ def _lw_transport_single_gpt(tau_gpt, planck_gpt, surface_source_gpt, emissivity
                               up_flux, down_flux, nlev, ncol):
     """LW transport for a single g-point within a single band.
 
+    Uses a diffusivity factor D=1.66 to convert vertical optical depth to
+    effective diffuse optical depth, consistent with the Eddington approximation
+    used in the Parmentier & Guillot (2014) analytical model.
+
     Args:
         tau_gpt: (nlev, ncol) optical depth per layer for this g-point
         planck_gpt: (nlev, ncol) Planck source per layer for this g-point
@@ -302,17 +306,18 @@ def _lw_transport_single_gpt(tau_gpt, planck_gpt, surface_source_gpt, emissivity
         nlev: number of layers
         ncol: number of columns
     """
+    DIFFUSIVITY_FACTOR = 1.66
     for i in prange(ncol):
         # Upward sweep: surface to TOA
         up_flux[0, i] = emissivity_band[i] * surface_source_gpt[i]
         for k in range(nlev):
-            trans = np.exp(-tau_gpt[k, i])
+            trans = np.exp(-DIFFUSIVITY_FACTOR * tau_gpt[k, i])
             up_flux[k + 1, i] = up_flux[k, i] * trans + planck_gpt[k, i] * (1.0 - trans)
 
         # Downward sweep: TOA to surface
         down_flux[nlev, i] = 0.0
         for k in range(nlev - 1, -1, -1):
-            trans = np.exp(-tau_gpt[k, i])
+            trans = np.exp(-DIFFUSIVITY_FACTOR * tau_gpt[k, i])
             down_flux[k, i] = down_flux[k + 1, i] * trans + planck_gpt[k, i] * (1.0 - trans)
 
 
@@ -368,12 +373,12 @@ def lw_transport(T, T_surface, tau, planck_source, surface_source, emissivity, w
     return up_band, down_band, up_broad, down_broad
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_kernels.py -v`
 Expected: All 3 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_components/picket_fence/lw/kernels.py tests/test_picket_fence_kernels.py
@@ -389,7 +394,7 @@ git commit -m "feat(picket-fence): add LW transport kernel with tests"
 - Create: `climt/_data/picket_fence/parmentier/solar_composition.npz`
 - Create: `tests/test_picket_fence_optics.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_picket_fence_optics.py
@@ -458,12 +463,12 @@ def test_parmentier_lookup_coefficients():
     assert R >= 1
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_optics.py -v`
 Expected: FAIL with `ImportError`
 
-- [ ] **Step 3: Create the Parmentier coefficient data file**
+- [x] **Step 3: Create the Parmentier coefficient data file**
 
 The coefficients come from Parmentier et al. (2015) Table 1. They are piecewise linear fits: `log10(coeff) = a + b * X` where `X = log10(T_eff)`, with different (a, b) in each T_eff range.
 
@@ -523,10 +528,9 @@ log10_gamma_P_ab = np.array([
     [13.92, 0.0],     # placeholder
 ])
 
-# gamma_P is actually a quadratic: log10(gamma_P) = a + b*X + c*X^2
-# From Parmentier et al. 2015: log10(gamma_P) = -19.38 + 13.92*X (for T_eff > 300K roughly)
-# Simplified: we use the full quadratic form
-log10_gamma_P_quad = np.array([-19.38, 13.92, 0.0])  # a + b*X + c*X^2
+# gamma_P is a full quadratic: log10(gamma_P) = a + b*X + c*X^2
+# From Parmentier et al. 2015, Table 1 footnote: a=-19.38, b=13.92, c=-2.36
+log10_gamma_P_quad = np.array([-19.38, 13.92, -2.36])  # a + b*X + c*X^2
 
 data_dir = os.path.join(os.path.dirname(__file__), "climt", "_data", "picket_fence", "parmentier")
 os.makedirs(data_dir, exist_ok=True)
@@ -547,7 +551,7 @@ Run this script from the repo root, then verify the file exists.
 
 **Important**: The exact coefficients above are approximate transcriptions from the paper. They must be verified against Parmentier et al. (2015) Table 1 during implementation and corrected if needed. The test structure is what matters here.
 
-- [ ] **Step 4: Implement the Parmentier optics module**
+- [x] **Step 4: Implement the Parmentier optics module**
 
 ```python
 # climt/_components/picket_fence/optics/parmentier.py
@@ -717,7 +721,7 @@ def parmentier_lw_optics(T, p, T_eff_arr, kappa_R_params, ratio_coeffs_arr):
     return tau, planck_source, surface_source
 ```
 
-- [ ] **Step 5: Create the data directory and generate the coefficient file**
+- [x] **Step 5: Create the data directory and generate the coefficient file**
 
 ```bash
 mkdir -p climt/_data/picket_fence/parmentier
@@ -731,12 +735,12 @@ touch climt/_data/picket_fence/stellar_spectra/__init__.py
 
 Run the coefficient generation script from Step 3 to create `solar_composition.npz`.
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_optics.py -v`
 Expected: All 4 tests PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add climt/_components/picket_fence/optics/parmentier.py \
@@ -754,7 +758,7 @@ git commit -m "feat(picket-fence): add Parmentier gas optics with coefficient lo
 - Modify: `climt/_components/__init__.py`
 - Create: `tests/test_picket_fence_lw.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_picket_fence_lw.py
@@ -825,12 +829,12 @@ def test_picket_fence_lw_isothermal_equilibrium():
     assert max_hr < 5.0  # K/day — loose bound for isothermal
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_lw.py -v`
 Expected: FAIL with `ImportError`
 
-- [ ] **Step 3: Implement PicketFenceLongwave**
+- [x] **Step 3: Implement PicketFenceLongwave**
 
 ```python
 # climt/_components/picket_fence/lw/component.py
@@ -887,6 +891,17 @@ class PicketFenceLongwave(TendencyComponent):
                 "alias": "T_surf",
             },
         }
+        if self._optics_mode == "parmentier":
+            props["irradiation_temperature"] = {
+                "dims": ["*"],
+                "units": "degK",
+                "alias": "T_irr",
+            }
+            props["internal_temperature"] = {
+                "dims": ["*"],
+                "units": "degK",
+                "alias": "T_int",
+            }
         return props
 
     @property
@@ -945,8 +960,13 @@ class PicketFenceLongwave(TendencyComponent):
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
         if self._optics_mode == "parmentier":
+            T_irr = np.asarray(getattr(state["T_irr"], "data", state["T_irr"]))
+            T_int = np.asarray(getattr(state["T_int"], "data", state["T_int"]))
+            T_irr_flat = T_irr.reshape(-1)
+            T_int_flat = T_int.reshape(-1)
             tau, planck_src, surf_src = self._parmentier_optics(
-                T_flat, p_flat, p_int_flat, T_surf_flat, sigma, g
+                T_flat, p_flat, p_int_flat, T_surf_flat,
+                T_irr_flat, T_int_flat, sigma, g
             )
         else:
             raise NotImplementedError
@@ -988,7 +1008,7 @@ class PicketFenceLongwave(TendencyComponent):
             },
         )
 
-    def _parmentier_optics(self, T, p, p_int, T_surf, sigma, g):
+    def _parmentier_optics(self, T, p, p_int, T_surf, T_irr, T_int, sigma, g):
         """Compute optical depths and sources for Parmentier mode."""
         nlev, ncol = T.shape
         nband = 2
@@ -999,9 +1019,16 @@ class PicketFenceLongwave(TendencyComponent):
         surf_src = np.zeros((nband, ngpt, ncol))
 
         for i in range(ncol):
-            # Compute T_eff for this column
-            # For non-irradiated case: T_eff ~ T_surf
-            T_eff = float(T_surf[i])
+            # Compute T_eff per column from irradiation and internal temperatures
+            # Following Lee et al. (2021) Eq. 20:
+            #   T_eff^4 = T_int^4 + (1 - A_B) * mu_* * T_irr^4
+            # For now, assume A_B=0 (Bond albedo) and mu_*=1/4 (global average).
+            # These can be refined once the SW solver provides a proper Bond albedo.
+            A_B = 0.0
+            mu_star = 0.25
+            T_eff = (T_int[i]**4 + (1.0 - A_B) * mu_star * T_irr[i]**4) ** 0.25
+            # Floor at 100 K to avoid degenerate coefficient lookups
+            T_eff = max(T_eff, 100.0)
 
             gv1, gv2, gv3, beta, gamma_P, R = lookup_ratio_coefficients(
                 self._coefficients, T_eff
@@ -1031,7 +1058,7 @@ class PicketFenceLongwave(TendencyComponent):
         return tau, planck_src, surf_src
 ```
 
-- [ ] **Step 4: Register in climt's component __init__**
+- [x] **Step 4: Register in climt's component __init__**
 
 Add to `climt/_components/__init__.py`:
 
@@ -1058,12 +1085,12 @@ from .picket_fence import PicketFenceLongwave
 
 And add `PicketFenceLongwave` to `__all__`.
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_lw.py -v`
 Expected: All 3 tests PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_components/picket_fence/lw/component.py \
@@ -1082,7 +1109,7 @@ git commit -m "feat(picket-fence): add PicketFenceLongwave component with Parmen
 - Create: `climt/_data/picket_fence/correlated_k/test_2band_lw.npz`
 - Modify: `tests/test_picket_fence_optics.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_picket_fence_optics.py`:
 
@@ -1140,12 +1167,12 @@ def test_correlated_k_optical_depth():
     assert np.all(tau >= 0)
 ```
 
-- [ ] **Step 2: Run tests to verify new tests fail**
+- [x] **Step 2: Run tests to verify new tests fail**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_optics.py::test_correlated_k_load_table -v`
 Expected: FAIL with `ImportError`
 
-- [ ] **Step 3: Create the test table**
+- [x] **Step 3: Create the test table**
 
 ```python
 # Script to generate test_2band_lw.npz — run once
@@ -1209,7 +1236,7 @@ np.savez(
 )
 ```
 
-- [ ] **Step 4: Implement correlated-k optics module**
+- [x] **Step 4: Implement correlated-k optics module**
 
 ```python
 # climt/_components/picket_fence/optics/correlated_k.py
@@ -1322,12 +1349,12 @@ def compute_ck_optical_depth(table, T, p, gas_amounts):
     return tau
 ```
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_optics.py -v`
 Expected: All 7 tests PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_components/picket_fence/optics/correlated_k.py \
@@ -1344,7 +1371,7 @@ git commit -m "feat(picket-fence): add correlated-k gas optics with table loadin
 - Modify: `climt/_components/picket_fence/lw/component.py`
 - Modify: `tests/test_picket_fence_lw.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_picket_fence_lw.py`:
 
@@ -1384,12 +1411,12 @@ def test_picket_fence_lw_correlated_k_per_band_sum():
     np.testing.assert_allclose(up_band.sum(axis=-1), up_broad, rtol=1e-10)
 ```
 
-- [ ] **Step 2: Run tests to verify new tests fail**
+- [x] **Step 2: Run tests to verify new tests fail**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_lw.py::test_picket_fence_lw_correlated_k_runs -v`
 Expected: FAIL with `NotImplementedError`
 
-- [ ] **Step 3: Add correlated-k mode to PicketFenceLongwave**
+- [x] **Step 3: Add correlated-k mode to PicketFenceLongwave**
 
 Modify `climt/_components/picket_fence/lw/component.py`:
 
@@ -1426,12 +1453,12 @@ Override `input_properties` to include gas concentrations when in correlated-k m
 
 Add `_correlated_k_optics` method that calls `compute_ck_optical_depth` and builds the Planck source from the table's `planck_fraction`.
 
-- [ ] **Step 4: Run all LW tests**
+- [x] **Step 4: Run all LW tests**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_lw.py -v`
 Expected: All 5 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_components/picket_fence/lw/component.py tests/test_picket_fence_lw.py
@@ -1446,7 +1473,7 @@ git commit -m "feat(picket-fence): add correlated-k mode to PicketFenceLongwave"
 - Create: `climt/_components/picket_fence/sw/kernels.py`
 - Modify: `tests/test_picket_fence_kernels.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_picket_fence_kernels.py`:
 
@@ -1504,12 +1531,12 @@ def test_sw_two_stream_total_absorption():
     np.testing.assert_allclose(down_broad[0, 0], 0.0, atol=1e-6)
 ```
 
-- [ ] **Step 2: Run tests to verify new tests fail**
+- [x] **Step 2: Run tests to verify new tests fail**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_kernels.py::test_sw_two_stream_no_atmosphere -v`
 Expected: FAIL with `ImportError`
 
-- [ ] **Step 3: Implement the SW two-stream kernel**
+- [x] **Step 3: Implement the SW two-stream kernel**
 
 ```python
 # climt/_components/picket_fence/sw/kernels.py
@@ -1607,12 +1634,12 @@ def sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights):
 
 Note: This is a simplified v1 SW solver (direct beam + surface reflection, no diffuse). The full Meador & Weaver two-stream can replace this later without changing the interface.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_kernels.py -v`
 Expected: All 5 kernel tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_components/picket_fence/sw/kernels.py tests/test_picket_fence_kernels.py
@@ -1629,7 +1656,7 @@ git commit -m "feat(picket-fence): add SW direct-beam kernel with tests"
 - Modify: `climt/_components/__init__.py`
 - Create: `tests/test_picket_fence_sw.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_picket_fence_sw.py
@@ -1696,12 +1723,12 @@ def test_picket_fence_sw_per_band_sum():
     np.testing.assert_allclose(down_band.sum(axis=-1), down_broad, rtol=1e-10)
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_sw.py -v`
 Expected: FAIL with `ImportError`
 
-- [ ] **Step 3: Implement PicketFenceShortwave**
+- [x] **Step 3: Implement PicketFenceShortwave**
 
 The structure mirrors `PicketFenceLongwave` but uses `sw_two_stream` kernel and handles solar flux, zenith angle, and albedo. The Parmentier SW optics uses 3 visible bands with opacities gamma_vi * kappa_R.
 
@@ -1724,8 +1751,9 @@ class PicketFenceShortwave(TendencyComponent):
         if optics == "parmentier":
             self._coefficients = load_parmentier_coefficients(coefficients)
             self._num_bands = 3
-            # Default solar constant distributed equally across 3 bands
-            self._solar_flux_per_band = np.array([1361.0 / 3.0] * 3)
+            # Solar flux per band is computed dynamically from T_irr in array_call.
+            # For Earth (non-irradiated) fallback, we store a default.
+            self._default_solar_flux_per_band = np.array([1361.0 / 3.0] * 3)
         elif optics == "correlated_k":
             raise NotImplementedError("Correlated-k SW mode not yet implemented")
         else:
@@ -1735,7 +1763,7 @@ class PicketFenceShortwave(TendencyComponent):
 
     @property
     def input_properties(self):
-        return {
+        props = {
             "air_temperature": {"dims": ["mid_levels", "*"], "units": "degK", "alias": "T"},
             "air_pressure": {"dims": ["mid_levels", "*"], "units": "Pa", "alias": "p"},
             "air_pressure_on_interface_levels": {"dims": ["interface_levels", "*"], "units": "Pa", "alias": "p_int"},
@@ -1743,6 +1771,14 @@ class PicketFenceShortwave(TendencyComponent):
             "zenith_angle": {"dims": ["*"], "units": "radians", "alias": "zenith"},
             "surface_albedo_for_direct_shortwave": {"dims": ["*"], "units": "dimensionless", "alias": "albedo"},
         }
+        if self._optics_mode == "parmentier":
+            props["irradiation_temperature"] = {
+                "dims": ["*"], "units": "degK", "alias": "T_irr",
+            }
+            props["internal_temperature"] = {
+                "dims": ["*"], "units": "degK", "alias": "T_int",
+            }
+        return props
 
     @property
     def tendency_properties(self):
@@ -1780,6 +1816,7 @@ class PicketFenceShortwave(TendencyComponent):
         albedo_flat = albedo.reshape(-1)
         ncol = T_flat.shape[1]
 
+        sigma = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
         g_const = get_constant("gravitational_acceleration", "m/s^2")
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
@@ -1787,11 +1824,26 @@ class PicketFenceShortwave(TendencyComponent):
         ngpt = 1  # Parmentier mode: 1 g-point per band
 
         if self._optics_mode == "parmentier":
-            tau, ssa, asym = self._parmentier_sw_optics(T_flat, p_flat, p_int_flat, g_const)
+            T_irr = np.asarray(getattr(state["T_irr"], "data", state["T_irr"]))
+            T_int = np.asarray(getattr(state["T_int"], "data", state["T_int"]))
+            T_irr_flat = T_irr.reshape(-1)
+            T_int_flat = T_int.reshape(-1)
+            tau, ssa, asym = self._parmentier_sw_optics(
+                T_flat, p_flat, p_int_flat, T_irr_flat, T_int_flat, g_const
+            )
+            # Compute TOA stellar flux from T_irr (Parmentier et al. 2015, Eq. 2):
+            #   F_0 = sigma * T_irr^4, split equally across 3 visible bands.
+            # For Earth-like (T_irr=0), fall back to stored default (1361 W/m^2).
+            T_irr_max = T_irr_flat.max()
+            if T_irr_max > 0:
+                F0 = sigma * T_irr_max ** 4
+                solar_flux_per_band = np.array([F0 / 3.0] * 3)
+            else:
+                solar_flux_per_band = self._default_solar_flux_per_band
         else:
             raise NotImplementedError
 
-        solar_flux = self._solar_flux_per_band.reshape(nband, 1) * np.ones((nband, ngpt))
+        solar_flux = solar_flux_per_band.reshape(nband, 1) * np.ones((nband, ngpt))
         weights = np.ones((nband, ngpt))
 
         up_band, down_band, up_broad, down_broad = sw_two_stream(
@@ -1821,7 +1873,7 @@ class PicketFenceShortwave(TendencyComponent):
             },
         )
 
-    def _parmentier_sw_optics(self, T, p, p_int, g):
+    def _parmentier_sw_optics(self, T, p, p_int, T_irr, T_int, g):
         """Compute SW optical depths for Parmentier mode (3 visible bands)."""
         nlev, ncol = T.shape
         nband = 3
@@ -1832,7 +1884,11 @@ class PicketFenceShortwave(TendencyComponent):
         asym = np.zeros((nband, ngpt, nlev, ncol))
 
         for i in range(ncol):
-            T_eff = 5778.0  # solar effective temperature (placeholder)
+            # Compute T_eff per column (same formula as LW, Lee et al. 2021 Eq. 20)
+            A_B = 0.0
+            mu_star = 0.25
+            T_eff = (T_int[i]**4 + (1.0 - A_B) * mu_star * T_irr[i]**4) ** 0.25
+            T_eff = max(T_eff, 100.0)
             gv1, gv2, gv3, beta, gamma_P, R = lookup_ratio_coefficients(
                 self._coefficients, T_eff
             )
@@ -1850,7 +1906,7 @@ class PicketFenceShortwave(TendencyComponent):
         return tau, ssa, asym
 ```
 
-- [ ] **Step 4: Update __init__ files**
+- [x] **Step 4: Update __init__ files**
 
 ```python
 # climt/_components/picket_fence/__init__.py
@@ -1868,12 +1924,12 @@ from .picket_fence import PicketFenceLongwave, PicketFenceShortwave
 
 And add both to `__all__`.
 
-- [ ] **Step 5: Run all tests**
+- [x] **Step 5: Run all tests**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_sw.py tests/test_picket_fence_lw.py tests/test_picket_fence_kernels.py tests/test_picket_fence_optics.py -v`
 Expected: All tests PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_components/picket_fence/sw/component.py \
@@ -1890,7 +1946,7 @@ git commit -m "feat(picket-fence): add PicketFenceShortwave component with Parme
 **Files:**
 - Modify: `climt/_core/initialization.py`
 
-- [ ] **Step 1: Add irradiation_temperature and internal_temperature to default_values**
+- [x] **Step 1: Add irradiation_temperature and internal_temperature to default_values**
 
 In the `default_values` dict in `climt/_core/initialization.py`, add:
 
@@ -1901,12 +1957,12 @@ In the `default_values` dict in `climt/_core/initialization.py`, add:
 
 These default to 0 K (non-irradiated), consistent with Earth-like use. For exoplanet work, users set them explicitly.
 
-- [ ] **Step 2: Verify existing tests still pass**
+- [x] **Step 2: Verify existing tests still pass**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/ -v --timeout=60`
 Expected: All existing tests PASS (no regressions)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add climt/_core/initialization.py
@@ -1920,7 +1976,7 @@ git commit -m "feat(picket-fence): add irradiation/internal temperature to defau
 **Files:**
 - Create: `tests/test_picket_fence_integration.py`
 
-- [ ] **Step 1: Write integration test**
+- [x] **Step 1: Write integration test**
 
 ```python
 # tests/test_picket_fence_integration.py
@@ -1990,17 +2046,17 @@ def test_cloud_optical_depth_modifies_fluxes():
     # assert olr_cloudy < olr_clear
 ```
 
-- [ ] **Step 2: Run integration tests**
+- [x] **Step 2: Run integration tests**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/test_picket_fence_integration.py -v`
 Expected: PASS
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `cd /Users/joymonteiro/github/climt && python -m pytest tests/ -v --timeout=120`
 Expected: All tests PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/test_picket_fence_integration.py

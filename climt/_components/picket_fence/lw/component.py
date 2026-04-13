@@ -3,7 +3,9 @@ from sympl import TendencyComponent, get_constant
 
 from ..common import compute_column_amount, compute_heating_rate, njit, prange
 from ..optics.parmentier import (
+    compute_rosseland_mean_opacity,
     compute_thermal_opacities,
+    load_freedman2014_coefficients,
     load_parmentier_coefficients,
     lookup_ratio_coefficients,
 )
@@ -24,6 +26,7 @@ class PicketFenceLongwave(TendencyComponent):
 
         if optics == "parmentier":
             self._coefficients = load_parmentier_coefficients(coefficients)
+            self._freedman_coeffs = load_freedman2014_coefficients()
             self._num_bands = 2
         elif optics == "correlated_k":
             from ..optics.correlated_k import load_k_table
@@ -35,6 +38,8 @@ class PicketFenceLongwave(TendencyComponent):
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
+        from climt._core.initialization import set_num_longwave_bands
+        set_num_longwave_bands(self._num_bands)
         super(PicketFenceLongwave, self).__init__(**kwargs)
 
     @property
@@ -60,6 +65,11 @@ class PicketFenceLongwave(TendencyComponent):
                 "units": "degK",
                 "alias": "T_surf",
             },
+            "surface_longwave_emissivity": {
+                "dims": ["num_longwave_bands", "*"],
+                "units": "dimensionless",
+                "alias": "emissivity",
+            },
         }
         if self._optics_mode == "parmentier":
             props["irradiation_temperature"] = {
@@ -73,17 +83,28 @@ class PicketFenceLongwave(TendencyComponent):
                 "alias": "T_int",
             }
         elif self._optics_mode == "correlated_k":
-            gas_name_map = {
+            # H2O enters as specific humidity (kg/kg); all other gases are mole
+            # fractions (mol/mol) per CF conventions.
+            _GAS_CF_NAME = {
                 "h2o": "specific_humidity",
                 "co2": "mole_fraction_of_carbon_dioxide_in_air",
             }
+            _GAS_UNITS = {"h2o": "kg/kg"}  # default for others: mole/mole
             for gas in self._gas_names:
-                cf_name = gas_name_map.get(gas, f"mole_fraction_of_{gas}_in_air")
+                cf_name = _GAS_CF_NAME.get(gas, f"mole_fraction_of_{gas}_in_air")
+                units = _GAS_UNITS.get(gas, "mole/mole")
                 props[cf_name] = {
                     "dims": ["mid_levels", "*"],
-                    "units": "kg/kg",
+                    "units": units,
                     "alias": gas,
                 }
+        # Cloud optical depth per band (spectrally-grey: same value across all
+        # g-points within a band). Uses num_longwave_bands set at scheme init.
+        props["longwave_optical_thickness_due_to_cloud"] = {
+            "dims": ["mid_levels", "*", "num_longwave_bands"],
+            "units": "dimensionless",
+            "alias": "tau_cloud",
+        }
         return props
 
     @property
@@ -122,10 +143,10 @@ class PicketFenceLongwave(TendencyComponent):
         return self._num_bands
 
     def array_call(self, state):
-        T = np.asarray(getattr(state["T"], "data", state["T"]))
-        p = np.asarray(getattr(state["p"], "data", state["p"]))
-        p_int = np.asarray(getattr(state["p_int"], "data", state["p_int"]))
-        T_surf = np.asarray(getattr(state["T_surf"], "data", state["T_surf"]))
+        T = state["T"]
+        p = state["p"]
+        p_int = state["p_int"]
+        T_surf = state["T_surf"]
 
         orig_shape_T = T.shape
         orig_shape_pint = p_int.shape
@@ -142,10 +163,8 @@ class PicketFenceLongwave(TendencyComponent):
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
         if self._optics_mode == "parmentier":
-            T_irr = np.asarray(getattr(state["T_irr"], "data", state["T_irr"]))
-            T_int = np.asarray(getattr(state["T_int"], "data", state["T_int"]))
-            T_irr_flat = T_irr.reshape(-1)
-            T_int_flat = T_int.reshape(-1)
+            T_irr_flat = state["T_irr"].reshape(-1)
+            T_int_flat = state["T_int"].reshape(-1)
             tau, planck_src, surf_src = self._parmentier_optics(
                 T_flat,
                 p_flat,
@@ -158,11 +177,26 @@ class PicketFenceLongwave(TendencyComponent):
             )
             weights = np.ones((tau.shape[0], tau.shape[1]))
         elif self._optics_mode == "correlated_k":
+            # Molar masses (g/mol) for unit conversion from mole fraction to kg/kg.
+            # H2O is already kg/kg (specific humidity); others are mole fractions.
+            _MOLAR_MASS = {
+                "h2o": 18.015,
+                "co2": 44.010,
+                "o3": 47.998,
+                "ch4": 16.043,
+                "n2o": 44.013,
+                "o2": 31.998,
+            }
+            _M_AIR = 28.970  # g/mol dry air
+
             ngas = len(self._gas_names)
             gas_amounts = np.zeros((ngas, nlev, ncol))
             for ig, gas in enumerate(self._gas_names):
-                q_gas = np.asarray(getattr(state[gas], "data", state[gas]))
-                q_gas_flat = q_gas.reshape(nlev, -1)
+                q_gas_flat = state[gas].reshape(nlev, -1)
+                # Convert mole fraction → mass mixing ratio (kg/kg) for non-H2O gases
+                if gas != "h2o":
+                    M_gas = _MOLAR_MASS.get(gas, _M_AIR)  # unknown gas: assume ~air
+                    q_gas_flat = q_gas_flat * (M_gas / _M_AIR)
                 gas_amounts[ig, :, :] = compute_column_amount(q_gas_flat, p_int_flat, g)
 
             tau, planck_src, surf_src = self._correlated_k_optics(
@@ -174,7 +208,14 @@ class PicketFenceLongwave(TendencyComponent):
 
         nband = tau.shape[0]
         ngpt = tau.shape[1]
-        emissivity = np.ones((nband, ncol))
+
+        emissivity = state["emissivity"].reshape(nband, ncol)
+
+        # Add cloud optical depth per band (shape: nlev, *horiz, nband).
+        # Applied uniformly across g-points within each band.
+        tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband)  # (nlev, ncol, nband)
+        # Rearrange to (nband, nlev, ncol) then broadcast over ngpt
+        tau = tau + tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
 
         up_band, down_band, up_broad, down_broad = lw_transport(
             T_flat,
@@ -241,9 +282,9 @@ class PicketFenceLongwave(TendencyComponent):
             )
 
             for k in range(nlev):
-                # Simplified Rosseland mean opacity (placeholder)
-                # A proper Freedman 2014 fit would use T[k,i] and p[k,i]
-                kappa_R = 1e-4  # m^2/kg — Earth-like placeholder
+                kappa_R = compute_rosseland_mean_opacity(
+                    T[k, i], p[k, i], self._freedman_coeffs
+                )
                 kappa_1, kappa_2 = compute_thermal_opacities(kappa_R, gamma_P, beta, R)
 
                 # Layer mass: dp / g

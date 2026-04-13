@@ -45,6 +45,32 @@ def test_picket_fence_sw_nighttime_zero():
     np.testing.assert_allclose(tendencies["air_temperature"].values, 0.0, atol=1e-10)
 
 
+def test_flux_adjustment_scales_toa_solar():
+    """flux_adjustment_for_earth_sun_distance should scale TOA solar flux proportionally."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    sw = PicketFenceShortwave(optics="parmentier")
+    grid = get_grid(nx=1, ny=1, nz=20)
+
+    state_ref = get_default_state([sw], grid_state=grid)
+    state_ref["zenith_angle"].values[:] = np.pi / 4
+    state_ref["flux_adjustment_for_earth_sun_distance"].values[()] = 1.0
+
+    state_near = get_default_state([sw], grid_state=grid)
+    state_near["zenith_angle"].values[:] = np.pi / 4
+    state_near["flux_adjustment_for_earth_sun_distance"].values[()] = 1.1  # 10% more flux
+
+    _, diag_ref = sw(state_ref)
+    _, diag_near = sw(state_near)
+
+    toa_ref = diag_near["downwelling_shortwave_flux_in_air"].values[-1, 0, 0]
+    toa_near = diag_ref["downwelling_shortwave_flux_in_air"].values[-1, 0, 0]
+    np.testing.assert_allclose(toa_ref / toa_near, 1.1, rtol=1e-6)
+
+
 def test_picket_fence_sw_per_band_sum():
     """Per-band fluxes sum to broadband in SW."""
     from climt import get_default_state, get_grid

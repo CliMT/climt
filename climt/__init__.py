@@ -20,6 +20,7 @@ from ._components import (
     SimplePhysics,
     SlabSurface,
 )
+from ._core.initialization import set_num_longwave_bands, set_num_shortwave_bands
 from ._core import (
     UnytBackend,
     UnytStateContainer,

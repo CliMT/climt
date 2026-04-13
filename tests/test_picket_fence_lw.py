@@ -65,6 +65,31 @@ def test_picket_fence_lw_isothermal_equilibrium():
     assert max_hr < 5.0  # K/day — loose bound for isothermal
 
 
+def test_surface_emissivity_reduces_olr():
+    """Setting surface emissivity < 1 should reduce OLR compared to emissivity = 1."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceLongwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    lw = PicketFenceLongwave(optics="parmentier")
+    grid = get_grid(nx=1, ny=1, nz=20)
+
+    state_full = get_default_state([lw], grid_state=grid)
+    # Default emissivity should come from state (ones after our fix)
+    _, diag_full = lw(state_full)
+    olr_full = diag_full["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
+
+    state_low = get_default_state([lw], grid_state=grid)
+    state_low["surface_longwave_emissivity"].values[:] = 0.5
+    _, diag_low = lw(state_low)
+    olr_low = diag_low["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
+
+    assert olr_low < olr_full, (
+        f"Lower emissivity should reduce OLR: olr_full={olr_full:.2f}, olr_low={olr_low:.2f}"
+    )
+
+
 def test_picket_fence_lw_correlated_k_runs():
     """PicketFenceLongwave in correlated-k mode produces non-zero fluxes."""
     from climt import get_default_state, get_grid

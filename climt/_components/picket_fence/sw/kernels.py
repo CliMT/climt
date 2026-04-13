@@ -74,14 +74,17 @@ def sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights):
                 for k in range(nlev + 1):
                     down_band[b, k, i] += w * direct[k]
 
-                # Upward flux = reflected direct at surface
+                # Upward flux = reflected direct at surface, attenuating back up
+                # through the absorbing atmosphere (ssa=0 → no diffuse scattering).
                 surface_down = direct[0]
-                reflected = albedo[i] * surface_down
-                # Reflected flux attenuates going up (simplified)
-                for k in range(nlev + 1):
-                    up_band[b, k, i] += (
-                        w * reflected
-                    )  # simplified: no re-absorption of reflected
+                reflected_surface = albedo[i] * surface_down
+                up_band[b, 0, i] += w * reflected_surface
+                cum_tau_up = 0.0
+                for k in range(nlev):
+                    cum_tau_up += tau_abs[k]
+                    up_band[b, k + 1, i] += w * reflected_surface * np.exp(
+                        -cum_tau_up / mu0
+                    )
 
     up_broad = np.zeros((nlev + 1, ncol))
     down_broad = np.zeros((nlev + 1, ncol))

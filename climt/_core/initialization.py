@@ -83,6 +83,44 @@ domain_shape_descriptor = {
 }
 
 
+# Configurable band counts for default-state generation.  Radiation schemes set
+# these at initialization so that get_default_state() creates arrays with the
+# right band dimension regardless of which scheme is active.
+_num_longwave_bands = None   # None → use RRTMGLongwave.num_longwave_bands (16)
+_num_shortwave_bands = None  # None → use RRTMGShortwave.num_shortwave_bands (14)
+
+
+def set_num_longwave_bands(n):
+    """Configure the longwave band count used by get_default_state().
+
+    Call this at scheme initialization so that default arrays (e.g.
+    ``longwave_optical_thickness_due_to_cloud``) are created with the
+    correct number of bands for the active scheme.
+    """
+    global _num_longwave_bands
+    _num_longwave_bands = int(n)
+
+
+def set_num_shortwave_bands(n):
+    """Configure the shortwave band count used by get_default_state()."""
+    global _num_shortwave_bands
+    _num_shortwave_bands = int(n)
+
+
+def _get_num_longwave_bands():
+    if _num_longwave_bands is not None:
+        return _num_longwave_bands
+    from .._components import RRTMGLongwave
+    return RRTMGLongwave.num_longwave_bands
+
+
+def _get_num_shortwave_bands():
+    if _num_shortwave_bands is not None:
+        return _num_shortwave_bands
+    from .._components import RRTMGShortwave
+    return RRTMGShortwave.num_shortwave_bands
+
+
 class RRTMGLongwaveDefaultValues(DiagnosticComponent):
     input_properties = {
         "air_pressure": {
@@ -107,19 +145,12 @@ class RRTMGLongwaveDefaultValues(DiagnosticComponent):
     }
 
     def array_call(self, state):
-        from .._components import RRTMGLongwave
-
+        nband = _get_num_longwave_bands()
         ncol, nz = state["air_pressure"].shape
         diagnostics = {
-            "surface_longwave_emissivity": np.ones(
-                [RRTMGLongwave.num_longwave_bands, ncol]
-            ),
-            "longwave_optical_thickness_due_to_cloud": np.zeros(
-                [nz, ncol, RRTMGLongwave.num_longwave_bands]
-            ),
-            "longwave_optical_thickness_due_to_aerosol": np.zeros(
-                [RRTMGLongwave.num_longwave_bands, nz, ncol]
-            ),
+            "surface_longwave_emissivity": np.ones([nband, ncol]),
+            "longwave_optical_thickness_due_to_cloud": np.zeros([nz, ncol, nband]),
+            "longwave_optical_thickness_due_to_aerosol": np.zeros([nband, nz, ncol]),
         }
         return diagnostics
 
@@ -170,25 +201,16 @@ class RRTMGShortwaveDefaultValues(DiagnosticComponent):
     def array_call(self, state):
         from .._components import RRTMGShortwave
 
+        nband = _get_num_shortwave_bands()
         nz, ncol = state["air_pressure"].shape
         diagnostics = {
-            "shortwave_optical_thickness_due_to_cloud": np.zeros(
-                [nz, ncol, RRTMGShortwave.num_shortwave_bands]
-            ),
-            "cloud_asymmetry_parameter": 0.85
-            * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
-            "cloud_forward_scattering_fraction": 0.8
-            * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
-            "single_scattering_albedo_due_to_cloud": 0.9
-            * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
-            "shortwave_optical_thickness_due_to_aerosol": np.zeros(
-                [RRTMGShortwave.num_shortwave_bands, nz, ncol]
-            ),
-            "aerosol_asymmetry_parameter": np.zeros(
-                [RRTMGShortwave.num_shortwave_bands, nz, ncol]
-            ),
-            "single_scattering_albedo_due_to_aerosol": 0.5
-            * np.ones([RRTMGShortwave.num_shortwave_bands, nz, ncol]),
+            "shortwave_optical_thickness_due_to_cloud": np.zeros([nz, ncol, nband]),
+            "cloud_asymmetry_parameter": 0.85 * np.ones([nz, ncol, nband]),
+            "cloud_forward_scattering_fraction": 0.8 * np.ones([nz, ncol, nband]),
+            "single_scattering_albedo_due_to_cloud": 0.9 * np.ones([nz, ncol, nband]),
+            "shortwave_optical_thickness_due_to_aerosol": np.zeros([nband, nz, ncol]),
+            "aerosol_asymmetry_parameter": np.zeros([nband, nz, ncol]),
+            "single_scattering_albedo_due_to_aerosol": 0.5 * np.ones([nband, nz, ncol]),
             "aerosol_optical_depth_at_55_micron": np.zeros(
                 [RRTMGShortwave.num_ecmwf_aerosols, nz, ncol]
             ),

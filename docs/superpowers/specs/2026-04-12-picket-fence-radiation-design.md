@@ -323,14 +323,17 @@ Table generation is performed externally using `linepyline` (GPL-3.0). climt (BS
 
 ### 6.1 Longwave transport
 
-Absorption-only (no scattering) sweep, identical to the existing gray radiation kernel but executed per g-point:
+Absorption-only (no scattering) sweep, identical to the existing gray radiation kernel but executed per g-point. A diffusivity factor D=1.66 is applied to convert vertical optical depth to effective diffuse optical depth, consistent with the Eddington approximation (Elsasser 1942):
 
 ```python
 @njit
 def _lw_transport(T, T_surface, tau, planck_source, emissivity, weights, sigma):
+    # D = 1.66  (diffusivity factor)
     # For each g-point:
     #   Upward sweep: surface emission + layer-by-layer absorption/emission
+    #     trans = exp(-D * tau)
     #   Downward sweep: top-of-atmosphere (zero) + layer-by-layer
+    #     trans = exp(-D * tau)
     # Weight by g-point weights
     # Sum over bands for broadband
     # Return per-band fluxes and broadband fluxes

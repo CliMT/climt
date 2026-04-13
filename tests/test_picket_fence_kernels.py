@@ -151,3 +151,37 @@ def test_sw_two_stream_total_absorption():
 
     # Nearly all radiation absorbed before reaching surface
     np.testing.assert_allclose(down_broad[0, 0], 0.0, atol=1e-6)
+
+
+def test_sw_reflected_beam_attenuates_upward():
+    """In a pure-absorption atmosphere, reflected photons are absorbed going back up."""
+    from climt._components.picket_fence.sw.kernels import sw_two_stream
+
+    nlev = 5
+    ncol = 1
+    nband = 1
+    ngpt = 1
+
+    # Moderate absorption (tau_total = 2.5 per layer path) with overhead sun
+    tau = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    ssa = np.zeros((nband, ngpt, nlev, ncol))   # pure absorption
+    asymmetry = np.zeros((nband, ngpt, nlev, ncol))
+    zenith = np.array([0.0])   # overhead sun (mu0=1)
+    albedo = np.array([1.0])   # perfect reflector: makes the effect maximal
+    solar_flux = np.array([[100.0]])
+    weights = np.ones((nband, ngpt))
+
+    up_band, down_band, up_broad, down_broad = sw_two_stream(
+        tau, ssa, asymmetry, zenith, albedo, solar_flux, weights
+    )
+
+    # Reflected beam is strongest at the surface and must attenuate going upward
+    # because the atmosphere absorbs it (ssa=0).
+    assert up_broad[0, 0] > up_broad[nlev, 0], (
+        f"Reflected beam must attenuate upward: "
+        f"up[surface]={up_broad[0, 0]:.4f}, up[TOA]={up_broad[nlev, 0]:.4f}"
+    )
+    # TOA upward flux should equal the surface reflected flux attenuated by total tau
+    tau_total = 0.5 * nlev
+    expected_toa = albedo[0] * solar_flux[0, 0] * np.exp(-tau_total) * np.exp(-tau_total)
+    np.testing.assert_allclose(up_broad[nlev, 0], expected_toa, rtol=1e-6)

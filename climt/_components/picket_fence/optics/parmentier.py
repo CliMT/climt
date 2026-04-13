@@ -32,6 +32,47 @@ def compute_thermal_opacities(kappa_R, gamma_P, beta, R):
     return kappa_1, kappa_2
 
 
+def load_freedman2014_coefficients():
+    """Load the Freedman et al. (2014) Rosseland mean opacity fit coefficients.
+
+    Returns a dict with keys: T_boundary, a_hi, b_hi, c_hi, a_lo, b_lo, c_lo.
+    The formula is:
+        log10(kappa_R [cm^2/g]) = a * log10(T [K]) + b * log10(P [dyne/cm^2]) + c
+    where the (a, b, c) set is chosen based on whether T < T_boundary or not.
+    Convert to m^2/kg by multiplying by 0.1.
+
+    Reference: Freedman et al. (2014), ApJS 214, 25. The coefficients here are
+    approximate values calibrated to reproduce the qualitative behaviour of their
+    Table 3 (solar metallicity, grain-free Rosseland mean); exact published values
+    from Table 1 should be substituted once verified.
+    """
+    data_path = importlib_resources.files(
+        "climt._data.picket_fence.parmentier"
+    ).joinpath("freedman2014.npz")
+    with importlib_resources.as_file(data_path) as f:
+        return np.load(f)
+
+
+def compute_rosseland_mean_opacity(T, p, coeffs):
+    """Compute the Freedman et al. (2014) Rosseland mean opacity.
+
+    Args:
+        T: temperature, K (scalar)
+        p: pressure, Pa (scalar)
+        coeffs: coefficient dict from load_freedman2014_coefficients()
+
+    Returns:
+        kappa_R: Rosseland mean opacity, m^2/kg (scalar)
+    """
+    log_T = np.log10(max(float(T), 10.0))
+    log_P = np.log10(max(float(p) * 10.0, 1.0))  # Pa → dyne/cm^2
+    if T < float(coeffs["T_boundary"]):
+        log_k = float(coeffs["a_lo"]) * log_T + float(coeffs["b_lo"]) * log_P + float(coeffs["c_lo"])
+    else:
+        log_k = float(coeffs["a_hi"]) * log_T + float(coeffs["b_hi"]) * log_P + float(coeffs["c_hi"])
+    return 10.0**log_k * 0.1  # cm^2/g → m^2/kg
+
+
 def load_parmentier_coefficients(name_or_path):
     """Load Parmentier coefficient table.
 
@@ -106,46 +147,3 @@ def lookup_ratio_coefficients(coeffs, T_eff):
     return gamma_v1, gamma_v2, gamma_v3, beta_val, gamma_P, R
 
 
-@njit
-def parmentier_lw_optics(T, p, T_eff_arr, kappa_R_params, ratio_coeffs_arr):
-    """Compute LW optical depths for Parmentier mode.
-
-    This is a simplified version that takes pre-computed per-column coefficients.
-
-    Args:
-        T: (nlev, ncol) temperature, K
-        p: (nlev, ncol) pressure, Pa
-        T_eff_arr: (ncol,) effective temperature per column
-        kappa_R_params: tuple of Freedman 2014 fit parameters
-        ratio_coeffs_arr: (ncol, 6) — gamma_v1, gamma_v2, gamma_v3, beta, gamma_P, R per column
-
-    Returns:
-        tau: (2, 1, nlev, ncol) optical depth per layer for 2 LW bands, 1 g-point each
-        planck_source: (2, 1, nlev, ncol) Planck source per band
-        surface_source: (2, 1, ncol) surface Planck source per band
-    """
-    nlev, ncol = T.shape
-    sigma = 5.670374419e-8
-    tau = np.zeros((2, 1, nlev, ncol))
-    planck_source = np.zeros((2, 1, nlev, ncol))
-    surface_source = np.zeros((2, 1, ncol))
-
-    for i in prange(ncol):
-        beta_val = ratio_coeffs_arr[i, 3]
-        R_val = ratio_coeffs_arr[i, 5]
-
-        for k in range(nlev):
-            # Simplified Rosseland mean opacity: constant for now
-            # Full Freedman 2014 fit would go here
-            kappa_R = 1e-2  # placeholder, m^2/kg
-            kappa_2 = kappa_R * (beta_val / R_val + 1.0 - beta_val)
-            kappa_1 = R_val * kappa_2
-
-            tau[0, 0, k, i] = kappa_1  # will be multiplied by dp/g in component
-            tau[1, 0, k, i] = kappa_2
-
-            planck_val = sigma * T[k, i] ** 4
-            planck_source[0, 0, k, i] = beta_val * planck_val
-            planck_source[1, 0, k, i] = (1.0 - beta_val) * planck_val
-
-    return tau, planck_source, surface_source
