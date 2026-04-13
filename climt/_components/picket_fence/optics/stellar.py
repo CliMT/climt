@@ -46,17 +46,17 @@ def integrate_spectrum_over_bands(spectrum, band_wavenumber_limits):
 
     for b in range(nband):
         wn_lo, wn_hi = band_wavenumber_limits[b]
-        mask = (wn >= wn_lo) & (wn <= wn_hi)
-        if mask.sum() >= 2:
-            flux[b] = np.trapezoid(irr[mask], wn[mask])
-        elif mask.sum() == 1:
-            # Single point in band: approximate with rectangle
-            idx = np.where(mask)[0][0]
-            flux[b] = irr[idx] * (wn_hi - wn_lo)
-        else:
-            # No spectral points in band: interpolate at band edges
-            irr_lo = np.interp(wn_lo, wn, irr)
-            irr_hi = np.interp(wn_hi, wn, irr)
-            flux[b] = 0.5 * (irr_lo + irr_hi) * (wn_hi - wn_lo)
+        
+        mask = (wn > wn_lo) & (wn < wn_hi)
+        wn_inner = wn[mask]
+        irr_inner = irr[mask]
+        
+        irr_lo = np.interp(wn_lo, wn, irr)
+        irr_hi = np.interp(wn_hi, wn, irr)
+        
+        wn_band = np.concatenate(([wn_lo], wn_inner, [wn_hi]))
+        irr_band = np.concatenate(([irr_lo], irr_inner, [irr_hi]))
+        
+        flux[b] = np.trapezoid(irr_band, wn_band)
 
     return flux

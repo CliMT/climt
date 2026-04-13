@@ -30,7 +30,30 @@ class PicketFenceShortwave(TendencyComponent):
             self._num_bands = 3
             # Solar flux per band is computed dynamically from T_irr in array_call.
             # For Earth (non-irradiated) fallback, we store a default.
-            self._default_solar_flux_per_band = np.array([1361.0 / 3.0] * 3)
+            # Compute per-band solar flux from stellar spectrum.
+            # Parmentier mode: 3 equal-width visible bands spanning the full spectrum.
+            from ..optics.stellar import (
+                integrate_spectrum_over_bands,
+                load_stellar_spectrum,
+            )
+
+            try:
+                spec = load_stellar_spectrum(stellar_spectrum)
+                wn = spec["wavenumber"]
+                wn_lo, wn_hi = wn.min(), wn.max()
+                band_width = (wn_hi - wn_lo) / 3.0
+                band_limits = np.array(
+                    [
+                        [wn_lo, wn_lo + band_width],
+                        [wn_lo + band_width, wn_lo + 2 * band_width],
+                        [wn_lo + 2 * band_width, wn_hi],
+                    ]
+                )
+                self._solar_flux_per_band = integrate_spectrum_over_bands(
+                    spec, band_limits
+                )
+            except (FileNotFoundError, KeyError):
+                self._solar_flux_per_band = np.array([1361.0 / 3.0] * 3)
         elif optics == "correlated_k":
             from ..optics.correlated_k import load_k_table
 
@@ -44,6 +67,7 @@ class PicketFenceShortwave(TendencyComponent):
             raise ValueError(f"Unknown optics mode: {optics}")
 
         from climt._core.initialization import set_num_shortwave_bands
+
         set_num_shortwave_bands(self._num_bands)
         super(PicketFenceShortwave, self).__init__(**kwargs)
 
@@ -168,16 +192,24 @@ class PicketFenceShortwave(TendencyComponent):
                 F0 = sigma * T_irr_max**4
                 solar_flux_per_band = np.array([F0 / 3.0] * 3)
             else:
-                solar_flux_per_band = self._default_solar_flux_per_band
+                solar_flux_per_band = self._solar_flux_per_band
 
             earth_sun_factor = float(state["earth_sun_factor"].reshape(-1)[0])
-            solar_flux = solar_flux_per_band.reshape(nband, 1) * np.ones((nband, ngpt)) * earth_sun_factor
+            solar_flux = (
+                solar_flux_per_band.reshape(nband, 1)
+                * np.ones((nband, ngpt))
+                * earth_sun_factor
+            )
             weights = np.ones((nband, ngpt))
 
         elif self._optics_mode == "correlated_k":
             _MOLAR_MASS = {
-                "h2o": 18.015, "co2": 44.010, "o3": 47.998,
-                "ch4": 16.043, "n2o": 44.013, "o2": 31.998,
+                "h2o": 18.015,
+                "co2": 44.010,
+                "o3": 47.998,
+                "ch4": 16.043,
+                "n2o": 44.013,
+                "o2": 31.998,
             }
             _M_AIR = 28.970
 
@@ -188,9 +220,12 @@ class PicketFenceShortwave(TendencyComponent):
                 if gas != "h2o":
                     M_gas = _MOLAR_MASS.get(gas, _M_AIR)
                     q_gas_flat = q_gas_flat * (M_gas / _M_AIR)
-                gas_amounts[ig, :, :] = compute_column_amount(q_gas_flat, p_int_flat, g_const)
+                gas_amounts[ig, :, :] = compute_column_amount(
+                    q_gas_flat, p_int_flat, g_const
+                )
 
             from ..optics.correlated_k import compute_ck_optical_depth
+
             result = compute_ck_optical_depth(self._table, T_flat, p_flat, gas_amounts)
             if isinstance(result, tuple):
                 tau_abs, weights = result
@@ -228,7 +263,9 @@ class PicketFenceShortwave(TendencyComponent):
                 for b in range(nband):
                     for idx in range(ngpt):
                         g_idx = idx % ngpt_orig
-                        solar_flux[b, idx] = self._solar_source[b, g_idx] * earth_sun_factor
+                        solar_flux[b, idx] = (
+                            self._solar_source[b, g_idx] * earth_sun_factor
+                        )
         else:
             raise NotImplementedError
 

@@ -61,7 +61,9 @@ def test_flux_adjustment_scales_toa_solar():
 
     state_near = get_default_state([sw], grid_state=grid)
     state_near["zenith_angle"].values[:] = np.pi / 4
-    state_near["flux_adjustment_for_earth_sun_distance"].values[()] = 1.1  # 10% more flux
+    state_near["flux_adjustment_for_earth_sun_distance"].values[()] = (
+        1.1  # 10% more flux
+    )
 
     _, diag_ref = sw(state_ref)
     _, diag_near = sw(state_near)
@@ -145,3 +147,21 @@ def test_picket_fence_sw_correlated_k_nighttime():
     np.testing.assert_allclose(
         diagnostics["downwelling_shortwave_flux_in_air"].values, 0.0, atol=1e-10
     )
+
+
+def test_picket_fence_sw_stellar_spectrum_loads():
+    """PicketFenceShortwave with stellar_spectrum='sun' uses non-default solar flux."""
+    import numpy as np
+
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sw = PicketFenceShortwave(optics="parmentier", stellar_spectrum="sun")
+    # The component should have loaded the spectrum and have non-trivial flux per band
+    # (not exactly 1361/3 per band, since the spectrum is non-uniform)
+    flux = sw._solar_flux_per_band
+    assert flux.shape == (3,)
+    assert np.all(flux > 0)
+    # Total should be approximately 1361 W/m^2
+    np.testing.assert_allclose(flux.sum(), 1361.0, rtol=0.05)
+    # Bands should NOT be exactly equal (spectrum is non-uniform)
+    assert not np.allclose(flux, flux[0], rtol=0.01)
