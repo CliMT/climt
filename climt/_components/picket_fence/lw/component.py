@@ -199,10 +199,9 @@ class PicketFenceLongwave(TendencyComponent):
                     q_gas_flat = q_gas_flat * (M_gas / _M_AIR)
                 gas_amounts[ig, :, :] = compute_column_amount(q_gas_flat, p_int_flat, g)
 
-            tau, planck_src, surf_src = self._correlated_k_optics(
+            tau, planck_src, surf_src, weights = self._correlated_k_optics(
                 T_flat, p_flat, gas_amounts, T_surf_flat, sigma
             )
-            weights = self._table["gpoint_weights"]
         else:
             raise NotImplementedError
 
@@ -308,13 +307,27 @@ class PicketFenceLongwave(TendencyComponent):
         from ..optics.correlated_k import compute_ck_optical_depth
 
         nlev, ncol = T.shape
-        nband = self._num_bands
-        ngpt = self._num_gpts
 
-        tau = compute_ck_optical_depth(self._table, T, p, gas_amounts)
-        planck_frac = self._table["planck_fraction"]  # (nband, ngpt, nT)
+        result = compute_ck_optical_depth(self._table, T, p, gas_amounts)
+        if isinstance(result, tuple):
+            # ESFT mode: returns (tau, combined_weights)
+            tau_raw, weights = result
+        else:
+            # Additive mode: returns tau only
+            tau_raw = result
+            weights = self._table["gpoint_weights"]
+
+        nband = tau_raw.shape[0]
+        ngpt = tau_raw.shape[1]
+
+        planck_frac = self._table["planck_fraction"]  # (nband_orig, ngpt_orig, nT)
         T_grid = self._table["temperature_grid"]
         nT = len(T_grid)
+        nband_orig = planck_frac.shape[0]
+        ngpt_orig = planck_frac.shape[1]
+
+        overlap = str(self._table.get("overlap_method", np.array("additive")))
+        ngas = self._table["k_coefficients"].shape[0]
 
         planck_src = np.zeros((nband, ngpt, nlev, ncol))
         surf_src = np.zeros((nband, ngpt, ncol))
@@ -330,9 +343,14 @@ class PicketFenceLongwave(TendencyComponent):
             surf_planck = sigma * T_s**4
             for ib in range(nband):
                 for igp in range(ngpt):
+                    if overlap == "esft" and ngas > 1:
+                        g_idx_orig = igp % ngpt_orig
+                    else:
+                        g_idx_orig = igp
+                    ib_orig = min(ib, nband_orig - 1)
                     frac_s = (
-                        planck_frac[ib, igp, iTs] * (1 - fTs)
-                        + planck_frac[ib, igp, iTs + 1] * fTs
+                        planck_frac[ib_orig, g_idx_orig, iTs] * (1 - fTs)
+                        + planck_frac[ib_orig, g_idx_orig, iTs + 1] * fTs
                     )
                     surf_src[ib, igp, icol] = frac_s * surf_planck
 
@@ -347,10 +365,15 @@ class PicketFenceLongwave(TendencyComponent):
                 layer_planck = sigma * T_l**4
                 for ib in range(nband):
                     for igp in range(ngpt):
+                        if overlap == "esft" and ngas > 1:
+                            g_idx_orig = igp % ngpt_orig
+                        else:
+                            g_idx_orig = igp
+                        ib_orig = min(ib, nband_orig - 1)
                         frac_l = (
-                            planck_frac[ib, igp, iTl] * (1 - fTl)
-                            + planck_frac[ib, igp, iTl + 1] * fTl
+                            planck_frac[ib_orig, g_idx_orig, iTl] * (1 - fTl)
+                            + planck_frac[ib_orig, g_idx_orig, iTl + 1] * fTl
                         )
                         planck_src[ib, igp, k, icol] = frac_l * layer_planck
 
-        return tau, planck_src, surf_src
+        return tau_raw, planck_src, surf_src, weights

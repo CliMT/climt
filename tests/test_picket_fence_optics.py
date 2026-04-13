@@ -198,3 +198,110 @@ def test_correlated_k_optical_depth():
     tau = compute_ck_optical_depth(table, T, p, gas_amounts)
     assert tau.shape == (nband, ngpt, nlev, ncol)
     assert np.all(tau >= 0)
+
+
+def test_correlated_k_sw_table_loads():
+    """Loading the SW test table returns expected dimensions and SW-specific fields."""
+    from climt._components.picket_fence.optics.correlated_k import load_k_table
+
+    table = load_k_table("test_2band_sw")
+    assert table["k_coefficients"].shape[0] == 1  # 1 gas
+    assert table["k_coefficients"].shape[1] == 2  # 2 bands
+    assert table["k_coefficients"].shape[2] == 2  # 2 g-points
+    assert "solar_source_per_gpoint" in table
+    assert table["solar_source_per_gpoint"].shape == (2, 2)  # (nband, ngpt)
+    assert "rayleigh_coefficient" in table
+    assert table["rayleigh_coefficient"].shape == (2,)  # (nband,)
+    # Solar source should sum to something reasonable per band
+    for b in range(2):
+        assert table["solar_source_per_gpoint"][b].sum() > 0
+
+
+def test_esft_single_gas_matches_additive():
+    """With one gas, ESFT should give the same result as additive overlap."""
+    from climt._components.picket_fence.optics.correlated_k import (
+        compute_ck_optical_depth,
+        load_k_table,
+    )
+
+    table = load_k_table("test_2band_lw")
+    # Override overlap method to esft
+    table_esft = dict(table)
+    table_esft["overlap_method"] = np.array("esft")
+
+    nlev = 5
+    ncol = 1
+    ngas = 1
+    T = 250.0 * np.ones((nlev, ncol))
+    p = np.linspace(1e3, 1e5, nlev).reshape(nlev, 1)
+    gas_amounts = 1e-3 * np.ones((ngas, nlev, ncol))
+
+    tau_add = compute_ck_optical_depth(table, T, p, gas_amounts)
+    tau_esft, weights_esft = compute_ck_optical_depth(table_esft, T, p, gas_amounts)
+
+    # With 1 gas, ESFT optical depths per combined g-point should equal additive
+    np.testing.assert_allclose(tau_esft, tau_add, rtol=1e-10)
+
+
+def test_esft_two_gas_weight_sum():
+    """ESFT combined weights for 2 gases × 2 g-points should sum to 1 per band."""
+    from climt._components.picket_fence.optics.correlated_k import (
+        compute_esft_weights,
+    )
+
+    gpoint_weights = np.array([[0.3, 0.7], [0.3, 0.7]])  # (nband=2, ngpt=2)
+    ngas = 2
+    combined = compute_esft_weights(gpoint_weights, ngas)
+    # Shape: (nband, ngpt^ngas) = (2, 4)
+    assert combined.shape == (2, 4)
+    for b in range(2):
+        np.testing.assert_allclose(combined[b].sum(), 1.0, rtol=1e-10)
+
+
+def test_esft_two_gas_optical_depth(tmp_path):
+    """ESFT with 2 gases produces correct combined optical depths."""
+    from climt._components.picket_fence.optics.correlated_k import (
+        compute_ck_optical_depth,
+    )
+
+    ngas, nband, ngpt, nT, nP = 2, 1, 2, 3, 3
+    # Gas 1: k = 0.1 everywhere; Gas 2: k = 0.2 everywhere
+    k_data = np.zeros((ngas, nband, ngpt, nT, nP))
+    k_data[0, :, :, :, :] = 0.1
+    k_data[1, :, :, :, :] = 0.2
+
+    table_file = str(tmp_path / "esft_test.npz")
+    np.savez(
+        table_file,
+        k_coefficients=k_data,
+        gpoint_weights=np.array([[0.4, 0.6]]),
+        planck_fraction=np.full((nband, ngpt, nT), 0.5),
+        band_wavenumber_limits=np.array([[200.0, 800.0]]),
+        temperature_grid=np.linspace(200.0, 400.0, nT),
+        pressure_grid_log=np.linspace(np.log(100.0), np.log(1e5), nP),
+        gas_names=np.array(["gas1", "gas2"]),
+        overlap_method=np.array("esft"),
+        resolution=np.array("low"),
+    )
+
+    from climt._components.picket_fence.optics.correlated_k import load_k_table
+    table = load_k_table(table_file)
+
+    nlev = 3
+    ncol = 1
+    T = 300.0 * np.ones((nlev, ncol))
+    p = 5e4 * np.ones((nlev, ncol))
+    gas_amounts = np.ones((ngas, nlev, ncol))  # 1 kg/m^2
+
+    tau, weights = compute_ck_optical_depth(table, T, p, gas_amounts)
+    # ESFT: nband=1, ngpt_combined=2*2=4
+    assert tau.shape[0] == 1   # nband
+    assert tau.shape[1] == 4   # ngpt^ngas = 2^2
+    assert weights.shape == (1, 4)
+
+    # Combined weight should sum to 1
+    np.testing.assert_allclose(weights[0].sum(), 1.0, rtol=1e-10)
+
+    # Optical depth for combined g-point (i,j) = k1[i]*amount1 + k2[j]*amount2
+    # k is uniform 0.1 for gas1, 0.2 for gas2, so all combined taus = 0.1 + 0.2 = 0.3
+    np.testing.assert_allclose(tau[:, :, :, :], 0.3, rtol=1e-6)

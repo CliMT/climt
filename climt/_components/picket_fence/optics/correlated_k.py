@@ -77,8 +77,42 @@ def interpolate_k(table, T, p):
     return result
 
 
+def compute_esft_weights(gpoint_weights, ngas):
+    """Compute ESFT combined g-point weights for multiple gases.
+
+    For N gases each with G g-points, produces G^N combined weights per band,
+    where the combined weight is the product of individual gas weights.
+
+    Args:
+        gpoint_weights: (nband, ngpt) per-gas g-point weights (same for all gases)
+        ngas: number of gases
+
+    Returns:
+        combined_weights: (nband, ngpt^ngas) combined weights
+    """
+    nband, ngpt = gpoint_weights.shape
+    ngpt_combined = ngpt ** ngas
+
+    combined = np.zeros((nband, ngpt_combined))
+
+    for b in range(nband):
+        w = gpoint_weights[b]
+        for idx in range(ngpt_combined):
+            weight = 1.0
+            remainder = idx
+            for gas in range(ngas):
+                g_idx = remainder % ngpt
+                remainder //= ngpt
+                weight *= w[g_idx]
+            combined[b, idx] = weight
+
+    return combined
+
+
 def compute_ck_optical_depth(table, T, p, gas_amounts):
     """Compute optical depths from correlated-k table.
+
+    Supports both additive and ESFT overlap methods.
 
     Args:
         table: loaded k-table
@@ -87,8 +121,23 @@ def compute_ck_optical_depth(table, T, p, gas_amounts):
         gas_amounts: (ngas, nlev, ncol) column amount per gas, kg/m^2
 
     Returns:
-        tau: (nband, ngpt, nlev, ncol) optical depth per layer
+        For additive overlap:
+            tau: (nband, ngpt, nlev, ncol) optical depth per layer
+        For ESFT overlap:
+            tuple of (tau, weights) where
+            tau: (nband, ngpt^ngas, nlev, ncol) optical depth per combined g-point
+            weights: (nband, ngpt^ngas) combined g-point weights
     """
+    overlap = str(table.get("overlap_method", np.array("additive")))
+
+    if overlap == "esft":
+        return _compute_ck_optical_depth_esft(table, T, p, gas_amounts)
+    else:
+        return _compute_ck_optical_depth_additive(table, T, p, gas_amounts)
+
+
+def _compute_ck_optical_depth_additive(table, T, p, gas_amounts):
+    """Additive overlap: sum optical depths from all gases on the same g-point grid."""
     k_data = table["k_coefficients"]
     ngas, nband, ngpt = k_data.shape[:3]
     nlev, ncol = T.shape
@@ -97,7 +146,6 @@ def compute_ck_optical_depth(table, T, p, gas_amounts):
 
     for k_lev in range(nlev):
         k_interp = interpolate_k(table, T[k_lev, :], p[k_lev, :])
-        # k_interp: (ngas, nband, ngpt, ncol)
         for ig in range(ngas):
             for ib in range(nband):
                 for igp in range(ngpt):
@@ -107,3 +155,39 @@ def compute_ck_optical_depth(table, T, p, gas_amounts):
                         )
 
     return tau
+
+
+def _compute_ck_optical_depth_esft(table, T, p, gas_amounts):
+    """ESFT overlap: outer product of g-points across gases.
+
+    For combined g-point index idx, decode per-gas g-point indices by
+    treating idx as a mixed-radix number (each digit base ngpt).
+    """
+    k_data = table["k_coefficients"]  # (ngas, nband, ngpt, nT, nP)
+    gpoint_weights = table["gpoint_weights"]  # (nband, ngpt)
+    ngas, nband, ngpt = k_data.shape[:3]
+    nlev, ncol = T.shape
+
+    ngpt_combined = ngpt ** ngas
+    tau = np.zeros((nband, ngpt_combined, nlev, ncol))
+
+    # Precompute combined weights
+    combined_weights = compute_esft_weights(gpoint_weights, ngas)
+
+    for k_lev in range(nlev):
+        k_interp = interpolate_k(table, T[k_lev, :], p[k_lev, :])
+        # k_interp: (ngas, nband, ngpt, ncol)
+
+        for ib in range(nband):
+            for idx in range(ngpt_combined):
+                # Decode combined index to per-gas g-point indices
+                remainder = idx
+                for ig in range(ngas):
+                    g_idx = remainder % ngpt
+                    remainder //= ngpt
+                    for icol in range(ncol):
+                        tau[ib, idx, k_lev, icol] += (
+                            k_interp[ig, ib, g_idx, icol] * gas_amounts[ig, k_lev, icol]
+                        )
+
+    return tau, combined_weights
