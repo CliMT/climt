@@ -68,3 +68,104 @@ def test_cloud_optical_depth_modifies_fluxes():
     assert olr_cloudy < olr_clear, (
         f"Cloud should reduce OLR: clear={olr_clear:.2f}, cloudy={olr_cloudy:.2f}"
     )
+
+
+def test_correlated_k_lw_sw_combined():
+    """Combined LW+SW in correlated-k mode produces physically sensible results."""
+    import os
+    import tempfile
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceLongwave, PicketFenceShortwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    # Build a minimal LW+SW table pair in a temp directory
+    ngas, nband, ngpt, nT, nP = 1, 2, 2, 5, 5
+    with tempfile.TemporaryDirectory() as tmpdir:
+        lw_file = os.path.join(tmpdir, "lw.npz")
+        sw_file = os.path.join(tmpdir, "sw.npz")
+
+        k_data = np.ones((ngas, nband, ngpt, nT, nP)) * 0.01
+        np.savez(
+            lw_file,
+            k_coefficients=k_data,
+            gpoint_weights=np.full((nband, ngpt), 0.5),
+            planck_fraction=np.full((nband, ngpt, nT), 0.5),
+            band_wavenumber_limits=np.array([[200.0, 800.0], [800.0, 1400.0]]),
+            temperature_grid=np.linspace(200.0, 400.0, nT),
+            pressure_grid_log=np.linspace(np.log(100.0), np.log(1e5), nP),
+            gas_names=np.array(["h2o"]),
+            overlap_method=np.array("additive"),
+            resolution=np.array("low"),
+        )
+        np.savez(
+            sw_file,
+            k_coefficients=k_data,
+            gpoint_weights=np.full((nband, ngpt), 0.5),
+            band_wavenumber_limits=np.array([[10000.0, 25000.0], [4000.0, 10000.0]]),
+            temperature_grid=np.linspace(200.0, 400.0, nT),
+            pressure_grid_log=np.linspace(np.log(100.0), np.log(1e5), nP),
+            gas_names=np.array(["h2o"]),
+            overlap_method=np.array("additive"),
+            resolution=np.array("low"),
+            solar_source_per_gpoint=np.array([[300.0, 200.0], [250.0, 250.0]]),
+            rayleigh_coefficient=np.array([1e-6, 5e-7]),
+        )
+
+        lw = PicketFenceLongwave(optics="correlated_k", table=lw_file)
+        sw = PicketFenceShortwave(optics="correlated_k", table=sw_file)
+        grid = get_grid(nx=1, ny=1, nz=20)
+        state = get_default_state([lw, sw], grid_state=grid)
+
+        state["zenith_angle"].values[:] = np.pi / 4
+
+        tend_lw, diag_lw = lw(state)
+        tend_sw, diag_sw = sw(state)
+
+        # LW OLR positive
+        olr = diag_lw["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
+        assert olr > 0
+
+        # SW surface flux positive
+        sw_sfc = diag_sw["downwelling_shortwave_flux_in_air"].values[0, 0, 0]
+        assert sw_sfc > 0
+
+        # No NaNs
+        assert not np.any(np.isnan(tend_lw["air_temperature"].values))
+        assert not np.any(np.isnan(tend_sw["air_temperature"].values))
+
+
+def test_sw_scattering_increases_upward_flux():
+    """A scattering atmosphere should produce more upward SW flux than pure absorption."""
+    from climt._components.picket_fence.sw.kernels import sw_two_stream
+
+    nlev = 10
+    ncol = 1
+    nband = 1
+    ngpt = 1
+
+    tau = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    zenith = np.array([np.pi / 4])
+    albedo = np.array([0.0])  # black surface
+    solar_flux = np.array([[100.0]])
+    weights = np.ones((nband, ngpt))
+
+    # Pure absorption
+    ssa_abs = np.zeros((nband, ngpt, nlev, ncol))
+    asym_abs = np.zeros((nband, ngpt, nlev, ncol))
+    _, _, up_abs, _ = sw_two_stream(
+        tau, ssa_abs, asym_abs, zenith, albedo, solar_flux, weights
+    )
+
+    # With scattering (ssa=0.5)
+    ssa_scat = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    asym_scat = np.zeros((nband, ngpt, nlev, ncol))
+    _, _, up_scat, _ = sw_two_stream(
+        tau, ssa_scat, asym_scat, zenith, albedo, solar_flux, weights
+    )
+
+    # Scattering atmosphere should reflect more radiation upward at TOA
+    assert up_scat[nlev, 0] > up_abs[nlev, 0], (
+        f"Scattering should increase upward flux: "
+        f"absorbing={up_abs[nlev, 0]:.4f}, scattering={up_scat[nlev, 0]:.4f}"
+    )
