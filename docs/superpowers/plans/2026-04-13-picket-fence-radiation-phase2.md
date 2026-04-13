@@ -1195,7 +1195,7 @@ git commit -m "test(picket-fence): add SW correlated-k test table"
 
 Enable `PicketFenceShortwave(optics="correlated_k", table="test_2band_sw")`. This path loads the SW k-table, computes absorption optical depths per band/g-point, adds Rayleigh scattering, and passes everything to the two-stream solver. Stellar flux per g-point comes from the table's `solar_source_per_gpoint` field.
 
-- [ ] **Step 1: Write failing tests for correlated-k SW**
+- [x] **Step 1: Write failing tests for correlated-k SW**
 
 Add to `tests/test_picket_fence_sw.py`:
 
@@ -1257,12 +1257,12 @@ def test_picket_fence_sw_correlated_k_nighttime():
     )
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_picket_fence_sw.py::test_picket_fence_sw_correlated_k_runs -v`
 Expected: FAIL (`NotImplementedError: Correlated-k SW mode not yet implemented`)
 
-- [ ] **Step 3: Implement correlated-k mode in the SW component**
+- [x] **Step 3: Implement correlated-k mode in the SW component**
 
 Update `climt/_components/picket_fence/sw/component.py`:
 
@@ -1616,17 +1616,17 @@ In `array_call`, the correlated-k branch should be:
 
 So the full updated `sw/component.py` integrates both paths. The `_parmentier_sw_optics` method stays as-is. The `_correlated_k_sw_optics` method is eliminated — all logic lives in `array_call`.
 
-- [ ] **Step 4: Run all SW tests**
+- [x] **Step 4: Run all SW tests**
 
 Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_picket_fence_sw.py -v`
 Expected: All PASS (Parmentier tests still pass, new correlated-k tests pass)
 
-- [ ] **Step 5: Run full test suite**
+- [x] **Step 5: Run full test suite**
 
 Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_picket_fence_kernels.py tests/test_picket_fence_optics.py tests/test_picket_fence_lw.py tests/test_picket_fence_sw.py tests/test_picket_fence_integration.py tests/test_picket_fence_stellar.py -v`
 Expected: All PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_components/picket_fence/sw/component.py tests/test_picket_fence_sw.py

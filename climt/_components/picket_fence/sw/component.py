@@ -32,7 +32,14 @@ class PicketFenceShortwave(TendencyComponent):
             # For Earth (non-irradiated) fallback, we store a default.
             self._default_solar_flux_per_band = np.array([1361.0 / 3.0] * 3)
         elif optics == "correlated_k":
-            raise NotImplementedError("Correlated-k SW mode not yet implemented")
+            from ..optics.correlated_k import load_k_table
+
+            self._table = load_k_table(table)
+            self._num_bands = self._table["k_coefficients"].shape[1]
+            self._num_gpts = self._table["k_coefficients"].shape[2]
+            self._gas_names = list(self._table["gas_names"])
+            self._solar_source = self._table["solar_source_per_gpoint"]
+            self._rayleigh = self._table.get("rayleigh_coefficient", None)
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
@@ -78,6 +85,20 @@ class PicketFenceShortwave(TendencyComponent):
                 "units": "degK",
                 "alias": "T_int",
             }
+        elif self._optics_mode == "correlated_k":
+            _GAS_CF_NAME = {
+                "h2o": "specific_humidity",
+                "co2": "mole_fraction_of_carbon_dioxide_in_air",
+            }
+            _GAS_UNITS = {"h2o": "kg/kg"}
+            for gas in self._gas_names:
+                cf_name = _GAS_CF_NAME.get(gas, f"mole_fraction_of_{gas}_in_air")
+                units = _GAS_UNITS.get(gas, "mole/mole")
+                props[cf_name] = {
+                    "dims": ["mid_levels", "*"],
+                    "units": units,
+                    "alias": gas,
+                }
         return props
 
     @property
@@ -133,30 +154,83 @@ class PicketFenceShortwave(TendencyComponent):
         g_const = get_constant("gravitational_acceleration", "m/s^2")
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
-        nband = self._num_bands
-        ngpt = 1  # Parmentier mode: 1 g-point per band
-
         if self._optics_mode == "parmentier":
+            nband = self._num_bands
+            ngpt = 1
+
             T_irr_flat = state["T_irr"].reshape(-1)
             T_int_flat = state["T_int"].reshape(-1)
             tau, ssa, asym = self._parmentier_sw_optics(
                 T_flat, p_flat, p_int_flat, T_irr_flat, T_int_flat, g_const
             )
-            # Compute TOA stellar flux from T_irr (Parmentier et al. 2015, Eq. 2):
-            #   F_0 = sigma * T_irr^4, split equally across 3 visible bands.
-            # For Earth-like (T_irr=0), fall back to stored default (1361 W/m^2).
             T_irr_max = T_irr_flat.max()
             if T_irr_max > 0:
                 F0 = sigma * T_irr_max**4
                 solar_flux_per_band = np.array([F0 / 3.0] * 3)
             else:
                 solar_flux_per_band = self._default_solar_flux_per_band
+
+            earth_sun_factor = float(state["earth_sun_factor"].reshape(-1)[0])
+            solar_flux = solar_flux_per_band.reshape(nband, 1) * np.ones((nband, ngpt)) * earth_sun_factor
+            weights = np.ones((nband, ngpt))
+
+        elif self._optics_mode == "correlated_k":
+            _MOLAR_MASS = {
+                "h2o": 18.015, "co2": 44.010, "o3": 47.998,
+                "ch4": 16.043, "n2o": 44.013, "o2": 31.998,
+            }
+            _M_AIR = 28.970
+
+            ngas = len(self._gas_names)
+            gas_amounts = np.zeros((ngas, nlev, ncol))
+            for ig, gas in enumerate(self._gas_names):
+                q_gas_flat = state[gas].reshape(nlev, -1)
+                if gas != "h2o":
+                    M_gas = _MOLAR_MASS.get(gas, _M_AIR)
+                    q_gas_flat = q_gas_flat * (M_gas / _M_AIR)
+                gas_amounts[ig, :, :] = compute_column_amount(q_gas_flat, p_int_flat, g_const)
+
+            from ..optics.correlated_k import compute_ck_optical_depth
+            result = compute_ck_optical_depth(self._table, T_flat, p_flat, gas_amounts)
+            if isinstance(result, tuple):
+                tau_abs, weights = result
+            else:
+                tau_abs = result
+                weights = self._table["gpoint_weights"]
+
+            nband = tau_abs.shape[0]
+            ngpt = tau_abs.shape[1]
+
+            ssa = np.zeros((nband, ngpt, nlev, ncol))
+            asym = np.zeros((nband, ngpt, nlev, ncol))
+            tau = tau_abs.copy()
+
+            if self._rayleigh is not None:
+                for b in range(nband):
+                    for k in range(nlev):
+                        dp = abs(p_int_flat[k + 1, :] - p_int_flat[k, :])
+                        tau_ray = self._rayleigh[b] * dp / g_const
+                        for gp in range(ngpt):
+                            tau_total = tau_abs[b, gp, k, :] + tau_ray
+                            ssa[b, gp, k, :] = np.where(
+                                tau_total > 0,
+                                tau_ray / tau_total,
+                                0.0,
+                            )
+                            tau[b, gp, k, :] = tau_total
+
+            earth_sun_factor = float(state["earth_sun_factor"].reshape(-1)[0])
+            if ngpt == self._solar_source.shape[1]:
+                solar_flux = self._solar_source * earth_sun_factor
+            else:
+                ngpt_orig = self._solar_source.shape[1]
+                solar_flux = np.zeros((nband, ngpt))
+                for b in range(nband):
+                    for idx in range(ngpt):
+                        g_idx = idx % ngpt_orig
+                        solar_flux[b, idx] = self._solar_source[b, g_idx] * earth_sun_factor
         else:
             raise NotImplementedError
-
-        earth_sun_factor = float(state["earth_sun_factor"].reshape(-1)[0])
-        solar_flux = solar_flux_per_band.reshape(nband, 1) * np.ones((nband, ngpt)) * earth_sun_factor
-        weights = np.ones((nband, ngpt))
 
         up_band, down_band, up_broad, down_broad = sw_two_stream(
             tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights

@@ -88,3 +88,60 @@ def test_picket_fence_sw_per_band_sum():
     down_band = diagnostics["downwelling_shortwave_flux_in_air_per_band"].values
     down_broad = diagnostics["downwelling_shortwave_flux_in_air"].values
     np.testing.assert_allclose(down_band.sum(axis=-1), down_broad, rtol=1e-10)
+
+
+def test_picket_fence_sw_correlated_k_runs():
+    """PicketFenceShortwave in correlated-k mode produces non-zero fluxes."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    sw = PicketFenceShortwave(optics="correlated_k", table="test_2band_sw")
+    grid = get_grid(nx=1, ny=1, nz=20)
+    state = get_default_state([sw], grid_state=grid)
+
+    state["zenith_angle"].values[:] = np.pi / 4
+
+    tendencies, diagnostics = sw(state)
+
+    assert np.any(diagnostics["downwelling_shortwave_flux_in_air"].values != 0.0)
+    assert not np.any(np.isnan(tendencies["air_temperature"].values))
+
+
+def test_picket_fence_sw_correlated_k_band_sum():
+    """Per-band fluxes sum to broadband in correlated-k SW mode."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    sw = PicketFenceShortwave(optics="correlated_k", table="test_2band_sw")
+    grid = get_grid(nx=1, ny=1, nz=20)
+    state = get_default_state([sw], grid_state=grid)
+    state["zenith_angle"].values[:] = np.pi / 3
+
+    _, diagnostics = sw(state)
+
+    down_band = diagnostics["downwelling_shortwave_flux_in_air_per_band"].values
+    down_broad = diagnostics["downwelling_shortwave_flux_in_air"].values
+    np.testing.assert_allclose(down_band.sum(axis=-1), down_broad, rtol=1e-10)
+
+
+def test_picket_fence_sw_correlated_k_nighttime():
+    """Correlated-k SW produces zero flux at nighttime."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    sw = PicketFenceShortwave(optics="correlated_k", table="test_2band_sw")
+    grid = get_grid(nx=1, ny=1, nz=15)
+    state = get_default_state([sw], grid_state=grid)
+    state["zenith_angle"].values[:] = np.pi / 2 + 0.1
+
+    tendencies, diagnostics = sw(state)
+
+    np.testing.assert_allclose(
+        diagnostics["downwelling_shortwave_flux_in_air"].values, 0.0, atol=1e-10
+    )
