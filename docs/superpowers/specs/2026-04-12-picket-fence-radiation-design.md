@@ -384,6 +384,60 @@ except ImportError:
 
 The outermost loop is over columns (parallelized), with inner loops over bands and g-points. All inputs are raw numpy arrays — no Python objects inside kernels.
 
+### 6.5 Pedagogical introspection and entry points
+
+The solver kernels implement the same Meador & Weaver / PIFM two-stream algorithm used in production codes (RRTMG, RRTMGP). Their pedagogical value comes from being pure Python: readable, modifiable, and debuggable interactively. To preserve and strengthen that value, the following features should be provided.
+
+#### 6.5.1 Optional intermediate diagnostics
+
+Both `sw_two_stream` and `lw_transport` should accept an optional `diagnostics_level` parameter (default 0). When set to a higher level, the solver returns additional per-layer quantities alongside the standard fluxes:
+
+- **Level 1**: Per-layer diffuse reflectance and transmittance (`Rdif`, `Tdif`), direct beam transmittance (`Tnoscat`), and the direct beam flux profile at interfaces — enough to see what the adding method is building from.
+- **Level 2**: Additionally, the direct-beam source terms (`Rdir`, `Tdir` per layer), the combined albedo array from the upward sweep, and the delta-scaled optical properties — the full internal state of the solver.
+
+These are returned as a dictionary of arrays keyed by name. When `diagnostics_level=0`, no additional work is done and no dictionary is allocated. The component's `array_call` passes the flag through and, if non-zero, includes the extra arrays in the diagnostics output with names like `sw_layer_diffuse_reflectance`, `sw_direct_beam_profile`, etc.
+
+This is the single most valuable pedagogical feature: it lets a student see *inside* the two-stream solve, which compiled Fortran codes cannot easily expose.
+
+#### 6.5.2 Single-column entry point
+
+A thin wrapper function provides a simplified interface for interactive exploration:
+
+```python
+def sw_single_column(tau, ssa, g, zenith, albedo, solar_flux,
+                     diagnostics_level=0):
+    """Run the SW two-stream solver on a single column.
+
+    Args:
+        tau: (nlev,) extinction optical depth per layer
+        ssa: (nlev,) single scattering albedo per layer
+        g: (nlev,) asymmetry parameter per layer
+        zenith: solar zenith angle, radians (scalar)
+        albedo: surface albedo (scalar)
+        solar_flux: TOA solar flux, W/m^2 (scalar)
+        diagnostics_level: 0 (fluxes only), 1, or 2
+
+    Returns:
+        dict with 'flux_up', 'flux_down', 'flux_down_direct',
+        'heating_rate', and (if diagnostics_level > 0) intermediate
+        quantities.
+    """
+```
+
+An equivalent `lw_single_column` takes `(tau, T_layer, T_surface, emissivity)`. These wrappers handle the reshaping into `(nband=1, ngpt=1, nlev, ncol=1)` internally so that a student never has to think about band/gpoint/column dimensions when exploring single-profile behavior.
+
+#### 6.5.3 Kernel function decomposition
+
+The current decomposition into small, single-purpose functions (`_delta_scale`, `_sw_dif_and_source`, `_adding`, `sw_two_stream`) must be preserved as the code evolves. Each function represents one conceptual step of the algorithm and can be understood in isolation. Resist merging them for performance — the numba JIT already inlines them, and the readability cost is not worth the negligible gain.
+
+#### 6.5.4 Worked Jupyter notebooks
+
+Notebooks (in `examples/`) should import the kernel functions and single-column wrappers directly to walk through the algorithm step by step:
+
+- **`examples/two_stream_anatomy.ipynb`**: Run `sw_single_column` with `diagnostics_level=2` on a simple atmosphere. Plot the per-layer reflectance, transmittance, direct beam profile, and combined albedo. Show how the adding method assembles fluxes from these pieces.
+- **`examples/k_distribution_demo.ipynb`**: Start from a line-by-line absorption spectrum, construct a k-distribution, and show that a 2-gpoint quadrature reproduces the broadband transmission. Connect this to the correlated-k tables used by the component.
+- **`examples/picket_fence_vs_rrtmg.ipynb`**: Compare picket-fence (Parmentier mode and correlated-k mode) against RRTMG for an Earth standard atmosphere, showing where the simplified scheme agrees and where it diverges.
+
 ---
 
 ## 7. Shortwave: Stellar and Orbital Parameters
@@ -503,7 +557,7 @@ The documentation for this component should be detailed and instructive, serving
 
 6. **Two-stream approximation.** The Meador & Weaver (1980) formulation, what the Eddington approximation is, when it's accurate (~2% for grey, ~4% for non-grey per Parmentier et al. 2015).
 
-7. **Worked examples.** Earth RCE with CO2 doubling. Hot Jupiter T-p profile comparison between Parmentier and correlated-k modes. Mars greenhouse effect.
+7. **Worked examples.** Jupyter notebooks as described in Section 6.5.4: two-stream anatomy with intermediate diagnostics, k-distribution construction from line-by-line, and picket-fence vs. RRTMG comparison. Additional scenarios: Earth RCE with CO2 doubling, Hot Jupiter T-p profile comparison between Parmentier and correlated-k modes, Mars greenhouse effect.
 
 ---
 
