@@ -413,9 +413,17 @@ def sw_single_column(tau, ssa, g, zenith, albedo, solar_flux,
         diagnostics_level: 0, 1, or 2
 
     Returns:
-        dict with 'flux_up', 'flux_down', 'flux_down_direct',
-        'heating_rate', and (if diagnostics_level > 0) intermediate
-        quantities with per-layer shape (nlev,) or per-interface shape (nlev+1,).
+        dict with:
+          'flux_up': (nlev+1,) upward flux at interfaces, W/m^2
+          'flux_down': (nlev+1,) total downward flux at interfaces, W/m^2
+          'flux_down_direct': (nlev+1,) direct beam flux at interfaces, W/m^2
+              (cosine-weighted, computed via cumulative Beer's law transmittance;
+              index 0 = surface, index nlev = TOA)
+          'heating_rate': (nlev,) flux divergence in W/m^2, where negative values
+              indicate net absorption (atmospheric warming) and positive values
+              indicate net energy loss (cooling)
+          and (if diagnostics_level > 0) intermediate quantities with per-layer
+          shape (nlev,) or per-interface shape (nlev+1,).
     """
     tau_arr = np.asarray(tau)
     nlev = tau_arr.shape[0]
@@ -433,18 +441,30 @@ def sw_single_column(tau, ssa, g, zenith, albedo, solar_flux,
                         diagnostics_level=diagnostics_level)
 
     if diagnostics_level > 0:
-        up_band, down_band, up_broad, down_broad, diag_raw = raw
+        _, _, up_broad, down_broad, diag_raw = raw
     else:
-        up_band, down_band, up_broad, down_broad = raw
+        _, _, up_broad, down_broad = raw
+
+    # Compute direct beam via cumulative Beer's law transmittance
+    mu0 = np.cos(float(zenith))
+    if mu0 > 1e-4:
+        tnoscat = np.exp(-tau_arr / mu0)  # shape (nlev,)
+        # direct beam at interfaces: TOA=solar_flux*mu0, decreasing toward surface
+        direct = np.zeros(nlev + 1)
+        direct[nlev] = float(solar_flux) * mu0   # TOA incident flux (cosine-weighted)
+        for k in range(nlev - 1, -1, -1):
+            direct[k] = direct[k + 1] * tnoscat[k]
+    else:
+        direct = np.zeros(nlev + 1)
 
     result = {
         "flux_up": up_broad[:, 0],
         "flux_down": down_broad[:, 0],
-        "flux_down_direct": down_band[0, :, 0] - up_band[0, :, 0],  # approximate
+        "flux_down_direct": direct,
         "heating_rate": np.diff(up_broad[:, 0] - down_broad[:, 0]),
     }
 
-    # Compute proper direct beam from diagnostics if available
+    # Overwrite direct beam from diagnostics if available (more accurate, uses delta-scaling)
     if diagnostics_level > 0:
         result["flux_down_direct"] = diag_raw["direct_beam_flux"][0, 0, :, 0]
         # Flatten diagnostic arrays from (1, 1, nlev, 1) -> (nlev,) etc.

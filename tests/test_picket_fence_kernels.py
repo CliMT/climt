@@ -482,3 +482,20 @@ def test_lw_single_column_basic():
 
     # Surface emits upward: flux_up at surface should be positive
     assert result["flux_up"][0] > 0
+
+
+def test_lw_single_column_diagnostics():
+    """lw_single_column passes diagnostics_level through."""
+    from climt._components.picket_fence.lw.kernels import lw_single_column
+
+    nlev = 5
+    result = lw_single_column(
+        tau=0.5 * np.ones(nlev),
+        T_layer=np.linspace(300, 200, nlev),
+        T_surface=300.0,
+        diagnostics_level=1,
+    )
+    assert "transmittance" in result
+    assert result["transmittance"].shape == (nlev,)
+    assert np.all(result["transmittance"] >= 0)
+    assert np.all(result["transmittance"] <= 1)

@@ -145,8 +145,13 @@ def lw_single_column(tau, T_layer, T_surface, emissivity=1.0,
         diagnostics_level: 0, or 1
 
     Returns:
-        dict with 'flux_up', 'flux_down', 'heating_rate', and
-        (if diagnostics_level > 0) intermediate quantities.
+        dict with:
+          'flux_up': (nlev+1,) upward flux at interfaces, W/m^2
+          'flux_down': (nlev+1,) downward flux at interfaces, W/m^2
+          'heating_rate': (nlev,) flux divergence in W/m^2, where negative values
+              indicate net absorption (atmospheric warming) and positive values
+              indicate net energy loss (cooling)
+          and (if diagnostics_level > 0) intermediate quantities.
     """
     sigma = 5.670374419e-8  # Stefan-Boltzmann constant
 
