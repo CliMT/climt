@@ -172,7 +172,7 @@ def _adding(nlev, sfc_albedo, Rdif, Tdif, src_up, src_dn, src_sfc,
 
 
 @njit
-def sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights):
+def _sw_two_stream_core(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights):
     """Multi-band, multi-g-point SW radiative transfer.
 
     Meador & Weaver (1980) two-stream with delta-Eddington scaling and
@@ -261,3 +261,136 @@ def sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights):
                 down_broad[k, i] += down_band[b, k, i]
 
     return up_band, down_band, up_broad, down_broad
+
+
+def sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights,
+                  diagnostics_level=0):
+    """Multi-band, multi-g-point SW radiative transfer.
+
+    Meador & Weaver (1980) two-stream with delta-Eddington scaling and
+    adding method for inter-layer coupling.
+
+    Args:
+        tau: (nband, ngpt, nlev, ncol) extinction optical depth
+        ssa: (nband, ngpt, nlev, ncol) single scattering albedo
+        asymmetry: (nband, ngpt, nlev, ncol) asymmetry parameter
+        zenith: (ncol,) solar zenith angle, radians
+        albedo: (ncol,) surface albedo
+        solar_flux: (nband, ngpt) TOA solar flux per g-point, W/m^2
+        weights: (nband, ngpt) g-point weights
+        diagnostics_level: 0 (fluxes only), 1 (per-layer R/T + direct beam),
+            2 (additionally delta-scaled properties + combined albedo)
+
+    Returns:
+        If diagnostics_level == 0:
+            (up_band, down_band, up_broad, down_broad)
+        If diagnostics_level > 0:
+            (up_band, down_band, up_broad, down_broad, diagnostics_dict)
+    """
+    if diagnostics_level == 0:
+        return _sw_two_stream_core(tau, ssa, asymmetry, zenith, albedo,
+                                   solar_flux, weights)
+
+    nband, ngpt, nlev, ncol = tau.shape
+
+    up_band = np.zeros((nband, nlev + 1, ncol))
+    down_band = np.zeros((nband, nlev + 1, ncol))
+
+    diag_Rdif = np.zeros((nband, ngpt, nlev, ncol))
+    diag_Tdif = np.zeros((nband, ngpt, nlev, ncol))
+    diag_Tnoscat = np.zeros((nband, ngpt, nlev, ncol))
+    diag_direct = np.zeros((nband, ngpt, nlev + 1, ncol))
+
+    if diagnostics_level >= 2:
+        diag_Rdir = np.zeros((nband, ngpt, nlev, ncol))
+        diag_Tdir = np.zeros((nband, ngpt, nlev, ncol))
+        diag_combined_albedo = np.zeros((nband, ngpt, nlev + 1, ncol))
+        diag_tau_d = np.zeros((nband, ngpt, nlev, ncol))
+        diag_ssa_d = np.zeros((nband, ngpt, nlev, ncol))
+        diag_g_d = np.zeros((nband, ngpt, nlev, ncol))
+
+    for b in range(nband):
+        for g in range(ngpt):
+            w = weights[b, g]
+            for i in range(ncol):
+                mu0 = np.cos(zenith[i])
+                if mu0 <= 1e-4:
+                    continue
+
+                Rdif = np.zeros(nlev)
+                Tdif = np.zeros(nlev)
+                Rdir = np.zeros(nlev)
+                Tdir = np.zeros(nlev)
+                Tnoscat = np.zeros(nlev)
+                flux_dn_dir = np.zeros(nlev + 1)
+                flux_dn_dir[nlev] = 1.0
+                src_up = np.zeros(nlev)
+                src_dn = np.zeros(nlev)
+
+                for k in range(nlev - 1, -1, -1):
+                    tau_s, ssa_s, g_s = _delta_scale(
+                        tau[b, g, k, i], ssa[b, g, k, i], asymmetry[b, g, k, i]
+                    )
+                    Rdif[k], Tdif[k], Rdir[k], Tdir[k], Tnoscat[k] = (
+                        _sw_dif_and_source(tau_s, ssa_s, g_s, mu0)
+                    )
+                    flux_dn_dir[k] = Tnoscat[k] * flux_dn_dir[k + 1]
+                    src_up[k] = Rdir[k] * flux_dn_dir[k + 1]
+                    src_dn[k] = Tdir[k] * flux_dn_dir[k + 1]
+
+                    if diagnostics_level >= 2:
+                        diag_tau_d[b, g, k, i] = tau_s
+                        diag_ssa_d[b, g, k, i] = ssa_s
+                        diag_g_d[b, g, k, i] = g_s
+
+                src_sfc = flux_dn_dir[0] * albedo[i]
+                flux_up_dif, flux_dn_dif = _adding(
+                    nlev, albedo[i], Rdif, Tdif, src_up, src_dn, src_sfc,
+                    flux_dn_dir
+                )
+
+                diag_Rdif[b, g, :, i] = Rdif
+                diag_Tdif[b, g, :, i] = Tdif
+                diag_Tnoscat[b, g, :, i] = Tnoscat
+                diag_direct[b, g, :, i] = flux_dn_dir * solar_flux[b, g] * mu0
+
+                if diagnostics_level >= 2:
+                    diag_Rdir[b, g, :, i] = Rdir
+                    diag_Tdir[b, g, :, i] = Tdir
+                    comb_alb = np.zeros(nlev + 1)
+                    comb_alb[0] = albedo[i]
+                    for k in range(nlev):
+                        d = 1.0 - Rdif[k] * comb_alb[k]
+                        if abs(d) < 1e-30:
+                            d = 1e-30
+                        comb_alb[k + 1] = Rdif[k] + Tdif[k] * Tdif[k] * comb_alb[k] / d
+                    diag_combined_albedo[b, g, :, i] = comb_alb
+
+                scale = solar_flux[b, g] * mu0 * w
+                for k in range(nlev + 1):
+                    up_band[b, k, i] += flux_up_dif[k] * scale
+                    down_band[b, k, i] += (flux_dn_dir[k] + flux_dn_dif[k]) * scale
+
+    up_broad = np.zeros((nlev + 1, ncol))
+    down_broad = np.zeros((nlev + 1, ncol))
+    for b in range(nband):
+        for k in range(nlev + 1):
+            for i in range(ncol):
+                up_broad[k, i] += up_band[b, k, i]
+                down_broad[k, i] += down_band[b, k, i]
+
+    diag = {
+        "Rdif": diag_Rdif,
+        "Tdif": diag_Tdif,
+        "Tnoscat": diag_Tnoscat,
+        "direct_beam_flux": diag_direct,
+    }
+    if diagnostics_level >= 2:
+        diag["Rdir"] = diag_Rdir
+        diag["Tdir"] = diag_Tdir
+        diag["combined_albedo"] = diag_combined_albedo
+        diag["tau_delta"] = diag_tau_d
+        diag["ssa_delta"] = diag_ssa_d
+        diag["g_delta"] = diag_g_d
+
+    return up_band, down_band, up_broad, down_broad, diag

@@ -279,3 +279,83 @@ def test_sw_two_stream_albedo_reflection():
     np.testing.assert_allclose(down_broad[0, 0], expected_down, rtol=1e-10)
     # Reflected = albedo * downward at surface, propagates up unattenuated (no atmosphere)
     np.testing.assert_allclose(up_broad[:, 0], albedo[0] * expected_down, rtol=1e-6)
+
+
+def test_sw_two_stream_diagnostics_level0_unchanged():
+    """diagnostics_level=0 returns the same 4-tuple as before."""
+    from climt._components.picket_fence.sw.kernels import sw_two_stream
+
+    nlev, ncol, nband, ngpt = 5, 1, 1, 1
+    tau = 0.3 * np.ones((nband, ngpt, nlev, ncol))
+    ssa = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    asymmetry = 0.1 * np.ones((nband, ngpt, nlev, ncol))
+    zenith = np.array([np.pi / 4])
+    albedo = np.array([0.3])
+    solar_flux = np.array([[100.0]])
+    weights = np.ones((nband, ngpt))
+
+    result = sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights,
+                           diagnostics_level=0)
+    assert len(result) == 4, "diagnostics_level=0 should return 4-tuple"
+
+
+def test_sw_two_stream_diagnostics_level1():
+    """diagnostics_level=1 returns per-layer diffuse R/T and direct beam profile."""
+    from climt._components.picket_fence.sw.kernels import sw_two_stream
+
+    nlev, ncol, nband, ngpt = 5, 1, 1, 1
+    tau = 0.3 * np.ones((nband, ngpt, nlev, ncol))
+    ssa = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    asymmetry = 0.1 * np.ones((nband, ngpt, nlev, ncol))
+    zenith = np.array([np.pi / 4])
+    albedo = np.array([0.3])
+    solar_flux = np.array([[100.0]])
+    weights = np.ones((nband, ngpt))
+
+    result = sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights,
+                           diagnostics_level=1)
+    assert len(result) == 5, "diagnostics_level=1 should return 5-tuple"
+    up_band, down_band, up_broad, down_broad, diag = result
+
+    assert "Rdif" in diag
+    assert "Tdif" in diag
+    assert "Tnoscat" in diag
+    assert "direct_beam_flux" in diag
+
+    assert diag["Rdif"].shape == (nband, ngpt, nlev, ncol)
+    assert diag["Tdif"].shape == (nband, ngpt, nlev, ncol)
+    assert diag["Tnoscat"].shape == (nband, ngpt, nlev, ncol)
+    assert diag["direct_beam_flux"].shape == (nband, ngpt, nlev + 1, ncol)
+
+    assert np.all(diag["Rdif"] >= 0)
+    assert np.all(diag["Rdif"] <= 1)
+
+
+def test_sw_two_stream_diagnostics_level2():
+    """diagnostics_level=2 additionally returns Rdir, Tdir, combined albedo, delta-scaled properties."""
+    from climt._components.picket_fence.sw.kernels import sw_two_stream
+
+    nlev, ncol, nband, ngpt = 5, 1, 1, 1
+    tau = 0.3 * np.ones((nband, ngpt, nlev, ncol))
+    ssa = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    asymmetry = 0.1 * np.ones((nband, ngpt, nlev, ncol))
+    zenith = np.array([np.pi / 4])
+    albedo = np.array([0.3])
+    solar_flux = np.array([[100.0]])
+    weights = np.ones((nband, ngpt))
+
+    result = sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights,
+                           diagnostics_level=2)
+    assert len(result) == 5
+    _, _, _, _, diag = result
+
+    assert "Rdir" in diag
+    assert "Tdir" in diag
+    assert "combined_albedo" in diag
+    assert "tau_delta" in diag
+    assert "ssa_delta" in diag
+    assert "g_delta" in diag
+
+    assert diag["Rdir"].shape == (nband, ngpt, nlev, ncol)
+    assert diag["combined_albedo"].shape == (nband, ngpt, nlev + 1, ncol)
+    assert diag["tau_delta"].shape == (nband, ngpt, nlev, ncol)
