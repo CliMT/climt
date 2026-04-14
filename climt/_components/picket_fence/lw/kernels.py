@@ -102,11 +102,7 @@ def lw_transport(
             )
 
             if diagnostics_level >= 1:
-                for k in range(nlev):
-                    for i in range(ncol):
-                        diag_trans[b, g, k, i] = np.exp(
-                            -DIFFUSIVITY_FACTOR * tau[b, g, k, i]
-                        )
+                diag_trans[b, g, :, :] = np.exp(-DIFFUSIVITY_FACTOR * tau[b, g, :, :])
                 diag_up_gpt[b, g, :, :] = up_gpt * weights[b, g]
                 diag_dn_gpt[b, g, :, :] = down_gpt * weights[b, g]
 
