@@ -394,3 +394,64 @@ def sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights,
         diag["g_delta"] = diag_g_d
 
     return up_band, down_band, up_broad, down_broad, diag
+
+
+def sw_single_column(tau, ssa, g, zenith, albedo, solar_flux,
+                     diagnostics_level=0):
+    """Run the SW two-stream solver on a single column.
+
+    Convenience wrapper for interactive exploration — reshapes 1D arrays
+    into the multi-band/gpoint/column format expected by sw_two_stream.
+
+    Args:
+        tau: (nlev,) extinction optical depth per layer
+        ssa: (nlev,) single scattering albedo per layer
+        g: (nlev,) asymmetry parameter per layer
+        zenith: solar zenith angle, radians (scalar)
+        albedo: surface albedo (scalar)
+        solar_flux: TOA solar flux, W/m^2 (scalar)
+        diagnostics_level: 0, 1, or 2
+
+    Returns:
+        dict with 'flux_up', 'flux_down', 'flux_down_direct',
+        'heating_rate', and (if diagnostics_level > 0) intermediate
+        quantities with per-layer shape (nlev,) or per-interface shape (nlev+1,).
+    """
+    tau_arr = np.asarray(tau)
+    nlev = tau_arr.shape[0]
+
+    tau_4d = tau_arr.reshape(1, 1, nlev, 1)
+    ssa_4d = np.asarray(ssa).reshape(1, 1, nlev, 1)
+    g_4d = np.asarray(g).reshape(1, 1, nlev, 1)
+    zenith_1d = np.array([float(zenith)])
+    albedo_1d = np.array([float(albedo)])
+    solar_flux_2d = np.array([[float(solar_flux)]])
+    weights_2d = np.ones((1, 1))
+
+    raw = sw_two_stream(tau_4d, ssa_4d, g_4d, zenith_1d, albedo_1d,
+                        solar_flux_2d, weights_2d,
+                        diagnostics_level=diagnostics_level)
+
+    if diagnostics_level > 0:
+        up_band, down_band, up_broad, down_broad, diag_raw = raw
+    else:
+        up_band, down_band, up_broad, down_broad = raw
+
+    result = {
+        "flux_up": up_broad[:, 0],
+        "flux_down": down_broad[:, 0],
+        "flux_down_direct": down_band[0, :, 0] - up_band[0, :, 0],  # approximate
+        "heating_rate": np.diff(up_broad[:, 0] - down_broad[:, 0]),
+    }
+
+    # Compute proper direct beam from diagnostics if available
+    if diagnostics_level > 0:
+        result["flux_down_direct"] = diag_raw["direct_beam_flux"][0, 0, :, 0]
+        # Flatten diagnostic arrays from (1, 1, nlev, 1) -> (nlev,) etc.
+        for key, arr in diag_raw.items():
+            if arr.ndim == 4 and arr.shape[2] == nlev:
+                result[key] = arr[0, 0, :, 0]
+            elif arr.ndim == 4 and arr.shape[2] == nlev + 1:
+                result[key] = arr[0, 0, :, 0]
+
+    return result

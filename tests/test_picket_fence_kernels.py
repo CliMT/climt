@@ -409,3 +409,76 @@ def test_lw_transport_diagnostics_level1():
 
     assert np.all(diag["transmittance"] >= 0)
     assert np.all(diag["transmittance"] <= 1)
+
+
+def test_sw_single_column_basic():
+    """sw_single_column runs on 1D inputs and returns a dict."""
+    from climt._components.picket_fence.sw.kernels import sw_single_column
+
+    nlev = 10
+    tau = 0.3 * np.ones(nlev)
+    ssa = 0.5 * np.ones(nlev)
+    g = 0.1 * np.ones(nlev)
+
+    result = sw_single_column(
+        tau, ssa, g,
+        zenith=np.pi / 4,
+        albedo=0.3,
+        solar_flux=1361.0,
+    )
+    assert isinstance(result, dict)
+    assert "flux_up" in result
+    assert "flux_down" in result
+    assert "flux_down_direct" in result
+    assert "heating_rate" in result
+
+    assert result["flux_up"].shape == (nlev + 1,)
+    assert result["flux_down"].shape == (nlev + 1,)
+    assert result["heating_rate"].shape == (nlev,)
+
+    # With scattering atmosphere: some upward flux at TOA
+    assert result["flux_up"][-1] > 0
+
+
+def test_sw_single_column_diagnostics():
+    """sw_single_column passes diagnostics_level through."""
+    from climt._components.picket_fence.sw.kernels import sw_single_column
+
+    nlev = 5
+    result = sw_single_column(
+        tau=0.3 * np.ones(nlev),
+        ssa=0.5 * np.ones(nlev),
+        g=0.1 * np.ones(nlev),
+        zenith=np.pi / 4,
+        albedo=0.3,
+        solar_flux=1361.0,
+        diagnostics_level=1,
+    )
+    assert "Rdif" in result
+    assert result["Rdif"].shape == (nlev,)
+
+
+def test_lw_single_column_basic():
+    """lw_single_column runs on 1D inputs and returns a dict."""
+    from climt._components.picket_fence.lw.kernels import lw_single_column
+
+    nlev = 10
+    T_layer = np.linspace(300, 200, nlev)
+    tau = 0.5 * np.ones(nlev)
+
+    result = lw_single_column(
+        tau=tau,
+        T_layer=T_layer,
+        T_surface=300.0,
+        emissivity=1.0,
+    )
+    assert isinstance(result, dict)
+    assert "flux_up" in result
+    assert "flux_down" in result
+    assert "heating_rate" in result
+
+    assert result["flux_up"].shape == (nlev + 1,)
+    assert result["flux_down"].shape == (nlev + 1,)
+
+    # Surface emits upward: flux_up at surface should be positive
+    assert result["flux_up"][0] > 0
