@@ -49,7 +49,8 @@ def _lw_transport_single_gpt(
 
 
 def lw_transport(
-    T, T_surface, tau, planck_source, surface_source, emissivity, weights, sigma
+    T, T_surface, tau, planck_source, surface_source, emissivity, weights, sigma,
+    diagnostics_level=0,
 ):
     """Multi-band, multi-g-point LW radiative transfer.
 
@@ -62,17 +63,28 @@ def lw_transport(
         emissivity: (nband, ncol) surface emissivity per band
         weights: (nband, ngpt) g-point quadrature weights
         sigma: Stefan-Boltzmann constant (unused, kept for interface consistency)
+        diagnostics_level: 0 (fluxes only), 1 (per-layer transmittance + per-gpoint fluxes)
 
     Returns:
-        up_band: (nband, nlev+1, ncol) per-band upward flux, W/m^2
-        down_band: (nband, nlev+1, ncol) per-band downward flux, W/m^2
-        up_broad: (nlev+1, ncol) broadband upward flux, W/m^2
-        down_broad: (nlev+1, ncol) broadband downward flux, W/m^2
+        If diagnostics_level == 0:
+            (up_band, down_band, up_broad, down_broad)
+        If diagnostics_level > 0:
+            (up_band, down_band, up_broad, down_broad, diagnostics_dict)
+            where diagnostics_dict contains:
+                transmittance: (nband, ngpt, nlev, ncol) per-layer diffuse transmittance
+                up_per_gpoint: (nband, ngpt, nlev+1, ncol) weighted upward flux per g-point
+                down_per_gpoint: (nband, ngpt, nlev+1, ncol) weighted downward flux per g-point
     """
+    DIFFUSIVITY_FACTOR = 1.66
     nband, ngpt, nlev, ncol = tau.shape
 
     up_band = np.zeros((nband, nlev + 1, ncol))
     down_band = np.zeros((nband, nlev + 1, ncol))
+
+    if diagnostics_level >= 1:
+        diag_trans = np.zeros((nband, ngpt, nlev, ncol))
+        diag_up_gpt = np.zeros((nband, ngpt, nlev + 1, ncol))
+        diag_dn_gpt = np.zeros((nband, ngpt, nlev + 1, ncol))
 
     for b in range(nband):
         for g in range(ngpt):
@@ -88,6 +100,16 @@ def lw_transport(
                 nlev,
                 ncol,
             )
+
+            if diagnostics_level >= 1:
+                for k in range(nlev):
+                    for i in range(ncol):
+                        diag_trans[b, g, k, i] = np.exp(
+                            -DIFFUSIVITY_FACTOR * tau[b, g, k, i]
+                        )
+                diag_up_gpt[b, g, :, :] = up_gpt * weights[b, g]
+                diag_dn_gpt[b, g, :, :] = down_gpt * weights[b, g]
+
             w = weights[b, g]
             for k in range(nlev + 1):
                 for i in range(ncol):
@@ -101,5 +123,13 @@ def lw_transport(
             for i in range(ncol):
                 up_broad[k, i] += up_band[b, k, i]
                 down_broad[k, i] += down_band[b, k, i]
+
+    if diagnostics_level >= 1:
+        diag = {
+            "transmittance": diag_trans,
+            "up_per_gpoint": diag_up_gpt,
+            "down_per_gpoint": diag_dn_gpt,
+        }
+        return up_band, down_band, up_broad, down_broad, diag
 
     return up_band, down_band, up_broad, down_broad

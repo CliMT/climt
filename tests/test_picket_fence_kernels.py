@@ -359,3 +359,53 @@ def test_sw_two_stream_diagnostics_level2():
     assert diag["Rdir"].shape == (nband, ngpt, nlev, ncol)
     assert diag["combined_albedo"].shape == (nband, ngpt, nlev + 1, ncol)
     assert diag["tau_delta"].shape == (nband, ngpt, nlev, ncol)
+
+
+def test_lw_transport_diagnostics_level0_unchanged():
+    """diagnostics_level=0 returns the same 4-tuple as before."""
+    from climt._components.picket_fence.lw.kernels import lw_transport
+
+    nlev, ncol, nband, ngpt = 5, 1, 2, 1
+    tau = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    sigma = 5.670374419e-8
+    T = 250.0 * np.ones((nlev, ncol))
+    T_surf = np.array([280.0])
+    planck_src = sigma * T[np.newaxis, np.newaxis, :, :] ** 4 * np.array([[0.6], [0.4]])[:, :, np.newaxis, np.newaxis]
+    surf_src = sigma * T_surf[np.newaxis, np.newaxis, :] ** 4 * np.array([[0.6], [0.4]])[:, :, np.newaxis]
+    emissivity = np.ones((nband, ncol))
+    weights = np.ones((nband, ngpt))
+
+    result = lw_transport(T, T_surf, tau, planck_src, surf_src, emissivity, weights, sigma,
+                          diagnostics_level=0)
+    assert len(result) == 4, "diagnostics_level=0 should return 4-tuple"
+
+
+def test_lw_transport_diagnostics_level1():
+    """diagnostics_level=1 returns per-layer transmittance and per-gpoint fluxes."""
+    from climt._components.picket_fence.lw.kernels import lw_transport
+
+    nlev, ncol, nband, ngpt = 5, 1, 2, 1
+    tau = 0.5 * np.ones((nband, ngpt, nlev, ncol))
+    sigma = 5.670374419e-8
+    T = 250.0 * np.ones((nlev, ncol))
+    T_surf = np.array([280.0])
+    planck_src = sigma * T[np.newaxis, np.newaxis, :, :] ** 4 * np.array([[0.6], [0.4]])[:, :, np.newaxis, np.newaxis]
+    surf_src = sigma * T_surf[np.newaxis, np.newaxis, :] ** 4 * np.array([[0.6], [0.4]])[:, :, np.newaxis]
+    emissivity = np.ones((nband, ncol))
+    weights = np.ones((nband, ngpt))
+
+    result = lw_transport(T, T_surf, tau, planck_src, surf_src, emissivity, weights, sigma,
+                          diagnostics_level=1)
+    assert len(result) == 5
+    _, _, _, _, diag = result
+
+    assert "transmittance" in diag
+    assert "up_per_gpoint" in diag
+    assert "down_per_gpoint" in diag
+
+    assert diag["transmittance"].shape == (nband, ngpt, nlev, ncol)
+    assert diag["up_per_gpoint"].shape == (nband, ngpt, nlev + 1, ncol)
+    assert diag["down_per_gpoint"].shape == (nband, ngpt, nlev + 1, ncol)
+
+    assert np.all(diag["transmittance"] >= 0)
+    assert np.all(diag["transmittance"] <= 1)
