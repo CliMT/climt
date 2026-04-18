@@ -1643,7 +1643,7 @@ git commit -m "feat(picket-fence): add correlated-k mode to PicketFenceShortwave
 
 Currently the Parmentier mode uses a hardcoded 1361/3 W/m^2 per band, and the correlated-k mode uses `solar_source_per_gpoint` from the table. Add an option to compute the Parmentier-mode solar flux from the loaded stellar spectrum integrated over equal-width visible bands, and use `integrate_spectrum_over_bands` for correlated-k tables that don't include `solar_source_per_gpoint`.
 
-- [ ] **Step 1: Write a test for stellar spectrum integration in the component**
+- [x] **Step 1: Write a test for stellar spectrum integration in the component**
 
 Add to `tests/test_picket_fence_sw.py`:
 
@@ -1664,12 +1664,12 @@ def test_picket_fence_sw_stellar_spectrum_loads():
     assert not np.allclose(flux, flux[0], rtol=0.01)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_picket_fence_sw.py::test_picket_fence_sw_stellar_spectrum_loads -v`
 Expected: FAIL (currently the stored flux is exactly 1361/3 per band)
 
-- [ ] **Step 3: Wire stellar spectrum loading into the SW component**
+- [x] **Step 3: Wire stellar spectrum loading into the SW component**
 
 In `sw/component.py`, modify `__init__` to load the spectrum when `stellar_spectrum` is provided:
 
@@ -1709,12 +1709,12 @@ With:
                 solar_flux_per_band = self._solar_flux_per_band
 ```
 
-- [ ] **Step 4: Run all SW tests**
+- [x] **Step 4: Run all SW tests**
 
 Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_picket_fence_sw.py -v`
 Expected: All PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_components/picket_fence/sw/component.py tests/test_picket_fence_sw.py
@@ -1728,7 +1728,7 @@ git commit -m "feat(picket-fence): wire stellar spectrum loading into SW compone
 **Files:**
 - Modify: `tests/test_picket_fence_integration.py`
 
-- [ ] **Step 1: Write integration tests**
+- [x] **Step 1: Write integration tests**
 
 Add to `tests/test_picket_fence_integration.py`:
 
@@ -1834,17 +1834,17 @@ def test_sw_scattering_increases_upward_flux():
     )
 ```
 
-- [ ] **Step 2: Run integration tests**
+- [x] **Step 2: Run integration tests**
 
 Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_picket_fence_integration.py -v`
 Expected: All PASS
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_picket_fence_kernels.py tests/test_picket_fence_optics.py tests/test_picket_fence_lw.py tests/test_picket_fence_sw.py tests/test_picket_fence_integration.py tests/test_picket_fence_stellar.py -v`
 Expected: All PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/test_picket_fence_integration.py

@@ -399,32 +399,30 @@ These are returned as a dictionary of arrays keyed by name. When `diagnostics_le
 
 This is the single most valuable pedagogical feature: it lets a student see *inside* the two-stream solve, which compiled Fortran codes cannot easily expose.
 
-#### 6.5.2 Single-column entry point
+#### 6.5.2 Component-level pedagogical diagnostics
 
-A thin wrapper function provides a simplified interface for interactive exploration:
+The primary pedagogical value of the picket-fence scheme is that it exposes the spectral physics that compiled codes hide: per-band optical depths, per-band transmittances, and per-band flux profiles. These let students see *why* the stratosphere cools (the window band is nearly transparent while the absorption band is opaque, so the stratosphere radiates more than it absorbs), and they can vary gas abundances and directly observe how optical depth changes — something rarely possible in full radiation codes.
 
-```python
-def sw_single_column(tau, ssa, g, zenith, albedo, solar_flux,
-                     diagnostics_level=0):
-    """Run the SW two-stream solver on a single column.
+Both `PicketFenceLongwave` and `PicketFenceShortwave` expose these quantities as standard diagnostics in their output dict, with no special flags required:
 
-    Args:
-        tau: (nlev,) extinction optical depth per layer
-        ssa: (nlev,) single scattering albedo per layer
-        g: (nlev,) asymmetry parameter per layer
-        zenith: solar zenith angle, radians (scalar)
-        albedo: surface albedo (scalar)
-        solar_flux: TOA solar flux, W/m^2 (scalar)
-        diagnostics_level: 0 (fluxes only), 1, or 2
+**LW additional diagnostics:**
 
-    Returns:
-        dict with 'flux_up', 'flux_down', 'flux_down_direct',
-        'heating_rate', and (if diagnostics_level > 0) intermediate
-        quantities.
-    """
-```
+| Quantity | Dims | Units | Description |
+|---|---|---|---|
+| `longwave_optical_depth_per_band` | mid_levels, \*, num_longwave_bands | dimensionless | Per-layer, per-band optical depth (tau) as computed by the optics function from gas abundances |
+| `longwave_transmittance_per_band` | mid_levels, \*, num_longwave_bands | dimensionless | Per-layer, per-band transmittance exp(-D·tau), where D=1.66 is the diffusivity factor |
+| `longwave_heating_rate_per_band` | mid_levels, \*, num_longwave_bands | degK day^-1 | Per-band contribution to the heating rate, so students can see which band drives cooling/warming at each level |
 
-An equivalent `lw_single_column` takes `(tau, T_layer, T_surface, emissivity)`. These wrappers handle the reshaping into `(nband=1, ngpt=1, nlev, ncol=1)` internally so that a student never has to think about band/gpoint/column dimensions when exploring single-profile behavior.
+**SW additional diagnostics:**
+
+| Quantity | Dims | Units | Description |
+|---|---|---|---|
+| `shortwave_optical_depth_per_band` | mid_levels, \*, num_shortwave_bands | dimensionless | Per-layer, per-band extinction optical depth |
+| `shortwave_heating_rate_per_band` | mid_levels, \*, num_shortwave_bands | degK day^-1 | Per-band contribution to the SW heating rate |
+
+These are always computed and returned — they add negligible cost since the tau arrays are already available inside `array_call` before being passed to the kernel. The per-band fluxes (`upwelling_longwave_flux_in_air_per_band`, etc.) are already in the standard output.
+
+Together with the existing per-band fluxes and the `diagnostics_level` kernel introspection, this gives students a complete spectral decomposition of the radiation budget at every level — the key ingredient for understanding why non-grey radiation matters and why stratospheric cooling is a spectral phenomenon.
 
 #### 6.5.3 Kernel function decomposition
 
@@ -432,9 +430,9 @@ The current decomposition into small, single-purpose functions (`_delta_scale`, 
 
 #### 6.5.4 Worked Jupyter notebooks
 
-Notebooks (in `examples/`) should import the kernel functions and single-column wrappers directly to walk through the algorithm step by step:
+Notebooks (in `examples/`) use the components directly to explore spectral radiation physics:
 
-- **`examples/two_stream_anatomy.ipynb`**: Run `sw_single_column` with `diagnostics_level=2` on a simple atmosphere. Plot the per-layer reflectance, transmittance, direct beam profile, and combined albedo. Show how the adding method assembles fluxes from these pieces.
+- **`examples/spectral_radiation_anatomy.ipynb`**: Run `PicketFenceLongwave` (correlated-k mode) on a realistic Earth temperature profile. Plot the per-band optical depth, per-band transmittance, and per-band flux profiles. Show that the window band is nearly transparent (transmittance close to 1 everywhere) while the absorption band is opaque (transmittance near zero in the lower troposphere). Use the per-band heating rates to demonstrate why the stratosphere cools: it emits in all bands but only absorbs in the opaque bands. Then double CO₂ and show how optical depth changes — making the "doubling CO₂" experiment concrete in optical depth space.
 - **`examples/k_distribution_demo.ipynb`**: Start from a line-by-line absorption spectrum, construct a k-distribution, and show that a 2-gpoint quadrature reproduces the broadband transmission. Connect this to the correlated-k tables used by the component.
 - **`examples/picket_fence_vs_rrtmg.ipynb`**: Compare picket-fence (Parmentier mode and correlated-k mode) against RRTMG for an Earth standard atmosphere, showing where the simplified scheme agrees and where it diverges.
 
@@ -463,7 +461,104 @@ Users compute these from orbital parameters (eccentricity, obliquity, longitude 
 
 ---
 
-## 8. Cloud Extensibility
+## 8. Atmospheric Properties: Multi-Planet Support
+
+### 8.1 Motivation
+
+Different planetary atmospheres require different physical constants: the molar mass of the bulk atmosphere, gas-specific molar masses for the absorbers that matter, gravitational acceleration, and so on. Hardcoding Earth values in component code prevents reuse for Mars, Titan, TRAPPIST-1 planets, or user-defined atmospheres.
+
+climt solves this by routing all atmosphere-dependent constants through sympl's constants dictionary. Components call `get_constant("molar_mass_of_dry_air", "g/mol")` rather than hardcoding 28.97. A dedicated API loads the full set of relevant constants for a named atmosphere in one call, replacing sympl's defaults.
+
+### 8.2 API
+
+```python
+import climt
+
+# Load Earth constants (default at import)
+climt.load_atmospheric_properties("earth")
+
+# Switch to Mars
+climt.load_atmospheric_properties("mars")
+
+# Restore previous state
+climt.reset_atmospheric_properties()
+
+# Load from a custom TOML file
+climt.load_atmospheric_properties("/path/to/my_atmosphere.toml")
+```
+
+`load_atmospheric_properties` takes a snapshot of the current sympl constants dictionary (deepcopy) before applying the new profile. `reset_atmospheric_properties` restores from that snapshot, reverting all changes made by the last load call.
+
+### 8.3 Profile format (TOML)
+
+Each profile is a TOML file containing every constant relevant to that atmosphere. Built-in profiles ship in `climt/_data/atmospheric_properties/`. The file name (without `.toml`) is the profile identifier.
+
+```toml
+# climt/_data/atmospheric_properties/earth.toml
+
+[planetary]
+gravitational_acceleration = { value = 9.80665, units = "m/s^2" }
+planetary_radius            = { value = 6371000.0, units = "m" }
+planetary_rotation_rate     = { value = 7.292e-05, units = "s^-1" }
+
+[bulk_atmosphere]
+molar_mass_of_dry_air                          = { value = 28.970, units = "g/mol" }
+gas_constant_of_dry_air                        = { value = 287.0,  units = "J/kg/K" }
+heat_capacity_of_dry_air_at_constant_pressure  = { value = 1004.64, units = "J/kg/K" }
+
+[gas_species]
+molar_mass_of_water_vapor      = { value = 18.015, units = "g/mol" }
+molar_mass_of_carbon_dioxide   = { value = 44.010, units = "g/mol" }
+molar_mass_of_ozone            = { value = 47.998, units = "g/mol" }
+molar_mass_of_methane          = { value = 16.043, units = "g/mol" }
+molar_mass_of_nitrous_oxide    = { value = 44.013, units = "g/mol" }
+```
+
+A Mars profile would set `gravitational_acceleration = 3.721 m/s^2`, `molar_mass_of_dry_air = 43.34 g/mol` (CO2-dominated), and omit water vapour or include it at lower priority. There is no requirement that profiles cover the same set of keys — each profile declares only the constants relevant to its atmosphere.
+
+### 8.4 Fail-fast with helpful errors
+
+If a component calls `get_constant` for a key not present in the loaded profile (e.g., requesting `molar_mass_of_water_vapor` on a dry Mars run), sympl raises a `KeyError`. climt wraps this in a more informative error:
+
+```
+ConstantNotFoundError: 'molar_mass_of_water_vapor' is not set in the current
+atmospheric profile. To add it, either:
+  1. Add it to your profile TOML under [gas_species]:
+       molar_mass_of_water_vapor = { value = 18.015, units = "g/mol" }
+  2. Set it directly: climt.set_constant("molar_mass_of_water_vapor", 18.015, "g/mol")
+Current profile: mars (climt/_data/atmospheric_properties/mars.toml)
+```
+
+### 8.5 Built-in profiles
+
+| Profile name | Description |
+|---|---|
+| `earth` | Earth standard atmosphere (loaded by default at `import climt`) |
+| `mars` | Mars CO2-dominated atmosphere |
+| `titan` | Titan N2/CH4 atmosphere |
+| `hot_jupiter` | Generic H2/He-dominated hot Jupiter |
+| `trappist1e` | TRAPPIST-1e estimated atmosphere |
+
+### 8.6 File organization addition
+
+```
+climt/
+  _data/
+    atmospheric_properties/
+      earth.toml
+      mars.toml
+      titan.toml
+      hot_jupiter.toml
+      trappist1e.toml
+  _core/
+    atmospheric_properties.py   # load_atmospheric_properties, reset_atmospheric_properties
+```
+
+`atmospheric_properties.py` exposes `load_atmospheric_properties` and `reset_atmospheric_properties` at the top-level `climt` namespace alongside the existing component exports.
+
+---
+
+## 9. Cloud Extensibility
 
 Clouds contribute additional optical depth per layer per band. The input property `longwave_optical_thickness_due_to_cloud` (and the SW equivalent) defaults to zero and is added to the gas optical depth before the solver:
 
@@ -477,7 +572,7 @@ A future cloud optics component would fill these arrays. No changes to the radia
 
 ---
 
-## 9. File Organization
+## 10. File Organization
 
 ```
 climt/
@@ -517,7 +612,7 @@ climt/
 
 ---
 
-## 10. Table Generation Workflow (External)
+## 11. Table Generation Workflow (External)
 
 Table generation is not part of climt. It uses `linepyline` (GPL-3.0) and lives in a separate repository or in `linepyline`'s examples.
 
@@ -541,7 +636,7 @@ Table generation is not part of climt. It uses `linepyline` (GPL-3.0) and lives 
 
 ---
 
-## 11. Documentation Requirements
+## 12. Documentation Requirements
 
 The documentation for this component should be detailed and instructive, serving as a teaching resource for students learning radiative transfer. Topics to cover:
 
@@ -557,11 +652,13 @@ The documentation for this component should be detailed and instructive, serving
 
 6. **Two-stream approximation.** The Meador & Weaver (1980) formulation, what the Eddington approximation is, when it's accurate (~2% for grey, ~4% for non-grey per Parmentier et al. 2015).
 
-7. **Worked examples.** Jupyter notebooks as described in Section 6.5.4: two-stream anatomy with intermediate diagnostics, k-distribution construction from line-by-line, and picket-fence vs. RRTMG comparison. Additional scenarios: Earth RCE with CO2 doubling, Hot Jupiter T-p profile comparison between Parmentier and correlated-k modes, Mars greenhouse effect.
+7. **Worked examples.** Jupyter notebooks as described in Section 6.5.4: spectral radiation anatomy with per-band diagnostics (optical depth, transmittance, heating rates), k-distribution construction from line-by-line, and picket-fence vs. RRTMG comparison. Additional scenarios: Earth RCE with CO2 doubling, Hot Jupiter T-p profile comparison between Parmentier and correlated-k modes, Mars greenhouse effect.
+
+8. **Switching planetary atmospheres.** How to use `load_atmospheric_properties` and `reset_atmospheric_properties`. Cover: (a) the built-in profiles and what each sets, (b) how to write a custom TOML profile — document every valid key, the `{ value, units }` format, and which keys are required vs. optional for each component, (c) what happens when a required constant is missing (the error message and how to fix it), (d) worked examples: running the same RCE model for Earth then Mars in the same session, and defining a novel exoplanet atmosphere from scratch.
 
 ---
 
-## 12. Validation Strategy
+## 13. Validation Strategy
 
 ### 12.1 Against existing climt components
 
@@ -586,7 +683,7 @@ The documentation for this component should be detailed and instructive, serving
 
 ---
 
-## 13. Performance Targets
+## 14. Performance Targets
 
 | Configuration | Mode | Target |
 |---|---|---|
@@ -597,7 +694,7 @@ The documentation for this component should be detailed and instructive, serving
 
 ---
 
-## 14. References
+## 15. References
 
 - Parmentier, V. & Guillot, T. (2014). A non-grey analytical model for irradiated atmospheres. I. Derivation. A&A 562, A133.
 - Parmentier, V., Guillot, T., Fortney, J. J., & Marley, M. S. (2015). A non-grey analytical model for irradiated atmospheres. II. Analytical vs. numerical solutions. A&A 574, A35.

@@ -2,7 +2,14 @@
 import numpy as np
 from sympl import TendencyComponent, get_constant
 
-from ..common import compute_column_amount, compute_heating_rate, njit, prange
+from ..common import (
+    MOLAR_MASS,
+    MOLAR_MASS_DRY_AIR,
+    compute_column_amount,
+    compute_heating_rate,
+    njit,
+    prange,
+)
 from ..optics.parmentier import (
     compute_rosseland_mean_opacity,
     load_freedman2014_coefficients,
@@ -174,11 +181,11 @@ class PicketFenceShortwave(TendencyComponent):
         albedo_flat = state["albedo"].reshape(-1)
         ncol = T_flat.shape[1]
 
-        sigma = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
         g_const = get_constant("gravitational_acceleration", "m/s^2")
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
         if self._optics_mode == "parmentier":
+            sigma = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
             nband = self._num_bands
             ngpt = 1
 
@@ -203,23 +210,13 @@ class PicketFenceShortwave(TendencyComponent):
             weights = np.ones((nband, ngpt))
 
         elif self._optics_mode == "correlated_k":
-            _MOLAR_MASS = {
-                "h2o": 18.015,
-                "co2": 44.010,
-                "o3": 47.998,
-                "ch4": 16.043,
-                "n2o": 44.013,
-                "o2": 31.998,
-            }
-            _M_AIR = 28.970
-
             ngas = len(self._gas_names)
             gas_amounts = np.zeros((ngas, nlev, ncol))
             for ig, gas in enumerate(self._gas_names):
                 q_gas_flat = state[gas].reshape(nlev, -1)
                 if gas != "h2o":
-                    M_gas = _MOLAR_MASS.get(gas, _M_AIR)
-                    q_gas_flat = q_gas_flat * (M_gas / _M_AIR)
+                    M_gas = MOLAR_MASS.get(gas, MOLAR_MASS_DRY_AIR)
+                    q_gas_flat = q_gas_flat * (M_gas / MOLAR_MASS_DRY_AIR)
                 gas_amounts[ig, :, :] = compute_column_amount(
                     q_gas_flat, p_int_flat, g_const
                 )
@@ -258,6 +255,10 @@ class PicketFenceShortwave(TendencyComponent):
             if ngpt == self._solar_source.shape[1]:
                 solar_flux = self._solar_source * earth_sun_factor
             else:
+                # TODO: ESFT expands g-points as the outer product across gases.
+                # The solar source should be replicated per original g-point index,
+                # not cycled with %. Replace with a proper mapping once ESFT solar
+                # distribution is specified.
                 ngpt_orig = self._solar_source.shape[1]
                 solar_flux = np.zeros((nband, ngpt))
                 for b in range(nband):

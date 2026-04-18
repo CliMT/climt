@@ -1,7 +1,14 @@
 import numpy as np
 from sympl import TendencyComponent, get_constant
 
-from ..common import compute_column_amount, compute_heating_rate, njit, prange
+from ..common import (
+    MOLAR_MASS,
+    MOLAR_MASS_DRY_AIR,
+    compute_column_amount,
+    compute_heating_rate,
+    njit,
+    prange,
+)
 from ..optics.parmentier import (
     compute_rosseland_mean_opacity,
     compute_thermal_opacities,
@@ -177,26 +184,14 @@ class PicketFenceLongwave(TendencyComponent):
             )
             weights = np.ones((tau.shape[0], tau.shape[1]))
         elif self._optics_mode == "correlated_k":
-            # Molar masses (g/mol) for unit conversion from mole fraction to kg/kg.
-            # H2O is already kg/kg (specific humidity); others are mole fractions.
-            _MOLAR_MASS = {
-                "h2o": 18.015,
-                "co2": 44.010,
-                "o3": 47.998,
-                "ch4": 16.043,
-                "n2o": 44.013,
-                "o2": 31.998,
-            }
-            _M_AIR = 28.970  # g/mol dry air
-
             ngas = len(self._gas_names)
             gas_amounts = np.zeros((ngas, nlev, ncol))
             for ig, gas in enumerate(self._gas_names):
                 q_gas_flat = state[gas].reshape(nlev, -1)
                 # Convert mole fraction → mass mixing ratio (kg/kg) for non-H2O gases
                 if gas != "h2o":
-                    M_gas = _MOLAR_MASS.get(gas, _M_AIR)  # unknown gas: assume ~air
-                    q_gas_flat = q_gas_flat * (M_gas / _M_AIR)
+                    M_gas = MOLAR_MASS.get(gas, MOLAR_MASS_DRY_AIR)
+                    q_gas_flat = q_gas_flat * (M_gas / MOLAR_MASS_DRY_AIR)
                 gas_amounts[ig, :, :] = compute_column_amount(q_gas_flat, p_int_flat, g)
 
             tau, planck_src, surf_src, weights = self._correlated_k_optics(
@@ -377,3 +372,4 @@ class PicketFenceLongwave(TendencyComponent):
                         planck_src[ib, igp, k, icol] = frac_l * layer_planck
 
         return tau_raw, planck_src, surf_src, weights
+

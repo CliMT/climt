@@ -3,6 +3,19 @@ import numpy as np
 
 from ..._core.backend import prange
 
+# Molar masses (g/mol) for unit conversion between mole fraction and mass mixing ratio.
+# H2O is supplied as specific humidity (kg/kg) and does not need conversion.
+# All other gases come in as mole fractions and are multiplied by M_gas / M_AIR.
+MOLAR_MASS_DRY_AIR = 28.970  # g/mol
+MOLAR_MASS = {
+    "h2o": 18.015,
+    "co2": 44.010,
+    "o3": 47.998,
+    "ch4": 16.043,
+    "n2o": 44.013,
+    "o2": 31.998,
+}
+
 try:
     from numba import njit
 
