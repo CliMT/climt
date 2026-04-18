@@ -32,10 +32,13 @@ from ._core import (
     get_grid,
     get_interface_values,
     list_available_constants,
+    load_atmospheric_properties,
+    reset_atmospheric_properties,
     mass_to_volume_mixing_ratio,
     numpy_version_of,
     set_constants_from_dict,
 )
+
 
 sympl.set_constant("top_of_model_pressure", 20.0, "Pa")
 
@@ -46,7 +49,10 @@ __all__ = (
     numpy_version_of,
     get_interface_values,
     list_available_constants,
+    load_atmospheric_properties,
+    reset_atmospheric_properties,
     set_constants_from_dict,
+
     bolton_q_sat,
     bolton_dqsat_dT,
     calculate_q_sat,
