@@ -130,7 +130,24 @@ class PicketFenceShortwave(TendencyComponent):
                     "units": units,
                     "alias": gas,
                 }
+        # Cloud optical properties for SW (default zero = clear sky)
+        props["shortwave_optical_thickness_due_to_cloud"] = {
+            "dims": ["mid_levels", "*", "num_shortwave_bands"],
+            "units": "dimensionless",
+            "alias": "tau_cloud",
+        }
+        props["single_scattering_albedo_due_to_cloud"] = {
+            "dims": ["mid_levels", "*", "num_shortwave_bands"],
+            "units": "dimensionless",
+            "alias": "ssa_cloud",
+        }
+        props["cloud_asymmetry_parameter"] = {
+            "dims": ["mid_levels", "*", "num_shortwave_bands"],
+            "units": "dimensionless",
+            "alias": "g_cloud",
+        }
         return props
+
 
     @property
     def tendency_properties(self):
@@ -278,9 +295,43 @@ class PicketFenceShortwave(TendencyComponent):
         else:
             raise NotImplementedError
 
+        # Combine gas and cloud optical properties
+        nband_cur = tau.shape[0]
+        tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband_cur)
+        ssa_cloud_flat = state["ssa_cloud"].reshape(nlev, ncol, nband_cur)
+        g_cloud_flat = state["g_cloud"].reshape(nlev, ncol, nband_cur)
+
+        # Rearrange cloud arrays to (nband, nlev, ncol) then broadcast over ngpt
+        tau_c = tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]  # (nband, 1, nlev, ncol)
+        ssa_c = ssa_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+        g_c = g_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+
+        # Combined optical properties (gas + cloud):
+        # tau_total = tau_gas + tau_cloud
+        # ssa_total = (tau_gas * ssa_gas + tau_cloud * ssa_cloud) / tau_total
+        # g_total = (tau_gas * ssa_gas * g_gas + tau_cloud * ssa_cloud * g_cloud) / (tau_total * ssa_total)
+        tau_total = tau + tau_c
+        scat_gas = tau * ssa
+        scat_cloud = tau_c * ssa_c
+        scat_total = scat_gas + scat_cloud
+        ssa_total = np.divide(
+            scat_total, tau_total, out=np.zeros_like(tau_total), where=tau_total > 0
+        )
+        g_total = np.divide(
+            (scat_gas * asym + scat_cloud * g_c),
+            scat_total,
+            out=np.zeros_like(scat_total),
+            where=scat_total > 0,
+        )
+        tau = tau_total
+        ssa = ssa_total
+        asym = g_total
+
+
         up_band, down_band, up_broad, down_broad = sw_two_stream(
             tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights
         )
+
 
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g_const, cpd)
