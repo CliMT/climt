@@ -159,6 +159,14 @@ class PicketFenceShortwave(TendencyComponent):
                 "dims": ["mid_levels", "*"],
                 "units": "degK day^-1",
             },
+            "shortwave_optical_depth_per_band": {
+                "dims": ["mid_levels", "*", "num_shortwave_bands"],
+                "units": "dimensionless",
+            },
+            "shortwave_heating_rate_per_band": {
+                "dims": ["mid_levels", "*", "num_shortwave_bands"],
+                "units": "degK day^-1",
+            },
         }
 
     @property
@@ -277,6 +285,20 @@ class PicketFenceShortwave(TendencyComponent):
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g_const, cpd)
 
+        # Per-band optical depth: sum over g-points (weighted)
+        tau_band = np.zeros((nband, nlev, ncol))
+        for b in range(nband):
+            for g_pt in range(ngpt):
+                tau_band[b] += weights[b, g_pt] * tau[b, g_pt]
+        tau_band_out = np.moveaxis(tau_band, 0, -1).reshape(orig_shape_T + (nband,))
+
+        # Per-band heating rate from per-band net flux divergence
+        hr_band = np.zeros((nband, nlev, ncol))
+        for b in range(nband):
+            net_band = up_band[b] - down_band[b]
+            hr_band[b] = compute_heating_rate(net_band, p_int_flat, g_const, cpd) * 86400.0
+        hr_band_out = np.moveaxis(hr_band, 0, -1).reshape(orig_shape_T + (nband,))
+
         tendency = heating_rate.reshape(orig_shape_T)
         up_broad_out = up_broad.reshape(orig_shape_pint)
         down_broad_out = down_broad.reshape(orig_shape_pint)
@@ -295,6 +317,8 @@ class PicketFenceShortwave(TendencyComponent):
                 "upwelling_shortwave_flux_in_air_per_band": up_band_out,
                 "downwelling_shortwave_flux_in_air_per_band": down_band_out,
                 "shortwave_heating_rate": heating_kday,
+                "shortwave_optical_depth_per_band": tau_band_out,
+                "shortwave_heating_rate_per_band": hr_band_out,
             },
         )
 

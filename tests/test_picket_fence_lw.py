@@ -127,3 +127,53 @@ def test_picket_fence_lw_correlated_k_per_band_sum():
     up_band = diagnostics["upwelling_longwave_flux_in_air_per_band"].values
     up_broad = diagnostics["upwelling_longwave_flux_in_air"].values
     np.testing.assert_allclose(up_band.sum(axis=-1), up_broad, rtol=1e-10)
+
+
+def test_lw_per_band_optical_depth_diagnostics():
+    """LW component returns per-band optical depth and transmittance."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceLongwave
+    import sympl
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    lw = PicketFenceLongwave(optics="parmentier")
+    grid = get_grid(nx=1, ny=1, nz=30)
+    state = get_default_state([lw], grid_state=grid)
+
+    tend, diag = lw(state)
+    assert "longwave_optical_depth_per_band" in diag
+    assert "longwave_transmittance_per_band" in diag
+    assert "longwave_heating_rate_per_band" in diag
+
+    tau = diag["longwave_optical_depth_per_band"].values
+    trans = diag["longwave_transmittance_per_band"].values
+
+    # Optical depth must be non-negative
+    assert np.all(tau >= 0)
+    # Transmittance must be in [0, 1]
+    assert np.all(trans >= 0)
+    assert np.all(trans <= 1)
+    # Transmittance should be consistent with optical depth (exp(-D*tau))
+    D = 1.66
+    expected_trans = np.exp(-D * tau)
+    np.testing.assert_allclose(trans, expected_trans, rtol=1e-10)
+
+
+def test_lw_per_band_heating_rate_sums_to_broadband():
+    """Per-band heating rates should sum to the broadband heating rate."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceLongwave
+    import sympl
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    lw = PicketFenceLongwave(optics="parmentier")
+    grid = get_grid(nx=1, ny=1, nz=30)
+    state = get_default_state([lw], grid_state=grid)
+
+    tend, diag = lw(state)
+    hr_broad = diag["longwave_heating_rate"].values
+    hr_band = diag["longwave_heating_rate_per_band"].values
+    # Sum over band dimension (last axis)
+    hr_band_sum = hr_band.sum(axis=-1)
+    np.testing.assert_allclose(hr_band_sum, hr_broad, rtol=1e-10)
+

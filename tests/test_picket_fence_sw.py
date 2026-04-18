@@ -165,3 +165,43 @@ def test_picket_fence_sw_stellar_spectrum_loads():
     np.testing.assert_allclose(flux.sum(), 1361.0, rtol=0.05)
     # Bands should NOT be exactly equal (spectrum is non-uniform)
     assert not np.allclose(flux, flux[0], rtol=0.01)
+
+
+def test_sw_per_band_optical_depth_diagnostics():
+    """SW component returns per-band optical depth."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+    import sympl
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    sw = PicketFenceShortwave(optics="parmentier")
+    grid = get_grid(nx=1, ny=1, nz=30)
+    state = get_default_state([sw], grid_state=grid)
+    state["zenith_angle"].values[:] = np.pi / 4
+
+    tend, diag = sw(state)
+    assert "shortwave_optical_depth_per_band" in diag
+    assert "shortwave_heating_rate_per_band" in diag
+
+    tau = diag["shortwave_optical_depth_per_band"].values
+    assert np.all(tau >= 0)
+
+
+def test_sw_per_band_heating_rate_sums_to_broadband():
+    """Per-band SW heating rates should sum to the broadband heating rate."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+    import sympl
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    sw = PicketFenceShortwave(optics="parmentier")
+    grid = get_grid(nx=1, ny=1, nz=30)
+    state = get_default_state([sw], grid_state=grid)
+    state["zenith_angle"].values[:] = np.pi / 4
+
+    tend, diag = sw(state)
+    hr_broad = diag["shortwave_heating_rate"].values
+    hr_band = diag["shortwave_heating_rate_per_band"].values
+    hr_band_sum = hr_band.sum(axis=-1)
+    np.testing.assert_allclose(hr_band_sum, hr_broad, rtol=1e-10)
+

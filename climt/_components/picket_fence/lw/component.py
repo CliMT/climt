@@ -143,6 +143,18 @@ class PicketFenceLongwave(TendencyComponent):
                 "dims": ["mid_levels", "*"],
                 "units": "degK day^-1",
             },
+            "longwave_optical_depth_per_band": {
+                "dims": ["mid_levels", "*", "num_longwave_bands"],
+                "units": "dimensionless",
+            },
+            "longwave_transmittance_per_band": {
+                "dims": ["mid_levels", "*", "num_longwave_bands"],
+                "units": "dimensionless",
+            },
+            "longwave_heating_rate_per_band": {
+                "dims": ["mid_levels", "*", "num_longwave_bands"],
+                "units": "degK day^-1",
+            },
         }
 
     @property
@@ -225,6 +237,25 @@ class PicketFenceLongwave(TendencyComponent):
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g, cpd)
 
+        # Per-band optical depth: sum over g-points (weighted)
+        # tau shape: (nband, ngpt, nlev, ncol)
+        D = 1.66  # diffusivity factor
+        tau_band = np.zeros((nband, nlev, ncol))
+        for b in range(nband):
+            for g_pt in range(ngpt):
+                tau_band[b] += weights[b, g_pt] * tau[b, g_pt]
+        tau_band_out = np.moveaxis(tau_band, 0, -1).reshape(orig_shape_T + (nband,))
+
+        trans_band = np.exp(-D * tau_band)
+        trans_band_out = np.moveaxis(trans_band, 0, -1).reshape(orig_shape_T + (nband,))
+
+        # Per-band heating rate from per-band net flux divergence
+        hr_band = np.zeros((nband, nlev, ncol))
+        for b in range(nband):
+            net_band = up_band[b] - down_band[b]  # (nlev+1, ncol)
+            hr_band[b] = compute_heating_rate(net_band, p_int_flat, g, cpd) * 86400.0
+        hr_band_out = np.moveaxis(hr_band, 0, -1).reshape(orig_shape_T + (nband,))
+
         # Reshape outputs
         tendency = heating_rate.reshape(orig_shape_T)
         up_broad_out = up_broad.reshape(orig_shape_pint)
@@ -246,6 +277,9 @@ class PicketFenceLongwave(TendencyComponent):
                 "upwelling_longwave_flux_in_air_per_band": up_band_out,
                 "downwelling_longwave_flux_in_air_per_band": down_band_out,
                 "longwave_heating_rate": heating_rate_kday,
+                "longwave_optical_depth_per_band": tau_band_out,
+                "longwave_transmittance_per_band": trans_band_out,
+                "longwave_heating_rate_per_band": hr_band_out,
             },
         )
 
