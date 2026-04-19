@@ -148,7 +148,6 @@ class PicketFenceShortwave(TendencyComponent):
         }
         return props
 
-
     @property
     def tendency_properties(self):
         return {"air_temperature": {"units": "degK s^-1"}}
@@ -327,11 +326,9 @@ class PicketFenceShortwave(TendencyComponent):
         ssa = ssa_total
         asym = g_total
 
-
         up_band, down_band, up_broad, down_broad = sw_two_stream(
             tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights
         )
-
 
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g_const, cpd)

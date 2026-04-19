@@ -171,8 +171,6 @@ def test_sw_per_band_optical_depth_diagnostics():
     """SW component returns per-band optical depth."""
     from climt import get_default_state, get_grid
     from climt._components.picket_fence import PicketFenceShortwave
-    import sympl
-    sympl.set_backend(sympl.DataArrayBackend())
 
     sw = PicketFenceShortwave(optics="parmentier")
     grid = get_grid(nx=1, ny=1, nz=30)
@@ -191,8 +189,6 @@ def test_sw_per_band_heating_rate_sums_to_broadband():
     """Per-band SW heating rates should sum to the broadband heating rate."""
     from climt import get_default_state, get_grid
     from climt._components.picket_fence import PicketFenceShortwave
-    import sympl
-    sympl.set_backend(sympl.DataArrayBackend())
 
     sw = PicketFenceShortwave(optics="parmentier")
     grid = get_grid(nx=1, ny=1, nz=30)
@@ -210,8 +206,6 @@ def test_sw_parmentier_cloud_increases_reflection():
     """Adding cloud optical depth in SW increases upwelling flux."""
     from climt import get_default_state, get_grid
     from climt._components.picket_fence import PicketFenceShortwave
-    import sympl
-    sympl.set_backend(sympl.DataArrayBackend())
 
     sw = PicketFenceShortwave(optics="parmentier")
     grid = get_grid(nx=1, ny=1, nz=30)
@@ -241,3 +235,62 @@ def test_sw_parmentier_cloud_increases_reflection():
     )
 
 
+def test_sw_correlated_k_cloud_increases_reflection():
+    """Adding cloud optical depth in correlated-k SW mode increases upwelling flux."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sw = PicketFenceShortwave(optics="correlated_k", table="test_2band_sw")
+    grid = get_grid(nx=1, ny=1, nz=20)
+    state = get_default_state([sw], grid_state=grid)
+    state["zenith_angle"].values[:] = np.pi / 4
+
+    # Clear sky
+    tend_clear, diag_clear = sw(state)
+
+    # Cloudy: add a scattering cloud in the middle of the atmosphere
+    nlev = state["air_temperature"].shape[0]
+    cloud_tau = state["shortwave_optical_thickness_due_to_cloud"].values.copy()
+    cloud_tau[nlev // 2, :, :] = 5.0
+    state["shortwave_optical_thickness_due_to_cloud"].values[:] = cloud_tau
+
+    cloud_ssa = state["single_scattering_albedo_due_to_cloud"].values.copy()
+    cloud_ssa[nlev // 2, :, :] = 0.99
+    state["single_scattering_albedo_due_to_cloud"].values[:] = cloud_ssa
+
+    tend_cloud, diag_cloud = sw(state)
+
+    up_clear = diag_clear["upwelling_shortwave_flux_in_air"].values[-1, :]
+    up_cloud = diag_cloud["upwelling_shortwave_flux_in_air"].values[-1, :]
+    assert np.all(up_cloud > up_clear), (
+        f"Cloud should increase TOA upwelling in CK mode: clear={up_clear}, cloudy={up_cloud}"
+    )
+
+
+def test_sw_cloud_increases_per_band_tau():
+    """Adding cloud should increase shortwave_optical_depth_per_band in the cloudy layer."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sw = PicketFenceShortwave(optics="parmentier")
+    grid = get_grid(nx=1, ny=1, nz=30)
+    state = get_default_state([sw], grid_state=grid)
+    state["zenith_angle"].values[:] = np.pi / 4
+
+    _, diag_clear = sw(state)
+    tau_clear = diag_clear["shortwave_optical_depth_per_band"].values.copy()
+
+    nlev = state["air_temperature"].shape[0]
+    cloud_layer = nlev // 2
+    cloud_tau = state["shortwave_optical_thickness_due_to_cloud"].values.copy()
+    cloud_tau[cloud_layer, :, :] = 2.0
+    state["shortwave_optical_thickness_due_to_cloud"].values[:] = cloud_tau
+
+    _, diag_cloud = sw(state)
+    tau_cloud = diag_cloud["shortwave_optical_depth_per_band"].values
+
+    # Per-band tau in the cloudy layer must be larger than clear-sky tau
+    assert np.all(tau_cloud[cloud_layer] > tau_clear[cloud_layer]), (
+        "Cloud optical depth should increase shortwave_optical_depth_per_band "
+        "in the cloudy layer"
+    )

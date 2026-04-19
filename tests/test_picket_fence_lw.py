@@ -133,8 +133,6 @@ def test_lw_per_band_optical_depth_diagnostics():
     """LW component returns per-band optical depth and transmittance."""
     from climt import get_default_state, get_grid
     from climt._components.picket_fence import PicketFenceLongwave
-    import sympl
-    sympl.set_backend(sympl.DataArrayBackend())
 
     lw = PicketFenceLongwave(optics="parmentier")
     grid = get_grid(nx=1, ny=1, nz=30)
@@ -163,8 +161,6 @@ def test_lw_per_band_heating_rate_sums_to_broadband():
     """Per-band heating rates should sum to the broadband heating rate."""
     from climt import get_default_state, get_grid
     from climt._components.picket_fence import PicketFenceLongwave
-    import sympl
-    sympl.set_backend(sympl.DataArrayBackend())
 
     lw = PicketFenceLongwave(optics="parmentier")
     grid = get_grid(nx=1, ny=1, nz=30)
@@ -176,4 +172,3 @@ def test_lw_per_band_heating_rate_sums_to_broadband():
     # Sum over band dimension (last axis)
     hr_band_sum = hr_band.sum(axis=-1)
     np.testing.assert_allclose(hr_band_sum, hr_broad, rtol=1e-10)
-
