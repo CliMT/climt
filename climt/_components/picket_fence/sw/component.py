@@ -73,6 +73,7 @@ class PicketFenceShortwave(TendencyComponent):
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
+        self._diagnostics_level = kwargs.pop("diagnostics_level", 0)
         from climt._core.initialization import set_num_shortwave_bands
 
         set_num_shortwave_bands(self._num_bands)
@@ -154,7 +155,7 @@ class PicketFenceShortwave(TendencyComponent):
 
     @property
     def diagnostic_properties(self):
-        return {
+        props = {
             "upwelling_shortwave_flux_in_air": {
                 "dims": ["interface_levels", "*"],
                 "units": "W m^-2",
@@ -184,6 +185,23 @@ class PicketFenceShortwave(TendencyComponent):
                 "units": "degK day^-1",
             },
         }
+        if self._diagnostics_level >= 1:
+            _layer_band = {"dims": ["mid_levels", "*", "num_shortwave_bands"], "units": "dimensionless"}
+            _iface_band = {"dims": ["interface_levels", "*", "num_shortwave_bands"], "units": "W m^-2"}
+            props["sw_layer_diffuse_reflectance"] = _layer_band
+            props["sw_layer_diffuse_transmittance"] = _layer_band
+            props["sw_layer_direct_transmittance"] = _layer_band
+            props["sw_direct_beam_profile"] = _iface_band
+        if self._diagnostics_level >= 2:
+            _layer_band = {"dims": ["mid_levels", "*", "num_shortwave_bands"], "units": "dimensionless"}
+            _iface_band_dl = {"dims": ["interface_levels", "*", "num_shortwave_bands"], "units": "dimensionless"}
+            props["sw_layer_direct_reflectance"] = _layer_band
+            props["sw_layer_direct_source_transmittance"] = _layer_band
+            props["sw_combined_albedo"] = _iface_band_dl
+            props["sw_delta_scaled_optical_depth"] = _layer_band
+            props["sw_delta_scaled_ssa"] = _layer_band
+            props["sw_delta_scaled_asymmetry"] = _layer_band
+        return props
 
     @property
     def num_shortwave_bands(self):
@@ -326,9 +344,14 @@ class PicketFenceShortwave(TendencyComponent):
         ssa = ssa_total
         asym = g_total
 
-        up_band, down_band, up_broad, down_broad = sw_two_stream(
-            tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights
+        result = sw_two_stream(
+            tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights,
+            diagnostics_level=self._diagnostics_level,
         )
+        if self._diagnostics_level > 0:
+            up_band, down_band, up_broad, down_broad, kernel_diag = result
+        else:
+            up_band, down_band, up_broad, down_broad = result
 
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g_const, cpd)
@@ -357,18 +380,53 @@ class PicketFenceShortwave(TendencyComponent):
             orig_shape_pint + (nband,)
         )
 
-        return (
-            {"T": tendency},
-            {
-                "upwelling_shortwave_flux_in_air": up_broad_out,
-                "downwelling_shortwave_flux_in_air": down_broad_out,
-                "upwelling_shortwave_flux_in_air_per_band": up_band_out,
-                "downwelling_shortwave_flux_in_air_per_band": down_band_out,
-                "shortwave_heating_rate": heating_kday,
-                "shortwave_optical_depth_per_band": tau_band_out,
-                "shortwave_heating_rate_per_band": hr_band_out,
-            },
-        )
+        diagnostics = {
+            "upwelling_shortwave_flux_in_air": up_broad_out,
+            "downwelling_shortwave_flux_in_air": down_broad_out,
+            "upwelling_shortwave_flux_in_air_per_band": up_band_out,
+            "downwelling_shortwave_flux_in_air_per_band": down_band_out,
+            "shortwave_heating_rate": heating_kday,
+            "shortwave_optical_depth_per_band": tau_band_out,
+            "shortwave_heating_rate_per_band": hr_band_out,
+        }
+        if self._diagnostics_level > 0:
+            # Reshape kernel diagnostics to sympl-compatible shapes.
+            # Kernel arrays are (nband, ngpt, nlev, ncol) or (nband, ngpt, nlev+1, ncol).
+            # Compute g-point weighted average to get (nband, nlev[+1], ncol),
+            # then move band axis to last position for sympl convention.
+            w_sum = weights.sum(axis=1)  # (nband,)
+
+            def _avg_layer(arr):
+                # arr: (nband, ngpt, nlev, ncol) → (nband, nlev, ncol) → sympl shape
+                avg = np.einsum("bgnc,bg->bnc", arr, weights) / w_sum[:, None, None]
+                return np.moveaxis(avg, 0, -1).reshape(orig_shape_T + (nband,))
+
+            def _sum_iface(arr):
+                # arr: (nband, ngpt, nlev+1, ncol) → sum over g → (nband, nlev+1, ncol)
+                s = arr.sum(axis=1)
+                return np.moveaxis(s, 0, -1).reshape(orig_shape_pint + (nband,))
+
+            _LAYER_KEYS = {
+                "Rdif": "sw_layer_diffuse_reflectance",
+                "Tdif": "sw_layer_diffuse_transmittance",
+                "Tnoscat": "sw_layer_direct_transmittance",
+                "Rdir": "sw_layer_direct_reflectance",
+                "Tdir": "sw_layer_direct_source_transmittance",
+                "tau_delta": "sw_delta_scaled_optical_depth",
+                "ssa_delta": "sw_delta_scaled_ssa",
+                "g_delta": "sw_delta_scaled_asymmetry",
+            }
+            _IFACE_KEYS = {
+                "direct_beam_flux": "sw_direct_beam_profile",
+                "combined_albedo": "sw_combined_albedo",
+            }
+            for kkey, cname in _LAYER_KEYS.items():
+                if kkey in kernel_diag:
+                    diagnostics[cname] = _avg_layer(kernel_diag[kkey])
+            for kkey, cname in _IFACE_KEYS.items():
+                if kkey in kernel_diag:
+                    diagnostics[cname] = _sum_iface(kernel_diag[kkey])
+        return ({"T": tendency}, diagnostics)
 
     def _parmentier_sw_optics(self, T, p, p_int, T_irr, T_int, g):
         """Compute SW optical depths for Parmentier mode (3 visible bands)."""

@@ -267,6 +267,23 @@ def test_sw_correlated_k_cloud_increases_reflection():
     )
 
 
+def test_sw_component_diagnostics_level():
+    """SW component with diagnostics_level=1 includes extra diagnostics."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceShortwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    sw = PicketFenceShortwave(optics="parmentier", diagnostics_level=1)
+    grid = get_grid(nx=1, ny=1, nz=20)
+    state = get_default_state([sw], grid_state=grid)
+    state["zenith_angle"].values[:] = np.pi / 4
+
+    tend, diag = sw(state)
+    assert "sw_layer_diffuse_reflectance" in diag
+    assert "sw_direct_beam_profile" in diag
+
+
 def test_sw_cloud_increases_per_band_tau():
     """Adding cloud should increase shortwave_optical_depth_per_band in the cloudy layer."""
     from climt import get_default_state, get_grid

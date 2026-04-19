@@ -45,6 +45,7 @@ class PicketFenceLongwave(TendencyComponent):
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
+        self._diagnostics_level = kwargs.pop("diagnostics_level", 0)
         from climt._core.initialization import set_num_longwave_bands
         set_num_longwave_bands(self._num_bands)
         super(PicketFenceLongwave, self).__init__(**kwargs)
@@ -122,7 +123,7 @@ class PicketFenceLongwave(TendencyComponent):
 
     @property
     def diagnostic_properties(self):
-        return {
+        props = {
             "upwelling_longwave_flux_in_air": {
                 "dims": ["interface_levels", "*"],
                 "units": "W m^-2",
@@ -156,6 +157,20 @@ class PicketFenceLongwave(TendencyComponent):
                 "units": "degK day^-1",
             },
         }
+        if self._diagnostics_level >= 1:
+            props["lw_layer_transmittance"] = {
+                "dims": ["mid_levels", "*", "num_longwave_bands"],
+                "units": "dimensionless",
+            }
+            props["lw_up_per_gpoint"] = {
+                "dims": ["interface_levels", "*", "num_longwave_bands"],
+                "units": "W m^-2",
+            }
+            props["lw_down_per_gpoint"] = {
+                "dims": ["interface_levels", "*", "num_longwave_bands"],
+                "units": "W m^-2",
+            }
+        return props
 
     @property
     def num_longwave_bands(self):
@@ -223,7 +238,7 @@ class PicketFenceLongwave(TendencyComponent):
         # Rearrange to (nband, nlev, ncol) then broadcast over ngpt
         tau = tau + tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
 
-        up_band, down_band, up_broad, down_broad = lw_transport(
+        lw_result = lw_transport(
             T_flat,
             T_surf_flat,
             tau,
@@ -232,7 +247,12 @@ class PicketFenceLongwave(TendencyComponent):
             emissivity,
             weights,
             sigma,
+            diagnostics_level=self._diagnostics_level,
         )
+        if self._diagnostics_level > 0:
+            up_band, down_band, up_broad, down_broad, kernel_diag = lw_result
+        else:
+            up_band, down_band, up_broad, down_broad = lw_result
 
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g, cpd)
@@ -269,19 +289,32 @@ class PicketFenceLongwave(TendencyComponent):
         up_band_out = up_band_out.reshape(target_band_shape)
         down_band_out = down_band_out.reshape(target_band_shape)
 
-        return (
-            {"T": tendency},
-            {
-                "upwelling_longwave_flux_in_air": up_broad_out,
-                "downwelling_longwave_flux_in_air": down_broad_out,
-                "upwelling_longwave_flux_in_air_per_band": up_band_out,
-                "downwelling_longwave_flux_in_air_per_band": down_band_out,
-                "longwave_heating_rate": heating_rate_kday,
-                "longwave_optical_depth_per_band": tau_band_out,
-                "longwave_transmittance_per_band": trans_band_out,
-                "longwave_heating_rate_per_band": hr_band_out,
-            },
-        )
+        diagnostics = {
+            "upwelling_longwave_flux_in_air": up_broad_out,
+            "downwelling_longwave_flux_in_air": down_broad_out,
+            "upwelling_longwave_flux_in_air_per_band": up_band_out,
+            "downwelling_longwave_flux_in_air_per_band": down_band_out,
+            "longwave_heating_rate": heating_rate_kday,
+            "longwave_optical_depth_per_band": tau_band_out,
+            "longwave_transmittance_per_band": trans_band_out,
+            "longwave_heating_rate_per_band": hr_band_out,
+        }
+        if self._diagnostics_level > 0:
+            w_sum = weights.sum(axis=1)  # (nband,)
+
+            def _avg_layer(arr):
+                avg = np.einsum("bgnc,bg->bnc", arr, weights) / w_sum[:, None, None]
+                return np.moveaxis(avg, 0, -1).reshape(orig_shape_T + (nband,))
+
+            def _avg_iface(arr):
+                avg = np.einsum("bgnc,bg->bnc", arr, weights) / w_sum[:, None, None]
+                return np.moveaxis(avg, 0, -1).reshape(orig_shape_pint + (nband,))
+
+            diagnostics["lw_layer_transmittance"] = _avg_layer(kernel_diag["transmittance"])
+            diagnostics["lw_up_per_gpoint"] = _avg_iface(kernel_diag["up_per_gpoint"])
+            diagnostics["lw_down_per_gpoint"] = _avg_iface(kernel_diag["down_per_gpoint"])
+
+        return ({"T": tendency}, diagnostics)
 
     def _parmentier_optics(self, T, p, p_int, T_surf, T_irr, T_int, sigma, g):
         """Compute optical depths and sources for Parmentier mode."""
