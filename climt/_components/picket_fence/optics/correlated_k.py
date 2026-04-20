@@ -7,22 +7,57 @@ import numpy as np
 from ..common import njit, prange
 
 
+_NETCDF_VARS = (
+    "k_coefficients",
+    "gpoint_weights",
+    "temperature_grid",
+    "pressure_grid_log",
+    "band_wavenumber_limits",
+    "planck_fraction",
+    "solar_source_per_gpoint",
+    "rayleigh_coefficient",
+)
+
+
+def _load_netcdf_table(path):
+    from scipy.io import netcdf_file
+
+    with netcdf_file(path, "r", mmap=False) as nc:
+        out = {}
+        for name in _NETCDF_VARS:
+            if name in nc.variables:
+                out[name] = np.asarray(nc.variables[name][:]).copy()
+        return out
+
+
 def load_k_table(name_or_path):
     """Load a correlated-k table.
 
     Args:
-        name_or_path: table name (e.g., "test_2band_lw") or path to .npz file
+        name_or_path: table name (e.g., ``"test_2band_lw"``) or path to a
+            ``.npz`` / ``.nc`` file. Shipped tables under
+            ``climt/_data/picket_fence/correlated_k/`` are resolved by name,
+            preferring ``.nc`` (design-spec format) then falling back to
+            ``.npz`` (legacy unit fixtures).
 
     Returns:
-        dict-like npz object
+        dict-like object exposing ``k_coefficients``, ``gpoint_weights``,
+        ``temperature_grid``, ``pressure_grid_log`` and (LW/SW-specific)
+        auxiliary arrays.
     """
     if os.path.isfile(name_or_path):
+        if name_or_path.endswith(".nc"):
+            return _load_netcdf_table(name_or_path)
         return np.load(name_or_path, allow_pickle=True)
 
-    data_path = importlib_resources.files(
-        "climt._data.picket_fence.correlated_k"
-    ).joinpath(f"{name_or_path}.npz")
-    with importlib_resources.as_file(data_path) as f:
+    pkg = importlib_resources.files("climt._data.picket_fence.correlated_k")
+    nc_path = pkg.joinpath(f"{name_or_path}.nc")
+    with importlib_resources.as_file(nc_path) as f:
+        if os.path.isfile(f):
+            return _load_netcdf_table(str(f))
+
+    npz_path = pkg.joinpath(f"{name_or_path}.npz")
+    with importlib_resources.as_file(npz_path) as f:
         return np.load(f, allow_pickle=True)
 
 
