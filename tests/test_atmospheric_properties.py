@@ -67,3 +67,27 @@ def test_load_nonexistent_profile_raises():
 
     with pytest.raises(FileNotFoundError):
         load_atmospheric_properties("nonexistent_planet_xyz")
+
+
+def test_load_titan_profile():
+    from climt import load_atmospheric_properties, reset_atmospheric_properties
+    from sympl import get_constant
+    try:
+        load_atmospheric_properties("titan")
+        g = get_constant("gravitational_acceleration", "m/s^2")
+        assert abs(g - 1.352) < 0.01
+        m = get_constant("molar_mass_of_dry_air", "g/mol")
+        assert 26.0 < m < 29.0   # ~N2/CH4 mixture
+    finally:
+        reset_atmospheric_properties()
+
+
+def test_load_trappist1e_profile():
+    from climt import load_atmospheric_properties, reset_atmospheric_properties
+    from sympl import get_constant
+    try:
+        load_atmospheric_properties("trappist1e")
+        g = get_constant("gravitational_acceleration", "m/s^2")
+        assert 7.0 < g < 10.0
+    finally:
+        reset_atmospheric_properties()
