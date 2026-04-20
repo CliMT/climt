@@ -9,6 +9,8 @@ import os
 
 from sympl import get_constant, set_constant
 
+from .exceptions import ConstantNotFoundError
+
 try:
     import tomllib  # Python 3.11+
 except ModuleNotFoundError:
@@ -24,6 +26,8 @@ _BUILTIN_DIR = os.path.join(
 # Snapshot stack (list of dicts). Each entry is a dict of
 # {constant_name: (value, units)} captured before a profile was loaded.
 _snapshot_stack = []
+
+_active_profile = {"name": None, "path": None}
 
 
 def _resolve_profile_path(name_or_path):
@@ -80,6 +84,9 @@ def load_atmospheric_properties(name_or_path):
     # Snapshot current state of the constants we're about to overwrite
     _snapshot_stack.append(_snapshot_constants(constants))
 
+    _active_profile["name"] = os.path.splitext(os.path.basename(path))[0]
+    _active_profile["path"] = path
+
     # Apply new constants
     for key, (value, units) in constants.items():
         set_constant(key, value, units)
@@ -101,3 +108,18 @@ def reset_atmospheric_properties():
         if val is not None:
             value, units = val
             set_constant(key, value, units)
+    _active_profile["name"] = None
+    _active_profile["path"] = None
+
+
+def get_constant_checked(name, units):
+    """Wrapper around sympl's get_constant that raises ConstantNotFoundError
+    with a helpful message when the constant is missing from the active profile."""
+    try:
+        return get_constant(name, units)
+    except (KeyError, ValueError) as exc:
+        raise ConstantNotFoundError(
+            name,
+            profile_name=_active_profile["name"],
+            profile_path=_active_profile["path"],
+        ) from exc

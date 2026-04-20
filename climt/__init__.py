@@ -22,12 +22,14 @@ from ._components import (
 )
 from ._core.initialization import set_num_longwave_bands, set_num_shortwave_bands
 from ._core import (
+    ConstantNotFoundError,
     UnytBackend,
     UnytStateContainer,
     UnytTimeDelta,
     bolton_dqsat_dT,
     bolton_q_sat,
     calculate_q_sat,
+    get_constant_checked,
     get_default_state,
     get_grid,
     get_interface_values,
@@ -52,6 +54,8 @@ __all__ = (
     load_atmospheric_properties,
     reset_atmospheric_properties,
     set_constants_from_dict,
+    get_constant_checked,
+    ConstantNotFoundError,
 
     bolton_q_sat,
     bolton_dqsat_dT,

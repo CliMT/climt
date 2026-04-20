@@ -1,9 +1,11 @@
 from sympl import get_constant, reset_constants, set_constant
 
 from .atmospheric_properties import (
+    get_constant_checked,
     load_atmospheric_properties,
     reset_atmospheric_properties,
 )
+from .exceptions import ConstantNotFoundError
 from .constants import list_available_constants, set_constants_from_dict
 
 from .initialization import get_default_state, get_grid
@@ -23,8 +25,10 @@ __all__ = (
     get_default_state,
     get_grid,
     get_interface_values,
+    get_constant_checked,
     load_atmospheric_properties,
     reset_atmospheric_properties,
+    ConstantNotFoundError,
     bolton_q_sat,
 
     bolton_dqsat_dT,
