@@ -27,7 +27,33 @@ def _load_netcdf_table(path):
         for name in _NETCDF_VARS:
             if name in nc.variables:
                 out[name] = np.asarray(nc.variables[name][:]).copy()
+
+        if "gas_names" in nc.variables:
+            raw = nc.variables["gas_names"][:]
+            out["gas_names"] = np.asarray(
+                [_decode(x) for x in np.atleast_1d(raw)]
+            )
+        else:
+            gn = getattr(nc, "gas_names", None)
+            if gn is not None:
+                out["gas_names"] = np.asarray(
+                    [s.strip() for s in _decode(gn).split(",") if s.strip()]
+                )
+
+        for attr in ("overlap_method", "resolution"):
+            val = getattr(nc, attr, None)
+            if val is not None:
+                out[attr] = np.asarray(_decode(val))
+
         return out
+
+
+def _decode(x):
+    if isinstance(x, bytes):
+        return x.decode("utf-8")
+    if isinstance(x, np.ndarray) and x.dtype.kind == "S":
+        return x.tobytes().decode("utf-8").rstrip("\x00")
+    return str(x)
 
 
 def load_k_table(name_or_path):
