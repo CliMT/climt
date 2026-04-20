@@ -55,3 +55,18 @@ def test_integrate_spectrum_narrow_band():
     flux = integrate_spectrum_over_bands(spec, band_limits)
     assert flux[0] > 0
     assert flux[0] < 100.0  # much less than TSI
+
+
+def test_trappist1_spectrum_loads():
+    from climt._components.picket_fence.optics.stellar import load_stellar_spectrum
+    spec = load_stellar_spectrum("trappist1")
+    wn = spec["wavenumber"]
+    irr = spec["irradiance"]
+    assert wn.ndim == 1 and irr.ndim == 1
+    assert wn.size == irr.size
+    assert wn.size > 100
+    assert (irr >= 0).all()
+    # TRAPPIST-1 total irradiance at 1 AU is about 4% of solar
+    # (0.000553 L_sun, times (1 AU / 1 AU)^2 -- the SED is tabulated at 1 AU)
+    total = np.trapezoid(irr, wn)
+    assert 20.0 < total < 80.0, f"expected ~55 W/m^2 at 1 AU, got {total:.1f}"
