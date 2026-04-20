@@ -73,6 +73,7 @@ class PicketFenceShortwave(TendencyComponent):
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
+        self._bond_albedo_feedback = kwargs.pop("bond_albedo_feedback", False)
         self._diagnostics_level = kwargs.pop("diagnostics_level", 0)
         from climt._core.initialization import set_num_shortwave_bands
 
@@ -227,15 +228,15 @@ class PicketFenceShortwave(TendencyComponent):
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
         if self._optics_mode == "parmentier":
+            from ..optics.parmentier import bond_albedo_from_fluxes
+
             sigma = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
             nband = self._num_bands
             ngpt = 1
 
             T_irr_flat = state["T_irr"].reshape(-1)
             T_int_flat = state["T_int"].reshape(-1)
-            tau, ssa, asym = self._parmentier_sw_optics(
-                T_flat, p_flat, p_int_flat, T_irr_flat, T_int_flat, g_const
-            )
+
             T_irr_max = T_irr_flat.max()
             if T_irr_max > 0:
                 F0 = sigma * T_irr_max**4
@@ -250,6 +251,47 @@ class PicketFenceShortwave(TendencyComponent):
                 * earth_sun_factor
             )
             weights = np.ones((nband, ngpt))
+
+            tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband)
+            ssa_cloud_flat = state["ssa_cloud"].reshape(nlev, ncol, nband)
+            g_cloud_flat = state["g_cloud"].reshape(nlev, ncol, nband)
+            tau_c = tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+            ssa_c = ssa_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+            g_c = g_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+
+            kernel_diag = {}
+            A_B = np.zeros(ncol)
+            max_iter = 2 if self._bond_albedo_feedback else 1
+            for _ in range(max_iter):
+                tau, ssa, asym = self._parmentier_sw_optics(
+                    T_flat, p_flat, p_int_flat, T_irr_flat, T_int_flat, g_const,
+                    A_B=A_B,
+                )
+                tau_total = tau + tau_c
+                scat_gas = tau * ssa
+                scat_cloud = tau_c * ssa_c
+                scat_total = scat_gas + scat_cloud
+                ssa_total = np.divide(
+                    scat_total, tau_total,
+                    out=np.zeros_like(tau_total), where=tau_total > 0,
+                )
+                g_total = np.divide(
+                    (scat_gas * asym + scat_cloud * g_c),
+                    scat_total,
+                    out=np.zeros_like(scat_total), where=scat_total > 0,
+                )
+                tau = tau_total
+                ssa = ssa_total
+                asym = g_total
+                result = sw_two_stream(
+                    tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights,
+                    diagnostics_level=self._diagnostics_level,
+                )
+                if self._diagnostics_level > 0:
+                    up_band, down_band, up_broad, down_broad, kernel_diag = result
+                else:
+                    up_band, down_band, up_broad, down_broad = result
+                A_B = bond_albedo_from_fluxes(up_broad[-1, :], down_broad[-1, :])
 
         elif self._optics_mode == "correlated_k":
             ngas = len(self._gas_names)
@@ -309,49 +351,42 @@ class PicketFenceShortwave(TendencyComponent):
                         solar_flux[b, idx] = (
                             self._solar_source[b, g_idx] * earth_sun_factor
                         )
+
+            # Combine gas and cloud optical properties
+            tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband)
+            ssa_cloud_flat = state["ssa_cloud"].reshape(nlev, ncol, nband)
+            g_cloud_flat = state["g_cloud"].reshape(nlev, ncol, nband)
+            tau_c = tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+            ssa_c = ssa_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+            g_c = g_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
+            tau_total = tau + tau_c
+            scat_gas = tau * ssa
+            scat_cloud = tau_c * ssa_c
+            scat_total = scat_gas + scat_cloud
+            ssa_total = np.divide(
+                scat_total, tau_total, out=np.zeros_like(tau_total), where=tau_total > 0
+            )
+            g_total = np.divide(
+                (scat_gas * asym + scat_cloud * g_c),
+                scat_total,
+                out=np.zeros_like(scat_total),
+                where=scat_total > 0,
+            )
+            tau = tau_total
+            ssa = ssa_total
+            asym = g_total
+
+            kernel_diag = {}
+            result = sw_two_stream(
+                tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights,
+                diagnostics_level=self._diagnostics_level,
+            )
+            if self._diagnostics_level > 0:
+                up_band, down_band, up_broad, down_broad, kernel_diag = result
+            else:
+                up_band, down_band, up_broad, down_broad = result
         else:
             raise NotImplementedError
-
-        # Combine gas and cloud optical properties
-        nband_cur = tau.shape[0]
-        tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband_cur)
-        ssa_cloud_flat = state["ssa_cloud"].reshape(nlev, ncol, nband_cur)
-        g_cloud_flat = state["g_cloud"].reshape(nlev, ncol, nband_cur)
-
-        # Rearrange cloud arrays to (nband, nlev, ncol) then broadcast over ngpt
-        tau_c = tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]  # (nband, 1, nlev, ncol)
-        ssa_c = ssa_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
-        g_c = g_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
-
-        # Combined optical properties (gas + cloud):
-        # tau_total = tau_gas + tau_cloud
-        # ssa_total = (tau_gas * ssa_gas + tau_cloud * ssa_cloud) / tau_total
-        # g_total = (tau_gas * ssa_gas * g_gas + tau_cloud * ssa_cloud * g_cloud) / (tau_total * ssa_total)
-        tau_total = tau + tau_c
-        scat_gas = tau * ssa
-        scat_cloud = tau_c * ssa_c
-        scat_total = scat_gas + scat_cloud
-        ssa_total = np.divide(
-            scat_total, tau_total, out=np.zeros_like(tau_total), where=tau_total > 0
-        )
-        g_total = np.divide(
-            (scat_gas * asym + scat_cloud * g_c),
-            scat_total,
-            out=np.zeros_like(scat_total),
-            where=scat_total > 0,
-        )
-        tau = tau_total
-        ssa = ssa_total
-        asym = g_total
-
-        result = sw_two_stream(
-            tau, ssa, asym, zenith_flat, albedo_flat, solar_flux, weights,
-            diagnostics_level=self._diagnostics_level,
-        )
-        if self._diagnostics_level > 0:
-            up_band, down_band, up_broad, down_broad, kernel_diag = result
-        else:
-            up_band, down_band, up_broad, down_broad = result
 
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g_const, cpd)
@@ -428,7 +463,7 @@ class PicketFenceShortwave(TendencyComponent):
                     diagnostics[cname] = _sum_iface(kernel_diag[kkey])
         return ({"T": tendency}, diagnostics)
 
-    def _parmentier_sw_optics(self, T, p, p_int, T_irr, T_int, g):
+    def _parmentier_sw_optics(self, T, p, p_int, T_irr, T_int, g, A_B=None):
         """Compute SW optical depths for Parmentier mode (3 visible bands)."""
         nlev, ncol = T.shape
         nband = 3
@@ -438,11 +473,13 @@ class PicketFenceShortwave(TendencyComponent):
         ssa = np.zeros((nband, ngpt, nlev, ncol))  # pure absorption for v1
         asym = np.zeros((nband, ngpt, nlev, ncol))
 
+        if A_B is None:
+            A_B = np.zeros(ncol)
+
         for i in range(ncol):
             # Compute T_eff per column (same formula as LW, Lee et al. 2021 Eq. 20)
-            A_B = 0.0
             mu_star = 0.25
-            T_eff = (T_int[i] ** 4 + (1.0 - A_B) * mu_star * T_irr[i] ** 4) ** 0.25
+            T_eff = (T_int[i] ** 4 + (1.0 - A_B[i]) * mu_star * T_irr[i] ** 4) ** 0.25
             T_eff = max(T_eff, 100.0)
             gv1, gv2, gv3, beta, gamma_P, R = lookup_ratio_coefficients(
                 self._coefficients, T_eff

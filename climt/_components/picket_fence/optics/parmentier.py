@@ -147,3 +147,19 @@ def lookup_ratio_coefficients(coeffs, T_eff):
     return gamma_v1, gamma_v2, gamma_v3, beta_val, gamma_P, R
 
 
+
+
+
+def bond_albedo_from_fluxes(up_toa, down_toa):
+    """Estimate the Bond albedo from top-of-atmosphere SW fluxes.
+
+    Args:
+        up_toa: upwelling SW flux at TOA, W/m^2 (ncol,)
+        down_toa: downwelling SW flux at TOA, W/m^2 (ncol,)
+
+    Returns:
+        A_B: bond albedo per column, dimensionless, clipped to [0, 1].
+    """
+    with np.errstate(divide="ignore", invalid="ignore"):
+        A_B = np.where(down_toa > 0, up_toa / down_toa, 0.0)
+    return np.clip(A_B, 0.0, 1.0)
