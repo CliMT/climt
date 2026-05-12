@@ -5,6 +5,9 @@ SHIPPED = [
     "earth_low_res_lw", "earth_low_res_sw",
     "mars_lw",          "mars_sw",
     "venus_lw",         "venus_sw",
+    "trappist1e_hab1_lw", "trappist1e_hab1_sw",
+    "trappist1e_hab2_lw", "trappist1e_hab2_sw",
+    "titan_lw",         "titan_sw",
 ]
 
 

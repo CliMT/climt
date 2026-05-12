@@ -23,3 +23,26 @@ Running the converter::
 
 See also the ``linepyline`` workflow for per-gas tables, which supports
 gas-forcing experiments (e.g., CO₂ doubling).
+
+linepyline-based tables
+-----------------------
+
+For scenarios outside Chaverot's Zenodo coverage (Titan, TRAPPIST-1e,
+ad-hoc compositions), climt ships a second offline pipeline using
+`linepyline <https://github.com/exoclime/linepyline>`_ and HITRAN 2024 line
+data. The driver is ``scripts/generate_pf_tables_linepyline.py``.
+
+Building a Titan table (run from the ``linepyline`` conda env)::
+
+    conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \\
+        --scenario titan --kind lw \\
+        --output climt/_data/picket_fence/correlated_k/titan_lw.nc
+
+Building a custom scenario: copy one of the entries in the ``SCENARIOS``
+dict at the top of the driver, edit the absorber dict / VMR grid / band
+edges, and re-run. The output netCDF drops straight into climt's
+``correlated_k`` data directory and is picked up by name.
+
+Titan in particular requires HITRAN CIA flat files in
+``climt/_data/picket_fence/cia/``; see the README there for the download
+list.

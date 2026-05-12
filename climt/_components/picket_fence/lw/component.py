@@ -42,6 +42,13 @@ class PicketFenceLongwave(TendencyComponent):
             self._num_bands = self._table["k_coefficients"].shape[1]
             self._num_gpts = self._table["k_coefficients"].shape[2]
             self._gas_names = list(self._table["gas_names"])
+            _has_h2o_axis = "h2o_vmr_grid" in self._table
+            self._fully_premixed = (self._gas_names == ["effective"]) and not _has_h2o_axis
+            self._premixed_bg = (
+                (self._gas_names == ["effective"] and _has_h2o_axis)
+                or str(self._table.get("background_is_premixed", np.array("")))
+                .lower() == "true"
+            )
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
@@ -91,21 +98,29 @@ class PicketFenceLongwave(TendencyComponent):
                 "alias": "T_int",
             }
         elif self._optics_mode == "correlated_k":
-            # H2O enters as specific humidity (kg/kg); all other gases are mole
-            # fractions (mol/mol) per CF conventions.
-            _GAS_CF_NAME = {
-                "h2o": "specific_humidity",
-                "co2": "mole_fraction_of_carbon_dioxide_in_air",
-            }
-            _GAS_UNITS = {"h2o": "kg/kg"}  # default for others: mole/mole
-            for gas in self._gas_names:
-                cf_name = _GAS_CF_NAME.get(gas, f"mole_fraction_of_{gas}_in_air")
-                units = _GAS_UNITS.get(gas, "mole/mole")
-                props[cf_name] = {
+            if self._premixed_bg:
+                # Background is pre-mixed; H2O VMR is the only live axis.
+                props["specific_humidity"] = {
                     "dims": ["mid_levels", "*"],
-                    "units": units,
-                    "alias": gas,
+                    "units": "kg/kg",
+                    "alias": "h2o",
                 }
+            elif not self._fully_premixed:
+                # H2O enters as specific humidity (kg/kg); all other gases are
+                # mole fractions (mol/mol) per CF conventions.
+                _GAS_CF_NAME = {
+                    "h2o": "specific_humidity",
+                    "co2": "mole_fraction_of_carbon_dioxide_in_air",
+                }
+                _GAS_UNITS = {"h2o": "kg/kg"}
+                for gas in self._gas_names:
+                    cf_name = _GAS_CF_NAME.get(gas, f"mole_fraction_of_{gas}_in_air")
+                    units = _GAS_UNITS.get(gas, "mole/mole")
+                    props[cf_name] = {
+                        "dims": ["mid_levels", "*"],
+                        "units": units,
+                        "alias": gas,
+                    }
         # Cloud optical depth per band (spectrally-grey: same value across all
         # g-points within a band). Uses num_longwave_bands set at scheme init.
         props["longwave_optical_thickness_due_to_cloud"] = {
@@ -213,16 +228,37 @@ class PicketFenceLongwave(TendencyComponent):
         elif self._optics_mode == "correlated_k":
             ngas = len(self._gas_names)
             gas_amounts = np.zeros((ngas, nlev, ncol))
-            for ig, gas in enumerate(self._gas_names):
-                q_gas_flat = state[gas].reshape(nlev, -1)
-                # Convert mole fraction → mass mixing ratio (kg/kg) for non-H2O gases
-                if gas != "h2o":
-                    M_gas = MOLAR_MASS.get(gas, MOLAR_MASS_DRY_AIR)
-                    q_gas_flat = q_gas_flat * (M_gas / MOLAR_MASS_DRY_AIR)
-                gas_amounts[ig, :, :] = compute_column_amount(q_gas_flat, p_int_flat, g)
+            h2o_vmr = None
+            if self._fully_premixed:
+                # k is m²/kg-of-air (all gases baked in); gas_amount = air column.
+                one = np.ones((nlev, ncol))
+                gas_amounts[0, :, :] = compute_column_amount(one, p_int_flat, g)
+            elif self._premixed_bg:
+                # Table k is m^2/kg-of-AIR with H2O as the runtime X-axis.
+                # gas_amount is therefore column mass of air, not of H2O.
+                # H2O enters only via specific_humidity → mole-fraction lookup
+                # for the trilinear (T, logP, logX) k interpolation.
+                q_h2o = state["h2o"].reshape(nlev, -1)  # kg/kg (specific humidity)
+                one = np.ones_like(q_h2o)
+                gas_amounts[0, :, :] = compute_column_amount(one, p_int_flat, g)
+                M_H2O = MOLAR_MASS["h2o"] / MOLAR_MASS_DRY_AIR  # ratio (dimensionless)
+                # x_H2O = (q/M_H2O) / (q/M_H2O + (1-q)/M_dry); express as
+                # x = q / (q + (1-q) * M_H2O/M_dry) in mass-ratio form.
+                h2o_vmr = q_h2o / np.maximum(
+                    q_h2o + (1.0 - q_h2o) * M_H2O, 1e-30
+                )
+            else:
+                for ig, gas in enumerate(self._gas_names):
+                    q_gas_flat = state[gas].reshape(nlev, -1)
+                    if gas != "h2o":
+                        M_gas = MOLAR_MASS.get(gas, MOLAR_MASS_DRY_AIR)
+                        q_gas_flat = q_gas_flat * (M_gas / MOLAR_MASS_DRY_AIR)
+                    gas_amounts[ig, :, :] = compute_column_amount(
+                        q_gas_flat, p_int_flat, g
+                    )
 
             tau, planck_src, surf_src, weights = self._correlated_k_optics(
-                T_flat, p_flat, gas_amounts, T_surf_flat, sigma
+                T_flat, p_flat, gas_amounts, T_surf_flat, sigma, h2o_vmr=h2o_vmr
             )
         else:
             raise NotImplementedError
@@ -365,12 +401,14 @@ class PicketFenceLongwave(TendencyComponent):
 
         return tau, planck_src, surf_src
 
-    def _correlated_k_optics(self, T, p, gas_amounts, T_surf, sigma):
+    def _correlated_k_optics(self, T, p, gas_amounts, T_surf, sigma, h2o_vmr=None):
         from ..optics.correlated_k import compute_ck_optical_depth
 
         nlev, ncol = T.shape
 
-        result = compute_ck_optical_depth(self._table, T, p, gas_amounts)
+        result = compute_ck_optical_depth(
+            self._table, T, p, gas_amounts, h2o_vmr=h2o_vmr
+        )
         if isinstance(result, tuple):
             # ESFT mode: returns (tau, combined_weights)
             tau_raw, weights = result

@@ -65,3 +65,22 @@ shasum -a 256 climt/_data/picket_fence/correlated_k/*.nc
 The `.npz` files in this directory are pre-existing unit-test fixtures and
 are not subject to the Chaverot provenance above. `single_band_unit_lw.nc`
 is a synthetic constant-k fixture for the grey-limit unit test.
+
+## linepyline-derived tables
+
+Built offline by `scripts/generate_pf_tables_linepyline.py` from
+HITRAN 2024 line data (via the [linepyline](https://github.com/exoclime/linepyline)
+package) plus MT_CKD 4.3 (H2O continuum) and HITRAN CIA 2021/2024 (Titan
+N2-N2, N2-CH4).
+
+| File | Atmosphere | LW bands (cm⁻¹) | SW bands (cm⁻¹) | g-pts | H2O axis | Notes |
+|---|---|---|---|---|---|---|
+| trappist1e_hab1_lw.nc | THAI Hab1: N2 + 400 ppm CO2 + H2O | 10, 500, 1250, 2500, 3250 | — | 2 | yes | Covers THAI Ben1 (radiation identical). |
+| trappist1e_hab1_sw.nc | as above | — | 3250, 8000, 14000, 30000 | 2 | yes | Stellar source from `trappist1.npz`. |
+| trappist1e_hab2_lw.nc | THAI Hab2: pure 1-bar CO2 | 10, 500, 1250, 2500, 3250 | — | 2 | no | Covers THAI Ben2. |
+| trappist1e_hab2_sw.nc | as above | — | 3250, 8000, 14000, 30000 | 2 | no | |
+| titan_lw.nc | 95% N2 + 5% CH4, incl. N2-N2 & N2-CH4 CIA | 10, 500, 1250, 2500, 3250 | — | 2 | no | CIA dominates rotational window (band 0). |
+| titan_sw.nc | as above | — | 3250, 8000, 14000, 30000 | 2 | no | Stellar source from `sun.npz`. |
+
+THAI protocol: Turbet et al. (2022), *ApJ* 924, 10; Sergeev et al. (2022), *ApJ* 924, 11.
+Titan CIA: Karman et al. (2019), HITRAN CIA database (CC-BY).

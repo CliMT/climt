@@ -70,6 +70,13 @@ class PicketFenceShortwave(TendencyComponent):
             self._gas_names = list(self._table["gas_names"])
             self._solar_source = self._table["solar_source_per_gpoint"]
             self._rayleigh = self._table.get("rayleigh_coefficient", None)
+            _has_h2o_axis = "h2o_vmr_grid" in self._table
+            self._fully_premixed = (self._gas_names == ["effective"]) and not _has_h2o_axis
+            self._premixed_bg = (
+                (self._gas_names == ["effective"] and _has_h2o_axis)
+                or str(self._table.get("background_is_premixed", np.array("")))
+                .lower() == "true"
+            )
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
 
@@ -119,19 +126,26 @@ class PicketFenceShortwave(TendencyComponent):
                 "alias": "T_int",
             }
         elif self._optics_mode == "correlated_k":
-            _GAS_CF_NAME = {
-                "h2o": "specific_humidity",
-                "co2": "mole_fraction_of_carbon_dioxide_in_air",
-            }
-            _GAS_UNITS = {"h2o": "kg/kg"}
-            for gas in self._gas_names:
-                cf_name = _GAS_CF_NAME.get(gas, f"mole_fraction_of_{gas}_in_air")
-                units = _GAS_UNITS.get(gas, "mole/mole")
-                props[cf_name] = {
+            if self._premixed_bg:
+                props["specific_humidity"] = {
                     "dims": ["mid_levels", "*"],
-                    "units": units,
-                    "alias": gas,
+                    "units": "kg/kg",
+                    "alias": "h2o",
                 }
+            elif not self._fully_premixed:
+                _GAS_CF_NAME = {
+                    "h2o": "specific_humidity",
+                    "co2": "mole_fraction_of_carbon_dioxide_in_air",
+                }
+                _GAS_UNITS = {"h2o": "kg/kg"}
+                for gas in self._gas_names:
+                    cf_name = _GAS_CF_NAME.get(gas, f"mole_fraction_of_{gas}_in_air")
+                    units = _GAS_UNITS.get(gas, "mole/mole")
+                    props[cf_name] = {
+                        "dims": ["mid_levels", "*"],
+                        "units": units,
+                        "alias": gas,
+                    }
         # Cloud optical properties for SW (default zero = clear sky)
         props["shortwave_optical_thickness_due_to_cloud"] = {
             "dims": ["mid_levels", "*", "num_shortwave_bands"],
@@ -296,18 +310,38 @@ class PicketFenceShortwave(TendencyComponent):
         elif self._optics_mode == "correlated_k":
             ngas = len(self._gas_names)
             gas_amounts = np.zeros((ngas, nlev, ncol))
-            for ig, gas in enumerate(self._gas_names):
-                q_gas_flat = state[gas].reshape(nlev, -1)
-                if gas != "h2o":
-                    M_gas = MOLAR_MASS.get(gas, MOLAR_MASS_DRY_AIR)
-                    q_gas_flat = q_gas_flat * (M_gas / MOLAR_MASS_DRY_AIR)
-                gas_amounts[ig, :, :] = compute_column_amount(
-                    q_gas_flat, p_int_flat, g_const
+            h2o_vmr = None
+            if self._fully_premixed:
+                # k is m²/kg-of-air (all gases baked in); gas_amount = air column.
+                one = np.ones((nlev, ncol))
+                gas_amounts[0, :, :] = compute_column_amount(one, p_int_flat, g_const)
+            elif self._premixed_bg:
+                # See LW component for the full rationale: k is m^2/kg-of-AIR,
+                # H2O VMR is the live axis, other gases are baked in.
+                q_h2o = state["h2o"].reshape(nlev, -1)
+                one = np.ones_like(q_h2o)
+                gas_amounts[0, :, :] = compute_column_amount(
+                    one, p_int_flat, g_const
                 )
+                M_ratio = MOLAR_MASS["h2o"] / MOLAR_MASS_DRY_AIR
+                h2o_vmr = q_h2o / np.maximum(
+                    q_h2o + (1.0 - q_h2o) * M_ratio, 1e-30
+                )
+            else:
+                for ig, gas in enumerate(self._gas_names):
+                    q_gas_flat = state[gas].reshape(nlev, -1)
+                    if gas != "h2o":
+                        M_gas = MOLAR_MASS.get(gas, MOLAR_MASS_DRY_AIR)
+                        q_gas_flat = q_gas_flat * (M_gas / MOLAR_MASS_DRY_AIR)
+                    gas_amounts[ig, :, :] = compute_column_amount(
+                        q_gas_flat, p_int_flat, g_const
+                    )
 
             from ..optics.correlated_k import compute_ck_optical_depth
 
-            result = compute_ck_optical_depth(self._table, T_flat, p_flat, gas_amounts)
+            result = compute_ck_optical_depth(
+                self._table, T_flat, p_flat, gas_amounts, h2o_vmr=h2o_vmr
+            )
             if isinstance(result, tuple):
                 tau_abs, weights = result
             else:

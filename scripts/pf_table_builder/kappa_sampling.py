@@ -126,7 +126,11 @@ def _h2o_kappa(rtm, nu_grid, p_grid, T_grid, X_h2o,
         if include_mtckd_continuum:
             k_cont = rtm.get_kappa_mtckd(nu_min, nu_max, dnu,
                                          p_grid, T_arr, p_self)
-            k = k + np.maximum(k_cont.transpose("p", "nu").interp(nu=nu_grid).values, 0.0)
+            # MT_CKD coverage ends ~20000 cm⁻¹; interp returns NaN outside → treat as 0.
+            k_cont_vals = np.nan_to_num(
+                k_cont.transpose("p", "nu").interp(nu=nu_grid).values, nan=0.0
+            )
+            k = k + np.maximum(k_cont_vals, 0.0)
         mass_frac = _mass_fraction(
             "H2O", X_h2o, background_gas,
             {**other_absorbers, "H2O": X_h2o},
