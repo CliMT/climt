@@ -27,11 +27,11 @@ SW bands are unchanged: `3250, 8000, 14000, 30000` cm⁻¹.
 | earth_low_res_lw_4gpt.nc | Earth (376 ppm CO₂) | LW option B | 10, 500, 800, 1800, 3250 | 4 | `8c9f83e2b38cfcd577cbc67f02d750afca80d0e2c2b70443d20825b4ccd04fe7` |
 | earth_low_res_lw_8gpt.nc | Earth (376 ppm CO₂) | LW option B | 10, 500, 800, 1800, 3250 | 8 | `15b06a4311eae5bc0fecd255c54e7a810c80d90634edd2a5d27ebe7c2ef49136` |
 | earth_low_res_lw_hotmoist.nc | Earth (376 ppm CO₂) | LW option D | 10, 500, 1200, 2000, 3250 | 2 | `9ae21cd2edf1c54bf64c7896673f1e5f93838fb3aa9a870c3f29eaa6b54aaccd` |
-| earth_low_res_sw.nc | Earth (376 ppm CO₂) | SW | 3250, 8000, 14000, 30000 | 2 | `7e3678235f91cb3296d1b6e03e0873b31b59cf0947f8539d0a45e6811fd9a3e2` |
+| earth_low_res_sw.nc | Earth (376 ppm CO₂) | SW | 3250, 8000, 14000, 30000 | 2 | `8709799c08dfaaf015a81a931c1eec699649559803b8fd2831eeed68d6360bda` |
 | mars_lw.nc | Mars (CO₂+N₂) | LW option B | 10, 500, 800, 1800, 3250 | 2 | `94e61290e54be8f3552b7762014bc09443bd5e7f0d94d39932c726c4198d78c7` |
-| mars_sw.nc | Mars (CO₂+N₂) | SW | 3250, 8000, 14000, 30000 | 2 | `983ce8dc67460a54466f7a5925c2dcfde5ffd4d880ec614a50f107d0ed834064` |
+| mars_sw.nc | Mars (CO₂+N₂) | SW | 3250, 8000, 14000, 30000 | 2 | `8e186ac238e1bf7f562348f3fc70bbc006358efeb4f0d26c4aab7756a73157bb` |
 | venus_lw.nc | Venus (H₂O+CO₂) | LW option B | 10, 500, 800, 1800, 3250 | 2 | `f308088c1cc2d6f028e44b1be3a004d4c01000d6347a4bc5bfff21dd285fe6b8` |
-| venus_sw.nc | Venus (H₂O+CO₂) | SW | 3250, 8000, 14000, 30000 | 2 | `e2a040cc69d53058cc4300e07fdf9c493286a8e9802cfeec7c413dcf2cc3c2b7` |
+| venus_sw.nc | Venus (H₂O+CO₂) | SW | 3250, 8000, 14000, 30000 | 2 | `606960889f56af3b7c49e93c728be04c1a80b5555df3643cff3af94c2adbf83f` |
 
 ## Format
 
