@@ -92,6 +92,7 @@ def lw_convergence():
     print()
     print("=== LW g-point convergence  (option B, Earth standard atm) ===")
     olrs = {}
+    back = {}
     for label, table in [
         ("2gpt", "earth_low_res_lw"),
         ("4gpt", "earth_low_res_lw_4gpt"),
@@ -101,12 +102,14 @@ def lw_convergence():
         state = get_default_state([lw])
         _, d = lw(state)
         olrs[label] = float(d["upwelling_longwave_flux_in_air"].values.flat[-1])
-        print(f"  OLR ({label}): {olrs[label]:.2f} W/m²")
+        back[label] = float(d["downwelling_longwave_flux_in_air"].values.flat[0])
+        print(f"  OLR ({label}): {olrs[label]:.2f} W/m²   back-rad: {back[label]:.2f} W/m²")
 
-    diff_2_4 = abs(olrs["4gpt"] - olrs["2gpt"])
-    diff_4_8 = abs(olrs["8gpt"] - olrs["4gpt"])
-    print(f"  |4-2gpt|: {diff_2_4:.3f} W/m²   |8-4gpt|: {diff_4_8:.3f} W/m²"
-          f"   ratio: {diff_2_4/diff_4_8:.1f}×")
+    for name, vals in [("OLR", olrs), ("back-rad", back)]:
+        d24 = abs(vals["4gpt"] - vals["2gpt"])
+        d48 = abs(vals["8gpt"] - vals["4gpt"])
+        print(f"  {name}: |4-2gpt| {d24:.3f} W/m²   |8-4gpt| {d48:.3f} W/m²"
+              f"   ratio: {d24/d48:.1f}×")
 
 
 if __name__ == "__main__":
