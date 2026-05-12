@@ -73,7 +73,9 @@ def sample_kappa_grid(
                 remove_plinth=False,
             )
             # rtm output is xarray (p, nu); interp wavenumber onto target grid.
-            k_arr = k_da.transpose("p", "nu").interp(nu=nu_grid).values
+            # Clamp to 0: linepyline can produce small negatives at band edges
+            # due to Lorentz-wing extrapolation beyond the requested nu range.
+            k_arr = np.maximum(k_da.transpose("p", "nu").interp(nu=nu_grid).values, 0.0)
             # Weight by mass mixing ratio of this species relative to total moist gas
             # For non-trace species we use molecular masses; linepyline's internal
             # mass weighting is done in get_optical_depth, so here we multiply by
@@ -120,11 +122,11 @@ def _h2o_kappa(rtm, nu_grid, p_grid, T_grid, X_h2o,
             line_shape=line_shape, binning=binning,
             remove_plinth=include_mtckd_continuum,
         )
-        k = k_lines.transpose("p", "nu").interp(nu=nu_grid).values
+        k = np.maximum(k_lines.transpose("p", "nu").interp(nu=nu_grid).values, 0.0)
         if include_mtckd_continuum:
             k_cont = rtm.get_kappa_mtckd(nu_min, nu_max, dnu,
                                          p_grid, T_arr, p_self)
-            k = k + k_cont.transpose("p", "nu").interp(nu=nu_grid).values
+            k = k + np.maximum(k_cont.transpose("p", "nu").interp(nu=nu_grid).values, 0.0)
         mass_frac = _mass_fraction(
             "H2O", X_h2o, background_gas,
             {**other_absorbers, "H2O": X_h2o},
