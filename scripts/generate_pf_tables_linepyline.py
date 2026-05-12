@@ -70,9 +70,9 @@ SCENARIOS = {
         mean_molar_mass_g=28.6,
         rayleigh_refractivity=2.97e-4,
         cia_files=[
-            dict(path="climt/_data/picket_fence/cia/N2-N2_2018.cia",
+            dict(path="climt/_data/picket_fence/cia/N2-N2_2021.cia",
                  pair=("N2", "N2"), vmr_a=0.95, vmr_b=0.95),
-            dict(path="climt/_data/picket_fence/cia/N2-CH4_2018.cia",
+            dict(path="climt/_data/picket_fence/cia/N2-CH4_2024.cia",
                  pair=("N2", "CH4"), vmr_a=0.95, vmr_b=0.05),
         ],
     ),
