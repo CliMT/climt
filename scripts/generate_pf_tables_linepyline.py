@@ -154,7 +154,7 @@ def build_table(scenario_name, kind, output_path, ngpt=2, dnu=0.5,
 
     if kind == "lw":
         planck_fraction = build_uniform_planck_fraction(
-            len(band_edges) - 1, ngpt, len(cfg["T_grid"]),
+            band_edges, ngpt, cfg["T_grid"],
         )
         write_lw_table(
             output_path,
