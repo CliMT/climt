@@ -42,6 +42,7 @@ SCENARIOS = {
         T_grid=np.linspace(150.0, 350.0, 10),
         p_grid=np.logspace(0.0, 5.05, 15),     # 1 Pa to ~1.1e5 Pa
         stellar_spectrum="trappist1",
+        toa_irradiance_W_m2=878.0,             # 0.000553 L_sun at 0.02928 AU
         mean_molar_mass_g=28.05,
         rayleigh_refractivity=2.97e-4,         # N2-dominated
         cia_files=[],
@@ -53,6 +54,7 @@ SCENARIOS = {
         T_grid=np.linspace(150.0, 350.0, 10),
         p_grid=np.logspace(0.0, 5.05, 15),
         stellar_spectrum="trappist1",
+        toa_irradiance_W_m2=878.0,             # 0.000553 L_sun at 0.02928 AU
         mean_molar_mass_g=44.01,
         rayleigh_refractivity=4.50e-4,         # CO2
         cia_files=[],
@@ -64,6 +66,7 @@ SCENARIOS = {
         T_grid=np.linspace(70.0, 200.0, 10),
         p_grid=np.logspace(-1.0, 5.2, 15),
         stellar_spectrum="sun",
+        toa_irradiance_W_m2=15.0,             # 1 L_sun at 9.54 AU (Saturn distance)
         mean_molar_mass_g=28.6,
         rayleigh_refractivity=2.97e-4,
         cia_files=[
@@ -167,7 +170,8 @@ def build_table(scenario_name, kind, output_path, ngpt=2, dnu=0.5,
     else:
         # Load stellar spectrum and build solar source / Rayleigh
         spectrum = _load_stellar_spectrum(cfg["stellar_spectrum"])
-        solar = build_solar_source_per_gpoint(spectrum, band_edges, ngpt)
+        solar = build_solar_source_per_gpoint(spectrum, band_edges, ngpt,
+                                              toa_irradiance=cfg["toa_irradiance_W_m2"])
         rayleigh = build_rayleigh_per_band(
             band_edges,
             mean_molar_mass_g=cfg["mean_molar_mass_g"],

@@ -4,13 +4,15 @@ from __future__ import annotations
 import numpy as np
 
 
-def build_solar_source_per_gpoint(spectrum, band_edges, ngpt):
-    """Distribute band-integrated stellar flux uniformly across g-points.
+def build_solar_source_per_gpoint(spectrum, band_edges, ngpt, toa_irradiance):
+    """Distribute toa_irradiance across bands (by spectral shape) and g-points.
 
     Args:
         spectrum: dict with "wavenumber" (cm^-1) and "irradiance" (W/m^2/cm^-1).
+            Only the spectral *shape* matters; absolute scale is ignored.
         band_edges: (nband+1,) cm^-1.
         ngpt: per-band g-point count.
+        toa_irradiance: total top-of-atmosphere flux (W/m^2) to distribute.
 
     Returns:
         (nband, ngpt) array, W/m^2 per (band, g-point).
@@ -18,11 +20,11 @@ def build_solar_source_per_gpoint(spectrum, band_edges, ngpt):
     wn = np.asarray(spectrum["wavenumber"])
     irr = np.asarray(spectrum["irradiance"])
     nband = len(band_edges) - 1
-    out = np.zeros((nband, ngpt))
     try:
         _trapz = np.trapezoid
     except AttributeError:
         _trapz = np.trapz
+    band_flux = np.zeros(nband)
     for ib in range(nband):
         lo, hi = band_edges[ib], band_edges[ib + 1]
         mask = (wn > lo) & (wn < hi)
@@ -30,9 +32,10 @@ def build_solar_source_per_gpoint(spectrum, band_edges, ngpt):
         irr_b = np.concatenate(([np.interp(lo, wn, irr)],
                                 irr[mask],
                                 [np.interp(hi, wn, irr)]))
-        band_flux = _trapz(irr_b, wn_b)
-        out[ib, :] = band_flux / ngpt
-    return out
+        band_flux[ib] = _trapz(irr_b, wn_b)
+    # Normalise shape, then scale to toa_irradiance
+    band_flux = band_flux / band_flux.sum() * toa_irradiance
+    return np.repeat(band_flux[:, np.newaxis], ngpt, axis=1) / ngpt
 
 
 def build_rayleigh_per_band(band_edges, mean_molar_mass_g,
