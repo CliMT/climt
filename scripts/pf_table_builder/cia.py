@@ -81,10 +81,12 @@ def cia_kappa_on_grid(
     n_a = (p_grid * vmr_a / p_STP)[:, None] * (T_STP / T_grid)[None, :]  # (nP, nT)
     n_b = (p_grid * vmr_b / p_STP)[:, None] * (T_STP / T_grid)[None, :]
 
-    # Convert σ from cm⁻¹ amagat⁻² to m⁻¹ amagat⁻²: ×100
-    sigma_si = sigma_TpNu * 100.0  # (nT, nNu)
+    # HITRAN CIA files are in cm⁵ molecule⁻² (not cm⁻¹ amagat⁻²).
+    # Convert to m⁻¹ amagat⁻²: multiply by N_amagat² [molecule/cm³]² then by 100 [cm→m].
+    _AMAGAT_CM3 = 2.6868e19  # molecule/cm³ at STP
+    sigma_si = sigma_TpNu * (_AMAGAT_CM3 ** 2) * 100.0  # cm⁵/mol² → m⁻¹ amagat⁻²
 
-    # κ_volume [m⁻¹] = σ × n_a × n_b  (per amagat²)
+    # κ_volume [m⁻¹] = σ × n_a × n_b  (n in amagat)
     # broadcast (nT, 1, nNu) × (nT, nP) × (nT, nP) → (nT, nP, nNu)
     n_a = n_a.T  # (nT, nP)
     n_b = n_b.T  # (nT, nP)
