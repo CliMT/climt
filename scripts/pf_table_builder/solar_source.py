@@ -19,7 +19,10 @@ def build_solar_source_per_gpoint(spectrum, band_edges, ngpt):
     irr = np.asarray(spectrum["irradiance"])
     nband = len(band_edges) - 1
     out = np.zeros((nband, ngpt))
-    _trapz = getattr(np, "trapezoid", np.trapz)
+    try:
+        _trapz = np.trapezoid
+    except AttributeError:
+        _trapz = np.trapz
     for ib in range(nband):
         lo, hi = band_edges[ib], band_edges[ib + 1]
         mask = (wn > lo) & (wn < hi)

@@ -20,7 +20,9 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(__file__))
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(_SCRIPT_DIR)
+sys.path.insert(0, _SCRIPT_DIR)
 from pf_table_builder.kappa_sampling import sample_kappa_grid
 from pf_table_builder.k_distribution import kappa_to_k_coeffs
 from pf_table_builder.planck_fraction import build_uniform_planck_fraction
@@ -72,6 +74,22 @@ SCENARIOS = {
         ],
     ),
 }
+
+_STELLAR_SPECTRA_DIR = os.path.join(
+    _REPO_ROOT, "climt", "_data", "picket_fence", "stellar_spectra"
+)
+
+
+def _load_stellar_spectrum(name_or_path):
+    """Load stellar spectrum from a built-in name or .npz path."""
+    if os.path.isfile(name_or_path):
+        path = name_or_path
+    else:
+        path = os.path.join(_STELLAR_SPECTRA_DIR, f"{name_or_path}.npz")
+    data = np.load(path)
+    return {"wavenumber": np.array(data["wavenumber"]),
+            "irradiance": np.array(data["irradiance"])}
+
 
 LW_BAND_EDGES = np.array([10.0, 500.0, 1250.0, 2500.0, 3250.0])
 SW_BAND_EDGES = np.array([3250.0, 8000.0, 14000.0, 30000.0])
@@ -148,10 +166,7 @@ def build_table(scenario_name, kind, output_path, ngpt=2, dnu=0.5,
         )
     else:
         # Load stellar spectrum and build solar source / Rayleigh
-        from climt._components.picket_fence.optics.stellar import (
-            load_stellar_spectrum,
-        )
-        spectrum = load_stellar_spectrum(cfg["stellar_spectrum"])
+        spectrum = _load_stellar_spectrum(cfg["stellar_spectrum"])
         solar = build_solar_source_per_gpoint(spectrum, band_edges, ngpt)
         rayleigh = build_rayleigh_per_band(
             band_edges,
