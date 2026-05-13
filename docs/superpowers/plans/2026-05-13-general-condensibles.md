@@ -32,7 +32,7 @@
 - Create: `climt/_core/condensibles.py`
 - Create: `tests/test_condensibles.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_condensibles.py
@@ -61,14 +61,14 @@ def test_species_id_mapping():
     assert SPECIES_ID["co2"] == 2
 ```
 
-- [ ] **Step 2: Run test to confirm it fails**
+- [x] **Step 2: Run test to confirm it fails**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py -v
 ```
 Expected: `ModuleNotFoundError` or `ImportError` — `condensibles` does not exist yet.
 
-- [ ] **Step 3: Create `climt/_core/condensibles.py` with CondensibleParams, defaults, factory**
+- [x] **Step 3: Create `climt/_core/condensibles.py` with CondensibleParams, defaults, factory**
 
 ```python
 # climt/_core/condensibles.py
@@ -132,14 +132,14 @@ def get_condensible_params() -> CondensibleParams:
     )
 ```
 
-- [ ] **Step 4: Run tests to confirm they pass**
+- [x] **Step 4: Run tests to confirm they pass**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py::test_condensible_params_h2o_defaults tests/test_condensibles.py::test_species_id_mapping -v
 ```
 Expected: both PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_core/condensibles.py tests/test_condensibles.py
@@ -154,7 +154,7 @@ git commit -m "feat(condensibles): CondensibleParams, H2O defaults, get_condensi
 - Modify: `climt/_core/condensibles.py`
 - Modify: `tests/test_condensibles.py`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `tests/test_condensibles.py`:
 
@@ -221,14 +221,14 @@ def test_lcl_pressure_subsaturated():
     assert plcl > 500.0  # sanity bound
 ```
 
-- [ ] **Step 2: Run tests to confirm they fail**
+- [x] **Step 2: Run tests to confirm they fail**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py -v
 ```
 Expected: all new tests FAIL with `ImportError` — functions not defined yet.
 
-- [ ] **Step 3: Add `_sat_vap_pressure`, `_lv`, `_lcl_pressure` to `condensibles.py`**
+- [x] **Step 3: Add `_sat_vap_pressure`, `_lv`, `_lcl_pressure` to `condensibles.py`**
 
 Append after `get_condensible_params()`:
 
@@ -273,14 +273,14 @@ def _lcl_pressure(P_nk, RH, T_nk, cond):
         return P_nk * (RH ** chi)
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py -v
 ```
 Expected: all tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_core/condensibles.py tests/test_condensibles.py
@@ -295,7 +295,7 @@ git commit -m "feat(condensibles): _sat_vap_pressure, _lv, _lcl_pressure kernel 
 - Modify: `climt/_core/condensibles.py`
 - Modify: `tests/test_condensibles.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `tests/test_condensibles.py`:
 
@@ -316,14 +316,14 @@ def test_compute_qs_matches_bolton_h2o():
     np.testing.assert_allclose(qs_new, qs_ref, rtol=1e-5)
 ```
 
-- [ ] **Step 2: Run test to confirm it fails**
+- [x] **Step 2: Run test to confirm it fails**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py::test_compute_qs_matches_bolton_h2o -v
 ```
 Expected: FAIL — `compute_qs` not defined.
 
-- [ ] **Step 3: Add `compute_qs` to `condensibles.py`**
+- [x] **Step 3: Add `compute_qs` to `condensibles.py`**
 
 Add the following imports at the top of `condensibles.py` (after the existing imports):
 
@@ -363,14 +363,14 @@ def compute_qs(T, P, cond, RD):
     return qs
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py -v
 ```
 Expected: all PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_core/condensibles.py tests/test_condensibles.py
@@ -385,7 +385,7 @@ git commit -m "feat(condensibles): compute_qs — parallelised saturation specif
 - Modify: `climt/_core/atmospheric_properties.py`
 - Modify: `tests/test_atmospheric_properties.py`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `tests/test_atmospheric_properties.py`:
 
@@ -414,14 +414,14 @@ def test_reset_restores_condensible():
 
 Note: the `titan` test will only pass after Task 5 adds `[condensible]` to titan.toml. For now, run only the default test.
 
-- [ ] **Step 2: Run the default test to confirm it fails**
+- [x] **Step 2: Run the default test to confirm it fails**
 
 ```bash
 conda run -n climt pytest tests/test_atmospheric_properties.py::test_get_active_condensible_default -v
 ```
 Expected: FAIL — `get_active_condensible` not defined.
 
-- [ ] **Step 3: Add `_active_condensible` state and `get_active_condensible()` to `atmospheric_properties.py`**
+- [x] **Step 3: Add `_active_condensible` state and `get_active_condensible()` to `atmospheric_properties.py`**
 
 After the `_active_profile` dict (around line 31), add:
 
@@ -490,21 +490,21 @@ In `reset_atmospheric_properties()`, after restoring constants, add:
     _active_profile["path"] = None
 ```
 
-- [ ] **Step 4: Run the default test**
+- [x] **Step 4: Run the default test**
 
 ```bash
 conda run -n climt pytest tests/test_atmospheric_properties.py::test_get_active_condensible_default -v
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Run full existing atmospheric properties test suite to check for regressions**
+- [x] **Step 5: Run full existing atmospheric properties test suite to check for regressions**
 
 ```bash
 conda run -n climt pytest tests/test_atmospheric_properties.py -v
 ```
 Expected: all PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_core/atmospheric_properties.py tests/test_atmospheric_properties.py
@@ -520,7 +520,7 @@ git commit -m "feat(atmospheric_properties): condensible species tracking via ge
 - Modify: `climt/_data/atmospheric_properties/titan.toml`
 - Modify: `climt/_data/atmospheric_properties/mars.toml`
 
-- [ ] **Step 1: Add `[condensible]` and `[condensible_properties]` to `earth.toml`**
+- [x] **Step 1: Add `[condensible]` and `[condensible_properties]` to `earth.toml`**
 
 Append to `climt/_data/atmospheric_properties/earth.toml`:
 
@@ -539,7 +539,7 @@ freezing_point_of_condensible            = { value = 273.15,  units = "degK" }
 
 Note: `CL = 2500.0` follows the original Emanuel scheme convention (not the true liquid water value of ~4186 J/kg/K). Do not change this — it preserves numerical parity with existing tests.
 
-- [ ] **Step 2: Add to `titan.toml`**
+- [x] **Step 2: Add to `titan.toml`**
 
 Append to `climt/_data/atmospheric_properties/titan.toml`:
 
@@ -558,7 +558,7 @@ density_of_condensible_liquid             = { value = 422.6,  units = "kg/m^3" }
 freezing_point_of_condensible            = { value = 90.69,  units = "degK" }
 ```
 
-- [ ] **Step 3: Add to `mars.toml`**
+- [x] **Step 3: Add to `mars.toml`**
 
 Append to `climt/_data/atmospheric_properties/mars.toml`:
 
@@ -578,14 +578,14 @@ density_of_condensible_liquid             = { value = 1562.0, units = "kg/m^3" }
 freezing_point_of_condensible            = { value = 216.6,  units = "degK" }
 ```
 
-- [ ] **Step 4: Run TOML-loading tests**
+- [x] **Step 4: Run TOML-loading tests**
 
 ```bash
 conda run -n climt pytest tests/test_atmospheric_properties.py -v
 ```
 Expected: all PASS, including the new `test_reset_restores_condensible` (titan now has `[condensible]`).
 
-- [ ] **Step 5: Run a quick smoke test that constants load correctly after loading titan**
+- [x] **Step 5: Run a quick smoke test that constants load correctly after loading titan**
 
 ```bash
 conda run -n climt python -c "
@@ -606,7 +606,7 @@ RV: 518.3
 after reset: h2o
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_data/atmospheric_properties/earth.toml \
@@ -622,7 +622,7 @@ git commit -m "feat(toml): add condensible species + properties to earth/titan/m
 **Files:**
 - Modify: `climt/_core/__init__.py`
 
-- [ ] **Step 1: Add imports and exports**
+- [x] **Step 1: Add imports and exports**
 
 In `climt/_core/__init__.py`, add the following import after the `atmospheric_properties` imports:
 
@@ -642,7 +642,7 @@ Add to the `__all__` tuple:
     get_active_condensible,
 ```
 
-- [ ] **Step 2: Confirm the imports work**
+- [x] **Step 2: Confirm the imports work**
 
 ```bash
 conda run -n climt python -c "
@@ -658,7 +658,7 @@ imports ok
 species_id: 0 RV: 461.5
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add climt/_core/__init__.py
@@ -672,14 +672,14 @@ git commit -m "feat(core): export CondensibleParams, get_condensible_params, get
 **Files:**
 - Modify: `climt/_components/emanuel/pure_python_v3.py`
 
-- [ ] **Step 1: Run baseline parity test to establish a reference**
+- [x] **Step 1: Run baseline parity test to establish a reference**
 
 ```bash
 conda run -n climt pytest tests/test_emanuel_v3_parity.py -v
 ```
 Expected: all PASS. Record this as the baseline.
 
-- [ ] **Step 2: Remove condensible fields from `EmanuelParams`**
+- [x] **Step 2: Remove condensible fields from `EmanuelParams`**
 
 In `pure_python_v3.py`, remove the following five fields from `EmanuelParams`:
 
@@ -694,7 +694,7 @@ In `pure_python_v3.py`, remove the following five fields from `EmanuelParams`:
 
 `EmanuelParams` should now end at `DELT0: float`.
 
-- [ ] **Step 3: Add condensibles import and update `__init__`**
+- [x] **Step 3: Add condensibles import and update `__init__`**
 
 At the top of `pure_python_v3.py`, add:
 
@@ -728,14 +728,14 @@ After the `self._params = EmanuelParams(...)` assignment, add:
         self._cond = get_condensible_params()
 ```
 
-- [ ] **Step 4: Run parity test — expect failure** (kernels still reference `params.RV` etc.)
+- [x] **Step 4: Run parity test — expect failure** (kernels still reference `params.RV` etc.)
 
 ```bash
 conda run -n climt pytest tests/test_emanuel_v3_parity.py -v 2>&1 | head -40
 ```
 Expected: errors about `params` missing `CPV` / `RV` etc. This is correct — kernel updates follow in Tasks 8–10.
 
-- [ ] **Step 5: Commit the params change as a work-in-progress**
+- [x] **Step 5: Commit the params change as a work-in-progress**
 
 ```bash
 git add climt/_components/emanuel/pure_python_v3.py
@@ -749,7 +749,7 @@ git commit -m "refactor(emanuel): remove condensible fields from EmanuelParams, 
 **Files:**
 - Modify: `climt/_components/emanuel/pure_python_v3.py`
 
-- [ ] **Step 1: Add `cond` parameter and update all condensible references**
+- [x] **Step 1: Add `cond` parameter and update all condensible references**
 
 Replace the function signature:
 
@@ -805,7 +805,7 @@ Replace the `TPK` line that references `params.CL`:
     ) / params.CPD
 ```
 
-- [ ] **Step 2: Update the two call sites of `_tlift_functional_np` in `_convect_functional_np`**
+- [x] **Step 2: Update the two call sites of `_tlift_functional_np` in `_convect_functional_np`**
 
 There are two calls (search for `_tlift_functional_np(`). Both need `cond` appended:
 
@@ -822,14 +822,14 @@ There are two calls (search for `_tlift_functional_np(`). Both need `cond` appen
 
 Do the same for the second call (KK=2). Note: `_convect_functional_np` doesn't have `cond` yet — that comes in Task 9. For now add `cond` as an argument to `_convect_functional_np` signature only (to unblock compilation), and pass `None` temporarily in `_numpy_vectorized_convect`. Actually, it's cleaner to update `_convect_functional_np` signature now even if its body changes come in Task 9. Add `cond` to its signature and pass it through immediately.
 
-- [ ] **Step 3: Run parity test**
+- [x] **Step 3: Run parity test**
 
 ```bash
 conda run -n climt pytest tests/test_emanuel_v3_parity.py -v
 ```
 Expected: still failing (more references to `params.RV` etc. remain in `_convect_functional_np`). That's fine — continue.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add climt/_components/emanuel/pure_python_v3.py
@@ -845,7 +845,7 @@ git commit -m "refactor(emanuel): _tlift_functional_np — use cond for condensi
 
 This task replaces all remaining `params.CPV`, `params.CL`, `params.RV`, `params.LV0`, `params.ROWL` references in `_convect_functional_np` with `cond.*` equivalents, and comments out the dead `TH` block.
 
-- [ ] **Step 1: Comment out the `TH` block**
+- [x] **Step 1: Comment out the `TH` block**
 
 Locate the block starting with `TH = np.zeros(NL + 1)` (around line 314). Comment it out:
 
@@ -862,7 +862,7 @@ Locate the block starting with `TH = np.zeros(NL + 1)` (around line 314). Commen
     #     TH[i] = T[i] * (1000.0 / P[i]) ** RDCP
 ```
 
-- [ ] **Step 2: Replace condensible references in `_convect_functional_np` body**
+- [x] **Step 2: Replace condensible references in `_convect_functional_np` body**
 
 Make these replacements (each `find` is unique in the function):
 
@@ -895,14 +895,14 @@ Add `_lcl_pressure` to the imports from `condensibles` at the top of the file:
 from ..._core.condensibles import CondensibleParams, get_condensible_params, _lcl_pressure, _sat_vap_pressure
 ```
 
-- [ ] **Step 3: Run parity test**
+- [x] **Step 3: Run parity test**
 
 ```bash
 conda run -n climt pytest tests/test_emanuel_v3_parity.py -v
 ```
 Expected: still failing — `_numpy_vectorized_convect` and `array_call` haven't been updated yet.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add climt/_components/emanuel/pure_python_v3.py
@@ -916,7 +916,7 @@ git commit -m "refactor(emanuel): _convect_functional_np — cond param, comment
 **Files:**
 - Modify: `climt/_components/emanuel/pure_python_v3.py`
 
-- [ ] **Step 1: Thread `cond` through `_numpy_vectorized_convect`**
+- [x] **Step 1: Thread `cond` through `_numpy_vectorized_convect`**
 
 Update the function signature:
 
@@ -953,7 +953,7 @@ Inside the function, add `cond` to the `_convect_functional_np` call:
         )
 ```
 
-- [ ] **Step 2: Update `array_call`**
+- [x] **Step 2: Update `array_call`**
 
 Add `compute_qs` to the condensibles import at the top of `pure_python_v3.py`:
 
@@ -992,7 +992,7 @@ Update the call to `_numpy_vectorized_convect` to include `cond`:
         )
 ```
 
-- [ ] **Step 3: Run parity test**
+- [x] **Step 3: Run parity test**
 
 ```bash
 conda run -n climt pytest tests/test_emanuel_v3_parity.py -v
@@ -1006,14 +1006,14 @@ grep -n "params\.RV\|params\.CPV\|params\.CL\b\|params\.LV0\|params\.ROWL" \
 
 Expected: no output.
 
-- [ ] **Step 4: Run full existing test suite for Emanuel**
+- [x] **Step 4: Run full existing test suite for Emanuel**
 
 ```bash
 conda run -n climt pytest tests/test_emanuel_v3_parity.py tests/test_emanuel_optimization.py tests/test_components.py -v
 ```
 Expected: all PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_components/emanuel/pure_python_v3.py
@@ -1027,7 +1027,7 @@ git commit -m "feat(emanuel): wire cond through vectorized kernel and array_call
 **Files:**
 - Modify: `tests/test_condensibles.py`
 
-- [ ] **Step 1: Write Titan integration smoke test**
+- [x] **Step 1: Write Titan integration smoke test**
 
 Add to `tests/test_condensibles.py`:
 
@@ -1071,28 +1071,28 @@ def test_emanuel_titan_ch4_smoke():
         reset_atmospheric_properties()
 ```
 
-- [ ] **Step 2: Run the smoke test**
+- [x] **Step 2: Run the smoke test**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py::test_emanuel_titan_ch4_smoke -v
 ```
 Expected: PASS (no exception; tendencies have correct shape).
 
-- [ ] **Step 3: Run the full condensibles test suite**
+- [x] **Step 3: Run the full condensibles test suite**
 
 ```bash
 conda run -n climt pytest tests/test_condensibles.py -v
 ```
 Expected: all PASS.
 
-- [ ] **Step 4: Run the complete test suite to check for regressions**
+- [x] **Step 4: Run the complete test suite to check for regressions**
 
 ```bash
 conda run -n climt pytest tests/ -v --ignore=tests/test_rrtmg_comparison.py -x
 ```
 Expected: all PASS. (`test_rrtmg_comparison.py` is excluded as it requires RRTMG data files that may not be present.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/test_condensibles.py

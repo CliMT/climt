@@ -85,7 +85,43 @@ def test_lcl_pressure_subsaturated():
     assert plcl > 500.0  # sanity bound
 
 
-def test_compute_qs_matches_bolton_h2o():
+def test_emanuel_titan_ch4_smoke():
+    """EmanuelConvectionPython runs without error on a Titan-like CH4 atmosphere."""
+    import numpy as np
+    from datetime import timedelta
+    from climt import load_atmospheric_properties, reset_atmospheric_properties
+    from climt._components.emanuel.pure_python_v3 import EmanuelConvectionPython
+
+    load_atmospheric_properties("titan")
+    try:
+        nlev, ncol = 30, 1
+        # Titan surface ~94 K, tropopause ~70 K, lapse rate ~1 K/km
+        T = np.linspace(94.0, 70.0, nlev).reshape(nlev, ncol)
+        # CH4 specific humidity: ~5% near surface, decreasing with altitude
+        q = np.linspace(0.05, 0.001, nlev).reshape(nlev, ncol)
+        u = np.zeros((nlev, ncol))
+        v = np.zeros((nlev, ncol))
+        # Titan surface pressure ~1467 hPa
+        p = np.linspace(1467.0, 10.0, nlev).reshape(nlev, ncol)
+        ph = np.linspace(1500.0, 5.0, nlev + 1).reshape(nlev + 1, ncol)
+        cbmf = np.zeros(ncol)
+
+        conv = EmanuelConvectionPython()
+        state = {
+            "air_temperature": T,
+            "specific_humidity": q,
+            "eastward_wind": u,
+            "northward_wind": v,
+            "air_pressure": p,
+            "air_pressure_on_interface_levels": ph,
+            "cloud_base_mass_flux": cbmf,
+        }
+        # Should complete without exception; output values not checked here
+        tendencies, diagnostics = conv.array_call(state, timedelta(minutes=15))
+        assert "air_temperature" in tendencies
+        assert tendencies["air_temperature"].shape == (nlev, ncol)
+    finally:
+        reset_atmospheric_properties()
     """compute_qs must match bolton_q_sat for H2O above freezing to within rtol=1e-5."""
     import numpy as np
     from climt._core.condensibles import compute_qs, get_condensible_params
