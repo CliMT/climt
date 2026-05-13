@@ -14,3 +14,16 @@ heat_capacity_of_dry_air_at_constant_pressure  = { value = 1040.0, units = "J/kg
 [gas_species]
 molar_mass_of_methane      = { value = 16.043, units = "g/mol" }
 molar_mass_of_water_vapor  = { value = 18.015, units = "g/mol" }
+
+[condensible]
+species = "ch4"
+
+[condensible_properties]
+# Methane condensible properties
+# Latent heat anchored at normal boiling point (111.65 K)
+gas_constant_of_condensible_vapor         = { value = 518.3,  units = "J/kg/K" }
+heat_capacity_of_condensible_vapor        = { value = 2232.0, units = "J/kg/K" }
+heat_capacity_of_condensible_liquid       = { value = 3469.0, units = "J/kg/K" }
+latent_heat_of_condensible_vaporization   = { value = 5.1e5,  units = "J/kg" }
+density_of_condensible_liquid             = { value = 422.6,  units = "kg/m^3" }
+freezing_point_of_condensible            = { value = 90.69,  units = "degK" }

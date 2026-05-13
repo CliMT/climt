@@ -16,3 +16,14 @@ molar_mass_of_carbon_dioxide = { value = 44.010, units = "g/mol" }
 molar_mass_of_ozone = { value = 47.998, units = "g/mol" }
 molar_mass_of_methane = { value = 16.043, units = "g/mol" }
 molar_mass_of_nitrous_oxide = { value = 44.013, units = "g/mol" }
+
+[condensible]
+species = "h2o"
+
+[condensible_properties]
+gas_constant_of_condensible_vapor         = { value = 461.5,   units = "J/kg/K" }
+heat_capacity_of_condensible_vapor        = { value = 1870.0,  units = "J/kg/K" }
+heat_capacity_of_condensible_liquid       = { value = 2500.0,  units = "J/kg/K" }
+latent_heat_of_condensible_vaporization   = { value = 2.501e6, units = "J/kg" }
+density_of_condensible_liquid             = { value = 1000.0,  units = "kg/m^3" }
+freezing_point_of_condensible            = { value = 273.15,  units = "degK" }
