@@ -207,16 +207,16 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
 
 
 @njit
-def _tlift_functional_np(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, params):
-    CPVMCL = params.CL - params.CPV
-    EPS = params.RD / params.RV
+def _tlift_functional_np(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, params, cond):
+    CPVMCL = cond.CL - cond.CPV
+    EPS = params.RD / cond.RV
     EPSI = 1.0 / EPS
     AH0 = (
-        (params.CPD * (1.0 - Q[NK]) + params.CL * Q[NK]) * T[NK]
-        + Q[NK] * (params.LV0 - CPVMCL * (T[NK] - 273.15))
+        (params.CPD * (1.0 - Q[NK]) + cond.CL * Q[NK]) * T[NK]
+        + Q[NK] * (cond.LV0 - CPVMCL * (T[NK] - cond.T_freeze))
         + GZ[NK]
     )
-    CPP = params.CPD * (1.0 - Q[NK]) + Q[NK] * params.CPV
+    CPP = params.CPD * (1.0 - Q[NK]) + Q[NK] * cond.CPV
     CPINV = 1.0 / CPP
     if KK == 1:
         for i in range(ICB):
@@ -229,26 +229,20 @@ def _tlift_functional_np(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, pa
     for i in range(NSB, NST + 1):
         TG = T[i]
         QG = QS[i]
-        ALV = params.LV0 - CPVMCL * (T[i] - 273.15)
+        ALV = cond.LV0 - CPVMCL * (T[i] - cond.T_freeze)
         for j in range(2):
-            S = 1.0 / (params.CPD + ALV * ALV * QG / (params.RV * T[i] * T[i]))
+            S = 1.0 / (params.CPD + ALV * ALV * QG / (cond.RV * T[i] * T[i]))
             AHG = (
                 params.CPD * TG
-                + (params.CL - params.CPD) * Q[NK] * T[i]
+                + (cond.CL - params.CPD) * Q[NK] * T[i]
                 + ALV * QG
                 + GZ[i]
             )
             TG = max(TG + S * (AH0 - AHG), 35.0)
-            TC = TG - 273.15
-            DENOM = 243.5 + TC
-            ES = (
-                6.112 * np.exp(17.67 * TC / DENOM)
-                if TC >= 0.0
-                else np.exp(23.33086 - 6111.72784 / TG + 0.15215 * np.log(TG))
-            )
+            ES = _sat_vap_pressure(TG, cond.species_id)
             QG = EPS * ES / (P[i] - ES * (1.0 - EPS))
         TPK[i] = (
-            AH0 - (params.CL - params.CPD) * Q[NK] * T[i] - GZ[i] - ALV * QG
+            AH0 - (cond.CL - params.CPD) * Q[NK] * T[i] - GZ[i] - ALV * QG
         ) / params.CPD
         CLW[i] = max(0.0, Q[NK] - QG)
         TVP[i] = TPK[i] * (1.0 + (QG / (1.0 - Q[NK])) * EPSI)
@@ -362,7 +356,7 @@ def _convect_functional_np(
     TP = np.zeros(ND)
     CLW = np.zeros(ND)
     TVP, TP, CLW = _tlift_functional_np(
-        P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params
+        P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params, cond
     )
     for i in range(NK, ICB + 1):
         TVP[i] -= TP[i] * Q[NK]
@@ -371,7 +365,7 @@ def _convect_functional_np(
     if IFLAG != 4:
         IFLAG = 1
     TVP, TP, CLW = _tlift_functional_np(
-        P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params
+        P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params, cond
     )
     EP = np.zeros(ND)
     SIGP = np.zeros(ND)
