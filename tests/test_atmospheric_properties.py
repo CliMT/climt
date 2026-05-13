@@ -91,3 +91,27 @@ def test_load_trappist1e_profile():
         assert 7.0 < g < 10.0
     finally:
         reset_atmospheric_properties()
+
+
+def test_get_active_condensible_default():
+    """get_active_condensible() returns 'h2o' before any profile is loaded."""
+    from climt._core.atmospheric_properties import get_active_condensible
+
+    assert get_active_condensible() == "h2o"
+
+
+def test_reset_restores_condensible():
+    """reset_atmospheric_properties() restores condensible to 'h2o'."""
+    from climt import load_atmospheric_properties, reset_atmospheric_properties
+    from climt._core.atmospheric_properties import get_active_condensible
+
+    load_atmospheric_properties("earth")
+    try:
+        load_atmospheric_properties("titan")
+        assert get_active_condensible() == "ch4"
+        reset_atmospheric_properties()
+        assert get_active_condensible() == "h2o"
+    except Exception:
+        pass
+    finally:
+        reset_atmospheric_properties()

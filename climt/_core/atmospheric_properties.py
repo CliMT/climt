@@ -28,6 +28,7 @@ _BUILTIN_DIR = os.path.join(
 _snapshot_stack = []
 
 _active_profile = {"name": None, "path": None}
+_active_condensible = {"species": "h2o"}
 
 
 def _resolve_profile_path(name_or_path):
@@ -43,10 +44,8 @@ def _resolve_profile_path(name_or_path):
     )
 
 
-def _parse_toml(path):
-    """Parse a TOML profile and return a flat dict of {name: (value, units)}."""
-    with open(path, "rb") as f:
-        data = tomllib.load(f)
+def _parse_toml_from_dict(data):
+    """Extract sympl constants from a parsed TOML dict."""
     constants = {}
     for section in data.values():
         if isinstance(section, dict):
@@ -54,6 +53,13 @@ def _parse_toml(path):
                 if isinstance(val, dict) and "value" in val and "units" in val:
                     constants[key] = (val["value"], val["units"])
     return constants
+
+
+def _parse_toml(path):
+    """Parse a TOML profile and return a flat dict of {name: (value, units)}."""
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    return _parse_toml_from_dict(data)
 
 
 def _snapshot_constants(keys):
@@ -79,13 +85,16 @@ def load_atmospheric_properties(name_or_path):
             "hot_jupiter") or path to a custom .toml file.
     """
     path = _resolve_profile_path(name_or_path)
-    constants = _parse_toml(path)
+    with open(path, "rb") as f:
+        raw = tomllib.load(f)
+    constants = _parse_toml_from_dict(raw)
 
     # Snapshot current state of the constants we're about to overwrite
     _snapshot_stack.append(_snapshot_constants(constants))
 
     _active_profile["name"] = os.path.splitext(os.path.basename(path))[0]
     _active_profile["path"] = path
+    _active_condensible["species"] = raw.get("condensible", {}).get("species", "h2o")
 
     # Apply new constants
     for key, (value, units) in constants.items():
@@ -110,6 +119,12 @@ def reset_atmospheric_properties():
             set_constant(key, value, units)
     _active_profile["name"] = None
     _active_profile["path"] = None
+    _active_condensible["species"] = "h2o"
+
+
+def get_active_condensible() -> str:
+    """Return the species string of the currently loaded condensible (e.g. 'ch4')."""
+    return _active_condensible["species"]
 
 
 def get_constant_checked(name, units):
