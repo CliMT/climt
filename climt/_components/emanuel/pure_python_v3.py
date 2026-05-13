@@ -238,7 +238,7 @@ def _tlift_functional_np(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, pa
                 + ALV * QG
                 + GZ[i]
             )
-            TG = max(TG + S * (AH0 - AHG), 35.0)
+            TG = max(TG + S * (AH0 - AHG), 35.0)  # TODO(condensibles): replace 35.0 with species-relative floor
             ES = _sat_vap_pressure(TG, cond.species_id)
             QG = EPS * ES / (P[i] - ES * (1.0 - EPS))
         TPK[i] = (
@@ -377,7 +377,7 @@ def _convect_functional_np(
         EP[i] = 0.0
         SIGP[i] = params.SIGS
     for i in range(NK + 1, NL + 1):
-        TCA = TP[i] - 273.15
+        TCA = TP[i] - cond.T_freeze
         ELACRIT = (
             params.ELCRIT if TCA >= 0.0 else params.ELCRIT * (1.0 - TCA / params.TLCRIT)
         )

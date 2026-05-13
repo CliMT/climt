@@ -26,6 +26,7 @@ _BUILTIN_DIR = os.path.join(
 # Snapshot stack (list of dicts). Each entry is a dict of
 # {constant_name: (value, units)} captured before a profile was loaded.
 _snapshot_stack = []
+_condensible_stack = []  # parallel to _snapshot_stack; tracks species before each load
 
 _active_profile = {"name": None, "path": None}
 _active_condensible = {"species": "h2o"}
@@ -89,8 +90,9 @@ def load_atmospheric_properties(name_or_path):
         raw = tomllib.load(f)
     constants = _parse_toml_from_dict(raw)
 
-    # Snapshot current state of the constants we're about to overwrite
+    # Snapshot current state before overwriting
     _snapshot_stack.append(_snapshot_constants(constants))
+    _condensible_stack.append(_active_condensible["species"])
 
     _active_profile["name"] = os.path.splitext(os.path.basename(path))[0]
     _active_profile["path"] = path
@@ -119,7 +121,7 @@ def reset_atmospheric_properties():
             set_constant(key, value, units)
     _active_profile["name"] = None
     _active_profile["path"] = None
-    _active_condensible["species"] = "h2o"
+    _active_condensible["species"] = _condensible_stack.pop()
 
 
 def get_active_condensible() -> str:

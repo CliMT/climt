@@ -71,6 +71,7 @@ def _sat_vap_pressure(T, species_id):
         if TC >= 0.0:
             return 6.112 * np.exp(17.67 * TC / (243.5 + TC))
         else:
+            # Tetens ice coefficients (23.33086, 6111.72784, 0.15215) produce hPa natively.
             return np.exp(23.33086 - 6111.72784 / T + 0.15215 * np.log(T))
     elif species_id == 1:  # CH4 — anchored at normal boiling point 111.65 K, 1 atm
         return 1013.25 * np.exp((5.1e5 / 518.3) * (1.0 / 111.65 - 1.0 / T))
@@ -105,7 +106,7 @@ def compute_qs(T, P, cond, RD):
 
     Args:
         T:   air temperature (K), shape (nlev, ncol)
-        P:   air pressure (hPa), shape (nlev, ncol)
+        P:   air pressure in **hPa** (not Pa), shape (nlev, ncol)
         cond: CondensibleParams for the active condensible
         RD:  specific gas constant of dry air (J/kg/K)
 

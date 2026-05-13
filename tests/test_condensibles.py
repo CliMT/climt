@@ -122,6 +122,9 @@ def test_emanuel_titan_ch4_smoke():
         assert tendencies["air_temperature"].shape == (nlev, ncol)
     finally:
         reset_atmospheric_properties()
+
+
+def test_compute_qs_matches_bolton_h2o():
     """compute_qs must match bolton_q_sat for H2O above freezing to within rtol=1e-5."""
     import numpy as np
     from climt._core.condensibles import compute_qs, get_condensible_params

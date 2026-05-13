@@ -111,7 +111,21 @@ def test_reset_restores_condensible():
         assert get_active_condensible() == "ch4"
         reset_atmospheric_properties()
         assert get_active_condensible() == "h2o"
-    except Exception:
-        pass
+    finally:
+        reset_atmospheric_properties()
+
+
+def test_nested_load_restores_previous_condensible():
+    """reset after a nested load restores the prior condensible species, not always h2o."""
+    from climt import load_atmospheric_properties, reset_atmospheric_properties
+    from climt._core.atmospheric_properties import get_active_condensible
+
+    load_atmospheric_properties("titan")
+    try:
+        assert get_active_condensible() == "ch4"
+        load_atmospheric_properties("mars")
+        assert get_active_condensible() == "co2"
+        reset_atmospheric_properties()
+        assert get_active_condensible() == "ch4"  # should restore titan, not h2o
     finally:
         reset_atmospheric_properties()
