@@ -21,6 +21,13 @@ def reset_sympl_backend():
     sympl.reset_constants()
     # Re-set climt's custom constants that reset_constants() clears
     sympl.set_constant("top_of_model_pressure", 20.0, "Pa")
+    
+    try:
+        from climt._core.condensibles import _H2O_DEFAULTS
+        for _name, (_val, _units) in _H2O_DEFAULTS.items():
+            sympl.set_constant(_name, _val, _units)
+    except ImportError:
+        pass
 
     # Reset climt-side global state that survives sympl.reset_constants().
     from climt._core import initialization as _init

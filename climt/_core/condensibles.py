@@ -56,3 +56,43 @@ def get_condensible_params() -> CondensibleParams:
         ROWL=get_constant("density_of_condensible_liquid", "kg/m^3"),
         T_freeze=get_constant("freezing_point_of_condensible", "degK"),
     )
+
+
+@njit
+def _sat_vap_pressure(T, species_id):
+    """Saturation vapor pressure in hPa for the given species.
+
+    H2O: Magnus formula (above/below freezing).
+    CH4, CO2: Clausius-Clapeyron anchored at 1 atm reference point.
+    """
+    if species_id == 0:  # H2O
+        TC = T - 273.15
+        if TC >= 0.0:
+            return 6.112 * np.exp(17.67 * TC / (243.5 + TC))
+        else:
+            return np.exp(23.33086 - 6111.72784 / T + 0.15215 * np.log(T))
+    elif species_id == 1:  # CH4 — anchored at normal boiling point 111.65 K, 1 atm
+        return 1013.25 * np.exp((5.1e5 / 518.3) * (1.0 / 111.65 - 1.0 / T))
+    else:  # CO2 — anchored at sublimation point 194.7 K, 1 atm
+        return 1013.25 * np.exp((5.71e5 / 188.9) * (1.0 / 194.7 - 1.0 / T))
+
+
+@njit
+def _lv(T, cond):
+    """Latent heat of vaporization/sublimation (J/kg) as a function of temperature."""
+    return cond.LV0 - (cond.CL - cond.CPV) * (T - cond.T_freeze)
+
+
+@njit
+def _lcl_pressure(P_nk, RH, T_nk, cond):
+    """Lifting Condensation Level pressure (hPa).
+
+    H2O: Bolton/Bohren empirical formula.
+    CH4, CO2: Clausius-Clapeyron approximation PLCL = P * RH^(Rv*T/Lv).
+    """
+    if cond.species_id == 0:  # H2O empirical
+        CHI = T_nk / (1669.0 - 122.0 * RH - T_nk)
+        return P_nk * (RH ** CHI)
+    else:  # Clausius-Clapeyron
+        chi = cond.RV * T_nk / cond.LV0
+        return P_nk * (RH ** chi)
