@@ -40,17 +40,12 @@ class EmanuelParams(NamedTuple):
     ALPHA: float
     DAMP: float
     CPD: float
-    CPV: float
-    CL: float
-    RV: float
     RD: float
-    LV0: float
     G: float
-    ROWL: float
     DELT0: float
 
 
-class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
+class EmanuelConvectionPython(ImplicitTendencyComponent):
     input_properties = {
         "air_temperature": {"dims": ["*", "mid_levels"], "units": "degK"},
         "specific_humidity": {"dims": ["*", "mid_levels"], "units": "kg/kg"},
@@ -113,13 +108,8 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
         self.ALPHA = 0.1
         self.DAMP = 0.1
         self.CPD = 1005.7
-        self.CPV = 1870.0
-        self.CL = 2500.0
-        self.RV = 461.5
         self.RD = 287.04
-        self.LV0 = 2.501e6
         self.G = 9.8
-        self.ROWL = 1000.0
         self.DELT0 = 300.0
         for key, value in kwargs.items():
             if hasattr(self, key):
@@ -142,16 +132,12 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
             ALPHA=float(self.ALPHA),
             DAMP=float(self.DAMP),
             CPD=float(self.CPD),
-            CPV=float(self.CPV),
-            CL=float(self.CL),
-            RV=float(self.RV),
             RD=float(self.RD),
-            LV0=float(self.LV0),
             G=float(self.G),
-            ROWL=float(self.ROWL),
             DELT0=float(self.DELT0),
         )
-        super(EmanuelConvectionPythonV3, self).__init__(**kwargs)
+        self._cond = get_condensible_params()
+        super(EmanuelConvectionPython, self).__init__(**kwargs)
 
     @ensure_contiguous_state
     def array_call(self, state, timestep):
@@ -892,3 +878,6 @@ def _numpy_vectorized_convect(
             iflag[i],
         ) = res
     return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag
+
+
+EmanuelConvectionPythonV3 = EmanuelConvectionPython
