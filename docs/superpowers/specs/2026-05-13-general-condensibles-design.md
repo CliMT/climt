@@ -202,8 +202,11 @@ qs = compute_qs(t, p * 100, self._cond, self._params.RD)
 ## What is NOT changed
 
 - `bolton_q_sat` in `util.py` — left in place; used by other components that haven't been generalized yet
-- Reference pressure `1000.0` hPa in potential temperature — Earth-specific but not blocking for initial generalization; deferred
 - `35.0` K minimum parcel temperature guard — becomes condensible-specific in a future pass
+
+## Dead code
+
+`TH` (potential temperature array, lines 314–319 of `_convect_functional_np`) is computed but never read — a carry-over from the original Fortran translation. The block (`TH`, its loop, and the `RDCP` local variable) is **commented out** rather than deleted. This also eliminates the Earth-specific `1000.0` hPa reference pressure concern for now. Other components that need `reference_pressure` will add it to the TOML as `reference_pressure = {value = ..., units = "hPa"}` in a future pass.
 
 ---
 
