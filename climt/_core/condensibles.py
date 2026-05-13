@@ -4,6 +4,7 @@ import numpy as np
 from sympl import get_constant, set_constant
 
 from .atmospheric_properties import get_active_condensible
+from .backend import jit_compile, prange
 
 try:
     from numba import njit
@@ -96,3 +97,26 @@ def _lcl_pressure(P_nk, RH, T_nk, cond):
     else:  # Clausius-Clapeyron
         chi = cond.RV * T_nk / cond.LV0
         return P_nk * (RH ** chi)
+
+
+@jit_compile(backend=np, parallel=True)
+def compute_qs(T, P, cond, RD):
+    """Saturation specific humidity (kg/kg) for a 2-D (nlev, ncol) array.
+
+    Args:
+        T:   air temperature (K), shape (nlev, ncol)
+        P:   air pressure (hPa), shape (nlev, ncol)
+        cond: CondensibleParams for the active condensible
+        RD:  specific gas constant of dry air (J/kg/K)
+
+    Returns:
+        qs array with same shape as T.
+    """
+    nlev, ncol = T.shape
+    qs = np.zeros_like(T)
+    EPS = RD / cond.RV
+    for i in prange(ncol):
+        for k in range(nlev):
+            es = _sat_vap_pressure(T[k, i], cond.species_id)
+            qs[k, i] = EPS * es / (P[k, i] - (1.0 - EPS) * es)
+    return qs

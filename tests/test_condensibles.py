@@ -83,3 +83,19 @@ def test_lcl_pressure_subsaturated():
     plcl = _lcl_pressure(1000.0, 0.7, 300.0, cond)
     assert plcl < 1000.0
     assert plcl > 500.0  # sanity bound
+
+
+def test_compute_qs_matches_bolton_h2o():
+    """compute_qs must match bolton_q_sat for H2O above freezing to within rtol=1e-5."""
+    import numpy as np
+    from climt._core.condensibles import compute_qs, get_condensible_params
+    from climt._core.util import bolton_q_sat
+
+    cond = get_condensible_params()
+    # All temperatures above 273.15 K so both formulas use the same (liquid) branch
+    T = np.array([[280.0], [290.0], [300.0], [310.0]])   # (4, 1)
+    P_hpa = np.array([[950.0], [900.0], [850.0], [800.0]])
+
+    qs_new = compute_qs(T, P_hpa, cond, 287.04)
+    qs_ref = bolton_q_sat(T, P_hpa * 100.0, 287.04, 461.5)
+    np.testing.assert_allclose(qs_new, qs_ref, rtol=1e-5)
