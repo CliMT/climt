@@ -10,7 +10,7 @@ from sympl import (
 
 from ..._core import ensure_contiguous_state
 from ..._core.backend import jit_compile, prange
-from ..._core.condensibles import CondensibleParams, get_condensible_params, _lcl_pressure, _sat_vap_pressure
+from ..._core.condensibles import CondensibleParams, get_condensible_params, _lcl_pressure, _sat_vap_pressure, compute_qs
 
 try:
     from numba import njit
@@ -158,9 +158,7 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
             ph = ph.T
             transposed = True
         nlev, ncol = t.shape
-        from climt._core import bolton_q_sat
-
-        qs = bolton_q_sat(t, p * 100, self.RD, self.RV)
+        qs = compute_qs(t, p, self._cond, self._params.RD)
         cbmf = state.get("cloud_base_mass_flux", np.zeros(ncol)).copy()
         ntra = 0
         tra = np.zeros((nlev, 1))
@@ -181,6 +179,7 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
             cbmf,
             tra_vector,
             self._params,
+            self._cond,
         )
         ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results
         if transposed:
@@ -266,6 +265,7 @@ def _convect_functional_np(
     CBMF_in,
     TRA_in,
     params,
+    cond,
 ):
     T = T_in.copy()
     Q = Q_in.copy()
@@ -653,7 +653,7 @@ def _convect_functional_np(
         - LVCP[0] * params.SIGD * EVAP[0]
         + params.SIGD
         * WT[1]
-        * (params.CL - params.CPD)
+        * (cond.CL - params.CPD)
         * WATER[1]
         * (T[1] - T[0])
         * DPINV
@@ -713,7 +713,7 @@ def _convect_functional_np(
         FT[i] += (
             params.SIGD
             * WT[i + 1]
-            * (params.CL - params.CPD)
+            * (cond.CL - params.CPD)
             * WATER[i + 1]
             * (T[i + 1] - T[i])
             * DPINV
@@ -831,7 +831,7 @@ def _convect_functional_np(
 
 @jit_compile(backend=np, parallel=True)
 def _numpy_vectorized_convect(
-    t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params
+    t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params, cond
 ):
     nlev, ncol = t.shape
     ft = np.zeros(t.shape)
@@ -861,6 +861,7 @@ def _numpy_vectorized_convect(
             cbmf[i],
             tra[:, :, i],
             params,
+            cond,
         )
         (
             ft[:, i],
