@@ -29,6 +29,7 @@ class PicketFenceLongwave(TendencyComponent):
         **kwargs,
     ):
         self._optics_mode = optics
+        self._has_co2_axis = False
         self._num_bands = 2 if optics == "parmentier" else None
 
         if optics == "parmentier":
@@ -43,6 +44,7 @@ class PicketFenceLongwave(TendencyComponent):
             self._num_gpts = self._table["k_coefficients"].shape[2]
             self._gas_names = list(self._table["gas_names"])
             _has_h2o_axis = "h2o_vmr_grid" in self._table
+            self._has_co2_axis = "co2_vmr_grid" in self._table
             self._fully_premixed = (self._gas_names == ["effective"]) and not _has_h2o_axis
             self._premixed_bg = (
                 (self._gas_names == ["effective"] and _has_h2o_axis)
@@ -105,6 +107,12 @@ class PicketFenceLongwave(TendencyComponent):
                     "units": "kg/kg",
                     "alias": "h2o",
                 }
+                if self._has_co2_axis:
+                    props["mole_fraction_of_carbon_dioxide_in_air"] = {
+                        "dims": ["mid_levels", "*"],
+                        "units": "mole/mole",
+                        "alias": "co2",
+                    }
             elif not self._fully_premixed:
                 # H2O enters as specific humidity (kg/kg); all other gases are
                 # mole fractions (mol/mol) per CF conventions.
@@ -126,7 +134,7 @@ class PicketFenceLongwave(TendencyComponent):
         props["longwave_optical_thickness_due_to_cloud"] = {
             "dims": ["mid_levels", "*", "num_longwave_bands"],
             "units": "dimensionless",
-            "alias": "tau_cloud",
+            "alias": "tau_cloud_lw",
         }
         return props
 
@@ -155,7 +163,7 @@ class PicketFenceLongwave(TendencyComponent):
                 "dims": ["interface_levels", "*", "num_longwave_bands"],
                 "units": "W m^-2",
             },
-            "longwave_heating_rate": {
+            "air_temperature_tendency_from_longwave": {
                 "dims": ["mid_levels", "*"],
                 "units": "degK day^-1",
             },
@@ -167,7 +175,7 @@ class PicketFenceLongwave(TendencyComponent):
                 "dims": ["mid_levels", "*", "num_longwave_bands"],
                 "units": "dimensionless",
             },
-            "longwave_heating_rate_per_band": {
+            "air_temperature_tendency_from_longwave_per_band": {
                 "dims": ["mid_levels", "*", "num_longwave_bands"],
                 "units": "degK day^-1",
             },
@@ -229,6 +237,7 @@ class PicketFenceLongwave(TendencyComponent):
             ngas = len(self._gas_names)
             gas_amounts = np.zeros((ngas, nlev, ncol))
             h2o_vmr = None
+            co2_vmr = None
             if self._fully_premixed:
                 # k is m²/kg-of-air (all gases baked in); gas_amount = air column.
                 one = np.ones((nlev, ncol))
@@ -247,6 +256,9 @@ class PicketFenceLongwave(TendencyComponent):
                 h2o_vmr = q_h2o / np.maximum(
                     q_h2o + (1.0 - q_h2o) * M_H2O, 1e-30
                 )
+                if self._has_co2_axis:
+                    # mole_fraction_of_carbon_dioxide_in_air IS already a VMR.
+                    co2_vmr = state["co2"].reshape(nlev, -1)
             else:
                 for ig, gas in enumerate(self._gas_names):
                     q_gas_flat = state[gas].reshape(nlev, -1)
@@ -258,7 +270,8 @@ class PicketFenceLongwave(TendencyComponent):
                     )
 
             tau, planck_src, surf_src, weights = self._correlated_k_optics(
-                T_flat, p_flat, gas_amounts, T_surf_flat, sigma, h2o_vmr=h2o_vmr
+                T_flat, p_flat, gas_amounts, T_surf_flat, sigma,
+                h2o_vmr=h2o_vmr, co2_vmr=co2_vmr,
             )
         else:
             raise NotImplementedError
@@ -270,7 +283,7 @@ class PicketFenceLongwave(TendencyComponent):
 
         # Add cloud optical depth per band (shape: nlev, *horiz, nband).
         # Applied uniformly across g-points within each band.
-        tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband)  # (nlev, ncol, nband)
+        tau_cloud_flat = state["tau_cloud_lw"].reshape(nlev, ncol, nband)  # (nlev, ncol, nband)
         # Rearrange to (nband, nlev, ncol) then broadcast over ngpt
         tau = tau + tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
 
@@ -330,10 +343,10 @@ class PicketFenceLongwave(TendencyComponent):
             "downwelling_longwave_flux_in_air": down_broad_out,
             "upwelling_longwave_flux_in_air_per_band": up_band_out,
             "downwelling_longwave_flux_in_air_per_band": down_band_out,
-            "longwave_heating_rate": heating_rate_kday,
+            "air_temperature_tendency_from_longwave": heating_rate_kday,
             "longwave_optical_depth_per_band": tau_band_out,
             "longwave_transmittance_per_band": trans_band_out,
-            "longwave_heating_rate_per_band": hr_band_out,
+            "air_temperature_tendency_from_longwave_per_band": hr_band_out,
         }
         if self._diagnostics_level > 0:
             w_sum = weights.sum(axis=1)  # (nband,)
@@ -401,13 +414,14 @@ class PicketFenceLongwave(TendencyComponent):
 
         return tau, planck_src, surf_src
 
-    def _correlated_k_optics(self, T, p, gas_amounts, T_surf, sigma, h2o_vmr=None):
+    def _correlated_k_optics(self, T, p, gas_amounts, T_surf, sigma,
+                             h2o_vmr=None, co2_vmr=None):
         from ..optics.correlated_k import compute_ck_optical_depth
 
         nlev, ncol = T.shape
 
         result = compute_ck_optical_depth(
-            self._table, T, p, gas_amounts, h2o_vmr=h2o_vmr
+            self._table, T, p, gas_amounts, h2o_vmr=h2o_vmr, co2_vmr=co2_vmr
         )
         if isinstance(result, tuple):
             # ESFT mode: returns (tau, combined_weights)

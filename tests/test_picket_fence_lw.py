@@ -61,7 +61,7 @@ def test_picket_fence_lw_isothermal_equilibrium():
 
     # Heating rate should be small (not exactly zero due to optical depth structure,
     # but should be much smaller than a non-isothermal case)
-    max_hr = np.abs(diagnostics["longwave_heating_rate"].values).max()
+    max_hr = np.abs(diagnostics["air_temperature_tendency_from_longwave"].values).max()
     assert max_hr < 5.0  # K/day — loose bound for isothermal
 
 
@@ -141,7 +141,7 @@ def test_lw_per_band_optical_depth_diagnostics():
     tend, diag = lw(state)
     assert "longwave_optical_depth_per_band" in diag
     assert "longwave_transmittance_per_band" in diag
-    assert "longwave_heating_rate_per_band" in diag
+    assert "air_temperature_tendency_from_longwave_per_band" in diag
 
     tau = diag["longwave_optical_depth_per_band"].values
     trans = diag["longwave_transmittance_per_band"].values
@@ -167,8 +167,58 @@ def test_lw_per_band_heating_rate_sums_to_broadband():
     state = get_default_state([lw], grid_state=grid)
 
     tend, diag = lw(state)
-    hr_broad = diag["longwave_heating_rate"].values
-    hr_band = diag["longwave_heating_rate_per_band"].values
+    hr_broad = diag["air_temperature_tendency_from_longwave"].values
+    hr_band = diag["air_temperature_tendency_from_longwave_per_band"].values
     # Sum over band dimension (last axis)
     hr_band_sum = hr_band.sum(axis=-1)
     np.testing.assert_allclose(hr_band_sum, hr_broad, rtol=1e-10)
+
+
+def test_picket_fence_lw_co2_axis_changes_olr(tmp_path):
+    """A premixed-bg table with a CO2 axis reads CO2 from state: more CO2 ->
+    less OLR (more trapping)."""
+    import sys
+    sys.path.insert(0, str(tmp_path.parent.parent))
+    import os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+    from scripts.pf_table_builder.netcdf_writer import write_lw_table
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceLongwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    # Tiny 2-band CO2-axis table; band 0 k rises steeply with CO2 index.
+    nband, ngpt, nT, nP, nX, nC = 2, 2, 4, 4, 3, 3
+    k = np.full((1, nband, ngpt, nT, nP, nX, nC), 1e-5)
+    # band 0 k increases with CO2 index
+    k[0, 0, :, :, :, :, :] = np.array([1e-5, 1e-3, 1e-1])[None, None, None, None, :]
+    write_lw_table(
+        str(tmp_path / "co2tab.nc"),
+        k_coefficients=k,
+        gpoint_weights=np.full((nband, ngpt), 0.5),
+        T_grid=np.linspace(180.0, 320.0, nT),
+        log_p_grid=np.linspace(np.log(1e2), np.log(1e5), nP),
+        band_edges=np.array([10.0, 1000.0, 3250.0]),
+        planck_fraction=np.full((nband, ngpt, nT), 1.0 / nband),
+        h2o_vmr_grid=np.array([1e-5, 1e-3, 1e-1]),
+        co2_vmr_grid=np.array([1e-4, 1e-3, 1e-2]),
+        gas_names=("effective",),
+    )
+
+    lw = PicketFenceLongwave(optics="correlated_k", table=str(tmp_path / "co2tab.nc"))
+    assert lw._has_co2_axis is True
+    grid = get_grid(nx=1, ny=1, nz=20)
+
+    state_lo = get_default_state([lw], grid_state=grid)
+    state_lo["specific_humidity"].values[:] = 1e-3
+    state_lo["mole_fraction_of_carbon_dioxide_in_air"].values[:] = 1e-4
+    _, diag_lo = lw(state_lo)
+    olr_lo = diag_lo["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
+
+    state_hi = get_default_state([lw], grid_state=grid)
+    state_hi["specific_humidity"].values[:] = 1e-3
+    state_hi["mole_fraction_of_carbon_dioxide_in_air"].values[:] = 1e-2
+    _, diag_hi = lw(state_hi)
+    olr_hi = diag_hi["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
+
+    assert olr_hi < olr_lo, f"more CO2 should trap more: lo={olr_lo}, hi={olr_hi}"
