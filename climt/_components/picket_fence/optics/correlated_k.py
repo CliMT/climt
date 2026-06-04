@@ -21,6 +21,12 @@ _NETCDF_VARS = (
     "continuum_kappa",
 )
 
+# CO2 runtime axis interpolation: True = geometric (log-k vs log-X_CO2),
+# the design default (CO2 band-mean k is convex/saturating in amount, so
+# linear-in-value over log-spaced nodes over-estimates it). Flip to False to
+# evaluate linear-in-k during the A5 CO2-accuracy check.
+_CO2_INTERP_LOGK = True
+
 
 def _load_netcdf_table(path):
     from scipy.io import netcdf_file
@@ -95,18 +101,20 @@ def load_k_table(name_or_path):
         return np.load(f, allow_pickle=True)
 
 
-def interpolate_k(table, T, p, h2o_vmr=None):
-    """Interpolate k-coefficients in (T, log p[, log X_H2O]) space.
+def interpolate_k(table, T, p, h2o_vmr=None, co2_vmr=None):
+    """Interpolate k-coefficients in (T, log p[, log X_H2O[, log X_CO2]]) space.
 
     Args:
-        table: loaded k-table. May have ``k_coefficients`` shaped
-            ``(ngas, nband, ngpt, nT, nP)`` (bilinear, back-compat) or
-            ``(ngas, nband, ngpt, nT, nP, nX)`` when an H2O VMR axis is
-            present (trilinear).
+        table: loaded k-table. ``k_coefficients`` may be shaped
+            ``(ngas, nband, ngpt, nT, nP)`` (bilinear),
+            ``(..., nP, nX)`` (trilinear, H2O axis), or
+            ``(..., nP, nX, nC)`` (quadrilinear, H2O + CO2 axes).
         T: (ncol,) temperature values, K
         p: (ncol,) pressure values, Pa
-        h2o_vmr: (ncol,) H2O mole fraction per column. Required if the
-            table has an H2O axis; ignored otherwise.
+        h2o_vmr: (ncol,) H2O mole fraction per column. Required if the table
+            has an H2O axis.
+        co2_vmr: (ncol,) CO2 mole fraction per column. Required if the table
+            has a CO2 axis.
 
     Returns:
         k_interp: (ngas, nband, ngpt, ncol)
@@ -114,84 +122,103 @@ def interpolate_k(table, T, p, h2o_vmr=None):
     k = table["k_coefficients"]
     T_grid = table["temperature_grid"]
     p_grid_log = table["pressure_grid_log"]
-    has_x_axis = k.ndim == 6
+    has_co2_axis = k.ndim == 7
+    has_x_axis = k.ndim >= 6
 
     ncol = len(T)
     log_p = np.log(np.maximum(p, 1.0))
 
-    if has_x_axis:
+    nX = nC = None
+    if has_co2_axis:
+        ngas, nband, ngpt, nT, nP, nX, nC = k.shape
+    elif has_x_axis:
         ngas, nband, ngpt, nT, nP, nX = k.shape
-        x_grid = table["h2o_vmr_grid"]
-        log_x_grid = np.log(np.maximum(np.asarray(x_grid, dtype=np.float64), 1e-30))
+    else:
+        ngas, nband, ngpt, nT, nP = k.shape
+
+    if has_x_axis:
+        x_grid = np.asarray(table["h2o_vmr_grid"], dtype=np.float64)
+        log_x_grid = np.log(np.maximum(x_grid, 1e-30))
         if h2o_vmr is None:
             raise ValueError(
                 "k-table has an h2o_vmr_grid axis but h2o_vmr was not provided"
             )
-        # Clamp to grid edges and take log for log-linear interpolation in X.
         x_clamped = np.clip(h2o_vmr, float(x_grid[0]), float(x_grid[-1]))
         log_x = np.log(np.maximum(x_clamped, 1e-30))
-    else:
-        ngas, nband, ngpt, nT, nP = k.shape
-        nX = None
+
+    if has_co2_axis:
+        c_grid = np.asarray(table["co2_vmr_grid"], dtype=np.float64)
+        log_c_grid = np.log(np.maximum(c_grid, 1e-30))
+        if co2_vmr is None:
+            raise ValueError(
+                "k-table has a co2_vmr_grid axis but co2_vmr was not provided"
+            )
+        c_clamped = np.clip(co2_vmr, float(c_grid[0]), float(c_grid[-1]))
+        log_c = np.log(np.maximum(c_clamped, 1e-30))
 
     result = np.zeros((ngas, nband, ngpt, ncol))
 
     for col in range(ncol):
-        iT = np.searchsorted(T_grid, T[col]) - 1
-        iT = max(0, min(iT, nT - 2))
+        iT = max(0, min(np.searchsorted(T_grid, T[col]) - 1, nT - 2))
         fT = (T[col] - T_grid[iT]) / (T_grid[iT + 1] - T_grid[iT])
         fT = max(0.0, min(1.0, fT))
 
-        iP = np.searchsorted(p_grid_log, log_p[col]) - 1
-        iP = max(0, min(iP, nP - 2))
+        iP = max(0, min(np.searchsorted(p_grid_log, log_p[col]) - 1, nP - 2))
         fP = (log_p[col] - p_grid_log[iP]) / (p_grid_log[iP + 1] - p_grid_log[iP])
         fP = max(0.0, min(1.0, fP))
 
         if has_x_axis:
-            iX = np.searchsorted(log_x_grid, log_x[col]) - 1
-            iX = max(0, min(iX, nX - 2))
+            iX = max(0, min(np.searchsorted(log_x_grid, log_x[col]) - 1, nX - 2))
             fX = (log_x[col] - log_x_grid[iX]) / (
-                log_x_grid[iX + 1] - log_x_grid[iX]
-            )
+                log_x_grid[iX + 1] - log_x_grid[iX])
             fX = max(0.0, min(1.0, fX))
 
-            for ig in range(ngas):
-                for ib in range(nband):
-                    for igp in range(ngpt):
-                        # Trilinear: (T, P, X). Two bilinear interpolations
-                        # on adjacent X slices, then linear in X.
-                        base = k[ig, ib, igp]  # (nT, nP, nX)
-                        v000 = base[iT, iP, iX]
-                        v100 = base[iT + 1, iP, iX]
-                        v010 = base[iT, iP + 1, iX]
-                        v110 = base[iT + 1, iP + 1, iX]
-                        v001 = base[iT, iP, iX + 1]
-                        v101 = base[iT + 1, iP, iX + 1]
-                        v011 = base[iT, iP + 1, iX + 1]
-                        v111 = base[iT + 1, iP + 1, iX + 1]
-                        x0 = (v000 * (1 - fT) * (1 - fP)
-                              + v100 * fT * (1 - fP)
-                              + v010 * (1 - fT) * fP
-                              + v110 * fT * fP)
-                        x1 = (v001 * (1 - fT) * (1 - fP)
-                              + v101 * fT * (1 - fP)
-                              + v011 * (1 - fT) * fP
-                              + v111 * fT * fP)
-                        result[ig, ib, igp, col] = x0 * (1 - fX) + x1 * fX
-        else:
-            for ig in range(ngas):
-                for ib in range(nband):
-                    for igp in range(ngpt):
-                        v00 = k[ig, ib, igp, iT, iP]
-                        v10 = k[ig, ib, igp, iT + 1, iP]
-                        v01 = k[ig, ib, igp, iT, iP + 1]
-                        v11 = k[ig, ib, igp, iT + 1, iP + 1]
-                        result[ig, ib, igp, col] = (
-                            v00 * (1 - fT) * (1 - fP)
-                            + v10 * fT * (1 - fP)
-                            + v01 * (1 - fT) * fP
-                            + v11 * fT * fP
-                        )
+        if has_co2_axis:
+            iC = max(0, min(np.searchsorted(log_c_grid, log_c[col]) - 1, nC - 2))
+            fC = (log_c[col] - log_c_grid[iC]) / (
+                log_c_grid[iC + 1] - log_c_grid[iC])
+            fC = max(0.0, min(1.0, fC))
+
+        def _txx(base):
+            # Trilinear (T, P, X_H2O), linear-in-k. base shape (nT, nP, nX).
+            v000 = base[iT, iP, iX]
+            v100 = base[iT + 1, iP, iX]
+            v010 = base[iT, iP + 1, iX]
+            v110 = base[iT + 1, iP + 1, iX]
+            v001 = base[iT, iP, iX + 1]
+            v101 = base[iT + 1, iP, iX + 1]
+            v011 = base[iT, iP + 1, iX + 1]
+            v111 = base[iT + 1, iP + 1, iX + 1]
+            x0 = (v000 * (1 - fT) * (1 - fP) + v100 * fT * (1 - fP)
+                  + v010 * (1 - fT) * fP + v110 * fT * fP)
+            x1 = (v001 * (1 - fT) * (1 - fP) + v101 * fT * (1 - fP)
+                  + v011 * (1 - fT) * fP + v111 * fT * fP)
+            return x0 * (1 - fX) + x1 * fX
+
+        def _tp(base):
+            # Bilinear (T, P), linear-in-k. base shape (nT, nP).
+            return (base[iT, iP] * (1 - fT) * (1 - fP)
+                    + base[iT + 1, iP] * fT * (1 - fP)
+                    + base[iT, iP + 1] * (1 - fT) * fP
+                    + base[iT + 1, iP + 1] * fT * fP)
+
+        for ig in range(ngas):
+            for ib in range(nband):
+                for igp in range(ngpt):
+                    if has_co2_axis:
+                        c0 = _txx(k[ig, ib, igp, :, :, :, iC])
+                        c1 = _txx(k[ig, ib, igp, :, :, :, iC + 1])
+                        if _CO2_INTERP_LOGK:
+                            lc0 = np.log(max(c0, 1e-40))
+                            lc1 = np.log(max(c1, 1e-40))
+                            result[ig, ib, igp, col] = np.exp(
+                                lc0 * (1 - fC) + lc1 * fC)
+                        else:
+                            result[ig, ib, igp, col] = c0 * (1 - fC) + c1 * fC
+                    elif has_x_axis:
+                        result[ig, ib, igp, col] = _txx(k[ig, ib, igp])
+                    else:
+                        result[ig, ib, igp, col] = _tp(k[ig, ib, igp])
 
     return result
 
