@@ -196,68 +196,64 @@ for iC in interior_nodes:
 # PART 2 — Optional LBL comparison at off-node CO2
 # ---------------------------------------------------------------------------
 print()
-print("--- Part 2: PF OLR at off-node CO2 (linepyline optional) ---")
+print("--- Part 2: PF (log-k vs linear-k) vs LBL at off-node CO2 ---")
+# This part needs NO linepyline: it runs PF in the climt env and compares against
+# pre-generated LBL spectra. Generate those once in the linepyline env with
+#   $LPY scripts/experiments/lbl_olr_tiebreak.py --co2 <ppm>
+# which writes debug_data/lbl_olr_spec_moist_co2_<ppm>ppm.npz.
 
-try:
-    import linepyline  # noqa: F401
-    _HAS_LPL = True
-except ImportError:
-    print("linepyline not available — skipping LBL comparison.")
-    print("(Install linepyline in the climt env to enable Part 2.)")
-    _HAS_LPL = False
+import climt._components.picket_fence.optics.correlated_k as _ck_mod  # noqa: E402
+from eval_band_structure import pf_olr  # noqa: E402
+from climt import get_grid  # noqa: E402
 
-if _HAS_LPL:
-    from climt import get_default_state, get_grid
-    import climt._components.picket_fence.optics.correlated_k as _ck_mod
-    from eval_band_structure import pf_olr  # noqa: E402
+NZ = 40
+DNU = 0.1  # cm^-1, the LBL spectrum integration step (must match lbl_olr_tiebreak)
+OFF_NODE_CO2_PPM = [400, 2000]  # between the 215/464 and 1000/2154 ppm nodes
 
-    NZ = 40
-    _fwd = os.path.join(_DBG, "forward_profile.npz")
-    if not os.path.isfile(_fwd):
-        print(f"  Forward profile not found at {_fwd} — skipping Part 2.")
-    else:
-        d = np.load(_fwd, allow_pickle=True)
-        p_mid, T, q_moist, Ts, co2_base = (
-            d["p_mid_Pa"], d["T_ref"], d["q_ref_moist"],
-            float(d["T_surf"]), float(d["CO2"]))
-        grid = get_grid(nx=1, ny=1, nz=NZ)
+_fwd = os.path.join(_DBG, "forward_profile.npz")
+if not os.path.isfile(_fwd):
+    print(f"  Forward profile not found at {_fwd} — skipping Part 2.")
+else:
+    d = np.load(_fwd, allow_pickle=True)
+    T, q_moist, Ts = d["T_ref"], d["q_ref_moist"], float(d["T_surf"])
+    grid = get_grid(nx=1, ny=1, nz=NZ)
 
-        OFF_NODE_CO2 = [400e-6, 2000e-6]  # 400 ppm and 2000 ppm (between nodes)
-        print(f"  {'CO2 [ppm]':>12s}  {'scheme':>12s}  {'OLR [W/m2]':>12s}")
-        for co2_val in OFF_NODE_CO2:
-            for use_logk, scheme in [(True, "log-k"), (False, "linear-k")]:
-                _ck_mod._CO2_INTERP_LOGK = use_logk
-                total, _ = pf_olr(table_name, T, q_moist, Ts, co2_val, grid)
-                print(f"  {co2_val*1e6:12.1f}  {scheme:>12s}  {total:12.4f}")
-
-        # Reset to design default
+    print(f"  {'CO2[ppm]':>9s}  {'PF log-k':>10s}  {'PF lin-k':>10s}  "
+          f"{'LBL':>10s}  {'logk-LBL':>9s}  {'link-LBL':>9s}")
+    any_lbl = False
+    for ppm in OFF_NODE_CO2_PPM:
+        co2_val = ppm * 1e-6
         _ck_mod._CO2_INTERP_LOGK = True
+        olr_logk, _ = pf_olr(table_name, T, q_moist, Ts, co2_val, grid)
+        _ck_mod._CO2_INTERP_LOGK = False
+        olr_link, _ = pf_olr(table_name, T, q_moist, Ts, co2_val, grid)
+        _ck_mod._CO2_INTERP_LOGK = True  # reset to design default
 
+        lbl_path = os.path.join(_DBG, f"lbl_olr_spec_moist_co2_{ppm}ppm.npz")
+        if os.path.isfile(lbl_path):
+            any_lbl = True
+            lbl = np.load(lbl_path)
+            lbl_total = float(np.sum(lbl["olr_spec"]) * DNU)
+            print(f"  {ppm:9d}  {olr_logk:10.3f}  {olr_link:10.3f}  "
+                  f"{lbl_total:10.3f}  {olr_logk - lbl_total:+9.3f}  "
+                  f"{olr_link - lbl_total:+9.3f}")
+        else:
+            print(f"  {ppm:9d}  {olr_logk:10.3f}  {olr_link:10.3f}  "
+                  f"{'(no LBL)':>10s}  {'—':>9s}  {'—':>9s}")
+
+    if not any_lbl:
         print()
-        # TODO: LBL ground-truth generation for Part 2 comparison
-        # -------------------------------------------------------------------------
-        # To generate matching LBL OLR at an off-node CO2 (e.g. 400 ppm):
-        #
-        # 1. In the linepyline workflow, reload the fixed forward profile from
-        #    debug_data/forward_profile.npz (keys: p_mid_Pa, T_ref, q_ref_moist,
-        #    T_surf, CO2) and override CO2 to the target value.
-        #
-        # 2. Re-run the same D=1.66 line-by-line forward calculation used to
-        #    generate debug_data/lbl_olr_spec_{moist,dry}.npz, but passing
-        #    co2_vmr=<target_co2>.
-        #
-        # 3. Save the resulting spectrum as, e.g.:
-        #      debug_data/lbl_olr_spec_moist_co2_{ppm}ppm.npz
-        #    with keys 'nu' (cm-1 array) and 'olr_spec' (W/m2/cm-1 array).
-        #
-        # 4. Compare Part 2's PF OLR against:
-        #      lbl_total = float(np.sum(lbl['olr_spec']) * 0.1)   # DNU=0.1 cm-1
-        #
-        # Cross-reference scripts/experiments/eval_band_structure.py for the
-        # lbl_olr_spec reading pattern and the DNU=0.1 cm-1 integration step.
-        # -------------------------------------------------------------------------
-        print("  [TODO] Compare the PF OLR above against freshly-generated LBL OLR.")
-        print("  [TODO] See TODO block in this script for the linepyline generation recipe.")
+        print("  No off-node LBL spectra found. Generate them IN THE linepyline env:")
+        print("    LPY=/Users/joymonteiro/miniconda3/envs/linepyline/bin/python")
+        for ppm in OFF_NODE_CO2_PPM:
+            print(f"    $LPY scripts/experiments/lbl_olr_tiebreak.py --co2 {ppm}")
+        print("  (each writes debug_data/lbl_olr_spec_moist_co2_<ppm>ppm.npz), "
+              "then re-run this probe in the climt env.")
+    else:
+        print()
+        print("  Smaller |scheme-LBL| = more faithful. Part 1 (leave-one-out) "
+              "already favours log-k;\n  this confirms it against true LBL at "
+              "off-node CO2.")
 
 print()
 print("=== A5 probe complete ===")
