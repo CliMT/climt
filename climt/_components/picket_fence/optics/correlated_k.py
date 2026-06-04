@@ -13,10 +13,12 @@ _NETCDF_VARS = (
     "temperature_grid",
     "pressure_grid_log",
     "h2o_vmr_grid",
+    "co2_vmr_grid",
     "band_wavenumber_limits",
     "planck_fraction",
     "solar_source_per_gpoint",
     "rayleigh_coefficient",
+    "continuum_kappa",
 )
 
 
@@ -256,6 +258,69 @@ def compute_ck_optical_depth(table, T, p, gas_amounts, h2o_vmr=None):
         return _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr)
 
 
+def interpolate_continuum(table, T, p, h2o_vmr):
+    """Interpolate the band-grey H2O continuum mass-absorption (m^2/kg-air).
+
+    Returns (nband, ncol) or None if the table has no decoupled continuum.
+
+    Interpolation is **log-linear in the continuum value** over (T, log p,
+    log X_H2O). This is essential: the H2O self-continuum scales ~X^2, and
+    linear-in-value interpolation across the widely log-spaced X nodes badly
+    OVER-estimates a convex power law between nodes (e.g. ~6x at X~0.024 between
+    the 1e-2 and 1e-1 nodes). log-space interpolation is exact for any power law
+    in X — this is the whole point of decoupling the continuum from the
+    line k-distribution (cf. RRTMG's analytic selffac ~ H2O^2 scaling).
+    """
+    if "continuum_kappa" not in table:
+        return None
+    cont = np.asarray(table["continuum_kappa"])
+    if cont.ndim != 4:  # needs the (nband, nT, nP, nX) H2O-axis form
+        return None
+    if h2o_vmr is None:
+        return None
+
+    nband, nT, nP, nX = cont.shape
+    T_grid = table["temperature_grid"]
+    p_grid_log = table["pressure_grid_log"]
+    x_grid = np.asarray(table["h2o_vmr_grid"], dtype=np.float64)
+    log_x_grid = np.log(np.maximum(x_grid, 1e-30))
+
+    _FLOOR = 1e-40
+    log_cont = np.log(np.maximum(cont, _FLOOR))  # (nband, nT, nP, nX)
+
+    ncol = len(T)
+    log_p = np.log(np.maximum(p, 1.0))
+    x_clamped = np.clip(h2o_vmr, float(x_grid[0]), float(x_grid[-1]))
+    log_x = np.log(np.maximum(x_clamped, 1e-30))
+
+    out = np.zeros((nband, ncol))
+    for col in range(ncol):
+        iT = max(0, min(np.searchsorted(T_grid, T[col]) - 1, nT - 2))
+        fT = (T[col] - T_grid[iT]) / (T_grid[iT + 1] - T_grid[iT])
+        fT = min(1.0, max(0.0, fT))
+
+        iP = max(0, min(np.searchsorted(p_grid_log, log_p[col]) - 1, nP - 2))
+        fP = (log_p[col] - p_grid_log[iP]) / (p_grid_log[iP + 1] - p_grid_log[iP])
+        fP = min(1.0, max(0.0, fP))
+
+        iX = max(0, min(np.searchsorted(log_x_grid, log_x[col]) - 1, nX - 2))
+        fX = (log_x[col] - log_x_grid[iX]) / (log_x_grid[iX + 1] - log_x_grid[iX])
+        fX = min(1.0, max(0.0, fX))
+
+        for ib in range(nband):
+            b = log_cont[ib]
+            x0 = (b[iT, iP, iX] * (1 - fT) * (1 - fP)
+                  + b[iT + 1, iP, iX] * fT * (1 - fP)
+                  + b[iT, iP + 1, iX] * (1 - fT) * fP
+                  + b[iT + 1, iP + 1, iX] * fT * fP)
+            x1 = (b[iT, iP, iX + 1] * (1 - fT) * (1 - fP)
+                  + b[iT + 1, iP, iX + 1] * fT * (1 - fP)
+                  + b[iT, iP + 1, iX + 1] * (1 - fT) * fP
+                  + b[iT + 1, iP + 1, iX + 1] * fT * fP)
+            out[ib, col] = np.exp(x0 * (1 - fX) + x1 * fX)
+    return out
+
+
 def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None):
     """Additive overlap: sum optical depths from all gases on the same g-point grid."""
     k_data = table["k_coefficients"]
@@ -263,6 +328,11 @@ def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None):
     nlev, ncol = T.shape
 
     tau = np.zeros((nband, ngpt, nlev, ncol))
+    has_continuum = (
+        "continuum_kappa" in table
+        and np.asarray(table["continuum_kappa"]).ndim == 4
+        and h2o_vmr is not None
+    )
 
     for k_lev in range(nlev):
         x_lev = h2o_vmr[k_lev, :] if h2o_vmr is not None else None
@@ -274,6 +344,17 @@ def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None):
                         tau[ib, igp, k_lev, icol] += (
                             k_interp[ig, ib, igp, icol] * gas_amounts[ig, k_lev, icol]
                         )
+        if has_continuum:
+            # Band-grey continuum: same air-column mass scaling as the premixed
+            # line k (gas 0), added equally to every g-point in the band.
+            cont = interpolate_continuum(table, T[k_lev, :], p[k_lev, :], x_lev)
+            if cont is not None:
+                for ib in range(nband):
+                    for igp in range(ngpt):
+                        for icol in range(ncol):
+                            tau[ib, igp, k_lev, icol] += (
+                                cont[ib, icol] * gas_amounts[0, k_lev, icol]
+                            )
 
     return tau
 

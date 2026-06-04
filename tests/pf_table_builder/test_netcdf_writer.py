@@ -70,6 +70,47 @@ def test_write_lw_table_with_h2o_axis_roundtrip(tmp_path):
     np.testing.assert_allclose(loaded["h2o_vmr_grid"], h2o_vmr, rtol=1e-5)
 
 
+def test_write_lw_table_with_co2_axis_roundtrip(tmp_path):
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+    from scripts.pf_table_builder.netcdf_writer import write_lw_table
+    from climt._components.picket_fence.optics.correlated_k import load_k_table
+
+    ngas, nband, ngpt, nT, nP, nX, nC = 1, 4, 2, 3, 5, 4, 6
+    k = np.random.RandomState(3).uniform(
+        1e-7, 1e-2, size=(ngas, nband, ngpt, nT, nP, nX, nC))
+    weights = np.full((nband, ngpt), 0.5)
+    T_grid = np.linspace(150, 350, nT)
+    log_p_grid = np.linspace(np.log(1.0), np.log(1e5), nP)
+    band_edges = np.array([10.0, 500.0, 1250.0, 2500.0, 3250.0])
+    h2o_vmr = np.array([1e-6, 1e-4, 1e-2, 1e-1])
+    co2_vmr = np.logspace(-5, -2, nC)
+    planck_fraction = np.full((nband, ngpt, nT), 1.0 / ngpt)
+    # continuum stays H2O-only (no CO2 axis): (nband, nT, nP, nX)
+    cont = np.random.RandomState(4).uniform(1e-6, 1e-3, size=(nband, nT, nP, nX))
+
+    path = tmp_path / "test_lw_co2.nc"
+    write_lw_table(
+        str(path),
+        k_coefficients=k,
+        gpoint_weights=weights,
+        T_grid=T_grid,
+        log_p_grid=log_p_grid,
+        band_edges=band_edges,
+        planck_fraction=planck_fraction,
+        h2o_vmr_grid=h2o_vmr,
+        co2_vmr_grid=co2_vmr,
+        continuum_kappa=cont,
+        gas_names=("effective",),
+        source="linepyline:test_co2",
+    )
+    loaded = load_k_table(str(path))
+    assert loaded["k_coefficients"].shape == (ngas, nband, ngpt, nT, nP, nX, nC)
+    np.testing.assert_allclose(loaded["co2_vmr_grid"], co2_vmr, rtol=1e-5)
+    np.testing.assert_allclose(loaded["h2o_vmr_grid"], h2o_vmr, rtol=1e-5)
+    assert loaded["continuum_kappa"].shape == (nband, nT, nP, nX)
+
+
 def test_write_sw_table_roundtrip(tmp_path):
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
