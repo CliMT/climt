@@ -224,14 +224,16 @@ def test_picket_fence_lw_co2_axis_changes_olr(tmp_path):
     assert olr_hi < olr_lo, f"more CO2 should trap more: lo={olr_lo}, hi={olr_hi}"
 
 
-def test_shipped_earth_hifi_lw_is_co2_adjustable():
-    """The shipped earth_hifi_lw table loads by name, is 14-band, exposes a CO2
-    axis, and OLR responds to CO2 (quadrupling traps more LW)."""
+@pytest.mark.parametrize("table_name", ["earth_hifi_lw", "earth_low_res_lw"])
+def test_shipped_earth_hifi_lw_is_co2_adjustable(table_name):
+    """The shipped CO2-adjustable LW table (and the default earth_low_res_lw,
+    which is now a byte-copy of earth_hifi_lw) loads by name, is 14-band,
+    exposes a CO2 axis, and OLR responds to CO2 (quadrupling traps more LW)."""
     from climt import get_default_state, get_grid
     from climt._components.picket_fence import PicketFenceLongwave
 
     sympl.set_backend(sympl.DataArrayBackend())
-    lw = PicketFenceLongwave(optics="correlated_k", table="earth_hifi_lw")
+    lw = PicketFenceLongwave(optics="correlated_k", table=table_name)
     assert lw._has_co2_axis is True
     assert lw.num_longwave_bands == 14
 
