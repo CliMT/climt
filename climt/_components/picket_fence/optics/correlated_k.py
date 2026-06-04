@@ -28,6 +28,95 @@ _NETCDF_VARS = (
 _CO2_INTERP_LOGK = True
 
 
+@njit
+def _ck_bracket(grid, v):
+    n = grid.shape[0]
+    i = np.searchsorted(grid, v) - 1
+    if i < 0:
+        i = 0
+    elif i > n - 2:
+        i = n - 2
+    f = (v - grid[i]) / (grid[i + 1] - grid[i])
+    if f < 0.0:
+        f = 0.0
+    elif f > 1.0:
+        f = 1.0
+    return i, f
+
+
+@njit
+def _ck_txx7(k, ig, ib, igp, iT, fT, iP, fP, iX, fX, iC):
+    v000 = k[ig, ib, igp, iT,     iP,     iX,     iC]
+    v100 = k[ig, ib, igp, iT + 1, iP,     iX,     iC]
+    v010 = k[ig, ib, igp, iT,     iP + 1, iX,     iC]
+    v110 = k[ig, ib, igp, iT + 1, iP + 1, iX,     iC]
+    v001 = k[ig, ib, igp, iT,     iP,     iX + 1, iC]
+    v101 = k[ig, ib, igp, iT + 1, iP,     iX + 1, iC]
+    v011 = k[ig, ib, igp, iT,     iP + 1, iX + 1, iC]
+    v111 = k[ig, ib, igp, iT + 1, iP + 1, iX + 1, iC]
+    x0 = (v000 * (1.0 - fT) * (1.0 - fP) + v100 * fT * (1.0 - fP)
+          + v010 * (1.0 - fT) * fP + v110 * fT * fP)
+    x1 = (v001 * (1.0 - fT) * (1.0 - fP) + v101 * fT * (1.0 - fP)
+          + v011 * (1.0 - fT) * fP + v111 * fT * fP)
+    return x0 * (1.0 - fX) + x1 * fX
+
+
+@njit
+def _ck_txx_cont(log_cont, ib, iT, fT, iP, fP, iX, fX):
+    b000 = log_cont[ib, iT,     iP,     iX]
+    b100 = log_cont[ib, iT + 1, iP,     iX]
+    b010 = log_cont[ib, iT,     iP + 1, iX]
+    b110 = log_cont[ib, iT + 1, iP + 1, iX]
+    b001 = log_cont[ib, iT,     iP,     iX + 1]
+    b101 = log_cont[ib, iT + 1, iP,     iX + 1]
+    b011 = log_cont[ib, iT,     iP + 1, iX + 1]
+    b111 = log_cont[ib, iT + 1, iP + 1, iX + 1]
+    x0 = (b000 * (1.0 - fT) * (1.0 - fP) + b100 * fT * (1.0 - fP)
+          + b010 * (1.0 - fT) * fP + b110 * fT * fP)
+    x1 = (b001 * (1.0 - fT) * (1.0 - fP) + b101 * fT * (1.0 - fP)
+          + b011 * (1.0 - fT) * fP + b111 * fT * fP)
+    return x0 * (1.0 - fX) + x1 * fX
+
+
+@njit(parallel=True)
+def _ck_tau_additive_co2_kernel(
+    k, T_grid, p_grid_log, log_x_grid, log_c_grid,
+    Tarr, log_p, log_x, log_c, gas_amounts,
+    has_cont, log_cont, co2_logk, tau,
+):
+    ngas, nband, ngpt = k.shape[0], k.shape[1], k.shape[2]
+    nlev = Tarr.shape[0]
+    ncol = Tarr.shape[1]
+    FLOOR = 1e-40
+    for i in prange(ncol):
+        for kk in range(nlev):
+            iT, fT = _ck_bracket(T_grid, Tarr[kk, i])
+            iP, fP = _ck_bracket(p_grid_log, log_p[kk, i])
+            iX, fX = _ck_bracket(log_x_grid, log_x[kk, i])
+            iC, fC = _ck_bracket(log_c_grid, log_c[kk, i])
+            for ib in range(nband):
+                if has_cont:
+                    lc = _ck_txx_cont(log_cont, ib, iT, fT, iP, fP, iX, fX)
+                    cont_val = np.exp(lc)
+                else:
+                    cont_val = 0.0
+                for igp in range(ngpt):
+                    acc = 0.0
+                    for ig in range(ngas):
+                        c0 = _ck_txx7(k, ig, ib, igp, iT, fT, iP, fP, iX, fX, iC)
+                        c1 = _ck_txx7(k, ig, ib, igp, iT, fT, iP, fP, iX, fX, iC + 1)
+                        if co2_logk:
+                            l0 = np.log(c0 if c0 > FLOOR else FLOOR)
+                            l1 = np.log(c1 if c1 > FLOOR else FLOOR)
+                            kv = np.exp(l0 * (1.0 - fC) + l1 * fC)
+                        else:
+                            kv = c0 * (1.0 - fC) + c1 * fC
+                        acc += kv * gas_amounts[ig, kk, i]
+                    if has_cont:
+                        acc += cont_val * gas_amounts[0, kk, i]
+                    tau[ib, igp, kk, i] = acc
+
+
 def _load_netcdf_table(path):
     from scipy.io import netcdf_file
 
@@ -362,6 +451,16 @@ def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None,
     ngas, nband, ngpt = k_data.shape[:3]
     nlev, ncol = T.shape
 
+    if k_data.ndim == 7:
+        # Fast compiled path for the CO2-axis (premixed-bg) table — the default.
+        if h2o_vmr is None:
+            raise ValueError(
+                "k-table has an h2o_vmr_grid axis but h2o_vmr was not provided")
+        if co2_vmr is None:
+            raise ValueError(
+                "k-table has a co2_vmr_grid axis but co2_vmr was not provided")
+        return _additive_co2_fast(table, T, p, gas_amounts, h2o_vmr, co2_vmr)
+
     tau = np.zeros((nband, ngpt, nlev, ncol))
     has_continuum = (
         "continuum_kappa" in table
@@ -393,6 +492,44 @@ def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None,
                                 cont[ib, icol] * gas_amounts[0, k_lev, icol]
                             )
 
+    return tau
+
+
+def _additive_co2_fast(table, T, p, gas_amounts, h2o_vmr, co2_vmr):
+    """Host wrapper: prep arrays and call the njit CO2-axis tau kernel."""
+    k = np.ascontiguousarray(table["k_coefficients"])
+    T_grid = np.asarray(table["temperature_grid"], dtype=np.float64)
+    p_grid_log = np.asarray(table["pressure_grid_log"], dtype=np.float64)
+    x_grid = np.asarray(table["h2o_vmr_grid"], dtype=np.float64)
+    c_grid = np.asarray(table["co2_vmr_grid"], dtype=np.float64)
+    log_x_grid = np.log(np.maximum(x_grid, 1e-30))
+    log_c_grid = np.log(np.maximum(c_grid, 1e-30))
+
+    nband, ngpt = k.shape[1], k.shape[2]
+    nlev, ncol = T.shape
+
+    Tarr = np.ascontiguousarray(T, dtype=np.float64)
+    log_p = np.log(np.maximum(p, 1.0))
+    x_clamped = np.clip(h2o_vmr, float(x_grid[0]), float(x_grid[-1]))
+    log_x = np.log(np.maximum(x_clamped, 1e-30))
+    c_clamped = np.clip(co2_vmr, float(c_grid[0]), float(c_grid[-1]))
+    log_c = np.log(np.maximum(c_clamped, 1e-30))
+    gas64 = np.ascontiguousarray(gas_amounts, dtype=np.float64)
+
+    has_cont = ("continuum_kappa" in table
+                and np.asarray(table["continuum_kappa"]).ndim == 4)
+    if has_cont:
+        cont = np.asarray(table["continuum_kappa"], dtype=np.float64)
+        log_cont = np.log(np.maximum(cont, 1e-40))
+    else:
+        log_cont = np.zeros((nband, 1, 1, 1))
+
+    tau = np.zeros((nband, ngpt, nlev, ncol))
+    _ck_tau_additive_co2_kernel(
+        k, T_grid, p_grid_log, log_x_grid, log_c_grid,
+        Tarr, log_p, log_x, log_c, gas64,
+        has_cont, log_cont, bool(_CO2_INTERP_LOGK), tau,
+    )
     return tau
 
 
