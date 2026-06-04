@@ -1619,5 +1619,12 @@ Benchmark `scripts/experiments/bench_pf_vs_rrtmg.py` (warm JIT, NZ=30). The 14-b
 Key finding: the `@njit(parallel=True)` **transport** kernel (Task 8, `lw_transport`) was *never* the bottleneck — sub-ms throughout. The cost was the optical-depth and Planck-source **assembly** loops, only visible once bands×gpts grew. Both now compiled. *Pedagogical hook for sub-project B: the faithful scheme is also the fast one — PF matches RRTMG's accuracy AND beats its throughput once the hot loops are JIT-compiled.*
 
 **STILL OPEN:**
-- *(optional)* Off-node LBL OLR at 400/2000 ppm in the linepyline env (regenerate `lbl_olr_spec_{moist,dry}.npz` at those CO₂ via the D=1.66 LBL path; PF-side hook in `eval_co2_interp_accuracy.py` Part 2). Not a ship gate — A5 leave-one-out already confirmed log-k.
+- ~~*(optional)* Off-node LBL OLR at 400/2000 ppm~~ **DONE — A5 CLOSED against true LBL.** Generated `lbl_olr_spec_moist_co2_{400,2000}ppm.npz` (`lbl_olr_tiebreak.py --co2`, D=1.66, pseudovoigt, MT_CKD), compared via `eval_co2_interp_accuracy.py` Part 2:
+
+  | CO₂ | PF log-k − LBL | PF lin-k − LBL | winner |
+  |---|---|---|---|
+  | 400 ppm  | **−11.475** | −11.604 | log-k (by 0.13) |
+  | 2000 ppm | **−11.007** | −11.090 | log-k (by 0.08) |
+
+  (i) **log-k is closer to true LBL at both off-node CO₂** → confirms the design default against the independent line-by-line reference, not just the Part-1 leave-one-out self-test. (ii) **The CO₂ axis is fidelity-free**: off-node PF−LBL (−11.5/−11.0) ≈ the on-node 376-ppm bias (−11.5), so interpolating CO₂ between table nodes adds no error beyond the pre-existing correlated-k floor. (iii) The log-k vs linear-k margin (~0.1 W/m²) is two orders below that floor — a genuine tiebreak, as predicted. `_CO2_INTERP_LOGK = True` confirmed at both the node-k level (Part 1) and the off-node OLR-vs-LBL level (Part 2).
 - ~~*(user)* Independent moist-RCE re-run~~ **DONE — VERIFIED.** Independent moist RCE (200 d, SW=240, O₃=0) on the shipped default + njit kernels: RRTMG T_sfc 282.82 / PF 284.95 → **ΔT_sfc +2.13 K**, q_sfc 2.21 vs 1.99 g/kg, tropopause co-located 196.2 hPa. The result is **byte-identical** to the pre-njit moist run (255.02/284.95/196.20/185.51/2.212), confirming the two njit kernels reproduce the pure-Python physics bit-for-bit through a full ~57.6k-step nonlinear RCE spin-up — not just on a single forward call. Optimization is physics-neutral end-to-end.
