@@ -19,12 +19,13 @@ def sample_kappa_grid(
     p_grid: np.ndarray,
     nu_grid: np.ndarray,
     h2o_vmr_grid: np.ndarray | None = None,
+    co2_vmr_grid: np.ndarray | None = None,
     line_shape: str = "lorentz",
     binning: bool = True,
     include_mtckd_continuum: bool = True,
     surface_gravity: float = 9.81,
 ):
-    """Compute mass absorption coefficient kappa(T, p[, X_H2O], nu).
+    """Compute mass absorption coefficient kappa(T, p[, X_H2O][, X_CO2], nu).
 
     Args:
         background_gas: "air", "N2", or None (passed to linepyline.rtm).
@@ -38,13 +39,16 @@ def sample_kappa_grid(
         nu_grid: (nNu,) wavenumber grid in cm^-1 (linepyline expects uniform).
         h2o_vmr_grid: optional (nX,) H2O VMRs. If given, output has an extra
             axis and H2O kappa is recomputed per VMR.
+        co2_vmr_grid: optional (nC,) CO2 VMRs. If given alongside h2o_vmr_grid,
+            CO2 is swept as a premixed absorber. Output has shape (nT, nP, nX, nC, nNu).
         line_shape, binning, include_mtckd_continuum: passed to linepyline.
         surface_gravity: passed to linepyline.rtm (does not affect kappa, only
             optical-depth integration, but linepyline requires it at __init__).
 
     Returns:
-        kappa array, shape (nT, nP, nNu) or (nT, nP, nX, nNu) if h2o_vmr_grid
-        is given. Units: m^2/kg of *total moist atmosphere* (consistent with
+        kappa array, shape (nT, nP, nNu), (nT, nP, nX, nNu) if h2o_vmr_grid
+        is given, or (nT, nP, nX, nC, nNu) if both grids are given.
+        Units: m^2/kg of *total moist atmosphere* (consistent with
         how climt's correlated_k.compute_ck_optical_depth multiplies it by
         column air mass).
     """
@@ -56,6 +60,30 @@ def sample_kappa_grid(
     nu_min, nu_max = float(nu_grid[0]), float(nu_grid[-1])
     dnu = float(np.diff(nu_grid).mean())
     nT, nP, nNu = len(T_grid), len(p_grid), len(nu_grid)
+
+    # CO2 runtime axis: sweep CO2 as a premixed absorber. For each CO2 node,
+    # recurse with CO2 folded into `absorbers` (no co2_vmr_grid) and stack along
+    # a new axis just before nu. Requires an H2O axis (the Earth use-case).
+    if co2_vmr_grid is not None:
+        if h2o_vmr_grid is None:
+            raise ValueError("co2_vmr_grid requires h2o_vmr_grid")
+        nX, nC = len(h2o_vmr_grid), len(co2_vmr_grid)
+        out = np.zeros((nT, nP, nX, nC, nNu))
+        for iC, co2 in enumerate(co2_vmr_grid):
+            sub = sample_kappa_grid(
+                background_gas=background_gas,
+                absorbers={**absorbers, "CO2": float(co2)},
+                T_grid=T_grid,
+                p_grid=p_grid,
+                nu_grid=nu_grid,
+                h2o_vmr_grid=h2o_vmr_grid,
+                line_shape=line_shape,
+                binning=binning,
+                include_mtckd_continuum=include_mtckd_continuum,
+                surface_gravity=surface_gravity,
+            )  # (nT, nP, nX, nNu)
+            out[:, :, :, iC, :] = sub
+        return out
 
     # Pre-compute kappa(T, p, nu) for each non-H2O absorber.
     # linepyline.get_kappa_hitran accepts 1D arrays of (T, p) and returns
