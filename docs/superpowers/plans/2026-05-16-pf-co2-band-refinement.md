@@ -1620,4 +1620,4 @@ Key finding: the `@njit(parallel=True)` **transport** kernel (Task 8, `lw_transp
 
 **STILL OPEN:**
 - *(optional)* Off-node LBL OLR at 400/2000 ppm in the linepyline env (regenerate `lbl_olr_spec_{moist,dry}.npz` at those CO₂ via the D=1.66 LBL path; PF-side hook in `eval_co2_interp_accuracy.py` Part 2). Not a ship gate — A5 leave-one-out already confirmed log-k.
-- *(user, in progress)* Independent moist-RCE re-run as a verification of the shipped default + njit kernels.
+- ~~*(user)* Independent moist-RCE re-run~~ **DONE — VERIFIED.** Independent moist RCE (200 d, SW=240, O₃=0) on the shipped default + njit kernels: RRTMG T_sfc 282.82 / PF 284.95 → **ΔT_sfc +2.13 K**, q_sfc 2.21 vs 1.99 g/kg, tropopause co-located 196.2 hPa. The result is **byte-identical** to the pre-njit moist run (255.02/284.95/196.20/185.51/2.212), confirming the two njit kernels reproduce the pure-Python physics bit-for-bit through a full ~57.6k-step nonlinear RCE spin-up — not just on a single forward call. Optimization is physics-neutral end-to-end.
