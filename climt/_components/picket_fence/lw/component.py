@@ -16,7 +16,7 @@ from ..optics.parmentier import (
     load_parmentier_coefficients,
     lookup_ratio_coefficients,
 )
-from .kernels import lw_transport
+from .kernels import lw_transport, planck_sources_kernel
 
 
 class PicketFenceLongwave(TendencyComponent):
@@ -446,49 +446,16 @@ class PicketFenceLongwave(TendencyComponent):
         planck_src = np.zeros((nband, ngpt, nlev, ncol))
         surf_src = np.zeros((nband, ngpt, ncol))
 
-        for icol in range(ncol):
-            # Surface source
-            T_s = T_surf[icol]
-            iTs = np.searchsorted(T_grid, T_s) - 1
-            iTs = max(0, min(iTs, nT - 2))
-            fTs = (T_s - T_grid[iTs]) / (T_grid[iTs + 1] - T_grid[iTs])
-            fTs = max(0.0, min(1.0, fTs))
-
-            surf_planck = sigma * T_s**4
-            for ib in range(nband):
-                for igp in range(ngpt):
-                    if overlap == "esft" and ngas > 1:
-                        g_idx_orig = igp % ngpt_orig
-                    else:
-                        g_idx_orig = igp
-                    ib_orig = min(ib, nband_orig - 1)
-                    frac_s = (
-                        planck_frac[ib_orig, g_idx_orig, iTs] * (1 - fTs)
-                        + planck_frac[ib_orig, g_idx_orig, iTs + 1] * fTs
-                    )
-                    surf_src[ib, igp, icol] = frac_s * surf_planck
-
-            # Layer source
-            for k in range(nlev):
-                T_l = T[k, icol]
-                iTl = np.searchsorted(T_grid, T_l) - 1
-                iTl = max(0, min(iTl, nT - 2))
-                fTl = (T_l - T_grid[iTl]) / (T_grid[iTl + 1] - T_grid[iTl])
-                fTl = max(0.0, min(1.0, fTl))
-
-                layer_planck = sigma * T_l**4
-                for ib in range(nband):
-                    for igp in range(ngpt):
-                        if overlap == "esft" and ngas > 1:
-                            g_idx_orig = igp % ngpt_orig
-                        else:
-                            g_idx_orig = igp
-                        ib_orig = min(ib, nband_orig - 1)
-                        frac_l = (
-                            planck_frac[ib_orig, g_idx_orig, iTl] * (1 - fTl)
-                            + planck_frac[ib_orig, g_idx_orig, iTl + 1] * fTl
-                        )
-                        planck_src[ib, igp, k, icol] = frac_l * layer_planck
+        is_esft = (overlap == "esft" and ngas > 1)
+        planck_sources_kernel(
+            np.ascontiguousarray(planck_frac),
+            np.ascontiguousarray(T_grid, dtype=np.float64),
+            np.ascontiguousarray(T, dtype=np.float64),
+            np.ascontiguousarray(T_surf, dtype=np.float64),
+            float(sigma),
+            nband, ngpt, is_esft, ngpt_orig, nband_orig,
+            planck_src, surf_src,
+        )
 
         return tau_raw, planck_src, surf_src, weights
 
