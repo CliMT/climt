@@ -1563,6 +1563,20 @@ Implemented per design `docs/superpowers/specs/2026-06-03-pf-co2-adjustable-hifi
 
 → earth_hifi_lw is fidelity-**identical** to candD (Δ ≤ 0.03 W/m²). CO₂ interp at off-node 376 ppm (between the 215/464 nodes) is essentially exact. The single-column LBL−PF ≈ +11 is the *fixed-profile* number for **both** tables (the docstring's <5 W/m² target was never met by candD either); candD is nonetheless the table that converged to the design's +2.7 K moist-RCE result, i.e. the RCE metric — not fixed-profile OLR — is what gates the ship.
 
+**Per-band LBL−PF (earth_hifi_lw, W/m²; +ve = PF over-traps):** the residual is the **correlated-k spectral-correlation floor on the line side** (continuum already decoupled), concentrated in the far-IR H₂O rotation band + CO₂/window region — exactly the deferred "line-side log-X" non-goal.
+
+| band cm⁻¹ | moist | dry |  | band cm⁻¹ | moist | dry |
+|---|---|---|---|---|---|---|
+| 10–250 | −0.54 | +2.55 | | 980–1080 | +0.44 | +0.11 |
+| 250–350 | +0.68 | +1.68 | | 1080–1180 | +0.57 | +0.05 |
+| 350–500 | **+2.64** | +1.07 | | 1180–1250 | +0.56 | +0.02 |
+| 500–630 | **+2.27** | +0.86 | | 1250–1400 | +1.80 | +0.22 |
+| 630–700 | +0.52 | +0.52 | | 1400–1600 | +0.38 | +1.84 |
+| 700–800 | +1.51 | +0.98 | | 1600–1800 | +0.08 | +1.06 |
+| 800–980 | +1.41 | +0.23 | | 1800–3250 | −0.82 | −0.18 |
+
+**A5 detail (band-mean rel err, stress-test 2-node-apart):** linear-k blows up in the CO₂ ν₂ band — +19.6% @4641 ppm vs log-k +1.3%; window band (no CO₂ lines) both ~0. Pooled p95: **log-k 5.5% vs linear-k 30.9%**. Production (adjacent-node) error ~4× smaller; log-k median well under 0.1%. **`_CO2_INTERP_LOGK = True` confirmed.**
+
 **A5 — CO₂-interpolation scheme confirmed (`eval_co2_interp_accuracy.py`, leave-one-out node test, no linepyline):**
 - Empirically CO₂ band-mean k ∝ amount^≈1 (×2.154 per ⅓-decade node). For a power law, log-k-vs-log-C interpolation is exact; linear-k overshoots between log-spaced nodes.
 - Pooled over all 8 interior nodes (2-node-apart **stress test** = upper bound; production adjacent-node error ~4× smaller):
@@ -1575,5 +1589,5 @@ Implemented per design `docs/superpowers/specs/2026-06-03-pf-co2-adjustable-hifi
 
 **STILL OPEN (needs user's linepyline env / long compute — Task 10c):**
 - Off-node LBL OLR at 400/2000 ppm (regenerate `lbl_olr_spec_{moist,dry}.npz` at those CO₂ via the D=1.66 LBL path; the PF-side hook is in `eval_co2_interp_accuracy.py` Part 2).
-- Converged RCE (moist+dry) at 280 and 1120 ppm vs RRTMG + the *true* ngpt=2 baseline (`--table earth_low_res_lw`), via the new `--co2`/`--table` flags. 2-day moist smoke with `--table earth_hifi_lw --co2 280` ran clean (576 steps, ~33 s).
+- Converged RCE (moist+dry) at 280 and **500** ppm (1120 too high for RRTMG-LW) vs RRTMG + the *true* ngpt=2 baseline (`--table earth_low_res_lw`), via the new `--co2`/`--table` flags. 2-day moist smoke with `--table earth_hifi_lw --co2 280` ran clean (576 steps, ~33 s).
 - Then Task 11: flip default `earth_hifi_lw.nc` → `earth_low_res_lw.nc`, shipped-table integration test, MANIFEST, graphify re-index.
