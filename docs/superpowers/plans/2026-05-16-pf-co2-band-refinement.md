@@ -1587,7 +1587,21 @@ Implemented per design `docs/superpowers/specs/2026-06-03-pf-co2-adjustable-hifi
 
 **New/changed validation tooling (committed):** `--co2`/`--table` flags on `rce_moist/dry_pf_vs_rrtmg.py`; `co2=` override on `eval_band_structure.py`; new `eval_co2_interp_accuracy.py`.
 
-**STILL OPEN (needs user's linepyline env / long compute — Task 10c):**
-- Off-node LBL OLR at 400/2000 ppm (regenerate `lbl_olr_spec_{moist,dry}.npz` at those CO₂ via the D=1.66 LBL path; the PF-side hook is in `eval_co2_interp_accuracy.py` Part 2).
-- Converged RCE (moist+dry) at 280 and **500** ppm (1120 too high for RRTMG-LW) vs RRTMG + the *true* ngpt=2 baseline (`--table earth_low_res_lw`), via the new `--co2`/`--table` flags. 2-day moist smoke with `--table earth_hifi_lw --co2 280` ran clean (576 steps, ~33 s).
-- Then Task 11: flip default `earth_hifi_lw.nc` → `earth_low_res_lw.nc`, shipped-table integration test, MANIFEST, graphify re-index.
+**RCE VALIDATION (Task 10c) — PASSED.** Single-column RCE, SW=240 W/m², O₃=0, CO₂ 280/500 ppm (1120 too high for RRTMG-LW). The robust quantity is the **PF−RRTMG bias** (both columns share the same near-equilibrium state). Dry `imbal ≈ −2.5 W/m²` → marginally unconverged but equally for both columns, so the relative bias holds. CO₂ labels were not in the run paste, so the two moist / two dry runs are reported as the 280–500 ppm pair without asserting order.
+
+| case | RRTMG T_sfc | PF `earth_hifi_lw` T_sfc | **ΔT_sfc** | q_sfc PF/RRTMG [g/kg] | p_tp PF/RRTMG [hPa] |
+|---|---|---|---|---|---|
+| moist (run A) | 284.27 | 286.16 | **+1.89 K** | 2.52 / 2.19 | 196.2 / 196.2 |
+| moist (run B) | 282.82 | 284.95 | **+2.13 K** | 2.21 / 1.99 | 196.2 / 196.2 |
+| dry (run A)   | 266.98 | 267.77 | **+0.79 K** | 0 / 0 | 379.4 / 379.4 (p_cnvtop) |
+| dry (run B)   | 266.03 | 266.82 | **+0.79 K** | 0 / 0 | 379.4 / 379.4 (p_cnvtop) |
+
+**The "before" — current shipped 4-band ngpt=2 `earth_low_res_lw`, moist:** T_sfc **+11.90 K** (295.44 vs RRTMG 283.54), q_sfc **6.49** vs 2.02 g/kg (**3.2× runaway** water vapour), tropopause **583 hPa** (no real cold point — diagnostic/structure broken). T_tp 258 vs RRTMG 186 K.
+
+→ earth_hifi beats the design target (+1.0 dry / +2.7 moist) — **dry +0.8 K, moist +1.9–2.1 K**, humidity within ~15%, tropopause co-located at 196 hPa. **RCE gate PASSED → Task 11 default-flip unblocked.**
+
+**PEDAGOGICAL HEADLINE (sub-project B, "fast vs faithful"):** the 4-band lumped-window table is +11.9 K too warm with 3.2× runaway humidity and no tropopause; the 14-band decoupled-continuum + runtime-CO₂ table tracks RRTMG to ~1–2 K with a co-located tropopause and tamed water-vapour feedback. Single-column fixed-profile LBL−PF is +11 W/m² for *both* candD and earth_hifi, yet full RCE converges to ~2 K — the lesson that the fixed-profile OLR metric over-states the error a self-adjusting column actually incurs.
+
+**STILL OPEN:**
+- *(optional)* Off-node LBL OLR at 400/2000 ppm in the linepyline env (regenerate `lbl_olr_spec_{moist,dry}.npz` at those CO₂ via the D=1.66 LBL path; PF-side hook in `eval_co2_interp_accuracy.py` Part 2). Not a ship gate — A5 leave-one-out already confirmed log-k.
+- Task 11: flip default `earth_hifi_lw.nc` → `earth_low_res_lw.nc`, repoint shipped-table integration test, update MANIFEST row, graphify re-index.
