@@ -66,3 +66,30 @@ def test_interpolate_k_co2_geometric_midpoint(tmp_path):
     out = interpolate_k(table, T, p, h2o_vmr=h2o, co2_vmr=co2)
     # geometric mean of 2 and 8 = 4
     np.testing.assert_allclose(out[0, 0, 0, 0], 4.0, rtol=1e-4)
+
+
+def test_compute_ck_optical_depth_threads_co2(tmp_path):
+    """Higher CO2 VMR yields larger optical depth where the table's CO2 axis
+    increases k (additive premixed-bg path)."""
+    from climt._components.picket_fence.optics.correlated_k import (
+        compute_ck_optical_depth,
+    )
+
+    # k grows with CO2 index in band 0; flat elsewhere.
+    k = np.full((1, 2, 1, 3, 4, 3, 3), 1e-4)
+    k[0, 0, 0, :, :, :, :] = np.array([1e-4, 1e-3, 1e-2])[None, None, None, :]
+    table = _build_co2_table(tmp_path, k)
+
+    nlev, ncol = 5, 1
+    T = np.full((nlev, ncol), 250.0)
+    p = np.full((nlev, ncol), 1e4)
+    air = np.ones((1, nlev, ncol)) * 100.0  # kg/m^2 air per layer
+    h2o = np.full((nlev, ncol), 1e-3)
+
+    tau_lo = compute_ck_optical_depth(
+        table, T, p, air, h2o_vmr=h2o, co2_vmr=np.full((nlev, ncol), 1e-4))
+    tau_hi = compute_ck_optical_depth(
+        table, T, p, air, h2o_vmr=h2o, co2_vmr=np.full((nlev, ncol), 1e-2))
+    # Band 0 optical depth must rise with CO2; band 1 unchanged.
+    assert tau_hi[0].sum() > tau_lo[0].sum() * 5
+    np.testing.assert_allclose(tau_hi[1], tau_lo[1], rtol=1e-5)

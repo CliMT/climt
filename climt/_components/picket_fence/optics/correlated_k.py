@@ -255,12 +255,15 @@ def compute_esft_weights(gpoint_weights, ngas):
     return combined
 
 
-def compute_ck_optical_depth(table, T, p, gas_amounts, h2o_vmr=None):
+def compute_ck_optical_depth(table, T, p, gas_amounts, h2o_vmr=None,
+                             co2_vmr=None):
     """Compute optical depths from correlated-k table.
 
     Supports both additive and ESFT overlap methods. When the table has an
     ``h2o_vmr_grid`` axis, ``h2o_vmr`` (nlev, ncol) must be provided so
-    interpolate_k can do trilinear (T, log p, log X_H2O) lookup.
+    interpolate_k can do trilinear (T, log p, log X_H2O) lookup. When the
+    table has a ``co2_vmr_grid`` axis, ``co2_vmr`` (nlev, ncol) must be
+    provided for quadrilinear lookup.
 
     Args:
         table: loaded k-table
@@ -270,6 +273,8 @@ def compute_ck_optical_depth(table, T, p, gas_amounts, h2o_vmr=None):
             For premixed-background tables this should be the column mass
             of air (the "gas" is bulk air with H2O as the live axis).
         h2o_vmr: (nlev, ncol) H2O mole fraction per level/column.
+        co2_vmr: (nlev, ncol) CO2 mole fraction per level/column, required
+            when the table has a co2_vmr_grid axis.
 
     Returns:
         For additive overlap:
@@ -280,9 +285,11 @@ def compute_ck_optical_depth(table, T, p, gas_amounts, h2o_vmr=None):
     overlap = str(table.get("overlap_method", np.array("additive")))
 
     if overlap == "esft":
-        return _compute_ck_optical_depth_esft(table, T, p, gas_amounts, h2o_vmr)
+        return _compute_ck_optical_depth_esft(
+            table, T, p, gas_amounts, h2o_vmr, co2_vmr)
     else:
-        return _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr)
+        return _compute_ck_optical_depth_additive(
+            table, T, p, gas_amounts, h2o_vmr, co2_vmr)
 
 
 def interpolate_continuum(table, T, p, h2o_vmr):
@@ -348,7 +355,8 @@ def interpolate_continuum(table, T, p, h2o_vmr):
     return out
 
 
-def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None):
+def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None,
+                                       co2_vmr=None):
     """Additive overlap: sum optical depths from all gases on the same g-point grid."""
     k_data = table["k_coefficients"]
     ngas, nband, ngpt = k_data.shape[:3]
@@ -363,7 +371,9 @@ def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None):
 
     for k_lev in range(nlev):
         x_lev = h2o_vmr[k_lev, :] if h2o_vmr is not None else None
-        k_interp = interpolate_k(table, T[k_lev, :], p[k_lev, :], h2o_vmr=x_lev)
+        c_lev = co2_vmr[k_lev, :] if co2_vmr is not None else None
+        k_interp = interpolate_k(
+            table, T[k_lev, :], p[k_lev, :], h2o_vmr=x_lev, co2_vmr=c_lev)
         for ig in range(ngas):
             for ib in range(nband):
                 for igp in range(ngpt):
@@ -386,7 +396,8 @@ def _compute_ck_optical_depth_additive(table, T, p, gas_amounts, h2o_vmr=None):
     return tau
 
 
-def _compute_ck_optical_depth_esft(table, T, p, gas_amounts, h2o_vmr=None):
+def _compute_ck_optical_depth_esft(table, T, p, gas_amounts, h2o_vmr=None,
+                                   co2_vmr=None):
     """ESFT overlap: outer product of g-points across gases."""
     k_data = table["k_coefficients"]
     gpoint_weights = table["gpoint_weights"]
@@ -400,7 +411,9 @@ def _compute_ck_optical_depth_esft(table, T, p, gas_amounts, h2o_vmr=None):
 
     for k_lev in range(nlev):
         x_lev = h2o_vmr[k_lev, :] if h2o_vmr is not None else None
-        k_interp = interpolate_k(table, T[k_lev, :], p[k_lev, :], h2o_vmr=x_lev)
+        c_lev = co2_vmr[k_lev, :] if co2_vmr is not None else None
+        k_interp = interpolate_k(
+            table, T[k_lev, :], p[k_lev, :], h2o_vmr=x_lev, co2_vmr=c_lev)
 
         for ib in range(nband):
             for idx in range(ngpt_combined):
