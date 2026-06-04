@@ -222,3 +222,32 @@ def test_picket_fence_lw_co2_axis_changes_olr(tmp_path):
     olr_hi = diag_hi["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
 
     assert olr_hi < olr_lo, f"more CO2 should trap more: lo={olr_lo}, hi={olr_hi}"
+
+
+def test_shipped_earth_hifi_lw_is_co2_adjustable():
+    """The shipped earth_hifi_lw table loads by name, is 14-band, exposes a CO2
+    axis, and OLR responds to CO2 (quadrupling traps more LW)."""
+    from climt import get_default_state, get_grid
+    from climt._components.picket_fence import PicketFenceLongwave
+
+    sympl.set_backend(sympl.DataArrayBackend())
+    lw = PicketFenceLongwave(optics="correlated_k", table="earth_hifi_lw")
+    assert lw._has_co2_axis is True
+    assert lw.num_longwave_bands == 14
+
+    grid = get_grid(nx=1, ny=1, nz=30)
+
+    s_lo = get_default_state([lw], grid_state=grid)
+    s_lo["specific_humidity"].values[:] = 5e-3
+    s_lo["mole_fraction_of_carbon_dioxide_in_air"].values[:] = 280e-6
+    _, d_lo = lw(s_lo)
+    olr_lo = d_lo["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
+
+    s_hi = get_default_state([lw], grid_state=grid)
+    s_hi["specific_humidity"].values[:] = 5e-3
+    s_hi["mole_fraction_of_carbon_dioxide_in_air"].values[:] = 1120e-6
+    _, d_hi = lw(s_hi)
+    olr_hi = d_hi["upwelling_longwave_flux_in_air"].values[-1, 0, 0]
+
+    assert olr_hi < olr_lo, f"CO2 quadrupling should trap more: lo={olr_lo}, hi={olr_hi}"
+    assert not np.isnan(olr_lo) and not np.isnan(olr_hi)

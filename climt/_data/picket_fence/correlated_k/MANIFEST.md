@@ -23,6 +23,7 @@ SW bands are unchanged: `3250, 8000, 14000, 30000` cm⁻¹.
 
 | File | Planet | Kind | Bands (cm⁻¹) | g-pts | sha256 |
 |---|---|---|---|---|---|
+| earth_hifi_lw.nc | Earth (CO₂ 10–10000 ppm runtime axis) | LW candD-class (14-band, decoupled+log-X H₂O continuum, runtime CO₂) | 10…3250 (14-band) | 8 | `3192c45f2c4bad5243023177841089568270f246280bc5bbbe0dc74bac74b760` |
 | earth_low_res_lw.nc | Earth (376 ppm CO₂) | LW option B | 10, 500, 800, 1800, 3250 | 2 | `94570a87d18c0c1f022d633433a663a0940816dc34c25693eb9ffd4aed1bfb82` |
 | earth_low_res_lw_4gpt.nc | Earth (376 ppm CO₂) | LW option B | 10, 500, 800, 1800, 3250 | 4 | `8c9f83e2b38cfcd577cbc67f02d750afca80d0e2c2b70443d20825b4ccd04fe7` |
 | earth_low_res_lw_8gpt.nc | Earth (376 ppm CO₂) | LW option B | 10, 500, 800, 1800, 3250 | 8 | `15b06a4311eae5bc0fecd255c54e7a810c80d90634edd2a5d27ebe7c2ef49136` |
