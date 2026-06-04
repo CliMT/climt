@@ -1602,6 +1602,22 @@ Implemented per design `docs/superpowers/specs/2026-06-03-pf-co2-adjustable-hifi
 
 **PEDAGOGICAL HEADLINE (sub-project B, "fast vs faithful"):** the 4-band lumped-window table is +11.9 K too warm with 3.2× runaway humidity and no tropopause; the 14-band decoupled-continuum + runtime-CO₂ table tracks RRTMG to ~1–2 K with a co-located tropopause and tamed water-vapour feedback. Single-column fixed-profile LBL−PF is +11 W/m² for *both* candD and earth_hifi, yet full RCE converges to ~2 K — the lesson that the fixed-profile OLR metric over-states the error a self-adjusting column actually incurs.
 
+**SHIPPED (Task 11 — default flipped).** `earth_low_res_lw.nc` is now a byte-copy of `earth_hifi_lw.nc` (sha `3192c45f…`); old 4-band/ngpt2 default preserved as `earth_low_res_lw_4band_ngpt2_before.nc` (sha `94570a87…`). Shipped-table integration test parametrized over both names; MANIFEST updated; graph re-indexed. The default PF Earth-LW scheme is now 14-band, decoupled+log-X continuum, runtime CO₂ 10–10000 ppm.
+
+### PERFORMANCE — PF-LW njit pass (2026-06-04)
+
+Benchmark `scripts/experiments/bench_pf_vs_rrtmg.py` (warm JIT, NZ=30). The 14-band×8-gpt table is 14× the old 4×2 band×gpt work, and the CO₂ axis doubles the inner interpolation — exposing two **pure-Python assembly loops** that had always been cheap at 4×2:
+
+| stage (100 cols) | PF-LW | vs RRTMG | fix |
+|---|---|---|---|
+| start | 3068 ms | 467× slower | pure-Python optics + Planck loops |
+| + njit CO₂ optical-depth kernel (`correlated_k._ck_tau_additive_co2_kernel`) | 203 ms | 30× slower | `f286c67` |
+| + njit Planck-source kernel (`lw/kernels.planck_sources_kernel`) | **5.7 ms** | **0.87× (faster)** | `2fab89b` |
+
+**~540× total speedup, zero physics change** — both kernels are bit-for-bit vs frozen oracles (rtol 1e-6, `tests/test_picket_fence_ck_njit.py`, `tests/test_planck_sources_kernel.py`); single-column OLR byte-identical (235.26 moist / 336.90 dry); 48 PF tests green. Throughput scales linearly and PF beats RRTMG at every size (per-column, 1000 cols: **PF 37.9 µs/col vs RRTMG 45.2**; ratio 0.83–0.90× across 10/100/1000 cols).
+
+Key finding: the `@njit(parallel=True)` **transport** kernel (Task 8, `lw_transport`) was *never* the bottleneck — sub-ms throughout. The cost was the optical-depth and Planck-source **assembly** loops, only visible once bands×gpts grew. Both now compiled. *Pedagogical hook for sub-project B: the faithful scheme is also the fast one — PF matches RRTMG's accuracy AND beats its throughput once the hot loops are JIT-compiled.*
+
 **STILL OPEN:**
 - *(optional)* Off-node LBL OLR at 400/2000 ppm in the linepyline env (regenerate `lbl_olr_spec_{moist,dry}.npz` at those CO₂ via the D=1.66 LBL path; PF-side hook in `eval_co2_interp_accuracy.py` Part 2). Not a ship gate — A5 leave-one-out already confirmed log-k.
-- Task 11: flip default `earth_hifi_lw.nc` → `earth_low_res_lw.nc`, repoint shipped-table integration test, update MANIFEST row, graphify re-index.
+- *(user, in progress)* Independent moist-RCE re-run as a verification of the shipped default + njit kernels.
