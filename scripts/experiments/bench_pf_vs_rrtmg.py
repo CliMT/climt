@@ -8,6 +8,7 @@ additive tau loop + continuum/CO2 interpolation) and the prange transport kernel
 Run: /Users/joymonteiro/miniconda3/envs/climt/bin/python \
         scripts/experiments/bench_pf_vs_rrtmg.py [NCOL] [NZ]
 """
+import argparse
 import cProfile
 import io
 import os
@@ -20,8 +21,12 @@ import sympl
 
 from climt import get_default_state, get_grid
 
-NCOL = int(sys.argv[1]) if len(sys.argv) > 1 else 100
-NZ = int(sys.argv[2]) if len(sys.argv) > 2 else 30
+# Optional NCOL/NZ are read straight from sys.argv (argparse has no positionals
+# registered, so it would reject them). The isdigit guard lets flags like --save
+# fall through to argparse in main(). Constraint: don't pass NCOL/NZ positionals
+# in the same invocation as --save (argparse would reject the leftover tokens).
+NCOL = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].lstrip("-").isdigit() else 100
+NZ = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].lstrip("-").isdigit() else 30
 N_WARM = 2
 N_TIME = 20
 
@@ -52,6 +57,12 @@ def _make_state(lw):
 
 
 def main():
+    ap = argparse.ArgumentParser(description="Benchmark PF-LW vs RRTMG-LW throughput")
+    ap.add_argument("--save", default=None,
+                    help="if given, write throughput scalars to this .npz "
+                         "(keys: rrtmg_us_per_col, pf_us_per_col, ncol)")
+    args = ap.parse_args()
+
     sympl.set_backend(sympl.DataArrayBackend())
     nthreads = os.environ.get("NUMBA_NUM_THREADS", "(default = all cores)")
     print(f"=== LW benchmark: NCOL={NCOL}, NZ={NZ}, "
@@ -74,6 +85,14 @@ def main():
           f"(min {min_p:6.2f})  -> {mean_p/NCOL*1e3:6.1f} µs/col")
 
     print(f"\nPF / RRTMG ratio  : {mean_p/mean_r:5.2f}x")
+
+    if args.save:
+        # mean_* are ms/call; /NCOL*1e3 -> µs/col.
+        np.savez(args.save,
+                 rrtmg_us_per_col=np.asarray(mean_r / NCOL * 1e3),
+                 pf_us_per_col=np.asarray(mean_p / NCOL * 1e3),
+                 ncol=np.asarray(NCOL))
+        print(f"saved throughput -> {args.save}")
 
     # --- Where does PF spend its time? Profile one warm call. ---
     print("\n--- PF call profile (cumulative top functions) ---")

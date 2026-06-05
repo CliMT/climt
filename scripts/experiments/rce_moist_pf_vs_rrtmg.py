@@ -56,6 +56,9 @@ ap.add_argument("--co2", type=float, default=None,
 ap.add_argument("--table", default=None,
                 help="single PF table name to compare vs RRTMG; if given, "
                      "replaces the COLUMNS dict with {RRTMG, that table}")
+ap.add_argument("--save", default=None,
+                help="if given, write final-state arrays to this .npz "
+                     "(keys: <label>__{p_hpa,T,q,hr_lw,T_sfc,olr})")
 args = ap.parse_args()
 if args.co2 is not None:
     CO2_MOLE_FRAC = args.co2 * 1e-6
@@ -207,3 +210,17 @@ npz = os.path.join(os.path.dirname(out), "rce_moist_pf_vs_rrtmg.npz")
 np.savez(npz, **{f"{l.replace(' ','_')}__{k}": np.asarray(history[l][-1][k])
                  for l in COLUMNS for k in ("p_hpa", "T", "q", "hr_lw")})
 print(f"Saved {npz}")
+
+if args.save:
+    payload = {}
+    for label in COLUMNS:
+        s = history[label][-1]
+        safe = label.replace(" ", "_")
+        payload[f"{safe}__p_hpa"] = np.asarray(s["p_hpa"])
+        payload[f"{safe}__T"] = np.asarray(s["T"])
+        payload[f"{safe}__q"] = np.asarray(s["q"])
+        payload[f"{safe}__hr_lw"] = np.asarray(s["hr_lw"])
+        payload[f"{safe}__T_sfc"] = np.asarray(s["T_sfc"])
+        payload[f"{safe}__olr"] = np.asarray(s["olr"])
+    np.savez(args.save, **payload)
+    print(f"saved final state -> {args.save}")
