@@ -80,3 +80,7 @@ target/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/.worktrees/
+
+# Quarto site build output
+docs/_site/
+.quarto/
