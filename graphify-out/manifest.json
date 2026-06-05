@@ -64,6 +64,11 @@
     "ast_hash": "21278057ea6452812d5ef882e3292152",
     "semantic_hash": "21278057ea6452812d5ef882e3292152"
   },
+  "/Users/joymonteiro/github/climt/tests/test_tropopause.py": {
+    "mtime": 1780624550.6051157,
+    "ast_hash": "deeac03bd22832cc9da6396684619223",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/climt/tests/conftest.py": {
     "mtime": 1778650004.0475528,
     "ast_hash": "73f56b29c67622dbdb0e8abbfeb6fd4b",
@@ -173,6 +178,11 @@
     "mtime": 1775286770.3521318,
     "ast_hash": "4e27a6e460d134b8dfed2aa99cb3c808",
     "semantic_hash": "4e27a6e460d134b8dfed2aa99cb3c808"
+  },
+  "/Users/joymonteiro/github/climt/tests/test_build_experiments.py": {
+    "mtime": 1780625396.9866166,
+    "ast_hash": "20301e925ab8936466bb0e5e53134549",
+    "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/tests/test_picket_fence_lw.py": {
     "mtime": 1780591737.9383698,
@@ -303,6 +313,236 @@
     "mtime": 1767444125.1682324,
     "ast_hash": "f332294f12d123573a6d05d725257f56",
     "semantic_hash": "f332294f12d123573a6d05d725257f56"
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/.hashes.json": {
+    "mtime": 1780640247.8931239,
+    "ast_hash": "04069e0525fb60882ee0fe586b159c3a",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/search.json": {
+    "mtime": 1780640545.5218055,
+    "ast_hash": "cf952639184633220ca8e4b0b686d8a2",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/bootstrap/bootstrap.min.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "e2b09c06f0e714b6144a6788a28e3950",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-html/quarto.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "6f4245742deb3cc92337dbe2701ccfe1",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-html/tippy.umd.min.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "d828775275749701b48bd9d958814111",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-html/anchor.min.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "91bcf6cd1fd88fec3f109811e5fc3546",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-html/popper.min.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "3a4a291ccf3f1ea0f82b641542fd3827",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-html/tabsets/tabsets.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "e8d6a8862b33ccc461f8fd532e05b365",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-nav/quarto-nav.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "12d334846b27bdb493298c08277bdf7f",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-nav/headroom.min.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "ace0360e576db9b6e7df48ac68ddbbf4",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-search/fuse.min.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "de7d60e4a6881074275feca14b84a49d",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-search/quarto-search.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "9c992af743ca88c8c5f650cf312c4e61",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/quarto-search/autocomplete.umd.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "b514204f2ef1ca7a8e2ad4579d263504",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/site_libs/clipboard/clipboard.min.js": {
+    "mtime": 1779702615.0,
+    "ast_hash": "15f52a1ee547f2bdd46e56747332ca2d",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/emanuel_convection_assessment.md.json": {
+    "mtime": 1780640545.4175303,
+    "ast_hash": "59ff561f762c83b063985f74a22f1a64",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/Description_of_SecondBEST.ipynb.json": {
+    "mtime": 1780640545.420967,
+    "ast_hash": "7f1dfa6d50158e1ce3610d381d62f26d",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/Implicit_Scheme_Derivation.ipynb.json": {
+    "mtime": 1780640545.4145517,
+    "ast_hash": "1f73d6bb4027b90f5c35daf968f2f5ce",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/PLUG_AND_PLAY_ARCHITECTURE.md.json": {
+    "mtime": 1780640545.4159248,
+    "ast_hash": "06aa4cb4ef7e320d068b5c91c983180a",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/experiments/index.qmd.json": {
+    "mtime": 1780640539.6555011,
+    "ast_hash": "9cf32b6aca2c8ebc1389723477307a34",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/experiments/2026-06-05-picket-fence-co2-bands/index.qmd.json": {
+    "mtime": 1780640539.8429985,
+    "ast_hash": "6a8e739ef4dcc849ae6f3ecb030ce381",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/experiments/2026-06-05-picket-fence-co2-bands/picket_fence_co2_bands.ipynb.json": {
+    "mtime": 1780640545.172687,
+    "ast_hash": "c440ace82b478f6cf4e5884024a87992",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/notes/corr-k-explainer-seed.md.json": {
+    "mtime": 1780640545.4193118,
+    "ast_hash": "8c631a56826476c962f65b142cae6ec4",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/picket_fence_reviewer_notes.md.json": {
+    "mtime": 1780640545.5113256,
+    "ast_hash": "cbd4f0be183efda33815543b16d93a6d",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/release-plan-phase1-numba-phase2-pyodide.md.json": {
+    "mtime": 1780640545.5128248,
+    "ast_hash": "927adbaddcbe3480f403f7cdfdf49350",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-06-04-pf-co2-adjustable-hifi-earth-lw.md.json": {
+    "mtime": 1780640545.4738705,
+    "ast_hash": "d31d9f1ef84d36ba1c88d79cf89142f3",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-04-20-picket-fence-radiation-phase4.md.json": {
+    "mtime": 1780640545.4926121,
+    "ast_hash": "1204d9078c3b8779fd7c84edb1af29fc",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-05-13-general-condensibles.md.json": {
+    "mtime": 1780640545.444658,
+    "ast_hash": "c2d6badb567bb5c8955f4dc03f86af94",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-06-01-pf-ozone-lw.md.json": {
+    "mtime": 1780640545.4771657,
+    "ast_hash": "5406666632454286f14a44d7d112d2fe",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-04-13-picket-fence-radiation-phase2.md.json": {
+    "mtime": 1780640545.4296114,
+    "ast_hash": "94bb786acd9f4f4f8cc87373969029a2",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-06-05-pf-subproject-B.md.json": {
+    "mtime": 1780640545.4667323,
+    "ast_hash": "3a428708d857dd16518e6493762785c7",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-04-14-picket-fence-radiation-phase3.md.json": {
+    "mtime": 1780640545.4574757,
+    "ast_hash": "83b1d275f0680c61dab0ad3f2901a5ef",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-05-18-climt-docs-feature.md.json": {
+    "mtime": 1780640545.462332,
+    "ast_hash": "ca52345cad7af666e86edb8a1c5856b5",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-04-12-picket-fence-radiation.md.json": {
+    "mtime": 1780640545.4373505,
+    "ast_hash": "6716dbcfbbafad11ef2493cfc265b86e",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-05-16-pf-co2-band-refinement.md.json": {
+    "mtime": 1780640545.4524465,
+    "ast_hash": "f8e267b7570872e37b51810d73441b4d",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-05-12-titan-trappist1e-opacity-tables.md.json": {
+    "mtime": 1780640545.4838512,
+    "ast_hash": "fa935917a6abdc2530005f8480c0b22c",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/plans/2026-05-12-task9-10-handoff.md.json": {
+    "mtime": 1780640545.440163,
+    "ast_hash": "c26be9b64c3216134a1b37de66b5debd",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-04-12-student-project-terrestrial-parmentier-calibration.md.json": {
+    "mtime": 1780640545.5022943,
+    "ast_hash": "b915bfda22d6fa217c7d5929918b9d2e",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-06-03-pf-co2-adjustable-hifi-earth-lw-design.md.json": {
+    "mtime": 1780640545.4943433,
+    "ast_hash": "947694a23dda2d4c6f70199432784bd2",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-04-12-picket-fence-radiation-design.md.json": {
+    "mtime": 1780640545.499166,
+    "ast_hash": "5d1e5a39d8beb3ab496e965514b227cf",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-03-29-pyodide-pure-python-support-design.md.json": {
+    "mtime": 1780640545.5035732,
+    "ast_hash": "1cfdd9d299994550ccefb84ba6b36460",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-05-18-climt-website-design.md.json": {
+    "mtime": 1780640545.50082,
+    "ast_hash": "d2b236d200c1de6fe18027e614a8f7c7",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-05-13-general-condensibles-design.md.json": {
+    "mtime": 1780640545.505048,
+    "ast_hash": "ce5aabcab16dad6e2308d767b74cf7ae",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-06-05-pf-subproject-B-design.md.json": {
+    "mtime": 1780640545.5069535,
+    "ast_hash": "a21150223eb0a57022e5d7761fa80126",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-06-01-pf-ozone-lw-design.md.json": {
+    "mtime": 1780640545.4961565,
+    "ast_hash": "eba42cc4bddc073dc43d0f746dd54bdc",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/specs/2026-06-05-pf-subproject-B-seed.md.json": {
+    "mtime": 1780640545.5083141,
+    "ast_hash": "e12fb36b4757ec34a2f3f8f773fe9397",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/.quarto/idx/superpowers/experiments/2026-05-16-pf-co2-band-refinement-log.md.json": {
+    "mtime": 1780640545.510244,
+    "ast_hash": "4045319479af44c6ba4751748cc12dc3",
+    "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/climt/__init__.py": {
     "mtime": 1780559085.6870968,
@@ -1299,6 +1539,11 @@
     "ast_hash": "d5f71b6c2d68f68ada8c196943781af9",
     "semantic_hash": "d5f71b6c2d68f68ada8c196943781af9"
   },
+  "/Users/joymonteiro/github/climt/scripts/build_experiments.py": {
+    "mtime": 1780625374.3563175,
+    "ast_hash": "f02410ecc291485a37f0e3c874afff9e",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/climt/scripts/generate_picket_fence_tables.py": {
     "mtime": 1780559085.6901293,
     "ast_hash": "f7ba14b33be51253748f0ed674d2898e",
@@ -1384,6 +1629,11 @@
     "ast_hash": "02a6e72e7f8f9d998b0f260bec1ae977",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/climt/scripts/experiments/make_subproject_B_figures.py": {
+    "mtime": 1780640228.4890199,
+    "ast_hash": "73a8063218372ab22abff3143652326d",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/climt/scripts/experiments/pf_h2o_axis_fidelity.py": {
     "mtime": 1780337364.5824642,
     "ast_hash": "427d009f94ad5b826fce283d254b89a9",
@@ -1425,13 +1675,13 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/eval_co2_interp_accuracy.py": {
-    "mtime": 1780563635.011024,
-    "ast_hash": "28ac30e17f666a1b600a8504540e8323",
+    "mtime": 1780601698.9415302,
+    "ast_hash": "6627a4ac66da95b16b5b2a8ef258462e",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/rce_moist_pf_vs_rrtmg.py": {
-    "mtime": 1780563262.6682749,
-    "ast_hash": "c3177e1125f03a4b08cc83ea9d8fbe62",
+    "mtime": 1780625624.8926384,
+    "ast_hash": "6d15998aeaadba021496e812873c883a",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/cooling_to_space_gsplit_sweep.py": {
@@ -1440,13 +1690,18 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/rce_dry_pf_vs_rrtmg.py": {
-    "mtime": 1780563277.4406414,
-    "ast_hash": "7018cc1122e86a7eecd3823ffbe675fe",
+    "mtime": 1780626032.8382344,
+    "ast_hash": "a34ae7495121fb576440c91422393bbc",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/probe_lpl_kappa_apis.py": {
     "mtime": 1780055795.451246,
     "ast_hash": "12ff1d81ac3026e900d72b03366f9e79",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/scripts/experiments/tropopause.py": {
+    "mtime": 1780624914.3559313,
+    "ast_hash": "ad382b2ce33b775fe1b5a535ff270d0c",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/cooling_to_space_diagnostic.py": {
@@ -1465,8 +1720,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/plot_kg_curves.py": {
-    "mtime": 1780343366.6129177,
-    "ast_hash": "725b0ee404ed8a3cb628f2519a8ec7da",
+    "mtime": 1780625673.0404031,
+    "ast_hash": "c381d78b4d72b1d19a982796902d639d",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/compare_lbl_pf_band_k.py": {
@@ -1480,13 +1735,13 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/bench_pf_vs_rrtmg.py": {
-    "mtime": 1780591900.7366836,
-    "ast_hash": "2bd114a7c6fa8e732d83a9248ea819a4",
+    "mtime": 1780626058.3153503,
+    "ast_hash": "10f6e19e154d3297ec6ea3124f57f9b3",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/lbl_olr_tiebreak.py": {
-    "mtime": 1780403548.3427076,
-    "ast_hash": "b488da7ff8bf22eb8005b7c0f9ef5ff8",
+    "mtime": 1780601661.2197695,
+    "ast_hash": "e8632185f7ff33b18c15106152eb70d0",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/scripts/experiments/chaverot_vs_lbl_envelope_native.py": {
@@ -1593,6 +1848,11 @@
     "mtime": 1775286770.3487995,
     "ast_hash": "abd2bcb6e90a1013e6e420526e936488",
     "semantic_hash": "abd2bcb6e90a1013e6e420526e936488"
+  },
+  "/Users/joymonteiro/github/climt/docs/_quarto.yml": {
+    "mtime": 1780625474.0385387,
+    "ast_hash": "cb58e8a0f9723e785c4420527f8e2d5d",
+    "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/docs/initialisation.rst": {
     "mtime": 1767444125.16938,
@@ -1719,9 +1979,39 @@
     "ast_hash": "998b7373872adbfaeab3d16e0a3f17a4",
     "semantic_hash": "998b7373872adbfaeab3d16e0a3f17a4"
   },
+  "/Users/joymonteiro/github/climt/docs/experiments/index.qmd": {
+    "mtime": 1780626979.0799007,
+    "ast_hash": "c0922aa7ccdb92e3dae1282d0b7c999a",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/index.qmd": {
+    "mtime": 1780640520.3670635,
+    "ast_hash": "dc122803aa016e7e5c14ad44bef5fa52",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/sources.yml": {
+    "mtime": 1780626790.3669856,
+    "ast_hash": "c40c645ec14bf6cfff61d853eca30d8d",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/throughput.txt": {
+    "mtime": 1780633158.5332153,
+    "ast_hash": "68098017e19901bf2d83767c2af4acc7",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/climt/docs/notes/corr-k-explainer-seed.md": {
     "mtime": 1780343406.50038,
     "ast_hash": "cb215e7c589f967fabec4877d5352d08",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/index.html": {
+    "mtime": 1780640545.5229404,
+    "ast_hash": "58b747f028a153d9f42bb29d51b227c5",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/index.html": {
+    "mtime": 1780640564.8118253,
+    "ast_hash": "bb508b1871b2957b67615a3c71288513",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/docs/superpowers/picket_fence_reviewer_notes.md": {
@@ -1755,8 +2045,8 @@
     "semantic_hash": "e429180bb00a37080cdcc04edbf2bd55"
   },
   "/Users/joymonteiro/github/climt/docs/superpowers/plans/2026-05-16-pf-co2-band-refinement.md": {
-    "mtime": 1780591527.0287542,
-    "ast_hash": "d8ee9f6a7296ed75398770cee94a75ca",
+    "mtime": 1780602060.0995405,
+    "ast_hash": "abe2916d8da745a7bcfef2ec156a061b",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/docs/superpowers/plans/2026-04-14-picket-fence-radiation-phase3.md": {
@@ -1767,6 +2057,11 @@
   "/Users/joymonteiro/github/climt/docs/superpowers/plans/2026-05-18-climt-docs-feature.md": {
     "mtime": 1779046526.2112925,
     "ast_hash": "e6b1e63f558b005e849794d1253627b2",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/superpowers/plans/2026-06-05-pf-subproject-B.md": {
+    "mtime": 1780624209.9795947,
+    "ast_hash": "a91712d0cc5b7b830417caca4e88f758",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/docs/superpowers/plans/2026-06-04-pf-co2-adjustable-hifi-earth-lw.md": {
@@ -1815,14 +2110,24 @@
     "semantic_hash": "fc103c5e85aa6f8e08688c7c9fda1328"
   },
   "/Users/joymonteiro/github/climt/docs/superpowers/specs/2026-03-29-pyodide-pure-python-support-design.md": {
-    "mtime": 1774751143.2740684,
-    "ast_hash": "1f61a403c0524fa4cabe1a8ffb436182",
-    "semantic_hash": "1f61a403c0524fa4cabe1a8ffb436182"
+    "mtime": 1780640623.8401988,
+    "ast_hash": "788ee19d9902d615063133a215f69f34",
+    "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/docs/superpowers/specs/2026-05-13-general-condensibles-design.md": {
     "mtime": 1778648554.3404698,
     "ast_hash": "77632a08b94cdde866c342145f649678",
     "semantic_hash": "77632a08b94cdde866c342145f649678"
+  },
+  "/Users/joymonteiro/github/climt/docs/superpowers/specs/2026-06-05-pf-subproject-B-design.md": {
+    "mtime": 1780623798.7243109,
+    "ast_hash": "dd916b79fe421069c6d3eaef65bd8637",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/superpowers/specs/2026-06-05-pf-subproject-B-seed.md": {
+    "mtime": 1780602464.7946348,
+    "ast_hash": "bf3f40c6ba6107f469668640f9c6efb5",
+    "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/docs/superpowers/experiments/2026-05-16-pf-co2-band-refinement-log.md": {
     "mtime": 1778905872.3690321,
@@ -1969,6 +2274,86 @@
     "ast_hash": "ce6bda3af6bcfef2ff045dfac5e4dce6",
     "semantic_hash": "ce6bda3af6bcfef2ff045dfac5e4dce6"
   },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/picket_fence_co2_bands_files/figure-html/cell-5-output-1.png": {
+    "mtime": 1780640564.5714931,
+    "ast_hash": "1a74aaac51572c9aa9dce5cbf6988828",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/picket_fence_co2_bands_files/figure-html/cell-4-output-1.png": {
+    "mtime": 1780640564.5709832,
+    "ast_hash": "1ca4305b52f4322f31bf752391e2ac6c",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/picket_fence_co2_bands_files/figure-html/cell-4-output-2.png": {
+    "mtime": 1780640564.5712225,
+    "ast_hash": "c38669c09e8ed475975a5e12c7d5aebd",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/picket_fence_co2_bands_files/figure-html/cell-6-output-1.png": {
+    "mtime": 1780640564.5718386,
+    "ast_hash": "cfe48fa936f6fa9f2209c40b3c0f9525",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/kg_window_band.png": {
+    "mtime": 1780640243.8682523,
+    "ast_hash": "1ca4305b52f4322f31bf752391e2ac6c",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/throughput.png": {
+    "mtime": 1780640247.8345318,
+    "ast_hash": "2c8630d96c6818de829e9025c7a21acb",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/lbl_overlay.png": {
+    "mtime": 1780640245.2435336,
+    "ast_hash": "0f60cccc92137b99c74a530fa988fc1a",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/rce_before_after.png": {
+    "mtime": 1780640246.6636958,
+    "ast_hash": "89abbda00862746cd8fb9b8b1adb3537",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/index_files/figure-html/picket_fence_co2_bands-cell-6-output-1.png": {
+    "mtime": 1780640563.5545063,
+    "ast_hash": "cfe48fa936f6fa9f2209c40b3c0f9525",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/index_files/figure-html/picket_fence_co2_bands-cell-5-output-1.png": {
+    "mtime": 1780640563.5540297,
+    "ast_hash": "1a74aaac51572c9aa9dce5cbf6988828",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/index_files/figure-html/picket_fence_co2_bands-cell-4-output-1.png": {
+    "mtime": 1780640563.5529585,
+    "ast_hash": "1ca4305b52f4322f31bf752391e2ac6c",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/index_files/figure-html/picket_fence_co2_bands-cell-4-output-2.png": {
+    "mtime": 1780640563.5536304,
+    "ast_hash": "c38669c09e8ed475975a5e12c7d5aebd",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/kg_window_band.png": {
+    "mtime": 1780640243.868,
+    "ast_hash": "1ca4305b52f4322f31bf752391e2ac6c",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/throughput.png": {
+    "mtime": 1780640247.834,
+    "ast_hash": "2c8630d96c6818de829e9025c7a21acb",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/lbl_overlay.png": {
+    "mtime": 1780640245.243,
+    "ast_hash": "0f60cccc92137b99c74a530fa988fc1a",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/climt/docs/_site/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/rce_before_after.png": {
+    "mtime": 1780640246.663,
+    "ast_hash": "89abbda00862746cd8fb9b8b1adb3537",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/climt/debug_data/pf_vs_lbl_k_profile__earth_low_res_lw_co2refined_gl.png": {
     "mtime": 1779082738.4603634,
     "ast_hash": "5fd3bf13aab2b1209536e38fe12ba97f",
@@ -2000,8 +2385,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/debug_data/rce_moist_pf_vs_rrtmg.png": {
-    "mtime": 1780590275.917816,
-    "ast_hash": "45bc3764f23a7d051a5ff768d8ebe5de",
+    "mtime": 1780633151.6667814,
+    "ast_hash": "02efffab2e2ba5d8cae55870b6df1642",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/climt/debug_data/chaverot_vs_lbl_spectra.png": {
