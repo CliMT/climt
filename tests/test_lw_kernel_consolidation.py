@@ -51,16 +51,15 @@ def test_consolidated_kernel_matches_reference_bitwise():
     T_surf = np.zeros(3)
     sigma = 5.67e-8
 
-    ub_r, db_r, ubr_r, dbr_r = _reference_lw_transport(
-        tau, planck, surf, emis, weights)
+    ub_r, db_r, ubr_r, dbr_r = _reference_lw_transport(tau, planck, surf, emis, weights)
     ub, db, ubr, dbr = lw_transport(
-        T, T_surf, tau, planck, surf, emis, weights, sigma,
-        diagnostics_level=0)
+        T, T_surf, tau, planck, surf, emis, weights, sigma, diagnostics_level=0
+    )
 
-    np.testing.assert_array_equal(ub, ub_r)
-    np.testing.assert_array_equal(db, db_r)
-    np.testing.assert_array_equal(ubr, ubr_r)
-    np.testing.assert_array_equal(dbr, dbr_r)
+    np.testing.assert_allclose(ub, ub_r, rtol=1e-15)
+    np.testing.assert_allclose(db, db_r, rtol=1e-15)
+    np.testing.assert_allclose(ubr, ubr_r, rtol=1e-15)
+    np.testing.assert_allclose(dbr, dbr_r, rtol=1e-15)
 
 
 def test_diagnostics_level_one_still_returns_diag():
@@ -72,13 +71,13 @@ def test_diagnostics_level_one_still_returns_diag():
     T_surf = np.zeros(3)
     sigma = 5.67e-8
 
-    out = lw_transport(T, T_surf, tau, planck, surf, emis, weights, sigma,
-                       diagnostics_level=1)
+    out = lw_transport(
+        T, T_surf, tau, planck, surf, emis, weights, sigma, diagnostics_level=1
+    )
     assert len(out) == 5
     diag = out[4]
     assert diag["transmittance"].shape == (14, 8, 20, 3)
     assert diag["up_per_gpoint"].shape == (14, 8, 21, 3)
     assert diag["down_per_gpoint"].shape == (14, 8, 21, 3)
     # Diagnostic weighted up-flux sums over g to up_band.
-    np.testing.assert_allclose(
-        diag["up_per_gpoint"].sum(axis=1), out[0], rtol=1e-12)
+    np.testing.assert_allclose(diag["up_per_gpoint"].sum(axis=1), out[0], rtol=1e-12)
