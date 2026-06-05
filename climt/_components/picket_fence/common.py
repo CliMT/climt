@@ -23,8 +23,16 @@ try:
 except ImportError:
     HAS_NUMBA = False
 
-    def njit(x, **kwargs):
-        return x
+    def njit(*args, **kwargs):
+        # No-numba fallback. Support both bare ``@njit`` and parametrized
+        # ``@njit(parallel=True, ...)`` usage so the pure-Python path imports.
+        if len(args) == 1 and callable(args[0]) and not kwargs:
+            return args[0]
+
+        def _decorator(func):
+            return func
+
+        return _decorator
 
 
 @njit
