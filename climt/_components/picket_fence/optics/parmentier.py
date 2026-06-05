@@ -4,8 +4,6 @@ import os
 import importlib_resources
 import numpy as np
 
-from ..common import njit
-
 
 def compute_thermal_opacities(kappa_R, gamma_P, beta, R):
     """Compute the two thermal band opacities from Parmentier parameters.
@@ -145,9 +143,6 @@ def lookup_ratio_coefficients(coeffs, T_eff):
         R = max(R, 1.0)
 
     return gamma_v1, gamma_v2, gamma_v3, beta_val, gamma_P, R
-
-
-
 
 
 def bond_albedo_from_fluxes(up_toa, down_toa):

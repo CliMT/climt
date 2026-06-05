@@ -6,8 +6,6 @@ from ..common import (
     MOLAR_MASS_DRY_AIR,
     compute_column_amount,
     compute_heating_rate,
-    njit,
-    prange,
 )
 from ..optics.parmentier import (
     compute_rosseland_mean_opacity,
@@ -436,7 +434,6 @@ class PicketFenceLongwave(TendencyComponent):
 
         planck_frac = self._table["planck_fraction"]  # (nband_orig, ngpt_orig, nT)
         T_grid = self._table["temperature_grid"]
-        nT = len(T_grid)
         nband_orig = planck_frac.shape[0]
         ngpt_orig = planck_frac.shape[1]
 
@@ -458,4 +455,3 @@ class PicketFenceLongwave(TendencyComponent):
         )
 
         return tau_raw, planck_src, surf_src, weights
-

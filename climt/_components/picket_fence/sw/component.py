@@ -7,8 +7,6 @@ from ..common import (
     MOLAR_MASS_DRY_AIR,
     compute_column_amount,
     compute_heating_rate,
-    njit,
-    prange,
 )
 from ..optics.parmentier import (
     compute_rosseland_mean_opacity,

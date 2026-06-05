@@ -394,5 +394,3 @@ def sw_two_stream(tau, ssa, asymmetry, zenith, albedo, solar_flux, weights,
         diag["g_delta"] = diag_g_d
 
     return up_band, down_band, up_broad, down_broad, diag
-
-

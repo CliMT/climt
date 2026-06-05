@@ -10,7 +10,7 @@ from sympl import (
 
 from ..._core import ensure_contiguous_state
 from ..._core.backend import jit_compile, prange
-from ..._core.condensibles import CondensibleParams, get_condensible_params, _lcl_pressure, _sat_vap_pressure, compute_qs
+from ..._core.condensibles import get_condensible_params, _lcl_pressure, _sat_vap_pressure, compute_qs
 
 try:
     from numba import njit
