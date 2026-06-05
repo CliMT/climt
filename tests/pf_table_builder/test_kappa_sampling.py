@@ -7,6 +7,10 @@ import pytest
 
 linepyline = pytest.importorskip("linepyline")
 
+# Line-by-line kappa sampling is table-building tooling (needs the linepyline +
+# numba_stats stack); run on demand with `pytest -m slow`, not in routine CI.
+pytestmark = pytest.mark.slow
+
 
 def test_sample_kappa_grid_shapes(monkeypatch):
     """sample_kappa_grid returns (nT, nP, nNu) for a single absorber."""
