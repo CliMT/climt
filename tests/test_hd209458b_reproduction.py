@@ -42,8 +42,13 @@ EQUIL_PATH = os.path.join(_FIGS, "hd209458b_model_equilibrium.csv")
 N_STEPS = 150_000  # 60s × 1M ≈ 1.9 years of simulation time
 
 
+@pytest.mark.slow
 def test_hd209458b_equilibrium_profile():
-    """HD 209458b radiative equilibrium: OLR balance, regression, and deep P&G check."""
+    """HD 209458b radiative equilibrium: OLR balance, regression, and deep P&G check.
+
+    Long RCE integration (~150k steps) — excluded from routine CI via the ``slow``
+    marker; run on demand with ``pytest -m slow``.
+    """
     from climt import (
         DryConvectiveAdjustment,
         SimplePhysics,
