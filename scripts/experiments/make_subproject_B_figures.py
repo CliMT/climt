@@ -74,9 +74,12 @@ def fig_rce(out, before_npz, after_npz):
             tp = find_tropopause(s["T"], s["p_hpa"])
             ax.plot(np.interp(tp["p_curvature"], s["p_hpa"][::-1], s["T"][::-1]),
                     tp["p_curvature"], "*", ms=16, mec="k")
-        ax.set_yscale("log"); ax.invert_yaxis(); ax.grid(alpha=0.3)
+        ax.set_yscale("log"); ax.grid(alpha=0.3)
         ax.set_title(title); ax.set_xlabel("Temperature (K)")
         ax.legend(fontsize=8)
+    # Invert ONCE: the axes share y (sharey=True), so a single invert flips both.
+    # Inverting per-axis in the loop would double-invert back to upright.
+    axes[0].invert_yaxis()
     axes[0].set_ylabel("Pressure (hPa)")
     fig.suptitle("Moist RCE: PF vs RRTMG (★ = θ-curvature tropopause)")
     fig.tight_layout(rect=[0, 0, 1, 0.94])

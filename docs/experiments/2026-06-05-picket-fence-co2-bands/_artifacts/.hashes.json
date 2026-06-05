@@ -1,9 +1,9 @@
 {
-  "_artifacts/kg_window_band.png": "c7c06c5d3d46f636505cd535fafd0c8d8245aafcb40108098e4a4f59d3f10c6d",
-  "_artifacts/lbl_overlay.png": "ccfbfe1678e927c24317f408ca07c367cea322be0dfe798edaf4868776d8ea06",
-  "_artifacts/rce_before_after.png": "acc16d4d79e5720db40fc661e5f36b2e42ee7c363e2c4bdf1e688f72cf56ef14",
+  "_artifacts/kg_window_band.png": "287fc3448c00f275751cd32a3801ce9fbcec1e9d64374637227211a206837fb5",
+  "_artifacts/lbl_overlay.png": "b86764e63163cbe7894f685b60fce3f5283af6a9dbed2a1d9b6f1477b50a6ad1",
+  "_artifacts/rce_before_after.png": "9426c3ebe49d5f752dd0c87105070566822c6a2f3eaad36992c83d9de5fb6f10",
   "_artifacts/rce_moist_after.npz": "03a1f2bf375135090e07ae4e83f13b2ddd3a6dca930deac8f49fb3a9f6d81e93",
   "_artifacts/rce_moist_before.npz": "38c2f8616af47a5d7d5bfb3d209a9beb9a3a617686a45929f3653e67d71b8a21",
   "_artifacts/throughput.npz": "e85dd3037aaf80889ab0ca24d2546a3a15459973e80af8a227afba00b2be33bd",
-  "_artifacts/throughput.png": "cd293d622676cc0f1ecfa942e0d3af839f7680ef66af5052d77114a53a050c4a"
+  "_artifacts/throughput.png": "30ca43aad49aadd86d6b0fa09cbce6b5b08a4278c48dabacf7cf2b15e8908d94"
 }
