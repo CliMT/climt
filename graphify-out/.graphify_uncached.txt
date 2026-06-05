@@ -1,0 +1,2 @@
+/Users/joymonteiro/github/climt/docs/PLUG_AND_PLAY_ARCHITECTURE.md
+/Users/joymonteiro/github/climt/graphify-out/memory/query_20260517_102630_how_do_i_build_a_model_with_specific_components_an.md

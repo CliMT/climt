@@ -1,0 +1,16 @@
+# TRAPPIST-1e estimated atmosphere (Earth-like reference composition)
+
+[planetary]
+gravitational_acceleration = { value = 9.12, units = "m/s^2" }
+planetary_radius            = { value = 5804000.0, units = "m" }
+planetary_rotation_rate     = { value = 1.19e-05, units = "s^-1" }  # tidally locked
+
+[bulk_atmosphere]
+molar_mass_of_dry_air                          = { value = 28.970, units = "g/mol" }
+gas_constant_of_dry_air                        = { value = 287.0,  units = "J/kg/K" }
+heat_capacity_of_dry_air_at_constant_pressure  = { value = 1004.64, units = "J/kg/K" }
+
+[gas_species]
+molar_mass_of_water_vapor     = { value = 18.015, units = "g/mol" }
+molar_mass_of_carbon_dioxide  = { value = 44.010, units = "g/mol" }
+molar_mass_of_nitrous_oxide   = { value = 44.013, units = "g/mol" }
