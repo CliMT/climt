@@ -1,0 +1,17 @@
+=== LW benchmark: NCOL=100, NZ=30, NUMBA_NUM_THREADS=(default = all cores) ===
+
+RRTMG-LW          :    6.53 ±  0.17 ms/call  (min   6.30)  ->   65.3 µs/col
+PF-LW (14b x 8g)  :    5.66 ±  0.20 ms/call  (min   5.27)  ->   56.6 µs/col
+
+PF / RRTMG ratio  :  0.87x
+saved throughput -> docs/experiments/2026-06-05-picket-fence-co2-bands/_artifacts/throughput.npz
+
+--- PF call profile (cumulative top functions) ---
+         10719 function calls (10583 primitive calls) in 0.007 seconds
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001    0.005    0.005 /Users/joymonteiro/github/climt/climt/_components/picket_fence/lw/component.py:202(array_call)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/picket_fence/lw/component.py:417(_correlated_k_optics)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/picket_fence/optics/correlated_k.py:347(compute_ck_optical_depth)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/picket_fence/optics/correlated_k.py:447(_compute_ck_optical_depth_additive)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/picket_fence/optics/correlated_k.py:498(_additive_co2_fast)
+        1    0.001    0.001    0.001    0.001 /Users/joymonteiro/github/climt/climt/_components/picket_fence/optics/correlated_k.py:81(_ck_tau_additive_co2_kernel)
