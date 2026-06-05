@@ -17,6 +17,7 @@ unyt
 scipy>=0.18.1
 numpy>=1.16.0
 cython>=0.25
+numba>=0.59.0
 ipython>=5.3.0
 coveralls
 sympl>=0.5.0
