@@ -22,16 +22,18 @@ LABELS = [
     "PF 4-band GL (shipped)",
     "PF 4-band 2s g=0.97",
     "PF 6-band 2s g=0.97 (refined)",
+    "PF 6-band GL (refined)",
 ]
 TABLES = {
-    "PF 4-band GL (shipped)":      "earth_low_res_lw_8gpt",
-    "PF 4-band 2s g=0.97":         "earth_low_res_lw_8gpt_2s097",
+    "PF 4-band GL (shipped)":        "earth_low_res_lw_8gpt",
+    "PF 4-band 2s g=0.97":           "earth_low_res_lw_8gpt_2s097",
     "PF 6-band 2s g=0.97 (refined)": "earth_low_res_lw_co2refined",
+    "PF 6-band GL (refined)":        "earth_low_res_lw_co2refined_gl",
 }
 HR_KEY_RRTMG = "air_temperature_tendency_from_longwave"
-HR_KEY_PF = "longwave_heating_rate"
-COLORS = ["black", "#999999", "#ff7f0e", "#d62728"]
-STYLES = ["-", "--", "-", "-"]
+HR_KEY_PF = "air_temperature_tendency_from_longwave"
+COLORS = ["black", "#999999", "#ff7f0e", "#d62728", "#1f77b4"]
+STYLES = ["-", "--", "-", "-", "-"]
 
 grid = get_grid(nx=1, ny=1, nz=NZ)
 

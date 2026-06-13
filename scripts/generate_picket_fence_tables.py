@@ -155,7 +155,31 @@ def _rayleigh_per_band(band_edges_wn, solar_per_band, molar_mass=0.028964,
     return np.array(out)
 
 
-def _rebin_to_bands(ktable, band_edges_wn, ngpt):
+def _two_stretch_gl_nodes(ngpt, g_split):
+    """Two-stretch Gauss-Legendre nodes on [0, 1].
+
+    Places ngpt//2 GL nodes on [0, g_split] and ngpt - ngpt//2 on [g_split, 1].
+    The upper stretch densely samples the strong-line tail (g→1) that plain
+    Gauss-Legendre under-resolves for molecular bands with steep line cores.
+
+    Weights sum to 1.0 over the combined node set.
+    """
+    n_lo = ngpt // 2
+    n_hi = ngpt - n_lo
+    xi_lo, wi_lo = np.polynomial.legendre.leggauss(n_lo)
+    xi_hi, wi_hi = np.polynomial.legendre.leggauss(n_hi)
+    # Map [-1, 1] -> [0, g_split] and [g_split, 1]
+    g_lo = 0.5 * (xi_lo + 1.0) * g_split
+    g_hi = g_split + 0.5 * (xi_hi + 1.0) * (1.0 - g_split)
+    w_lo = 0.5 * wi_lo * g_split
+    w_hi = 0.5 * wi_hi * (1.0 - g_split)
+    g_nodes = np.concatenate([g_lo, g_hi])
+    weights = np.concatenate([w_lo, w_hi])
+    return g_nodes, weights
+
+
+def _rebin_to_bands(ktable, band_edges_wn, ngpt,
+                    quadrature="gauss-legendre", g_split=0.95):
     """Re-bin an Exo_k Ktable/Ktable5d to new bands with ``ngpt`` g-points per band.
 
     For a Ktable5d (Chaverot), the H2O VMR (X) axis is preserved end-to-end
@@ -180,9 +204,16 @@ def _rebin_to_bands(ktable, band_edges_wn, ngpt):
         kdata = k_binned.kdata[:, :, np.newaxis, :, :]
         x_grid = np.asarray([1.0])  # dummy, not written for non-H2O tables
 
-    xi, wi = np.polynomial.legendre.leggauss(ngpt)
-    xi = 0.5 * (xi + 1.0)
-    wi = 0.5 * wi
+    if quadrature == "gauss-legendre":
+        xi, wi = np.polynomial.legendre.leggauss(ngpt)
+        xi = 0.5 * (xi + 1.0)
+        wi = 0.5 * wi
+    elif quadrature == "two-stretch":
+        if ngpt < 2:
+            raise ValueError("two-stretch quadrature requires ngpt >= 2")
+        xi, wi = _two_stretch_gl_nodes(ngpt, g_split)
+    else:
+        raise ValueError(f"unknown quadrature: {quadrature!r}")
 
     # Output layout: (nband, ngpt, T, P, X). Transposed from Chaverot's
     # (P, T, X, …) layout to match climt's column-oriented k-lookup.
@@ -300,6 +331,15 @@ def main():
     ap.add_argument("--bands", required=True,
                     help="comma-separated band edges in wavenumber (cm^-1)")
     ap.add_argument("--ngpt", type=int, default=2)
+    ap.add_argument("--quadrature", default="gauss-legendre",
+                    choices=("gauss-legendre", "two-stretch"),
+                    help="g-node placement. 'gauss-legendre' (default) is the "
+                         "shipped behavior. 'two-stretch' splits [0,1] at "
+                         "--g-split and applies GL to each subinterval, "
+                         "densely sampling the strong-line tail g->1.")
+    ap.add_argument("--g-split", type=float, default=0.95,
+                    help="Split point for two-stretch quadrature (default 0.95). "
+                         "Ignored for gauss-legendre.")
     ap.add_argument("--mixture-molar-mass", type=float, default=0.028964,
                     help="Molar mass of the gas mixture in kg/mol (used to "
                          "convert Chaverot k from m^2/molecule to m^2/kg). "
@@ -312,7 +352,8 @@ def main():
     except ValueError:
         ktable = exo_k.Ktable5d(filename=args.input)
 
-    rebinned = _rebin_to_bands(ktable, edges, args.ngpt)
+    rebinned = _rebin_to_bands(ktable, edges, args.ngpt,
+                               quadrature=args.quadrature, g_split=args.g_split)
 
     # Convert k from m^2/molecule to m^2/kg-of-mixture using Avogadro / molar mass.
     conversion = _N_AVOGADRO / args.mixture_molar_mass

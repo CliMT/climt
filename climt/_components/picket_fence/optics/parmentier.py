@@ -48,7 +48,8 @@ def load_freedman2014_coefficients():
         "climt._data.picket_fence.parmentier"
     ).joinpath("freedman2014.npz")
     with importlib_resources.as_file(data_path) as f:
-        return np.load(f)
+        with np.load(f) as npz:
+            return {k: npz[k] for k in npz.files}
 
 
 def compute_rosseland_mean_opacity(T, p, coeffs):
@@ -81,13 +82,15 @@ def load_parmentier_coefficients(name_or_path):
         dict-like npz object with coefficient arrays
     """
     if os.path.isfile(name_or_path):
-        return np.load(name_or_path)
+        with np.load(name_or_path) as npz:
+            return {k: npz[k] for k in npz.files}
 
     data_path = importlib_resources.files(
         "climt._data.picket_fence.parmentier"
     ).joinpath(f"{name_or_path}.npz")
     with importlib_resources.as_file(data_path) as f:
-        return np.load(f)
+        with np.load(f) as npz:
+            return {k: npz[k] for k in npz.files}
 
 
 def lookup_ratio_coefficients(coeffs, T_eff):

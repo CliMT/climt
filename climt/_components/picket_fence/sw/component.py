@@ -148,7 +148,7 @@ class PicketFenceShortwave(TendencyComponent):
         props["shortwave_optical_thickness_due_to_cloud"] = {
             "dims": ["mid_levels", "*", "num_shortwave_bands"],
             "units": "dimensionless",
-            "alias": "tau_cloud",
+            "alias": "tau_cloud_sw",
         }
         props["single_scattering_albedo_due_to_cloud"] = {
             "dims": ["mid_levels", "*", "num_shortwave_bands"],
@@ -185,7 +185,7 @@ class PicketFenceShortwave(TendencyComponent):
                 "dims": ["interface_levels", "*", "num_shortwave_bands"],
                 "units": "W m^-2",
             },
-            "shortwave_heating_rate": {
+            "air_temperature_tendency_from_shortwave": {
                 "dims": ["mid_levels", "*"],
                 "units": "degK day^-1",
             },
@@ -193,7 +193,7 @@ class PicketFenceShortwave(TendencyComponent):
                 "dims": ["mid_levels", "*", "num_shortwave_bands"],
                 "units": "dimensionless",
             },
-            "shortwave_heating_rate_per_band": {
+            "air_temperature_tendency_from_shortwave_per_band": {
                 "dims": ["mid_levels", "*", "num_shortwave_bands"],
                 "units": "degK day^-1",
             },
@@ -264,7 +264,7 @@ class PicketFenceShortwave(TendencyComponent):
             )
             weights = np.ones((nband, ngpt))
 
-            tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband)
+            tau_cloud_flat = state["tau_cloud_sw"].reshape(nlev, ncol, nband)
             ssa_cloud_flat = state["ssa_cloud"].reshape(nlev, ncol, nband)
             g_cloud_flat = state["g_cloud"].reshape(nlev, ncol, nband)
             tau_c = tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
@@ -385,7 +385,7 @@ class PicketFenceShortwave(TendencyComponent):
                         )
 
             # Combine gas and cloud optical properties
-            tau_cloud_flat = state["tau_cloud"].reshape(nlev, ncol, nband)
+            tau_cloud_flat = state["tau_cloud_sw"].reshape(nlev, ncol, nband)
             ssa_cloud_flat = state["ssa_cloud"].reshape(nlev, ncol, nband)
             g_cloud_flat = state["g_cloud"].reshape(nlev, ncol, nband)
             tau_c = tau_cloud_flat.transpose(2, 0, 1)[:, np.newaxis, :, :]
@@ -452,9 +452,9 @@ class PicketFenceShortwave(TendencyComponent):
             "downwelling_shortwave_flux_in_air": down_broad_out,
             "upwelling_shortwave_flux_in_air_per_band": up_band_out,
             "downwelling_shortwave_flux_in_air_per_band": down_band_out,
-            "shortwave_heating_rate": heating_kday,
+            "air_temperature_tendency_from_shortwave": heating_kday,
             "shortwave_optical_depth_per_band": tau_band_out,
-            "shortwave_heating_rate_per_band": hr_band_out,
+            "air_temperature_tendency_from_shortwave_per_band": hr_band_out,
         }
         if self._diagnostics_level > 0:
             # Reshape kernel diagnostics to sympl-compatible shapes.

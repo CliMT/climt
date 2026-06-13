@@ -179,7 +179,7 @@ def test_sw_per_band_optical_depth_diagnostics():
 
     tend, diag = sw(state)
     assert "shortwave_optical_depth_per_band" in diag
-    assert "shortwave_heating_rate_per_band" in diag
+    assert "air_temperature_tendency_from_shortwave_per_band" in diag
 
     tau = diag["shortwave_optical_depth_per_band"].values
     assert np.all(tau >= 0)
@@ -196,8 +196,8 @@ def test_sw_per_band_heating_rate_sums_to_broadband():
     state["zenith_angle"].values[:] = np.pi / 4
 
     tend, diag = sw(state)
-    hr_broad = diag["shortwave_heating_rate"].values
-    hr_band = diag["shortwave_heating_rate_per_band"].values
+    hr_broad = diag["air_temperature_tendency_from_shortwave"].values
+    hr_band = diag["air_temperature_tendency_from_shortwave_per_band"].values
     hr_band_sum = hr_band.sum(axis=-1)
     np.testing.assert_allclose(hr_band_sum, hr_broad, rtol=1e-10)
 
