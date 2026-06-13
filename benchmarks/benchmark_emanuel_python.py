@@ -8,7 +8,7 @@ from sympl._core.backend import DataArrayBackend
 import climt
 from climt import (
     EmanuelConvection,
-    EmanuelConvectionPythonV3,
+    EmanuelConvectionPython,
     get_default_state,
     get_grid,
 )
@@ -22,7 +22,7 @@ def run_benchmark():
 
     # Initialize components
     conv_fortran = EmanuelConvection()
-    conv_python = EmanuelConvectionPythonV3()
+    conv_python = EmanuelConvectionPython()
 
     # Initial state
     state = get_default_state([conv_fortran], grid_state=grid)
