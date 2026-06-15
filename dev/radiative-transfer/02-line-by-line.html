@@ -58,7 +58,26 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +125,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -262,8 +310,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-voigt-line-shape" id="toc-the-voigt-line-shape" class="nav-link active" data-scroll-target="#the-voigt-line-shape">The Voigt line shape</a></li>
+  <li><a href="#what-linepyline-does" id="toc-what-linepyline-does" class="nav-link" data-scroll-target="#what-linepyline-does">What <code>linepyline</code> does</a></li>
+  <li><a href="#why-not-just-ship-lbl" id="toc-why-not-just-ship-lbl" class="nav-link" data-scroll-target="#why-not-just-ship-lbl">Why not just ship LBL?</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further reading</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -287,6 +344,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Every opacity climt uses ultimately traces back to HITRAN: the atlas of spectral lines for each greenhouse gas. A line-by-line (LBL) calculation means evaluating the opacity at enough wavenumbers to resolve every individual line — tens of thousands of points per cm⁻¹, over thousands of cm⁻¹, on a T-p grid. It is expensive.</p>
+<p>But you only have to do it once. All of correlated-k is a lossy compression of an LBL calculation.</p>
+<section id="the-voigt-line-shape" class="level2">
+<h2 class="anchored" data-anchor-id="the-voigt-line-shape">The Voigt line shape</h2>
+<p>Each spectral line at rest wavenumber <span class="math inline">\(\nu_0\)</span> with intensity <span class="math inline">\(S\)</span> has a profile that is the convolution of two broadening mechanisms:</p>
+<ul>
+<li><strong>Doppler broadening</strong>: <span class="math inline">\(\Delta\nu_D \propto \sqrt{T/M}\)</span> — pure Gaussian, dominant in the upper atmosphere and for light gases.</li>
+<li><strong>Pressure broadening</strong>: <span class="math inline">\(\Delta\nu_L \propto p\)</span> — pure Lorentzian, dominant in the troposphere.</li>
+</ul>
+<p>The convolution is the <strong>Voigt profile</strong>:</p>
+<p><span class="math display">\[\phi(\nu) = \frac{y}{\pi}\int_{-\infty}^{\infty}
+             \frac{e^{-t^2}}{y^2 + (x-t)^2}\,dt,\]</span></p>
+<p>with <span class="math inline">\(x = (\nu-\nu_0)/\Delta\nu_D\)</span>, <span class="math inline">\(y = \Delta\nu_L/\Delta\nu_D\)</span>. The absorption cross-section at wavenumber <span class="math inline">\(\nu\)</span> is the sum over all lines of <span class="math inline">\(S_i\,\phi_i(\nu)\)</span>.</p>
+</section>
+<section id="what-linepyline-does" class="level2">
+<h2 class="anchored" data-anchor-id="what-linepyline-does">What <code>linepyline</code> does</h2>
+<p><code>linepyline</code> (Rodrigo Caballero, GPL-3) wraps a numpy Voigt evaluator around the HITRAN line database. Given a gas, (T, p), and a wavenumber grid, it returns the absorption cross-section in cm²/molecule:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> linepyline <span class="im">as</span> lpl</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>wn <span class="op">=</span> np.linspace(<span class="fl">1000.0</span>, <span class="fl">1200.0</span>, <span class="dv">20000</span>)          <span class="co"># cm⁻¹</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sigma <span class="op">=</span> lpl.rtm(species<span class="op">=</span><span class="st">"H2O"</span>, T<span class="op">=</span><span class="fl">296.0</span>, p<span class="op">=</span><span class="fl">1.0e5</span>, wavenumber<span class="op">=</span>wn)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                                                  <span class="co"># cm²/molecule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -297,15 +377,61 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This chapter is being written. See the <a href="../radiative-transfer/index.html">walkthrough index</a>.</p>
+<p><strong>Figure 2.1</strong> — H₂O absorption cross-section, 1000–1200 cm⁻¹, T=296 K, p=1 bar. Every spike is an individual line. The baseline between lines is not zero — there is a weak continuum and a far-wing contribution. <em>(Generated by <code>_figures.py</code> with <code>linepyline</code> installed; falls back to a pre-computed array on CI.)</em></p>
 </div>
 </div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>linepyline</code> is an optional dependency. The chapters that use it guard against its absence with a <code>try/except ImportError</code> block. If you see “linepyline not available” in notebook output, install it separately from HITRAN’s line data.</p>
+</div>
+</div>
+</section>
+<section id="why-not-just-ship-lbl" class="level2">
+<h2 class="anchored" data-anchor-id="why-not-just-ship-lbl">Why not just ship LBL?</h2>
+<p>A single LBL column from 10 to 30 000 cm⁻¹ at R = 500 000 is ≈ 10⁷ points. Multiply by a T × p grid (14 × 20) and keep one gas in double precision: 22 GB. Three gases: 66 GB. This is why we compress into k-distributions (Chapter 3).</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Try it yourself
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Run <code>examples/k_distribution_demo.ipynb</code> cell by cell. The first half uses <code>linepyline</code> to reproduce Figure 2.1, with a pre-baked fallback array when <code>linepyline</code> is absent.</p>
+</div>
+</div>
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further reading</h2>
+<ul>
+<li><span class="citation" data-cites="rothman2013"><span class="nocase">Rothman et al.</span> (<a href="#ref-rothman2013" role="doc-biblioref">2013</a>)</span> — the HITRAN 2012 spectroscopic database.</li>
+<li><span class="citation" data-cites="goody1989">Goody and Yung (<a href="#ref-goody1989" role="doc-biblioref">1989</a>)</span>, Chapter 3 — derivation of Voigt line shapes and pressure broadening.</li>
+</ul>
 
 
 <!-- -->
 
 
-</main> <!-- /main -->
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-goody1989" class="csl-entry" role="listitem">
+Goody, R. M., and Y. L. Yung. 1989. <em>Atmospheric Radiation: Theoretical Basis</em>. 2nd ed. Oxford University Press. <a href="https://global.oup.com/academic/product/atmospheric-radiation-9780195051346">https://global.oup.com/academic/product/atmospheric-radiation-9780195051346</a>.
+</div>
+<div id="ref-rothman2013" class="csl-entry" role="listitem">
+<span class="nocase">Rothman, L. S. et al.</span> 2013. <span>“The <span>HITRAN2012</span> Molecular Spectroscopic Database.”</span> <em>Journal of Quantitative Spectroscopy and Radiative Transfer</em> 130: 4–50. <a href="https://doi.org/10.1016/j.jqsrt.2013.07.002">https://doi.org/10.1016/j.jqsrt.2013.07.002</a>.
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -757,13 +883,86 @@ Note
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 2: Line-by-line physics"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>This chapter is being written. See the <span class="co">[</span><span class="ot">walkthrough index</span><span class="co">](index.qmd)</span>.</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 2: Line-by-line physics"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>Every opacity climt uses ultimately traces back to HITRAN: the atlas of</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>spectral lines for each greenhouse gas. A line-by-line (LBL) calculation</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>means evaluating the opacity at enough wavenumbers to resolve every individual</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>line — tens of thousands of points per cm⁻¹, over thousands of cm⁻¹, on a</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>T-p grid. It is expensive.</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>But you only have to do it once. All of correlated-k is a lossy compression of</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>an LBL calculation.</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Voigt line shape</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>Each spectral line at rest wavenumber $\nu_0$ with intensity $S$ has a profile</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>that is the convolution of two broadening mechanisms:</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Doppler broadening**: $\Delta\nu_D \propto \sqrt{T/M}$ — pure Gaussian,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  dominant in the upper atmosphere and for light gases.</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Pressure broadening**: $\Delta\nu_L \propto p$ — pure Lorentzian, dominant</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  in the troposphere.</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>The convolution is the **Voigt profile**:</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>$$\phi(\nu) = \frac{y}{\pi}\int_{-\infty}^{\infty}</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>             \frac{e^{-t^2}}{y^2 + (x-t)^2}\,dt,$$</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>with $x = (\nu-\nu_0)/\Delta\nu_D$, $y = \Delta\nu_L/\Delta\nu_D$. The</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>absorption cross-section at wavenumber $\nu$ is the sum over all lines of</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>$S_i\,\phi_i(\nu)$.</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="fu">## What `linepyline` does</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="in">`linepyline`</span> (Rodrigo Caballero, GPL-3) wraps a numpy Voigt evaluator around</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>the HITRAN line database. Given a gas, (T, p), and a wavenumber grid, it</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>returns the absorption cross-section in cm²/molecule:</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> linepyline <span class="im">as</span> lpl</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>wn <span class="op">=</span> np.linspace(<span class="fl">1000.0</span>, <span class="fl">1200.0</span>, <span class="dv">20000</span>)          <span class="co"># cm⁻¹</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>sigma <span class="op">=</span> lpl.rtm(species<span class="op">=</span><span class="st">"H2O"</span>, T<span class="op">=</span><span class="fl">296.0</span>, p<span class="op">=</span><span class="fl">1.0e5</span>, wavenumber<span class="op">=</span>wn)</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>                                                  <span class="co"># cm²/molecule</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>**Figure 2.1** — H₂O absorption cross-section, 1000–1200 cm⁻¹, T=296 K, p=1 bar.</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>Every spike is an individual line. The baseline between lines is not zero —</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>there is a weak continuum and a far-wing contribution. *(Generated by</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="in">`_figures.py`</span> with <span class="in">`linepyline`</span> installed; falls back to a pre-computed array</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>on CI.)*</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="in">`linepyline`</span> is an optional dependency. The chapters that use it guard against</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>its absence with a <span class="in">`try/except ImportError`</span> block. If you see "linepyline not</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>available" in notebook output, install it separately from HITRAN's line data.</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why not just ship LBL?</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>A single LBL column from 10 to 30 000 cm⁻¹ at R = 500 000 is ≈ 10⁷ points.</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>Multiply by a T × p grid (14 × 20) and keep one gas in double precision: 22 GB.</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>Three gases: 66 GB. This is why we compress into k-distributions (Chapter 3).</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>Run <span class="in">`examples/k_distribution_demo.ipynb`</span> cell by cell. The first half uses</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="in">`linepyline`</span> to reproduce Figure 2.1, with a pre-baked fallback array when</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="in">`linepyline`</span> is absent.</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further reading</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@rothman2013 — the HITRAN 2012 spectroscopic database.</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@goody1989, Chapter 3 — derivation of Voigt line shapes and pressure broadening.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

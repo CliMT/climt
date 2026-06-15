@@ -58,7 +58,26 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +125,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -262,8 +310,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-two-stream-approximation" id="toc-the-two-stream-approximation" class="nav-link active" data-scroll-target="#the-two-stream-approximation">The two-stream approximation</a></li>
+  <li><a href="#δ-eddington-scaling" id="toc-δ-eddington-scaling" class="nav-link" data-scroll-target="#δ-eddington-scaling">δ-Eddington scaling</a></li>
+  <li><a href="#the-adding-method" id="toc-the-adding-method" class="nav-link" data-scroll-target="#the-adding-method">The adding method</a></li>
+  <li><a href="#longwave-transport" id="toc-longwave-transport" class="nav-link" data-scroll-target="#longwave-transport">Longwave transport</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further reading</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -287,6 +345,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Once gas optics has produced optical depth <span class="math inline">\(\tau\)</span>, single-scattering albedo <span class="math inline">\(\omega_0\)</span>, and asymmetry parameter <span class="math inline">\(g\)</span> for every (band, g-point, layer), a radiative-transfer solver converts them to fluxes. climt uses the Meador &amp; Weaver (1980) two-stream formulation with <span class="math inline">\(\delta\)</span>-Eddington scaling — the same physics as RRTMGP <span class="citation" data-cites="pincus2019">(<a href="#ref-pincus2019" role="doc-biblioref">Pincus et al. 2019</a>)</span>.</p>
+<section id="the-two-stream-approximation" class="level2">
+<h2 class="anchored" data-anchor-id="the-two-stream-approximation">The two-stream approximation</h2>
+<p>The radiative-transfer equation in a plane-parallel layer is reduced to two angular moments: the upward hemispheric flux <span class="math inline">\(F^+\)</span> and the downward <span class="math inline">\(F^-\)</span>. For each layer this yields the <strong>diffuse reflectance</strong> <span class="math inline">\(R_\text{dif}\)</span> and <strong>transmittance</strong> <span class="math inline">\(T_\text{dif}\)</span>. climt’s per-layer SW coefficients are computed in <code>_sw_dif_and_source</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _sw_dif_and_source(tau, w0, g, mu0):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute per-layer diffuse R/T and direct-beam source terms.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Uses Zdunkowski PIFM gamma coefficients.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">        tau: layer optical depth (delta-scaled)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">        w0:  single scattering albedo (delta-scaled)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">        g:   asymmetry parameter (delta-scaled)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">        mu0: cosine of solar zenith angle</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">        Rdif, Tdif, Rdir, Tdir, Tnoscat</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    gamma1 <span class="op">=</span> (<span class="fl">8.0</span> <span class="op">-</span> w0 <span class="op">*</span> (<span class="fl">5.0</span> <span class="op">+</span> <span class="fl">3.0</span> <span class="op">*</span> g)) <span class="op">*</span> <span class="fl">0.25</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    gamma2 <span class="op">=</span> <span class="fl">3.0</span> <span class="op">*</span> (w0 <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> g)) <span class="op">*</span> <span class="fl">0.25</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> np.sqrt(<span class="bu">max</span>((gamma1 <span class="op">-</span> gamma2) <span class="op">*</span> (gamma1 <span class="op">+</span> gamma2), _MIN_K))</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    exp_minusktau  <span class="op">=</span> np.exp(<span class="op">-</span>tau <span class="op">*</span> k)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    exp_minus2ktau <span class="op">=</span> exp_minusktau <span class="op">*</span> exp_minusktau</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    RT_term <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> (k <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">+</span> exp_minus2ktau)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                     <span class="op">+</span> gamma1 <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> exp_minus2ktau))</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    Rdif <span class="op">=</span> RT_term <span class="op">*</span> gamma2 <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> exp_minus2ktau)   <span class="co"># M&amp;W Eq. 25</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    Tdif <span class="op">=</span> RT_term <span class="op">*</span> <span class="fl">2.0</span> <span class="op">*</span> k <span class="op">*</span> exp_minusktau            <span class="co"># M&amp;W Eq. 26</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>(Source: <code>climt/_components/picket_fence/sw/kernels.py</code>)</em></p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -297,15 +387,78 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This chapter is being written. See the <a href="../radiative-transfer/index.html">walkthrough index</a>.</p>
+<p><strong>Figure 7.1</strong> — Diffuse <span class="math inline">\(R\)</span> and <span class="math inline">\(T\)</span> vs.&nbsp;layer optical depth for conservative scattering (<span class="math inline">\(\omega_0 = 1\)</span>, <span class="math inline">\(g = 0.5\)</span>). A thin layer mostly transmits; a thick layer mostly reflects. <em>(Generated by <code>_figures.py</code> — Task 7.)</em></p>
 </div>
 </div>
+</section>
+<section id="δ-eddington-scaling" class="level2">
+<h2 class="anchored" data-anchor-id="δ-eddington-scaling">δ-Eddington scaling</h2>
+<p>Real cloud and aerosol phase functions have a strong forward peak that the two-stream cannot resolve. The <span class="math inline">\(\delta\)</span>-Eddington transformation absorbs the forward peak into an effective reduction of optical depth:</p>
+<p><span class="math display">\[\tau' = \tau(1 - \omega_0 g^2), \quad
+  \omega'_0 = \frac{\omega_0(1-g^2)}{1-\omega_0 g^2}, \quad
+  g' = \frac{g}{1+g}.\]</span></p>
+<p>climt applies this inside <code>_delta_scale</code> before every two-stream solve.</p>
+</section>
+<section id="the-adding-method" class="level2">
+<h2 class="anchored" data-anchor-id="the-adding-method">The adding method</h2>
+<p>With per-layer <span class="math inline">\((R, T)\)</span> known, the <strong>adding method</strong> combines layers bottom-up into a column albedo and flux profile. The <code>_adding</code> function in <code>climt/_components/picket_fence/sw/kernels.py</code> propagates both diffuse and direct-beam components in one downward-then-upward sweep.</p>
+</section>
+<section id="longwave-transport" class="level2">
+<h2 class="anchored" data-anchor-id="longwave-transport">Longwave transport</h2>
+<p>The LW solver is simpler — no scattering, just absorption and emission. A diffusivity factor <span class="math inline">\(D = 1.66\)</span> converts vertical <span class="math inline">\(\tau\)</span> to effective-diffuse <span class="math inline">\(\tau\)</span>. The compiled kernel loops over all (band, g-point, column) triples:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _lw_transport_kernel(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    tau, planck_source, surface_source, emissivity, weights,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    up_band, down_band, up_broad, down_broad, ...</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Multi-band, multi-g-point LW transport (numba prange over columns).</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">    For each (band, g-point): upward sweep from surface to TOA, then</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    downward sweep from TOA to surface. Weighted fluxes are accumulated</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    into up_band/down_band; broadband totals go into up_broad/down_broad.</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    nband, ngpt, nlev, ncol <span class="op">=</span> tau.shape</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> prange(ncol):</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(nband):</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> g <span class="kw">in</span> <span class="bu">range</span>(ngpt):</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>                w <span class="op">=</span> weights[b, g]</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Upward: surface emission → TOA</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>                up_prev <span class="op">=</span> emissivity[b, i] <span class="op">*</span> surface_source[b, g, i]</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(nlev):</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                    trans  <span class="op">=</span> np.exp(<span class="op">-</span>DIFFUSIVITY_FACTOR <span class="op">*</span> tau[b, g, k, i])</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>                    up_cur <span class="op">=</span> up_prev <span class="op">*</span> trans <span class="op">+</span> planck_source[b, g, k, i] <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> trans)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>                    up_band[b, k <span class="op">+</span> <span class="dv">1</span>, i] <span class="op">+=</span> w <span class="op">*</span> up_cur</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>                    up_prev <span class="op">=</span> up_cur</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Downward: TOA BC = 0</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                dn_prev <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(nlev <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>                    trans  <span class="op">=</span> np.exp(<span class="op">-</span>DIFFUSIVITY_FACTOR <span class="op">*</span> tau[b, g, k, i])</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>                    dn_cur <span class="op">=</span> dn_prev <span class="op">*</span> trans <span class="op">+</span> planck_source[b, g, k, i] <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> trans)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>                    down_band[b, k, i] <span class="op">+=</span> w <span class="op">*</span> dn_cur</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>                    dn_prev <span class="op">=</span> dn_cur</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>(Source: <code>climt/_components/picket_fence/lw/kernels.py</code>, simplified)</em></p>
+<p>The diffusivity factor <span class="math inline">\(D = 1.66\)</span> is the Elsasser approximation; it converts the exact hemispheric integral <span class="math inline">\(\int_0^1 e^{-\tau/\mu}\,d\mu\)</span> to <span class="math inline">\(e^{-D\tau}\)</span>.</p>
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further reading</h2>
+<ul>
+<li><span class="citation" data-cites="meador1980">Meador and Weaver (<a href="#ref-meador1980" role="doc-biblioref">1980</a>)</span> — the two-stream coefficients and their derivation.</li>
+<li><span class="citation" data-cites="pincus2019">Pincus et al. (<a href="#ref-pincus2019" role="doc-biblioref">2019</a>)</span> — RRTMGP, the modern successor; discusses the adding method and <span class="math inline">\(\delta\)</span>-Eddington in production use.</li>
+</ul>
 
 
 <!-- -->
 
 
-</main> <!-- /main -->
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-meador1980" class="csl-entry" role="listitem">
+Meador, W. E., and W. R. Weaver. 1980. <span>“Two-Stream Approximations to Radiative Transfer in Planetary Atmospheres: A Unified Description and Results.”</span> <em>Journal of the Atmospheric Sciences</em> 37 (3): 630–43. <a href="https://doi.org/10.1175/1520-0469(1980)037<0630:TSATRT>2.0.CO;2">https://doi.org/10.1175/1520-0469(1980)037&lt;0630:TSATRT&gt;2.0.CO;2</a>.
+</div>
+<div id="ref-pincus2019" class="csl-entry" role="listitem">
+Pincus, R., E. J. Mlawer, and J. S. Delamere. 2019. <span>“Balancing Accuracy, Efficiency, and Flexibility in Radiation Calculations for Dynamical Models.”</span> <em>Journal of Advances in Modeling Earth Systems</em> 11: 3074–89. <a href="https://doi.org/10.1029/2019MS001621">https://doi.org/10.1029/2019MS001621</a>.
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -757,13 +910,131 @@ Note
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 7: The two-stream solver"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>This chapter is being written. See the <span class="co">[</span><span class="ot">walkthrough index</span><span class="co">](index.qmd)</span>.</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 7: The two-stream solver"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>Once gas optics has produced optical depth $\tau$, single-scattering albedo</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>$\omega_0$, and asymmetry parameter $g$ for every (band, g-point, layer), a</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>radiative-transfer solver converts them to fluxes. climt uses the Meador &amp;</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>Weaver (1980) two-stream formulation with $\delta$-Eddington scaling — the same</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>physics as RRTMGP <span class="co">[</span><span class="ot">@pincus2019</span><span class="co">]</span>.</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## The two-stream approximation</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>The radiative-transfer equation in a plane-parallel layer is reduced to two</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>angular moments: the upward hemispheric flux $F^+$ and the downward $F^-$. For</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>each layer this yields the **diffuse reflectance** $R_\text{dif}$ and</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>**transmittance** $T_\text{dif}$. climt's per-layer SW coefficients are</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>computed in <span class="in">`_sw_dif_and_source`</span>:</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _sw_dif_and_source(tau, w0, g, mu0):</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute per-layer diffuse R/T and direct-beam source terms.</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co">    Uses Zdunkowski PIFM gamma coefficients.</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co">        tau: layer optical depth (delta-scaled)</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co">        w0:  single scattering albedo (delta-scaled)</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co">        g:   asymmetry parameter (delta-scaled)</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co">        mu0: cosine of solar zenith angle</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="co">        Rdif, Tdif, Rdir, Tdir, Tnoscat</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    gamma1 <span class="op">=</span> (<span class="fl">8.0</span> <span class="op">-</span> w0 <span class="op">*</span> (<span class="fl">5.0</span> <span class="op">+</span> <span class="fl">3.0</span> <span class="op">*</span> g)) <span class="op">*</span> <span class="fl">0.25</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    gamma2 <span class="op">=</span> <span class="fl">3.0</span> <span class="op">*</span> (w0 <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> g)) <span class="op">*</span> <span class="fl">0.25</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> np.sqrt(<span class="bu">max</span>((gamma1 <span class="op">-</span> gamma2) <span class="op">*</span> (gamma1 <span class="op">+</span> gamma2), _MIN_K))</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    exp_minusktau  <span class="op">=</span> np.exp(<span class="op">-</span>tau <span class="op">*</span> k)</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    exp_minus2ktau <span class="op">=</span> exp_minusktau <span class="op">*</span> exp_minusktau</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    RT_term <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> (k <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">+</span> exp_minus2ktau)</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>                     <span class="op">+</span> gamma1 <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> exp_minus2ktau))</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>    Rdif <span class="op">=</span> RT_term <span class="op">*</span> gamma2 <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> exp_minus2ktau)   <span class="co"># M&amp;W Eq. 25</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    Tdif <span class="op">=</span> RT_term <span class="op">*</span> <span class="fl">2.0</span> <span class="op">*</span> k <span class="op">*</span> exp_minusktau            <span class="co"># M&amp;W Eq. 26</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>*(Source: `climt/_components/picket_fence/sw/kernels.py`)*</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>**Figure 7.1** — Diffuse $R$ and $T$ vs. layer optical depth for conservative</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>scattering ($\omega_0 = 1$, $g = 0.5$). A thin layer mostly transmits; a</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>thick layer mostly reflects. *(Generated by `_figures.py` — Task 7.)*</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="fu">## δ-Eddington scaling</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>Real cloud and aerosol phase functions have a strong forward peak that the</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>two-stream cannot resolve. The $\delta$-Eddington transformation absorbs the</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>forward peak into an effective reduction of optical depth:</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>$$\tau' = \tau(1 - \omega_0 g^2), \quad</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>  \omega'_0 = \frac{\omega_0(1-g^2)}{1-\omega_0 g^2}, \quad</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>  g' = \frac{g}{1+g}.$$</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>climt applies this inside <span class="in">`_delta_scale`</span> before every two-stream solve.</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## The adding method</span></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>With per-layer $(R, T)$ known, the **adding method** combines layers bottom-up</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>into a column albedo and flux profile. The <span class="in">`_adding`</span> function in</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="in">`climt/_components/picket_fence/sw/kernels.py`</span> propagates both diffuse and</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>direct-beam components in one downward-then-upward sweep.</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a><span class="fu">## Longwave transport</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>The LW solver is simpler — no scattering, just absorption and emission. A</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>diffusivity factor $D = 1.66$ converts vertical $\tau$ to effective-diffuse</span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>$\tau$. The compiled kernel loops over all (band, g-point, column) triples:</span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _lw_transport_kernel(</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>    tau, planck_source, surface_source, emissivity, weights,</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    up_band, down_band, up_broad, down_broad, ...</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Multi-band, multi-g-point LW transport (numba prange over columns).</span></span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a><span class="co">    For each (band, g-point): upward sweep from surface to TOA, then</span></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a><span class="co">    downward sweep from TOA to surface. Weighted fluxes are accumulated</span></span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a><span class="co">    into up_band/down_band; broadband totals go into up_broad/down_broad.</span></span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>    nband, ngpt, nlev, ncol <span class="op">=</span> tau.shape</span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> prange(ncol):</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(nband):</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> g <span class="kw">in</span> <span class="bu">range</span>(ngpt):</span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>                w <span class="op">=</span> weights[b, g]</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Upward: surface emission → TOA</span></span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>                up_prev <span class="op">=</span> emissivity[b, i] <span class="op">*</span> surface_source[b, g, i]</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(nlev):</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>                    trans  <span class="op">=</span> np.exp(<span class="op">-</span>DIFFUSIVITY_FACTOR <span class="op">*</span> tau[b, g, k, i])</span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>                    up_cur <span class="op">=</span> up_prev <span class="op">*</span> trans <span class="op">+</span> planck_source[b, g, k, i] <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> trans)</span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>                    up_band[b, k <span class="op">+</span> <span class="dv">1</span>, i] <span class="op">+=</span> w <span class="op">*</span> up_cur</span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>                    up_prev <span class="op">=</span> up_cur</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Downward: TOA BC = 0</span></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>                dn_prev <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(nlev <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>                    trans  <span class="op">=</span> np.exp(<span class="op">-</span>DIFFUSIVITY_FACTOR <span class="op">*</span> tau[b, g, k, i])</span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>                    dn_cur <span class="op">=</span> dn_prev <span class="op">*</span> trans <span class="op">+</span> planck_source[b, g, k, i] <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> trans)</span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>                    down_band[b, k, i] <span class="op">+=</span> w <span class="op">*</span> dn_cur</span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>                    dn_prev <span class="op">=</span> dn_cur</span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>*(Source: `climt/_components/picket_fence/lw/kernels.py`, simplified)*</span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>The diffusivity factor $D = 1.66$ is the Elsasser approximation; it converts</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>the exact hemispheric integral $\int_0^1 e^{-\tau/\mu}\,d\mu$ to</span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>$e^{-D\tau}$.</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further reading</span></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@meador1980 — the two-stream coefficients and their derivation.</span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@pincus2019 — RRTMGP, the modern successor; discusses the adding method and</span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>  $\delta$-Eddington in production use.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

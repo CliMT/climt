@@ -58,7 +58,26 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +125,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -262,8 +310,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-parmentier-guillot-2014-formulation" id="toc-the-parmentier-guillot-2014-formulation" class="nav-link active" data-scroll-target="#the-parmentier-guillot-2014-formulation">The Parmentier &amp; Guillot (2014) formulation</a></li>
+  <li><a href="#the-rosseland-mean-opacity" id="toc-the-rosseland-mean-opacity" class="nav-link" data-scroll-target="#the-rosseland-mean-opacity">The Rosseland mean opacity</a></li>
+  <li><a href="#the-ratio-coefficients-gamma_i-and-beta" id="toc-the-ratio-coefficients-gamma_i-and-beta" class="nav-link" data-scroll-target="#the-ratio-coefficients-gamma_i-and-beta">The ratio coefficients <span class="math inline">\(\gamma_i\)</span> and <span class="math inline">\(\beta\)</span></a></li>
+  <li><a href="#what-the-picket-fence-gets-right" id="toc-what-the-picket-fence-gets-right" class="nav-link" data-scroll-target="#what-the-picket-fence-gets-right">What the picket-fence gets right</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further reading</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -287,6 +345,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Everything so far has been a generic correlated-k story. The picket-fence model is the simplest possible parameterisation of that story that still captures non-grey physics. It fits in half a page of algebra and runs at &gt; 1 000 iter/s in pure Python.</p>
+<section id="the-parmentier-guillot-2014-formulation" class="level2">
+<h2 class="anchored" data-anchor-id="the-parmentier-guillot-2014-formulation">The Parmentier &amp; Guillot (2014) formulation</h2>
+<p>The atmosphere has two opacities in the thermal (LW) and three in the visible (SW), all expressed as ratios of the Rosseland mean opacity <span class="math inline">\(\kappa_R\)</span>:</p>
+<p><span class="math display">\[\gamma_1 = \kappa_1 / \kappa_R, \quad
+  \gamma_2 = \kappa_2 / \kappa_R, \quad
+  \gamma_{v_i} = \kappa_{v_i} / \kappa_R \quad (i=1,2,3).\]</span></p>
+<p>The Planck function in the LW is split: fraction <span class="math inline">\(\beta\)</span> goes to the opaque band 1, <span class="math inline">\((1-\beta)\)</span> to the transparent band 2. In the window (<span class="math inline">\(\gamma_2 \ll
+1\)</span>) most of the cooling-to-space happens; in the absorption band (<span class="math inline">\(\gamma_1
+\sim 1\)</span>) the thermal blanketing is concentrated.</p>
+<p>This two-opacity caricature is the “picket fence”: a spectrum that alternates tall opaque slats (CO₂/H₂O line clusters) and short transparent slats (the atmospheric window).</p>
+</section>
+<section id="the-rosseland-mean-opacity" class="level2">
+<h2 class="anchored" data-anchor-id="the-rosseland-mean-opacity">The Rosseland mean opacity</h2>
+<p><span class="math inline">\(\kappa_R\)</span> is the reciprocal of a Planck-weighted harmonic mean of <span class="math inline">\(\sigma(\nu)\)</span>. climt uses the Freedman et al.&nbsp;(2014) polynomial fit for solar-composition gas-giant atmospheres:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_rosseland_mean_opacity(T, p, coeffs):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute the Freedman et al. (2014) Rosseland mean opacity.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">        T: temperature, K (scalar)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">        p: pressure, Pa (scalar)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: coefficient dict from load_freedman2014_coefficients()</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">        kappa_R: Rosseland mean opacity, m²/kg (scalar)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    log_T <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(T), <span class="fl">10.0</span>))</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    log_P <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(p) <span class="op">*</span> <span class="fl">10.0</span>, <span class="fl">1.0</span>))  <span class="co"># Pa → dyne/cm²</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> T <span class="op">&lt;</span> <span class="bu">float</span>(coeffs[<span class="st">"T_boundary"</span>]):</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_lo"</span>]) <span class="op">*</span> log_T</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_lo"</span>]) <span class="op">*</span> log_P</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_lo"</span>]))</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_hi"</span>]) <span class="op">*</span> log_T</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_hi"</span>]) <span class="op">*</span> log_P</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_hi"</span>]))</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">10.0</span><span class="op">**</span>log_k <span class="op">*</span> <span class="fl">0.1</span>   <span class="co"># cm²/g → m²/kg</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>(Source: <code>climt/_components/picket_fence/optics/parmentier.py</code>)</em></p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -297,15 +393,98 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This chapter is being written. See the <a href="../radiative-transfer/index.html">walkthrough index</a>.</p>
+<p><strong>Figure 6.1</strong> — Rosseland mean opacity as a function of pressure for a hot-Jupiter column at <span class="math inline">\(T_\text{eff}\)</span> = 1 000 K. The shape drives the T-p profile. <em>(Generated by <code>_figures.py</code> — Task 7.)</em></p>
 </div>
 </div>
+</section>
+<section id="the-ratio-coefficients-gamma_i-and-beta" class="level2">
+<h2 class="anchored" data-anchor-id="the-ratio-coefficients-gamma_i-and-beta">The ratio coefficients <span class="math inline">\(\gamma_i\)</span> and <span class="math inline">\(\beta\)</span></h2>
+<p>The ratios <span class="math inline">\(\gamma_{v1}, \gamma_{v2}, \gamma_{v3}, \beta\)</span> and <span class="math inline">\(\gamma_P\)</span> are piecewise-linear functions of effective temperature <span class="math inline">\(T_\text{eff}\)</span>, fitted in <span class="citation" data-cites="parmentier2015">Parmentier et al. (<a href="#ref-parmentier2015" role="doc-biblioref">2016</a>)</span> Table 1. climt ships those coefficients and interpolates them at runtime:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lookup_ratio_coefficients(coeffs, T_eff):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Look up Parmentier ratio coefficients for a given T_eff.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: loaded coefficient data (from load_parmentier_coefficients)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">        T_eff: effective temperature, K (scalar)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">        gamma_v1, gamma_v2, gamma_v3, beta, gamma_P, R</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.log10(<span class="bu">max</span>(T_eff, <span class="fl">10.0</span>))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    boundaries <span class="op">=</span> coeffs[<span class="st">"T_eff_boundaries"</span>]</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    region <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(boundaries) <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> T_eff <span class="op">&gt;=</span> boundaries[i] <span class="kw">and</span> T_eff <span class="op">&lt;</span> boundaries[i <span class="op">+</span> <span class="dv">1</span>]:</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>            region <span class="op">=</span> i</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _eval_linear(ab_array, region_idx, X_val):</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> ab_array[region_idx]</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> a <span class="op">+</span> b <span class="op">*</span> X_val</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    log10_gv3 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v3_ab"</span>], region, X)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    log10_gv2 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v2_ab"</span>], region, X)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    log10_gv1 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v1_ab"</span>], region, X)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    beta_val   <span class="op">=</span> np.clip(_eval_linear(coeffs[<span class="st">"beta_ab"</span>], region, X), <span class="fl">0.01</span>, <span class="fl">0.99</span>)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>(Source: <code>climt/_components/picket_fence/optics/parmentier.py</code>)</em></p>
+</section>
+<section id="what-the-picket-fence-gets-right" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-picket-fence-gets-right">What the picket-fence gets right</h2>
+<ul>
+<li>Radiative-equilibrium T-p profile: within 2–4 % of full LBL for solar-composition atmospheres <span class="citation" data-cites="parmentier2014">(<a href="#ref-parmentier2014" role="doc-biblioref">Parmentier and Guillot 2014</a>)</span>.</li>
+<li>Qualitative stratospheric cooling.</li>
+<li>Day-side/night-side temperature contrast on tidally-locked exoplanets.</li>
+<li>Plugging in different tables re-targets to Mars, Venus, Titan, or hot Jupiters (Chapter 8) with no code changes.</li>
+</ul>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The Parmentier optics mode (<code>optics="parmentier"</code>) lumps all opacity into <span class="math inline">\(\kappa_R\)</span> and cannot do gas-abundance forcing experiments (e.g., CO₂ doubling). For that, switch to <code>optics="correlated_k"</code> with an Earth table.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Try it yourself
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>examples/picket_fence_vs_rrtmg.ipynb</code> compares the Parmentier-mode hot-Jupiter T-p profile against a reference. <code>tests/test_hd209458b_reproduction.py</code> runs HD 209458b to radiative equilibrium.</p>
+</div>
+</div>
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further reading</h2>
+<ul>
+<li><span class="citation" data-cites="parmentier2014">Parmentier and Guillot (<a href="#ref-parmentier2014" role="doc-biblioref">2014</a>)</span> — the original picket-fence analytical model.</li>
+<li><span class="citation" data-cites="parmentier2015">Parmentier et al. (<a href="#ref-parmentier2015" role="doc-biblioref">2016</a>)</span> — the ratio-coefficient tables used by climt.</li>
+</ul>
 
 
 <!-- -->
 
 
-</main> <!-- /main -->
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-parmentier2015" class="csl-entry" role="listitem">
+Parmentier, V., J. J. Fortney, A. P. Showman, C. Morley, and M. S. Marley. 2016. <span>“Transitions in the Cloud Composition of Hot <span>Jupiters</span>.”</span> <em>The Astrophysical Journal</em> 828 (1): 22. <a href="https://doi.org/10.3847/0004-637X/828/1/22">https://doi.org/10.3847/0004-637X/828/1/22</a>.
+</div>
+<div id="ref-parmentier2014" class="csl-entry" role="listitem">
+Parmentier, V., and T. Guillot. 2014. <span>“A Non-Grey Analytical Model for Irradiated Atmospheres.”</span> <em>Astronomy &amp; Astrophysics</em> 562: A133. <a href="https://doi.org/10.1051/0004-6361/201322342">https://doi.org/10.1051/0004-6361/201322342</a>.
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -757,13 +936,139 @@ Note
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 6: The picket-fence model"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>This chapter is being written. See the <span class="co">[</span><span class="ot">walkthrough index</span><span class="co">](index.qmd)</span>.</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 6: The picket-fence model"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>Everything so far has been a generic correlated-k story. The picket-fence model</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>is the simplest possible parameterisation of that story that still captures</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>non-grey physics. It fits in half a page of algebra and runs at &gt; 1 000 iter/s</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>in pure Python.</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Parmentier &amp; Guillot (2014) formulation</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>The atmosphere has two opacities in the thermal (LW) and three in the visible</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>(SW), all expressed as ratios of the Rosseland mean opacity $\kappa_R$:</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>$$\gamma_1 = \kappa_1 / \kappa_R, \quad</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  \gamma_2 = \kappa_2 / \kappa_R, \quad</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  \gamma_{v_i} = \kappa_{v_i} / \kappa_R \quad (i=1,2,3).$$</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>The Planck function in the LW is split: fraction $\beta$ goes to the opaque</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>band 1, $(1-\beta)$ to the transparent band 2. In the window ($\gamma_2 \ll</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>1$) most of the cooling-to-space happens; in the absorption band ($\gamma_1</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>\sim 1$) the thermal blanketing is concentrated.</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>This two-opacity caricature is the "picket fence": a spectrum that alternates</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>tall opaque slats (CO₂/H₂O line clusters) and short transparent slats</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>(the atmospheric window).</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Rosseland mean opacity</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>$\kappa_R$ is the reciprocal of a Planck-weighted harmonic mean of</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>$\sigma(\nu)$. climt uses the Freedman et al. (2014) polynomial fit for</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>solar-composition gas-giant atmospheres:</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_rosseland_mean_opacity(T, p, coeffs):</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute the Freedman et al. (2014) Rosseland mean opacity.</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="co">        T: temperature, K (scalar)</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="co">        p: pressure, Pa (scalar)</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: coefficient dict from load_freedman2014_coefficients()</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="co">        kappa_R: Rosseland mean opacity, m²/kg (scalar)</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    log_T <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(T), <span class="fl">10.0</span>))</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    log_P <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(p) <span class="op">*</span> <span class="fl">10.0</span>, <span class="fl">1.0</span>))  <span class="co"># Pa → dyne/cm²</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> T <span class="op">&lt;</span> <span class="bu">float</span>(coeffs[<span class="st">"T_boundary"</span>]):</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_lo"</span>]) <span class="op">*</span> log_T</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_lo"</span>]) <span class="op">*</span> log_P</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_lo"</span>]))</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_hi"</span>]) <span class="op">*</span> log_T</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_hi"</span>]) <span class="op">*</span> log_P</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_hi"</span>]))</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">10.0</span><span class="op">**</span>log_k <span class="op">*</span> <span class="fl">0.1</span>   <span class="co"># cm²/g → m²/kg</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>*(Source: `climt/_components/picket_fence/optics/parmentier.py`)*</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>**Figure 6.1** — Rosseland mean opacity as a function of pressure for a</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>hot-Jupiter column at $T_\text{eff}$ = 1 000 K. The shape drives the T-p</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>profile. *(Generated by `_figures.py` — Task 7.)*</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## The ratio coefficients $\gamma_i$ and $\beta$</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>The ratios $\gamma_{v1}, \gamma_{v2}, \gamma_{v3}, \beta$ and $\gamma_P$ are</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>piecewise-linear functions of effective temperature $T_\text{eff}$, fitted in</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>@parmentier2015 Table 1. climt ships those coefficients and interpolates them</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>at runtime:</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lookup_ratio_coefficients(coeffs, T_eff):</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Look up Parmentier ratio coefficients for a given T_eff.</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: loaded coefficient data (from load_parmentier_coefficients)</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a><span class="co">        T_eff: effective temperature, K (scalar)</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="co">        gamma_v1, gamma_v2, gamma_v3, beta, gamma_P, R</span></span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.log10(<span class="bu">max</span>(T_eff, <span class="fl">10.0</span>))</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>    boundaries <span class="op">=</span> coeffs[<span class="st">"T_eff_boundaries"</span>]</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    region <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(boundaries) <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> T_eff <span class="op">&gt;=</span> boundaries[i] <span class="kw">and</span> T_eff <span class="op">&lt;</span> boundaries[i <span class="op">+</span> <span class="dv">1</span>]:</span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>            region <span class="op">=</span> i</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _eval_linear(ab_array, region_idx, X_val):</span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> ab_array[region_idx]</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> a <span class="op">+</span> b <span class="op">*</span> X_val</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>    log10_gv3 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v3_ab"</span>], region, X)</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>    log10_gv2 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v2_ab"</span>], region, X)</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>    log10_gv1 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v1_ab"</span>], region, X)</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>    beta_val   <span class="op">=</span> np.clip(_eval_linear(coeffs[<span class="st">"beta_ab"</span>], region, X), <span class="fl">0.01</span>, <span class="fl">0.99</span>)</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>*(Source: `climt/_components/picket_fence/optics/parmentier.py`)*</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a><span class="fu">## What the picket-fence gets right</span></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Radiative-equilibrium T-p profile: within 2–4 % of full LBL for</span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>  solar-composition atmospheres <span class="co">[</span><span class="ot">@parmentier2014</span><span class="co">]</span>.</span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Qualitative stratospheric cooling.</span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Day-side/night-side temperature contrast on tidally-locked exoplanets.</span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Plugging in different tables re-targets to Mars, Venus, Titan, or hot Jupiters</span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>  (Chapter 8) with no code changes.</span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>The Parmentier optics mode (<span class="in">`optics="parmentier"`</span>) lumps all opacity into</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>$\kappa_R$ and cannot do gas-abundance forcing experiments (e.g., CO₂</span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>doubling). For that, switch to <span class="in">`optics="correlated_k"`</span> with an Earth table.</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a><span class="in">`examples/picket_fence_vs_rrtmg.ipynb`</span> compares the Parmentier-mode hot-Jupiter</span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>T-p profile against a reference. <span class="in">`tests/test_hd209458b_reproduction.py`</span> runs</span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>HD 209458b to radiative equilibrium.</span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further reading</span></span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@parmentier2014 — the original picket-fence analytical model.</span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@parmentier2015 — the ratio-coefficient tables used by climt.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
