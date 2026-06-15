@@ -12,7 +12,7 @@ Usage
 -----
   /path/to/climt/python scripts/experiments/eval_co2_interp_accuracy.py [table_name]
 
-  table_name defaults to "earth_hifi_lw".
+  table_name defaults to "earth_low_res_lw".
 """
 import os
 import sys
@@ -31,7 +31,7 @@ sys.path.insert(0, _HERE)  # allows: from eval_band_structure import pf_olr
 # ---------------------------------------------------------------------------
 # Load table
 # ---------------------------------------------------------------------------
-table_name = sys.argv[1] if len(sys.argv) > 1 else "earth_hifi_lw"
+table_name = sys.argv[1] if len(sys.argv) > 1 else "earth_low_res_lw"
 
 from climt._components.picket_fence.optics.correlated_k import load_k_table  # noqa: E402
 
