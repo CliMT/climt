@@ -1,0 +1,23 @@
+---
+title: "climt"
+---
+
+**climt** (Climate Modelling and Diagnostics Toolkit) is an open-source Python
+framework for building and running climate models. It provides modular,
+composable components — radiation, convection, surface, dynamics — with a
+consistent interface so they can be mixed, matched, and extended.
+
+## What's here
+
+- **Experiments** — long-form research case studies: reproducible investigations
+  with full methodology, dead-ends and all.
+- **User Guide** — *(coming soon)* component reference, configuration, and
+  worked examples.
+- **Radiative Transfer Walkthrough** — *(coming soon)* a graduate-level tour of
+  non-grey radiation, correlated-k, and the picket-fence scheme.
+- **API Reference** — *(coming soon)* auto-generated from docstrings.
+
+## Quick links
+
+- [GitHub repository](https://github.com/CliMT/climt)
+- [First experiment: building a longwave scheme that rivals RRTMG](experiments/2026-06-05-picket-fence-co2-bands/index.qmd)

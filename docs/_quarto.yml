@@ -6,18 +6,28 @@
 project:
   type: website
   output-dir: _site
+  render:
+    - "index.qmd"
+    - "experiments/**/*.qmd"
 
 website:
   title: "climt"
+  repo-url: https://github.com/CliMT/climt
   navbar:
     left:
+      - text: "Home"
+        href: index.qmd
       - text: "Experiments"
         href: experiments/index.qmd
+    right:
+      - icon: github
+        href: https://github.com/CliMT/climt
 
 format:
   html:
     theme: cosmo
     toc: true
     code-fold: false
+    code-tools: true
 
-# Experiments listing is provided by docs/experiments/index.qmd (a later task).
+bibliography: ../references.bib
