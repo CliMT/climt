@@ -1,0 +1,52 @@
+---
+title: "Built-in components"
+---
+
+This page documents the different components available through climt.
+
+## Radiation
+
+::: {.autosummary toctree="generated/"}
+RRTMGLongwave RRTMGLongwave.\_\_call\_\_
+
+RRTMGShortwave RRTMGShortwave.\_\_call\_\_
+
+GrayLongwaveRadiation GrayLongwaveRadiation.\_\_call\_\_
+
+Frierson06LongwaveOpticalDepth
+Frierson06LongwaveOpticalDepth.\_\_call\_\_
+
+Instellation Instellation.\_\_call\_\_
+:::
+
+## Convection
+
+::: {.autosummary toctree="generated/"}
+EmanuelConvection EmanuelConvection.\_\_call\_\_
+
+DryConvectiveAdjustment DryConvectiveAdjustment.\_\_call\_\_
+:::
+
+## Surface Processes
+
+::: {.autosummary toctree="generated/"}
+SimplePhysics SimplePhysics.\_\_call\_\_
+
+SlabSurface SlabSurface.\_\_call\_\_
+
+BucketHydrology BucketHydrology.\_\_call\_\_
+:::
+
+## Ice and Snow
+
+::: {.autosummary toctree="generated/"}
+IceSheet IceSheet.\_\_call\_\_
+:::
+
+## Test Cases
+
+::: {.autosummary toctree="generated/"}
+HeldSuarez HeldSuarez.\_\_call\_\_
+
+DcmipInitialConditions DcmipInitialConditions.\_\_call\_\_
+:::

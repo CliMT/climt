@@ -1,0 +1,7 @@
+---
+title: "Chapter 5: Gas overlap: additive vs ESFT"
+---
+
+::: {.callout-note}
+This chapter is being written. See the [walkthrough index](index.qmd).
+:::

@@ -1,0 +1,34 @@
+---
+title: "Component types"
+---
+
+Deriving from [Sympl](http://sympl.readthedocs.io), most components in
+climt are either `TendencyComponent`{.interpreted-text role="py:class"},
+`DiagnosticComponent`{.interpreted-text role="py:class"},
+`ImplicitTendencyComponent`{.interpreted-text role="py:class"} or
+`Stepper`{.interpreted-text role="py:class"}.
+
+- `TendencyComponent`{.interpreted-text role="py:class"} takes the model
+  state as input and returns tendencies and optional diagnostics. A
+  radiation component is a good example of such components: any
+  radiation component returns the heating rate of each layer of the
+  atmosphere (in $degK/s$)
+- `DiagnosticComponent`{.interpreted-text role="py:class"} takes the
+  model state as input and returns some other diagnostic quantities. An
+  example would be a component that takes the model state and returns
+  the optical depth.
+- `Stepper`{.interpreted-text role="py:class"} takes the model state,
+  and returns new values for some some quantities in the model state. A
+  dynamical core is a good example, which returns new values of winds,
+  temperature and pressure.
+- `ImplicitTendencyComponent`{.interpreted-text role="py:class"} takes
+  the model state and outputs tendencies (like a
+  `TendencyComponent`{.interpreted-text role="py:class"}) but require
+  the model timestep (like a `Stepper`{.interpreted-text
+  role="py:class"}) for various reasons, including to ensure that a
+  vertical
+  [CFL](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition)
+  criterion is met.
+
+You can read more about this schema of model components in Sympl\'s
+[documentation](http://sympl.readthedocs.io/en/latest/computation.html).

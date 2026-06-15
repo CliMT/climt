@@ -1,0 +1,7 @@
+---
+title: "Chapter 6: The picket-fence model"
+---
+
+::: {.callout-note}
+This chapter is being written. See the [walkthrough index](index.qmd).
+:::

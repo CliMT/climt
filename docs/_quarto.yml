@@ -1,27 +1,74 @@
-# docs/_quarto.yml
-# Minimal, forward-compatible seed of the full climt-website config
-# (docs/superpowers/specs/2026-05-18-climt-website-design.md). The site
-# migration extends this with nav, theme, and quartodoc; nothing here may
-# contradict that spec.
 project:
   type: website
   output-dir: _site
   render:
     - "index.qmd"
+    - "get-started/**/*.qmd"
+    - "user-guide/**/*.qmd"
+    - "radiative-transfer/**/*.qmd"
     - "experiments/**/*.qmd"
 
 website:
   title: "climt"
+  description: "A climate modelling toolkit"
   repo-url: https://github.com/CliMT/climt
   navbar:
     left:
-      - text: "Home"
-        href: index.qmd
+      - text: "Get Started"
+        href: get-started/installation.qmd
+      - text: "User Guide"
+        href: user-guide/introduction.qmd
+      - text: "Radiative Transfer"
+        href: radiative-transfer/index.qmd
       - text: "Experiments"
         href: experiments/index.qmd
     right:
       - icon: github
         href: https://github.com/CliMT/climt
+  sidebar:
+    - title: "Get Started"
+      style: "docked"
+      contents:
+        - get-started/installation.qmd
+        - get-started/quickstart.qmd
+    - title: "User Guide"
+      style: "docked"
+      contents:
+        - user-guide/introduction.qmd
+        - user-guide/interaction.qmd
+        - user-guide/realistic.qmd
+        - user-guide/component_types.qmd
+        - user-guide/components.qmd
+        - user-guide/configuration.qmd
+        - user-guide/initialisation.qmd
+        - user-guide/utilities.qmd
+        - user-guide/naming.qmd
+        - user-guide/memory_management.qmd
+        - section: "Components"
+          contents:
+            - user-guide/emanuel_convection.qmd
+            - user-guide/rrtmg_clouds.qmd
+        - section: "Project"
+          contents:
+            - user-guide/contributing.qmd
+            - user-guide/authors.qmd
+            - user-guide/history.qmd
+    - title: "Radiative Transfer"
+      style: "docked"
+      contents:
+        - radiative-transfer/index.qmd
+        - radiative-transfer/01-why-nongrey.qmd
+        - radiative-transfer/02-line-by-line.qmd
+        - radiative-transfer/03-k-distribution.qmd
+        - radiative-transfer/04-correlated-k.qmd
+        - radiative-transfer/05-gas-overlap.qmd
+        - radiative-transfer/06-picket-fence.qmd
+        - radiative-transfer/07-two-stream.qmd
+        - radiative-transfer/08-multiplanet.qmd
+        - section: "Appendices"
+          contents:
+            - radiative-transfer/table-generation.qmd
+            - radiative-transfer/performance.qmd
 
 format:
   html:
