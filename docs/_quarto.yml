@@ -13,6 +13,8 @@ website:
   description: "A climate modelling toolkit"
   repo-url: https://github.com/CliMT/climt
   navbar:
+    logo: climt_logo.jpg
+    logo-alt: "climt logo"
     left:
       - text: "Get Started"
         href: get-started/installation.qmd
