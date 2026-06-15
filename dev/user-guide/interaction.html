@@ -363,7 +363,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="model-state">Model State</h2>
 <p>The model state is a dictionary whose keys are names of quantities and values are <a href="http://sympl.readthedocs.io">sympl</a> DataArrays. The <a href="http://sympl.readthedocs.io">sympl</a> DataArray is a thin wrapper over the <a href="http://xarray.pydata.org">xarray</a> DataArray that makes it units aware. To ensure model scripts are readable not just by specialists, names of quantities use the descriptive <a href="http://cfconventions.org/Data/cf-standard-names/41/build/cf-standard-name-table.html">CF Convention</a>. Only in the case where the CF Convention names are really unwieldy, like <code>air_temperature_at_effective_cloud_top_defined_by_infrared_radiation</code> for example, we use more convenient names.</p>
 <p>DataArrays are a more human-friendly way of handling numerical arrays. DataArrays label the dimensions of an array and provide various mathematical functions which can be directly applied to arrays. <a href="http://sympl.readthedocs.io">sympl</a> DataArrays in addition allow conversion between units, a feature required to allow interoperability between components which expect inputs in different units.</p>
-<p>Let's create a 3-d model state to see how useful DataArrays are:</p>
+<p>Let’s create a 3-d model state to see how useful DataArrays are:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -389,16 +389,36 @@ window.Quarto = {
 </ul>
 <p>It is also fairly easy to change units. The <code class="interpreted-text" role="py:func">.to_units()</code> method can be used as below to return a DataArray with the equivalent temperature in degrees Farenheit:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'air_temperature'</span>].to_units(<span class="st">'degF'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="{callout-note}">
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <p>climt always names the vertical coordinate as <code>mid_levels</code> or <code>interface_levels</code>, however, the state dictionary will contain a key corresponding to the name of the vertical coordinate specified by <code>get_grid</code>.</p>
+</div>
 </div>
 <p>As mentioned previously, DataArrays are a user-friendly way of handling numerical or numpy arrays. The numpy array underlying any DataArray is easily accessed using the <code>values</code> attribute:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">type</span>(state[<span class="st">'air_temperature'</span>].values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>and can also be modified easily:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'air_temperature'</span>].values[:] <span class="op">=</span> <span class="dv">291</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The right hand side can also be any numpy array, as long as it has the same dimensions (or can be broadcasted to the same dimensions) as the current numpy array.</p>
-<div class="{callout-note}">
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <p>It is recommended to use the syntax <code>...values[:] = ...</code> rather than <code>...values = ...</code>, as the former modifies the numpy array in-place. In either case, DataArrays check to ensure the dimensions (or shape) of the new data matches with the current dimensions.</p>
+</div>
 </div>
 <p>You can perform any of the functions <a href="http://xarray.pydata.org/en/stable/computation.html">supported</a> by xarray on the model state quantities.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'air_temperature'</span>].<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -909,7 +929,7 @@ window.Quarto = {
 <span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>conversion between units, a feature required to allow interoperability</span>
 <span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>between components which expect inputs in different units.</span>
 <span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>Let\'s create a 3-d model state to see how useful DataArrays are:</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>Let's create a 3-d model state to see how useful DataArrays are:</span>
 <span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
 <span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
@@ -963,7 +983,7 @@ window.Quarto = {
 <span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'air_temperature'</span>].to_units(<span class="st">'degF'</span>)</span>
 <span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>::: {callout-note}</span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
 <span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a>climt always names the vertical coordinate as <span class="in">`mid_levels`</span> or</span>
 <span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a><span class="in">`interface_levels`</span>, however, the state dictionary will contain a key</span>
 <span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>corresponding to the name of the vertical coordinate specified by</span>
@@ -988,7 +1008,7 @@ window.Quarto = {
 <span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a>same dimensions (or can be broadcasted to the same dimensions) as the</span>
 <span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a>current numpy array.</span>
 <span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>::: {callout-note}</span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
 <span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>It is recommended to use the syntax <span class="in">`...values[:] = ...`</span> rather than</span>
 <span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a>`...values =</span>
 <span id="cb9-111"><a href="#cb9-111" aria-hidden="true" tabindex="-1"></a>...`, as the former modifies the numpy array in-place. In either case,</span>

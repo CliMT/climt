@@ -331,7 +331,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="arrays" class="level2">
 <h2 class="anchored" data-anchor-id="arrays">Arrays</h2>
-<p>If possible, you should try to be aware of when there are two code references to the same in-memory array. This can help avoid some common bugs. Let's start with an example. Say you create a ConstantTendencyComponent object like so:</p>
+<p>If possible, you should try to be aware of when there are two code references to the same in-memory array. This can help avoid some common bugs. Let’s start with an example. Say you create a ConstantTendencyComponent object like so:</p>
 <pre><code>&gt;&gt;&gt; import numpy as np
 &gt;&gt;&gt; from climt import ConstantTendencyComponent, DataArray
 &gt;&gt;&gt; array = DataArray(
@@ -339,7 +339,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         dims=('lon', 'lat', 'lev'), attrs={'units': 'K/s'})
 &gt;&gt;&gt; tendencies = {'air_temperature': array}
 &gt;&gt;&gt; prognostic = ConstantTendencyComponent(tendencies)</code></pre>
-<p>This is all fine so far. But it's important to know that now <code>array</code> is the same array stored inside <code>prognostic</code>:</p>
+<p>This is all fine so far. But it’s important to know that now <code>array</code> is the same array stored inside <code>prognostic</code>:</p>
 <pre><code>&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})
 &gt;&gt;&gt; out_tendencies['air_temperature'] is array  # same place in memory
 True</code></pre>
@@ -351,7 +351,7 @@ True
 &gt;&gt;&gt; np.all(out_tendencies['air_temperature'].values == array.values)
 True</code></pre>
 <p>When in doubt, assume that any array you put into a component when it is initialized should not be modified any more, unless changing the values in the component is intentional. Below is some less (but potentially) useful information for those interested.</p>
-<p>If instead of modifying <code>array</code>, you make a new array for the python variable <code>array</code> to refer to, it doesn't modify the array in <code>prognostic</code>:</p>
+<p>If instead of modifying <code>array</code>, you make a new array for the python variable <code>array</code> to refer to, it doesn’t modify the array in <code>prognostic</code>:</p>
 <pre><code>&gt;&gt;&gt; array = array * 5.
 &gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})
 &gt;&gt;&gt; out_tendencies['air_temperature'] is array
@@ -834,7 +834,7 @@ False</code></pre>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>If possible, you should try to be aware of when there are two code</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>references to the same in-memory array. This can help avoid some common</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>bugs. Let\'s start with an example. Say you create a</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>bugs. Let's start with an example. Say you create a</span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>ConstantTendencyComponent object like so:</span>
 <span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="in">    &gt;&gt;&gt; import numpy as np</span></span>
@@ -845,7 +845,7 @@ False</code></pre>
 <span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="in">    &gt;&gt;&gt; tendencies = {'air_temperature': array}</span></span>
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="in">    &gt;&gt;&gt; prognostic = ConstantTendencyComponent(tendencies)</span></span>
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>This is all fine so far. But it\'s important to know that now <span class="in">`array`</span> is</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>This is all fine so far. But it's important to know that now <span class="in">`array`</span> is</span>
 <span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>the same array stored inside <span class="in">`prognostic`</span>:</span>
 <span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="in">    &gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})</span></span>
@@ -868,7 +868,7 @@ False</code></pre>
 <span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>useful information for those interested.</span>
 <span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>If instead of modifying <span class="in">`array`</span>, you make a new array for the python</span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>variable <span class="in">`array`</span> to refer to, it doesn\'t modify the array in</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>variable <span class="in">`array`</span> to refer to, it doesn't modify the array in</span>
 <span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="in">`prognostic`</span>:</span>
 <span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a><span class="in">    &gt;&gt;&gt; array = array * 5.</span></span>

@@ -363,9 +363,9 @@ window.Quarto = {
 
 <p>A typical climate model allows the user the following kinds of configuration:</p>
 <ul>
-<li>Algorithmic Configuration: Changing the "tuning" parameters of the algorithms underlying various components. For example, the kind of advection used in a dynamical core could be configured.</li>
+<li>Algorithmic Configuration: Changing the “tuning” parameters of the algorithms underlying various components. For example, the kind of advection used in a dynamical core could be configured.</li>
 <li>Memory/Array Configuration: Deciding the grid shapes, and distribution over multiple processors, if using MPI.</li>
-<li>"Physical" Configuration: Choosing the physical constants that are used during the simulation. For example, gravitational acceleration or planetary rotation rate could be varied.</li>
+<li>“Physical” Configuration: Choosing the physical constants that are used during the simulation. For example, gravitational acceleration or planetary rotation rate could be varied.</li>
 <li>Behavioural Configuration: Allows modification of component behaviour. For example, radiative transfer components are called only once every N (&gt;&gt; 1) time steps and the output is kept constant for the remaining N-1 time steps.</li>
 <li>Compositional Configuration: Describing the components that make up the model, the order in which components need to be called, among other things.</li>
 </ul>
@@ -381,7 +381,7 @@ window.Quarto = {
 </section>
 <section id="physical-configuration" class="level2">
 <h2 class="anchored" data-anchor-id="physical-configuration">Physical Configuration</h2>
-<p>climt provides an interface to set and reset constants required by various components. The constants are put into different categories (<code class="interpreted-text" role="py:data">boltzmann_constant</code> is a 'physical constant' whereas <code class="interpreted-text" role="py:data">planetary_rotation_rate</code> is a 'planetary constant', for example).</p>
+<p>climt provides an interface to set and reset constants required by various components. The constants are put into different categories (<code class="interpreted-text" role="py:data">boltzmann_constant</code> is a ‘physical constant’ whereas <code class="interpreted-text" role="py:data">planetary_rotation_rate</code> is a ‘planetary constant’, for example).</p>
 <p>The constants can be reset to their default values so that climt is in a known state at the end of a simulation. In the future, climt will provide a context manager to clean up modified constants at the end of a run.</p>
 <p>You can read more about this functionality in <code class="interpreted-text" role="ref">utility_functions</code>.</p>
 </section>
@@ -399,8 +399,18 @@ window.Quarto = {
 <section id="compositional-configuration" class="level2">
 <h2 class="anchored" data-anchor-id="compositional-configuration">Compositional Configuration</h2>
 <p>This kind of configuration will allow the automatic building of models given certain components selected by the user. Currently, the user has to write the script to build the model and run it. It is clear that a lot of this code is repetitive and can be replaced by an entity (Which will be called <code class="interpreted-text" role="py:mod">Federation</code>).</p>
-<div class="{callout-note}">
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <p>This functionality is currently unavailble, and will be present in a future version of climt.</p>
+</div>
 </div>
 
 
@@ -867,12 +877,12 @@ window.Quarto = {
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>A typical climate model allows the user the following kinds of</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>configuration:</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Algorithmic Configuration: Changing the \"tuning\" parameters of the</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Algorithmic Configuration: Changing the "tuning" parameters of the</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  algorithms underlying various components. For example, the kind of</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  advection used in a dynamical core could be configured.</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Memory/Array Configuration: Deciding the grid shapes, and distribution</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  over multiple processors, if using MPI.</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>\"Physical\" Configuration: Choosing the physical constants that are</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>"Physical" Configuration: Choosing the physical constants that are</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  used during the simulation. For example, gravitational acceleration or</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  planetary rotation rate could be varied.</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Behavioural Configuration: Allows modification of component behaviour.</span>
@@ -910,9 +920,9 @@ window.Quarto = {
 <span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>climt provides an interface to set and reset constants required by</span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>various components. The constants are put into different categories</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>(<span class="in">`boltzmann_constant`</span>{.interpreted-text role="py:data"} is a \'physical</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>constant\' whereas <span class="in">`planetary_rotation_rate`</span>{.interpreted-text</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>role="py:data"} is a \'planetary constant\', for example).</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>(<span class="in">`boltzmann_constant`</span>{.interpreted-text role="py:data"} is a 'physical</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>constant' whereas <span class="in">`planetary_rotation_rate`</span>{.interpreted-text</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>role="py:data"} is a 'planetary constant', for example).</span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>The constants can be reset to their default values so that climt is in a</span>
 <span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>known state at the end of a simulation. In the future, climt will</span>
@@ -972,7 +982,7 @@ window.Quarto = {
 <span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>lot of this code is repetitive and can be replaced by an entity (Which</span>
 <span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>will be called <span class="in">`Federation`</span>{.interpreted-text role="py:mod"}).</span>
 <span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>::: {callout-note}</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
 <span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>This functionality is currently unavailble, and will be present in a</span>
 <span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>future version of climt.</span>
 <span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>

@@ -248,13 +248,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Run the components</li>
 <li>Do something with the output</li>
 </ul>
-<p>Variables <code>radiation</code> and <code>surface</code> are two components that we create. All climt components take a lot of optional arguments: However, by design, the default options (which are used if you don't specify any arguments) are meant to be scientifically meaningful.</p>
+<p>Variables <code>radiation</code> and <code>surface</code> are two components that we create. All climt components take a lot of optional arguments: However, by design, the default options (which are used if you don’t specify any arguments) are meant to be scientifically meaningful.</p>
 <p>The variables <code>state</code>, <code>tendencies</code> and <code>diagnostics</code> are dictionaries which contain quantities which act either as inputs <strong>to</strong> components or outputs <strong>from</strong> components.</p>
 <p>The function <code>get_default_state()</code>, if called only with a list of components, will provide a set of quantities which represent a single column of the atmosphere. These default values may or may not be meaningful in your context, so it is best to see what they are and change them according to your needs.</p>
-<div class="{callout-note}">
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <p>The square brackets are required in the call to <code>get_default_state</code>, even if it is one component: <code>climt.get_default_state([radiation])</code> is the correct syntax.</p>
 </div>
-<p>Building more sophisticated models and running them is merely an extended version of the above simple example. climt makes heavy use of <a href="http://sympl.readthedocs.io">Sympl</a>, and knowledge of Sympl is necessary to use climt to its full capabilities. So, do go through Sympl's docs!</p>
+</div>
+<p>Building more sophisticated models and running them is merely an extended version of the above simple example. climt makes heavy use of <a href="http://sympl.readthedocs.io">Sympl</a>, and knowledge of Sympl is necessary to use climt to its full capabilities. So, do go through Sympl’s docs!</p>
 
 
 <!-- -->
@@ -750,7 +760,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>Variables <span class="in">`radiation`</span> and <span class="in">`surface`</span> are two components that we create.</span>
 <span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>All climt components take a lot of optional arguments: However, by</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>design, the default options (which are used if you don\'t specify any</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>design, the default options (which are used if you don't specify any</span>
 <span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>arguments) are meant to be scientifically meaningful.</span>
 <span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>The variables <span class="in">`state`</span>, <span class="in">`tendencies`</span> and <span class="in">`diagnostics`</span> are dictionaries</span>
@@ -763,7 +773,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>meaningful in your context, so it is best to see what they are and</span>
 <span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>change them according to your needs.</span>
 <span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>::: {callout-note}</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
 <span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>The square brackets are required in the call to <span class="in">`get_default_state`</span>,</span>
 <span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>even if it is one component: <span class="in">`climt.get_default_state([radiation])`</span> is</span>
 <span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>the correct syntax.</span>
@@ -773,7 +783,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>extended version of the above simple example. climt makes heavy use of</span>
 <span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Sympl</span><span class="co">](http://sympl.readthedocs.io)</span>, and knowledge of Sympl is</span>
 <span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>necessary to use climt to its full capabilities. So, do go through</span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>Sympl\'s docs!</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>Sympl's docs!</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

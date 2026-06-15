@@ -465,7 +465,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Emanuel convection scheme can no longer be set to perform dry adiabatic adjustment to the boundary layer. This has been implemented in a separate component.</li>
 <li>ClimtPrognostic, ClimtImplicitPrognostic, ClimtDiagnostic, ClimtImplicit have been removed. Use the base types in Sympl.</li>
 <li>State initialization has been entirely re-worked. get_default_state now takes in an optional grid state instead of options to do with the state grid. A function get_grid is provided which can create a grid state, or one can be created manually. A grid state is a state containing air pressure and sigma on mid and interface levels, as well as surface pressure.</li>
-<li>Replaced references to "thermal_capacity" with references to "heat_capacity" in component quantity names.</li>
+<li>Replaced references to “thermal_capacity” with references to “heat_capacity” in component quantity names.</li>
 </ul>
 </section>
 <section id="v.0.14.7" class="level2">
@@ -537,7 +537,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>API for constants setting changed to <span class="title-ref">set_constant_from_dict</span> and <span class="title-ref">add_constants_from_dict</span></li>
 <li><span class="title-ref">GfsDynamicalCore</span> renamed to <span class="title-ref">GFSDynamicalCore</span> for consistency</li>
 <li><span class="title-ref">get_prognostic_version</span> method of <span class="title-ref">ClimtImplicit</span> renamed to <span class="title-ref">prognostic_version</span>, and no longer accepts timestep as an argument. The current timestep should be set in <span class="title-ref">ClimtImplicit.current_time_step</span> during each iteration.</li>
-<li><span class="title-ref">RRTMGShortwave</span> now uses sympl's solar constant by default instead of from fortran.</li>
+<li><span class="title-ref">RRTMGShortwave</span> now uses sympl’s solar constant by default instead of from fortran.</li>
 </ul>
 </section>
 <section id="v.0.9.1" class="level2">
@@ -1146,8 +1146,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>  state, or one can be created manually. A grid state is a state</span>
 <span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>  containing air pressure and sigma on mid and interface levels, as well</span>
 <span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>  as surface pressure.</span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Replaced references to \"thermal_capacity\" with references to</span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>  \"heat_capacity\" in component quantity names.</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Replaced references to "thermal_capacity" with references to</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>  "heat_capacity" in component quantity names.</span>
 <span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="fu">## v.0.14.7</span></span>
 <span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
@@ -1212,7 +1212,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">prognostic_version</span><span class="co">]</span>{.title-ref}, and no longer accepts timestep as an</span>
 <span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>  argument. The current timestep should be set in</span>
 <span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">ClimtImplicit.current_time_step</span><span class="co">]</span>{.title-ref} during each iteration.</span>
-<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">RRTMGShortwave</span><span class="co">]</span>{.title-ref} now uses sympl\'s solar constant by</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">RRTMGShortwave</span><span class="co">]</span>{.title-ref} now uses sympl's solar constant by</span>
 <span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>  default instead of from fortran.</span>
 <span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a><span class="fu">## v.0.9.1</span></span>

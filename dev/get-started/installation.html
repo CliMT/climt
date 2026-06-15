@@ -234,19 +234,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="stable-release" class="level2">
 <h2 class="anchored" data-anchor-id="stable-release">Stable release</h2>
-<div class="{callout-note}">
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <p>The GFS dynamical core has been made into a seperate package called <a href="https://github.com/Ai33L/gfs_dynamical_core">gfs_dynamical_core</a> for ease of maintenance.</p>
+</div>
 </div>
 <p>If you need the dynamical core, please install this package from source or directly using pip. Doing this will automatically install climt as well.</p>
 <pre class="console"><code>$ pip install gfs_dynamical_core</code></pre>
 <p>You can install climt by simply typing</p>
 <pre class="console"><code>$ pip install climt</code></pre>
 <p>This is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with <code>sudo</code>. This command should work on Linux, Mac and Windows. For Mac and Windows, it is recommended to use the <a href="https://www.continuum.io/downloads">anaconda</a> python distribution to make installation simpler.</p>
-<div class="{callout-note}">
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <p>If you are not using Anaconda, please ensure you have the libpython library installed. See the next section for instructions to install libpython.</p>
 </div>
-<p>Since by default pip attempts to install a binary wheel, you won't need a compiler on your system.</p>
-<p>If you don't have <a href="https://pip.pypa.io">pip</a> installed, this <a href="http://docs.python-guide.org/en/latest/starting/installation/">Python installation guide</a> can guide you through the process.</p>
+</div>
+<p>Since by default pip attempts to install a binary wheel, you won’t need a compiler on your system.</p>
+<p>If you don’t have <a href="https://pip.pypa.io">pip</a> installed, this <a href="http://docs.python-guide.org/en/latest/starting/installation/">Python installation guide</a> can guide you through the process.</p>
 </section>
 <section id="installing-from-source" class="level2">
 <h2 class="anchored" data-anchor-id="installing-from-source">Installing from source</h2>
@@ -739,7 +759,7 @@ $ export FC=gfortran-x</code></pre>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## Stable release</span></span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>::: {callout-note}</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>The GFS dynamical core has been made into a seperate package called</span>
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">gfs_dynamical_core</span><span class="co">](https://github.com/Ai33L/gfs_dynamical_core)</span> for</span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>ease of maintenance.</span>
@@ -766,16 +786,16 @@ $ export FC=gfortran-x</code></pre>
 <span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">anaconda</span><span class="co">](https://www.continuum.io/downloads)</span> python distribution to</span>
 <span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>make installation simpler.</span>
 <span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>::: {callout-note}</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
 <span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>If you are not using Anaconda, please ensure you have the libpython</span>
 <span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>library installed. See the next section for instructions to install</span>
 <span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>libpython.</span>
 <span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>Since by default pip attempts to install a binary wheel, you won\'t need</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>Since by default pip attempts to install a binary wheel, you won't need</span>
 <span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>a compiler on your system.</span>
 <span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>If you don\'t have <span class="co">[</span><span class="ot">pip</span><span class="co">](https://pip.pypa.io)</span> installed, this [Python</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>If you don't have <span class="co">[</span><span class="ot">pip</span><span class="co">](https://pip.pypa.io)</span> installed, this [Python</span>
 <span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>installation</span>
 <span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>guide](http://docs.python-guide.org/en/latest/starting/installation/)</span>
 <span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>can guide you through the process.</span>
