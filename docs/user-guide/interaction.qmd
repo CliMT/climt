@@ -26,7 +26,7 @@ mathematical functions which can be directly applied to arrays.
 conversion between units, a feature required to allow interoperability
 between components which expect inputs in different units.
 
-Let\'s create a 3-d model state to see how useful DataArrays are:
+Let's create a 3-d model state to see how useful DataArrays are:
 
 ``` python
 import climt
@@ -80,7 +80,7 @@ Farenheit:
 state['air_temperature'].to_units('degF')
 ```
 
-::: {callout-note}
+::: {.callout-note}
 climt always names the vertical coordinate as `mid_levels` or
 `interface_levels`, however, the state dictionary will contain a key
 corresponding to the name of the vertical coordinate specified by
@@ -105,7 +105,7 @@ The right hand side can also be any numpy array, as long as it has the
 same dimensions (or can be broadcasted to the same dimensions) as the
 current numpy array.
 
-::: {callout-note}
+::: {.callout-note}
 It is recommended to use the syntax `...values[:] = ...` rather than
 `...values =
 ...`, as the former modifies the numpy array in-place. In either case,

@@ -108,8 +108,8 @@ recommend reading those changes in the Sympl documentation.
   state, or one can be created manually. A grid state is a state
   containing air pressure and sigma on mid and interface levels, as well
   as surface pressure.
-- Replaced references to \"thermal_capacity\" with references to
-  \"heat_capacity\" in component quantity names.
+- Replaced references to "thermal_capacity" with references to
+  "heat_capacity" in component quantity names.
 
 ## v.0.14.7
 
@@ -174,7 +174,7 @@ recommend reading those changes in the Sympl documentation.
   [prognostic_version]{.title-ref}, and no longer accepts timestep as an
   argument. The current timestep should be set in
   [ClimtImplicit.current_time_step]{.title-ref} during each iteration.
-- [RRTMGShortwave]{.title-ref} now uses sympl\'s solar constant by
+- [RRTMGShortwave]{.title-ref} now uses sympl's solar constant by
   default instead of from fortran.
 
 ## v.0.9.1

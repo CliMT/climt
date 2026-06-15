@@ -6,7 +6,7 @@ title: "Memory management"
 
 If possible, you should try to be aware of when there are two code
 references to the same in-memory array. This can help avoid some common
-bugs. Let\'s start with an example. Say you create a
+bugs. Let's start with an example. Say you create a
 ConstantTendencyComponent object like so:
 
     >>> import numpy as np
@@ -17,7 +17,7 @@ ConstantTendencyComponent object like so:
     >>> tendencies = {'air_temperature': array}
     >>> prognostic = ConstantTendencyComponent(tendencies)
 
-This is all fine so far. But it\'s important to know that now `array` is
+This is all fine so far. But it's important to know that now `array` is
 the same array stored inside `prognostic`:
 
     >>> out_tendencies, out_diagnostics = prognostic({})
@@ -40,7 +40,7 @@ in the component is intentional. Below is some less (but potentially)
 useful information for those interested.
 
 If instead of modifying `array`, you make a new array for the python
-variable `array` to refer to, it doesn\'t modify the array in
+variable `array` to refer to, it doesn't modify the array in
 `prognostic`:
 
     >>> array = array * 5.

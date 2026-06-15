@@ -11,7 +11,7 @@ emphasizes the accurate representation of convective water fluxes and
 microphysical processes, which are critical for controlling atmospheric
 water vapor and its associated feedback on climate.
 
-Unlike many other schemes, it avoids the \"entraining plume\" model in
+Unlike many other schemes, it avoids the "entraining plume" model in
 favor of a **buoyancy-sorting hypothesis**. This approach assumes that
 mixing between clouds and their environment is episodic and
 inhomogeneous, leading to a spectrum of mixtures that ascend or descend
@@ -46,7 +46,7 @@ vertical gradient of buoyancy $B$ of the undilute cloud air:
 
 $$\frac{\delta M}{M_b} = \frac{|\delta B| + \Lambda \delta p}{\sum_{i=1}^N [|\delta B| + \Lambda \delta p]}$$
 
-Air mixed into the cloud forms a spectrum of mixtures. Each mixture\'s
+Air mixed into the cloud forms a spectrum of mixtures. Each mixture's
 fate is determined by its own buoyancy: \* **Positively buoyant**
 mixtures continue to ascend (entrainment). \* **Negatively buoyant**
 mixtures descend and eventually leave the cloud (detrainment).

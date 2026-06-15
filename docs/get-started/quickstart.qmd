@@ -36,7 +36,7 @@ are present:
 
 Variables `radiation` and `surface` are two components that we create.
 All climt components take a lot of optional arguments: However, by
-design, the default options (which are used if you don\'t specify any
+design, the default options (which are used if you don't specify any
 arguments) are meant to be scientifically meaningful.
 
 The variables `state`, `tendencies` and `diagnostics` are dictionaries
@@ -49,7 +49,7 @@ column of the atmosphere. These default values may or may not be
 meaningful in your context, so it is best to see what they are and
 change them according to your needs.
 
-::: {callout-note}
+::: {.callout-note}
 The square brackets are required in the call to `get_default_state`,
 even if it is one component: `climt.get_default_state([radiation])` is
 the correct syntax.
@@ -59,4 +59,4 @@ Building more sophisticated models and running them is merely an
 extended version of the above simple example. climt makes heavy use of
 [Sympl](http://sympl.readthedocs.io), and knowledge of Sympl is
 necessary to use climt to its full capabilities. So, do go through
-Sympl\'s docs!
+Sympl's docs!

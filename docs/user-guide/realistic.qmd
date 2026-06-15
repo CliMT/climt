@@ -73,7 +73,7 @@ modelling are available in the github
 scripts include examples which setup graphics to view the evolution of
 the model over time.
 
-::: {callout-note}
+::: {.callout-note}
 A more user friendly API called `Federation` will be available in a
 later version of climt. However, setting up models is easy enough even
 without `Federation` once you get used to the workflow.

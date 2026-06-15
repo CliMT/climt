@@ -5,12 +5,12 @@ title: "Configuration"
 A typical climate model allows the user the following kinds of
 configuration:
 
-- Algorithmic Configuration: Changing the \"tuning\" parameters of the
+- Algorithmic Configuration: Changing the "tuning" parameters of the
   algorithms underlying various components. For example, the kind of
   advection used in a dynamical core could be configured.
 - Memory/Array Configuration: Deciding the grid shapes, and distribution
   over multiple processors, if using MPI.
-- \"Physical\" Configuration: Choosing the physical constants that are
+- "Physical" Configuration: Choosing the physical constants that are
   used during the simulation. For example, gravitational acceleration or
   planetary rotation rate could be varied.
 - Behavioural Configuration: Allows modification of component behaviour.
@@ -48,9 +48,9 @@ role="py:func"}. See, for example, the configuration of arrays in a
 
 climt provides an interface to set and reset constants required by
 various components. The constants are put into different categories
-(`boltzmann_constant`{.interpreted-text role="py:data"} is a \'physical
-constant\' whereas `planetary_rotation_rate`{.interpreted-text
-role="py:data"} is a \'planetary constant\', for example).
+(`boltzmann_constant`{.interpreted-text role="py:data"} is a 'physical
+constant' whereas `planetary_rotation_rate`{.interpreted-text
+role="py:data"} is a 'planetary constant', for example).
 
 The constants can be reset to their default values so that climt is in a
 known state at the end of a simulation. In the future, climt will
@@ -110,7 +110,7 @@ to write the script to build the model and run it. It is clear that a
 lot of this code is repetitive and can be replaced by an entity (Which
 will be called `Federation`{.interpreted-text role="py:mod"}).
 
-::: {callout-note}
+::: {.callout-note}
 This functionality is currently unavailble, and will be present in a
 future version of climt.
 :::

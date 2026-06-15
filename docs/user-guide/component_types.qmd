@@ -30,5 +30,5 @@ climt are either `TendencyComponent`{.interpreted-text role="py:class"},
   [CFL](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition)
   criterion is met.
 
-You can read more about this schema of model components in Sympl\'s
+You can read more about this schema of model components in Sympl's
 [documentation](http://sympl.readthedocs.io/en/latest/computation.html).

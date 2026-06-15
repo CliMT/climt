@@ -12,7 +12,7 @@ You can contribute in many ways:
 ### Usage in Publications
 
 If you use CliMT to perform research, your publication is a valuable
-resource for others looking to learn the ways they can leverage CliMT\'s
+resource for others looking to learn the ways they can leverage CliMT's
 capabilities. If you have used CliMT in a publication, please let us
 know so we can add it to the list.
 
@@ -42,13 +42,13 @@ If you are reporting a bug, please include:
 
 ### Fix Bugs
 
-Look through the GitHub issues for bugs. Anything tagged with \"bug\"
-and \"help wanted\" is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything tagged with "bug"
+and "help wanted" is open to whoever wants to implement it.
 
 ### Implement Features
 
 Look through the GitHub issues for features. Anything tagged with
-\"enhancement\" and \"help wanted\" is open to whoever wants to
+"enhancement" and "help wanted" is open to whoever wants to
 implement it.
 
 ### Write Documentation
@@ -77,7 +77,7 @@ If you are proposing a feature:
 
 ## Get Started!
 
-Ready to contribute? Here\'s how to set up [climt]{.title-ref} for local
+Ready to contribute? Here's how to set up [climt]{.title-ref} for local
 development.
 
 1.  Fork the [climt]{.title-ref} repo on GitHub.
@@ -106,7 +106,7 @@ development.
 
     Now you can make your changes locally.
 
-5.  When you\'re done making changes, check that your changes pass
+5.  When you're done making changes, check that your changes pass
     flake8 and the tests, including testing other Python versions with
     tox:
 
@@ -143,7 +143,7 @@ Before you submit a pull request, check that it meets these guidelines:
 ## Style
 
 In the CliMT code, we follow PEP 8 style guidelines (tested by flake8).
-You can test style by running \"tox -e flake8\" from the root directory
+You can test style by running "tox -e flake8" from the root directory
 of the repository. There are some exceptions to PEP 8:
 
 - All lines should be shorter than 80 characters. However, lines longer
@@ -152,11 +152,11 @@ of the repository. There are some exceptions to PEP 8:
 - Space should be assigned around arithmetic operators in a way that
   maximizes readability. For some cases, this may mean not including
   whitespace around certain operations to make the separation of terms
-  clearer, e.g. \"Cp\*T + g\*z + Lv\*q\".
+  clearer, e.g. "Cp\*T + g\*z + Lv\*q".
 - While state dictionary keys are full and verbose, within components
   they may be assigned to shorter names if it makes the code clearer.
 - We can take advantage of known scientific abbreviations for quantities
-  within components (e.g. \"T\" for \"air_temperature\") even thought
+  within components (e.g. "T" for "air_temperature") even thought
   they do not follow pothole_case.
 
 ## Tips

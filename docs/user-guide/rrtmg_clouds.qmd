@@ -402,7 +402,7 @@ sees some of the cloud. With `maximum_random`, the g-intervals that see
 cloud in one model layer are the same as those that see cloud in a
 neighbouring model layer. This maximises the cloud overlap between
 neighbouring layers (within a single cloud). If the cloud area fraction
-changes between layers, the additional g-intervals that see (or don\'t
+changes between layers, the additional g-intervals that see (or don't
 see) cloud are assigned randomly. Therefore, if there are two clouds at
 different altitudes, separated by clear sky, the two clouds overlap
 randomly with respect to each other. If `maximum` is selected, cloud
