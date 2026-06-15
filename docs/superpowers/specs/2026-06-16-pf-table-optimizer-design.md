@@ -156,10 +156,16 @@ no linepyline, no PF run needed to choose the split.
 
 ## Acceptance criteria
 
-- `max(|OLR_err_moist|, |OLR_err_dry|) < 5 W/m²` (configurable `OLR_TARGET`).
-- Heating-rate RMSE per level `< HR_TARGET` (configurable; default chosen to be
-  comparable to RRTMG−LBL on the same column).
-- Evaluated across the validation columns (not a single profile).
+- **v1 hard gate:** `max(|OLR_err_moist|, |OLR_err_dry|) < 5 W/m²`
+  (configurable `OLR_TARGET`), evaluated across the validation columns. This is
+  fully supported by linepyline's `ds["olr"]` and matches the proven
+  `eval_band_structure` / `lbl_olr_tiebreak` workflow.
+- **Heating-rate RMSE per level** is computed and reported as a secondary
+  diagnostic but is **not a v1 gate**. Promoting it to a gate (with an
+  `HR_TARGET` calibrated to RRTMG−LBL) is a v2 follow-up, deferred only because
+  it requires wiring linepyline's per-level net-flux profile schema, which is
+  not yet confirmed. Splitting (dry) + continuum decoupling (moist) are expected
+  to clear Earth LW on the OLR gate alone.
 
 ## Validation columns
 
