@@ -2,7 +2,7 @@
 title: "climt"
 ---
 
-![](climt_logo.jpg){width=160px fig-align="center"}
+![](climt_logo.jpg){width=500px fig-align="center"}
 
 **climt** (Climate Modelling and Diagnostics Toolkit) is an open-source Python
 framework for building and running climate models. It provides modular,
