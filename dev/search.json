@@ -7,6 +7,301 @@
     "text": "Long-form research case studies from the climt project — each a worked investigation, reproducible end to end.\n\n\n\n\n\n\n\n\n\n\n\nWhat it takes to build a longwave scheme that rivals RRTMG\n\n\nA picket-fence correlated-k table ran 12 K too warm. Chasing down why — and the dead-ends along the way — turned into a lesson in how correlated-k really works, and how it fails.\n\n\n\n\n\nJun 5, 2026\n\n\n\n\n\nNo matching items"
   },
   {
+    "objectID": "radiative-transfer/table-generation.html",
+    "href": "radiative-transfer/table-generation.html",
+    "title": "Table generation",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Appendices",
+      "Table generation"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/index.html",
+    "href": "radiative-transfer/index.html",
+    "title": "Radiative Transfer Walkthrough",
+    "section": "",
+    "text": "A graduate-level tour of non-grey radiative transfer — from line-by-line physics to the picket-fence correlated-k scheme — with live climt source excerpts and runnable notebooks.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Radiative Transfer Walkthrough"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/index.html#chapters",
+    "href": "radiative-transfer/index.html#chapters",
+    "title": "Radiative Transfer Walkthrough",
+    "section": "Chapters",
+    "text": "Chapters\n\nWhy non-grey?\nLine-by-line physics\nThe k-distribution\nCorrelated-k\nGas overlap: additive vs ESFT\nThe picket-fence model\nThe two-stream solver\nSwitching planets\n\nAppendices: Table generation · Performance",
+    "crumbs": [
+      "Radiative Transfer",
+      "Radiative Transfer Walkthrough"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/07-two-stream.html",
+    "href": "radiative-transfer/07-two-stream.html",
+    "title": "Chapter 7: The two-stream solver",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 7: The two-stream solver"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/05-gas-overlap.html",
+    "href": "radiative-transfer/05-gas-overlap.html",
+    "title": "Chapter 5: Gas overlap: additive vs ESFT",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 5: Gas overlap: additive vs ESFT"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/03-k-distribution.html",
+    "href": "radiative-transfer/03-k-distribution.html",
+    "title": "Chapter 3: The k-distribution",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 3: The k-distribution"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/01-why-nongrey.html",
+    "href": "radiative-transfer/01-why-nongrey.html",
+    "title": "Chapter 1: Why non-grey?",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 1: Why non-grey?"
+    ]
+  },
+  {
+    "objectID": "user-guide/rrtmg_clouds.html",
+    "href": "user-guide/rrtmg_clouds.html",
+    "title": "RRTMG and clouds",
+    "section": "",
+    "text": "There are two methods in RRTMG, which handle clouds in different ways.\n\n\nMcICA allows us to have fractional cloud areas, by randomly assigning some wavelengths to see cloud and other wavelengths to see no cloud. For example if we have a cloud fraction of 40%, then 40% of the wavelengths see cloud, while the other 60% do not.\n\n\n\nWith nomcica, all of the wavelengths see some cloud. Using this method for the shortwave we can only have cloud area fractions of zero and one, representing clear and completely overcast skies. On the other hand, if we are calculating longwave fluxes, we can also use fractional cloud area fractions.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "RRTMG and clouds"
+    ]
+  },
+  {
+    "objectID": "user-guide/rrtmg_clouds.html#introduction",
+    "href": "user-guide/rrtmg_clouds.html#introduction",
+    "title": "RRTMG and clouds",
+    "section": "",
+    "text": "There are two methods in RRTMG, which handle clouds in different ways.\n\n\nMcICA allows us to have fractional cloud areas, by randomly assigning some wavelengths to see cloud and other wavelengths to see no cloud. For example if we have a cloud fraction of 40%, then 40% of the wavelengths see cloud, while the other 60% do not.\n\n\n\nWith nomcica, all of the wavelengths see some cloud. Using this method for the shortwave we can only have cloud area fractions of zero and one, representing clear and completely overcast skies. On the other hand, if we are calculating longwave fluxes, we can also use fractional cloud area fractions.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "RRTMG and clouds"
+    ]
+  },
+  {
+    "objectID": "user-guide/rrtmg_clouds.html#calculation-of-radiative-fluxes",
+    "href": "user-guide/rrtmg_clouds.html#calculation-of-radiative-fluxes",
+    "title": "RRTMG and clouds",
+    "section": "Calculation of radiative fluxes",
+    "text": "Calculation of radiative fluxes\n\nLongwave\nTwo properties are needed to calculate the longwave radiative fluxes; the absorptivity (or transmittance which equals one minus the absorptivity) and the emissivity. Values of these two properties are needed for each model layer, for both cloudy and clear sky regimes and for each waveband.\nradld = radld * (1 - atrans(lev)) * (1 - efclfrac(lev,ib)) + &\n        gassrc * (1 - cldfrac(lev)) + bbdtot * atot(lev) * cldfrac(lev)\nThe radiative fluxes at each layer(radld on the left hand side of the equations) are calculated from the radiative fluxes from the layer above (radld on the right hand side of the equation) and the properties of the layer. The first term in the equation above is fraction of radiative flux from the layer above that is transmitted through the layer. atrans(lev) is the gaseous absorptivity and efclfrac is the absorptivity of the cloud weighted by the cloud area fraction (here for nomcica). The other two terms in the above equation are emission terms. The first of these represents emission from gases in the area of clear sky and the second represents emission from gases and cloud from the area of cloud. The equation for the upward longwave flux radlu is very similar: the flux is calculated from the radiative flux from the layer below and the properties of the layer.\nThese equations are used with nomcica when the rrtmg_cloud_overlap_method is set to random and the cloud area fraction is greater than 10-6. These calculations are in the rrtmg_lw_rtrn.f90 file, in the downward radiative transfer loop and upward radiative transfer loop respectively. These equations are also used with McICA. In this case, efclfrac is either zero or the non-weighted absorptivity of the cloud and this is allocated randomly to each waveband, with the number of waveband receiving each depending on the cloud area fraction. For McICA, these calculations are in the rrtmg_lw_rtrnmc.f90 file, in the downward loop and upward loop respectively. In both files, in the downward loop there are three different ways of calculating the absorptivity, which use different approximations for the exponential of the optical depth. The one that is used depends on the optical depth of the clear sky and of the total sky.\nWith nomcica, if the rrtmg_cloud_overlap_method is set to any of the other options except random, the rrtmg_lw_rtrnmr.f90 file is called. Then, the radiative fluxes are calculated as follows, at the end of the downward radiative transfer loop.\ncldradd = cldradd * (1._rb - atot(lev)) + cldfrac(lev) * bbdtot * atot(lev)\nclrradd = clrradd * (1._rb-atrans(lev)) + (1._rb - cldfrac(lev)) * gassrc\nradld = cldradd + clrradd\nThe downward radiative flux is split into the clear sky and cloudy components, clrradd and cldradd respectively. Both components contain a transmittance term from the clear or cloudy part, respectively, of the layer above and an emission term. The emission terms are identical to those described above. The fluxes clrradd and cldradd are modified by an amount that depends on the change in cloud fraction between layers before they are used for the calculation of fluxes in the layer below.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "RRTMG and clouds"
+    ]
+  },
+  {
+    "objectID": "user-guide/rrtmg_clouds.html#clouds-with-mcica",
+    "href": "user-guide/rrtmg_clouds.html#clouds-with-mcica",
+    "title": "RRTMG and clouds",
+    "section": "Clouds with McICA",
+    "text": "Clouds with McICA\nA brief description of the different options that can be used in RRTMG with McICA and the input parameters required in each case.\n\nCloud properties\nThere are three options for the RRTMG inflag, as given in the climt dictionary: rrtmg_cloud_props_dict\nrrtmg_cloud_props_dict = {\n    'direct_input': 0,\n    'single_cloud_type': 1,\n    'liquid_and_ice_clouds': 2\n}\nWith McICA, we cannot use single_cloud_type, but can choose between direct_input and liquid_and_ice_clouds. If we choose direct_input, we input the longwave_optical_thickness_due_to_cloud, shortwave_optical_thickness_due_to_cloud, as well as the shortwave parameters single_scattering_albedo_due_to_cloud, cloud_asymmetry_parameter and cloud_forward_scattering_fraction. The cloud_forward_scattering_fraction is used to scale the other shortwave parameters (shortwave_optical_thickness_due_to_cloud, single_scattering_albedo_due_to_cloud and cloud_asymmetry_parameter), but it is not directly used in the radiative transfer calculations. If the cloud_forward_scattering_fraction is set to zero, no scaling is applied. The other cloud properties, namely cloud_ice_particle_size and cloud_water_droplet_radius, mass_content_of_cloud_ice_in_atmosphere_layer, and mass_content_of_cloud_liquid_water_in_atmosphere_layer are completely unused. The RRTMG iceflag and liqflag are irrelevant.\nOn the other hand, if we choose liquid_and_ice_clouds, any input values for longwave_optical_thickness_due_to_cloud, shortwave_optical_thickness_due_to_cloud, single_scattering_albedo_due_to_cloud and cloud_asymmetry_parameter are irrelevant. Instead, these parameters are calculated from the cloud ice and water droplet particle sizes (cloud_ice_particle_size and cloud_water_droplet_radius), as well as the cloud ice and water paths (mass_content_of_cloud_ice_in_atmosphere_layer, mass_content_of_cloud_liquid_water_in_atmosphere_layer). The methods used for the calculations depend on the cloud ice and water properties; iceflag and liqflag in RRTMG.\nRegardless of the other cloud input type, cloud_area_fraction_in_atmosphere_layer is required, and is used in McICA to determine how much of the wavelength spectrum sees cloud and how much does not.\n\n\nCalculation of cloud properties\n\nLongwave\nFor the longwave, the only cloud property of interest for calculating radiative fluxes in RRTMG, is the optical depth. This is calculated at the end of the longwave cldprmc submodule as:\ntaucmc(ig,lay) = ciwpmc(ig,lay) * abscoice(ig) + &\n                 clwpmc(ig,lay) * abscoliq(ig)\nValues of cloud optical depth taucmc are calculated for each model layer (pressure), lay, and each g-interval, ig. The cloud ice and liquid absorption coefficients (abscoice and abscoliq) are multiplied by the cloud ice and liquid water paths (ciwpmc and clwpmc) respectively, to give the ice cloud optical depth and the liquid water cloud optical depth. The cloud ice and liquid water paths are input by the user, in climt as mass_content_of_cloud_ice_in_atmosphere_layer and mass_content_of_cloud_liquid_water_in_atmosphere_layer respectively. The cloud ice and liquid absorption coefficients are calculated based on the ice and liquid water particle sizes (specified by the user), and this calculation depends on the choice of iceflag and liqflag.\n\n\nShortwave\nFor the shortwave, there are three cloud properties, which affect the radiative flux calculation in RRTMG, namely the optical depth, the single scattering albedo and the asymmetry parameter.\nThe shortwave optical depth is calculated as:\ntaucmc(ig,lay) = tauice + tauliq\nwith\ntauice = (1 - forwice(ig) + ssacoice(ig)) * ciwpmc(ig,lay) * extcoice(ig)\ntauliq = (1 - forwliq(ig) + ssacoliq(ig)) * clwpmc(ig,lay) * extcoliq(ig)\nThe single scattering albedo is calculated as:\nssacmc(ig,lay) = (scatice + scatliq) / taucmc(ig,lay)\nwith\nscatice = ssacoice(ig) * (1._rb - forwice(ig)) / (1._rb - forwice(ig) * ssacoice(ig)) * tauice\nscatliq = ssacoliq(ig) * (1._rb - forwliq(ig)) / (1._rb - forwliq(ig) * ssacoliq(ig)) * tauliq\nThe asymmetry parameter is given by:\nasmcmc(ig,lay) = 1.0_rb / (scatliq + scatice) * ( &\n                 scatliq * (gliq(ig) - forwliq(ig)) / (1.0_rb - forwliq(ig)) + &\n                 scatice * (gice(ig) - forwice(ig)) / (1.0_rb - forwice(ig)) )\nThe original RRTMG code for these calculations is at the end of the shortwave cldprmc submodule.\nValues of optical depth, single scattering albedo and asymmetry parameter are calculated for each model layer (pressure), lay, and each g-interval, ig. The cloud ice and liquid water paths (ciwpmc and clwpmc) are input by the user. The other parameters (extcoice, extcoliq, ssacoice, ssacoliq, gice, gliq, forwice, forwliq) are calculated based on the ice and liquid water particle sizes and this calculation depends on the choice of iceflag and liqflag.\n\n\n\nCloud ice properties\nThere are four options for the RRTMG iceflag. These are given in the climt dictionary: rrtmg_cloud_ice_props_dict\nrrtmg_cloud_ice_props_dict = {\n    'ebert_curry_one': 0,\n    'ebert_curry_two': 1,\n    'key_streamer_manual': 2,\n    'fu': 3\n}\n\nebert_curry_one\nFor the longwave, ebert_curry_one gives an absorption coefficient of\nabscoice = 0.005 + 1.0 / radice\nHere, radice is the ice particle size and the absorption coefficient is the same for all wavebands.\nebert_curry_one should not be used for the shortwave component with McICA.\n\n\nebert_curry_two\nebert_curry_two is the default choice for cloud ice optical properties in climt. In this case, the longwave absorption coefficient is calculated in the lw_cldprmc file as follows.\nabscoice(ig) = absice1(1,ib) + absice1(2,ib)/radice\nThe absorption coefficient abscoice is a function of g-interval ig and is made up of two contributions. The first of these absice1(1, ib) comes from a look up table and is given in [m2/ g]. ib provides an index for the look up table, based on the waveband of the g-interval. absice1(2,ib) also comes from a look up table and is given in [microns m2/ g]. It is divided by radice, the cloud ice particle size, providing an ice particle size dependence of the absorption coefficient. Although the syntax does not emphasise it, the absorption coefficient may also depend on model layer (pressure), as radice can have model layer dependence. radice comes from the input property labeled cloud_ice_particle_size in climt. The ice particle size dependent term is more important than the independent term (absice1(2,ib)/radice &gt; absice1(1,ib)) at all wavebands for ice particle sizes less than 88 microns. Using ebert_curry_two, the ice particle size must be in the range [13, 130] microns, and even for larger particle sizes (&gt; 88), the ice particle size dependent term is more important than the independent term for four of the five wavebands.\nFor the shortwave, the parameters (required for the optical depth, single scattering albedo and asymmetry) are calculated in the sw_cldprmc file as follows.\nextcoice(ig) = abari(icx) + bbari(icx)/radice\nssacoice(ig) = 1._rb - cbari(icx) - dbari(icx) * radice\ngice(ig) = ebari(icx) + fbari(icx) * radice\nforwice(ig) = gice(ig)*gice(ig)\nabari, bbari, cbari, dbari, ebari and fbari are all look up tables, containing five values, which correspond to five different wavebands. The choice of waveband is indicated by icx. The particle size dependence comes from radice, so each parameter consists of both a size independent and a size dependent contribution.\n\n\n\nThe dependence of cloud optical depth taucmc on cloud ice particle size (with an ice water path of 1), with different lines representing the different wavebands.\n\n\n\n\nkey_streamer_manual\nIn this case, both the longwave absorption coefficient and three of the shortwave parameters (excoice, ssacoice, gice) are interpolated from look up tables. Comments in the RRTMG code state that these look up tables are for a spherical ice particle parameterisation. The look up tables contain 42 values for each of the 16 longwave and 14 shortwave wavebands. The 42 values correspond to different ice particle radii, evenly spaced in the range [5, 131] microns. Ice particles must be within this range, otherwise an error is thrown.\nThe shortwave parameter forwice is calculated as the square of gice.\n\n\nfu\nThe longwave absorption coefficient and shortwave parameters extcoice, ssacoice and gice are interpolated from look up tables. The look up tables differ to those in key_streamer_manual, and comments in the RRTMG code state that the look up tables for fu are for a hexagonal ice particle parameterisation. The look up tables for fu are slightly larger than those for key_streamer_manual, and the range of allowed values for the ice particle size is corresponding larger ([5, 140] microns).\nThe shortwave parameter forwice is calculated from fdelta (again taken from look up tables) and ssacoice as follows.\nforwice(ig) = fdelta(ig) + 0.5_rb / ssacoice(ig)\nThe longwave and shortwave parameter calculations can be found in the longwave cldprmc and shortwave cldprmc subroutines respectively.\n\n\n\nCloud liquid properties\nThere are two options for the RRTMG liqflag. These are given in the climt dictionary: rrtmg_cloud_liquid_props_dict\nrrtmg_cloud_liquid_props_dict = {\n    'radius_independent_absorption': 0,\n    'radius_dependent_absorption': 1\n}\nFor radius_independent_absorption, the longwave absorption coefficient is 0.0903614 for all wavebands. This option should not be used for the shortwave.\nradius_dependent_absorption is the default choice for cloud liquid water properties in climt. In this case, the longwave absorption coefficient and the shortwave parameters extcoliq, ssacoliq, and gliq are interpolated from look up tables. The look up tables have values for particle sizes in the range [2.5, 59.5] microns in 1 micron intervals (58 values) for each of the 16 longwave and 14 shortwave wavebands. The shortwave parameter forwliq is calculated as the square of gliq.\n\n\n\nThe dependence of cloud optical depth taucmc on cloud liquid water particle size (with a liquid water path of 1), with different lines representing the different wavebands.\n\n\n\n\nCloud overlap method\nThis is the RRTMG icld and is given in the climt dictionary: rrtmg_cloud_overlap_method_dict\nrrtmg_cloud_overlap_method_dict = {\n    'clear_only': 0,\n    'random': 1,\n    'maximum_random': 2,\n    'maximum': 3\n}\nIf we choose clear_only, there are no clouds, regardless of the other input. If we choose random, the g-intervals which see cloud are chosen randomly for each model layer. This means that there is a dependence on vertical resolution: if vertical resolution is increased, more layers contain the same cloud and a larger portion of the wavelength spectrum sees some of the cloud. With maximum_random, the g-intervals that see cloud in one model layer are the same as those that see cloud in a neighbouring model layer. This maximises the cloud overlap between neighbouring layers (within a single cloud). If the cloud area fraction changes between layers, the additional g-intervals that see (or don't see) cloud are assigned randomly. Therefore, if there are two clouds at different altitudes, separated by clear sky, the two clouds overlap randomly with respect to each other. If maximum is selected, cloud overlap is maximised both within and between clouds.\nThe implementation is in the mcica_subcol_gen_sw and mcica_subcol_gen_lw files, and consists firstly of assigning each g-interval a random number in the range [0, 1]. For random, and maximum_random (cases 1 and 2 in mcica_subcol_gen_sw and mcica_subcol_gen_lw), random numbers are generated for each layer, whereas for maximum (case 3) only one set of random numbers is generated and applied to all the layers. For maximum_random, the random numbers are recalculated to fulfill the assumption about overlap (this recalculation is described below). Whether a g-interval at a certain layer sees cloud depends on both the random number it has been assigned and the cloud fraction at that layer. For example, if the cloud area fraction is 30%, all g-intervals that have been assigned a random number &gt; 0.7 (approximately 30% of the g-intervals) will see cloud. The other g-intervals will see clear-sky. If the cloud fraction is 20%, only g-intervals with a random number &gt; 0.8 will see cloud. The recalculation of random numbers in the maximum_random case for a certain model layer (layer 2), considers the assigned random numbers and cloud area fraction of the layer above (layer 1). If the g-interval sees cloud in layer 1, its random number in layer 2 is changed so that it matches that in layer 1. This does not necessarily mean that it will see cloud in layer 2, because the cloud fraction could be smaller in layer 2 than layer 1 (so the requirement for seeing cloud would be increased). The random numbers for the g-intervals in layer 2, which do not see cloud in layer 1, are multiplied by one minus the cloud area fraction of layer 1, so that the set of random numbers assigned to layer 2 are still randomly distributed in the range [0, 1]. This is required so that the right proportion of g-intervals in layer 2 see cloud.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "RRTMG and clouds"
+    ]
+  },
+  {
+    "objectID": "user-guide/rrtmg_clouds.html#differences-in-cloud-input-with-nomcica",
+    "href": "user-guide/rrtmg_clouds.html#differences-in-cloud-input-with-nomcica",
+    "title": "RRTMG and clouds",
+    "section": "Differences in cloud input with nomcica",
+    "text": "Differences in cloud input with nomcica\nRegarding the options that can be used with nomcica, there are a few differences to those that can be used with McICA.\n\nCloud properties\nFor the longwave, we can choose single_cloud_type in the rrtmg_cloud_props_dict. The longwave cloud optical depth is calculated as follows.\ntaucloud(lay,ib) = abscld1 * (ciwp(lay) + clwp(lay))\nThis gives us a cloud optical depth based on a single constant value, abscld1 and the total cloud water path. Thus, for this option, the mass_content_of_cloud_ice_in_atmosphere_layer, and mass_content_of_cloud_liquid_water_in_atmosphere_layer are needed as input. single_cloud_type is not available for the shortwave.\nIf we choose liquid_and_ice_clouds, the calculations of the longwave and shortwave optical properties from the cloud mass and particle sizes are the same as for McICA, but are calculated for each waveband instead of each g-interval.\n\n\nCloud overlap method\nWith nomcica choosing a cloud overlap of random in the rrtmg_cloud_overlap_method_dict is different to choosing either maximum_random or maximum. The latter two options do not differ. If we choose random, the radiative flux transmitted from one layer to the next does not care if it came from cloud or clear sky, whereas with maximum_random, the cloudy and clear fluxes are separated and treated separately from one model layer to the next.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "RRTMG and clouds"
+    ]
+  },
+  {
+    "objectID": "user-guide/naming.html",
+    "href": "user-guide/naming.html",
+    "title": "Naming conventions",
+    "section": "",
+    "text": "Any quantity that is on vertical interface levels should be named using the form \"&lt;variable&gt;_on_interface_levels\", while quantities on mid levels should not have anything appended to the variable name. Quantities that do not specify \"_on_interface_levels\" are assumed to be on mid levels. This must be in the name rather than as an attribute so that the same coordinate may be present on both half and full levels (with different names).",
+    "crumbs": [
+      "User Guide",
+      "Naming conventions"
+    ]
+  },
+  {
+    "objectID": "user-guide/introduction.html",
+    "href": "user-guide/introduction.html",
+    "title": "Introduction",
+    "section": "",
+    "text": "climt (pronounced klimt) is an attempt to build a climate modelling infrastructure that is easy to use, easy to understand and easy to learn.\nMost climate model components are written in fortran for performance reasons. For that very reason, it is difficult to change model configurations and behaviour easily, which is something scientists tend to do all the time during their research. The earth-science community is converging towards Python as the language of choice for data analysis tasks, thanks to Python's flexibility and emphasis on clean, readable code. climt aims to use Python for climate modelling for these very reasons -- clearly documented components, self documenting model scripts, and a flexible configuration system will make climate modelling more reproducible and make the learning curve less steep.\nclimt is aimed at a wide spectrum of users -- from students who are curious to learn about the climate system to researchers who want state-of-the-art components. climt aims to provide multiple levels of abstraction which will allow the user to tradeoff ease of use vs. flexibility, depending on their particular needs and experience in modelling and Python programming.",
+    "crumbs": [
+      "User Guide",
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "user-guide/initialisation.html",
+    "href": "user-guide/initialisation.html",
+    "title": "Initialisation",
+    "section": "",
+    "text": "climt\n\n\nInitialisation\n\nget_default_state get_grid",
+    "crumbs": [
+      "User Guide",
+      "Initialisation"
+    ]
+  },
+  {
+    "objectID": "user-guide/emanuel_convection.html",
+    "href": "user-guide/emanuel_convection.html",
+    "title": "Emanuel convection",
+    "section": "",
+    "text": "The Emanuel convection scheme (Emanuel and Živković-Rothman, 1999) is a mass-flux parameterization designed for use in climate models. It emphasizes the accurate representation of convective water fluxes and microphysical processes, which are critical for controlling atmospheric water vapor and its associated feedback on climate.\nUnlike many other schemes, it avoids the \"entraining plume\" model in favor of a buoyancy-sorting hypothesis. This approach assumes that mixing between clouds and their environment is episodic and inhomogeneous, leading to a spectrum of mixtures that ascend or descend to their respective levels of neutral buoyancy.\n\n\n\nSchematic representation of the Emanuel Convection Scheme logic.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "Emanuel convection"
+    ]
+  },
+  {
+    "objectID": "user-guide/emanuel_convection.html#introduction",
+    "href": "user-guide/emanuel_convection.html#introduction",
+    "title": "Emanuel convection",
+    "section": "",
+    "text": "The Emanuel convection scheme (Emanuel and Živković-Rothman, 1999) is a mass-flux parameterization designed for use in climate models. It emphasizes the accurate representation of convective water fluxes and microphysical processes, which are critical for controlling atmospheric water vapor and its associated feedback on climate.\nUnlike many other schemes, it avoids the \"entraining plume\" model in favor of a buoyancy-sorting hypothesis. This approach assumes that mixing between clouds and their environment is episodic and inhomogeneous, leading to a spectrum of mixtures that ascend or descend to their respective levels of neutral buoyancy.\n\n\n\nSchematic representation of the Emanuel Convection Scheme logic.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "Emanuel convection"
+    ]
+  },
+  {
+    "objectID": "user-guide/emanuel_convection.html#key-concepts",
+    "href": "user-guide/emanuel_convection.html#key-concepts",
+    "title": "Emanuel convection",
+    "section": "Key Concepts",
+    "text": "Key Concepts\n\nSubcloud-Layer Quasi-Equilibrium\nThe scheme assumes that convective mass fluxes adjust to keep the subcloud layer neutrally buoyant when air is displaced upward. The Cloud-Base Mass Flux (CBMF), denoted as \\(M_b\\), is relaxed toward this equilibrium state:\n\\[\\frac{\\partial M_b}{\\partial t} = \\frac{\\alpha}{\\Delta t} (T_{v,p} - T_v + \\Delta T_b)_{LCL} - \\frac{D}{\\Delta t} M_b\\]\nwhere \\(\\alpha\\) is a relaxation rate, \\(D\\) is a damping coefficient, and the terms in parentheses represent the buoyancy excess at the Lifted Condensation Level (LCL).\n\n\nEpisodic Mixing and Buoyancy Sorting\nThe rate of mixing \\(\\delta M\\) at any level is proportional to the vertical gradient of buoyancy \\(B\\) of the undilute cloud air:\n\\[\\frac{\\delta M}{M_b} = \\frac{|\\delta B| + \\Lambda \\delta p}{\\sum_{i=1}^N [|\\delta B| + \\Lambda \\delta p]}\\]\nAir mixed into the cloud forms a spectrum of mixtures. Each mixture's fate is determined by its own buoyancy: * Positively buoyant mixtures continue to ascend (entrainment). * Negatively buoyant mixtures descend and eventually leave the cloud (detrainment).\n\n\nMicrophysics and Precipitation\nThe scheme converts cloud water to precipitation using a temperature-dependent threshold \\(l_c\\):\n\\[l_c = l_0 \\left(1 - \\frac{T}{T_{crit}}ight)\\]\nwhere \\(l_0\\) is the warm-cloud autoconversion threshold and \\(T_{crit}\\) is a critical temperature (typically -55°C) below which all cloud water is converted to precipitation.\n\n\nUnsaturated Downdrafts\nPrecipitation falling through unsaturated air evaporates, driving a hydrostatic downdraft. This downdraft transports heat and moisture into the subcloud layer and enhances surface fluxes by increasing the effective surface wind speed.\n\n\n\nImplementation Details\n\n\n\nThe implementation in climt (both the Fortran-wrapped and the pure Python versions) follows these logical steps:\n\nThermodynamics: Calculate profiles of Enthalpy (\\(h\\)), Moist Static Energy (\\(h_m\\)), and Virtual Temperature (\\(T_v\\)).\nParcel Lifting (TLIFT): Iteratively solve for the temperature and moisture of an undilute parcel lifted from the level of maximum MSE.\nMixing Matrices: Compute the \\(SIJ\\) (mixing fraction) and \\(MENT\\) (entrainment flux) matrices to determine mass exchange at every level.\nDowndraft Loop: Integrate downward from the highest level of positive CAPE to find the properties of the precipitating downdraft.\nTendencies: Calculate the net impact on grid-scale Temperature, Moisture, and Momentum.\nConservation: Apply a final adjustment to ensure exact column enthalpy and momentum conservation.",
+    "crumbs": [
+      "User Guide",
+      "Components",
+      "Emanuel convection"
+    ]
+  },
+  {
+    "objectID": "user-guide/configuration.html",
+    "href": "user-guide/configuration.html",
+    "title": "Configuration",
+    "section": "",
+    "text": "A typical climate model allows the user the following kinds of configuration:\nClimate models can be configured in many ways, including hard coded configurations, namelists, shell environment variables. These diverse ways of configuring a climate model make it difficult to keep track of all configurations and changes made.\nclimt aims to keep all configuration in the main run script, but separated logically to ensure the script is still intuitive to read.",
+    "crumbs": [
+      "User Guide",
+      "Configuration"
+    ]
+  },
+  {
+    "objectID": "user-guide/configuration.html#algorithmic-configuration",
+    "href": "user-guide/configuration.html#algorithmic-configuration",
+    "title": "Configuration",
+    "section": "Algorithmic Configuration",
+    "text": "Algorithmic Configuration\nConfiguring the algorithm used by each component is done by various keyword arguments passed to the component while creating it. See, for example, the documentation for climt.RRTMGShortwave.",
+    "crumbs": [
+      "User Guide",
+      "Configuration"
+    ]
+  },
+  {
+    "objectID": "user-guide/configuration.html#memoryarray-configuration",
+    "href": "user-guide/configuration.html#memoryarray-configuration",
+    "title": "Configuration",
+    "section": "Memory/Array Configuration",
+    "text": "Memory/Array Configuration\nclimt does not yet support MPI, so there is no API yet to handle distributed arrays. However, the shape of arrays used by a model can be set while calling climt.get_default_state. See, for example, the configuration of arrays in a GCM.",
+    "crumbs": [
+      "User Guide",
+      "Configuration"
+    ]
+  },
+  {
+    "objectID": "user-guide/configuration.html#physical-configuration",
+    "href": "user-guide/configuration.html#physical-configuration",
+    "title": "Configuration",
+    "section": "Physical Configuration",
+    "text": "Physical Configuration\nclimt provides an interface to set and reset constants required by various components. The constants are put into different categories (boltzmann_constant is a 'physical constant' whereas planetary_rotation_rate is a 'planetary constant', for example).\nThe constants can be reset to their default values so that climt is in a known state at the end of a simulation. In the future, climt will provide a context manager to clean up modified constants at the end of a run.\nYou can read more about this functionality in utility_functions.",
+    "crumbs": [
+      "User Guide",
+      "Configuration"
+    ]
+  },
+  {
+    "objectID": "user-guide/configuration.html#interfacial-configuration",
+    "href": "user-guide/configuration.html#interfacial-configuration",
+    "title": "Configuration",
+    "section": "Interfacial Configuration",
+    "text": "Interfacial Configuration\nWrappers are the preferred way of changing the inputs or outputs of a component to make it apparently work in a different way.\n\nPiecewise constant output: Computationally expensive modules like radiative transfer are sometimes called only once every few timesteps, and the same values is used for the intermediate timesteps of a model. For example a GCM with a time step of 10 minutes might only call radiation after 1 hour of model time has elapsed. To allow for such behaviour, sympl.UpdateFrequencyWrapper can be used. See how this can be used practically in this example.\nTendencyComponent version: Spectral dynamical cores step the model forward in spectral space, and therefore, they do not play well with Stepper components that step forward the model in grid space. Typically, this is handled by finite differencing the output of Stepper components and providing them as time tendencies. Stepper components can be wrapped with sympl.TimeDifferencingWrapper which returns a component which provides the time differenced tendencies. The time differencing is done using a first order scheme:\n\\(\\frac{dX}{dt} = (X_{out} - X_{in})/\\delta t\\).\nSee how this is used in the Grey GCM.\nScaled version: Very often, we perform experiments where we want to study the sensitivity of the simulation to a particular quantity or the effect of a certain quantity on the output (mechanism denial). This is in some instances done by scaling the quantity or setting it to zero (which is also a scaling). To allow for this kind of modification, sympl.ScalingWrapper can be used. This is a method available to all kinds of components (Stepper, TendencyComponent, etc.,). See the documentation for this method in the description of the base components in component_list.",
+    "crumbs": [
+      "User Guide",
+      "Configuration"
+    ]
+  },
+  {
+    "objectID": "user-guide/configuration.html#compositional-configuration",
+    "href": "user-guide/configuration.html#compositional-configuration",
+    "title": "Configuration",
+    "section": "Compositional Configuration",
+    "text": "Compositional Configuration\nThis kind of configuration will allow the automatic building of models given certain components selected by the user. Currently, the user has to write the script to build the model and run it. It is clear that a lot of this code is repetitive and can be replaced by an entity (Which will be called Federation).\n\nThis functionality is currently unavailble, and will be present in a future version of climt.",
+    "crumbs": [
+      "User Guide",
+      "Configuration"
+    ]
+  },
+  {
+    "objectID": "user-guide/component_types.html",
+    "href": "user-guide/component_types.html",
+    "title": "Component types",
+    "section": "",
+    "text": "Deriving from Sympl, most components in climt are either TendencyComponent, DiagnosticComponent, ImplicitTendencyComponent or Stepper.\n\nTendencyComponent takes the model state as input and returns tendencies and optional diagnostics. A radiation component is a good example of such components: any radiation component returns the heating rate of each layer of the atmosphere (in \\(degK/s\\))\nDiagnosticComponent takes the model state as input and returns some other diagnostic quantities. An example would be a component that takes the model state and returns the optical depth.\nStepper takes the model state, and returns new values for some some quantities in the model state. A dynamical core is a good example, which returns new values of winds, temperature and pressure.\nImplicitTendencyComponent takes the model state and outputs tendencies (like a TendencyComponent) but require the model timestep (like a Stepper) for various reasons, including to ensure that a vertical CFL criterion is met.\n\nYou can read more about this schema of model components in Sympl's documentation.",
+    "crumbs": [
+      "User Guide",
+      "Component types"
+    ]
+  },
+  {
+    "objectID": "get-started/quickstart.html",
+    "href": "get-started/quickstart.html",
+    "title": "Quickstart",
+    "section": "",
+    "text": "Let us start with a simple climt model which is not very useful, but helps illustrate how to use climt:\n\npython\nimport climt\n# Create some components radiation = climt.GrayLongwaveRadiation()\nsurface = climt.SlabSurface()\n# Get a state dictionary filled with required quantities # for the components to run state = climt.get_default_state([radiation, surface])\n# Run components tendencies, diagnostics = radiation(state)\n# See output tendencies.keys() tendencies['air_temperature']\n\nHere, all the essential aspects of creating and running a model in climt are present:\n\nImport the climt package\nCreate one or many components\nCreate a state dictionary using get_default_state\nRun the components\nDo something with the output\n\nVariables radiation and surface are two components that we create. All climt components take a lot of optional arguments: However, by design, the default options (which are used if you don't specify any arguments) are meant to be scientifically meaningful.\nThe variables state, tendencies and diagnostics are dictionaries which contain quantities which act either as inputs to components or outputs from components.\nThe function get_default_state(), if called only with a list of components, will provide a set of quantities which represent a single column of the atmosphere. These default values may or may not be meaningful in your context, so it is best to see what they are and change them according to your needs.\n\nThe square brackets are required in the call to get_default_state, even if it is one component: climt.get_default_state([radiation]) is the correct syntax.\n\nBuilding more sophisticated models and running them is merely an extended version of the above simple example. climt makes heavy use of Sympl, and knowledge of Sympl is necessary to use climt to its full capabilities. So, do go through Sympl's docs!",
+    "crumbs": [
+      "Get Started",
+      "Quickstart"
+    ]
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "climt",
@@ -26,6 +321,727 @@
     "title": "climt",
     "section": "Quick links",
     "text": "Quick links\n\nGitHub repository\nFirst experiment: building a longwave scheme that rivals RRTMG"
+  },
+  {
+    "objectID": "get-started/installation.html",
+    "href": "get-started/installation.html",
+    "title": "Installation",
+    "section": "",
+    "text": "The GFS dynamical core has been made into a seperate package called gfs_dynamical_core for ease of maintenance.\n\nIf you need the dynamical core, please install this package from source or directly using pip. Doing this will automatically install climt as well.\n$ pip install gfs_dynamical_core\nYou can install climt by simply typing\n$ pip install climt\nThis is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with sudo. This command should work on Linux, Mac and Windows. For Mac and Windows, it is recommended to use the anaconda python distribution to make installation simpler.\n\nIf you are not using Anaconda, please ensure you have the libpython library installed. See the next section for instructions to install libpython.\n\nSince by default pip attempts to install a binary wheel, you won't need a compiler on your system.\nIf you don't have pip installed, this Python installation guide can guide you through the process.",
+    "crumbs": [
+      "Get Started",
+      "Installation"
+    ]
+  },
+  {
+    "objectID": "get-started/installation.html#stable-release",
+    "href": "get-started/installation.html#stable-release",
+    "title": "Installation",
+    "section": "",
+    "text": "The GFS dynamical core has been made into a seperate package called gfs_dynamical_core for ease of maintenance.\n\nIf you need the dynamical core, please install this package from source or directly using pip. Doing this will automatically install climt as well.\n$ pip install gfs_dynamical_core\nYou can install climt by simply typing\n$ pip install climt\nThis is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with sudo. This command should work on Linux, Mac and Windows. For Mac and Windows, it is recommended to use the anaconda python distribution to make installation simpler.\n\nIf you are not using Anaconda, please ensure you have the libpython library installed. See the next section for instructions to install libpython.\n\nSince by default pip attempts to install a binary wheel, you won't need a compiler on your system.\nIf you don't have pip installed, this Python installation guide can guide you through the process.",
+    "crumbs": [
+      "Get Started",
+      "Installation"
+    ]
+  },
+  {
+    "objectID": "get-started/installation.html#installing-from-source",
+    "href": "get-started/installation.html#installing-from-source",
+    "title": "Installation",
+    "section": "Installing from source",
+    "text": "Installing from source\nThe sources for climt can be downloaded from the Github repo.\nYou can either clone the public repository:\n$ git clone git://github.com/CliMT/climt\nOr download the tarball:\n$ curl  -OL https://github.com/CliMT/climt/tarball/master\nOnce you have a copy of the source, you can install it with:\n$ pip install -r requirements_dev.txt\n$ python setup.py install\nBoth commands may require the use of sudo.\n\nDependencies for source installations\nclimt depends on some easily installable libraries. For an installation from source, it also requires that C and fortran compilers be installed.\nOn Ubuntu Linux, for example, these dependencies can be installed by:\n$ sudo apt-get install gcc\n$ sudo apt-get install gfortran\n$ sudo apt-get install python-dev\n$ sudo pip install -U cython\n$ sudo pip install -U numpy\nuse pip3 and python3-dev if you use Python 3.\nOn Mac OSX, it is recommended that you use anaconda as your python distribution. This will eliminate the need to install cython, numpy and python-dev. Once you have anaconda installed, you will need to do the following:\n$ brew install gcc\n$ export CC=gcc-x\n$ export FC=gfortran-x\nWhere gcc-x,gfortran-x are the names of the C,Fortran compilers that Homebrew installs. Exporting the name of the compiler is essential on Mac since the default compiler that ships with Mac (called gcc, but is actually a different compiler) cannot compile OpenMP programs, like the dynamical core in climt.",
+    "crumbs": [
+      "Get Started",
+      "Installation"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html",
+    "href": "user-guide/authors.html",
+    "title": "Authors",
+    "section": "",
+    "text": "Rodrigo Caballero &lt;rodrigo.caballero@misu.su.se&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html#original-creator",
+    "href": "user-guide/authors.html#original-creator",
+    "title": "Authors",
+    "section": "",
+    "text": "Rodrigo Caballero &lt;rodrigo.caballero@misu.su.se&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html#development-lead",
+    "href": "user-guide/authors.html#development-lead",
+    "title": "Authors",
+    "section": "Development Lead",
+    "text": "Development Lead\n\nJoy Monteiro &lt;joy.monteiro@misu.su.se&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html#contributors",
+    "href": "user-guide/authors.html#contributors",
+    "title": "Authors",
+    "section": "Contributors",
+    "text": "Contributors\n\nJeremy McGibbon &lt;mcgibbon@uw.edu&gt;\nSergey Kosukhin &lt;sergey.kosukhin@mpimet.mpg.de&gt;\nSally Dacie &lt;sally.dacie@mpimet.mpg.de&gt;\nRaymond Pierrehumbert &lt;raymond.pierrehumbert@physics.ox.ac.uk&gt;\nDargan Frierson &lt;dargan@atmos.washington.edu&gt;\nJonathan Mitchell &lt;jonmitch@ucla.edu&gt;\nSuhas D L &lt;suhasd@iisc.ac.in&gt;\nAbel Shibu &lt;abel.shibu@students.iiserpune.ac.in&gt;\nMonali Vadje &lt;monali.sv4@gmail.com&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "user-guide/components.html",
+    "href": "user-guide/components.html",
+    "title": "Built-in components",
+    "section": "",
+    "text": "This page documents the different components available through climt.",
+    "crumbs": [
+      "User Guide",
+      "Built-in components"
+    ]
+  },
+  {
+    "objectID": "user-guide/components.html#radiation",
+    "href": "user-guide/components.html#radiation",
+    "title": "Built-in components",
+    "section": "Radiation",
+    "text": "Radiation\n\nRRTMGLongwave RRTMGLongwave.__call__\nRRTMGShortwave RRTMGShortwave.__call__\nGrayLongwaveRadiation GrayLongwaveRadiation.__call__\nFrierson06LongwaveOpticalDepth Frierson06LongwaveOpticalDepth.__call__\nInstellation Instellation.__call__",
+    "crumbs": [
+      "User Guide",
+      "Built-in components"
+    ]
+  },
+  {
+    "objectID": "user-guide/components.html#convection",
+    "href": "user-guide/components.html#convection",
+    "title": "Built-in components",
+    "section": "Convection",
+    "text": "Convection\n\nEmanuelConvection EmanuelConvection.__call__\nDryConvectiveAdjustment DryConvectiveAdjustment.__call__",
+    "crumbs": [
+      "User Guide",
+      "Built-in components"
+    ]
+  },
+  {
+    "objectID": "user-guide/components.html#surface-processes",
+    "href": "user-guide/components.html#surface-processes",
+    "title": "Built-in components",
+    "section": "Surface Processes",
+    "text": "Surface Processes\n\nSimplePhysics SimplePhysics.__call__\nSlabSurface SlabSurface.__call__\nBucketHydrology BucketHydrology.__call__",
+    "crumbs": [
+      "User Guide",
+      "Built-in components"
+    ]
+  },
+  {
+    "objectID": "user-guide/components.html#ice-and-snow",
+    "href": "user-guide/components.html#ice-and-snow",
+    "title": "Built-in components",
+    "section": "Ice and Snow",
+    "text": "Ice and Snow\n\nIceSheet IceSheet.__call__",
+    "crumbs": [
+      "User Guide",
+      "Built-in components"
+    ]
+  },
+  {
+    "objectID": "user-guide/components.html#test-cases",
+    "href": "user-guide/components.html#test-cases",
+    "title": "Built-in components",
+    "section": "Test Cases",
+    "text": "Test Cases\n\nHeldSuarez HeldSuarez.__call__\nDcmipInitialConditions DcmipInitialConditions.__call__",
+    "crumbs": [
+      "User Guide",
+      "Built-in components"
+    ]
+  },
+  {
+    "objectID": "user-guide/contributing.html",
+    "href": "user-guide/contributing.html",
+    "title": "Contributing",
+    "section": "",
+    "text": "Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.\nYou can contribute in many ways:",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Contributing"
+    ]
+  },
+  {
+    "objectID": "user-guide/contributing.html#types-of-contributions",
+    "href": "user-guide/contributing.html#types-of-contributions",
+    "title": "Contributing",
+    "section": "Types of Contributions",
+    "text": "Types of Contributions\n\nUsage in Publications\nIf you use CliMT to perform research, your publication is a valuable resource for others looking to learn the ways they can leverage CliMT's capabilities. If you have used CliMT in a publication, please let us know so we can add it to the list.\n\n\nPresenting CliMT to Others\nCliMT is meant to be an accessible, community-driven model. You can help the community of users grow and be more effective in many ways, such as:\n\nRunning a workshop\nOffering to be a resource for others to ask questions\nPresenting research that uses CliMT\n\nIf you or someone you know is contributing to the CliMT community by presenting it or assisting others with the model, please let us know so we can add that person to the contributors list.\n\n\nReport Bugs\nReport bugs at https://github.com/CliMT/climt/issues.\nIf you are reporting a bug, please include:\n\nYour operating system name and version.\nAny details about your local setup that might be helpful in troubleshooting.\nDetailed steps to reproduce the bug.\n\n\n\nFix Bugs\nLook through the GitHub issues for bugs. Anything tagged with \"bug\" and \"help wanted\" is open to whoever wants to implement it.\n\n\nImplement Features\nLook through the GitHub issues for features. Anything tagged with \"enhancement\" and \"help wanted\" is open to whoever wants to implement it.\n\n\nWrite Documentation\nCliMT could always use more documentation. You could:\n\nClean up or add to the official CliMT docs and docstrings.\nWrite useful and clear examples that are missing from the examples folder.\nCreate a Jupyter notebook that uses CliMT and share it with others.\nPrepare reproducible model scripts to distribute with a paper using CliMT.\nAnything else that communicates useful information about CliMT.\n\n\n\nSubmit Feedback\nThe best way to send feedback is to file an issue at https://github.com/CliMT/climt/issues.\nIf you are proposing a feature:\n\nExplain in detail how it would work.\nKeep the scope as narrow as possible, to make it easier to implement.\nRemember that this is a volunteer-driven project, and that contributions are welcome :)",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Contributing"
+    ]
+  },
+  {
+    "objectID": "user-guide/contributing.html#get-started",
+    "href": "user-guide/contributing.html#get-started",
+    "title": "Contributing",
+    "section": "Get Started!",
+    "text": "Get Started!\nReady to contribute? Here's how to set up climt for local development.\n\nFork the climt repo on GitHub.\nClone your fork locally:\n$ git clone git@github.com:your_name_here/climt.git\nInstall your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development:\n$ mkvirtualenv climt\n$ cd climt/\n$ python setup.py develop\nCreate a branch for local development:\n$ git checkout -b name-of-your-bugfix-or-feature\nNow you can make your changes locally.\nWhen you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox:\n$ flake8 climt tests\n$ python setup.py test or py.test\n$ tox\nTo get flake8 and tox, just pip install them into your virtualenv.\nCommit your changes and push your branch to GitHub:\n$ git add .\n$ git commit -m \"Your detailed description of your changes.\"\n$ git push origin name-of-your-bugfix-or-feature\nSubmit a pull request through the GitHub website.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Contributing"
+    ]
+  },
+  {
+    "objectID": "user-guide/contributing.html#pull-request-guidelines",
+    "href": "user-guide/contributing.html#pull-request-guidelines",
+    "title": "Contributing",
+    "section": "Pull Request Guidelines",
+    "text": "Pull Request Guidelines\nBefore you submit a pull request, check that it meets these guidelines:\n\nThe pull request should include tests.\nIf the pull request adds functionality, the docs should be updated. Put your new functionality into a function with a docstring, and add the feature to the list in README.rst.\nThe pull request should work for Python 2.7, 3.4 and 3.5. Check https://travis-ci.org/CliMT/climt/pull_requests and make sure that the tests pass for all supported Python versions.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Contributing"
+    ]
+  },
+  {
+    "objectID": "user-guide/contributing.html#style",
+    "href": "user-guide/contributing.html#style",
+    "title": "Contributing",
+    "section": "Style",
+    "text": "Style\nIn the CliMT code, we follow PEP 8 style guidelines (tested by flake8). You can test style by running \"tox -e flake8\" from the root directory of the repository. There are some exceptions to PEP 8:\n\nAll lines should be shorter than 80 characters. However, lines longer than this are permissible if this increases readability (particularly for lines representing complicated equations).\nSpace should be assigned around arithmetic operators in a way that maximizes readability. For some cases, this may mean not including whitespace around certain operations to make the separation of terms clearer, e.g. \"Cp*T + g*z + Lv*q\".\nWhile state dictionary keys are full and verbose, within components they may be assigned to shorter names if it makes the code clearer.\nWe can take advantage of known scientific abbreviations for quantities within components (e.g. \"T\" for \"air_temperature\") even thought they do not follow pothole_case.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Contributing"
+    ]
+  },
+  {
+    "objectID": "user-guide/contributing.html#tips",
+    "href": "user-guide/contributing.html#tips",
+    "title": "Contributing",
+    "section": "Tips",
+    "text": "Tips\nTo run a subset of tests:\n$ py.test tests.test_timestepping",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Contributing"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html",
+    "href": "user-guide/history.html",
+    "title": "Changelog",
+    "section": "",
+    "text": "Removed dycore to move it to independent package",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.17.0",
+    "href": "user-guide/history.html#v.0.17.0",
+    "title": "Changelog",
+    "section": "",
+    "text": "Removed dycore to move it to independent package",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.15",
+    "href": "user-guide/history.html#v.0.16.15",
+    "title": "Changelog",
+    "section": "v.0.16.15",
+    "text": "v.0.16.15\n\nMove to Github Actions tentatively finished!",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.11",
+    "href": "user-guide/history.html#v.0.16.11",
+    "title": "Changelog",
+    "section": "v.0.16.11",
+    "text": "v.0.16.11\n\nNew component BucketHydrology that implements Manabe first generation land model\nBucketHydrology calculates the sensible and latent heat flux within the component\nConservation test for the component also added\nMoving CI to Github Actions",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.8",
+    "href": "user-guide/history.html#v.0.16.8",
+    "title": "Changelog",
+    "section": "v.0.16.8",
+    "text": "v.0.16.8\n\nFix timeout for all MAC builds",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.6",
+    "href": "user-guide/history.html#v.0.16.6",
+    "title": "Changelog",
+    "section": "v.0.16.6",
+    "text": "v.0.16.6\n\nPrevent MAC OS builds from timing out",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.5",
+    "href": "user-guide/history.html#v.0.16.5",
+    "title": "Changelog",
+    "section": "v.0.16.5",
+    "text": "v.0.16.5\n\nFix formatting errors which prevent pypi deployment",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.4",
+    "href": "user-guide/history.html#v.0.16.4",
+    "title": "Changelog",
+    "section": "v.0.16.4",
+    "text": "v.0.16.4\n\nFix MCICA for the shortwave component of RRTMG\nRevise random number generation for MCICA\nImprovement of the user interface to control MCICA",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.3",
+    "href": "user-guide/history.html#v.0.16.3",
+    "title": "Changelog",
+    "section": "v.0.16.3",
+    "text": "v.0.16.3\n\nupdate numpy requirement to avoid binary incompatibility error\nFix error in documentation",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.2",
+    "href": "user-guide/history.html#v.0.16.2",
+    "title": "Changelog",
+    "section": "v.0.16.2",
+    "text": "v.0.16.2\n\nFix wheel build on Mac",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.16.1",
+    "href": "user-guide/history.html#v.0.16.1",
+    "title": "Changelog",
+    "section": "v.0.16.1",
+    "text": "v.0.16.1\n\nFixed issue with Mac build\nFew changes in the dry convection component. Significantly improves the performance.\nChanged logo!\nFixed failing docs build",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v0.16.0",
+    "href": "user-guide/history.html#v0.16.0",
+    "title": "Changelog",
+    "section": "v0.16.0",
+    "text": "v0.16.0\n\nAdded some documentation for using RRTMG with McICA\nCI Testing for Mac and py37 added.\nRefactored initialisation code\nEnable the McICA version of RRTMG Longwave for consistency with the Shortwave component.\nFix bugs in IceSheet\nAdd tests to verify conservation of quantities\nFix bugs in initialisation\nFix energy conservation in surface flux scheme\nEnable the McICA version of RRTMG Shortwave, so that partial cloud fractions can be used.\nAdd GMD example scripts to repository.\nFix docs to reflect API changes after refactor.\nFix wrong initialisation to use sigma values instead of pressure values of optical depth for GrayLongwaveRadiation",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#breaking-changes",
+    "href": "user-guide/history.html#breaking-changes",
+    "title": "Changelog",
+    "section": "Breaking Changes",
+    "text": "Breaking Changes\n\nThe flux outputs of GrayLongwaveRadiation have been renamed to eliminate on_interface_levels to keep consistency with other components.\nAll arrays are now 3/2d by default based on their expected dimensions.\nhorizontal dimensions are now lon, lat, but inputs used by components remain the same (latitude, longitude).",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.14.8",
+    "href": "user-guide/history.html#v.0.14.8",
+    "title": "Changelog",
+    "section": "v.0.14.8",
+    "text": "v.0.14.8\nMany of the changes in this version come from changes in Sympl 0.4.0. We recommend reading those changes in the Sympl documentation.\n\nUpdated component APIs to work with Sympl 0.4.0\nMany components which previously required horizontal dimensions now use wildcard matches for column dimensions.\nSwitched many print statements to logging calls.\nFixed bugs in some components",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#breaking-changes-1",
+    "href": "user-guide/history.html#breaking-changes-1",
+    "title": "Changelog",
+    "section": "Breaking Changes",
+    "text": "Breaking Changes\n\nget_constant and set_constant have been removed, use the ones in Sympl.\nEmanuel convection scheme can no longer be set to perform dry adiabatic adjustment to the boundary layer. This has been implemented in a separate component.\nClimtPrognostic, ClimtImplicitPrognostic, ClimtDiagnostic, ClimtImplicit have been removed. Use the base types in Sympl.\nState initialization has been entirely re-worked. get_default_state now takes in an optional grid state instead of options to do with the state grid. A function get_grid is provided which can create a grid state, or one can be created manually. A grid state is a state containing air pressure and sigma on mid and interface levels, as well as surface pressure.\nReplaced references to \"thermal_capacity\" with references to \"heat_capacity\" in component quantity names.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.14.7",
+    "href": "user-guide/history.html#v.0.14.7",
+    "title": "Changelog",
+    "section": "v.0.14.7",
+    "text": "v.0.14.7\n\nFix issue with pip v10 and pandas 0.22 conflicts",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.14.3",
+    "href": "user-guide/history.html#v.0.14.3",
+    "title": "Changelog",
+    "section": "v.0.14.3",
+    "text": "v.0.14.3\n\nFix release issue because of pip API change",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.14.1",
+    "href": "user-guide/history.html#v.0.14.1",
+    "title": "Changelog",
+    "section": "v.0.14.1",
+    "text": "v.0.14.1\n\nFix appveyor fail due to pip changes",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.14.0",
+    "href": "user-guide/history.html#v.0.14.0",
+    "title": "Changelog",
+    "section": "v.0.14.0",
+    "text": "v.0.14.0\n\nFixed broken version numbers",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.12.0",
+    "href": "user-guide/history.html#v.0.12.0",
+    "title": "Changelog",
+    "section": "v.0.12.0",
+    "text": "v.0.12.0\n\nnew release to fix version numbers and create zenodo ID",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.9.4",
+    "href": "user-guide/history.html#v.0.9.4",
+    "title": "Changelog",
+    "section": "v.0.9.4",
+    "text": "v.0.9.4\n\nAdded attributes to inputs/outputs/ etc., to work with ScalingWrapper Added tests as well.\nAdded tests for constants functions\nFixed requirements to ensure this version of climt installs the correct versions of sympl and numpy.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.9.3",
+    "href": "user-guide/history.html#v.0.9.3",
+    "title": "Changelog",
+    "section": "v.0.9.3",
+    "text": "v.0.9.3\n\nReleased because of a labelling issue. See 0.9.2 for details.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.9.2",
+    "href": "user-guide/history.html#v.0.9.2",
+    "title": "Changelog",
+    "section": "v.0.9.2",
+    "text": "v.0.9.2\n\nUpdated documentation\nCleaned up examples\nAdded (*)_properties as a property to all components\nThe gas constant for dry air in the Emanuel scheme is now renamed Rdair\nRRTMG LW and SW are now OpenMP parallel\nAdded Instellation component to calculate zenith angle\nAdded tests to increase coverage\nNew constants handling functionality added\nTravis builds now use stages\nAppveyor CI up and running\nPre-installation of cython and numpy no longer necessary for source builds\nAdded snow-ice component\nOzone profiles do not need to be specified externally\nNow also tested on Python 3.6",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#breaking-changes-2",
+    "href": "user-guide/history.html#breaking-changes-2",
+    "title": "Changelog",
+    "section": "Breaking Changes",
+    "text": "Breaking Changes\n\nAPI for constants setting changed to set_constant_from_dict and add_constants_from_dict\nGfsDynamicalCore renamed to GFSDynamicalCore for consistency\nget_prognostic_version method of ClimtImplicit renamed to prognostic_version, and no longer accepts timestep as an argument. The current timestep should be set in ClimtImplicit.current_time_step during each iteration.\nRRTMGShortwave now uses sympl's solar constant by default instead of from fortran.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.9.1",
+    "href": "user-guide/history.html#v.0.9.1",
+    "title": "Changelog",
+    "section": "v.0.9.1",
+    "text": "v.0.9.1\n\nHeld-Suarez and moist GCM with grey radiation work!\nAdded DCMIP initial conditions, test 4 tried out.\nDynamical core integrated now.\nBIG change in the build system. Tests pass on Mac as well\nArrays can now have arbitrary dtype (to use qualitative, string, quantities)\nAdded Emanuel Convection, surface energy balance model and ice sheet energy balance\n2D coordinates are now supported for horizontal coordinates\nReplaced create_output_arrays() with a more general get_state_dict_for() and get_numpy_arrays_from_state() combination.\nState arrays now have coordinates\nUpdated documentation\nRTD finally working, phew!\nAdded RRTMG Longwave, Simple Physics\nAdded helper functions to reduce boilerplate code in components",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#breaking-changes-3",
+    "href": "user-guide/history.html#breaking-changes-3",
+    "title": "Changelog",
+    "section": "Breaking Changes",
+    "text": "Breaking Changes",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#latest",
+    "href": "user-guide/history.html#latest",
+    "title": "Changelog",
+    "section": "Latest",
+    "text": "Latest\n\nmethod to obtain piecewise constant prognostic has been renamed to piecewise_constant_version\nOzone profile has been modified\nHeating rate for RRTMG top-of-atmosphere is no longer manually set to zero\nComponents no longer accept constants during initialisation. All constant handling is done internally.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/history.html#v.0.9",
+    "href": "user-guide/history.html#v.0.9",
+    "title": "Changelog",
+    "section": "v.0.9",
+    "text": "v.0.9\n\nSlabSurface no longer uses depth_slab_surface as input\nchanged order of outputs of GfsDynamicalCore and SimplePhysics to conform to TimeStepper order of diagnostics, new_state\nget_default_state now accepts mid_levels and interface_levels instead of z to specify vertical coordinates.\nmass_to_volume_mixing_ratio now uses numpy arrays instead of DataArrays.",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Changelog"
+    ]
+  },
+  {
+    "objectID": "user-guide/interaction.html",
+    "href": "user-guide/interaction.html",
+    "title": "Interacting with climt",
+    "section": "",
+    "text": "As we saw in the Quickstart section, climt has two kinds of entities for the user to interact with: model components and model state. Here, we will take a closer look at both these elements.",
+    "crumbs": [
+      "User Guide",
+      "Interacting with climt"
+    ]
+  },
+  {
+    "objectID": "user-guide/interaction.html#model-state",
+    "href": "user-guide/interaction.html#model-state",
+    "title": "Interacting with climt",
+    "section": "Model State",
+    "text": "Model State\nThe model state is a dictionary whose keys are names of quantities and values are sympl DataArrays. The sympl DataArray is a thin wrapper over the xarray DataArray that makes it units aware. To ensure model scripts are readable not just by specialists, names of quantities use the descriptive CF Convention. Only in the case where the CF Convention names are really unwieldy, like air_temperature_at_effective_cloud_top_defined_by_infrared_radiation for example, we use more convenient names.\nDataArrays are a more human-friendly way of handling numerical arrays. DataArrays label the dimensions of an array and provide various mathematical functions which can be directly applied to arrays. sympl DataArrays in addition allow conversion between units, a feature required to allow interoperability between components which expect inputs in different units.\nLet's create a 3-d model state to see how useful DataArrays are:\n\npython\nimport climt import matplotlib.pyplot as plt import numpy as np\n# Create some components radiation = climt.GrayLongwaveRadiation() convection = climt.DryConvectiveAdjustment()\n\nWe need to tell climt what the model dimensions are. This is done by the get_grid function. This function takes three arguments which are the number of grid points in the three directions, and provides a state dictionary containing the definition of a grid.\nPassing this grid state dictionary onto get_default_state makes climt aware of the dimensions required by the model:\n\npython\ngrid = climt.get_grid(ny=3, nz=5)\n# Get a state dictionary filled with required quantities # for the components to run state = climt.get_default_state([radiation, convection], grid_state=grid)\nstate['air_temperature']\n\nclimt does not interpret any of the dimension attributes in state quantities other than units. The values and labels of coordinates are mainly for users and components. For instance, SimplePhysics requires that the y dimension be called latitude. So, any model that uses SimplePhysics has to label one of the dimensions as latitude.\nAs you can see, air_temperature has\n\na uniform value of 290\ncoordinates of latitude and mid_levels\nunits of degK, which is the notation used in climt (and Sympl) for degrees Kelvin.\n\nIt is also fairly easy to change units. The .to_units() method can be used as below to return a DataArray with the equivalent temperature in degrees Farenheit:\n\npython\nstate['air_temperature'].to_units('degF')\n\n\nclimt always names the vertical coordinate as mid_levels or interface_levels, however, the state dictionary will contain a key corresponding to the name of the vertical coordinate specified by get_grid.\n\nAs mentioned previously, DataArrays are a user-friendly way of handling numerical or numpy arrays. The numpy array underlying any DataArray is easily accessed using the values attribute:\n\npython\ntype(state['air_temperature'].values)\n\nand can also be modified easily:\n\npython\nstate['air_temperature'].values[:] = 291\n\nThe right hand side can also be any numpy array, as long as it has the same dimensions (or can be broadcasted to the same dimensions) as the current numpy array.\n\nIt is recommended to use the syntax ...values[:] = ... rather than ...values = ..., as the former modifies the numpy array in-place. In either case, DataArrays check to ensure the dimensions (or shape) of the new data matches with the current dimensions.\n\nYou can perform any of the functions supported by xarray on the model state quantities.\n\npython\nstate['air_temperature'].sum()\n\nYou can also directly plot DataArrays:\n\npython\nstate['air_temperature'].plot()\n\nDataArrays are a very powerful way of dealing with array-oriented data, and you should read more about xarray, and not just for using climt!",
+    "crumbs": [
+      "User Guide",
+      "Interacting with climt"
+    ]
+  },
+  {
+    "objectID": "user-guide/interaction.html#model-components",
+    "href": "user-guide/interaction.html#model-components",
+    "title": "Interacting with climt",
+    "section": "Model Components",
+    "text": "Model Components\nComponents are representations of physical processes. You can see all available components in climt in the section component_list.\nAll components take some inputs from the model state, and return outputs or tendencies along with diagnostics (if any).\nDiagnostics are quantities computed while calculating outputs or tendencies. For example, a radiation component calculates heating rates. However, in the process of calculating these heating rates, it also calculates the radiative flux at each interface level.\n\npython\n# These are the tendencies returned by radiation radiation.tendency_properties\n# These are the diagnostics returned by radiation radiation.diagnostic_properties\n# These are the outputs returned by convection convection.output_properties\n# convection returns no diagnostics convection.diagnostic_properties\n\nNo component will return both outputs and tendencies. The tendency of a quantity \\(X\\) is given by \\(\\frac{dX}{dt}\\), and so the units of a quantity returned as a tendency will always have per second as as suffix: i.e, if a component is returning air_temperature as a tendency, then its units will be degK/s.",
+    "crumbs": [
+      "User Guide",
+      "Interacting with climt"
+    ]
+  },
+  {
+    "objectID": "user-guide/memory_management.html",
+    "href": "user-guide/memory_management.html",
+    "title": "Memory management",
+    "section": "",
+    "text": "If possible, you should try to be aware of when there are two code references to the same in-memory array. This can help avoid some common bugs. Let's start with an example. Say you create a ConstantTendencyComponent object like so:\n&gt;&gt;&gt; import numpy as np\n&gt;&gt;&gt; from climt import ConstantTendencyComponent, DataArray\n&gt;&gt;&gt; array = DataArray(\n        np.ones((5, 5, 10)),\n        dims=('lon', 'lat', 'lev'), attrs={'units': 'K/s'})\n&gt;&gt;&gt; tendencies = {'air_temperature': array}\n&gt;&gt;&gt; prognostic = ConstantTendencyComponent(tendencies)\nThis is all fine so far. But it's important to know that now array is the same array stored inside prognostic:\n&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})\n&gt;&gt;&gt; out_tendencies['air_temperature'] is array  # same place in memory\nTrue\nSo if you were to modify array, it would change the output given by prognostic:\n&gt;&gt;&gt; array[:] = array[:] * 5.\n&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})\n&gt;&gt;&gt; out_tendencies['air_temperature'] is array\nTrue\n&gt;&gt;&gt; np.all(out_tendencies['air_temperature'].values == array.values)\nTrue\nWhen in doubt, assume that any array you put into a component when it is initialized should not be modified any more, unless changing the values in the component is intentional. Below is some less (but potentially) useful information for those interested.\nIf instead of modifying array, you make a new array for the python variable array to refer to, it doesn't modify the array in prognostic:\n&gt;&gt;&gt; array = array * 5.\n&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})\n&gt;&gt;&gt; out_tendencies['air_temperature'] is array\nFalse\n&gt;&gt;&gt; np.all(out_tendencies['air_temperature'].values == array.values)\nFalse\nThis is because having the [:] on the left hand side of the assignment operator \\= tells python that you want to modify the existing memory of the array on the left hand side. More precisely, having array = tells python that you want to change what the variable array refers to, and set it to be the thing on the right hand side, while array[:] = tells python to call the __setitem__(key, value) method of array with the contents of the square parentheses as the key and the right hand side as the value.\nInterestingly, array = array * 5. has different behavior from array *= 5.. The first one will change what array refers to, as before, while the second one will modify array in-place without changing the reference. All similarly written operations (-=, +=, /=, etc.) are in-place operations. When you want to avoid copying data, array *= 5. is better since the values of the array will be modified where they already are in memory, instead of allocating an entirely new array.",
+    "crumbs": [
+      "User Guide",
+      "Memory management"
+    ]
+  },
+  {
+    "objectID": "user-guide/memory_management.html#arrays",
+    "href": "user-guide/memory_management.html#arrays",
+    "title": "Memory management",
+    "section": "",
+    "text": "If possible, you should try to be aware of when there are two code references to the same in-memory array. This can help avoid some common bugs. Let's start with an example. Say you create a ConstantTendencyComponent object like so:\n&gt;&gt;&gt; import numpy as np\n&gt;&gt;&gt; from climt import ConstantTendencyComponent, DataArray\n&gt;&gt;&gt; array = DataArray(\n        np.ones((5, 5, 10)),\n        dims=('lon', 'lat', 'lev'), attrs={'units': 'K/s'})\n&gt;&gt;&gt; tendencies = {'air_temperature': array}\n&gt;&gt;&gt; prognostic = ConstantTendencyComponent(tendencies)\nThis is all fine so far. But it's important to know that now array is the same array stored inside prognostic:\n&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})\n&gt;&gt;&gt; out_tendencies['air_temperature'] is array  # same place in memory\nTrue\nSo if you were to modify array, it would change the output given by prognostic:\n&gt;&gt;&gt; array[:] = array[:] * 5.\n&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})\n&gt;&gt;&gt; out_tendencies['air_temperature'] is array\nTrue\n&gt;&gt;&gt; np.all(out_tendencies['air_temperature'].values == array.values)\nTrue\nWhen in doubt, assume that any array you put into a component when it is initialized should not be modified any more, unless changing the values in the component is intentional. Below is some less (but potentially) useful information for those interested.\nIf instead of modifying array, you make a new array for the python variable array to refer to, it doesn't modify the array in prognostic:\n&gt;&gt;&gt; array = array * 5.\n&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})\n&gt;&gt;&gt; out_tendencies['air_temperature'] is array\nFalse\n&gt;&gt;&gt; np.all(out_tendencies['air_temperature'].values == array.values)\nFalse\nThis is because having the [:] on the left hand side of the assignment operator \\= tells python that you want to modify the existing memory of the array on the left hand side. More precisely, having array = tells python that you want to change what the variable array refers to, and set it to be the thing on the right hand side, while array[:] = tells python to call the __setitem__(key, value) method of array with the contents of the square parentheses as the key and the right hand side as the value.\nInterestingly, array = array * 5. has different behavior from array *= 5.. The first one will change what array refers to, as before, while the second one will modify array in-place without changing the reference. All similarly written operations (-=, +=, /=, etc.) are in-place operations. When you want to avoid copying data, array *= 5. is better since the values of the array will be modified where they already are in memory, instead of allocating an entirely new array.",
+    "crumbs": [
+      "User Guide",
+      "Memory management"
+    ]
+  },
+  {
+    "objectID": "user-guide/memory_management.html#dictionaries",
+    "href": "user-guide/memory_management.html#dictionaries",
+    "title": "Memory management",
+    "section": "Dictionaries",
+    "text": "Dictionaries\nUnlike arrays, the dictionary containers are copied when passed in. Copying dictionaries is fairly cheap, since the new dictionary will still refer to the same values (arrays) as before, and all that has to be copied is the key-value pairs:\n&gt;&gt;&gt; tendencies['new_quantity'] = array\n&gt;&gt;&gt; out_tendencies, out_diagnostics = prognostic({})\n&gt;&gt;&gt; 'new_quantity' in out_tendencies.keys()\nFalse",
+    "crumbs": [
+      "User Guide",
+      "Memory management"
+    ]
+  },
+  {
+    "objectID": "user-guide/realistic.html",
+    "href": "user-guide/realistic.html",
+    "title": "A realistic model",
+    "section": "",
+    "text": "As mentioned before, climt includes some components which returns the a new version of the model state, and some which return just tendencies.\nSince tendencies by themselves are not useful for much other than plotting, we need to couple them with numerical integration components to march the model forward in time. Again, we will use the grey radiation scheme as an example.\nThe following script is used to obtain the temperature profile of the atmosphere if no physical process other than radiation (specifically, grey gas radiation in this example) are present. The temperature profile obtained is called the radiative equilibrium profile.\nAs before, we will create the radiation component and the model state:\n\npython\nimport climt import matplotlib.pyplot as plt import numpy as np # Two new imports from sympl import AdamsBashforth from datetime import timedelta\n# Create some components radiation = climt.GrayLongwaveRadiation()\n# Get a state dictionary filled with required quantities # for the components to run state = climt.get_default_state([radiation])\n\nWe have two new imports, AdamsBashforth and timedelta. The former is a numerical integrator which will step the model forward in time, and the latter is a standard python module which will be used to represent the time step of the model.\nNow, to create the integrator and the timestep:\n\npython\nmodel_time_step = timedelta(hours=1) model = AdamsBashforth([radiation])\n\nWe now have a model ready to run! The integrator will return the new model state and any diagnostics that radiation has generated. We can then update the current model state with the new model state and continue to step the model forward in time:\n\npython\n\nfor step in range(10):\n\ndiagnostics, new_state = model(state, model_time_step) ''' Update state with diagnostics. This updated state can be saved if necessary ''' state.update(diagnostics) '''Update state quantities''' state.update(new_state) '''Update model time''' state['time'] += model_time_step '''See if the maximum temperature is changing''' print(state['time'], ': ', state['air_temperature'].max().values)\n\n\n\nAnd voila, we have a model that actually evolves over time! Many example scripts that illustrate standard model configurations used in climate modelling are available in the github repository. These scripts include examples which setup graphics to view the evolution of the model over time.\n\nA more user friendly API called Federation will be available in a later version of climt. However, setting up models is easy enough even without Federation once you get used to the workflow.",
+    "crumbs": [
+      "User Guide",
+      "A realistic model"
+    ]
+  },
+  {
+    "objectID": "user-guide/utilities.html",
+    "href": "user-guide/utilities.html",
+    "title": "Utilities",
+    "section": "",
+    "text": "This documents some utility functions available in climt. Most of the constants functionality is inherited from sympl.",
+    "crumbs": [
+      "User Guide",
+      "Utilities"
+    ]
+  },
+  {
+    "objectID": "user-guide/utilities.html#constants",
+    "href": "user-guide/utilities.html#constants",
+    "title": "Utilities",
+    "section": "Constants",
+    "text": "Constants\n\nlist_available_constants set_constants_from_dict",
+    "crumbs": [
+      "User Guide",
+      "Utilities"
+    ]
+  },
+  {
+    "objectID": "user-guide/utilities.html#miscellaneous",
+    "href": "user-guide/utilities.html#miscellaneous",
+    "title": "Utilities",
+    "section": "Miscellaneous",
+    "text": "Miscellaneous\n\nmass_to_volume_mixing_ratio get_interface_values",
+    "crumbs": [
+      "User Guide",
+      "Utilities"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/02-line-by-line.html",
+    "href": "radiative-transfer/02-line-by-line.html",
+    "title": "Chapter 2: Line-by-line physics",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 2: Line-by-line physics"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/04-correlated-k.html",
+    "href": "radiative-transfer/04-correlated-k.html",
+    "title": "Chapter 4: Correlated-k",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 4: Correlated-k"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/06-picket-fence.html",
+    "href": "radiative-transfer/06-picket-fence.html",
+    "title": "Chapter 6: The picket-fence model",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 6: The picket-fence model"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/08-multiplanet.html",
+    "href": "radiative-transfer/08-multiplanet.html",
+    "title": "Chapter 8: Switching planets",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Chapter 8: Switching planets"
+    ]
+  },
+  {
+    "objectID": "radiative-transfer/performance.html",
+    "href": "radiative-transfer/performance.html",
+    "title": "Performance",
+    "section": "",
+    "text": "Note\n\n\n\nThis chapter is being written. See the walkthrough index.",
+    "crumbs": [
+      "Radiative Transfer",
+      "Appendices",
+      "Performance"
+    ]
   },
   {
     "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html",
