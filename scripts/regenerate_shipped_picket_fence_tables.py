@@ -9,12 +9,16 @@ Run from the project root with an environment that has `exo_k` installed
     python scripts/regenerate_shipped_picket_fence_tables.py \\
         --chaverot-dir /Users/joymonteiro/github/chaverot/data/correlated-k_tables
 
-Each invocation writes six ``.nc`` files under
+Each invocation writes five ``.nc`` files under
 ``climt/_data/picket_fence/correlated_k/``:
 
-    earth_low_res_lw.nc   earth_low_res_sw.nc
-    mars_lw.nc            mars_sw.nc
-    venus_lw.nc           venus_sw.nc
+    earth_low_res_sw.nc
+    mars_lw.nc   mars_sw.nc
+    venus_lw.nc  venus_sw.nc
+
+The Earth LW table (``earth_low_res_lw.nc``) is built from HITRAN 2024 line
+data via ``scripts/generate_pf_tables_linepyline.py``; it is NOT regenerated
+by this script.
 
 This script is a thin wrapper around ``generate_picket_fence_tables.py`` — it
 just fixes the per-planet source file, band edges, g-point count, and mixture
@@ -86,55 +90,8 @@ GENERATOR = os.path.join(CLIMT_ROOT, "scripts", "generate_picket_fence_tables.py
 # The H2O VMR axis from the Chaverot Ktable5d is preserved in the output for
 # all three planets (runtime trilinear interpolation).
 RECIPES = [
-    # --- Earth LW: option B (CO2-isolating) ---
-    # Splits at 800 cm^-1 to separate the CO2 15um band (500-800) from the
-    # atmospheric window (800-1800). Better for present-day climate sensitivity.
-    {
-        "source": "Earth_376ppmCO2_R500_10-30k.ktable.SI.h5",
-        "output": "earth_low_res_lw.nc",
-        "kind": "lw",
-        "bands": "10,500,800,1800,3250",
-        "ngpt": 2,
-        "molar_mass": 0.028964,
-    },
-    # Earth LW option B at 4 and 8 g-points — for resolution convergence test.
-    {
-        "source": "Earth_376ppmCO2_R500_10-30k.ktable.SI.h5",
-        "output": "earth_low_res_lw_4gpt.nc",
-        "kind": "lw",
-        "bands": "10,500,800,1800,3250",
-        "ngpt": 4,
-        "molar_mass": 0.028964,
-    },
-    {
-        "source": "Earth_376ppmCO2_R500_10-30k.ktable.SI.h5",
-        "output": "earth_low_res_lw_8gpt.nc",
-        "kind": "lw",
-        "bands": "10,500,800,1800,3250",
-        "ngpt": 8,
-        "molar_mass": 0.028964,
-    },
-    # --- Earth LW: option D (H2O/hot-moist-optimised) ---
-    # Bands chosen to resolve H2O near-IR (2000-3250) and window closure
-    # (500-1200 keeps CO2+window together; 1200-2000 captures H2O vib-rot).
-    # Use for runaway-greenhouse / high-T moist-atmosphere studies where
-    # showing window closure is the goal (H2O VMR 0-10%).
-    #
-    # LIMITATION: molar_mass is frozen at dry-air Earth (0.028964 kg/mol),
-    # matching the Chaverot LBL background composition. At very high H2O mole
-    # fractions (>~20%, near the Simpson-Nakajima runaway limit), the true
-    # bulk molar mass drops toward ~0.023 kg/mol, introducing a ~20% error in
-    # column optical depth. For quantitative runaway-greenhouse work, regenerate
-    # from a source table built at high-H2O bulk composition.
-    {
-        "source": "Earth_376ppmCO2_R500_10-30k.ktable.SI.h5",
-        "output": "earth_low_res_lw_hotmoist.nc",
-        "kind": "lw",
-        "bands": "10,500,1200,2000,3250",
-        "ngpt": 2,
-        "molar_mass": 0.028964,
-    },
-    # --- Earth SW (unchanged) ---
+    # --- Earth SW ---
+    # Earth LW (earth_low_res_lw.nc) is built from linepyline; not in this script.
     {
         "source": "Earth_376ppmCO2_R500_10-30k.ktable.SI.h5",
         "output": "earth_low_res_sw.nc",
