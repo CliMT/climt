@@ -5,23 +5,25 @@ title: "Quickstart"
 Let us start with a simple climt model which is not very useful, but
 helps illustrate how to use climt:
 
-::: ipython
-python
-
+``` python
 import climt
 
-\# Create some components radiation = climt.GrayLongwaveRadiation()
+# Create some components
+radiation = climt.GrayLongwaveRadiation()
 
 surface = climt.SlabSurface()
 
-\# Get a state dictionary filled with required quantities \# for the
-components to run state = climt.get_default_state(\[radiation,
-surface\])
+# Get a state dictionary filled with required quantities
+# for the components to run
+state = climt.get_default_state([radiation, surface])
 
-\# Run components tendencies, diagnostics = radiation(state)
+# Run components
+tendencies, diagnostics = radiation(state)
 
-\# See output tendencies.keys() tendencies\[\'air_temperature\'\]
-:::
+# See output
+tendencies.keys()
+tendencies['air_temperature']
+```
 
 Here, all the essential aspects of creating and running a model in climt
 are present:

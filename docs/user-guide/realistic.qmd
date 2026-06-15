@@ -17,18 +17,21 @@ obtained is called the **radiative equilibrium** profile.
 
 As before, we will create the radiation component and the model state:
 
-::: ipython
-python
+``` python
+import climt
+import matplotlib.pyplot as plt
+import numpy as np
+# Two new imports
+from sympl import AdamsBashforth
+from datetime import timedelta
 
-import climt import matplotlib.pyplot as plt import numpy as np \# Two
-new imports from sympl import AdamsBashforth from datetime import
-timedelta
+# Create some components
+radiation = climt.GrayLongwaveRadiation()
 
-\# Create some components radiation = climt.GrayLongwaveRadiation()
-
-\# Get a state dictionary filled with required quantities \# for the
-components to run state = climt.get_default_state(\[radiation\])
-:::
+# Get a state dictionary filled with required quantities
+# for the components to run
+state = climt.get_default_state([radiation])
+```
 
 We have two new imports, `AdamsBashforth` and `timedelta`. The former is
 a numerical
@@ -39,31 +42,29 @@ model.
 
 Now, to create the integrator and the timestep:
 
-::: ipython
-python
-
-model_time_step = timedelta(hours=1) model =
-AdamsBashforth(\[radiation\])
-:::
+``` python
+model_time_step = timedelta(hours=1)
+model = AdamsBashforth([radiation])
+```
 
 We now have a model ready to run! The integrator will return the new
 model state and any diagnostics that `radiation` has generated. We can
 then update the current model state with the new model state and
 continue to step the model forward in time:
 
-::: ipython
-python
-
+``` python
 for step in range(10):
-
-:   diagnostics, new_state = model(state, model_time_step) \'\'\' Update
-    state with diagnostics. This updated state can be saved if necessary
-    \'\'\' state.update(diagnostics) \'\'\'Update state quantities\'\'\'
-    state.update(new_state) \'\'\'Update model time\'\'\'
-    state\[\'time\'\] += model_time_step \'\'\'See if the maximum
-    temperature is changing\'\'\' print(state\[\'time\'\], \': \',
-    state\[\'air_temperature\'\].max().values)
-:::
+    diagnostics, new_state = model(state, model_time_step)
+    ''' Update state with diagnostics.
+    This updated state can be saved if necessary '''
+    state.update(diagnostics)
+    '''Update state quantities'''
+    state.update(new_state)
+    '''Update model time'''
+    state['time'] += model_time_step
+    '''See if the maximum temperature is changing'''
+    print(state['time'], ': ', state['air_temperature'].max().values)
+```
 
 And voila, we have a model that actually evolves over time! Many example
 scripts that illustrate standard model configurations used in climate
