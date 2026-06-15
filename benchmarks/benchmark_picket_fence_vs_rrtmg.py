@@ -85,37 +85,9 @@ def sw_metrics():
           f"  max-rel {np.max(np.abs(up_pf-up_rr)/np.maximum(np.abs(up_rr),1e-3)):.1%}")
 
 
-def lw_convergence():
-    from climt import get_default_state
-    from climt._components.picket_fence import PicketFenceLongwave
-
-    print()
-    print("=== LW g-point convergence  (option B, Earth standard atm) ===")
-    olrs = {}
-    back = {}
-    for label, table in [
-        ("2gpt", "earth_low_res_lw"),
-        ("4gpt", "earth_low_res_lw_4gpt"),
-        ("8gpt", "earth_low_res_lw_8gpt"),
-    ]:
-        lw = PicketFenceLongwave(optics="correlated_k", table=table)
-        state = get_default_state([lw])
-        _, d = lw(state)
-        olrs[label] = float(d["upwelling_longwave_flux_in_air"].values.flat[-1])
-        back[label] = float(d["downwelling_longwave_flux_in_air"].values.flat[0])
-        print(f"  OLR ({label}): {olrs[label]:.2f} W/m²   back-rad: {back[label]:.2f} W/m²")
-
-    for name, vals in [("OLR", olrs), ("back-rad", back)]:
-        d24 = abs(vals["4gpt"] - vals["2gpt"])
-        d48 = abs(vals["8gpt"] - vals["4gpt"])
-        print(f"  {name}: |4-2gpt| {d24:.3f} W/m²   |8-4gpt| {d48:.3f} W/m²"
-              f"   ratio: {d24/d48:.1f}×")
-
-
 if __name__ == "__main__":
     if not _rrtmg_available():
         print("RRTMG not available — skipping.")
     else:
         lw_metrics()
         sw_metrics()
-        lw_convergence()
