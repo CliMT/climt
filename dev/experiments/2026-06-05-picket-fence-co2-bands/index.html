@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Joy Monteiro">
+<meta name="dcterms.date" content="2026-06-05">
+<meta name="description" content="A picket-fence correlated-k table ran 12 K too warm. Chasing down why — and the dead-ends along the way — turned into a lesson in how correlated-k really works, and how it fails.">
+
+<title>What it takes to build a longwave scheme that rivals RRTMG – climt</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">climt</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../experiments/index.html"> 
+<span class="menu-text">Experiments</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/CliMT/climt"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-symptom" id="toc-the-symptom" class="nav-link active" data-scroll-target="#the-symptom">1. The symptom</a></li>
+  <li><a href="#a-primer-the-k-distribution-and-the-one-assumption-it-rests-on" id="toc-a-primer-the-k-distribution-and-the-one-assumption-it-rests-on" class="nav-link" data-scroll-target="#a-primer-the-k-distribution-and-the-one-assumption-it-rests-on">2. A primer: the k-distribution, and the one assumption it rests on</a></li>
+  <li><a href="#isolating-the-culprit" id="toc-isolating-the-culprit" class="nav-link" data-scroll-target="#isolating-the-culprit">3. Isolating the culprit</a></li>
+  <li><a href="#the-dead-ends-this-is-the-useful-part" id="toc-the-dead-ends-this-is-the-useful-part" class="nav-link" data-scroll-target="#the-dead-ends-this-is-the-useful-part">4. The dead-ends (this is the useful part)</a></li>
+  <li><a href="#root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever" id="toc-root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever" class="nav-link" data-scroll-target="#root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever">5. Root cause #1 — the water-vapour continuum (the dominant moist lever)</a></li>
+  <li><a href="#root-cause-2-band-structure-the-lumped-window" id="toc-root-cause-2-band-structure-the-lumped-window" class="nav-link" data-scroll-target="#root-cause-2-band-structure-the-lumped-window">6. Root cause #2 — band structure (the lumped window)</a></li>
+  <li><a href="#the-payoff-and-which-diagnostic-to-trust" id="toc-the-payoff-and-which-diagnostic-to-trust" class="nav-link" data-scroll-target="#the-payoff-and-which-diagnostic-to-trust">7. The payoff — and which diagnostic to trust</a></li>
+  <li><a href="#two-more-things-this-bought-us" id="toc-two-more-things-this-bought-us" class="nav-link" data-scroll-target="#two-more-things-this-bought-us">8. Two more things this bought us</a></li>
+  <li><a href="#the-answer-key" id="toc-the-answer-key" class="nav-link" data-scroll-target="#the-answer-key">9. The answer key</a></li>
+  <li><a href="#try-it-yourself" id="toc-try-it-yourself" class="nav-link" data-scroll-target="#try-it-yourself">Try it yourself</a></li>
+  <li><a href="#try-it-yourself-the-picket-fence-longwave-discovery" id="toc-try-it-yourself-the-picket-fence-longwave-discovery" class="nav-link" data-scroll-target="#try-it-yourself-the-picket-fence-longwave-discovery">Try it yourself — the picket-fence longwave discovery</a>
+  <ul class="collapse">
+  <li><a href="#the-symptom-1" id="toc-the-symptom-1" class="nav-link" data-scroll-target="#the-symptom-1">1. The symptom</a></li>
+  <li><a href="#the-k-distribution-and-how-it-fails" id="toc-the-k-distribution-and-how-it-fails" class="nav-link" data-scroll-target="#the-k-distribution-and-how-it-fails">2. The k-distribution, and how it fails</a></li>
+  <li><a href="#isolating-the-culprit-1" id="toc-isolating-the-culprit-1" class="nav-link" data-scroll-target="#isolating-the-culprit-1">3. Isolating the culprit</a></li>
+  <li><a href="#the-dead-ends-and-why-resolution-doesnt-help" id="toc-the-dead-ends-and-why-resolution-doesnt-help" class="nav-link" data-scroll-target="#the-dead-ends-and-why-resolution-doesnt-help">4. The dead-ends (and why resolution doesn’t help)</a></li>
+  <li><a href="#the-fix-and-the-payoff" id="toc-the-fix-and-the-payoff" class="nav-link" data-scroll-target="#the-fix-and-the-payoff">5. The fix, and the payoff</a>
+  <ul class="collapse">
+  <li><a href="#which-diagnostic-do-you-trust" id="toc-which-diagnostic-do-you-trust" class="nav-link" data-scroll-target="#which-diagnostic-do-you-trust">Which diagnostic do you trust?</a></li>
+  </ul></li>
+  <li><a href="#two-more-things-this-bought-us-1" id="toc-two-more-things-this-bought-us-1" class="nav-link" data-scroll-target="#two-more-things-this-bought-us-1">6. Two more things this bought us</a></li>
+  <li><a href="#pyodide-live-cells-map" id="toc-pyodide-live-cells-map" class="nav-link" data-scroll-target="#pyodide-live-cells-map">Pyodide / live-cells map</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="picket_fence_co2_bands-preview.html"><i class="bi bi-journal-code"></i>Try it yourself — the picket-fence longwave discovery</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">What it takes to build a longwave scheme that rivals RRTMG</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">radiation</div>
+    <div class="quarto-category">picket-fence</div>
+    <div class="quarto-category">correlated-k</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    A picket-fence correlated-k table ran 12 K too warm. Chasing down why — and the dead-ends along the way — turned into a lesson in how correlated-k really works, and how it fails.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Joy Monteiro </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 5, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="the-symptom" class="level2">
+<h2 class="anchored" data-anchor-id="the-symptom">1. The symptom</h2>
+<p>Here is a moist column relaxed to radiative–convective equilibrium (RCE) two ways: once with RRTMG-LW, the workhorse longwave scheme, and once with climt’s picket-fence longwave (<code>PicketFenceLongwave</code>) using its first-cut <strong>4-band</strong> Earth table. Same shortwave, same convection, same surface. Only the longwave differs.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_artifacts/rce_before_after.png" class="img-fluid figure-img"></p>
+<figcaption>Moist RCE temperature profiles, before vs after. ★ marks the tropopause located by the θ-curvature criterion of §7.</figcaption>
+</figure>
+</div>
+<p>Look at the left panel. The picket-fence column (blue) is far warmer than RRTMG (green) through the whole troposphere. The numbers are stark:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>quantity (moist RCE)</th>
+<th>4-band default</th>
+<th>vs RRTMG</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>surface temperature</td>
+<td><strong>+11.9 K warmer</strong></td>
+<td>runaway</td>
+</tr>
+<tr class="even">
+<td>surface humidity</td>
+<td>6.48 g/kg</td>
+<td>vs 2.02 (≈3× too moist)</td>
+</tr>
+<tr class="odd">
+<td>tropopause (θ-curvature)</td>
+<td>≈23 hPa</td>
+<td>vs 238 hPa — nowhere close</td>
+</tr>
+</tbody>
+</table>
+<p>A +12 K surface bias with a humidity runaway is not a tuning problem; it is a <em>the scheme is wrong</em> problem. The detective question for the rest of this post: <strong>is it the line data, or the scheme?</strong></p>
+</section>
+<section id="a-primer-the-k-distribution-and-the-one-assumption-it-rests-on" class="level2">
+<h2 class="anchored" data-anchor-id="a-primer-the-k-distribution-and-the-one-assumption-it-rests-on">2. A primer: the k-distribution, and the one assumption it rests on</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>How correlated-k works (expand if it’s new)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>A longwave band spans many wavenumbers ν, and the gas absorption coefficient k(ν) varies wildly across it — by orders of magnitude between a transparent gap and the centre of an absorption line. The band-averaged transmission through a column of absorber amount <span class="math inline">\(u\)</span> is</p>
+<p><span class="math display">\[\mathcal{T}(u) = \big\langle e^{-k(\nu)\,u} \big\rangle_\nu .\]</span></p>
+<p>You <strong>cannot</strong> replace <span class="math inline">\(k(\nu)\)</span> by its mean: the average of an exponential is not the exponential of the average. Line-by-line integration does it honestly but is far too expensive for a climate model.</p>
+<p>The <strong>k-distribution</strong> trick: that integral only depends on the <em>distribution</em> of k-values in the band, not on where in ν they sit. So sort k(ν) from weakest to strongest. You get a smooth, monotonic curve <span class="math inline">\(k(g)\)</span>, where <span class="math inline">\(g \in [0,1]\)</span> is the cumulative fraction of the band. A handful of quadrature points on <span class="math inline">\(k(g)\)</span> — the <strong>g-points</strong> — then integrate the transmission cheaply. Low-g points are the transparent gaps that radiate to space; high-g points are the saturated line cores.</p>
+<p>The <strong>“correlated”</strong> part is the load-bearing assumption. Stacking many layers requires that the <em>rank ordering</em> of k(ν) is preserved with height — that a given g-point corresponds to the same wavenumbers at every level. That holds when one absorber, scaling smoothly with pressure and temperature, dominates the band.</p>
+</div>
+</div>
+</div>
+<p>Keep that last assumption in mind. It is exactly what will break.</p>
+</section>
+<section id="isolating-the-culprit" class="level2">
+<h2 class="anchored" data-anchor-id="isolating-the-culprit">3. Isolating the culprit</h2>
+<p>The clean way to split “line data” from “scheme” is to compare against <strong>line-by-line</strong> truth — the absorption computed wavenumber by wavenumber, with no k-distribution approximation at all.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_artifacts/lbl_overlay.png" class="img-fluid figure-img"></p>
+<figcaption>Line-by-line spectral OLR (grey), with the band-integrated totals from line-by-line, picket-fence, and RRTMG.</figcaption>
+</figure>
+</div>
+<p>The line-by-line total matches RRTMG. The picket-fence scheme, fed the <em>same</em> line data, traps more — its outgoing longwave is too low. The line data is fine. <strong>The correlated-k scheme is the culprit.</strong> Now we have to find out where inside it the error lives.</p>
+</section>
+<section id="the-dead-ends-this-is-the-useful-part" class="level2">
+<h2 class="anchored" data-anchor-id="the-dead-ends-this-is-the-useful-part">4. The dead-ends (this is the useful part)</h2>
+<p>The obvious instinct is that the scheme is under-resolved. It isn’t, and watching the obvious fixes fail is how you learn what the problem actually is.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>What did <em>not</em> work
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>More g-points (8 → 16 → 32).</strong> The over-trapping barely moves. If this were a quadrature-resolution problem, more g-points would fix it. They don’t.</li>
+<li><strong>Finer vertical resolution.</strong> Same story — no help.</li>
+<li><strong>Boosting the line wings.</strong> A hack; rejected.</li>
+</ul>
+<p>When throwing resolution at an error doesn’t move it, you are not fighting a numerical problem. You are fighting a <strong>structural</strong> assumption — here, the correlated-k spectral-correlation floor. That reframing is what points at the two real levers below.</p>
+</div>
+</div>
+</section>
+<section id="root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever" class="level2">
+<h2 class="anchored" data-anchor-id="root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever">5. Root cause #1 — the water-vapour continuum (the dominant moist lever)</h2>
+<p>The H₂O continuum <span class="citation" data-cites="mlawer2012">(<a href="#ref-mlawer2012" role="doc-biblioref">Mlawer et al. 2012</a>)</span> is a broad, slowly varying absorption that rides underneath the lines. The first-cut table folded it <em>into</em> the line-sorted k-distribution and interpolated it linearly across log-spaced humidity nodes. Because the continuum scales roughly with the square of water-vapour amount, linear interpolation across log-spaced nodes systematically over-shoots — and it over-traps by about <strong>17 W/m²</strong> in the moist column.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>The fix (engineering)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Decouple it. Build the k-distribution from the <strong>lines only</strong>, and carry the continuum as a separate, band-grey term interpolated in log-X. This is precisely the separation RRTMG uses — its <code>tauself</code> / <code>taufor</code> self- and foreign-continuum paths <span class="citation" data-cites="mlawer1997">(<a href="#ref-mlawer1997" role="doc-biblioref">Mlawer et al. 1997</a>)</span>. Same physics, split into the two pieces that each interpolate cleanly.</p>
+</div>
+</div>
+</section>
+<section id="root-cause-2-band-structure-the-lumped-window" class="level2">
+<h2 class="anchored" data-anchor-id="root-cause-2-band-structure-the-lumped-window">6. Root cause #2 — band structure (the lumped window)</h2>
+<p>The second lever is the one the primer warned about. The 4-band table lumps the entire 800–1800 cm⁻¹ region into a single band — but that region contains <strong>two spectrally distinct populations</strong>: the transparent 8–12 µm window, and the opaque H₂O ν₂ band. Sort them together and you get the tell-tale shape:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_artifacts/kg_window_band.png" class="img-fluid figure-img"></p>
+<figcaption>k(g) for the lumped window band (left): dry it is low and smooth, but moist it grows a low-g <em>shelf</em> (the window) and a high-g <em>cliff</em> (the H₂O lines). Right: the lumped two-piece curve next to spectrally coherent bands.</figcaption>
+</figure>
+</div>
+<p>That shelf-and-cliff is the fingerprint of two populations in one band. One shared Planck weight and one shared set of g-points cannot represent both at once, so the transparent half can’t open up and gets over-absorbed. Notice the error is <strong>invisible when dry</strong> (both halves are transparent) and switches on with water vapour — exactly the dry/moist signature we measured.</p>
+<p>The fix is surgical: a <strong>14-band</strong> partition that isolates the window and refines the far-IR and ν₂ regions, so each band is again a single coherent population.</p>
+</section>
+<section id="the-payoff-and-which-diagnostic-to-trust" class="level2">
+<h2 class="anchored" data-anchor-id="the-payoff-and-which-diagnostic-to-trust">7. The payoff — and which diagnostic to trust</h2>
+<p>Put both fixes together — decoupled continuum + 14-band structure — and re-run the same moist RCE (the right panel of the first figure):</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>quantity (moist RCE vs RRTMG)</th>
+<th>4-band</th>
+<th>14-band</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>surface temperature</td>
+<td>+11.9 K</td>
+<td><strong>+2.0 K</strong></td>
+</tr>
+<tr class="even">
+<td>dry surface temperature</td>
+<td>—</td>
+<td>+0.8 K</td>
+</tr>
+<tr class="odd">
+<td>surface humidity</td>
+<td>6.48 vs 2.02 g/kg</td>
+<td>2.38 vs 2.02</td>
+</tr>
+<tr class="even">
+<td>tropopause (θ-curvature)</td>
+<td>23 hPa vs RRTMG 238</td>
+<td><strong>238 hPa — co-located</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The warm runaway is gone, the humidity is sane, and the picket-fence tropopause now sits right on top of RRTMG’s.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>A diagnostic that survives a broken climate
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Locating the tropopause turned out to need its own work. The simple “potential temperature exceeds the surface value by 10 K” marker mislocated the runaway column badly — it reported a tropopause near <strong>583 hPa</strong>, deep in the mid-troposphere, which is physically nonsense. This post instead uses a <strong>θ-curvature</strong> criterion: the tropopause is the kink where potential temperature stops being convectively well-mixed and shoots up into the stratosphere — the level of maximum |d²θ/d(ln p)²|. It locates the well-behaved 14-band column at 238 hPa (matching RRTMG) and correctly reports the broken 4-band column as pathological — convection driven absurdly deep, tropopause near 23 hPa. You can read it in <code>scripts/experiments/tropopause.py</code>.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Which error metric should you believe?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>There’s a trap here worth internalising. A <strong>fixed-profile</strong> single-column comparison reads about +11 W/m² of over-trapping for <em>both</em> the prototype and the shipped 14-band table — it looks like the band work barely helped. Yet the self-adjusting RCE column converges to only ~2 K. The fixed-profile metric <strong>over-states</strong> the error a column that can adjust its own humidity and lapse rate actually incurs. Always match the diagnostic to the question you’re asking.</p>
+</div>
+</div>
+</section>
+<section id="two-more-things-this-bought-us" class="level2">
+<h2 class="anchored" data-anchor-id="two-more-things-this-bought-us">8. Two more things this bought us</h2>
+<p><strong>Fast vs faithful.</strong> Making the table faithful — 14 bands, 8 g-points, a runtime CO₂ axis — made the <em>Python</em> optical-depth and Planck assembly the bottleneck, not the physics. Compiling the two hot loops with Numba’s <code>@njit(parallel=True)</code> (on top of the already-compiled transport kernel) recovered all of it, bit-for-bit:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_artifacts/throughput.png" class="img-fluid figure-img"></p>
+<figcaption>Longwave throughput. The faithful 14-band picket-fence scheme is faster than RRTMG.</figcaption>
+</figure>
+</div>
+<p>The faithful scheme ends up <strong>faster than RRTMG</strong> (here 56.6 vs 65.3 µs/column; your absolute numbers will vary with machine and column count). The lesson is that accuracy and speed were never the trade-off — the cost was un-compiled assembly loops.</p>
+<p><strong>The free knob.</strong> The same table is CO₂-adjustable from 10 to 10 000 ppm through a single runtime axis, interpolated geometrically (log-k against log-X_CO₂). Interpolating CO₂ <em>between</em> table nodes turns out to be fidelity-free: the off-node bias against line-by-line equals the on-node bias. (A leave-one-out test puts log-k interpolation at 5.5 % vs 30.9 % for linear-k.) The probe lives in <code>scripts/experiments/eval_co2_interp_accuracy.py</code>.</p>
+</section>
+<section id="the-answer-key" class="level2">
+<h2 class="anchored" data-anchor-id="the-answer-key">9. The answer key</h2>
+<p>The shipped recipe, for reference:</p>
+<ul>
+<li><strong>14 bands</strong>, edges (cm⁻¹): <code>10, 250, 350, 500, 630, 700, 800, 980, 1080, 1180, 1250, 1400, 1600, 1800, 3250</code>; <strong>8 g-points</strong> per band.</li>
+<li><strong>Line-only</strong> k-distribution + a <strong>decoupled band-grey H₂O continuum</strong>, log-X interpolated.</li>
+<li>A runtime <strong>CO₂ axis</strong> (10 log nodes, 10–10 000 ppm).</li>
+<li>Quadrilinear interpolation: T (linear), log p (linear), log X_H₂O (linear-k), log X_CO₂ (<strong>log-k</strong>).</li>
+</ul>
+<p>The picket-fence optics follow the analytic non-grey framework of <span class="citation" data-cites="parmentier2014">Parmentier and Guillot (<a href="#ref-parmentier2014" role="doc-biblioref">2014</a>)</span>; the table ships as <code>earth_low_res_lw</code>, with the original 4-band table preserved as <code>earth_low_res_lw_4band_ngpt2_before</code> for the before/after comparison above.</p>
+</section>
+<section id="try-it-yourself" class="level2">
+<h2 class="anchored" data-anchor-id="try-it-yourself">Try it yourself</h2>
+<p>Every figure and number above is reproduced by the companion notebook, which loads the same regenerated artifacts and re-runs the analysis. Run it in the <code>climt</code> environment, or read it through here:</p>
+</section>
+<section id="try-it-yourself-the-picket-fence-longwave-discovery" class="level1 quarto-embed-nb-cell">
+<h1>Try it yourself — the picket-fence longwave discovery</h1>
+<p>This notebook reproduces every figure and headline number in the companion post, straight from the regenerated artifacts in <code>_artifacts/</code>. Run it top to bottom in the <code>climt</code> conda environment. Each section mirrors a beat of the post: symptom → k-distribution → culprit → dead-ends → fix → payoff.</p>
+<div id="1f544dd6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-06-05T06:20:08.386355Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-06-05T06:20:08.385999Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-06-05T06:20:11.130211Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-06-05T06:20:11.129691Z&quot;}}" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os, sys</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Image, display</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>REPO <span class="op">=</span> os.path.abspath(os.path.join(<span class="st">'..'</span>, <span class="st">'..'</span>, <span class="st">'..'</span>))</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, os.path.join(REPO, <span class="st">'scripts'</span>, <span class="st">'experiments'</span>))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tropopause <span class="im">import</span> find_tropopause</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>ARTIF <span class="op">=</span> <span class="st">'_artifacts'</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_rce(name):</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Final-state columns from an rce_moist --save .npz: {label: {field: array}}."""</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> np.load(os.path.join(ARTIF, name))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    cols <span class="op">=</span> <span class="bu">sorted</span>({k.split(<span class="st">'__'</span>)[<span class="dv">0</span>] <span class="cf">for</span> k <span class="kw">in</span> d.files})</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {c: {k.split(<span class="st">'__'</span>)[<span class="dv">1</span>]: d[k] <span class="cf">for</span> k <span class="kw">in</span> d.files <span class="cf">if</span> k.startswith(c <span class="op">+</span> <span class="st">'__'</span>)}</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> c <span class="kw">in</span> cols}</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> climt <span class="im">import</span> RRTMGLongwave  <span class="co"># noqa: F401</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    RRTMG_AVAILABLE <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> exc:  <span class="co"># pragma: no cover - Pyodide has no Fortran RRTMG</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    RRTMG_AVAILABLE <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">'RRTMG unavailable (expected under Pyodide):'</span>, exc)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'RRTMG_AVAILABLE ='</span>, RRTMG_AVAILABLE)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>RRTMG_AVAILABLE = True</code></pre>
+</div>
+</div>
+<section id="the-symptom-1" class="level2">
+<h2 class="anchored" data-anchor-id="the-symptom-1">1. The symptom</h2>
+<p>The shipped-<em>before</em> 4-band Earth-LW table, run to moist radiative-convective equilibrium against RRTMG, runs away: a much warmer surface, runaway humidity, and a tropopause nowhere near RRTMG’s.</p>
+<div id="556c28db" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-06-05T06:20:11.131880Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-06-05T06:20:11.131694Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-06-05T06:20:11.137430Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-06-05T06:20:11.136947Z&quot;}}" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>before <span class="op">=</span> load_rce(<span class="st">'rce_moist_before.npz'</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>rr <span class="op">=</span> <span class="bu">next</span>(l <span class="cf">for</span> l <span class="kw">in</span> before <span class="cf">if</span> l.startswith(<span class="st">'RRTMG'</span>))</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>pf <span class="op">=</span> <span class="bu">next</span>(l <span class="cf">for</span> l <span class="kw">in</span> before <span class="cf">if</span> l.startswith(<span class="st">'PF'</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>dT    <span class="op">=</span> <span class="bu">float</span>(before[pf][<span class="st">'T_sfc'</span>]) <span class="op">-</span> <span class="bu">float</span>(before[rr][<span class="st">'T_sfc'</span>])</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>tp_pf <span class="op">=</span> find_tropopause(before[pf][<span class="st">'T'</span>], before[pf][<span class="st">'p_hpa'</span>])[<span class="st">'p_curvature'</span>]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>tp_rr <span class="op">=</span> find_tropopause(before[rr][<span class="st">'T'</span>], before[rr][<span class="st">'p_hpa'</span>])[<span class="st">'p_curvature'</span>]</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'surface warming  PF - RRTMG : </span><span class="sc">{</span>dT<span class="sc">:+.2f}</span><span class="ss"> K'</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'q_sfc  PF </span><span class="sc">{</span><span class="bu">float</span>(before[pf][<span class="st">"q"</span>][<span class="dv">0</span>])<span class="op">*</span><span class="fl">1e3</span><span class="sc">:.2f}</span><span class="ss"> g/kg   vs RRTMG </span><span class="sc">{</span><span class="bu">float</span>(before[rr][<span class="st">"q"</span>][<span class="dv">0</span>])<span class="op">*</span><span class="fl">1e3</span><span class="sc">:.2f}</span><span class="ss"> g/kg'</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'tropopause (theta-curvature)  PF </span><span class="sc">{</span>tp_pf<span class="sc">:.0f}</span><span class="ss"> hPa   vs RRTMG </span><span class="sc">{</span>tp_rr<span class="sc">:.0f}</span><span class="ss"> hPa'</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Self-check: the 4-band default really does run away.</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> dT <span class="op">&gt;</span> <span class="fl">8.0</span>, dT</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> tp_pf <span class="op">&lt;</span> <span class="fl">100.0</span>, tp_pf   <span class="co"># convection driven absurdly deep vs RRTMG</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>surface warming  PF - RRTMG : +11.91 K
+q_sfc  PF 6.48 g/kg   vs RRTMG 2.02 g/kg
+tropopause (theta-curvature)  PF 23 hPa   vs RRTMG 238 hPa</code></pre>
+</div>
+</div>
+</section>
+<section id="the-k-distribution-and-how-it-fails" class="level2">
+<h2 class="anchored" data-anchor-id="the-k-distribution-and-how-it-fails">2. The k-distribution, and how it fails</h2>
+<p>A correlated-k band replaces the messy absorption spectrum with its <em>sorted</em> values — a smooth <code>k(g)</code>. That is exact for one band of one population. It breaks when a band <strong>lumps two populations</strong> (a transparent window + opaque lines): the sorted curve grows a low-<code>g</code> shelf and a high-<code>g</code> cliff, and one shared set of g-points / Planck weight can’t represent both. The regenerated figure shows exactly that for the 800–1800 cm⁻¹ window band.</p>
+<div id="b714a96b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-06-05T06:20:11.138896Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-06-05T06:20:11.138796Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-06-05T06:20:11.366486Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-06-05T06:20:11.365909Z&quot;}}" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>display(Image(os.path.join(ARTIF, <span class="st">'kg_window_band.png'</span>)))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Pure-Python toy (runs live, even under Pyodide): a k-distribution is just the</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># SORTED absorption coefficients of a band. Build a 'coherent' band (one</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># population) and a 'lumped' band (transparent window + opaque lines).</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2000</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>coherent <span class="op">=</span> np.sort(rng.lognormal(<span class="op">-</span><span class="fl">2.0</span>, <span class="fl">1.0</span>, <span class="dv">2000</span>))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>lumped <span class="op">=</span> np.sort(np.concatenate([rng.lognormal(<span class="op">-</span><span class="fl">8.0</span>, <span class="fl">0.3</span>, <span class="dv">1000</span>),   <span class="co"># window: tiny k</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                                 rng.lognormal( <span class="fl">0.0</span>, <span class="fl">0.5</span>, <span class="dv">1000</span>)]))  <span class="co"># lines: large k</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>plt.semilogy(g, coherent, label<span class="op">=</span><span class="st">'coherent band (one population)'</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>plt.semilogy(g, lumped,   label<span class="op">=</span><span class="st">'lumped band (window + lines)'</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'g (cumulative fraction of band)'</span>)<span class="op">;</span> plt.ylabel(<span class="st">'k'</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'k(g): the lumped band</span><span class="ch">\'</span><span class="st">s shelf+cliff is the fingerprint of trouble'</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>plt.legend()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/picket_fence_co2_bands-cell-4-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/picket_fence_co2_bands-cell-4-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="isolating-the-culprit-1" class="level2">
+<h2 class="anchored" data-anchor-id="isolating-the-culprit-1">3. Isolating the culprit</h2>
+<p>Is the warm bias bad line data, or the scheme? Line-by-line truth (linepyline at the PF diffusivity angle) matches RRTMG; PF over-traps. So it’s the <strong>correlated-k scheme</strong>, not the physics input.</p>
+<div id="4e7755b3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-06-05T06:20:11.367764Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-06-05T06:20:11.367647Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-06-05T06:20:11.521808Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-06-05T06:20:11.521278Z&quot;}}" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, kind <span class="kw">in</span> <span class="bu">zip</span>(axes, (<span class="st">'moist'</span>, <span class="st">'dry'</span>)):</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> np.load(os.path.join(ARTIF, <span class="ss">f'lbl_olr_spec_</span><span class="sc">{</span>kind<span class="sc">}</span><span class="ss">_co2_400ppm.npz'</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    ax.plot(d[<span class="st">'nu'</span>], d[<span class="st">'olr_spec'</span>], lw<span class="op">=</span><span class="fl">0.4</span>, color<span class="op">=</span><span class="st">'#444'</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"</span><span class="sc">{</span>kind<span class="sc">}</span><span class="ss">:  LBL=</span><span class="sc">{</span><span class="bu">float</span>(d[<span class="st">'total'</span>])<span class="sc">:.1f}</span><span class="ss">   "</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                 <span class="ss">f"PF=</span><span class="sc">{</span><span class="bu">float</span>(d[<span class="st">'olr_pf'</span>])<span class="sc">:.1f}</span><span class="ss">   RRTMG=</span><span class="sc">{</span><span class="bu">float</span>(d[<span class="st">'olr_rrtmg'</span>])<span class="sc">:.1f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">'wavenumber (cm$^{-1}$)'</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">'spectral OLR (W/m$^2$/cm$^{-1}$)'</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Lower OLR = more trapping. PF's scalar OLR sits below the line-by-line total.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/picket_fence_co2_bands-cell-5-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="the-dead-ends-and-why-resolution-doesnt-help" class="level2">
+<h2 class="anchored" data-anchor-id="the-dead-ends-and-why-resolution-doesnt-help">4. The dead-ends (and why resolution doesn’t help)</h2>
+<p>The tempting fixes don’t work, and that’s the lesson:</p>
+<ul>
+<li><strong>More g-points (8 → 16 → 32):</strong> the over-trapping barely moves. It is not a quadrature-resolution problem.</li>
+<li><strong>Finer vertical resolution:</strong> same — no help.</li>
+<li><strong>Wing-boost hacks:</strong> rejected.</li>
+</ul>
+<p>When adding resolution doesn’t move the error, you are fighting a <em>structural</em> assumption (the correlated-k spectral-correlation floor), not a numerical one. The real levers turn out to be the <strong>H₂O continuum</strong> (decouple it) and the <strong>band structure</strong> (split the lumped window band).</p>
+</section>
+<section id="the-fix-and-the-payoff" class="level2">
+<h2 class="anchored" data-anchor-id="the-fix-and-the-payoff">5. The fix, and the payoff</h2>
+<p>The 14-band table with a decoupled, log-X-interpolated H₂O continuum co-locates PF with RRTMG and tames the surface warming from ~+12 K to ~+2 K.</p>
+<div id="4cc678f3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-06-05T06:20:11.523328Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-06-05T06:20:11.523208Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-06-05T06:20:11.735423Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-06-05T06:20:11.734923Z&quot;}}" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>after <span class="op">=</span> load_rce(<span class="st">'rce_moist_after.npz'</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, cols, title <span class="kw">in</span> ((axes[<span class="dv">0</span>], before, <span class="st">'before: 4-band default'</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                        (axes[<span class="dv">1</span>], after,  <span class="st">'after: 14-band CO$_2$ table'</span>)):</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> label, s <span class="kw">in</span> cols.items():</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        ax.plot(s[<span class="st">'T'</span>], s[<span class="st">'p_hpa'</span>], <span class="st">'-o'</span>, ms<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span>label)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        tp <span class="op">=</span> find_tropopause(s[<span class="st">'T'</span>], s[<span class="st">'p_hpa'</span>])[<span class="st">'p_curvature'</span>]</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        ax.plot(np.interp(tp, s[<span class="st">'p_hpa'</span>][::<span class="op">-</span><span class="dv">1</span>], s[<span class="st">'T'</span>][::<span class="op">-</span><span class="dv">1</span>]), tp, <span class="st">'*'</span>, ms<span class="op">=</span><span class="dv">16</span>, mec<span class="op">=</span><span class="st">'k'</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    ax.set_yscale(<span class="st">'log'</span>)<span class="op">;</span> ax.grid(alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    ax.set_title(title)<span class="op">;</span> ax.set_xlabel(<span class="st">'Temperature (K)'</span>)<span class="op">;</span> ax.legend(fontsize<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].invert_yaxis()            <span class="co"># invert ONCE: the panels share the y-axis</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">'Pressure (hPa)'</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>rr2 <span class="op">=</span> <span class="bu">next</span>(l <span class="cf">for</span> l <span class="kw">in</span> after <span class="cf">if</span> l.startswith(<span class="st">'RRTMG'</span>))</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>pf2 <span class="op">=</span> <span class="bu">next</span>(l <span class="cf">for</span> l <span class="kw">in</span> after <span class="cf">if</span> l.startswith(<span class="st">'PF'</span>))</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>dT_after <span class="op">=</span> <span class="bu">float</span>(after[pf2][<span class="st">'T_sfc'</span>]) <span class="op">-</span> <span class="bu">float</span>(after[rr2][<span class="st">'T_sfc'</span>])</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>tp_pf2 <span class="op">=</span> find_tropopause(after[pf2][<span class="st">'T'</span>], after[pf2][<span class="st">'p_hpa'</span>])[<span class="st">'p_curvature'</span>]</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>tp_rr2 <span class="op">=</span> find_tropopause(after[rr2][<span class="st">'T'</span>], after[rr2][<span class="st">'p_hpa'</span>])[<span class="st">'p_curvature'</span>]</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'surface warming PF-RRTMG:  before </span><span class="sc">{</span>dT<span class="sc">:+.1f}</span><span class="ss"> K  -&gt;  after </span><span class="sc">{</span>dT_after<span class="sc">:+.1f}</span><span class="ss"> K'</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'after tropopause  PF </span><span class="sc">{</span>tp_pf2<span class="sc">:.0f}</span><span class="ss"> hPa  vs RRTMG </span><span class="sc">{</span>tp_rr2<span class="sc">:.0f}</span><span class="ss"> hPa  (co-located)'</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> dT_after <span class="op">&lt;</span> <span class="fl">3.0</span>, dT_after</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/picket_fence_co2_bands-cell-6-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>surface warming PF-RRTMG:  before +11.9 K  -&gt;  after +2.0 K
+after tropopause  PF 238 hPa  vs RRTMG 238 hPa  (co-located)</code></pre>
+</div>
+</div>
+<section id="which-diagnostic-do-you-trust" class="level3">
+<h3 class="anchored" data-anchor-id="which-diagnostic-do-you-trust">Which diagnostic do you trust?</h3>
+<p>A subtlety worth carrying away: a <em>fixed-profile</em> single-column LBL−PF comparison reads about +11 W/m² for <strong>both</strong> the prototype and the shipped table — yet the self-adjusting RCE column above converges to only ~2 K. The fixed-profile metric <strong>over-states</strong> the error a column that can adjust its own humidity and lapse rate actually incurs. Trust the diagnostic that matches the question you’re asking.</p>
+</section>
+</section>
+<section id="two-more-things-this-bought-us-1" class="level2">
+<h2 class="anchored" data-anchor-id="two-more-things-this-bought-us-1">6. Two more things this bought us</h2>
+<p><strong>Fast vs faithful.</strong> Making the table faithful made the Python optical-depth / Planck assembly the bottleneck. Compiling the two hot loops with <code>@njit(parallel=True)</code> made the faithful 14-band scheme <em>faster</em> than RRTMG, bit-for-bit. <strong>The free knob.</strong> The same table is CO₂-adjustable 10–10000 ppm via one runtime axis, log-k interpolated — interpolating between nodes is fidelity-free (see <code>scripts/experiments/eval_co2_interp_accuracy.py</code>).</p>
+<div id="21b48fc4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-06-05T06:20:11.737091Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-06-05T06:20:11.736981Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-06-05T06:20:11.739749Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-06-05T06:20:11.739286Z&quot;}}" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.load(os.path.join(ARTIF, <span class="st">'throughput.npz'</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>rr_us, pf_us <span class="op">=</span> <span class="bu">float</span>(t[<span class="st">'rrtmg_us_per_col'</span>]), <span class="bu">float</span>(t[<span class="st">'pf_us_per_col'</span>])</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'throughput @ NCOL=</span><span class="sc">{</span><span class="bu">int</span>(t[<span class="st">"ncol"</span>])<span class="sc">}</span><span class="ss">:  '</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'RRTMG </span><span class="sc">{</span>rr_us<span class="sc">:.1f}</span><span class="ss"> us/col   PF </span><span class="sc">{</span>pf_us<span class="sc">:.1f}</span><span class="ss"> us/col   '</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'(PF/RRTMG = </span><span class="sc">{</span>pf_us<span class="op">/</span>rr_us<span class="sc">:.2f}</span><span class="ss">x)'</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># The faithful 14-band PF scheme is faster than RRTMG.</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> pf_us <span class="op">&lt;</span> rr_us, (pf_us, rr_us)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>throughput @ NCOL=100:  RRTMG 65.3 us/col   PF 56.6 us/col   (PF/RRTMG = 0.87x)</code></pre>
+</div>
+</div>
+</section>
+<section id="pyodide-live-cells-map" class="level2">
+<h2 class="anchored" data-anchor-id="pyodide-live-cells-map">Pyodide / live-cells map</h2>
+<p>For a future in-browser (JupyterLite) port, this notebook already separates cleanly:</p>
+<ul>
+<li><strong>Pure-Python-live</strong> (run under Pyodide as-is): the setup imports, the k(g) toy in §2, and the analysis/plotting of the pre-baked arrays.</li>
+<li><strong>Needs pre-baked <code>_artifacts/*.npz</code></strong> (their producers — RRTMG Fortran and the linepyline line-by-line code — don’t run under Pyodide): the symptom (§1), the line-by-line overlay (§3), the before/after RCE (§5), and the throughput scalars (§6). The live <code>RRTMGLongwave</code> import is guarded by <code>RRTMG_AVAILABLE</code> so the notebook degrades gracefully.</li>
+</ul>
+<p>That boundary is the concrete hand-off to the website spec’s deferred live-cells follow-up.</p>
+</section>
+<a class="quarto-notebook-link" id="nblink-1" href="picket_fence_co2_bands-preview.html#6b2f06f0">Source: Try it yourself — the picket-fence longwave discovery</a></section>
+
+
+<!-- -->
+
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-mlawer2012" class="csl-entry" role="listitem">
+Mlawer, E. J., V. H. Payne, J.-L. Moncet, J. S. Delamere, M. J. Alvarado, and D. C. Tobin. 2012. <span>“Development and Recent Evaluation of the MT_CKD Model of Continuum Absorption.”</span> <em>Philosophical Transactions of the Royal Society A</em> 370: 2520–56. <a href="https://doi.org/10.1098/rsta.2011.0295">https://doi.org/10.1098/rsta.2011.0295</a>.
+</div>
+<div id="ref-mlawer1997" class="csl-entry" role="listitem">
+Mlawer, E. J., S. J. Taubman, P. D. Brown, M. J. Iacono, and S. A. Clough. 1997. <span>“Radiative Transfer for Inhomogeneous Atmospheres: RRTM, a Validated Correlated-k Model for the Longwave.”</span> <em>Journal of Geophysical Research</em> 102 (D14): 16663–82. <a href="https://doi.org/10.1029/97JD00237">https://doi.org/10.1029/97JD00237</a>.
+</div>
+<div id="ref-parmentier2014" class="csl-entry" role="listitem">
+Parmentier, V., and T. Guillot. 2014. <span>“A Non-Grey Analytical Model for Irradiated Atmospheres.”</span> <em>Astronomy &amp; Astrophysics</em> 562: A133. <a href="https://doi.org/10.1051/0004-6361/201322342">https://doi.org/10.1051/0004-6361/201322342</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "What it takes to build a longwave scheme that rivals RRTMG"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "A picket-fence correlated-k table ran 12 K too warm. Chasing down why — and the dead-ends along the way — turned into a lesson in how correlated-k really works, and how it fails."</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> 2026-06-05</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Joy Monteiro"</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../../references.bib</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [radiation, picket-fence, correlated-k]</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. The symptom</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>Here is a moist column relaxed to radiative–convective equilibrium (RCE) two</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>ways: once with RRTMG-LW, the workhorse longwave scheme, and once with climt's</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>picket-fence longwave (<span class="in">`PicketFenceLongwave`</span>) using its first-cut **4-band**</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>Earth table. Same shortwave, same convection, same surface. Only the longwave</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>differs.</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="al">![Moist RCE temperature profiles, before vs after. ★ marks the tropopause located by the θ-curvature criterion of §7.](_artifacts/rce_before_after.png)</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>Look at the left panel. The picket-fence column (blue) is far warmer than RRTMG</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>(green) through the whole troposphere. The numbers are stark:</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> quantity (moist RCE) <span class="pp">|</span> 4-band default <span class="pp">|</span> vs RRTMG <span class="pp">|</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> surface temperature <span class="pp">|</span> **+11.9 K warmer** <span class="pp">|</span> runaway <span class="pp">|</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> surface humidity <span class="pp">|</span> 6.48 g/kg <span class="pp">|</span> vs 2.02 (≈3× too moist) <span class="pp">|</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> tropopause (θ-curvature) <span class="pp">|</span> ≈23 hPa <span class="pp">|</span> vs 238 hPa — nowhere close <span class="pp">|</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>A +12 K surface bias with a humidity runaway is not a tuning problem; it is a</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>*the scheme is wrong* problem. The detective question for the rest of this post:</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>**is it the line data, or the scheme?**</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. A primer: the k-distribution, and the one assumption it rests on</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>::: {.callout-note collapse="true"}</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a><span class="fu">## How correlated-k works (expand if it's new)</span></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>A longwave band spans many wavenumbers ν, and the gas absorption coefficient</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>k(ν) varies wildly across it — by orders of magnitude between a transparent gap</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>and the centre of an absorption line. The band-averaged transmission through a</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>column of absorber amount $u$ is</span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>$$\mathcal{T}(u) = \big\langle e^{-k(\nu)\,u} \big\rangle_\nu .$$</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>You **cannot** replace $k(\nu)$ by its mean: the average of an exponential is not</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>the exponential of the average. Line-by-line integration does it honestly but is</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>far too expensive for a climate model.</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>The **k-distribution** trick: that integral only depends on the *distribution* of</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>k-values in the band, not on where in ν they sit. So sort k(ν) from weakest to</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>strongest. You get a smooth, monotonic curve $k(g)$, where $g \in <span class="co">[</span><span class="ot">0,1</span><span class="co">]</span>$ is the</span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>cumulative fraction of the band. A handful of quadrature points on $k(g)$ — the</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>**g-points** — then integrate the transmission cheaply. Low-g points are the</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>transparent gaps that radiate to space; high-g points are the saturated line</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>cores.</span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>The **"correlated"** part is the load-bearing assumption. Stacking many layers</span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>requires that the *rank ordering* of k(ν) is preserved with height — that a given</span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>g-point corresponds to the same wavenumbers at every level. That holds when one</span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>absorber, scaling smoothly with pressure and temperature, dominates the band.</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>Keep that last assumption in mind. It is exactly what will break.</span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Isolating the culprit</span></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>The clean way to split "line data" from "scheme" is to compare against</span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>**line-by-line** truth — the absorption computed wavenumber by wavenumber, with no</span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a>k-distribution approximation at all.</span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a><span class="al">![Line-by-line spectral OLR (grey), with the band-integrated totals from line-by-line, picket-fence, and RRTMG.](_artifacts/lbl_overlay.png)</span></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>The line-by-line total matches RRTMG. The picket-fence scheme, fed the *same*</span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>line data, traps more — its outgoing longwave is too low. The line data is fine.</span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a>**The correlated-k scheme is the culprit.** Now we have to find out where inside</span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>it the error lives.</span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. The dead-ends (this is the useful part)</span></span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a>The obvious instinct is that the scheme is under-resolved. It isn't, and watching</span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>the obvious fixes fail is how you learn what the problem actually is.</span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a><span class="fu">## What did *not* work</span></span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**More g-points (8 → 16 → 32).** The over-trapping barely moves. If this were a</span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a>  quadrature-resolution problem, more g-points would fix it. They don't.</span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Finer vertical resolution.** Same story — no help.</span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Boosting the line wings.** A hack; rejected.</span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a>When throwing resolution at an error doesn't move it, you are not fighting a</span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a>numerical problem. You are fighting a **structural** assumption — here, the</span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a>correlated-k spectral-correlation floor. That reframing is what points at the two</span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a>real levers below.</span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Root cause #1 — the water-vapour continuum (the dominant moist lever)</span></span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a>The H₂O continuum <span class="co">[</span><span class="ot">@mlawer2012</span><span class="co">]</span> is a broad, slowly varying absorption that rides</span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a>underneath the lines. The first-cut table folded it *into* the line-sorted</span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a>k-distribution and interpolated it linearly across log-spaced humidity nodes.</span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a>Because the continuum scales roughly with the square of water-vapour amount,</span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a>linear interpolation across log-spaced nodes systematically over-shoots — and it</span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a>over-traps by about **17 W/m²** in the moist column.</span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a><span class="fu">## The fix (engineering)</span></span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a>Decouple it. Build the k-distribution from the **lines only**, and carry the</span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a>continuum as a separate, band-grey term interpolated in log-X. This is precisely</span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a>the separation RRTMG uses — its <span class="in">`tauself`</span> / <span class="in">`taufor`</span> self- and foreign-continuum</span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a>paths <span class="co">[</span><span class="ot">@mlawer1997</span><span class="co">]</span>. Same physics, split into the two pieces that each</span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>interpolate cleanly.</span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. Root cause #2 — band structure (the lumped window)</span></span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a>The second lever is the one the primer warned about. The 4-band table lumps the</span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a>entire 800–1800 cm⁻¹ region into a single band — but that region contains **two</span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a>spectrally distinct populations**: the transparent 8–12 µm window, and the opaque</span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>H₂O ν₂ band. Sort them together and you get the tell-tale shape:</span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a><span class="al">![k(g) for the lumped window band (left): dry it is low and smooth, but moist it grows a low-g *shelf* (the window) and a high-g *cliff* (the H₂O lines). Right: the lumped two-piece curve next to spectrally coherent bands.](_artifacts/kg_window_band.png)</span></span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a>That shelf-and-cliff is the fingerprint of two populations in one band. One shared</span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a>Planck weight and one shared set of g-points cannot represent both at once, so the</span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a>transparent half can't open up and gets over-absorbed. Notice the error is</span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a>**invisible when dry** (both halves are transparent) and switches on with water</span>
+<span id="cb11-130"><a href="#cb11-130" aria-hidden="true" tabindex="-1"></a>vapour — exactly the dry/moist signature we measured.</span>
+<span id="cb11-131"><a href="#cb11-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-132"><a href="#cb11-132" aria-hidden="true" tabindex="-1"></a>The fix is surgical: a **14-band** partition that isolates the window and refines</span>
+<span id="cb11-133"><a href="#cb11-133" aria-hidden="true" tabindex="-1"></a>the far-IR and ν₂ regions, so each band is again a single coherent population.</span>
+<span id="cb11-134"><a href="#cb11-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-135"><a href="#cb11-135" aria-hidden="true" tabindex="-1"></a><span class="fu">## 7. The payoff — and which diagnostic to trust</span></span>
+<span id="cb11-136"><a href="#cb11-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-137"><a href="#cb11-137" aria-hidden="true" tabindex="-1"></a>Put both fixes together — decoupled continuum + 14-band structure — and re-run the</span>
+<span id="cb11-138"><a href="#cb11-138" aria-hidden="true" tabindex="-1"></a>same moist RCE (the right panel of the first figure):</span>
+<span id="cb11-139"><a href="#cb11-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-140"><a href="#cb11-140" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> quantity (moist RCE vs RRTMG) <span class="pp">|</span> 4-band <span class="pp">|</span> 14-band <span class="pp">|</span></span>
+<span id="cb11-141"><a href="#cb11-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb11-142"><a href="#cb11-142" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> surface temperature <span class="pp">|</span> +11.9 K <span class="pp">|</span> **+2.0 K** <span class="pp">|</span></span>
+<span id="cb11-143"><a href="#cb11-143" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> dry surface temperature <span class="pp">|</span> — <span class="pp">|</span> +0.8 K <span class="pp">|</span></span>
+<span id="cb11-144"><a href="#cb11-144" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> surface humidity <span class="pp">|</span> 6.48 vs 2.02 g/kg <span class="pp">|</span> 2.38 vs 2.02 <span class="pp">|</span></span>
+<span id="cb11-145"><a href="#cb11-145" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> tropopause (θ-curvature) <span class="pp">|</span> 23 hPa vs RRTMG 238 <span class="pp">|</span> **238 hPa — co-located** <span class="pp">|</span></span>
+<span id="cb11-146"><a href="#cb11-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-147"><a href="#cb11-147" aria-hidden="true" tabindex="-1"></a>The warm runaway is gone, the humidity is sane, and the picket-fence tropopause</span>
+<span id="cb11-148"><a href="#cb11-148" aria-hidden="true" tabindex="-1"></a>now sits right on top of RRTMG's.</span>
+<span id="cb11-149"><a href="#cb11-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-150"><a href="#cb11-150" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb11-151"><a href="#cb11-151" aria-hidden="true" tabindex="-1"></a><span class="fu">## A diagnostic that survives a broken climate</span></span>
+<span id="cb11-152"><a href="#cb11-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-153"><a href="#cb11-153" aria-hidden="true" tabindex="-1"></a>Locating the tropopause turned out to need its own work. The simple "potential</span>
+<span id="cb11-154"><a href="#cb11-154" aria-hidden="true" tabindex="-1"></a>temperature exceeds the surface value by 10 K" marker mislocated the runaway</span>
+<span id="cb11-155"><a href="#cb11-155" aria-hidden="true" tabindex="-1"></a>column badly — it reported a tropopause near **583 hPa**, deep in the</span>
+<span id="cb11-156"><a href="#cb11-156" aria-hidden="true" tabindex="-1"></a>mid-troposphere, which is physically nonsense. This post instead uses a</span>
+<span id="cb11-157"><a href="#cb11-157" aria-hidden="true" tabindex="-1"></a>**θ-curvature** criterion: the tropopause is the kink where potential temperature</span>
+<span id="cb11-158"><a href="#cb11-158" aria-hidden="true" tabindex="-1"></a>stops being convectively well-mixed and shoots up into the stratosphere — the</span>
+<span id="cb11-159"><a href="#cb11-159" aria-hidden="true" tabindex="-1"></a>level of maximum |d²θ/d(ln p)²|. It locates the well-behaved 14-band column at</span>
+<span id="cb11-160"><a href="#cb11-160" aria-hidden="true" tabindex="-1"></a>238 hPa (matching RRTMG) and correctly reports the broken 4-band column as</span>
+<span id="cb11-161"><a href="#cb11-161" aria-hidden="true" tabindex="-1"></a>pathological — convection driven absurdly deep, tropopause near 23 hPa. You can</span>
+<span id="cb11-162"><a href="#cb11-162" aria-hidden="true" tabindex="-1"></a>read it in <span class="in">`scripts/experiments/tropopause.py`</span>.</span>
+<span id="cb11-163"><a href="#cb11-163" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb11-164"><a href="#cb11-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-165"><a href="#cb11-165" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb11-166"><a href="#cb11-166" aria-hidden="true" tabindex="-1"></a><span class="fu">## Which error metric should you believe?</span></span>
+<span id="cb11-167"><a href="#cb11-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-168"><a href="#cb11-168" aria-hidden="true" tabindex="-1"></a>There's a trap here worth internalising. A **fixed-profile** single-column</span>
+<span id="cb11-169"><a href="#cb11-169" aria-hidden="true" tabindex="-1"></a>comparison reads about +11 W/m² of over-trapping for *both* the prototype and the</span>
+<span id="cb11-170"><a href="#cb11-170" aria-hidden="true" tabindex="-1"></a>shipped 14-band table — it looks like the band work barely helped. Yet the</span>
+<span id="cb11-171"><a href="#cb11-171" aria-hidden="true" tabindex="-1"></a>self-adjusting RCE column converges to only ~2 K. The fixed-profile metric</span>
+<span id="cb11-172"><a href="#cb11-172" aria-hidden="true" tabindex="-1"></a>**over-states** the error a column that can adjust its own humidity and lapse rate</span>
+<span id="cb11-173"><a href="#cb11-173" aria-hidden="true" tabindex="-1"></a>actually incurs. Always match the diagnostic to the question you're asking.</span>
+<span id="cb11-174"><a href="#cb11-174" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb11-175"><a href="#cb11-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-176"><a href="#cb11-176" aria-hidden="true" tabindex="-1"></a><span class="fu">## 8. Two more things this bought us</span></span>
+<span id="cb11-177"><a href="#cb11-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-178"><a href="#cb11-178" aria-hidden="true" tabindex="-1"></a>**Fast vs faithful.** Making the table faithful — 14 bands, 8 g-points, a runtime</span>
+<span id="cb11-179"><a href="#cb11-179" aria-hidden="true" tabindex="-1"></a>CO₂ axis — made the *Python* optical-depth and Planck assembly the bottleneck, not</span>
+<span id="cb11-180"><a href="#cb11-180" aria-hidden="true" tabindex="-1"></a>the physics. Compiling the two hot loops with Numba's <span class="in">`@njit(parallel=True)`</span> (on</span>
+<span id="cb11-181"><a href="#cb11-181" aria-hidden="true" tabindex="-1"></a>top of the already-compiled transport kernel) recovered all of it, bit-for-bit:</span>
+<span id="cb11-182"><a href="#cb11-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-183"><a href="#cb11-183" aria-hidden="true" tabindex="-1"></a><span class="al">![Longwave throughput. The faithful 14-band picket-fence scheme is faster than RRTMG.](_artifacts/throughput.png)</span></span>
+<span id="cb11-184"><a href="#cb11-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-185"><a href="#cb11-185" aria-hidden="true" tabindex="-1"></a>The faithful scheme ends up **faster than RRTMG** (here 56.6 vs 65.3 µs/column;</span>
+<span id="cb11-186"><a href="#cb11-186" aria-hidden="true" tabindex="-1"></a>your absolute numbers will vary with machine and column count). The lesson is that</span>
+<span id="cb11-187"><a href="#cb11-187" aria-hidden="true" tabindex="-1"></a>accuracy and speed were never the trade-off — the cost was un-compiled assembly</span>
+<span id="cb11-188"><a href="#cb11-188" aria-hidden="true" tabindex="-1"></a>loops.</span>
+<span id="cb11-189"><a href="#cb11-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-190"><a href="#cb11-190" aria-hidden="true" tabindex="-1"></a>**The free knob.** The same table is CO₂-adjustable from 10 to 10 000 ppm through</span>
+<span id="cb11-191"><a href="#cb11-191" aria-hidden="true" tabindex="-1"></a>a single runtime axis, interpolated geometrically (log-k against log-X_CO₂).</span>
+<span id="cb11-192"><a href="#cb11-192" aria-hidden="true" tabindex="-1"></a>Interpolating CO₂ *between* table nodes turns out to be fidelity-free: the</span>
+<span id="cb11-193"><a href="#cb11-193" aria-hidden="true" tabindex="-1"></a>off-node bias against line-by-line equals the on-node bias. (A leave-one-out test</span>
+<span id="cb11-194"><a href="#cb11-194" aria-hidden="true" tabindex="-1"></a>puts log-k interpolation at 5.5 % vs 30.9 % for linear-k.) The probe lives in</span>
+<span id="cb11-195"><a href="#cb11-195" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/experiments/eval_co2_interp_accuracy.py`</span>.</span>
+<span id="cb11-196"><a href="#cb11-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-197"><a href="#cb11-197" aria-hidden="true" tabindex="-1"></a><span class="fu">## 9. The answer key</span></span>
+<span id="cb11-198"><a href="#cb11-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-199"><a href="#cb11-199" aria-hidden="true" tabindex="-1"></a>The shipped recipe, for reference:</span>
+<span id="cb11-200"><a href="#cb11-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-201"><a href="#cb11-201" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**14 bands**, edges (cm⁻¹): `10, 250, 350, 500, 630, 700, 800, 980, 1080, 1180,</span>
+<span id="cb11-202"><a href="#cb11-202" aria-hidden="true" tabindex="-1"></a>  1250, 1400, 1600, 1800, 3250`; **8 g-points** per band.</span>
+<span id="cb11-203"><a href="#cb11-203" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Line-only** k-distribution + a **decoupled band-grey H₂O continuum**, log-X</span>
+<span id="cb11-204"><a href="#cb11-204" aria-hidden="true" tabindex="-1"></a>  interpolated.</span>
+<span id="cb11-205"><a href="#cb11-205" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A runtime **CO₂ axis** (10 log nodes, 10–10 000 ppm).</span>
+<span id="cb11-206"><a href="#cb11-206" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Quadrilinear interpolation: T (linear), log p (linear), log X_H₂O (linear-k),</span>
+<span id="cb11-207"><a href="#cb11-207" aria-hidden="true" tabindex="-1"></a>  log X_CO₂ (**log-k**).</span>
+<span id="cb11-208"><a href="#cb11-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-209"><a href="#cb11-209" aria-hidden="true" tabindex="-1"></a>The picket-fence optics follow the analytic non-grey framework of</span>
+<span id="cb11-210"><a href="#cb11-210" aria-hidden="true" tabindex="-1"></a>@parmentier2014; the table ships as <span class="in">`earth_low_res_lw`</span>, with the original 4-band</span>
+<span id="cb11-211"><a href="#cb11-211" aria-hidden="true" tabindex="-1"></a>table preserved as <span class="in">`earth_low_res_lw_4band_ngpt2_before`</span> for the before/after</span>
+<span id="cb11-212"><a href="#cb11-212" aria-hidden="true" tabindex="-1"></a>comparison above.</span>
+<span id="cb11-213"><a href="#cb11-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-214"><a href="#cb11-214" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
+<span id="cb11-215"><a href="#cb11-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-216"><a href="#cb11-216" aria-hidden="true" tabindex="-1"></a>Every figure and number above is reproduced by the companion notebook, which</span>
+<span id="cb11-217"><a href="#cb11-217" aria-hidden="true" tabindex="-1"></a>loads the same regenerated artifacts and re-runs the analysis. Run it in the</span>
+<span id="cb11-218"><a href="#cb11-218" aria-hidden="true" tabindex="-1"></a><span class="in">`climt`</span> environment, or read it through here:</span>
+<span id="cb11-219"><a href="#cb11-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-220"><a href="#cb11-220" aria-hidden="true" tabindex="-1"></a>{{&lt; embed picket_fence_co2_bands.ipynb echo=true &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
