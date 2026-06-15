@@ -1,10 +1,11 @@
 ---
 title: "Emanuel convection"
+bibliography: ../../references.bib
 ---
 
 ## Introduction
 
-The Emanuel convection scheme (Emanuel and Živković-Rothman, 1999) is a
+The Emanuel convection scheme [@emanuel1999] is a
 mass-flux parameterization designed for use in climate models. It
 emphasizes the accurate representation of convective water fluxes and
 microphysical processes, which are critical for controlling atmospheric

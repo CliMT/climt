@@ -1,0 +1,40 @@
+# get_grid { #climt.get_grid }
+
+```python
+get_grid(
+    nx=None,
+    ny=None,
+    nz=28,
+    n_ice_interface_levels=10,
+    p_surf_in_Pa=None,
+    p_toa_in_Pa=None,
+    proportion_sigma_levels=0.1,
+    proportion_isobaric_levels=0.25,
+    x_name='lon',
+    y_name='lat',
+    latitude_grid='gaussian',
+)
+```
+
+Args:
+    nx : int, optional
+        Number of longitudinal points.
+    ny : int, optional
+        Number of latitudinal points.
+    nz : int, optional
+        Number of vertical mid levels.
+    n_ice_interface_levels (int, optional): Number of vertical
+        interface levels to use for ice. Use None to disable the ice
+        vertical grid.
+    p_surf_in_Pa : float, optional
+        Surface pressure in Pa.
+    x_name : str, optional
+        Name of latitudinal dimension
+    y_name : str, optional
+        Name of longitudinal dimension
+    latitude_grid : 'gaussian' or 'regular'
+        Type of spacing to use for the latitudinal grid.
+
+Returns:
+    grid_state: dict
+        A model state containing grid quantities.

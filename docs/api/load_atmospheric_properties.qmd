@@ -1,0 +1,14 @@
+# load_atmospheric_properties { #climt.load_atmospheric_properties }
+
+```python
+load_atmospheric_properties(name_or_path)
+```
+
+Load an atmospheric profile and set sympl constants accordingly.
+
+Takes a snapshot of the current constants before applying changes,
+so that reset_atmospheric_properties() can restore them.
+
+Args:
+    name_or_path: Built-in profile name (e.g., "earth", "mars",
+        "hot_jupiter") or path to a custom .toml file.

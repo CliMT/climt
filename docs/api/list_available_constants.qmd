@@ -1,0 +1,7 @@
+# list_available_constants { #climt.list_available_constants }
+
+```python
+list_available_constants()
+```
+
+Prints all the constants currently registered with sympl.

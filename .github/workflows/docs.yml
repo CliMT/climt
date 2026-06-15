@@ -17,6 +17,18 @@ jobs:
 
       - uses: quarto-dev/quarto-actions/setup@v2
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install climt + docs deps
+        run: |
+          pip install "griffe<2.0" quartodoc pyyaml
+          pip install -e . --no-deps
+
+      - name: Build API reference
+        run: cd docs && quartodoc build
+
       - name: Render site
         run: quarto render docs/
 

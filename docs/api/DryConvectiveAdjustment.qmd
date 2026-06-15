@@ -1,0 +1,8 @@
+# DryConvectiveAdjustment { #climt.DryConvectiveAdjustment }
+
+```python
+DryConvectiveAdjustment()
+```
+
+A conservative scheme to keep the temperature profile close to the
+dry adiabat if it is super-adiabatic.

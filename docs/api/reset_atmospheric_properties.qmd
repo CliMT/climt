@@ -1,0 +1,10 @@
+# reset_atmospheric_properties { #climt.reset_atmospheric_properties }
+
+```python
+reset_atmospheric_properties()
+```
+
+Restore constants to the state before the last load_atmospheric_properties call.
+
+Raises:
+    RuntimeError: If no profile has been loaded (nothing to reset).

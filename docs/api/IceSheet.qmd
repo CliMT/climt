@@ -1,0 +1,7 @@
+# IceSheet { #climt.IceSheet }
+
+```python
+IceSheet(maximum_snow_ice_height=10, **kwargs)
+```
+
+1-d snow-ice energy balance model.

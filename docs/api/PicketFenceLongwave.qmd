@@ -1,0 +1,12 @@
+# PicketFenceLongwave { #climt._components.picket_fence.lw.component.PicketFenceLongwave }
+
+```python
+_components.picket_fence.lw.component.PicketFenceLongwave(
+    optics='parmentier',
+    table=None,
+    coefficients='solar_composition',
+    rosseland_mean_fit='freedman2014',
+    **kwargs,
+)
+```
+
