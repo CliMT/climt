@@ -1,16 +1,20 @@
-from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
-from .held_suarez import HeldSuarez
-from .grid_scale_condensation import GridScaleCondensation
 from .berger_solar_insolation import BergerSolarInsolation
-from .simple_physics import SimplePhysics
+from .bucket_hydrology import BucketHydrology
+from .dcmip import DcmipInitialConditions
+from .dry_convection import DryConvectiveAdjustment
+from .emanuel import (
+    EmanuelConvection,
+    EmanuelConvectionPython,
+)
+from .grid_scale_condensation import GridScaleCondensation
+from .held_suarez import HeldSuarez
+from .instellation import Instellation
+from .picket_fence import PicketFenceLongwave, PicketFenceShortwave
+from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
-from .emanuel import EmanuelConvection, EmanuelConvectionPython, EmanuelConvectionPythonV3
+from .simple_physics import SimplePhysics
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
-from .dcmip import DcmipInitialConditions
-from .instellation import Instellation
-from .dry_convection import DryConvectiveAdjustment
-from .bucket_hydrology import BucketHydrology
 
 __all__ = (
     Frierson06LongwaveOpticalDepth,
@@ -23,11 +27,12 @@ __all__ = (
     RRTMGShortwave,
     EmanuelConvection,
     EmanuelConvectionPython,
-    EmanuelConvectionPythonV3,
     SlabSurface,
     DcmipInitialConditions,
     IceSheet,
     Instellation,
     DryConvectiveAdjustment,
     BucketHydrology,
+    PicketFenceLongwave,
+    PicketFenceShortwave,
 )

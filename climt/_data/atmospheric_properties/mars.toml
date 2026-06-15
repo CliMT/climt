@@ -1,0 +1,29 @@
+# Mars CO2-dominated atmosphere constants
+
+[planetary]
+gravitational_acceleration = { value = 3.721, units = "m/s^2" }
+planetary_radius = { value = 3389500.0, units = "m" }
+planetary_rotation_rate = { value = 7.088e-05, units = "s^-1" }
+
+[bulk_atmosphere]
+molar_mass_of_dry_air = { value = 43.34, units = "g/mol" }
+gas_constant_of_dry_air = { value = 191.8, units = "J/kg/K" }
+heat_capacity_of_dry_air_at_constant_pressure = { value = 735.0, units = "J/kg/K" }
+
+[gas_species]
+molar_mass_of_carbon_dioxide = { value = 44.010, units = "g/mol" }
+molar_mass_of_water_vapor = { value = 18.015, units = "g/mol" }
+
+[condensible]
+species = "co2"
+
+[condensible_properties]
+# CO2 condensible properties — condensate is solid (dry ice) at Mars surface conditions
+# Latent heat is sublimation heat anchored at 194.7 K (1 atm sublimation point)
+# T_freeze set to CO2 triple point; at Mars pressures CO2 always precipitates as dry ice
+gas_constant_of_condensible_vapor         = { value = 188.9,  units = "J/kg/K" }
+heat_capacity_of_condensible_vapor        = { value = 846.0,  units = "J/kg/K" }
+heat_capacity_of_condensible_liquid       = { value = 709.0,  units = "J/kg/K" }
+latent_heat_of_condensible_vaporization   = { value = 5.71e5, units = "J/kg" }
+density_of_condensible_liquid             = { value = 1562.0, units = "kg/m^3" }
+freezing_point_of_condensible            = { value = 216.6,  units = "degK" }

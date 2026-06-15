@@ -55,7 +55,7 @@ class GrayLongwaveRadiation(TendencyComponent):
             "units": "W m^-2",
             "alias": "lw_up",
         },
-        "longwave_heating_rate": {"dims": ["mid_levels", "*"], "units": "degK day^-1"},
+        "air_temperature_tendency_from_longwave": {"dims": ["mid_levels", "*"], "units": "degK day^-1"},
     }
 
     tendency_properties = {
@@ -105,7 +105,7 @@ class GrayLongwaveRadiation(TendencyComponent):
         return {"sl": lw_temperature_tendency}, {
             "lw_down": downward_flux,
             "lw_up": upward_flux,
-            "longwave_heating_rate": lw_temperature_tendency * 86400.0,
+            "air_temperature_tendency_from_longwave": lw_temperature_tendency * 86400.0,
         }
 
 

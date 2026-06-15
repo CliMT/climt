@@ -30,7 +30,7 @@ COMPONENTS = [
     "SlabSurface",
     "Instellation",
     "BucketHydrology",
-    "EmanuelConvectionPythonV3",
+    "EmanuelConvectionPython",
 ]
 
 # Components that need a timestep (Steppers / ImplicitTendency)
@@ -38,7 +38,7 @@ NEEDS_TIMESTEP = {
     "GridScaleCondensation",
     "DryConvectiveAdjustment",
     "BucketHydrology",
-    "EmanuelConvectionPythonV3",
+    "EmanuelConvectionPython",
 }
 
 

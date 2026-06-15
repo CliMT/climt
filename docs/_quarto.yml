@@ -1,0 +1,23 @@
+# docs/_quarto.yml
+# Minimal, forward-compatible seed of the full climt-website config
+# (docs/superpowers/specs/2026-05-18-climt-website-design.md). The site
+# migration extends this with nav, theme, and quartodoc; nothing here may
+# contradict that spec.
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "climt"
+  navbar:
+    left:
+      - text: "Experiments"
+        href: experiments/index.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: false
+
+# Experiments listing is provided by docs/experiments/index.qmd (a later task).

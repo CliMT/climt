@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help
+.PHONY: clean clean-test clean-pyc clean-build docs help experiments experiments-check
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -95,3 +95,9 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+experiments: ## regenerate stale docs experiment artifacts (hash-gated)
+	conda run --no-capture-output -n climt python scripts/build_experiments.py
+
+experiments-check: ## fail if any experiment artifact is stale (CI bookkeeping)
+	conda run --no-capture-output -n climt python scripts/build_experiments.py --check
