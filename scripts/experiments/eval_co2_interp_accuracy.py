@@ -1,4 +1,4 @@
-"""A5 CO2-interpolation accuracy probe for the picket-fence LW k-table.
+"""A5 CO2-interpolation accuracy probe for the cork LW k-table.
 
 Part 1 (leave-one-out node test) runs in the climt env with NO linepyline and
 is the primary deliverable.  It answers the design question "log-k vs linear-k
@@ -26,14 +26,14 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 _REPO = os.path.join(_HERE, "..", "..")
 _DBG = os.path.join(_REPO, "debug_data")
 
-sys.path.insert(0, _HERE)  # allows: from eval_band_structure import pf_olr
+sys.path.insert(0, _HERE)  # allows: from eval_band_structure import cork_olr
 
 # ---------------------------------------------------------------------------
 # Load table
 # ---------------------------------------------------------------------------
 table_name = sys.argv[1] if len(sys.argv) > 1 else "earth_low_res_lw"
 
-from climt._components.picket_fence.optics.correlated_k import load_k_table  # noqa: E402
+from climt._components.cork.optics.correlated_k import load_k_table  # noqa: E402
 
 table = load_k_table(table_name)
 k = table["k_coefficients"]          # (ngas, nband, ngpt, nT, nP, nX_H2O, nC)
@@ -196,14 +196,14 @@ for iC in interior_nodes:
 # PART 2 — Optional LBL comparison at off-node CO2
 # ---------------------------------------------------------------------------
 print()
-print("--- Part 2: PF (log-k vs linear-k) vs LBL at off-node CO2 ---")
-# This part needs NO linepyline: it runs PF in the climt env and compares against
+print("--- Part 2: CORK (log-k vs linear-k) vs LBL at off-node CO2 ---")
+# This part needs NO linepyline: it runs CORK in the climt env and compares against
 # pre-generated LBL spectra. Generate those once in the linepyline env with
 #   $LPY scripts/experiments/lbl_olr_tiebreak.py --co2 <ppm>
 # which writes debug_data/lbl_olr_spec_moist_co2_<ppm>ppm.npz.
 
-import climt._components.picket_fence.optics.correlated_k as _ck_mod  # noqa: E402
-from eval_band_structure import pf_olr  # noqa: E402
+import climt._components.cork.optics.correlated_k as _ck_mod  # noqa: E402
+from eval_band_structure import cork_olr  # noqa: E402
 from climt import get_grid  # noqa: E402
 
 NZ = 40
@@ -218,15 +218,15 @@ else:
     T, q_moist, Ts = d["T_ref"], d["q_ref_moist"], float(d["T_surf"])
     grid = get_grid(nx=1, ny=1, nz=NZ)
 
-    print(f"  {'CO2[ppm]':>9s}  {'PF log-k':>10s}  {'PF lin-k':>10s}  "
+    print(f"  {'CO2[ppm]':>9s}  {'CORK log-k':>10s}  {'CORK lin-k':>10s}  "
           f"{'LBL':>10s}  {'logk-LBL':>9s}  {'link-LBL':>9s}")
     any_lbl = False
     for ppm in OFF_NODE_CO2_PPM:
         co2_val = ppm * 1e-6
         _ck_mod._CO2_INTERP_LOGK = True
-        olr_logk, _ = pf_olr(table_name, T, q_moist, Ts, co2_val, grid)
+        olr_logk, _ = cork_olr(table_name, T, q_moist, Ts, co2_val, grid)
         _ck_mod._CO2_INTERP_LOGK = False
-        olr_link, _ = pf_olr(table_name, T, q_moist, Ts, co2_val, grid)
+        olr_link, _ = cork_olr(table_name, T, q_moist, Ts, co2_val, grid)
         _ck_mod._CO2_INTERP_LOGK = True  # reset to design default
 
         lbl_path = os.path.join(_DBG, f"lbl_olr_spec_moist_co2_{ppm}ppm.npz")

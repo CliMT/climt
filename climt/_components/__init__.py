@@ -9,7 +9,7 @@ from .emanuel import (
 from .grid_scale_condensation import GridScaleCondensation
 from .held_suarez import HeldSuarez
 from .instellation import Instellation
-from .picket_fence import PicketFenceLongwave, PicketFenceShortwave
+from .cork import CorkLongwaveRadiation, CorkShortwaveRadiation
 from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .simple_physics import SimplePhysics
@@ -33,6 +33,6 @@ __all__ = (
     Instellation,
     DryConvectiveAdjustment,
     BucketHydrology,
-    PicketFenceLongwave,
-    PicketFenceShortwave,
+    CorkLongwaveRadiation,
+    CorkShortwaveRadiation,
 )

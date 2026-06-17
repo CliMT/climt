@@ -47,7 +47,7 @@ for iT in range(nT):
     planck_fraction[1, 0, iT] = 0.7 * 0.5
     planck_fraction[1, 1, iT] = 0.3 * 0.5
 
-data_dir = os.path.join("climt", "_data", "picket_fence", "correlated_k")
+data_dir = os.path.join("climt", "_data", "cork", "correlated_k")
 os.makedirs(data_dir, exist_ok=True)
 
 np.savez(

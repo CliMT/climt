@@ -13,7 +13,7 @@ g-integrated band-mean sum(k_i * w_i) for each. Convergence target = the plain
 arithmetic mean of the sampled kappa over the band (which == the LBL band-mean,
 since LBL band-mean is the same uniform-nu mean and kappa is 1.00x LBL).
 
-Run from the linepyline env (needs linepyline + the pure-numpy pf_table_builder):
+Run from the linepyline env (needs linepyline + the pure-numpy cork_table_builder):
     /Users/joymonteiro/miniconda3/envs/linepyline/bin/python \
         scripts/experiments/ngpt_convergence.py
 """
@@ -28,7 +28,7 @@ import xarray as xr
 import linepyline as lpl
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ))
-from pf_table_builder.k_distribution import kappa_to_k_coeffs
+from cork_table_builder.k_distribution import kappa_to_k_coeffs
 
 CO2_VMR = 376e-6
 P_FIXED = 1.0e4

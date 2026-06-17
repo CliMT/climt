@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a linepyline-based offline pipeline that produces climt-format picket-fence correlated-k tables for TRAPPIST-1e (THAI Hab1 + Hab2 scenarios) and Titan, so students can run the picket-fence radiation scheme on those atmospheres and compare against SOCRATES.
+**Goal:** Build a linepyline-based offline pipeline that produces climt-format cork correlated-k tables for TRAPPIST-1e (THAI Hab1 + Hab2 scenarios) and Titan, so students can run the cork radiation scheme on those atmospheres and compare against SOCRATES.
 
-**Architecture:** A pure-python offline script `scripts/generate_pf_tables_linepyline.py` calls `linepyline.rtm.get_kappa_hitran` (+ MT_CKD continuum for H2O, + HITRAN CIA for Titan N₂–N₂ / N₂–CH₄) on a (T, p) grid at line-by-line resolution, bins the resulting κ(ν) into picket-fence bands, builds a per-band k-distribution sampled at `ngpt` Gauss–Legendre g-points, and writes a netCDF file matching the schema consumed by `climt._components.picket_fence.optics.correlated_k.load_k_table`. The script is run from the `linepyline` conda env (not a climt runtime dep). Outputs are committed under `climt/_data/picket_fence/correlated_k/` and smoke-tested from the `climt` env. THAI Hab1 uses the H₂O-VMR axis (trilinear in T, log p, log X_H2O) so the same table can drive runs over a wide humidity range; Hab2 and Titan are pre-mixed (no H₂O axis). Titan additionally pulls HITRAN CIA cross-sections — without CIA, Titan's LW window opacity is wrong by orders of magnitude.
+**Architecture:** A pure-python offline script `scripts/generate_cork_tables_linepyline.py` calls `linepyline.rtm.get_kappa_hitran` (+ MT_CKD continuum for H2O, + HITRAN CIA for Titan N₂–N₂ / N₂–CH₄) on a (T, p) grid at line-by-line resolution, bins the resulting κ(ν) into cork bands, builds a per-band k-distribution sampled at `ngpt` Gauss–Legendre g-points, and writes a netCDF file matching the schema consumed by `climt._components.cork.optics.correlated_k.load_k_table`. The script is run from the `linepyline` conda env (not a climt runtime dep). Outputs are committed under `climt/_data/cork/correlated_k/` and smoke-tested from the `climt` env. THAI Hab1 uses the H₂O-VMR axis (trilinear in T, log p, log X_H2O) so the same table can drive runs over a wide humidity range; Hab2 and Titan are pre-mixed (no H₂O axis). Titan additionally pulls HITRAN CIA cross-sections — without CIA, Titan's LW window opacity is wrong by orders of magnitude.
 
 **Tech Stack:** Python 3.12, numpy, xarray, scipy.io.netcdf, linepyline (HITRAN 2024 lines + MT_CKD 4.3), HITRAN CIA flat files, pytest.
 
@@ -19,8 +19,8 @@
 
 ```
 scripts/
-  generate_pf_tables_linepyline.py     # CREATE — CLI driver (one scenario per invocation)
-  pf_table_builder/
+  generate_cork_tables_linepyline.py     # CREATE — CLI driver (one scenario per invocation)
+  cork_table_builder/
     __init__.py                        # CREATE
     kappa_sampling.py                  # CREATE — wraps linepyline κ on a (T,p[,X]) grid
     k_distribution.py                  # CREATE — band-bin + sort + Gauss-Legendre quadrature
@@ -28,7 +28,7 @@ scripts/
     solar_source.py                    # CREATE — SW solar source + Rayleigh per (band, gpoint)
     cia.py                             # CREATE — HITRAN CIA loader (Titan only)
     netcdf_writer.py                   # CREATE — climt-schema writer
-climt/_data/picket_fence/correlated_k/
+climt/_data/cork/correlated_k/
   trappist1e_hab1_lw.nc                # CREATE (with H2O VMR axis)
   trappist1e_hab1_sw.nc                # CREATE (with H2O VMR axis)
   trappist1e_hab2_lw.nc                # CREATE (premixed pure CO2)
@@ -36,21 +36,21 @@ climt/_data/picket_fence/correlated_k/
   titan_lw.nc                          # CREATE (premixed; CIA included)
   titan_sw.nc                          # CREATE (premixed; Sun-illuminated)
   MANIFEST.md                          # MODIFY — append new rows
-climt/_data/picket_fence/cia/
+climt/_data/cork/cia/
   N2-N2_2018.cia                       # CREATE (committed from HITRAN download)
   N2-CH4_2018.cia                      # CREATE
   CH4-N2_2018.cia                      # CREATE (sometimes only one of the two pairs is in HITRAN; document)
 tests/
   test_correlated_k_tables.py          # MODIFY — extend SHIPPED list
-  test_picket_fence_titan_trappist.py  # CREATE — end-to-end smoke run
+  test_cork_titan_trappist.py  # CREATE — end-to-end smoke run
 docs/
   radiative_transfer/
     table_generation.rst               # MODIFY — add linepyline section
 ```
 
 **Notes:**
-- `pf_table_builder/` is a *package next to the script*, not inside `climt/` — keep climt's runtime dep graph clean. The runtime only consumes the resulting `.nc` files.
-- All `_data/picket_fence/correlated_k/*.nc` files are committed as binary. Each is small (< 200 KB at 4 bands × 2 gpts × ~10×15 (T,p) × optional 5 X-points).
+- `cork_table_builder/` is a *package next to the script*, not inside `climt/` — keep climt's runtime dep graph clean. The runtime only consumes the resulting `.nc` files.
+- All `_data/cork/correlated_k/*.nc` files are committed as binary. Each is small (< 200 KB at 4 bands × 2 gpts × ~10×15 (T,p) × optional 5 X-points).
 - The `cia/` subdirectory is only used by the offline build script — climt itself does not need to load it at runtime (the CIA contribution is baked into the table's k-coefficients).
 
 ---
@@ -61,7 +61,7 @@ All script invocations in this plan are run from the `linepyline` conda env, exc
 
 ```bash
 # Build (heavy, offline):
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py …
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py …
 
 # Test (cheap, in climt):
 cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest …
@@ -72,25 +72,25 @@ cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest …
 ### Task 1: Kappa sampling utility — linepyline wrapper over a (T, p) grid
 
 **Files:**
-- Create: `scripts/pf_table_builder/__init__.py`
-- Create: `scripts/pf_table_builder/kappa_sampling.py`
-- Create: `tests/pf_table_builder/test_kappa_sampling.py`
+- Create: `scripts/cork_table_builder/__init__.py`
+- Create: `scripts/cork_table_builder/kappa_sampling.py`
+- Create: `tests/cork_table_builder/test_kappa_sampling.py`
 
 The job: for one scenario (background gas + absorber dict), produce a 4D array `kappa[iT, iP, iNu]` of total mass absorption coefficient (m²/kg) on a fixed (T grid, log-p grid, wavenumber grid).
 
 - [x] **Step 1: Create the package**
 
-Create `scripts/pf_table_builder/__init__.py` with a single line:
+Create `scripts/cork_table_builder/__init__.py` with a single line:
 
 ```python
-"""Offline utilities to convert linepyline line-by-line opacity into picket-fence k-tables."""
+"""Offline utilities to convert linepyline line-by-line opacity into cork k-tables."""
 ```
 
 - [x] **Step 2: Write the failing test**
 
-Create `tests/pf_table_builder/__init__.py` (empty file).
+Create `tests/cork_table_builder/__init__.py` (empty file).
 
-Create `tests/pf_table_builder/test_kappa_sampling.py`:
+Create `tests/cork_table_builder/test_kappa_sampling.py`:
 
 ```python
 """Tests for the linepyline kappa sampler.
@@ -107,7 +107,7 @@ def test_sample_kappa_grid_shapes(monkeypatch):
     """sample_kappa_grid returns (nT, nP, nNu) for a single absorber."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.kappa_sampling import sample_kappa_grid
+    from scripts.cork_table_builder.kappa_sampling import sample_kappa_grid
 
     T_grid = np.array([200.0, 250.0, 300.0])
     p_grid = np.array([1e3, 1e4, 1e5])
@@ -133,7 +133,7 @@ def test_sample_kappa_grid_with_h2o_vmr_axis():
     """sample_kappa_grid with X axis returns (nT, nP, nX, nNu)."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.kappa_sampling import sample_kappa_grid
+    from scripts.cork_table_builder.kappa_sampling import sample_kappa_grid
 
     T_grid = np.array([250.0, 300.0])
     p_grid = np.array([1e3, 1e5])
@@ -157,12 +157,12 @@ def test_sample_kappa_grid_with_h2o_vmr_axis():
 
 - [x] **Step 3: Run test to verify it fails**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_kappa_sampling.py -v`
-Expected: FAIL with `ModuleNotFoundError: scripts.pf_table_builder.kappa_sampling`.
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_kappa_sampling.py -v`
+Expected: FAIL with `ModuleNotFoundError: scripts.cork_table_builder.kappa_sampling`.
 
 - [x] **Step 4: Implement the kappa sampler**
 
-Create `scripts/pf_table_builder/kappa_sampling.py`:
+Create `scripts/cork_table_builder/kappa_sampling.py`:
 
 ```python
 """Sample linepyline line-by-line mass absorption coefficients on a (T, p[, X_H2O]) grid.
@@ -319,16 +319,16 @@ def _mass_fraction(species, vmr, background_gas, all_absorbers):
 
 - [x] **Step 5: Run tests to verify they pass**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_kappa_sampling.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_kappa_sampling.py -v`
 Expected: ALL PASS (first invocation downloads/loads HITRAN data into linepyline; subsequent runs are fast.)
 
 - [x] **Step 6: Commit**
 
 ```bash
-git add scripts/pf_table_builder/__init__.py \
-        scripts/pf_table_builder/kappa_sampling.py \
-        tests/pf_table_builder/
-git commit -m "feat(pf-tables): add linepyline kappa sampler over (T, p[, X_H2O]) grid"
+git add scripts/cork_table_builder/__init__.py \
+        scripts/cork_table_builder/kappa_sampling.py \
+        tests/cork_table_builder/
+git commit -m "feat(cork-tables): add linepyline kappa sampler over (T, p[, X_H2O]) grid"
 ```
 
 ---
@@ -336,14 +336,14 @@ git commit -m "feat(pf-tables): add linepyline kappa sampler over (T, p[, X_H2O]
 ### Task 2: k-distribution builder — band-bin → sort → Gauss–Legendre
 
 **Files:**
-- Create: `scripts/pf_table_builder/k_distribution.py`
-- Create: `tests/pf_table_builder/test_k_distribution.py`
+- Create: `scripts/cork_table_builder/k_distribution.py`
+- Create: `tests/cork_table_builder/test_k_distribution.py`
 
 Given `kappa[..., nu]` and band edges, build `k_coeffs[..., band, gpt]` using the classical k-distribution: within each band, sort κ values and integrate against the cumulative distribution function evaluated at Gauss–Legendre nodes on [0, 1].
 
 - [x] **Step 1: Write failing test**
 
-Create `tests/pf_table_builder/test_k_distribution.py`:
+Create `tests/cork_table_builder/test_k_distribution.py`:
 
 ```python
 import numpy as np
@@ -354,7 +354,7 @@ def test_kappa_to_k_coeffs_uniform_recovers_value():
     """A uniform kappa(nu) in a band should give k_coeffs = kappa at every g-point."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.k_distribution import kappa_to_k_coeffs
+    from scripts.cork_table_builder.k_distribution import kappa_to_k_coeffs
 
     nu_grid = np.linspace(10.0, 3250.0, 1000)
     band_edges = np.array([10.0, 500.0, 1250.0, 2500.0, 3250.0])
@@ -373,7 +373,7 @@ def test_kappa_to_k_coeffs_two_peaks_orders_correctly():
     """Within a band, k_coeffs at successive g-points are monotone increasing."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.k_distribution import kappa_to_k_coeffs
+    from scripts.cork_table_builder.k_distribution import kappa_to_k_coeffs
 
     nu_grid = np.linspace(10.0, 3250.0, 5000)
     band_edges = np.array([10.0, 500.0, 1250.0, 2500.0, 3250.0])
@@ -393,7 +393,7 @@ def test_kappa_to_k_coeffs_with_extra_axes():
     """Builder is shape-agnostic in the leading kappa axes."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.k_distribution import kappa_to_k_coeffs
+    from scripts.cork_table_builder.k_distribution import kappa_to_k_coeffs
 
     nu_grid = np.linspace(10.0, 3250.0, 200)
     band_edges = np.array([10.0, 500.0, 1250.0, 2500.0, 3250.0])
@@ -406,12 +406,12 @@ def test_kappa_to_k_coeffs_with_extra_axes():
 
 - [x] **Step 2: Run — expect FAIL**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_k_distribution.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_k_distribution.py -v`
 Expected: FAIL (`ModuleNotFoundError`).
 
 - [x] **Step 3: Implement k-distribution**
 
-Create `scripts/pf_table_builder/k_distribution.py`:
+Create `scripts/cork_table_builder/k_distribution.py`:
 
 ```python
 """Band-bin κ(ν) and quadrature to a small number of g-points."""
@@ -471,15 +471,15 @@ def kappa_to_k_coeffs(kappa, nu_grid, band_edges, ngpt):
 
 - [x] **Step 4: Run — expect PASS**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_k_distribution.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_k_distribution.py -v`
 Expected: ALL PASS.
 
 - [x] **Step 5: Commit**
 
 ```bash
-git add scripts/pf_table_builder/k_distribution.py \
-        tests/pf_table_builder/test_k_distribution.py
-git commit -m "feat(pf-tables): k-distribution builder with Gauss-Legendre quadrature"
+git add scripts/cork_table_builder/k_distribution.py \
+        tests/cork_table_builder/test_k_distribution.py
+git commit -m "feat(cork-tables): k-distribution builder with Gauss-Legendre quadrature"
 ```
 
 ---
@@ -487,8 +487,8 @@ git commit -m "feat(pf-tables): k-distribution builder with Gauss-Legendre quadr
 ### Task 3: Planck-fraction utility (LW source distribution per g-point)
 
 **Files:**
-- Create: `scripts/pf_table_builder/planck_fraction.py`
-- Create: `tests/pf_table_builder/test_planck_fraction.py`
+- Create: `scripts/cork_table_builder/planck_fraction.py`
+- Create: `tests/cork_table_builder/test_planck_fraction.py`
 
 climt's LW correlated-k loader expects `planck_fraction(band, gpt, T)` so that the Planck source per (band, g) is `B_band(T) × planck_fraction`. Because we built the k-distribution by sorting κ in wavenumber without preserving which ν went to which g, the assumption is that within a band the Planck source is distributed *uniformly across g* — i.e., `planck_fraction = 1/ngpt` for every (band, gpt, T). This matches what the existing Earth/Mars/Venus tables ship.
 
@@ -496,7 +496,7 @@ This task gives that a name and a unit test so the writer (Task 6) reads from on
 
 - [x] **Step 1: Failing test**
 
-Create `tests/pf_table_builder/test_planck_fraction.py`:
+Create `tests/cork_table_builder/test_planck_fraction.py`:
 
 ```python
 import numpy as np
@@ -505,23 +505,23 @@ import numpy as np
 def test_uniform_planck_fraction_sums_to_one():
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.planck_fraction import build_uniform_planck_fraction
+    from scripts.cork_table_builder.planck_fraction import build_uniform_planck_fraction
 
     nband, ngpt, nT = 4, 2, 5
-    pf = build_uniform_planck_fraction(nband, ngpt, nT)
-    assert pf.shape == (nband, ngpt, nT)
-    np.testing.assert_allclose(pf.sum(axis=1), 1.0, rtol=1e-12)
-    np.testing.assert_allclose(pf, 1.0 / ngpt)
+    cork = build_uniform_planck_fraction(nband, ngpt, nT)
+    assert cork.shape == (nband, ngpt, nT)
+    np.testing.assert_allclose(cork.sum(axis=1), 1.0, rtol=1e-12)
+    np.testing.assert_allclose(cork, 1.0 / ngpt)
 ```
 
 - [x] **Step 2: Run — expect FAIL**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_planck_fraction.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_planck_fraction.py -v`
 Expected: FAIL.
 
 - [x] **Step 3: Implement**
 
-Create `scripts/pf_table_builder/planck_fraction.py`:
+Create `scripts/cork_table_builder/planck_fraction.py`:
 
 ```python
 """Planck-source distribution across g-points within each LW band."""
@@ -542,13 +542,13 @@ def build_uniform_planck_fraction(nband, ngpt, nT):
 
 - [x] **Step 4: Run + commit**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_planck_fraction.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_planck_fraction.py -v`
 Expected: PASS.
 
 ```bash
-git add scripts/pf_table_builder/planck_fraction.py \
-        tests/pf_table_builder/test_planck_fraction.py
-git commit -m "feat(pf-tables): uniform Planck-fraction helper for LW writer"
+git add scripts/cork_table_builder/planck_fraction.py \
+        tests/cork_table_builder/test_planck_fraction.py
+git commit -m "feat(cork-tables): uniform Planck-fraction helper for LW writer"
 ```
 
 ---
@@ -556,14 +556,14 @@ git commit -m "feat(pf-tables): uniform Planck-fraction helper for LW writer"
 ### Task 4: SW solar-source + Rayleigh per band
 
 **Files:**
-- Create: `scripts/pf_table_builder/solar_source.py`
-- Create: `tests/pf_table_builder/test_solar_source.py`
+- Create: `scripts/cork_table_builder/solar_source.py`
+- Create: `tests/cork_table_builder/test_solar_source.py`
 
 Compute `solar_source_per_gpoint(band, gpt)` by integrating a stellar spectrum across each band and splitting equally across the band's g-points (same uniform assumption as Planck fraction). Also compute a single-value-per-band Rayleigh coefficient using a standard λ⁻⁴ formula and the bulk gas refractive index (parameterized by mean molar mass and a refractivity coefficient).
 
 - [x] **Step 1: Failing test**
 
-Create `tests/pf_table_builder/test_solar_source.py`:
+Create `tests/cork_table_builder/test_solar_source.py`:
 
 ```python
 import numpy as np
@@ -573,7 +573,7 @@ def test_solar_source_partitions_total_irradiance():
     """Sum of solar_source across (band, gpt) equals total stellar flux integral."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.solar_source import (
+    from scripts.cork_table_builder.solar_source import (
         build_solar_source_per_gpoint, build_rayleigh_per_band,
     )
 
@@ -593,7 +593,7 @@ def test_rayleigh_per_band_decreases_with_wavelength():
     """Rayleigh coefficient should drop as wavenumber drops (longer λ)."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.solar_source import build_rayleigh_per_band
+    from scripts.cork_table_builder.solar_source import build_rayleigh_per_band
 
     band_edges = np.array([3250.0, 8000.0, 14000.0, 30000.0])
     r = build_rayleigh_per_band(band_edges, mean_molar_mass_g=28.0,
@@ -605,12 +605,12 @@ def test_rayleigh_per_band_decreases_with_wavelength():
 
 - [x] **Step 2: Run — expect FAIL**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_solar_source.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_solar_source.py -v`
 Expected: FAIL.
 
 - [x] **Step 3: Implement**
 
-Create `scripts/pf_table_builder/solar_source.py`:
+Create `scripts/cork_table_builder/solar_source.py`:
 
 ```python
 """SW band-integrated solar source and Rayleigh cross-section."""
@@ -673,13 +673,13 @@ def build_rayleigh_per_band(band_edges, mean_molar_mass_g,
 
 - [x] **Step 4: Run + commit**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_solar_source.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_solar_source.py -v`
 Expected: PASS.
 
 ```bash
-git add scripts/pf_table_builder/solar_source.py \
-        tests/pf_table_builder/test_solar_source.py
-git commit -m "feat(pf-tables): SW solar source + band Rayleigh utilities"
+git add scripts/cork_table_builder/solar_source.py \
+        tests/cork_table_builder/test_solar_source.py
+git commit -m "feat(cork-tables): SW solar source + band Rayleigh utilities"
 ```
 
 ---
@@ -687,9 +687,9 @@ git commit -m "feat(pf-tables): SW solar source + band Rayleigh utilities"
 ### Task 5: HITRAN CIA loader (Titan N₂–N₂, N₂–CH₄)
 
 **Files:**
-- Create: `scripts/pf_table_builder/cia.py`
-- Create: `tests/pf_table_builder/test_cia.py`
-- Create: `climt/_data/picket_fence/cia/README.md`
+- Create: `scripts/cork_table_builder/cia.py`
+- Create: `tests/cork_table_builder/test_cia.py`
+- Create: `climt/_data/cork/cia/README.md`
 
 HITRAN distributes CIA cross-sections (units cm⁻¹ amagat⁻²) as ASCII files split into temperature blocks. Each block header is `<species1> <species2> ν_min ν_max nPoints T ...`. We need to read them, interpolate κ_CIA(ν, T) at each (T, p), and convert to mass absorption coefficient (m²/kg).
 
@@ -701,12 +701,12 @@ For Titan the relevant pairs are **N₂–N₂** (dominant rotational continuum 
 
 - [x] **Step 1: README and placeholder for downloaded files**
 
-Create `climt/_data/picket_fence/cia/README.md`:
+Create `climt/_data/cork/cia/README.md`:
 
 ```markdown
 # HITRAN CIA flat files (offline build only)
 
-These ASCII files are consumed by `scripts/pf_table_builder/cia.py` when
+These ASCII files are consumed by `scripts/cork_table_builder/cia.py` when
 building the Titan opacity table. They are not loaded at climt runtime —
 the CIA contribution is baked into the resulting `.nc` k-table.
 
@@ -722,7 +722,7 @@ pair — the loader accepts either ordering.
 
 - [x] **Step 2: Failing test (uses a tiny synthetic CIA file)**
 
-Create `tests/pf_table_builder/test_cia.py`:
+Create `tests/cork_table_builder/test_cia.py`:
 
 ```python
 import numpy as np
@@ -749,7 +749,7 @@ def _write_fake_cia(tmp_path, name="N2-N2_fake.cia"):
 def test_load_cia_blocks(tmp_path):
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.cia import load_cia_blocks
+    from scripts.cork_table_builder.cia import load_cia_blocks
 
     p = _write_fake_cia(tmp_path)
     blocks = load_cia_blocks(str(p))
@@ -763,7 +763,7 @@ def test_cia_kappa_on_grid(tmp_path):
     """cia_kappa_on_grid returns kappa(T,p,nu) in m^2/kg for the pair."""
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.cia import cia_kappa_on_grid
+    from scripts.cork_table_builder.cia import cia_kappa_on_grid
 
     p = _write_fake_cia(tmp_path)
     T_grid = np.array([200.0, 250.0, 300.0])
@@ -785,12 +785,12 @@ def test_cia_kappa_on_grid(tmp_path):
 
 - [x] **Step 3: Run — expect FAIL**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_cia.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_cia.py -v`
 Expected: FAIL.
 
 - [x] **Step 4: Implement the CIA loader**
 
-Create `scripts/pf_table_builder/cia.py`:
+Create `scripts/cork_table_builder/cia.py`:
 
 ```python
 """Load HITRAN CIA flat files and evaluate κ_CIA(T, p, ν) on a (T, p) grid.
@@ -903,14 +903,14 @@ def cia_kappa_on_grid(
 
 - [x] **Step 5: Run + commit**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/pf_table_builder/test_cia.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/cork_table_builder/test_cia.py -v`
 Expected: ALL PASS.
 
 ```bash
-git add scripts/pf_table_builder/cia.py \
-        tests/pf_table_builder/test_cia.py \
-        climt/_data/picket_fence/cia/README.md
-git commit -m "feat(pf-tables): HITRAN CIA loader for Titan N2-N2 / N2-CH4"
+git add scripts/cork_table_builder/cia.py \
+        tests/cork_table_builder/test_cia.py \
+        climt/_data/cork/cia/README.md
+git commit -m "feat(cork-tables): HITRAN CIA loader for Titan N2-N2 / N2-CH4"
 ```
 
 ---
@@ -918,16 +918,16 @@ git commit -m "feat(pf-tables): HITRAN CIA loader for Titan N2-N2 / N2-CH4"
 ### Task 6: netCDF writer matching climt's correlated-k schema
 
 **Files:**
-- Create: `scripts/pf_table_builder/netcdf_writer.py`
-- Create: `tests/pf_table_builder/test_netcdf_writer.py`
+- Create: `scripts/cork_table_builder/netcdf_writer.py`
+- Create: `tests/cork_table_builder/test_netcdf_writer.py`
 
-The writer mirrors variable names + dimensions consumed by `climt._components.picket_fence.optics.correlated_k._load_netcdf_table`:
+The writer mirrors variable names + dimensions consumed by `climt._components.cork.optics.correlated_k._load_netcdf_table`:
 - LW: `k_coefficients`, `gpoint_weights`, `temperature_grid`, `pressure_grid_log`, optionally `h2o_vmr_grid`, `band_wavenumber_limits`, `planck_fraction`.
 - SW: same plus `solar_source_per_gpoint`, `rayleigh_coefficient`. No `planck_fraction`.
 
 - [x] **Step 1: Failing test**
 
-Create `tests/pf_table_builder/test_netcdf_writer.py`:
+Create `tests/cork_table_builder/test_netcdf_writer.py`:
 
 ```python
 import numpy as np
@@ -937,8 +937,8 @@ import pytest
 def test_write_lw_table_roundtrip(tmp_path):
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.netcdf_writer import write_lw_table
-    from climt._components.picket_fence.optics.correlated_k import load_k_table
+    from scripts.cork_table_builder.netcdf_writer import write_lw_table
+    from climt._components.cork.optics.correlated_k import load_k_table
 
     ngas, nband, ngpt, nT, nP = 1, 4, 2, 3, 5
     k = np.random.RandomState(0).uniform(1e-7, 1e-2,
@@ -971,8 +971,8 @@ def test_write_lw_table_roundtrip(tmp_path):
 def test_write_lw_table_with_h2o_axis_roundtrip(tmp_path):
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.netcdf_writer import write_lw_table
-    from climt._components.picket_fence.optics.correlated_k import load_k_table
+    from scripts.cork_table_builder.netcdf_writer import write_lw_table
+    from climt._components.cork.optics.correlated_k import load_k_table
 
     ngas, nband, ngpt, nT, nP, nX = 1, 4, 2, 3, 5, 4
     k = np.random.RandomState(1).uniform(1e-7, 1e-2,
@@ -1005,8 +1005,8 @@ def test_write_lw_table_with_h2o_axis_roundtrip(tmp_path):
 def test_write_sw_table_roundtrip(tmp_path):
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    from scripts.pf_table_builder.netcdf_writer import write_sw_table
-    from climt._components.picket_fence.optics.correlated_k import load_k_table
+    from scripts.cork_table_builder.netcdf_writer import write_sw_table
+    from climt._components.cork.optics.correlated_k import load_k_table
 
     ngas, nband, ngpt, nT, nP = 1, 3, 2, 3, 5
     k = np.random.RandomState(2).uniform(0, 1e-3,
@@ -1033,15 +1033,15 @@ def test_write_sw_table_roundtrip(tmp_path):
 
 - [x] **Step 2: Run — expect FAIL**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/pf_table_builder/test_netcdf_writer.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/cork_table_builder/test_netcdf_writer.py -v`
 Expected: FAIL.
 
 - [x] **Step 3: Implement the writer**
 
-Create `scripts/pf_table_builder/netcdf_writer.py`:
+Create `scripts/cork_table_builder/netcdf_writer.py`:
 
 ```python
-"""Write picket-fence correlated-k netCDF tables in climt's schema."""
+"""Write cork correlated-k netCDF tables in climt's schema."""
 from __future__ import annotations
 
 import os
@@ -1113,9 +1113,9 @@ def write_lw_table(
         bl = nc.createVariable("band_wavenumber_limits", "f4", ("band", "bounds"))
         bl[:] = limits.astype("f4")
 
-        pf = nc.createVariable("planck_fraction", "f4",
+        cork = nc.createVariable("planck_fraction", "f4",
                                ("band", "gpoint", "temperature"))
-        pf[:] = planck_fraction.astype("f4")
+        cork[:] = planck_fraction.astype("f4")
 
         if has_x:
             xv = nc.createVariable("h2o_vmr_grid", "f4", ("h2o_vmr",))
@@ -1192,35 +1192,35 @@ def write_sw_table(
 
 - [x] **Step 4: Run + commit**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/pf_table_builder/test_netcdf_writer.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/cork_table_builder/test_netcdf_writer.py -v`
 Expected: PASS.
 
 ```bash
-git add scripts/pf_table_builder/netcdf_writer.py \
-        tests/pf_table_builder/test_netcdf_writer.py
-git commit -m "feat(pf-tables): netCDF writer for picket-fence k-tables"
+git add scripts/cork_table_builder/netcdf_writer.py \
+        tests/cork_table_builder/test_netcdf_writer.py
+git commit -m "feat(cork-tables): netCDF writer for cork k-tables"
 ```
 
 ---
 
-### Task 7: CLI driver — `generate_pf_tables_linepyline.py`
+### Task 7: CLI driver — `generate_cork_tables_linepyline.py`
 
 **Files:**
-- Create: `scripts/generate_pf_tables_linepyline.py`
+- Create: `scripts/generate_cork_tables_linepyline.py`
 
 A single CLI that picks a named scenario and assembles all five helpers into one `.nc` file. Scenarios are hard-coded so reproducing a table is one shell command.
 
 - [x] **Step 1: Write the driver**
 
-Create `scripts/generate_pf_tables_linepyline.py`:
+Create `scripts/generate_cork_tables_linepyline.py`:
 
 ```python
 #!/usr/bin/env python
-"""Generate a picket-fence correlated-k table for a named planetary scenario.
+"""Generate a cork correlated-k table for a named planetary scenario.
 
 Usage:
-    conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \\
-        --scenario trappist1e_hab2 --kind lw --output climt/_data/picket_fence/correlated_k/trappist1e_hab2_lw.nc
+    conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \\
+        --scenario trappist1e_hab2 --kind lw --output climt/_data/cork/correlated_k/trappist1e_hab2_lw.nc
 
 Scenarios:
     trappist1e_hab1  THAI Hab1: N2 bath + 400 ppm CO2 + variable H2O (axis)
@@ -1238,14 +1238,14 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
-from pf_table_builder.kappa_sampling import sample_kappa_grid
-from pf_table_builder.k_distribution import kappa_to_k_coeffs
-from pf_table_builder.planck_fraction import build_uniform_planck_fraction
-from pf_table_builder.solar_source import (
+from cork_table_builder.kappa_sampling import sample_kappa_grid
+from cork_table_builder.k_distribution import kappa_to_k_coeffs
+from cork_table_builder.planck_fraction import build_uniform_planck_fraction
+from cork_table_builder.solar_source import (
     build_solar_source_per_gpoint, build_rayleigh_per_band,
 )
-from pf_table_builder.netcdf_writer import write_lw_table, write_sw_table
-from pf_table_builder.cia import cia_kappa_on_grid
+from cork_table_builder.netcdf_writer import write_lw_table, write_sw_table
+from cork_table_builder.cia import cia_kappa_on_grid
 
 
 # Scenario configuration registry
@@ -1282,9 +1282,9 @@ SCENARIOS = {
         mean_molar_mass_g=28.6,
         rayleigh_refractivity=2.97e-4,
         cia_files=[
-            dict(path="climt/_data/picket_fence/cia/N2-N2_2018.cia",
+            dict(path="climt/_data/cork/cia/N2-N2_2018.cia",
                  pair=("N2", "N2"), vmr_a=0.95, vmr_b=0.95),
-            dict(path="climt/_data/picket_fence/cia/N2-CH4_2018.cia",
+            dict(path="climt/_data/cork/cia/N2-CH4_2018.cia",
                  pair=("N2", "CH4"), vmr_a=0.95, vmr_b=0.05),
         ],
     ),
@@ -1365,7 +1365,7 @@ def build_table(scenario_name, kind, output_path, ngpt=2, dnu=0.5,
         )
     else:
         # Load stellar spectrum and build solar source / Rayleigh
-        from climt._components.picket_fence.optics.stellar import (
+        from climt._components.cork.optics.stellar import (
             load_stellar_spectrum,
         )
         spectrum = load_stellar_spectrum(cfg["stellar_spectrum"])
@@ -1417,8 +1417,8 @@ To avoid a long build during plan execution, first run it for `trappist1e_hab2 /
 - [x] **Step 3: Commit**
 
 ```bash
-git add scripts/generate_pf_tables_linepyline.py
-git commit -m "feat(pf-tables): CLI driver for Titan/TRAPPIST-1e scenarios"
+git add scripts/generate_cork_tables_linepyline.py
+git commit -m "feat(cork-tables): CLI driver for Titan/TRAPPIST-1e scenarios"
 ```
 
 ---
@@ -1426,8 +1426,8 @@ git commit -m "feat(pf-tables): CLI driver for Titan/TRAPPIST-1e scenarios"
 ### Task 8: Build TRAPPIST-1e Hab2 tables (simplest scenario first)
 
 **Files:**
-- Create: `climt/_data/picket_fence/correlated_k/trappist1e_hab2_lw.nc`
-- Create: `climt/_data/picket_fence/correlated_k/trappist1e_hab2_sw.nc`
+- Create: `climt/_data/cork/correlated_k/trappist1e_hab2_lw.nc`
+- Create: `climt/_data/cork/correlated_k/trappist1e_hab2_sw.nc`
 
 Pure-CO2 atmosphere, no H2O VMR axis. This is the cleanest validation of the full pipeline because the only opacity is CO2 lines.
 
@@ -1435,21 +1435,21 @@ Pure-CO2 atmosphere, no H2O VMR axis. This is the cleanest validation of the ful
 
 Run:
 ```bash
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \
     --scenario trappist1e_hab2 --kind lw \
-    --output climt/_data/picket_fence/correlated_k/trappist1e_hab2_lw.nc \
+    --output climt/_data/cork/correlated_k/trappist1e_hab2_lw.nc \
     --ngpt 2 --dnu 0.5
 ```
-Expected output: `[trappist1e_hab2/lw] wrote climt/_data/picket_fence/correlated_k/trappist1e_hab2_lw.nc  k_coefficients.shape=(1, 4, 2, 10, 15)`.
+Expected output: `[trappist1e_hab2/lw] wrote climt/_data/cork/correlated_k/trappist1e_hab2_lw.nc  k_coefficients.shape=(1, 4, 2, 10, 15)`.
 Expected runtime: 5–20 minutes (CO2 has many lines).
 
 - [x] **Step 2: Build SW table**
 
 Run:
 ```bash
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \
     --scenario trappist1e_hab2 --kind sw \
-    --output climt/_data/picket_fence/correlated_k/trappist1e_hab2_sw.nc \
+    --output climt/_data/cork/correlated_k/trappist1e_hab2_sw.nc \
     --ngpt 2 --dnu 1.0
 ```
 (SW range 3250–30000 cm⁻¹ is wide; use coarser dnu.)
@@ -1459,7 +1459,7 @@ conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
 Run:
 ```bash
 cd /Users/joymonteiro/github/climt && conda run -n climt python -c "
-from climt._components.picket_fence.optics.correlated_k import load_k_table
+from climt._components.cork.optics.correlated_k import load_k_table
 t = load_k_table('trappist1e_hab2_lw')
 print('LW shape:', t['k_coefficients'].shape, 'min', t['k_coefficients'].min(), 'max', t['k_coefficients'].max())
 t = load_k_table('trappist1e_hab2_sw')
@@ -1474,9 +1474,9 @@ Expected:
 - [x] **Step 4: Commit (binary files)**
 
 ```bash
-git add climt/_data/picket_fence/correlated_k/trappist1e_hab2_lw.nc \
-        climt/_data/picket_fence/correlated_k/trappist1e_hab2_sw.nc
-git commit -m "feat(pf-tables): ship TRAPPIST-1e Hab2 (pure CO2) LW+SW tables"
+git add climt/_data/cork/correlated_k/trappist1e_hab2_lw.nc \
+        climt/_data/cork/correlated_k/trappist1e_hab2_sw.nc
+git commit -m "feat(cork-tables): ship TRAPPIST-1e Hab2 (pure CO2) LW+SW tables"
 ```
 
 ---
@@ -1484,8 +1484,8 @@ git commit -m "feat(pf-tables): ship TRAPPIST-1e Hab2 (pure CO2) LW+SW tables"
 ### Task 9: Build TRAPPIST-1e Hab1 tables (with H2O VMR axis)
 
 **Files:**
-- Create: `climt/_data/picket_fence/correlated_k/trappist1e_hab1_lw.nc`
-- Create: `climt/_data/picket_fence/correlated_k/trappist1e_hab1_sw.nc`
+- Create: `climt/_data/cork/correlated_k/trappist1e_hab1_lw.nc`
+- Create: `climt/_data/cork/correlated_k/trappist1e_hab1_sw.nc`
 
 Same as Hab2 but with N2 bath, 400 ppm CO2, and the H2O-VMR axis (5 humidity bins).
 
@@ -1493,9 +1493,9 @@ Same as Hab2 but with N2 bath, 400 ppm CO2, and the H2O-VMR axis (5 humidity bin
 
 Run:
 ```bash
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \
     --scenario trappist1e_hab1 --kind lw \
-    --output climt/_data/picket_fence/correlated_k/trappist1e_hab1_lw.nc \
+    --output climt/_data/cork/correlated_k/trappist1e_hab1_lw.nc \
     --ngpt 2 --dnu 0.5
 ```
 Expected shape: `(1, 4, 2, 10, 15, 5)`.
@@ -1504,9 +1504,9 @@ Expected runtime: 30–60 min (H2O is the slow molecule; nX=5 multiplies that).
 - [x] **Step 2: Build SW**
 
 ```bash
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \
     --scenario trappist1e_hab1 --kind sw \
-    --output climt/_data/picket_fence/correlated_k/trappist1e_hab1_sw.nc \
+    --output climt/_data/cork/correlated_k/trappist1e_hab1_sw.nc \
     --ngpt 2 --dnu 1.0
 ```
 
@@ -1515,7 +1515,7 @@ conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
 ```bash
 cd /Users/joymonteiro/github/climt && conda run -n climt python -c "
 import numpy as np
-from climt._components.picket_fence.optics.correlated_k import load_k_table, interpolate_k
+from climt._components.cork.optics.correlated_k import load_k_table, interpolate_k
 t = load_k_table('trappist1e_hab1_lw')
 print('shape', t['k_coefficients'].shape)
 print('h2o_vmr_grid', t['h2o_vmr_grid'])
@@ -1530,9 +1530,9 @@ Expected: `shape (1, 4, 2, 10, 15, 5)` and a positive `kappa` of order 1e-4 – 
 - [x] **Step 4: Commit**
 
 ```bash
-git add climt/_data/picket_fence/correlated_k/trappist1e_hab1_lw.nc \
-        climt/_data/picket_fence/correlated_k/trappist1e_hab1_sw.nc
-git commit -m "feat(pf-tables): ship TRAPPIST-1e Hab1 (N2+CO2+H2O axis) LW+SW tables"
+git add climt/_data/cork/correlated_k/trappist1e_hab1_lw.nc \
+        climt/_data/cork/correlated_k/trappist1e_hab1_sw.nc
+git commit -m "feat(cork-tables): ship TRAPPIST-1e Hab1 (N2+CO2+H2O axis) LW+SW tables"
 ```
 
 ---
@@ -1540,8 +1540,8 @@ git commit -m "feat(pf-tables): ship TRAPPIST-1e Hab1 (N2+CO2+H2O axis) LW+SW ta
 ### Task 10: Download HITRAN CIA files for Titan
 
 **Files:**
-- Create: `climt/_data/picket_fence/cia/N2-N2_2018.cia`
-- Create: `climt/_data/picket_fence/cia/N2-CH4_2018.cia`
+- Create: `climt/_data/cork/cia/N2-N2_2018.cia`
+- Create: `climt/_data/cork/cia/N2-CH4_2018.cia`
 
 These are public CC-BY ASCII files (typical size 1–5 MB).
 
@@ -1558,11 +1558,11 @@ Place them at the paths above.
 Run:
 ```bash
 conda run -n linepyline python -c "
-from scripts.pf_table_builder.cia import load_cia_blocks
-blocks = load_cia_blocks('climt/_data/picket_fence/cia/N2-N2_2018.cia')
+from scripts.cork_table_builder.cia import load_cia_blocks
+blocks = load_cia_blocks('climt/_data/cork/cia/N2-N2_2018.cia')
 print('N2-N2 temperatures:', sorted(blocks)[:5], '...', sorted(blocks)[-1])
 print('block count:', len(blocks))
-blocks = load_cia_blocks('climt/_data/picket_fence/cia/N2-CH4_2018.cia')
+blocks = load_cia_blocks('climt/_data/cork/cia/N2-CH4_2018.cia')
 print('N2-CH4 temperatures:', sorted(blocks)[:5])
 "
 ```
@@ -1571,8 +1571,8 @@ Expected: N2-N2 has ~10–15 temperature blocks covering ~40–400 K; N2-CH4 sim
 - [x] **Step 3: Commit (these are ~1–5 MB binary blobs)**
 
 ```bash
-git add climt/_data/picket_fence/cia/*.cia
-git commit -m "feat(pf-tables): ship HITRAN CIA files for Titan opacity build"
+git add climt/_data/cork/cia/*.cia
+git commit -m "feat(cork-tables): ship HITRAN CIA files for Titan opacity build"
 ```
 
 ---
@@ -1580,15 +1580,15 @@ git commit -m "feat(pf-tables): ship HITRAN CIA files for Titan opacity build"
 ### Task 11: Build Titan tables
 
 **Files:**
-- Create: `climt/_data/picket_fence/correlated_k/titan_lw.nc`
-- Create: `climt/_data/picket_fence/correlated_k/titan_sw.nc`
+- Create: `climt/_data/cork/correlated_k/titan_lw.nc`
+- Create: `climt/_data/cork/correlated_k/titan_sw.nc`
 
 - [x] **Step 1: Build LW (includes CIA)**
 
 ```bash
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \
     --scenario titan --kind lw \
-    --output climt/_data/picket_fence/correlated_k/titan_lw.nc \
+    --output climt/_data/cork/correlated_k/titan_lw.nc \
     --ngpt 2 --dnu 0.5
 ```
 Watch the output for the line `[titan/lw] adding 2 CIA pair(s)`.
@@ -1596,9 +1596,9 @@ Watch the output for the line `[titan/lw] adding 2 CIA pair(s)`.
 - [x] **Step 2: Build SW**
 
 ```bash
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \
     --scenario titan --kind sw \
-    --output climt/_data/picket_fence/correlated_k/titan_sw.nc \
+    --output climt/_data/cork/correlated_k/titan_sw.nc \
     --ngpt 2 --dnu 1.0
 ```
 
@@ -1606,7 +1606,7 @@ conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
 
 ```bash
 cd /Users/joymonteiro/github/climt && conda run -n climt python -c "
-from climt._components.picket_fence.optics.correlated_k import load_k_table
+from climt._components.cork.optics.correlated_k import load_k_table
 t = load_k_table('titan_lw')
 import numpy as np
 k = t['k_coefficients']  # (ngas, nband, ngpt, nT, nP)
@@ -1621,19 +1621,19 @@ Expected: band 0 average ≳ 10× band 1 average (because CIA dominates the rota
 - [x] **Step 4: Commit**
 
 ```bash
-git add climt/_data/picket_fence/correlated_k/titan_lw.nc \
-        climt/_data/picket_fence/correlated_k/titan_sw.nc
-git commit -m "feat(pf-tables): ship Titan (N2+CH4+CIA) LW+SW tables"
+git add climt/_data/cork/correlated_k/titan_lw.nc \
+        climt/_data/cork/correlated_k/titan_sw.nc
+git commit -m "feat(cork-tables): ship Titan (N2+CH4+CIA) LW+SW tables"
 ```
 
 ---
 
-### Task 12: Smoke tests + MANIFEST + end-to-end picket-fence run
+### Task 12: Smoke tests + MANIFEST + end-to-end cork run
 
 **Files:**
 - Modify: `tests/test_correlated_k_tables.py`
-- Create: `tests/test_picket_fence_titan_trappist.py`
-- Modify: `climt/_data/picket_fence/correlated_k/MANIFEST.md`
+- Create: `tests/test_cork_titan_trappist.py`
+- Modify: `climt/_data/cork/correlated_k/MANIFEST.md`
 
 - [x] **Step 1: Extend the shipped-tables smoke test**
 
@@ -1650,12 +1650,12 @@ SHIPPED = [
 ]
 ```
 
-- [x] **Step 2: Write an end-to-end picket-fence integration test**
+- [x] **Step 2: Write an end-to-end cork integration test**
 
-Create `tests/test_picket_fence_titan_trappist.py`:
+Create `tests/test_cork_titan_trappist.py`:
 
 ```python
-"""End-to-end smoke tests: run PicketFence{Long,Short}wave with the new tables.
+"""End-to-end smoke tests: run Cork{Long,Short}wave with the new tables.
 
 Verifies the netCDF schema we wrote matches what climt's loader expects and
 that fluxes are physically sane (positive, finite, monotone in obvious ways).
@@ -1664,8 +1664,8 @@ import numpy as np
 import pytest
 
 from climt import get_default_state, load_atmospheric_properties, reset_atmospheric_properties
-from climt._components.picket_fence import (
-    PicketFenceLongwave, PicketFenceShortwave,
+from climt._components.cork import (
+    CorkLongwaveRadiation, CorkShortwaveRadiation,
 )
 
 
@@ -1674,11 +1674,11 @@ from climt._components.picket_fence import (
     ("trappist1e_hab2", "trappist1e"),
     ("titan", "titan"),
 ])
-def test_picket_fence_lw_runs(scenario, profile):
+def test_cork_lw_runs(scenario, profile):
     """LW kernel produces non-negative OLR with the new table."""
     load_atmospheric_properties(profile)
     try:
-        lw = PicketFenceLongwave(optics="correlated_k", table=f"{scenario}_lw")
+        lw = CorkLongwaveRadiation(optics="correlated_k", table=f"{scenario}_lw")
         state = get_default_state([lw])
         tend, diag = lw(state)
         olr = diag["upwelling_longwave_flux_in_air"].values[-1, :]
@@ -1693,11 +1693,11 @@ def test_picket_fence_lw_runs(scenario, profile):
     ("trappist1e_hab2", "trappist1e", "trappist1"),
     ("titan", "titan", "sun"),
 ])
-def test_picket_fence_sw_runs(scenario, profile, star):
+def test_cork_sw_runs(scenario, profile, star):
     """SW kernel produces non-negative downwelling flux with the new table."""
     load_atmospheric_properties(profile)
     try:
-        sw = PicketFenceShortwave(
+        sw = CorkShortwaveRadiation(
             optics="correlated_k",
             table=f"{scenario}_sw",
             stellar_spectrum=star,
@@ -1714,18 +1714,18 @@ def test_picket_fence_sw_runs(scenario, profile, star):
 
 - [x] **Step 3: Run the new tests**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_correlated_k_tables.py tests/test_picket_fence_titan_trappist.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n climt python -m pytest tests/test_correlated_k_tables.py tests/test_cork_titan_trappist.py -v`
 Expected: ALL PASS.
 
 - [x] **Step 4: Update MANIFEST.md**
 
-Append to `climt/_data/picket_fence/correlated_k/MANIFEST.md`:
+Append to `climt/_data/cork/correlated_k/MANIFEST.md`:
 
 ```markdown
 
 ## linepyline-derived tables
 
-Built offline by `scripts/generate_pf_tables_linepyline.py` from
+Built offline by `scripts/generate_cork_tables_linepyline.py` from
 HITRAN 2024 line data (via the [linepyline](https://github.com/...)
 package) plus MT_CKD 4.3 (H2O continuum) and HITRAN CIA 2018 (Titan
 N2-N2, N2-CH4).
@@ -1755,13 +1755,13 @@ linepyline-based tables
 For scenarios outside Chaverot's Zenodo coverage (Titan, TRAPPIST-1e,
 ad-hoc compositions), climt ships a second offline pipeline using
 `linepyline <https://github.com/.../linepyline>`_ and HITRAN 2024 line
-data. The driver is ``scripts/generate_pf_tables_linepyline.py``.
+data. The driver is ``scripts/generate_cork_tables_linepyline.py``.
 
 Building a Titan table (run from the ``linepyline`` conda env)::
 
-    conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \\
+    conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \\
         --scenario titan --kind lw \\
-        --output climt/_data/picket_fence/correlated_k/titan_lw.nc
+        --output climt/_data/cork/correlated_k/titan_lw.nc
 
 Building a custom scenario: copy one of the entries in the ``SCENARIOS``
 dict at the top of the driver, edit the absorber dict / VMR grid / band
@@ -1769,7 +1769,7 @@ edges, and re-run. The output netCDF drops straight into climt's
 ``correlated_k`` data directory and is picked up by name.
 
 Titan in particular requires HITRAN CIA flat files in
-``climt/_data/picket_fence/cia/``; see the README there for the download
+``climt/_data/cork/cia/``; see the README there for the download
 list.
 ```
 
@@ -1777,10 +1777,10 @@ list.
 
 ```bash
 git add tests/test_correlated_k_tables.py \
-        tests/test_picket_fence_titan_trappist.py \
-        climt/_data/picket_fence/correlated_k/MANIFEST.md \
+        tests/test_cork_titan_trappist.py \
+        climt/_data/cork/correlated_k/MANIFEST.md \
         docs/radiative_transfer/table_generation.rst
-git commit -m "test(pf-tables): smoke tests + docs for Titan/TRAPPIST-1e tables"
+git commit -m "test(cork-tables): smoke tests + docs for Titan/TRAPPIST-1e tables"
 ```
 
 ---
@@ -1788,16 +1788,16 @@ git commit -m "test(pf-tables): smoke tests + docs for Titan/TRAPPIST-1e tables"
 ### Task 13: Validation — compare to linepyline reference column
 
 **Files:**
-- Create: `tests/test_picket_fence_linepyline_validation.py`
+- Create: `tests/test_cork_linepyline_validation.py`
 
-The strongest physics test: take one Titan and one TRAPPIST-1e profile, compute OLR with the picket-fence + new k-table, and compare to a direct linepyline LBL run on the same column. Expect agreement to within ~10–20% (limited by 4-band / 2-g-point resolution).
+The strongest physics test: take one Titan and one TRAPPIST-1e profile, compute OLR with the cork + new k-table, and compare to a direct linepyline LBL run on the same column. Expect agreement to within ~10–20% (limited by 4-band / 2-g-point resolution).
 
 - [x] **Step 1: Failing test**
 
-Create `tests/test_picket_fence_linepyline_validation.py`:
+Create `tests/test_cork_linepyline_validation.py`:
 
 ```python
-"""LBL-vs-picket-fence consistency on one column per scenario."""
+"""LBL-vs-cork consistency on one column per scenario."""
 import numpy as np
 import pytest
 
@@ -1806,9 +1806,9 @@ linepyline = pytest.importorskip("linepyline")
 
 @pytest.mark.slow
 def test_olr_matches_linepyline_for_hab2():
-    """TRAPPIST-1e Hab2 OLR from picket-fence within 20% of linepyline LBL."""
+    """TRAPPIST-1e Hab2 OLR from cork within 20% of linepyline LBL."""
     from climt import load_atmospheric_properties, reset_atmospheric_properties
-    from climt._components.picket_fence import PicketFenceLongwave
+    from climt._components.cork import CorkLongwaveRadiation
 
     # Pick one (T, p) profile
     p = np.logspace(2, 5, 30)               # 100 Pa -> 1e5 Pa
@@ -1823,10 +1823,10 @@ def test_olr_matches_linepyline_for_hab2():
     )
     olr_lbl = float(ds.olr.integrate("nu"))
 
-    # Picket-fence
+    # Cork
     load_atmospheric_properties("trappist1e")
     try:
-        lw = PicketFenceLongwave(optics="correlated_k",
+        lw = CorkLongwaveRadiation(optics="correlated_k",
                                  table="trappist1e_hab2_lw")
         # ... build a state with these (T, p), call lw, extract OLR ...
         from climt import get_default_state
@@ -1836,17 +1836,17 @@ def test_olr_matches_linepyline_for_hab2():
         state["air_pressure"].values[:, 0] = p
         state["surface_temperature"].values[:] = Ts
         tend, diag = lw(state)
-        olr_pf = float(diag["upwelling_longwave_flux_in_air"].values[-1, 0])
+        olr_cork = float(diag["upwelling_longwave_flux_in_air"].values[-1, 0])
     finally:
         reset_atmospheric_properties()
 
-    rel_err = abs(olr_pf - olr_lbl) / olr_lbl
-    assert rel_err < 0.20, f"OLR mismatch {rel_err:.1%}: pf={olr_pf:.1f}, lbl={olr_lbl:.1f}"
+    rel_err = abs(olr_cork - olr_lbl) / olr_lbl
+    assert rel_err < 0.20, f"OLR mismatch {rel_err:.1%}: cork={olr_cork:.1f}, lbl={olr_lbl:.1f}"
 ```
 
 - [x] **Step 2: Run**
 
-Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/test_picket_fence_linepyline_validation.py -v`
+Run: `cd /Users/joymonteiro/github/climt && conda run -n linepyline python -m pytest tests/test_cork_linepyline_validation.py -v`
 (Requires both climt and linepyline in same env — alternatively, run linepyline in its env, dump `olr_lbl` to a file, then run the comparison in climt env reading that file.)
 
 Expected: PASS (within 20%). If not, the most likely causes are: too-coarse `dnu` in the table build, too few g-points, or band edges chosen poorly for the gas mixture. Iterate `--ngpt`, `--dnu`, or band edges in the driver.
@@ -1854,8 +1854,8 @@ Expected: PASS (within 20%). If not, the most likely causes are: too-coarse `dnu
 - [x] **Step 3: Commit**
 
 ```bash
-git add tests/test_picket_fence_linepyline_validation.py
-git commit -m "test(pf-tables): LBL consistency check for new tables"
+git add tests/test_cork_linepyline_validation.py
+git commit -m "test(cork-tables): LBL consistency check for new tables"
 ```
 
 ---
@@ -1865,12 +1865,12 @@ git commit -m "test(pf-tables): LBL consistency check for new tables"
 After this plan completes:
 
 1. Six new k-tables are shipped: `trappist1e_hab1_{lw,sw}.nc`, `trappist1e_hab2_{lw,sw}.nc`, `titan_{lw,sw}.nc`.
-2. A reusable, tested `pf_table_builder` package handles linepyline kappa sampling, band-binning, k-distribution quadrature, Planck/solar source partitioning, HITRAN CIA, and netCDF writing.
-3. Students can launch picket-fence runs for TRAPPIST-1e THAI Hab1/Hab2/Ben1/Ben2 and Titan with one-line API calls (`PicketFenceLongwave(optics="correlated_k", table="trappist1e_hab1_lw")` + `load_atmospheric_properties("trappist1e")`).
+2. A reusable, tested `cork_table_builder` package handles linepyline kappa sampling, band-binning, k-distribution quadrature, Planck/solar source partitioning, HITRAN CIA, and netCDF writing.
+3. Students can launch cork runs for TRAPPIST-1e THAI Hab1/Hab2/Ben1/Ben2 and Titan with one-line API calls (`CorkLongwaveRadiation(optics="correlated_k", table="trappist1e_hab1_lw")` + `load_atmospheric_properties("trappist1e")`).
 4. The driver is extensible — adding a new scenario means appending a dict to `SCENARIOS` and re-running.
 
 **Self-review notes (for the executor):**
 - All step bodies contain complete code or exact shell commands.
 - Smoke tests load from the climt env; build steps run from the linepyline env. Don't mix.
 - The two long-running steps are Task 8 SW and Task 9 LW (H2O is the slowest molecule); budget ~1 hour each, run in background.
-- If a step's output shape doesn't match what the next step expects, fix it in `generate_pf_tables_linepyline.py:build_table` before re-running — don't paper over with a transpose in the writer.
+- If a step's output shape doesn't match what the next step expects, fix it in `generate_cork_tables_linepyline.py:build_table` before re-running — don't paper over with a transpose in the writer.

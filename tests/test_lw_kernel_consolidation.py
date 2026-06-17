@@ -44,7 +44,7 @@ def _make_inputs(seed=0):
 
 def test_consolidated_kernel_matches_reference_bitwise():
     """The refactored kernel must reproduce current fluxes exactly."""
-    from climt._components.picket_fence.lw.kernels import lw_transport
+    from climt._components.cork.lw.kernels import lw_transport
 
     tau, planck, surf, emis, weights = _make_inputs()
     T = np.zeros((20, 3))
@@ -64,7 +64,7 @@ def test_consolidated_kernel_matches_reference_bitwise():
 
 def test_diagnostics_level_one_still_returns_diag():
     """diagnostics_level=1 must still return diag dict with correct shapes."""
-    from climt._components.picket_fence.lw.kernels import lw_transport
+    from climt._components.cork.lw.kernels import lw_transport
 
     tau, planck, surf, emis, weights = _make_inputs(seed=1)
     T = np.zeros((20, 3))

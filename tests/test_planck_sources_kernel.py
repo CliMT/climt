@@ -40,7 +40,7 @@ def _reference(planck_frac, T_grid, T, T_surf, sigma, nband, ngpt,
 
 
 def test_planck_sources_kernel_matches_reference():
-    from climt._components.picket_fence.lw.kernels import planck_sources_kernel
+    from climt._components.cork.lw.kernels import planck_sources_kernel
 
     rng = np.random.RandomState(0)
     nband, ngpt, nT, nlev, ncol = 14, 8, 12, 30, 5
@@ -66,7 +66,7 @@ def test_planck_sources_kernel_matches_reference():
 
 def test_planck_sources_kernel_clamps_out_of_range_T():
     """T below/above the grid clamps the fraction, matching the oracle."""
-    from climt._components.picket_fence.lw.kernels import planck_sources_kernel
+    from climt._components.cork.lw.kernels import planck_sources_kernel
 
     rng = np.random.RandomState(1)
     nband, ngpt, nT, nlev, ncol = 4, 2, 6, 8, 3

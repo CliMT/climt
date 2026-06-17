@@ -6,7 +6,7 @@
 
 ## Goal
 
-Replace the existing Sphinx documentation with a single Quarto-based GitHub Pages site that unifies (a) the existing user/API documentation, (b) a graduate-level radiative-transfer textbook walkthrough, (c) a formal blog of long-form experiment writeups (picket-fence saga first), and (d) runnable Jupyter notebooks. The site is the public face of climt; it should serve students learning radiative transfer, practising climt users, and contributors extending climt to other planets — without forcing each reader to read everything.
+Replace the existing Sphinx documentation with a single Quarto-based GitHub Pages site that unifies (a) the existing user/API documentation, (b) a graduate-level radiative-transfer textbook walkthrough, (c) a formal blog of long-form experiment writeups (cork saga first), and (d) runnable Jupyter notebooks. The site is the public face of climt; it should serve students learning radiative transfer, practising climt users, and contributors extending climt to other planets — without forcing each reader to read everything.
 
 ## Audience
 
@@ -30,17 +30,17 @@ Quarto project root at `docs/`. Top-level navigation:
    - Ch 3 The k-distribution
    - Ch 4 Correlated-k
    - Ch 5 Gas overlap: additive vs ESFT
-   - Ch 6 The picket-fence model
+   - Ch 6 The cork model
    - Ch 7 The two-stream solver
    - Ch 8 Switching planets
    - Appendix: Performance
    Each chapter combines theory, derivation, climt-source excerpts (via Quarto `include`), and figures built by `_generate_figures.py` (uses `linepyline` for LBL spectra and `climt` for downsampled comparisons).
-4. **Experiments** — long-form research case studies, structured as a formal blog (see *Experiments format* below). The picket-fence CO₂-band-refinement saga is the first post, drawing from the existing experiment log in `docs/superpowers/plans/2026-05-16-pf-co2-band-refinement.md`.
+4. **Experiments** — long-form research case studies, structured as a formal blog (see *Experiments format* below). The cork CO₂-band-refinement saga is the first post, drawing from the existing experiment log in `docs/superpowers/plans/2026-05-16-cork-co2-band-refinement.md`.
 5. **API Reference** — auto-generated from docstrings via [`quartodoc`](https://machow.github.io/quartodoc/). Replaces Sphinx autodoc.
 6. **Contributing** — dev workflow, how to add an experiment writeup, how to add an RT-walkthrough chapter.
-7. **References** — bibliography of cited papers. Every entry is an external link to the publisher / DOI / arXiv page. No PDFs in the repo. Existing PDFs under `docs/` (Pincus 2019, Louis 79, Emanuel 1991/1999, picket-fence series, etc.) are deleted as part of the migration; their citations move to References with `url=` fields in the BibTeX file.
+7. **References** — bibliography of cited papers. Every entry is an external link to the publisher / DOI / arXiv page. No PDFs in the repo. Existing PDFs under `docs/` (Pincus 2019, Louis 79, Emanuel 1991/1999, cork series, etc.) are deleted as part of the migration; their citations move to References with `url=` fields in the BibTeX file.
 
-Notebooks (`k_distribution_demo`, `spectral_radiation_anatomy`, `picket_fence_vs_rrtmg` — from phase4 Part E tasks 13–15) are **not** a top-level section. Each lives inside the chapter or experiment that motivates it, rendered as a "Try it yourself" Quarto include at the end. The raw `.ipynb` is downloadable from the page.
+Notebooks (`k_distribution_demo`, `spectral_radiation_anatomy`, `cork_vs_rrtmg` — from phase4 Part E tasks 13–15) are **not** a top-level section. Each lives inside the chapter or experiment that motivates it, rendered as a "Try it yourself" Quarto include at the end. The raw `.ipynb` is downloadable from the page.
 
 ## Experiments format
 
@@ -53,14 +53,14 @@ A formal blog, not a rigid template. Each writeup is a single `.qmd` essay; stru
 - Layered audience via callouts (`callout-note` for physics, `callout-tip` for engineering, `callout-warning` for pitfalls).
 - Citations are `@key` references resolved against a single `references.bib` at the site root; every entry has a `url=` pointing to the canonical paper page.
 
-The picket-fence post becomes the first worked example of the format; future experiments inherit only its conventions, not its skeleton.
+The cork post becomes the first worked example of the format; future experiments inherit only its conventions, not its skeleton.
 
 ## Artifact regeneration
 
 Each experiment and each RT-walkthrough chapter owns a directory containing an `index.qmd`, an `_artifacts/` subdirectory, and a `sources.yml` manifest:
 
 ```
-docs/experiments/2026-05-18-picket-fence-co2-bands/
+docs/experiments/2026-05-18-cork-co2-bands/
   index.qmd
   _artifacts/
     cool_to_space.png
@@ -80,8 +80,8 @@ artifacts:
     cmd: conda run -n climt python examples/cooling_to_space_gsplit_sweep.py
     deps:
       - examples/cooling_to_space_gsplit_sweep.py
-      - climt/_components/picket_fence/**/*.py
-      - climt/_data/picket_fence/correlated_k/earth_low_res_lw_8gpt.nc
+      - climt/_components/cork/**/*.py
+      - climt/_data/cork/correlated_k/earth_low_res_lw_8gpt.nc
 ```
 
 A small Python driver `scripts/build_experiments.py` walks `docs/**/sources.yml`, content-hashes the listed deps (glob-expanded), compares to `.hashes.json`, and re-runs only stale artifacts. Captured stdout goes to `out_txt`; the produced figure is copied to `out`. Hashes (not mtimes) so that branch switches and network filesystems don't trigger spurious rebuilds.
@@ -145,7 +145,7 @@ Single migration PR off `develop`:
 4. Delete all `*.pdf` under `docs/`; migrate their citations to `references.bib` with `url=` fields.
 5. Delete superseded Sphinx machinery: `conf.py`, `Makefile`, `make.bat`, `modules.rst`, every `.rst` whose content is now in a `.qmd`.
 6. Scaffold the RT walkthrough directory with empty chapter `.qmd` files and the `_generate_figures.py` script.
-7. Author the picket-fence experiment post end-to-end, including `sources.yml` and the regenerated artifacts.
+7. Author the cork experiment post end-to-end, including `sources.yml` and the regenerated artifacts.
 8. Add `scripts/build_experiments.py`, the `Makefile` target, and `sources.yml` for each chapter and experiment that has artifacts.
 9. Add `.github/workflows/docs.yml`.
 10. Enable GH Pages in the repository settings (one-time, manual).
@@ -166,7 +166,7 @@ Subsequent PRs fill the empty RT chapters and add new experiment posts.
 |---|---|
 | Relationship to existing Sphinx docs | Replace with one unified site |
 | Generator | Quarto |
-| Initial experiment content | Picket-fence saga, end-to-end |
+| Initial experiment content | Cork saga, end-to-end |
 | Reader | All three (student / user / contributor), layered via callouts |
 | Code execution model | Static artifacts, regenerated locally via `make experiments` |
 | Artifact flow | `make experiments` recipe, author runs locally and commits |
@@ -179,7 +179,7 @@ Subsequent PRs fill the empty RT chapters and add new experiment posts.
 ## Success criteria
 
 1. `https://climt.github.io/climt/` serves the rendered site after the first merge to `main`.
-2. The picket-fence post is published and readable end-to-end by a student who has not been part of the development sessions.
+2. The cork post is published and readable end-to-end by a student who has not been part of the development sessions.
 3. All eight RT walkthrough chapters render with at least their theory text and figure placeholders (filling figures is a follow-up).
 4. `make experiments` and `python scripts/build_experiments.py --check` work locally and in CI; a deliberately-stalled artifact fails CI.
 5. The existing `docs/*.rst` and `docs/*.pdf` files are deleted; their content is either migrated or, for the PDFs, referenced by external link.

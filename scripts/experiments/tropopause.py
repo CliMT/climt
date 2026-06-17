@@ -1,7 +1,7 @@
 # scripts/experiments/tropopause.py
-"""Robust cross-climate tropopause locator for the picket-fence RCE columns.
+"""Robust cross-climate tropopause locator for the cork RCE columns.
 
-Replaces the constant-theta+10K marker (formerly in rce_moist_pf_vs_rrtmg.py)
+Replaces the constant-theta+10K marker (formerly in rce_moist_cork_vs_rrtmg.py)
 that mislocated the tropopause for runaway-warm columns -- the 583 hPa artifact.
 Pure numpy, so it is Pyodide-safe and importable from the experiment notebook.
 

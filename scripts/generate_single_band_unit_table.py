@@ -1,11 +1,11 @@
-"""Generate a single-band, single-g-point, constant-opacity picket-fence
+"""Generate a single-band, single-g-point, constant-opacity cork
 correlated-k table for grey-limit unit testing.
 
 This script has no external dependencies beyond numpy and scipy and can be
 run on any machine without the Chaverot source data.
 
     python scripts/generate_single_band_unit_table.py \\
-        --output climt/_data/picket_fence/correlated_k/single_band_unit_lw.nc \\
+        --output climt/_data/cork/correlated_k/single_band_unit_lw.nc \\
         --k 1e-2
 """
 import argparse
@@ -53,9 +53,9 @@ def write_single_band_unit_lw(out_path, k_value=1e-2,
         bl = nc.createVariable("band_wavenumber_limits", "f4", ("band", "bounds"))
         bl[:] = np.asarray([band_wn], dtype="f4")
 
-        pf = nc.createVariable("planck_fraction", "f4",
+        cork = nc.createVariable("planck_fraction", "f4",
                                ("band", "gpoint", "temperature"))
-        pf[:] = np.ones((nband, ngpt, nT), dtype="f4")
+        cork[:] = np.ones((nband, ngpt, nT), dtype="f4")
 
         nc.gas_names = "co2"
         nc.overlap_method = "additive"
