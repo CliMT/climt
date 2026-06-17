@@ -18,6 +18,8 @@ from ._components import (
     RRTMGShortwave,
     SimplePhysics,
     SlabSurface,
+    SimCloud, 
+    SimCloudCondensation
 )
 from ._core import (
     ConstantNotFoundError,
@@ -77,6 +79,8 @@ __all__ = (
     Instellation,
     DryConvectiveAdjustment,
     BucketHydrology,
+    SimCloud, 
+    SimCloudCondensation
 )
 
 __version__ = "0.20.0"
