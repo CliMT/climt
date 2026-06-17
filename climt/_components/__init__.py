@@ -15,6 +15,7 @@ from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .simple_physics import SimplePhysics
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
+from .simcloud import SimCloud, SimCloudCondensation
 
 __all__ = (
     Frierson06LongwaveOpticalDepth,
@@ -35,4 +36,6 @@ __all__ = (
     BucketHydrology,
     PicketFenceLongwave,
     PicketFenceShortwave,
+    SimCloud, 
+    SimCloudCondensation
 )

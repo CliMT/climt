@@ -792,6 +792,16 @@ default_values = {
         "units": "kg m^-2",
         "domain": "atmosphere",
     },
+    "cloud_liquid_water_mixing_ratio": {
+        "value": 0.0,
+        "units": "kg/kg",
+        "domain": "atmosphere",
+    },
+    "cloud_ice_mixing_ratio": {
+        "value": 0.0,
+        "units": "kg/kg",
+        "domain": "atmosphere",
+    },
     "cloud_ice_particle_size": {
         "value": 20.0,
         "units": "micrometer",
