@@ -79,3 +79,28 @@ def test_tau_jax_matches_oracle(tmp_path, with_cont):
     log_p, log_x, log_c = _prep(table, T, p, h2o, co2)
     tau_jax = compute_tau_jax(**_jax_args(table, T, log_p, log_x, log_c, gas))
     np.testing.assert_allclose(np.asarray(tau_jax), tau_oracle, rtol=1e-6, atol=1e-12)
+
+
+def test_tau_jax_grad_matches_finite_difference(tmp_path):
+    from climt._components.cork.optics.correlated_k_jax import compute_tau_jax
+    rng = np.random.RandomState(7)
+    k = rng.uniform(1e-6, 1e-2, size=(1, 3, 2, 4, 5, 3, 6))
+    table = _build(tmp_path, k)
+    T, p, h2o, co2 = _inputs(nlev=5, ncol=2, seed=4)
+    gas = np.full((1,) + T.shape, 100.0)
+    log_p, log_x, log_c = _prep(table, T, p, h2o, co2)
+    args = _jax_args(table, T, log_p, log_x, log_c, gas)
+    static = {key: args[key] for key in args if key != "T"}
+
+    def scalar(Tj):
+        return jnp.sum(compute_tau_jax(T=Tj, **static))
+
+    g = np.asarray(jax.grad(scalar)(args["T"]))
+    assert np.all(np.isfinite(g))
+    # central finite difference at one interior point well inside grid brackets
+    eps = 1e-3
+    i, j = 2, 1
+    Tp = args["T"].at[i, j].add(eps)
+    Tm = args["T"].at[i, j].add(-eps)
+    fd = (float(scalar(Tp)) - float(scalar(Tm))) / (2 * eps)
+    np.testing.assert_allclose(g[i, j], fd, rtol=1e-3, atol=1e-6)
