@@ -1,7 +1,7 @@
 """Compute the Parmentier & Guillot (2014) analytic T-p profile for HD 209458b.
 
 Uses the same solar_composition coefficients and Freedman (2014) opacity fit
-that the climt Parmentier-mode picket-fence uses, so the converged RCE and this
+that the climt Parmentier-mode cork uses, so the converged RCE and this
 analytic profile should agree to the level of the time-stepping discretisation.
 
 Output: docs/radiative_transfer/figures/hd209458b_reference.csv
@@ -43,8 +43,8 @@ def _load(pkg, fname):
         return np.load(f)
 
 
-coeffs   = _load("climt._data.picket_fence.parmentier", "solar_composition.npz")
-freeco   = _load("climt._data.picket_fence.parmentier", "freedman2014.npz")
+coeffs   = _load("climt._data.cork.parmentier", "solar_composition.npz")
+freeco   = _load("climt._data.cork.parmentier", "freedman2014.npz")
 
 
 # ---------------------------------------------------------------------------

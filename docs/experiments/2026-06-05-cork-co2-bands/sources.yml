@@ -1,0 +1,54 @@
+# docs/experiments/2026-06-05-cork-co2-bands/sources.yml
+# Paths in `out`/`out_txt` are relative to this file's dir; cmd/deps paths are
+# relative to the repo root. The driver runs entries in order, so producers
+# (the .npz) precede consumers (the figures that read them).
+#
+# NOTE: CorkLongwaveRadiation's --table argument is a BARE table name; the loader
+# (climt/_components/cork/optics/correlated_k.py:load_k_table) appends
+# `.nc` itself. So `--table earth_low_res_lw`, not `earth_low_res_lw.nc`. The
+# deps paths below keep the real `.nc` filenames (they are hashed as files).
+artifacts:
+  # --- data: two moist-RCE final states (slow; rerun only if CORK source/tables change)
+  - out: _artifacts/rce_moist_before.npz
+    cmd: conda run --no-capture-output -n climt python scripts/experiments/rce_moist_cork_vs_rrtmg.py --table earth_low_res_lw_4band_ngpt2_before --days 200 --save docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_before.npz
+    deps:
+      - scripts/experiments/rce_moist_cork_vs_rrtmg.py
+      - climt/_components/cork/**/*.py
+      - climt/_data/cork/correlated_k/earth_low_res_lw_4band_ngpt2_before.nc
+  - out: _artifacts/rce_moist_after.npz
+    cmd: conda run --no-capture-output -n climt python scripts/experiments/rce_moist_cork_vs_rrtmg.py --table earth_low_res_lw --days 200 --save docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_after.npz
+    deps:
+      - scripts/experiments/rce_moist_cork_vs_rrtmg.py
+      - climt/_components/cork/**/*.py
+      - climt/_data/cork/correlated_k/earth_low_res_lw.nc
+  # --- data: throughput scalars
+  - out: _artifacts/throughput.npz
+    out_txt: _artifacts/throughput.txt
+    cmd: conda run --no-capture-output -n climt python scripts/experiments/bench_cork_vs_rrtmg.py --save docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.npz
+    deps:
+      - scripts/experiments/bench_cork_vs_rrtmg.py
+      - climt/_components/cork/**/*.py
+  # --- figures
+  - out: _artifacts/kg_window_band.png
+    cmd: conda run --no-capture-output -n climt python scripts/experiments/make_subproject_B_figures.py --figure kg --out docs/experiments/2026-06-05-cork-co2-bands/_artifacts/kg_window_band.png
+    deps:
+      - scripts/experiments/make_subproject_B_figures.py
+      - scripts/experiments/plot_kg_curves.py
+  - out: _artifacts/lbl_overlay.png
+    cmd: conda run --no-capture-output -n climt python scripts/experiments/make_subproject_B_figures.py --figure lbl --out docs/experiments/2026-06-05-cork-co2-bands/_artifacts/lbl_overlay.png
+    deps:
+      - scripts/experiments/make_subproject_B_figures.py
+      - debug_data/lbl_olr_spec_moist_co2_400ppm.npz
+      - debug_data/lbl_olr_spec_dry_co2_400ppm.npz
+  - out: _artifacts/rce_before_after.png
+    cmd: conda run --no-capture-output -n climt python scripts/experiments/make_subproject_B_figures.py --figure rce --before-npz docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_before.npz --after-npz docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_after.npz --out docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_before_after.png
+    deps:
+      - scripts/experiments/make_subproject_B_figures.py
+      - scripts/experiments/tropopause.py
+      - docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_before.npz
+      - docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_after.npz
+  - out: _artifacts/throughput.png
+    cmd: conda run --no-capture-output -n climt python scripts/experiments/make_subproject_B_figures.py --figure throughput --npz docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.npz --out docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png
+    deps:
+      - scripts/experiments/make_subproject_B_figures.py
+      - docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.npz

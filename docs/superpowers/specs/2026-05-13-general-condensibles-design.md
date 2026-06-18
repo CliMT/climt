@@ -1,7 +1,7 @@
 # General Condensibles Design
 
 **Date:** 2026-05-13  
-**Branch:** feature/picket-fence-radiation (will likely need its own branch)  
+**Branch:** feature/cork-radiation (will likely need its own branch)  
 **Goal:** Make `EmanuelConvectionPython` (and future moist schemes) work for arbitrary condensibles — initially H₂O (Earth), CH₄ (Titan), CO₂ (Mars) — by pulling condensible physics out of hardcoded constants into a shared, profile-driven layer.
 
 ---

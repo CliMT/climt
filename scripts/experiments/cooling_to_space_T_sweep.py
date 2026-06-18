@@ -1,6 +1,6 @@
-"""Cooling-to-space sweep over T_iso: does PF's oscillatory low-p cooling track temperature?
+"""Cooling-to-space sweep over T_iso: does CORK's oscillatory low-p cooling track temperature?
 
-If PF's stratospheric oscillations reflect *physics* (Planck-weighted opacity),
+If CORK's stratospheric oscillations reflect *physics* (Planck-weighted opacity),
 the cooling profile should scale and shift with T_iso. If they reflect
 *table-interpolation artifacts*, the shape will be largely T-independent.
 
@@ -12,17 +12,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from climt import RRTMGLongwave, get_default_state, get_grid
-from climt._components.picket_fence import PicketFenceLongwave
+from climt._components.cork import CorkLongwaveRadiation
 
 CO2_MOLE_FRAC = 376e-6
 T_ISOS = [200.0, 250.0, 300.0]
 NZ = 30
 
-LABELS = ["RRTMG (16 bands)", "PF 8 g-pts (GL)", "PF 8 g-pts (2-stretch)"]
+LABELS = ["RRTMG (16 bands)", "CORK 8 g-pts (GL)", "CORK 8 g-pts (2-stretch)"]
 HR_KEY = {
     "RRTMG (16 bands)": "air_temperature_tendency_from_longwave",
-    "PF 8 g-pts (GL)": "air_temperature_tendency_from_longwave",
-    "PF 8 g-pts (2-stretch)": "air_temperature_tendency_from_longwave",
+    "CORK 8 g-pts (GL)": "air_temperature_tendency_from_longwave",
+    "CORK 8 g-pts (2-stretch)": "air_temperature_tendency_from_longwave",
 }
 T_COLORS = {200.0: "#1f77b4", 250.0: "#2ca02c", 300.0: "#d62728"}
 
@@ -31,14 +31,14 @@ grid = get_grid(nx=1, ny=1, nz=NZ)
 rad_lw = RRTMGLongwave()
 rrtmg_state = get_default_state([rad_lw], grid_state=grid)
 
-pf_gl = PicketFenceLongwave(optics="correlated_k", table="earth_low_res_lw_8gpt")
-pf_2s = PicketFenceLongwave(optics="correlated_k", table="earth_low_res_lw_8gpt_twostretch")
+cork_gl = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw_8gpt")
+cork_2s = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw_8gpt_twostretch")
 
-pf_state_gl = get_default_state([pf_gl], grid_state=grid)
-pf_state_2s = get_default_state([pf_2s], grid_state=grid)
+cork_state_gl = get_default_state([cork_gl], grid_state=grid)
+cork_state_2s = get_default_state([cork_2s], grid_state=grid)
 
-components = {LABELS[0]: rad_lw, LABELS[1]: pf_gl, LABELS[2]: pf_2s}
-states = {LABELS[0]: rrtmg_state, LABELS[1]: pf_state_gl, LABELS[2]: pf_state_2s}
+components = {LABELS[0]: rad_lw, LABELS[1]: cork_gl, LABELS[2]: cork_2s}
+states = {LABELS[0]: rrtmg_state, LABELS[1]: cork_state_gl, LABELS[2]: cork_state_2s}
 
 # results[label][T_iso] = {"p_hpa", "hr_day", "olr"}
 results = {label: {} for label in LABELS}

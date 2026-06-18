@@ -13,7 +13,7 @@ Components represent physical processes. They compute tendencies or diagnostics 
 
 ### Radiation
 - **`RRTMGLongwave` / `RRTMGShortwave`**: Highly accurate Rapid Radiative Transfer Model for GCMs.
-- **`PicketFenceLongwave` / `PicketFenceShortwave`**: Idealized multi-band correlated-k scheme.
+- **`CorkLongwaveRadiation` / `CorkShortwaveRadiation`**: Idealized multi-band correlated-k scheme.
 - **`GrayLongwaveRadiation` / `Frierson06LongwaveOpticalDepth`**: Simplified gray gas radiation.
 
 ### Convection & Condensation

@@ -1,4 +1,4 @@
-"""Generate climt/_data/picket_fence/stellar_spectra/trappist1.npz.
+"""Generate climt/_data/cork/stellar_spectra/trappist1.npz.
 
 Approach: Approximate TRAPPIST-1 (M8V, T_eff ~ 2566 K) as a blackbody,
 scaled so the integrated flux at 1 AU equals 55.0 W/m^2 (= L_star / 4 pi AU^2
@@ -11,7 +11,7 @@ import os
 import numpy as np
 
 OUT = os.path.join(
-    "climt", "_data", "picket_fence", "stellar_spectra", "trappist1.npz"
+    "climt", "_data", "cork", "stellar_spectra", "trappist1.npz"
 )
 
 T_EFF = 2566.0          # effective temperature, K

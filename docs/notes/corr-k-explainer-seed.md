@@ -1,22 +1,22 @@
 # Doc seed — explaining correlated-k (with a real failure case)
 
-**Status:** note / raw material, not a finished doc. When the picket-fence
+**Status:** note / raw material, not a finished doc. When the cork
 correlated-k mode gets a proper write-up (a docs page alongside
-`docs/PLUG_AND_PLAY_ARCHITECTURE.md`, or a user guide for `PicketFenceLongwave`),
+`docs/PLUG_AND_PLAY_ARCHITECTURE.md`, or a user guide for `CorkLongwaveRadiation`),
 fold this in. The value here is a *worked example, grounded in a real debugging
 session*, of both how correlated-k works and how it fails — far more memorable
 than an abstract description.
 
 ## Why this is worth writing up
 
-While diagnosing a radiative-convective-equilibrium warm bias (PF ran ~13 K too
+While diagnosing a radiative-convective-equilibrium warm bias (CORK ran ~13 K too
 warm vs RRTMG), we traced ~38 W/m² of a 51 W/m² OLR over-trapping to a single
 cause: the 800–1800 cm⁻¹ "window" band of the Earth LW table **lumps two
 spectrally distinct populations** — the transparent 8–12 µm window and the
 opaque H₂O ν₂ band — into one 8-g-point k-distribution. That is the classic
 correlated-k failure mode, and we have the `k(g)` curves to show it. (Full
 story: experiment #16 in
-`docs/superpowers/plans/2026-05-16-pf-co2-band-refinement.md`.)
+`docs/superpowers/plans/2026-05-16-cork-co2-band-refinement.md`.)
 
 ## Narrative beats to use
 

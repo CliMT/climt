@@ -1,7 +1,7 @@
 """Diagnostic: plot Chaverot R=500 LW source CDF k(g) for wing vs core CO2 bands.
 
-Tests the hypothesis from the 2026-05-18 picket-fence experiment log:
-the cold-stratosphere bias is upstream of the picket-fence integrator —
+Tests the hypothesis from the 2026-05-18 cork experiment log:
+the cold-stratosphere bias is upstream of the cork integrator —
 the Chaverot R=500 source k-distribution itself lacks moderate-strength
 CO2-wing line opacity at low pressure that warms RRTMG's stratosphere.
 

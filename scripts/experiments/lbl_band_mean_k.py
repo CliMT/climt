@@ -2,7 +2,7 @@
 
 Saves kappa(p, nu) and T(p) so a downstream script (in the climt env) can
 integrate Planck-weighted band-mean opacities over arbitrary band edges
-and compare to PF correlated-k tables.
+and compare to CORK correlated-k tables.
 
 Usage (linepyline env):
     conda run -n linepyline python examples/lbl_band_mean_k.py --profile iso
@@ -24,7 +24,7 @@ DNU = 0.1
 T_SURF_ADIABAT = 288.0
 P_SURF_ADIABAT = 101325.0
 KAPPA = 2.0 / 7.0  # R/cp for diatomic ideal gas
-T_FLOOR = 80.0  # clip to keep within PF table T_grid (min 50 K)
+T_FLOOR = 80.0  # clip to keep within CORK table T_grid (min 50 K)
 
 # Isothermal
 T_ISO = 250.0

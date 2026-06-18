@@ -1,4 +1,4 @@
-# Student Project: Calibrating Picket-Fence Coefficients for Terrestrial Atmospheres
+# Student Project: Calibrating Cork Coefficients for Terrestrial Atmospheres
 
 **Date:** 2026-04-12
 **Prerequisites:** Familiarity with atmospheric radiation, Python, basic spectroscopy
@@ -9,7 +9,7 @@
 
 ## 1. Background
 
-The Parmentier & Guillot (2014, 2015) picket-fence radiation model describes atmospheric opacity using a small number of dimensionless parameters:
+The Parmentier & Guillot (2014, 2015) cork radiation model describes atmospheric opacity using a small number of dimensionless parameters:
 
 - **gamma_P** = kappa_P / kappa_R — ratio of Planck mean to Rosseland mean opacity, quantifying non-greyness
 - **beta** — relative spectral width of the high-opacity thermal channel (fraction of Planck function in the strong-absorption band)
@@ -20,7 +20,7 @@ These parameters, combined with a Rosseland mean opacity fit kappa_R(T, p), full
 
 ### Why this matters
 
-The Parmentier mode in climt's picket-fence radiation scheme currently only works for gas giant atmospheres. Extending it to terrestrial compositions would enable fast, physically motivated radiation calculations for Earth-like planets without requiring k-distribution tables — useful for parameter sweeps, idealized GCM experiments, and building physical intuition about how atmospheric composition shapes the temperature profile.
+The Parmentier mode in climt's cork radiation scheme currently only works for gas giant atmospheres. Extending it to terrestrial compositions would enable fast, physically motivated radiation calculations for Earth-like planets without requiring k-distribution tables — useful for parameter sweeps, idealized GCM experiments, and building physical intuition about how atmospheric composition shapes the temperature profile.
 
 ---
 
@@ -28,7 +28,7 @@ The Parmentier mode in climt's picket-fence radiation scheme currently only work
 
 1. **Compute Rosseland and Planck mean opacities** for terrestrial atmospheric compositions (Earth, Mars, Venus) as functions of temperature and pressure, using line-by-line calculations from `linepyline`.
 
-2. **Derive the picket-fence parameters** (gamma_P, beta, R, gamma_v1, gamma_v2, gamma_v3) from the opacity cumulative distribution functions (CDFs) at representative atmospheric conditions.
+2. **Derive the cork parameters** (gamma_P, beta, R, gamma_v1, gamma_v2, gamma_v3) from the opacity cumulative distribution functions (CDFs) at representative atmospheric conditions.
 
 3. **Fit the parameters** as functions of an appropriate control variable (T_eff for irradiated cases, or surface temperature for non-irradiated cases) and produce coefficient tables in the same format as Parmentier et al. (2015) Table 1.
 
@@ -84,7 +84,7 @@ where B_nu is the Planck function at temperature T.
 
 The ratio gamma_P = kappa_P / kappa_R quantifies the non-greyness. For a grey atmosphere, gamma_P = 1. For real atmospheres, gamma_P >> 1 because the Planck mean is dominated by the strongest absorption lines while the Rosseland mean is dominated by the weakest.
 
-### 3.3 Deriving picket-fence parameters from the opacity CDF
+### 3.3 Deriving cork parameters from the opacity CDF
 
 Following Parmentier et al. (2015) Section 5.1.2:
 
@@ -124,7 +124,7 @@ One approach: fit kappa_R as a function of (T, p, q) where q is specific humidit
 
 ### 4.1 Against correlated-k calculations
 
-Run climt's picket-fence radiation in correlated-k mode for standard atmospheric profiles (e.g., US Standard Atmosphere for Earth, Mars Climate Database profiles). Compare the equilibrium temperature profiles against those obtained using the newly calibrated Parmentier coefficients.
+Run climt's cork radiation in correlated-k mode for standard atmospheric profiles (e.g., US Standard Atmosphere for Earth, Mars Climate Database profiles). Compare the equilibrium temperature profiles against those obtained using the newly calibrated Parmentier coefficients.
 
 Target accuracy: temperature profiles within 10% of the correlated-k solution at pressures above the tropopause, following the accuracy achieved by Parmentier et al. (2015) for gas giants.
 
@@ -138,13 +138,13 @@ For Earth, compare broadband fluxes (OLR, surface downwelling LW) against RRTMG 
 - Does it reproduce the strong greenhouse effect of Venus?
 - Does it capture the thin-atmosphere limit for Mars?
 
-These tests will reveal which climate phenomena the 5-band picket-fence model can and cannot represent for terrestrial atmospheres.
+These tests will reveal which climate phenomena the 5-band cork model can and cannot represent for terrestrial atmospheres.
 
 ---
 
 ## 5. Deliverables
 
-1. **Coefficient files** for Earth, Mars, and Venus in the format expected by climt's `PicketFenceLongwave` and `PicketFenceShortwave` components (netCDF).
+1. **Coefficient files** for Earth, Mars, and Venus in the format expected by climt's `CorkLongwaveRadiation` and `CorkShortwaveRadiation` components (netCDF).
 
 2. **Rosseland mean opacity fits** for each atmosphere.
 
@@ -153,7 +153,7 @@ These tests will reveal which climate phenomena the 5-band picket-fence model ca
 4. **A short report** (or paper draft) discussing:
    - How the terrestrial opacity structure differs from gas giants
    - Which parameters are most sensitive to composition
-   - Where the 5-band picket-fence approximation breaks down for terrestrial atmospheres
+   - Where the 5-band cork approximation breaks down for terrestrial atmospheres
    - Recommendations for whether more thermal or visible bands are needed
 
 ---

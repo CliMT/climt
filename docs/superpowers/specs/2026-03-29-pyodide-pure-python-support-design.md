@@ -196,8 +196,8 @@ def has_fortran_extensions():
 
 ## Related: in-browser notebook target
 
-The picket-fence Experiments post
-(`docs/experiments/2026-06-05-picket-fence-co2-bands/`) is a target for the
+The cork Experiments post
+(`docs/experiments/2026-06-05-cork-co2-bands/`) is a target for the
 website spec's deferred live-cells follow-up, which depends on this pure-Python
 wheel. Its companion notebook already maps the boundary: the setup, the k(g) toy,
 and all analysis/plotting of pre-baked arrays are pure-Python-live under Pyodide,
