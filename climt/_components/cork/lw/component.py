@@ -1,6 +1,13 @@
 import numpy as np
 from sympl import TendencyComponent, get_constant
 
+try:
+    import jax
+    import jax.numpy as jnp
+    HAS_JAX = True
+except ImportError:
+    HAS_JAX = False
+
 from ..common import (
     MOLAR_MASS,
     MOLAR_MASS_DRY_AIR,
@@ -51,6 +58,15 @@ class CorkLongwaveRadiation(TendencyComponent):
             )
         else:
             raise ValueError(f"Unknown optics mode: {optics}")
+
+        self._jax_table = None
+        if optics == "correlated_k" and HAS_JAX:
+            try:
+                if self._table["k_coefficients"].ndim == 7 and self._premixed_bg:
+                    from .kernels_jax import build_cork_lw_table
+                    self._jax_table = build_cork_lw_table(self._table)
+            except Exception:
+                self._jax_table = None
 
         self._diagnostics_level = kwargs.pop("diagnostics_level", 0)
         from climt._core.initialization import set_num_longwave_bands
@@ -198,6 +214,10 @@ class CorkLongwaveRadiation(TendencyComponent):
         return self._num_bands
 
     def array_call(self, state):
+        if (HAS_JAX and self._jax_table is not None
+                and self._diagnostics_level == 0
+                and isinstance(state["T"], jax.Array)):
+            return self._array_call_jax(state)
         T = state["T"]
         p = state["p"]
         p_int = state["p_int"]
@@ -362,6 +382,64 @@ class CorkLongwaveRadiation(TendencyComponent):
             diagnostics["lw_down_per_gpoint"] = _avg_iface(kernel_diag["down_per_gpoint"])
 
         return ({"T": tendency}, diagnostics)
+
+    def _array_call_jax(self, state):
+        from .kernels_jax import cork_lw_jax
+        sigma = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
+        g = get_constant("gravitational_acceleration", "m/s^2")
+        cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
+
+        T = state["T"]; orig_shape_T = T.shape
+        p_int = state["p_int"]; orig_shape_pint = p_int.shape
+        nlev = T.shape[0]
+        T_flat = T.reshape(nlev, -1)
+        ncol = T_flat.shape[1]
+        p_flat = state["p"].reshape(nlev, -1)
+        p_int_flat = p_int.reshape(nlev + 1, -1)
+        T_surf_flat = state["T_surf"].reshape(-1)
+        nband = self._num_bands
+        emissivity = state["emissivity"].reshape(nband, ncol)
+        h2o = state["h2o"].reshape(nlev, ncol)
+        co2 = state["co2"].reshape(nlev, ncol)
+        tau_cloud = state["tau_cloud_lw"].reshape(nlev, ncol, nband)
+
+        tendency, up_broad, down_broad, up_band, down_band, tau = cork_lw_jax(
+            T_flat, p_flat, p_int_flat, T_surf_flat, h2o, co2,
+            emissivity, tau_cloud, self._jax_table, sigma, g, cpd)
+
+        ngpt = tau.shape[1]
+        weights = self._jax_table.gpoint_weights
+        D = 1.66
+        tau_band = jnp.einsum("bgnc,bg->bnc", tau, weights)          # (nband,nlev,ncol)
+        trans_band = jnp.exp(-D * tau_band)
+        hr_band = jnp.stack([
+            self._hr_band_jax(up_band[b] - down_band[b], p_int_flat, g, cpd)
+            for b in range(nband)], axis=0) * 86400.0
+
+        def lay(a):
+            return jnp.moveaxis(a, 0, -1).reshape(orig_shape_T + (nband,))
+
+        def ifc(a):
+            return jnp.moveaxis(a, 0, -1).reshape(orig_shape_pint + (nband,))
+
+        tendency_out = tendency.reshape(orig_shape_T)
+        diagnostics = {
+            "upwelling_longwave_flux_in_air": up_broad.reshape(orig_shape_pint),
+            "downwelling_longwave_flux_in_air": down_broad.reshape(orig_shape_pint),
+            "upwelling_longwave_flux_in_air_per_band": ifc(up_band),
+            "downwelling_longwave_flux_in_air_per_band": ifc(down_band),
+            "air_temperature_tendency_from_longwave": tendency_out * 86400.0,
+            "longwave_optical_depth_per_band": lay(tau_band),
+            "longwave_transmittance_per_band": lay(trans_band),
+            "air_temperature_tendency_from_longwave_per_band": lay(hr_band),
+        }
+        return ({"T": tendency_out}, diagnostics)
+
+    @staticmethod
+    def _hr_band_jax(net_flux, p_int, g, cpd):
+        dp = p_int[1:] - p_int[:-1]
+        dflux = net_flux[1:] - net_flux[:-1]
+        return g / cpd * dflux / dp
 
     def _parmentier_optics(self, T, p, p_int, T_surf, T_irr, T_int, sigma, g):
         """Compute optical depths and sources for Parmentier mode."""
