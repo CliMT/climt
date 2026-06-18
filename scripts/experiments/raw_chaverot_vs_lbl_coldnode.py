@@ -1,6 +1,6 @@
 """Experiment #6 — raw Chaverot R=500 source vs LBL at the cold strat node.
 
-T2 showed the shipped PF table is 14.5x too opaque in the 500-630 cm^-1
+T2 showed the shipped CORK table is 14.5x too opaque in the 500-630 cm^-1
 wing at the 110 K node (p=1e4 Pa), and that this is a TABLE NODE error, not
 interpolation. This script asks the final question: is the error in the
 *raw Chaverot source* CDF, or introduced by our bin_down + GL 20->8 rebin?
@@ -30,7 +30,7 @@ LBL_NPZ = os.path.join(
 
 N_A = 6.02214076e23
 M_AIR = 0.028964            # kg/mol — generator default --mixture-molar-mass
-CONV = N_A / M_AIR          # m^2/molecule -> m^2/kg (generate_picket_fence_tables.py:359)
+CONV = N_A / M_AIR          # m^2/molecule -> m^2/kg (generate_cork_tables.py:359)
 
 P_NODE = 1.0e4
 X_DRY = 1e-6

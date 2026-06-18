@@ -1,7 +1,7 @@
-"""Experiment: boost CO₂-wing opacity in the 6-band-GL PF table and check
+"""Experiment: boost CO₂-wing opacity in the 6-band-GL CORK table and check
 whether T_strat moves toward RRTMG's ~190 K.
 
-Hypothesis (from 2026-05-18 per-band diagnostic): PF's stratospheric T is
+Hypothesis (from 2026-05-18 per-band diagnostic): CORK's stratospheric T is
 pinned at ~155 K by the CO₂ core (630-700 cm⁻¹). The wing bands (500-630
 and 700-800 cm⁻¹) at 100 hPa look like windows (BT > 240 K), implying κ
 ≈ 0 aloft. If we artificially boost wing-band k by a factor B, the wings
@@ -28,7 +28,7 @@ from sympl import AdamsBashforth
 from tqdm import trange
 
 from climt import SlabSurface, get_default_state, get_grid
-from climt._components.picket_fence import PicketFenceLongwave
+from climt._components.cork import CorkLongwaveRadiation
 
 # ── Physical constants for band-integrated Planck brightness temperature ──────
 H_PLANCK = 6.62607015e-34
@@ -57,7 +57,7 @@ def band_brightness_T(F_band, nu1_cm, nu2_cm):
 
 # ── Configuration ────────────────────────────────────────────────────────────
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "climt", "_data",
-                        "picket_fence", "correlated_k")
+                        "cork", "correlated_k")
 BASE_TABLE = "earth_low_res_lw_co2refined_gl"
 WING_BAND_IDX = [1, 3]  # 500-630 and 700-800 cm⁻¹ (CO₂ wings)
 BOOST_FACTORS = [1.0, 3.0, 10.0, 30.0]
@@ -104,7 +104,7 @@ for lbl, tn in zip(LABELS, table_names):
 
 components, surfaces, states = {}, {}, {}
 for lbl, tn in zip(LABELS, table_names):
-    lw = PicketFenceLongwave(optics="correlated_k", table=tn)
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=tn)
     sf = SlabSurface()
     st = get_default_state([lw, sf], grid_state=grid)
     st["specific_humidity"].values[:] = 0.0

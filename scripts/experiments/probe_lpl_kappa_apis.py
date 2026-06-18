@@ -1,6 +1,6 @@
 """Pin the ~4.85x discrepancy between the two linepyline kappa paths.
 
-The new linepyline-built PF table reads ~5x too opaque in EVERY band vs LBL
+The new linepyline-built CORK table reads ~5x too opaque in EVERY band vs LBL
 (even the core, which should be ~1.0). Two code paths produce kappa:
 
   * LBL reference (lbl_kT_curvature.py): rtm.radiative_transfer(...)["kappa"]

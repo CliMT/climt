@@ -1,7 +1,7 @@
-"""Experiment #21 step 1 (climt env) — dump the exp #16 fixed profile + PF/RRTMG OLR.
+"""Experiment #21 step 1 (climt env) — dump the exp #16 fixed profile + CORK/RRTMG OLR.
 
-Reproduces the identical (T, p, q) profile used by lw_forward_pf_vs_rrtmg.py and
-records RRTMG and PF (winsplit table) OLR for both moist and dry cases, then saves
+Reproduces the identical (T, p, q) profile used by lw_forward_cork_vs_rrtmg.py and
+records RRTMG and CORK (winsplit table) OLR for both moist and dry cases, then saves
 everything to debug_data/forward_profile.npz so the linepyline-env tiebreak script
 (lbl_olr_tiebreak.py) can run the LBL on the SAME profile.
 
@@ -18,9 +18,9 @@ from climt import RRTMGLongwave, get_default_state, get_grid
 CO2 = 376e-6
 NZ = 40
 T_SURF = 288.0
-PF_TABLE = "earth_low_res_lw_co2refined_linepyline_winsplit"
+CORK_TABLE = "earth_low_res_lw_co2refined_linepyline_winsplit"
 _HERE = os.path.dirname(__file__)
-_FWD = os.path.join(_HERE, "lw_forward_pf_vs_rrtmg.py")
+_FWD = os.path.join(_HERE, "lw_forward_cork_vs_rrtmg.py")
 
 
 def reference_profile(p_hpa):
@@ -31,17 +31,17 @@ def reference_profile(p_hpa):
 
 
 def forward_olr(dry):
-    """Run lw_forward_pf_vs_rrtmg.py in its own process (one RRTMG per process —
+    """Run lw_forward_cork_vs_rrtmg.py in its own process (one RRTMG per process —
     a second RRTMG instance in the same process returns garbage) and parse the
-    'OLR (TOA up)  RRTMG  PF  PF-RRTMG' line."""
-    cmd = [sys.executable, _FWD, "--table", PF_TABLE]
+    'OLR (TOA up)  RRTMG  CORK  CORK-RRTMG' line."""
+    cmd = [sys.executable, _FWD, "--table", CORK_TABLE]
     if dry:
         cmd.append("--dry")
     out = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
     for line in out.splitlines():
         if line.strip().startswith("OLR (TOA up)"):
             nums = re.findall(r"-?\d+\.\d+", line)
-            return float(nums[0]), float(nums[1])  # RRTMG, PF
+            return float(nums[0]), float(nums[1])  # RRTMG, CORK
     raise RuntimeError("could not parse OLR from forward script output")
 
 
@@ -55,11 +55,11 @@ def main():
 
     results = {}
     for tag, dry in (("moist", False), ("dry", True)):
-        olr_rr, olr_pf = forward_olr(dry)
+        olr_rr, olr_cork = forward_olr(dry)
         results[f"olr_rrtmg_{tag}"] = olr_rr
-        results[f"olr_pf_{tag}"] = olr_pf
-        print(f"[{tag}] RRTMG OLR = {olr_rr:.2f}   PF OLR = {olr_pf:.2f}   "
-              f"PF-RRTMG = {olr_pf - olr_rr:+.2f}")
+        results[f"olr_cork_{tag}"] = olr_cork
+        print(f"[{tag}] RRTMG OLR = {olr_rr:.2f}   CORK OLR = {olr_cork:.2f}   "
+              f"CORK-RRTMG = {olr_cork - olr_rr:+.2f}")
 
     out = os.path.abspath(os.path.join(_HERE, "..", "..",
                                        "debug_data", "forward_profile.npz"))
@@ -72,7 +72,7 @@ def main():
         q_ref_moist=q_ref_moist,
         T_surf=T_SURF,
         CO2=CO2,
-        pf_table=PF_TABLE,
+        cork_table=CORK_TABLE,
         **results,
     )
     print(f"\nSaved {out}")

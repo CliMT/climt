@@ -12,7 +12,7 @@ def reset_sympl_backend():
       breaking sympl.set_constant in a later test that runs with a
       backend whose get_container_type() returns None).
     - climt's atmospheric-profile snapshot stack and configurable
-      radiation band counts (set by PicketFence* schemes at init,
+      radiation band counts (set by Cork* schemes at init,
       which otherwise cause shape mismatches in later RRTMG tests).
     """
     saved_backend = sympl.get_backend()

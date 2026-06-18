@@ -1,7 +1,7 @@
 import numpy as np
 import sympl
 
-from climt._components.picket_fence import PicketFenceShortwave
+from climt._components.cork import CorkShortwaveRadiation
 
 
 def _make_state_with_high_albedo(sw):
@@ -18,10 +18,10 @@ def _make_state_with_high_albedo(sw):
 
 def test_bond_albedo_feedback_changes_olr():
     """Enabling bond_albedo_feedback shifts the TOA upward/downward fluxes."""
-    sw_no_feedback = PicketFenceShortwave(
+    sw_no_feedback = CorkShortwaveRadiation(
         optics="parmentier", bond_albedo_feedback=False
     )
-    sw_feedback = PicketFenceShortwave(
+    sw_feedback = CorkShortwaveRadiation(
         optics="parmentier", bond_albedo_feedback=True
     )
 

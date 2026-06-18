@@ -39,7 +39,7 @@ BAND_LABELS = ["wing 500-630", "core 630-700", "wing 700-820"]
 BAND_COLORS = ["C0", "C3", "C2"]
 
 N_AVOGADRO = 6.02214076e23
-M_AIR = 0.028964  # kg/mol — same as generate_picket_fence_tables.py default
+M_AIR = 0.028964  # kg/mol — same as generate_cork_tables.py default
 CHAVEROT_M2_PER_MOLEC_TO_M2_PER_KG = N_AVOGADRO / M_AIR
 
 
