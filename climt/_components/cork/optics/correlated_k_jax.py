@@ -24,8 +24,8 @@ def _bracket(grid, v):
 def _txx7(k, iT, fT, iP, fP, iX, fX, iC):
     """8-corner trilinear over (T,P,X) at fixed C index. Returns
     (ngas,nband,ngpt,nlev,ncol)."""
-    def g(a, b, c):
-        return k[:, :, :, iT + a, iP + b, iX + c, iC]
+    def g(dT, dP, dX):
+        return k[:, :, :, iT + dT, iP + dP, iX + dX, iC]
     x0 = (g(0, 0, 0) * (1 - fT) * (1 - fP) + g(1, 0, 0) * fT * (1 - fP)
           + g(0, 1, 0) * (1 - fT) * fP + g(1, 1, 0) * fT * fP)
     x1 = (g(0, 0, 1) * (1 - fT) * (1 - fP) + g(1, 0, 1) * fT * (1 - fP)
@@ -35,8 +35,8 @@ def _txx7(k, iT, fT, iP, fP, iX, fX, iC):
 
 def _txx_cont(log_cont, iT, fT, iP, fP, iX, fX):
     """8-corner trilinear over (T,P,X) of log continuum. Returns (nband,nlev,ncol)."""
-    def g(a, b, c):
-        return log_cont[:, iT + a, iP + b, iX + c]
+    def g(dT, dP, dX):
+        return log_cont[:, iT + dT, iP + dP, iX + dX]
     x0 = (g(0, 0, 0) * (1 - fT) * (1 - fP) + g(1, 0, 0) * fT * (1 - fP)
           + g(0, 1, 0) * (1 - fT) * fP + g(1, 1, 0) * fT * fP)
     x1 = (g(0, 0, 1) * (1 - fT) * (1 - fP) + g(1, 0, 1) * fT * (1 - fP)
