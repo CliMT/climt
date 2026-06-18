@@ -55,3 +55,30 @@ def test_lw_transport_jax_matches_oracle():
     np.testing.assert_allclose(np.asarray(dnj), dn_b, rtol=1e-7, atol=1e-9)
     np.testing.assert_allclose(np.asarray(ubrj), up_br, rtol=1e-7, atol=1e-9)
     np.testing.assert_allclose(np.asarray(dbrj), dn_br, rtol=1e-7, atol=1e-9)
+
+
+def test_transport_grad_through_temperature_is_finite_and_correct():
+    from climt._components.cork.lw.kernels_jax import (
+        planck_sources_jax, lw_transport_jax)
+    rng = np.random.RandomState(5)
+    nband, ngpt, nT, nlev, ncol = 3, 2, 6, 6, 2
+    planck_frac = jnp.asarray(rng.uniform(0.0, 1.0, size=(nband, ngpt, nT)))
+    T_grid = jnp.asarray(np.linspace(180.0, 330.0, nT))
+    tau = jnp.asarray(rng.uniform(0.0, 1.5, size=(nband, ngpt, nlev, ncol)))
+    emis = jnp.asarray(rng.uniform(0.85, 1.0, size=(nband, ncol)))
+    weights = jnp.asarray(np.full((nband, ngpt), 0.5))
+    T_surf = jnp.asarray(rng.uniform(270.0, 300.0, size=(ncol,)))
+    sigma = 5.670374419e-8
+    T0 = jnp.asarray(rng.uniform(210.0, 310.0, size=(nlev, ncol)))
+
+    def olr(T):
+        ps, ss = planck_sources_jax(planck_frac, T_grid, T, T_surf, sigma)
+        _, _, up_broad, _ = lw_transport_jax(tau, ps, ss, emis, weights)
+        return up_broad[-1].sum()   # outgoing longwave at TOA
+
+    g = np.asarray(jax.grad(olr)(T0))
+    assert np.all(np.isfinite(g))
+    eps = 1e-2
+    i, j = 3, 1
+    fd = (float(olr(T0.at[i, j].add(eps))) - float(olr(T0.at[i, j].add(-eps)))) / (2 * eps)
+    np.testing.assert_allclose(g[i, j], fd, rtol=1e-3, atol=1e-6)
