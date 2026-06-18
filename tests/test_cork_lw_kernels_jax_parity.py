@@ -33,3 +33,25 @@ def test_planck_sources_jax_matches_oracle():
         jnp.asarray(T), jnp.asarray(T_surf), sigma)
     np.testing.assert_allclose(np.asarray(ps_jax), planck_src, rtol=1e-6, atol=1e-9)
     np.testing.assert_allclose(np.asarray(ss_jax), surf_src, rtol=1e-6, atol=1e-9)
+
+
+def test_lw_transport_jax_matches_oracle():
+    from climt._components.cork.lw.kernels import lw_transport
+    from climt._components.cork.lw.kernels_jax import lw_transport_jax
+    rng = np.random.RandomState(2)
+    nband, ngpt, nlev, ncol = 4, 3, 8, 5
+    tau = rng.uniform(0.0, 2.0, size=(nband, ngpt, nlev, ncol))
+    planck = rng.uniform(50.0, 400.0, size=(nband, ngpt, nlev, ncol))
+    surf = rng.uniform(200.0, 450.0, size=(nband, ngpt, ncol))
+    emis = rng.uniform(0.8, 1.0, size=(nband, ncol))
+    weights = np.full((nband, ngpt), 0.5)
+
+    up_b, dn_b, up_br, dn_br = lw_transport(
+        None, None, tau, planck, surf, emis, weights, 5.67e-8, diagnostics_level=0)
+    upj, dnj, ubrj, dbrj = lw_transport_jax(
+        jnp.asarray(tau), jnp.asarray(planck), jnp.asarray(surf),
+        jnp.asarray(emis), jnp.asarray(weights))
+    np.testing.assert_allclose(np.asarray(upj), up_b, rtol=1e-7, atol=1e-9)
+    np.testing.assert_allclose(np.asarray(dnj), dn_b, rtol=1e-7, atol=1e-9)
+    np.testing.assert_allclose(np.asarray(ubrj), up_br, rtol=1e-7, atol=1e-9)
+    np.testing.assert_allclose(np.asarray(dbrj), dn_br, rtol=1e-7, atol=1e-9)
