@@ -5,7 +5,6 @@ from .dry_convection import DryConvectiveAdjustment
 from .emanuel import (
     EmanuelConvection,
     EmanuelConvectionPython,
-    EmanuelConvectionPythonV3,
 )
 from .grid_scale_condensation import GridScaleCondensation
 from .held_suarez import HeldSuarez
@@ -36,5 +35,4 @@ __all__ = (
     BucketHydrology,
     CorkLongwaveRadiation,
     CorkShortwaveRadiation,
-    EmanuelConvectionPythonV3,
 )
