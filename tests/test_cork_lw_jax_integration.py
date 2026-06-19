@@ -57,7 +57,6 @@ def test_array_call_jax_matches_numpy():
 
 
 def _core_args(nlev, ncol):
-    from climt._components.cork.lw.kernels_jax import build_cork_lw_table
     comp, s = _make_state(nlev, ncol, as_jax=True)
     jt = comp._jax_table
     args = dict(

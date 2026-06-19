@@ -10,6 +10,7 @@ import jax.numpy as jnp
 from jax import lax
 
 from ..optics.correlated_k_jax import _bracket
+from ..optics.correlated_k import _CO2_INTERP_LOGK
 
 DIFFUSIVITY_FACTOR = 1.66
 
@@ -120,7 +121,7 @@ def build_cork_lw_table(table):
         log_cont = np.log(np.maximum(
             np.asarray(table["continuum_kappa"], dtype=np.float64), 1e-40))
     else:
-        log_cont = np.zeros((k.shape[1], 1, 1, 1))
+        log_cont = np.zeros((k.shape[1], 1, 1, 1), dtype=np.float64)
     return CorkLWTable(
         k=jnp.asarray(k, dtype=jnp.float64),
         T_grid=jnp.asarray(table["temperature_grid"], dtype=jnp.float64),
@@ -131,7 +132,7 @@ def build_cork_lw_table(table):
         gpoint_weights=jnp.asarray(table["gpoint_weights"], dtype=jnp.float64),
         has_cont=bool(has_cont),
         log_cont=jnp.asarray(log_cont),
-        co2_logk=True,
+        co2_logk=bool(_CO2_INTERP_LOGK),
     )
 
 

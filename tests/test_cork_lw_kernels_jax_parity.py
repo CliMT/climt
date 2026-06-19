@@ -4,7 +4,6 @@ jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_platform_name", "cpu")
 import jax.numpy as jnp
 import numpy as np
-import pytest
 
 
 def test_planck_sources_jax_matches_oracle():
@@ -44,7 +43,7 @@ def test_lw_transport_jax_matches_oracle():
     planck = rng.uniform(50.0, 400.0, size=(nband, ngpt, nlev, ncol))
     surf = rng.uniform(200.0, 450.0, size=(nband, ngpt, ncol))
     emis = rng.uniform(0.8, 1.0, size=(nband, ncol))
-    weights = np.full((nband, ngpt), 0.5)
+    weights = rng.uniform(0.2, 0.8, size=(nband, ngpt))
 
     up_b, dn_b, up_br, dn_br = lw_transport(
         None, None, tau, planck, surf, emis, weights, 5.67e-8, diagnostics_level=0)

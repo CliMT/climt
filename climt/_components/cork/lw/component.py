@@ -407,7 +407,6 @@ class CorkLongwaveRadiation(TendencyComponent):
             T_flat, p_flat, p_int_flat, T_surf_flat, h2o, co2,
             emissivity, tau_cloud, self._jax_table, sigma, g, cpd)
 
-        ngpt = tau.shape[1]
         weights = self._jax_table.gpoint_weights
         D = 1.66
         tau_band = jnp.einsum("bgnc,bg->bnc", tau, weights)          # (nband,nlev,ncol)
