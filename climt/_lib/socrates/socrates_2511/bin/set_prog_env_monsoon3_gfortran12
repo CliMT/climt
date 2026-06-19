@@ -1,0 +1,19 @@
+module purge 2> /dev/null
+module load mo-certs/2025-05-28
+module load mo-craylibs-milan/1.0
+module load userenv/1.2.1.1
+module load moose-client/1.1.0
+module load libfabric/1.15.2.0
+module load craype-network-ofi
+module load xpmem/2.6.2-2.5_2.40__gd067c3f.shasta
+module load cray-pals/1.2.13
+module load scitools/default-current
+module load cpe/23.05
+module load cray-pmi/6.1.11
+module load perftools-base/23.05.0
+module load PrgEnv-gnu/8.4.0
+module load craype-x86-milan
+module load cray-hdf5/1.12.2.3
+module load cray-netcdf/4.9.0.3
+module load nccmp/1.9.1.0
+export NETCDFF_ROOT=$(nf-config --prefix)

@@ -1023,6 +1023,13 @@ def get_init_diagnostic(name, grid_state):
             dtype=default_values[name[:-20]].get("dtype", None),
             domain=default_values[name[:-20]]["domain"] + "_interface",
         )
+    elif name.startswith("mole_fraction_of_") and name.endswith("_in_air"):
+        return ConstantDefaultValue(
+            name,
+            0.0,
+            "dimensionless",
+            domain="atmosphere",
+        )
     # If it isn't, check if there is a diagnostic defined in some library of DiagnosticComponent
     # classes (probably a list stored here) that can calculate the quantity,
     # and return that one.

@@ -1,0 +1,203 @@
+#!/bin/bash
+
+echo -n 'Started mk_sp_lw_400_jm_mars: '; date
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+# Set environment variables
+# -------------------------
+procs=8
+. ./env_mars
+
+sp_dir="jm_mars_hr"
+mkdir -p ${sp_dir}
+
+# Create skeleton spectral file
+# -----------------------------
+specfile=${sp_dir}/sp_lw_400_jm_mars
+skelfile=${sp_dir}/sp_lw_400_jm_mars_skel
+./mk_sp_lw_400_jm_mars_skel $skelfile > /dev/null
+
+
+# Gas absorption coefficients
+# ---------------------------
+echo -n 'H2O '
+if [ ! -s $sp_dir/h2o_lwf_l ] ; then
+  if [ ! -s $H2O_LBL_LWF ] ; then
+    echo ": No LBL file: please run ./mk_h2o_lbl_lw_400_jm_mars"
+    exit 1
+  else
+    rm -f $sp_dir/h2o_lwf_l*
+    Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} \
+      -R 1 400 -l 1 ${COL_MASS_K_H2O} -b 5.0e-4 \
+      -s $skelfile +p -lk \
+      -o $sp_dir/h2o_lwf_l -m $sp_dir/h2o_lwf_lm \
+      -L $H2O_LBL_LWF \
+      -sm $sp_dir/h2o_lwf_l_map.nc \
+       > $sp_dir/h2o_lwf_log
+  fi
+fi
+echo 'done'
+
+if [ ! -s $sp_dir/h2o-h2o_lw_c ] ; then
+  echo "H2O self-broadened continuum"
+  rm -f $sp_dir/h2o-h2o_lw_c*
+  Ccorr_k -F $CONT_PT_FILE \
+    -R 1 400 -i 0.1 -ct 1 1 ${COL_H2OC} -t 5.0e-4 \
+    -e $CONT_H2O_S296 $CONT_H2O_S260 \
+    -s $skelfile +p -lk \
+    -o $sp_dir/h2o-h2o_lw_c -m $sp_dir/h2o-h2o_lw_cm \
+    -L $sp_dir/h2o-h2o_lw_clbl.nc \
+    -lw $sp_dir/h2o_lwf_l_map.nc \
+     > $sp_dir/h2o-h2o_lw_clog
+fi
+
+echo -n 'CO2 '
+if [ ! -s $sp_dir/co2_lw_l ] ; then
+  if [ ! -s $CO2_LBL_LW ] ; then
+    echo ": No LBL file: please run ./mk_co2_lbl_lw_400_jm_mars"
+    exit 1
+  else
+    rm -f $sp_dir/co2_lw_l*
+    Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} \
+      -R 1 400 -l 2 ${COL_MASS_K_CO2} -b 5.0e-4 \
+      -sb ${GAS_DATA_DIR}/gas_fractions_09_10 -lp 2 \
+      -s $skelfile +p -lk \
+      -o $sp_dir/co2_lw_l -m $sp_dir/co2_lw_lm \
+      -L $CO2_LBL_LW \
+       > $sp_dir/co2_lw_log
+  fi
+fi
+echo 'done'
+
+if [ ! -s $sp_dir/co2-co2_lw_c ] ; then
+  echo "CO2-CO2 CIA"
+  rm -f $sp_dir/co2-co2_lw_c*
+  Ccorr_k -F $CONT_PT_FILE -CIA $CONT_CO2_CO2 \
+    -R 1 400 -i 1.0 -ct 2 2 ${COL_CO2C} -t 5.0e-4 \
+    -k -s $skelfile +p -lk \
+    -o $sp_dir/co2-co2_lw_c -m $sp_dir/co2-co2_lw_cm \
+    -L $sp_dir/co2-co2_lw_clbl.nc \
+    -np $procs > $sp_dir/co2-co2_lw_clog
+fi
+
+echo -n 'SO2 '
+if [ ! -s $sp_dir/so2_lw_l ] ; then
+  if [ ! -s $SO2_LBL_LW ] ; then
+    echo ": No LBL file: please run ./mk_so2_lbl_lw_400_jm_mars"
+    exit 1
+  else
+    rm -f $sp_dir/so2_lw_l*
+    Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} \
+      -R 1 400 -l 9 ${COL_MASS_K_SO2} -b 5.0e-4 \
+      -s $skelfile +p -lk \
+      -o $sp_dir/so2_lw_l -m $sp_dir/so2_lw_lm \
+      -L $SO2_LBL_LW \
+       > $sp_dir/so2_lw_log
+  fi
+fi
+echo 'done'
+
+
+# Sulphuric acid aerosol
+# ----------------------
+if [ ! -s $sp_dir/sulphuric_lw.avg ] ; then
+  echo 'Sulphuric acid aerosol'
+  Cscatter_average -s $skelfile -P 1 -w -p 200 \
+    -a $sp_dir/sulphuric_lw.avg $RAD_DATA/aerosol/sulphuric.mon
+fi
+
+
+# Cloud droplet and ice parametrisations
+# --------------------------------------
+if [ ! -s $sp_dir/fit_lw_drop5 ] ; then
+  echo 'Calculating type 5 droplet data'
+  rm -f $sp_dir/fit_lw_drop5 $sp_dir/mon_lw_drop5
+  Cscatter_average -s $skelfile -P 1 -t -p 200 \
+    -f 5 $sp_dir/fit_lw_drop5 $sp_dir/mon_lw_drop5 1.e3 \
+    $RAD_DATA/cloud/scatter_drop_type5
+fi
+if [ ! -s $sp_dir/fit_lw_ice8 ] ; then
+  echo 'Calculating type 8 ice data'
+  rm -f $sp_dir/fit_lw_ice8 $sp_dir/mon_lw_ice8
+  Cscatter_average -s $skelfile -P 1 -t -p 200 \
+    -f 12 $sp_dir/fit_lw_ice8 $sp_dir/mon_lw_ice8 920 \
+    $RAD_DATA/cloud/scatter_ice_lw_type8
+fi
+
+
+# Create the spectral file from the data calculated above.
+# Include thermal emission between 60K - 540K:
+# look-up table with 500 points in log of temperature centred on 180K
+# -------------------------------------------------------------------
+echo 'Constructing spectral file'
+mv ${specfile} ${specfile}_old 2> /dev/null
+mv ${specfile}_k ${specfile}_old_k 2> /dev/null
+prep_spec << EOF > ${specfile}_log 2>&1
+$skelfile
+n
+$specfile
+6
+n
+t
+60 540
+500
+5
+$sp_dir/h2o_lwf_l
+5
+y
+$sp_dir/co2_lw_l
+5
+y
+$sp_dir/so2_lw_l
+19
+$sp_dir/h2o-h2o_lw_c
+19
+y
+$sp_dir/co2-co2_lw_c
+10
+5
+$sp_dir/fit_lw_drop5
+1.50000E-06 5.00000E-05
+11
+$sp_dir/sulphuric_lw.avg
+12
+8
+$sp_dir/fit_lw_ice8
+-1
+EOF
+
+# Rearrange so the major gas is listed first for each band and
+# gases are removed from bands where absorption is very weak.
+echo 'Tidying spectral file'
+tidy_90 << EOF > ${specfile}_tidy_log
+$specfile
+o
+8
+1
+0
+1
+$COL_MASS_K_H2O
+$COL_MASS_K_CO2
+$COL_MASS_K_SO2
+${COL_H2OC}
+${COL_CO2C}
+0.999990
+6
+$COL_MASS_K_H2O
+$COL_MASS_K_CO2
+$COL_MASS_K_SO2
+${COL_H2OC}
+${COL_CO2C}
+1.0e+6
+n
+-1
+EOF
+
+echo -n 'Finished mk_sp_lw_400_jm_mars: '; date
+exit 0

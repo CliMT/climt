@@ -1,0 +1,497 @@
+#!/bin/bash
+
+# This script creates the 6 band SW spectral file sp_sw_6_jm2
+# from scratch using HITRAN database files available in August 2013.
+# The following files (available from www.cfa.harvard.edu/hitran)
+# are required in HITRAN_DIR (set to your local HITRAN directory):
+
+HITRAN_DIR="$RAD_DATA/gases"
+
+HITRAN_H2O="$HITRAN_DIR/01_hit12.par"
+HITRAN_CO2="$HITRAN_DIR/02_hit12.par"
+HITRAN_O3="$HITRAN_DIR/03_hit12.par"
+HITRAN_N2O="$HITRAN_DIR/04_hit08.par"
+HITRAN_UV_N2O="$HITRAN_DIR/N2O-UV00.xsc"
+HITRAN_CH4="$HITRAN_DIR/06_hit12.par"
+HITRAN_O2="$HITRAN_DIR/07_hit12.par"
+HITRAN_UV_O2="$HITRAN_DIR/07_UV06.par"
+HITRAN_SO2="$HITRAN_DIR/09_hit12.par"
+HITRAN_UV_SO2="$HITRAN_DIR/SO2_UV08.xsc"
+HITRAN_OCS="$HITRAN_DIR/19_hit12.par"
+
+HITRAN_UV_O3="$RAD_DATA/gases/ser_bdm_o3.xsc"
+JPL_UV_O2="$RAD_DATA/gases/jpl_o2.xsc"
+
+# Water vapour continuum uses CAVIAR data contained within the
+# suite ($RAD_DATA/continua).
+
+# Aerosol and cloud parametrisations are those used operationally
+# in the Met Office from GA3.0 (see also $RAD_DIR/examples/aerosols,
+# $RAD_DIR/examples/droplets).
+
+# Note this script should be run after the LbL files have been created
+# by running the script for the 260 band file.
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+if [ ! $SW_DATA ] ; then
+  SW_DATA=.
+fi
+
+pt_file="$RAD_DATA/gases/pt_ses_new"
+o3_pt_file="$RAD_DATA/gases/pt_o3_ser"
+o2_pt_file="$RAD_DATA/gases/pt_o2_jpl"
+n2o_pt_file="$RAD_DATA/gases/pt_n2o_uv"
+so2_pt_file="$RAD_DATA/gases/pt_so2_uv"
+ref_pt_file="$RAD_DATA/gases/ref_pt"
+
+# Create skeleton spectral file
+specfile="sp_sw_6_skel"
+rm -f $specfile
+. mk_sp_sw_6_skel > /dev/null
+
+# Create 12 band skeleton spectral file for pseudo-bands
+specfile12="sp_sw_12_skel"
+rm -f $specfile12
+. mk_sp_sw_12_skel > /dev/null
+
+# Hadgem bands ->  220        ->  260 bands:
+#            1 ->    1 -  38  ->  1/6 -  29
+#            2 ->   38 -  91  ->   30 -  66
+#            3 ->   91 - 118  ->   67 - 103
+#            4 ->  118 - 148  ->  104 - 154
+#            5 ->  148 - 188  ->  155 - 214
+#            6 ->  188 - 220  ->  215 - 260
+
+# Gases
+
+echo 'H2O lines'
+if [ ! -s h2o_s6_3l ] ; then
+  rm -f h2o_s6_3l*
+  Ccorr_k -F $pt_file -D $HITRAN_H2O \
+    -R 3 3 -c 2500.0 -i 1.0 -l 1 1.0e2 -n 2  \
+    -s $specfile +S lean_12 -lk \
+    -k -x $RAD_DATA/continua/caviar_frn \
+    -o h2o_s6_3l -m h2o_s6_3lm -L $SW_DATA/h2o_lbl_swf.nc
+fi
+if [ ! -s h2o_s6_4l ] ; then
+  rm -f h2o_s6_4l*
+  Ccorr_k -F $pt_file -D $HITRAN_H2O \
+    -R 4 4 -c 2500.0 -i 1.0 -l 1 1.0e2 -t 1.0e-2  \
+    -s $specfile +S lean_12 -lk \
+    -k -x $RAD_DATA/continua/caviar_frn \
+    -o h2o_s6_4l -m h2o_s6_4lm -L $SW_DATA/h2o_lbl_swf.nc
+fi
+if [ ! -s h2o_s6_5l ] ; then
+  rm -f h2o_s6_5l*
+  Ccorr_k -F $pt_file -D $HITRAN_H2O \
+    -R 5 5 -c 2500.0 -i 1.0 -l 1 1.0e2 -t 1.0e-2  \
+    -s $specfile +S lean_12 -lk \
+    -k -x $RAD_DATA/continua/caviar_frn \
+    -o h2o_s6_5l -m h2o_s6_5lm -L $SW_DATA/h2o_lbl_swf.nc
+fi
+if [ ! -s h2o_s6_6l ] ; then
+  rm -f h2o_s6_6l*
+  Ccorr_k -F $pt_file -D $HITRAN_H2O \
+    -R 6 6 -c 2500.0 -i 1.0 -l 1 1.0e2 -t 1.2e-2  \
+    -s $specfile +S lean_12 -lk \
+    -k -x $RAD_DATA/continua/caviar_frn \
+    -o h2o_s6_6l -m h2o_s6_6lm -L $SW_DATA/h2o_lbl_swf.nc
+fi
+
+echo 'H2O self-broadened continuum'
+if [ ! -s h2o_s6_s ] ; then
+  rm -f h2o_s6_s*
+  Ccorr_k -C 33 1.0e-4 1.0e4 -F $pt_file -D $HITRAN_H2O \
+    -P 7 -R 3 6 -c 2500.0 -i 1.0 \
+    -e $RAD_DATA/continua/caviar_s296 $RAD_DATA/continua/caviar_s260 \
+    -k -s $specfile +S lean_12 -q -r $ref_pt_file \
+    -o h2o_s6_s -m h2o_s6_sm -L $SW_DATA/h2o_lbl_swf.nc
+fi
+
+echo 'CO2'
+if [ ! -s co2_s6_5l ] ; then
+  rm -f co2_s6_5l*
+  Ccorr_k -F $pt_file -D $HITRAN_CO2 \
+    -R 5 5 -c 2500.0 -i 1.0 -l 2 1.0e1 -t 4.0e-3  \
+    -s $specfile +S lean_12 -lk \
+    -o co2_s6_5l -m co2_s6_5lm -L $SW_DATA/co2_lbl_sw.nc
+fi
+if [ ! -s co2_s6_6l ] ; then
+  rm -f co2_s6_6l*
+  Ccorr_k -F $pt_file -D $HITRAN_CO2 \
+    -R 6 6 -c 2500.0 -i 1.0 -l 2 1.0e1 -t 1.0e-2  \
+    -s $specfile +S lean_12 -lk \
+    -o co2_s6_6l -m co2_s6_6lm -L $SW_DATA/co2_lbl_sw.nc
+fi
+
+echo 'O3'
+if [ ! -s o3_u12_l ] ; then
+  rm -f o3_u12_l*
+  Ccorr_k -F $o3_pt_file -X $HITRAN_UV_O3 \
+    -R 1 8 -c 2500.0 -i 1.0 -l 3 1.0e-2 -n 1  \
+    -s $specfile12 +S lean_12 -q -r $ref_pt_file \
+    -o o3_u12_l -m o3_u12_lm -L $SW_DATA/o3_lbl_uv.nc
+fi
+# Edit 12 band O3 file to give 6 band file:
+# Adjust weights to normalised solar spectrum weights from sp_sw_12_skel
+# (hardwired here: should be changed if solar spectrum is changed)
+sed -e "15s/1/6/"                                            \
+    -e "18s/1.000000000E+00/2.121528934E-02/"  -e "20,38d"   \
+    -e "39s/1.000000000E+00/3.472014963E-02/"  -e "41,59d"   \
+    -e "60s/1.000000000E+00/4.818967733E-02/"  -e "62,80d"   \
+    -e "81s/1.000000000E+00/1.412245476E-01/"  -e "83,101d"  \
+    -e "102s/1.000000000E+00/2.941486590E-01/" -e "104,122d" \
+    -e "123s/1.000000000E+00/4.605016771E-01/"               \
+    -e "130s/7/2/"                                           \
+    -e "141s/1/2/"                                           \
+    -e "144s/1.000000000E+00/2.900632239E-01/" -e "146,164d" \
+    -e "165s/1.000000000E+00/7.099367761E-01/"               \
+    o3_u12_l > o3_u6_l
+
+if [ ! -s o3_u6_2l ] ; then
+  rm -f o3_u6_2l*
+  Ccorr_k -F $o3_pt_file -X $HITRAN_UV_O3 \
+    -R 3 4 -c 2500.0 -i 1.0 -l 3 1.0e-2 -t 1.0e-2  \
+    -s $specfile +S lean_12 -q -r $ref_pt_file \
+    -o o3_u6_2l -m o3_u6_2lm -L $SW_DATA/o3_lbl_uv.nc
+fi
+if [ ! -s o3_s6_2l ] ; then
+  rm -f o3_s6_2l*
+  Ccorr_k -F $pt_file -D $HITRAN_O3 \
+    -R 6 6 -c 2500.0 -i 1.0 -l 3 1.0e-2 -t 1.0e-2  \
+    -s $specfile +S lean_12 -lk \
+    -o o3_s6_2l -m o3_s6_2lm -L $SW_DATA/o3_lbl_sw.nc
+fi
+
+echo 'N2O'
+if [ ! -s n2o_s6_6l ] ; then
+  rm -f n2o_s6_6l*
+  Ccorr_k -F $pt_file -D $HITRAN_N2O \
+    -R 6 6 -c 2500.0 -i 1.0 -l 4 5.0e-3 -t 6.0e-3  \
+    -s $specfile +S lean_12 -lk \
+    -o n2o_s6_6l -m n2o_s6_6lm -L $SW_DATA/n2o_lbl_sw.nc
+fi
+
+echo 'CH4'
+if [ ! -s ch4_s6_5l ] ; then
+  rm -f ch4_s6_5l*
+  Ccorr_k -F $pt_file -D $HITRAN_CH4 \
+    -R 5 5 -c 2500.0 -i 1.0 -l 6 1.0e-2 -t 6.0e-3  \
+    -s $specfile +S lean_12 -lk \
+    -o ch4_s6_5l -m ch4_s6_5lm -L $SW_DATA/ch4_lbl_sw.nc
+fi
+if [ ! -s ch4_s6_6l ] ; then
+  rm -f ch4_s6_6l*
+  Ccorr_k -F $pt_file -D $HITRAN_CH4 \
+    -R 6 6 -c 2500.0 -i 1.0 -l 6 1.0e-2 -t 6.0e-3  \
+    -s $specfile +S lean_12 -lk \
+    -o ch4_s6_6l -m ch4_s6_6lm -L $SW_DATA/ch4_lbl_sw.nc
+fi
+
+echo 'O2'
+if [ ! -s o2_u6_1l ] ; then
+  rm -f o2_u6_1l*
+  Ccorr_k -F $pt_file -D $HITRAN_UV_O2 \
+    -R 1 1 -c 2500.0 -i 1.0 -l 7 2.3e3 -t 1.0e-2  \
+    -s $specfile +S lean_12 -lk \
+    -o o2_u6_1l -m o2_u6_1lm -L $SW_DATA/o2_lbl_uv.nc
+fi
+if [ ! -s o2_s6_3l ] ; then
+  rm -f o2_s6_3l*
+  Ccorr_k -F $pt_file -D $HITRAN_O2 \
+    -R 3 3 -c 2500.0 -i 1.0 -l 7 2.3e3 -t 1.0e-2  \
+    -s $specfile +S lean_12 -lk \
+    -o o2_s6_3l -m o2_s6_3lm -L $SW_DATA/o2_lbl_sw.nc
+fi
+if [ ! -s o2_s6_4l ] ; then
+  rm -f o2_s6_4l*
+  Ccorr_k -F $pt_file -D $HITRAN_O2 \
+    -R 4 4 -c 2500.0 -i 1.0 -l 7 2.3e3 -t 2.2e-3  \
+    -s $specfile +S lean_12 -lk \
+    -o o2_s6_4l -m o2_s6_4lm -L $SW_DATA/o2_lbl_sw.nc
+fi
+if [ ! -s o2_s6_5l ] ; then
+  rm -f o2_s6_5l*
+  Ccorr_k -F $pt_file -D $HITRAN_O2 \
+    -R 5 5 -c 2500.0 -i 1.0 -l 7 2.3e3 -t 1.0e-2  \
+    -s $specfile +S lean_12 -lk \
+    -o o2_s6_5l -m o2_s6_5lm -L $SW_DATA/o2_lbl_sw.nc
+fi
+
+echo 'SO2'
+if [ ! -s so2_s6_l ] ; then
+  rm -f so2_s6_l*
+  Ccorr_k -F $pt_file -D $HITRAN_SO2 \
+    -R 6 6 -c 2500.0 -i 1.0 -l 9 3.0e-4 -t 1.0e-3  \
+    -s $specfile +S lean_12 -lk \
+    -o so2_s6_l -m so2_s6_lm -L $SW_DATA/so2_lbl_sw.nc
+fi
+if [ ! -s so2_u6_l ] ; then
+  rm -f so2_u6_l*
+  Ccorr_k -F $so2_pt_file -X $HITRAN_UV_SO2 \
+    -R 1 2 -c 2500.0 -i 1.0 -l 9 3.0e-4 -t 1.0e-3  \
+    -s $specfile +S lean_12 -q -r $ref_pt_file \
+    -o so2_u6_l -m so2_u6_lm -L $SW_DATA/so2_lbl_uv.nc
+fi
+
+echo 'OCS'
+if [ ! -s ocs_s6_l ] ; then
+  rm ocs_s6_l*
+  Ccorr_k -F $pt_file -D $HITRAN_OCS \
+    -R 6 6 -c 2500.0 -i 1.0 -l 25 1.0e-3 -t 1.0e-3  \
+    -s $specfile +S lean_12 -lk \
+    -o ocs_s6_l -m ocs_s6_lm -L $SW_DATA/ocs_lbl_sw.nc
+fi
+
+
+# Cloud
+
+if [ ! -s fit_sw_drop5_6 ] ; then
+  rm -f mon_sw_drop5_6
+  Cscatter_average -s $specfile -P 1 -t -S lean_12 \
+    -f 5 fit_sw_drop5_6 mon_sw_drop5_6 1.e3 \
+    $RAD_DATA/cloud/scatter_drop_sw_type5
+fi
+if [ ! -s fit_sw_ice8_6 ] ; then
+  rm -f mon_sw_ice8_6
+  Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+    -f 12 fit_sw_ice8_6 mon_sw_ice8_6 920 \
+    $RAD_DATA/cloud/scatter_ice_sw_type8
+fi
+
+
+# Aerosols
+
+if [ ! -s soluble_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a soluble_6.avg $RAD_DATA/aerosol/soluble.mon
+fi
+if [ ! -s dustlike_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a dustlike_6.avg $RAD_DATA/aerosol/dustlike.mon
+fi
+if [ ! -s oceanic_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a oceanic_6.avg $RAD_DATA/aerosol/oceanic.mon
+fi
+if [ ! -s soot_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a soot_6.avg $RAD_DATA/aerosol/soot.mon
+fi
+if [ ! -s sulphuric_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a sulphuric_6.avg $RAD_DATA/aerosol/sulphuric.mon
+fi
+if [ ! -s accumsulp_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a accumsulp_6.avg $RAD_DATA/aerosol/accumsulp.mon
+fi
+if [ ! -s aitkensulp_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a aitkensulp_6.avg $RAD_DATA/aerosol/aitkensulp.mon
+fi
+if [ ! -s freshsoot_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a freshsoot_6.avg $RAD_DATA/aerosol/freshsoot.mon
+fi
+if [ ! -s agedsoot_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a agedsoot_6.avg $RAD_DATA/aerosol/agedsoot.mon
+fi
+if [ ! -s seasaltfilm_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a seasaltfilm_6.avg $RAD_DATA/aerosol/seasaltfilm.mon
+fi
+if [ ! -s seasaltjet_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a seasaltjet_6.avg $RAD_DATA/aerosol/seasaltjet.mon
+fi
+if [ ! -s dust_div1_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a dust_div1_6.avg $RAD_DATA/aerosol/dust_div1.mon
+fi
+if [ ! -s dust_div2_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a dust_div2_6.avg $RAD_DATA/aerosol/dust_div2.mon
+fi
+if [ ! -s dust_div3_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a dust_div3_6.avg $RAD_DATA/aerosol/dust_div3.mon
+fi
+if [ ! -s dust_div4_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a dust_div4_6.avg $RAD_DATA/aerosol/dust_div4.mon
+fi
+if [ ! -s dust_div5_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a dust_div5_6.avg $RAD_DATA/aerosol/dust_div5.mon
+fi
+if [ ! -s dust_div6_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a dust_div6_6.avg $RAD_DATA/aerosol/dust_div6.mon
+fi
+if [ ! -s freshbiomass_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a freshbiomass_6.avg $RAD_DATA/aerosol/freshbiomass.mon
+fi
+if [ ! -s agedbiomass_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a agedbiomass_6.avg $RAD_DATA/aerosol/agedbiomass.mon
+fi
+if [ ! -s biogenic_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a biogenic_6.avg $RAD_DATA/aerosol/biogenic.mon
+fi
+if [ ! -s freshocff_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a freshocff_6.avg $RAD_DATA/aerosol/freshocff.mon
+fi
+if [ ! -s agedocff_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a agedocff_6.avg $RAD_DATA/aerosol/agedocff.mon
+fi
+if [ ! -s nitrate_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a nitrate_6.avg $RAD_DATA/aerosol/nitrate.mon
+fi
+if [ ! -s twobindust_1_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a twobindust_1_6.avg $RAD_DATA/aerosol/twobindust_1.mon
+fi
+if [ ! -s twobindust_2_6.avg ] ; then
+Cscatter_average -s $specfile -P 1 -w -S lean_12 \
+  -a twobindust_2_6.avg $RAD_DATA/aerosol/twobindust_2.mon
+fi
+
+mv sp_sw_6_jm2 sp_sw_6_jm2_old
+mv sp_sw_6_jm2_k sp_sw_6_jm2_old_k
+# Construct spectral file
+prep_spec << EOF
+sp_sw_6_skel
+n
+sp_sw_6_jm2
+5
+h2o_s6_4l
+5
+y
+h2o_s6_5l
+5
+y
+h2o_s6_6l
+9
+h2o_s6_s
+5
+y
+co2_s6_5l
+5
+y
+co2_s6_6l
+5
+y
+o3_u6_2l
+5
+y
+o3_s6_2l
+5
+y
+o3_u6_l
+5
+y
+h2o_s6_3l
+5
+y
+n2o_s6_6l
+5
+y
+ch4_s6_5l
+5
+y
+ch4_s6_6l
+5
+y
+o2_u6_1l
+5
+y
+o2_s6_3l
+5
+y
+o2_s6_4l
+5
+y
+o2_s6_5l
+5
+y
+so2_s6_l
+5
+y
+so2_u6_l
+5
+y
+ocs_s6_l
+10
+5
+fit_sw_drop5_6
+1.50000E-06 5.00000E-05
+12
+8
+fit_sw_ice8_6
+11
+soluble_6.avg
+11
+dustlike_6.avg
+11
+oceanic_6.avg
+11
+soot_6.avg
+11
+sulphuric_6.avg
+11
+accumsulp_6.avg
+11
+aitkensulp_6.avg
+11
+freshsoot_6.avg
+11
+agedsoot_6.avg
+11
+seasaltfilm_6.avg
+11
+seasaltjet_6.avg
+11
+dust_div1_6.avg
+11
+dust_div2_6.avg
+11
+dust_div3_6.avg
+11
+dust_div4_6.avg
+11
+dust_div5_6.avg
+11
+dust_div6_6.avg
+11
+freshbiomass_6.avg
+11
+agedbiomass_6.avg
+11
+biogenic_6.avg
+11
+freshocff_6.avg
+11
+agedocff_6.avg
+11
+nitrate_6.avg
+11
+twobindust_1_6.avg
+11
+twobindust_2_6.avg
+-1
+EOF
+
+exit 0

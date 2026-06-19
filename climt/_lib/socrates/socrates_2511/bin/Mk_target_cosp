@@ -1,0 +1,8 @@
+#
+# Full list of COSP programs
+#
+TARGET_COSP: cosp_driver
+
+cosp_driver: cosp_driver.o $(COSP_CDF_OBJ) cosplib.$(LIBSUFFIX)
+	${LINK} -L$(LIBCDF_PATH) -o cosp_driver \
+	   cosp_driver.o $(COSP_CDF_OBJ) cosplib.$(LIBSUFFIX) -l$(LIBCDF_NAME)

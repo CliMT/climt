@@ -1,0 +1,19 @@
+netcdf /temp/hc0300/haddb/cnvtest/YYY.vwpol{                                    
+
+dimensions:
+    direction          =   1 ;
+
+variables:
+    float direction(direction) ; 
+             direction:units = "None" ;
+             direction:title = "GRID POINT" ; 
+
+    float vwpol(direction) ;  
+             vwpol:units = "Degrees" ;
+             vwpol:title = "POLAR VIEWING ANGLE" ;                                                  
+
+data:                                                                           
+            direction =   .10000E+01 ;
+            vwpol     =  0.45000E+02 ;
+
+}                                                                               

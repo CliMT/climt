@@ -1,0 +1,10 @@
+Test script for scatter_90, scatter_average_90 and prep_data provided by
+Reading University. Further information can be found here:
+http://www.met.rdg.ac.uk/~lem/large_models/esrad/run/examples/mie/
+
+To run the script, first make sure that npd_band is set to 220 or more in 
+$RAD_BIN/dimensions_spec_ucf.f90
+(and recompile if necessary).
+
+Then type, run_me, which should give an output file sp_with_aer that 
+should look like sp_* depending on your compiler.

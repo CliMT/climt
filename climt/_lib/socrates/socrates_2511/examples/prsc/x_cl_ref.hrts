@@ -1,0 +1,34 @@
+netcdf x_cl.hrts{                                                               
+
+dimensions:
+    lon            =   1;
+    lat            =   1;
+    plev           =  10;
+
+
+variables:
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "longitude";                                        
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "latitude";                                         
+    float plev(plev);                                                         
+             plev:units = "pa";                                               
+             plev:title = "pressure";                                        
+
+    float hrts(plev,lat,lon);                                                  
+             hrts:units = "k.d-1";                                            
+             hrts:title = "heating rates";                                                   
+
+data:
+              lon =  0.100000E+01;
+              lat =  0.100000E+01;
+             plev =  0.500000E+04, 0.150000E+05, 0.250000E+05, 0.350000E+05,
+                     0.450000E+05, 0.550000E+05, 0.650000E+05, 0.750000E+05,
+                     0.850000E+05, 0.950000E+05;
+             hrts =  0.369043E-01, 0.124437E+00, 0.250067E+00, 0.485290E+00,
+                     0.691016E+00, 0.109980E+01, 0.202307E+01, 0.519955E+01,
+                     0.233953E+00, 0.352396E+00;
+
+}

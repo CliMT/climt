@@ -1,0 +1,35 @@
+#! /bin/bash
+#
+# Script to run the program to generate a viewing field.
+# This basic version works only with one point direction
+# and viewing level.
+#
+touch $LOCK_FILE
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -p) POLAR=$2; N_DIR=1 ; shift 2 ;;
+      -a) AZIM=$2 ; shift 2 ;;
+      -v) VIEW=$2 ; N_VIEW=1 ; shift 2 ;;
+      -N) LONS=$2 ; N_LON=1 ; shift 2 ;;
+      -T) LATS=$2 ; N_LAT=1 ; shift 2 ;;
+       *) echo "Unsupported version of command.\n" ; exit 1 ;;
+   esac
+done
+cat > /tmp/gsc.$$ << EOF
+$N_LON
+$N_LAT
+$LONS
+$LATS
+$N_VIEW
+$VIEW
+$N_DIR
+$POLAR
+$AZIM
+$OUTFILE
+EOF
+gen_view_cdl < /tmp/gsc.$$ > /dev/null
+rm -f /tmp/gsc.$$
+rm -f $LOCK_FILE
+

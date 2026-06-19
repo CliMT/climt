@@ -1,0 +1,45 @@
+MODULES_COSP =	cosp_kinds.f90 \
+		cosp_errorHandling.f90 \
+		cosp.f90 \
+		cosp_config.f90 \
+		cosp_constants.f90 \
+		cosp_stats.f90 \
+		cosp_atlid_interface.f90 \
+		cosp_calipso_interface.f90 \
+		cosp_cloudsat_interface.f90 \
+		cosp_grLidar532_interface.f90 \
+		cosp_isccp_interface.f90 \
+		cosp_misr_interface.f90 \
+		cosp_modis_interface.f90 \
+		cosp_parasol_interface.f90 \
+		cosp_rttov_interfaceSTUB.f90 \
+		MISR_simulator.f90 \
+		modis_simulator.f90 \
+		lidar_simulator.f90 \
+		icarus.f90 \
+		parasol.f90 \
+		quickbeam.f90 \
+		cosp_rttovSTUB.f90 \
+		cosp_optics.f90 \
+		cosp_utils.f90 \
+		array_lib.f90 \
+		math_lib.f90 \
+		mrgrnk.f90 \
+		optics_lib.f90 \
+		quickbeam_optics.f90 \
+		scops.f90 \
+		prec_scops.f90 \
+		mo_rng.f90 \
+		cosp_input_mod.f90 \
+		cosp_mod.f90 \
+		cosp_constants_mod.f90 \
+		cosp_types_mod.f90 \
+		cosp_radiation_mod.f90 \
+		cosp_def_diag.f90 \
+		cosp_diagnostics_mod.f90 \
+		realtype_rd.f90 \
+		ereport_mod.f90 \
+		get_free_unit.f90
+
+MODULES_COSP_CDF = cosp2_io.f90
+

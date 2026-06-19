@@ -1,0 +1,41 @@
+#! /bin/bash
+#
+# Script to form weighted averages of CDL-files of calculated fluxes
+# or radiances.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -w) if [ "$base2" ]
+             then echo "Too many basenames given"
+             exit 1 
+          fi
+          if [ "$base1" ]
+             then base2=$2
+             weight2=$3
+             shift 3 
+          else
+             base1=$2
+             weight1=$3
+             shift 3 
+          fi ;;
+      -o) base_out=$2 ; shift 2
+   esac
+done
+for suffix in uflx dflx nflx vflx sflx hrts radn
+do
+   if [ -f $base1.$suffix ] && [ -f $base2.$suffix ]
+      then cat >> /tmp/wa.$$ << EOF
+$base1.$suffix
+$weight1
+$base2.$suffix
+$weight2
+$base_out.$suffix
+EOF
+      wadd < /tmp/wa.$$ > /dev/null
+      rm -f /tmp/wa.$$
+   fi
+done
+rm -f $LOCK_FILE
+         
+

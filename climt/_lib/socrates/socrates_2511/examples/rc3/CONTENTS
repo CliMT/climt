@@ -1,0 +1,3 @@
+        The files in this directiry contain the inputs for running the
+radiance code on monochromatic data (executable run_mono) to repeat the
+3rd test of the international radiation commission (see Benassi et al.).

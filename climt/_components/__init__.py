@@ -12,6 +12,7 @@ from .instellation import Instellation
 from .picket_fence import PicketFenceLongwave, PicketFenceShortwave
 from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
+from .socrates import SocratesLongwave, SocratesShortwave
 from .simple_physics import SimplePhysics
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
@@ -26,6 +27,8 @@ __all__ = (
     SimplePhysics,
     RRTMGLongwave,
     RRTMGShortwave,
+    SocratesLongwave,
+    SocratesShortwave,
     EmanuelConvection,
     EmanuelConvectionPython,
     SlabSurface,

@@ -1,0 +1,166 @@
+#! /bin/bash
+#set -xv
+#
+# Script to run the radiation code for one set of optical properties.
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$*
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod rad_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+# Process options
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -B) base_name=$2 ; shift 2 ;;
+      -F) sph_flux=$2 ; shift 2 ;;
+      -G) brdf_basis=$2 ; ls_brdf_trunc=$3 ; shift 3 ;;
+      -e) euler_trnf=T ; shift ;;
+      -H) hg_phf=T ; shift ;;
+      -I) isolir=$IP_INFRA_RED ; wavelength_s=$2 ; wavelength_l=$3 ; shift 3 ;;
+      -i) isoinc=T ; shift  ;;
+      -Q) angular_integration=$IP_IR_GAUSS ; gauss_order=$2 ; shift 2 ;;
+      -q) quadratic=T ; shift ;;
+      +R) rescale=T ; shift ;;
+      +S) angular_integration=$IP_SPHERICAL_HARMONIC ; truncation=$2 ; \
+          ls_global_trunc=$3 ; ms_min=$4 ; ms_max=$5 ; shift 5 ; \
+          if [ $truncation -eq $IP_TRUNC_ADAPTIVE ] ; \
+          then accuracy_adptive=$1 ; shift ; fi ;;
+      -S) isolir=$IP_SOLAR ; shift ;;
+      -T) sph_algorithm=$IP_SPH_REDUCED_ITER ; shift ;;
+      -Y) sph_algorithm=$IP_SPH_DIRECT ; shift ;;
+      -Z) n_phf_solar=$2 ; shift 2 ;;
+      -t) angular_integration=$IP_TWO_STREAM ; two_stream=$2 ; shift 2 ;;
+      -v) solver=$2 ; shift 2 ;;
+      -x) retain=T ; CFILE=$2 ; shift 2 ;;
+       *) echo "Unknown option: $1"; exit 1 ;;
+   esac
+done
+#
+# Write the inputs to the code to a temporary file
+#
+if [ "$base_name" ] 
+   then echo $base_name >> /tmp/mcdl.$$
+else
+   echo "Base name not set."
+   exit  
+fi
+#
+if [ "$isolir" ]
+   then echo $isolir >> /tmp/mcdl.$$
+else
+   echo "Spectral region not set."
+   exit  
+fi
+if [ $isolir -eq $IP_INFRA_RED ]
+   then echo $wavelength_s $wavelength_l >> /tmp/mcdl.$$
+fi
+#
+if [ $isolir -eq $IP_INFRA_RED ]
+   then if [ "$quadratic" = T ] 
+      then echo "q" >> /tmp/mcdl.$$
+   else
+      echo "l" >> /tmp/mcdl.$$
+   fi
+fi
+#
+if [ "$isoinc" = T ]
+   then echo "y" >> /tmp/mcdl.$$
+else
+   echo "n" >> /tmp/mcdl.$$
+fi
+#
+echo $angular_integration >> /tmp/mcdl.$$
+if [ $angular_integration -eq $IP_TWO_STREAM ]
+   then if [ "$two_stream" ]
+      then echo $two_stream >> /tmp/mcdl.$$
+   else
+      echo "Two-stream scheme not set."
+      exit
+   fi
+   if [ "$rescale" ]
+      then echo "T" >> /tmp/mcdl.$$
+   else
+      echo "F" >> /tmp/mcdl.$$
+   fi
+   if [ "$solver" ]
+      then echo $solver >> /tmp/mcdl.$$
+   else
+      echo "Solver not set."
+      exit
+   fi
+else if [ $angular_integration -eq $IP_IR_GAUSS ]
+      then echo $gauss_order >> /tmp/mcdl.$$
+else if [ $angular_integration -eq $IP_SPHERICAL_HARMONIC ]
+      then echo $truncation >> /tmp/mcdl.$$
+   if [ "$rescale" ]
+      then echo "T" >> /tmp/mcdl.$$
+   else
+      echo "F" >> /tmp/mcdl.$$
+   fi
+   echo $ls_global_trunc >> /tmp/mcdl.$$
+   if [ "$truncation" -ne $IP_TRUNC_AZIM_SYM ]
+     then echo $ms_min >> /tmp/mcdl.$$
+     echo $ms_max >> /tmp/mcdl.$$
+   fi
+   if [ "$truncation" -eq $IP_TRUNC_ADAPTIVE ]
+      then echo $accuracy_adaptive >> /tmp/lrcdl.$$
+   fi
+   if [ "$euler_trnf" ]
+      then echo "Y" >> /tmp/mcdl.$$
+   else
+      echo "N" >> /tmp/mcdl.$$
+   fi
+   echo $ls_brdf_trunc >> /tmp/mcdl.$$
+   if [ "$hg_phf" ]
+      then echo "Y" >> /tmp/mcdl.$$
+   else
+      echo "N" >> /tmp/mcdl.$$
+   fi
+   if [ "$sph_flux" = F ] || [ "$sph_flux" = J ]
+      then echo $sph_flux >> /tmp/mcdl.$$
+   else  
+      echo $sph_flux >> /tmp/mcdl.$$
+      if [ "$sph_algorithm" ]
+         then echo "$sph_algorithm" >> /tmp/mcdl.$$
+         if [ "$isolir" -eq $IP_SOLAR ] \
+               && [ "$sph_algorithm" -eq $IP_SPH_REDUCED_ITER ]
+            then if [ ! "$n_phf_solar" ] 
+               then n_phf_solar=$ls_global_trunc
+            fi
+            echo "$n_phf_solar" >> /tmp/mcdl.$$
+            echo "N" >> /tmp/mcdl.$$
+         fi
+      else
+         echo "Spherical algorithm not set." ; exit 1
+      fi
+   fi
+   echo $brdf_basis >> /tmp/mcdl.$$
+   else
+      echo "Illegal Angular integration scheme"
+      exit
+   fi
+fi
+fi
+if [ "$sph_flux" != "F" ] && [ "$sph_flux" != "J" ] && [ "$sph_flux" != "R" ]
+then
+echo "Illegal Algorithm"
+exit
+fi
+run_mono < /tmp/mcdl.$$ > /dev/null
+if [ ! "$retain" ] 
+   then rm -f /tmp/mcdl.$$
+else
+   mv /tmp/mcdl.$$ $CFILE
+fi
+rm -f $LOCK_FILE

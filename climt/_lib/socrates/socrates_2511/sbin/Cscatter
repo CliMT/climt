@@ -1,0 +1,150 @@
+#! /bin/bash
+#
+# SCRIPT TO RUN SCATTERING CODE.
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$*
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod scatter_algorithm_pcf.f90
+. $RAD_SCRIPT/set_param_mod distribution_pcf.f90
+. $RAD_SCRIPT/set_param_mod scatter_pp_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+#
+# Process options
+#
+N_MODE=0
+MEASURE=1
+#
+# Calculate only the asymmetry unless otherwise directed.
+MOMENT=1
+#
+#set -A WEIGHT
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -w) WAVEFILE=$2 ; shift 2 ;;
+      -r) REFRACTFILE=$2 ; shift 2 ;;
+      -c) INTERP=c ; shift ;;
+      -C) COMPONENT=$2 ; shift 2 ;;
+      -f) DISTFILE=$2 ; DIST_TYPE=$IP_EXTERNAL ; shift 2 ;;
+      -g) N_MODE=$(expr $N_MODE + 1 ) ; WEIGHT[$N_MODE]=$2 ; \
+             R0[$N_MODE]=$3; SIGMA[$N_MODE]=$4 ; \
+             DIST_TYPE=$IP_LOG_NORMAL ; shift 4 ;;
+      -h) HUM=y ; REFRACT_WATER=$2 ; HUMFILE=$3 ; shift 3 ;;
+      -l) INTERP=l ; shift ;;
+      -n) N0=$2 ; shift 2 ;;
+      -m) N_MODE=$(expr $N_MODE + 1 ) ; WEIGHT[$N_MODE]=$2 ; \
+          ALPHA[$N_MODE]=$3 ; RM[$N_MODE]=$4 ; \
+          BETA[$N_MODE]=$5 ; DIST_TYPE=$IP_MODIFIED_GAMMA ; shift 5 ;;
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -P) MOMENT=$2 ; shift 2 ;;
+      -p) PHASE="y" ; shift ;;
+      -t) TYPE=$2 ; shift 2 ;;
+      -H) DMIN=$2 ; A100=$3 ; B100=$4 ; A1000=$5 ; B1000=$6; \
+             DIST_TYPE=$IP_HEYMSFIELD_PLATT ; shift 6 ;;
+      -M) ALGORITHM=$IP_ALGORITHM_MIE ; shift ;;
+      -A) ALGORITHM=$IP_ALGORITHM_ADT ; shift ;;
+      -E) ALGORITHM=$IP_ENHANCED_ADT ; shift ;;
+      -U) MEASURE=$2 ; shift 2 ;;
+      -v) verbose=T ; shift ;;
+      -*) echo "Invalid option"; exit -1 ;;
+   esac
+done
+#
+# Check input data
+#
+if [ ! -f $WAVEFILE ]
+   then echo "File of wavelengths does not exist" ; exit 1 
+fi
+if [ ! -f $REFRACTFILE ]
+   then echo "File of refractive indices does not exist" ; exit 1 
+fi
+if [ -f $OUTFILE ] || [ -d $OUTFILE ]
+   then echo "File specified for output already exists." ; exit 1 
+fi
+if [ ! "$HUM" ] ; then HUM=n ; fi
+if [ ! "$DIST_TYPE" ]
+   then echo "Distribution is not set." ; exit 1 
+fi
+if [ ! "$ALGORITHM" ]
+   then echo "Scattering algorithnm is not set." ; exit 1 
+fi
+echo $WAVEFILE >> /tmp/R.$$
+echo $REFRACTFILE >> /tmp/R.$$
+echo $INTERP >> /tmp/R.$$
+echo $HUM >> /tmp/R.$$
+if [ $HUM = "y" ]
+   then echo $REFRACT_WATER >> /tmp/R.$$
+   echo $HUMFILE >> /tmp/R.$$
+fi
+echo $DIST_TYPE >> /tmp/R.$$
+if  [ $DIST_TYPE -eq $IP_EXTERNAL ] 
+   then
+   echo $MEASURE >> /tmp/R.$$
+   echo $DISTFILE >> /tmp/R.$$
+elif [ $DIST_TYPE -eq $IP_LOG_NORMAL ]
+   then
+   echo $MEASURE >> /tmp/R.$$
+   echo $N0 >> /tmp/R.$$
+   echo $N_MODE >> /tmp/R.$$
+   N_COUNT=1
+   while [ $N_COUNT -le $N_MODE ]
+   do
+      echo ${WEIGHT[$N_COUNT]} ${R0[$N_COUNT]} \
+         ${SIGMA[$N_COUNT]} >> /tmp/R.$$
+      N_COUNT=$(expr $N_COUNT + 1 )
+   done 
+elif [ $DIST_TYPE -eq $IP_MODIFIED_GAMMA ]
+   then 
+   echo $MEASURE >> /tmp/R.$$
+   echo $N0 >> /tmp/R.$$
+   echo $N_MODE >> /tmp/R.$$
+   N_COUNT=1
+   while [ $N_COUNT -le $N_MODE ]
+   do
+      echo ${WEIGHT[$N_COUNT]} ${ALPHA[$N_COUNT]} \
+         ${RM[$N_COUNT]} ${BETA[$N_COUNT]} >> /tmp/R.$$
+      N_COUNT=$(expr $N_COUNT + 1 )
+   done 
+elif [ $DIST_TYPE -eq $IP_HEYMSFIELD_PLATT ]
+   then 
+   echo $DMIN >> /tmp/R.$$
+   echo $A100 $B100 >> /tmp/R.$$
+   echo $A1000 $B1000 >> /tmp/R.$$
+fi
+echo $ALGORITHM >> /tmp/R.$$
+echo $MOMENT >> /tmp/R.$$
+if [ $DIST_TYPE -eq $IP_EXTERNAL ] && [ $ALGORITHM -eq $IP_ALGORITHM_MIE ] \
+   && [ $(sed -e '1,/^\*BEGIN_DATA/d' \
+   -e '/^\*END/,$d' $DISTFILE | wc -l) -eq 1 ]
+   then echo ${PHASE:-n} >> /tmp/R.$$
+fi
+cat >> /tmp/R.$$ << EOF 
+$OUTFILE
+$TYPE
+EOF
+if [ "$TYPE" -eq $IP_TYPE_AEROSOL ] 
+   then if [ "$COMPONENT" ]
+      then echo $COMPONENT >> /tmp/R.$$
+   else
+      echo "Aerosol component not specified." ; exit 1
+   fi
+fi
+if [ "$verbose" ] 
+  then scatter_90 < /tmp/R.$$
+else
+  scatter_90 < /tmp/R.$$ > /dev/null
+fi
+rm /tmp/R.$$
+#echo /tmp/R.$$
+rm -f $LOCK_FILE

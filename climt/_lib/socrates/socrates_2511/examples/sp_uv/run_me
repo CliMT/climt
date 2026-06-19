@@ -1,0 +1,120 @@
+#!/bin/bash
+
+ierr=0
+
+./mk_tropical > /dev/null
+
+cp tropical.surfsw tropical.surf
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 1 2 -r -C 5
+fmove tropical trop_xsw_photol_g1_2
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 1 2 -r -C 5 -sg
+fmove tropical trop_xsw_photol_sg_g1_2
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 1 13 -r -C 5
+fmove tropical trop_xsw_photol_g1_13
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 1 13 -r -C 5 -sg
+fmove tropical trop_xsw_photol_sg_g1_13
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 2 -r -C 5 -c
+fmove tropical trop_xsw_photol_g2
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 2 -r -C 5 -sg -c
+fmove tropical trop_xsw_photol_sg_g2
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 3 -r -C 5 -c
+fmove tropical trop_xsw_photol_g3
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 3 -r -C 5 -sg -c
+fmove tropical trop_xsw_photol_sg_g3
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 4 -r -C 5 -c
+fmove tropical trop_xsw_photol_g4
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 4 -r -C 5 -sg -c
+fmove tropical trop_xsw_photol_sg_g4
+
+mv tropical.o tropical.o_orig
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 3 -r -C 5 -sg -c
+fmove tropical trop_xsw_photol_sg_g3_no
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 4 -r -C 5 -sg -c
+fmove tropical trop_xsw_photol_sg_g4_no
+mv tropical.o_orig tropical.o
+
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 3 -r -C 5 -sg -c -ch 2401
+fmove tropical trop_xsw_photol_ch
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 3 -r -C 5 -sg -c -n
+fmove tropical trop_xsw_photol_nlte
+Cl_run_cdf -B tropical -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -S -R 1 6 -g 4 -r -C 5 -sg -c
+fmove tropical trop_sw_ga7
+
+Cl_run_cdf -B tropical -s sp_uv_photol -S -R 1 320 -g 4 -r -C 5 -sg -ch 320
+fmove tropical trop_320_sg_ch
+Cl_run_cdf -B tropical -s sp_uv_photol -S -R 1 320 -g 4 -r -C 5
+fmove tropical trop_320
+
+cp tropical.surflw tropical.surf
+Cl_run_cdf -B tropical -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -I -R 1 9 -g 4 -C 5 -c
+fmove tropical trop_lw_ga7
+Cl_run_cdf -B tropical -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -I -R 1 9 -g 4 -C 5 -c -n
+fmove tropical trop_lw_ga7_nlte
+
+#sbatch -n 24 -o ./sbatch_output -t 360 ./mk_sp_xsw
+#sacct --format=jobname%10,jobid%9,timelimit,elapsed,ncpus%5,exitcode,state | grep mk_sp_xsw
+
+rm -f cdl_trop_*
+Ccdf2cdl -o cdl_trop_xsw_photol_g1_2.hrts          trop_xsw_photol_g1_2.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_g1_13.hrts         trop_xsw_photol_g1_13.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_g2.hrts            trop_xsw_photol_g2.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_g3.hrts            trop_xsw_photol_g3.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_g4.hrts            trop_xsw_photol_g4.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_sg_g1_2.hrts       trop_xsw_photol_sg_g1_2.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_sg_g1_13.hrts      trop_xsw_photol_sg_g1_13.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_sg_g2.hrts         trop_xsw_photol_sg_g2.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_sg_g3.hrts         trop_xsw_photol_sg_g3.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_sg_g4.hrts         trop_xsw_photol_sg_g4.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_sg_g3_no.ph_rate_8 trop_xsw_photol_sg_g3_no.ph_rate_8 > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_sg_g4_no.ph_rate_8 trop_xsw_photol_sg_g4_no.ph_rate_8 > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_ch.ph_rate_2       trop_xsw_photol_ch.ph_rate_2 > /dev/null
+Ccdf2cdl -o cdl_trop_xsw_photol_nlte.hrts          trop_xsw_photol_nlte.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_sw_ga7.hrts                   trop_sw_ga7.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_320_sg_ch.ph_rate_2           trop_320_sg_ch.ph_rate_2 > /dev/null
+Ccdf2cdl -o cdl_trop_320.hrts                      trop_320.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_lw_ga7.hrts                   trop_lw_ga7.hrts > /dev/null
+Ccdf2cdl -o cdl_trop_lw_ga7_nlte.hrts              trop_lw_ga7_nlte.hrts > /dev/null
+
+diff -q cdl_trop_xsw_photol_g1_2.hrts     ref_trop_xsw_photol_g1_2.hrts          || ierr=1
+diff -q cdl_trop_xsw_photol_g1_13.hrts    gfortran_trop_xsw_photol_g1_13.hrts    || \
+diff -q cdl_trop_xsw_photol_g1_13.hrts    ref_trop_xsw_photol_g1_13.hrts         || \
+diff -q cdl_trop_xsw_photol_g1_13.hrts    ifx2025_trop_xsw_photol_g1_13.hrts     || \
+    ierr=1
+diff -q cdl_trop_xsw_photol_g2.hrts       ref_trop_xsw_photol_g2.hrts            || ierr=1
+diff -q cdl_trop_xsw_photol_g3.hrts       ref_trop_xsw_photol_g3.hrts            || ierr=1
+diff -q cdl_trop_xsw_photol_g4.hrts       ref_trop_xsw_photol_g4.hrts            || ierr=1
+diff -q cdl_trop_xsw_photol_sg_g1_2.hrts  ref_trop_xsw_photol_sg_g1_2.hrts       || ierr=1
+diff -q cdl_trop_xsw_photol_sg_g1_13.hrts gfortran_trop_xsw_photol_sg_g1_13.hrts || \
+diff -q cdl_trop_xsw_photol_sg_g1_13.hrts ref_trop_xsw_photol_sg_g1_13.hrts      || \
+diff -q cdl_trop_xsw_photol_sg_g1_13.hrts ifx2025_trop_xsw_photol_sg_g1_13.hrts  || \
+    ierr=1
+diff -q cdl_trop_xsw_photol_sg_g2.hrts    ref_trop_xsw_photol_sg_g2.hrts         || ierr=1
+diff -q cdl_trop_xsw_photol_sg_g3.hrts    ref_trop_xsw_photol_sg_g3.hrts         || ierr=1
+diff -q cdl_trop_xsw_photol_sg_g4.hrts    ref_trop_xsw_photol_sg_g4.hrts         || ierr=1
+diff -q cdl_trop_xsw_photol_sg_g3_no.ph_rate_8 gfortran_trop_xsw_photol_sg_g3_no.ph_rate_8 || \
+diff -q cdl_trop_xsw_photol_sg_g3_no.ph_rate_8 ref_trop_xsw_photol_sg_g3_no.ph_rate_8      || \
+    ierr=1
+diff -q cdl_trop_xsw_photol_sg_g4_no.ph_rate_8 gfortran_trop_xsw_photol_sg_g4_no.ph_rate_8 || \
+diff -q cdl_trop_xsw_photol_sg_g4_no.ph_rate_8 ref_trop_xsw_photol_sg_g4_no.ph_rate_8      || \
+    ierr=1
+diff -q cdl_trop_xsw_photol_ch.ph_rate_2  gfortran_trop_xsw_photol_ch.ph_rate_2  || \
+diff -q cdl_trop_xsw_photol_ch.ph_rate_2  ref_trop_xsw_photol_ch.ph_rate_2       || \
+    ierr=1
+diff -q cdl_trop_xsw_photol_nlte.hrts     ref_trop_xsw_photol_nlte.hrts          || ierr=1
+diff -q cdl_trop_sw_ga7.hrts              ref_trop_sw_ga7.hrts                   || ierr=1
+(diff -q cdl_trop_320_sg_ch.ph_rate_2     gfortran_trop_320_sg_ch.ph_rate_2      && \
+  echo 'Matched gfortran output')                                                || \
+(diff -q cdl_trop_320_sg_ch.ph_rate_2     ref_trop_320_sg_ch.ph_rate_2           && \
+  echo 'Matched ifort output')                                                   || \
+    ierr=1
+diff -q cdl_trop_320.hrts                 ref_trop_320.hrts                      || ierr=1
+diff -q cdl_trop_lw_ga7.hrts              ref_trop_lw_ga7.hrts                   || ierr=1
+diff -q cdl_trop_lw_ga7_nlte.hrts         ref_trop_lw_ga7_nlte.hrts              || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f trop_* cdl_trop_* tropical.*
+  echo 'OK'
+  exit 0
+fi

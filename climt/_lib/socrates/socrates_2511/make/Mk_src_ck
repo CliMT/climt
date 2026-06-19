@@ -1,0 +1,38 @@
+#
+# Library routines related to correlated-k programs.
+#
+
+SOURCE_CK =	adjust_path.f90 \
+		bi_interp.f90 \
+		ckd_extern_data.f90 \
+		ck_parm_acf.f90 \
+		ck_fit_pcf.f90 \
+		corr_k_single.f90 \
+		conjugate_gradient_90.f90 \
+		def_hitran_record.f90 \
+		exponent_fit_90.f90 \
+		func_scale_90.f90 \
+		func_scale_derivative_90.f90 \
+		h2o_continuum.f90 \
+		hitran_cnst.f90 \
+		line_prof_corr_mod.f90 \
+		offset_residual_trans_acf.f90 \
+		optimal_k.f90 \
+		read_hitran.f90 \
+		read_pt_line_90.f90 \
+		read_ref_pt_90.f90 \
+		residual_trans_90.f90 \
+		residual_gradient_90.f90 \
+		scale_ck_fit_90.f90 \
+		scale_parameters_acf.f90 \
+		set_condition_ck_90.f90 \
+		set_extern_ckd_self_data.f90 \
+		set_extern_ckd_frn_data.f90 \
+		set_g_point_90.f90 \
+		select_weight_ck_90.f90 \
+		terminate_scale_90.f90 \
+		trans_k_dist.f90 \
+		type_residual_pcf.f90 \
+		voigt_profile.f90 \
+		write_fit_90.f90 
+

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+# Remove files created by previous runs
+rm -f sp_sw_ga7*
+
+# Copy GA7 shortwave spectral file here and add N2 and argon
+cp ../../data/spectra/ga7/sp_sw_ga7 .
+cp ../../data/spectra/ga7/sp_sw_ga7_k .
+sed -i '4s/ 8/10/' sp_sw_ga7
+sed -i '17i\    9          13       Nitrogen            ' sp_sw_ga7
+sed -i '18i\   10          37       Argon               ' sp_sw_ga7
+
+# Remove block 3 with Rayleigh scattering data
+sed -i '/BLOCK: TYPE =    3/,/END/d' sp_sw_ga7
+
+# Run prep_spec and add Rayleigh scattering coefficients for H2O, CO2, O2, N2
+# and Ar
+prep_spec << EOF > /dev/null
+sp_sw_ga7
+a
+3
+../../data/solar/lean_12
+c
+5
+1
+2
+7
+13
+37
+-1
+EOF

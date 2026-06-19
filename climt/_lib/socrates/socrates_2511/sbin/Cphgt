@@ -1,0 +1,21 @@
+#! /bin/bash
+#
+# Script to run the program to evaluate the pressuare at a given height.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -h) height=$2 ; shift 2 ;;
+      -*) echo "Invalid option"; exit 1 ;;
+      *) infile=$1 ; shift ;;
+   esac
+done
+if [ ! "$height" ] ; then echo "Pressure not set"; exit 1 ; fi
+if [ ! "$infile" ] ; then echo "Input file not set"; exit 1 ; fi
+cat > /tmp/fv.$$ << EOF
+$infile
+$height
+EOF
+phgt < /tmp/fv.$$ | sed -e 1,3d
+rm -f /tmp/fv.$$
+rm -f $LOCK_FILE

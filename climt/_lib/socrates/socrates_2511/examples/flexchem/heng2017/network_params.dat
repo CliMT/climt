@@ -1,0 +1,9 @@
+! Parameters for the Heng2017 test network
+! nfile
+1
+! nmol
+4
+! nmol_neq
+4
+! file index, reac_method, is_reversible 
+ 1         1           1      

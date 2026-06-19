@@ -1,0 +1,76 @@
+#! /bin/bash
+#
+# SCRIPT TO RUN THE CODE FOR ICE SCATTERING.
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$*
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod scatter_algorithm_pcf.f90
+. $RAD_SCRIPT/set_param_mod distribution_pcf.f90
+. $RAD_SCRIPT/set_param_mod scatter_pp_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+#
+# Process options
+#
+MEASURE=1
+#
+# Calculate only the asymmetry unless otherwise directed.
+MOMENT=1
+#
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -f) DISTFILE=$2 ; DIST_TYPE=$IP_EXTERNAL ; shift 2 ;;
+      -G) GEOMETRY_FILE=$2 ; shift 2 ;;
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -P) MOMENT=$2 ; shift 2 ;;
+      -U) MEASURE=$2 ; shift 2 ;;
+      -D) DATABASE=$2 ; ALGORITHM=$IP_SCAT_DATABASE ; shift 2 ;;
+      -*) echo "Invalid option"; exit -1 ;;
+   esac
+done
+#
+# Check input data
+#
+if [ ! "$DATABASE" ]
+   then echo "The capability to run without a database has not been developed"
+   exit 1 
+fi
+if [ -f $OUTFILE ] || [ -d $OUTFILE ]
+   then echo "File specified for output already exists." ; exit 1 
+fi
+if [ ! "$DIST_TYPE" ]
+   then echo "Distribution is not set." ; exit 1 
+fi
+if [ ! "$ALGORITHM" ]
+   then echo "Scattering algorithnm is not set." ; exit 1 
+fi
+echo $DIST_TYPE > /tmp/isc.$$
+echo $MEASURE >> /tmp/isc.$$
+if  [ $DIST_TYPE -eq $IP_EXTERNAL ] 
+   then echo $DISTFILE >> /tmp/isc.$$
+else
+   echo "Only observed size distributions and databases are allowed."
+   exit 1
+fi
+echo $ALGORITHM >> /tmp/isc.$$
+cat >> /tmp/isc.$$ << EOF 
+$MOMENT
+$DATABASE
+$OUTFILE
+$GEOMETRY_FILE
+EOF
+( ice_scatter < /tmp/isc.$$ ) > /dev/null
+#rm /tmp/isc.$$
+echo /tmp/isc.$$
+rm $LOCK_FILE

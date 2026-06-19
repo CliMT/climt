@@ -1,0 +1,188 @@
+#!/bin/bash
+#
+# Setting up a test atmosphere.
+#
+# Path to the McClatchey profiles
+INBASE=$RAD_DATA/mcc_profiles/one_km
+
+# Define an Atmosphere
+case $1 in
+  tro | mls | mlw | sas | saw) ATM=$1 ;;
+  *) echo "Please specify McClatchey profile as argument:" ; \
+     echo "tro, mls, mlw, sas or saw" ; exit 1 ;;
+esac
+
+# Define a Base Name and remove old files
+BASE=wk_$ATM
+rm -f wk_$ATM*
+
+# The raw McClatchey profile of temperature is used to define the
+# edges of the atmospheric layers. Other atmospheric quantities
+# are defined at the midpoints which we have to create.
+cp $INBASE/$ATM.t $BASE.tl
+cp $INBASE/$ATM.tstar $BASE.tstar
+
+Cmid_point -o $BASE.null $BASE.tl
+		 
+Cinterp -g $BASE.null -o $BASE.t -n "t" -u "K" -L "Central Temperatures" \
+                 -lgn $BASE.tl
+            
+Cinterp -g $BASE.null -o $BASE.q -n "q" -u "None" -L "Specific humidity" \
+                 -lgg $INBASE/$ATM.q
+         
+Cinterp -g $BASE.null -o $BASE.o3 -n "o3" -u "None" -L "Ozone mmr" \
+                 -lgg $INBASE/$ATM.o3
+
+
+# Set the mixing ratios of other gases
+Cinc_field -R 0.0,1.2e5:5.241e-4 -o $BASE.co2 \
+                 -n "co2" -u "None" -L "CO2 mmr" $BASE.null
+		
+Cinc_field -R 0.0,1.2e5:0.2314 -o $BASE.o2 \
+                 -n "o2" -u "None" -L "O2 mmr" $BASE.null
+		
+
+# Make the surface fields
+Cgen_surf_cdl -o $BASE.surf -n alb \
+                 -L "Surface Albedo" -u "None" \
+                 -b 0.06 -N 0.0 -T 0.0
+
+
+# Make the Solar Fields
+Cgen_horiz_cdl -o $BASE.szen -n szen \
+                 -L "Solar zenith angle" -u "Degrees" \
+                 -F 10.0 -N 0.0 -T 0.0
+		
+Cgen_horiz_cdl -o $BASE.stoa -n stoa \
+                 -L "Solar Irradiance" -u "W.m-2" \
+                 -F 1365.0 -N 0.0 -T 0.0
+		
+Cgen_horiz_cdl -o $BASE.sazim -n sazim \
+                 -L "Solar azimuthal angle" -u "Degrees" \
+		 -F 0.0 -N 0.0 -T 0.0
+
+
+# Viewing Geometry
+Cgen_view_cdl -o $BASE.view -p 0.0 -a 0.0 -v 0.0 -N 0.0 -T 0.0
+
+
+# Set the IWC
+IWC=0.000025
+Cinc_field -R 0.0,1.2e5:$IWC -o $BASE.iwm -n "iwm" -u "kg/kg" \
+                 -L "Ice Water Content" $BASE.null
+
+IRE=0.000010
+Cinc_field -R 0.0,1.2e5:$IRE -o $BASE.ire -n "dl" -u "m" \
+                 -L "Mean maximum dimension" $BASE.null
+
+
+# Make the cloud fields
+if [ "$ATM" == tro ]
+   then P_CLTOP=1.0e4
+   P_CLBASE=2.0e4
+   Cinc_field -R $P_CLTOP,$P_CLBASE:1.0 -o $BASE.clfr \
+                 -n "clfr" -u "None" -L "Cloud Fraction" $BASE.null
+elif [ "$ATM" == mlw ] || [ "$ATM" == mls ]
+   then P_CLTOP=5.0e4
+   P_CLBASE=6.0e4
+   Cinc_field -R $P_CLTOP,$P_CLBASE:1.0 -o $BASE.clfr \
+                 -n "clfr" -u "None" -L "Cloud Fraction" $BASE.null
+elif [ "$ATM" == saw ] || [ "$ATM" == sas ]
+   then P_CLTOP=8.0e4
+   P_CLBASE=9.0e4
+   Cinc_field -R $P_CLTOP,$P_CLBASE:1.0 -o $BASE.clfr \
+                 -n "clfr" -u "None" -L "Cloud Fraction" $BASE.null
+fi		
+
+
+echo "Calculating LW radiances and fluxes using spherical harmonics"
+echo "for clear sky..."
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 \
+           -I -g 2 -c -C 5 \
+           +S 3 7 0 0 -G 5 0 -H -T
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 \
+           -I -g 2 -c -C 5 \
+           +S 3 7 0 0 -G 5 0 -H -T +F
+fmove wk_$ATM lw_sph_clearsky_$ATM
+echo "and cloudy sky..."
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 \
+           -I -g 2 -c -C 3 -K 1 -i 8 +R \
+           +S 3 7 0 0 -G 5 0 -H -T
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 \
+           -I -g 2 -c -C 3 -K 1 -i 8 +R \
+           +S 3 7 0 0 -G 5 0 -H -T +F
+fmove wk_$ATM lw_sph_cloudy_$ATM
+
+
+echo "Calculating LW fluxes using two-stream approximation"
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 \
+           -I -g 2 -c -C 5
+fmove wk_$ATM lw_ts_clearsky_$ATM
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 \
+           -I -g 2 -c -C 2 -K 1 -i 8 +R
+fmove wk_$ATM lw_ts_cloudy_$ATM
+
+
+echo "Calculating SW radiances and fluxes using spherical harmonics"
+echo "for clear sky..."
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 \
+           -S -r -g 2 -c -C 5 \
+           +S 1 7 0 7 -G 5 0 -H -T
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 \
+           -S -r -g 2 -c -C 5 \
+           +S 3 7 0 0 -G 5 0 -H -T +F
+fmove wk_$ATM sw_sph_clearsky_$ATM
+echo "and cloudy sky..."
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 \
+           -S -r -g 2 -c -C 3 -K 1 -i 8 +R \
+           +S 1 7 0 7 -G 5 0 -H -T
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 \
+           -S -r -g 2 -c -C 3 -K 1 -i 8 +R \
+           +S 3 7 0 0 -G 5 0 -H -T +F
+fmove wk_$ATM sw_sph_cloudy_$ATM
+
+
+echo "Calculating SW fluxes using two-stream approximation"
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 \
+           -S -r -g 2 -c -C 5
+fmove wk_$ATM sw_ts_clearsky_$ATM
+Cl_run_cdl -B $BASE -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 \
+           -S -r -g 2 -c -C 2 -K 1 -i 8 +R
+fmove wk_$ATM sw_ts_cloudy_$ATM
+
+
+# Test output against KGO
+ierr=0
+
+case $ATM in
+  mls) \
+    diff -q lw_sph_cld_mls_ifort.hrts    lw_sph_cloudy_mls.hrts   || \
+   (diff -q lw_sph_cld_mls_ifx.hrts      lw_sph_cloudy_mls.hrts   &&
+    echo 'Matched ifx output')                                    || \
+   (diff -q lw_sph_cld_mls_gfortran.hrts lw_sph_cloudy_mls.hrts   &&
+    echo 'Matched gfortran output') || ierr=1 ; \
+    diff -q lw_sph_cld_mls_ref.radn      lw_sph_cloudy_mls.radn   || ierr=1 ; \
+    diff -q lw_sph_cs_mls_ifort.hrts     lw_sph_clearsky_mls.hrts || \
+   (diff -q lw_sph_cs_mls_ifx.hrts       lw_sph_clearsky_mls.hrts &&
+    echo 'Matched ifx output')                                    || \
+   (diff -q lw_sph_cs_mls_gfortran.hrts  lw_sph_clearsky_mls.hrts &&
+    echo 'Matched gfortran output') || ierr=1 ; \
+    diff -q lw_sph_cs_mls_ref.radn       lw_sph_clearsky_mls.radn || ierr=1 ; \
+    diff -q lw_ts_cld_mls_ref.hrts       lw_ts_cloudy_mls.hrts    || ierr=1 ; \
+    diff -q lw_ts_cs_mls_ref.hrts        lw_ts_clearsky_mls.hrts  || ierr=1 ; \
+    diff -q sw_sph_cld_mls_ref.hrts      sw_sph_cloudy_mls.hrts   || ierr=1 ; \
+    diff -q sw_sph_cld_mls_ref.radn      sw_sph_cloudy_mls.radn   || ierr=1 ; \
+    diff -q sw_sph_cs_mls_ref.hrts       sw_sph_clearsky_mls.hrts || ierr=1 ; \
+    diff -q sw_sph_cs_mls_ref.radn       sw_sph_clearsky_mls.radn || ierr=1 ; \
+    diff -q sw_ts_cld_mls_ref.hrts       sw_ts_cloudy_mls.hrts    || ierr=1 ; \
+    diff -q sw_ts_cs_mls_ref.hrts        sw_ts_clearsky_mls.hrts  || ierr=1 ;;
+  *) echo "No KGO for this profile" ; exit 0 ;;
+esac
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f wk* *clearsky* *cloudy*
+  echo OK
+  exit 0
+fi

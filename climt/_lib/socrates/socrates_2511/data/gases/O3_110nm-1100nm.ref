@@ -1,0 +1,31 @@
+Ozone cross-section data has been compiled from the following sources:
+
+Below 244nm data is based on the recommended sources from the JPL 19-5 report at https://jpldataeval.jpl.nasa.gov/
+-- 298K --
+110-139nm: http://satellite.mpic.de/spectral_atlas/cross_sections/Ozone/O3_Mason(1996)_298K_110.2-139.2nm.txt
+139-185nm: http://satellite.mpic.de/spectral_atlas/cross_sections/Ozone/O3_Mason(1996)_298K_110.2-337.4nm.txt
+185-233nm: http://satellite.mpic.de/spectral_atlas/cross_sections/Ozone/O3_MolinaMolina(1986)_298K_185-350nm(0.5nm).txt
+-- 293K --
+233-244nm: http://satellite.mpic.de/spectral_atlas/cross_sections/Ozone/O3_Burrows(1999)_293K_230-794nm(air).txt
+-- 218K --
+195-244nm: http://satellite.mpic.de/spectral_atlas/cross_sections/Ozone/O3_Malicet(1995)_218K_195-345nm.txt
+all converted to xsc format using the script dat2xsc.
+
+Between 244-346nm data at 6 temperatures comes from the HITRAN 2020 database: https://hitran.org/xsc/
+O3_193.0K-0.0Torr_28901.0-40999.0_118.xsc
+O3_213.0K-0.0Torr_28901.0-40999.0_118.xsc
+O3_233.0K-0.0Torr_28901.0-40999.0_118.xsc
+O3_253.0K-0.0Torr_28901.0-40999.0_118.xsc
+O3_273.0K-0.0Torr_28901.0-40999.0_118.xsc
+O3_293.0K-0.0Torr_28901.0-40999.0_118.xsc
+based on the data of Birk and Wagner 2018: https://dx.doi.org/10.5281/zenodo.1485588
+
+Between 346-830nm we use the recommended source from JPL 19-5:
+http://satellite.mpic.de/spectral_atlas/cross_sections/Ozone/O3_Brion(1998)_295K_345.00-830.00nm.txt
+converted to xsc format using the script dat2xsc.
+
+Between 830-1100nm data at 11 temperatures comes from:
+https://www.iup.uni-bremen.de/gruppen/molspec/databases/referencespectra/o3spectra2011/
+SerdyuchenkoGorshelevVersionJuly2013.dat converted to uvxsc then xsc format using the scripts ser2uvxsc, xsc2xsc.
+
+All concatenated together into O3_110nm-1100nm.xsc

@@ -1,0 +1,9 @@
+	This file contains an examples of using the code to run ICRCCM case 27 
+(LW) on AER profiles.
+
+	The files laer27... contain atmospheric profiles for ICRCCM case27
+as used by the AER LBL code given in CDL format. The calculation of
+fluxes can be performed using the script run27, which gives an example of
+how the code is run. The files aer_... are the results from the AER LbL code
+itself.
+

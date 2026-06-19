@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Convert the column data in photocomp_std_atm.raw into
+# Socrates input file format
+rm -f atm*
+raw_input <<EOF > /dev/null
+photocomp_std_atm.raw
+atm
+n
+EOF
+Cgen_horiz_cdl -o atm_1.szen -n szen \
+                 -L "Solar zenith angle" -u "Degrees" \
+                 -F 15.0 -N 0.0 -T 0.0
+Cgen_horiz_cdl -o atm_1.stoa -n stoa \
+                 -L "Solar Irradiance" -u "W.m-2" \
+                 -F 1365.0 -N 0.0 -T 0.0
+Cgen_surf_cdl -o atm_1.surf -n alb \
+                 -L "Surface Albedo" -u "None" \
+                 -b 0.1 -N 0.0 -T 0.0
+
+# Convert to netCDF
+rm -f atm.*
+Ccdl2cdf -o atm.o3 atm_1.o3
+Ccdl2cdf -o atm.t atm_1.t
+Ccdl2cdf -o atm.tl atm_2.tl
+Ccdl2cdf -o atm.tstar atm_3.tstar
+Ccdl2cdf -o atm.szen atm_1.szen
+Ccdl2cdf -o atm.stoa atm_1.stoa
+Ccdl2cdf -o atm.surf atm_1.surf
+rm -f atm_*
+
+exit 0

@@ -1,0 +1,25 @@
+netcdf /temp/hc0300/haddb/cnvtest/YYY.szen{                                    
+
+dimensions:
+    lat         =   1 ;
+    lon         =   1 ;
+
+
+variables:
+    float lon(lon) ; 
+             lon:units = "None" ; 
+             lon:title = "LONGITUDE" ;
+    float lat(lat) ;                                                       
+             lat:units = "None" ;                                            
+             lat:title = "LATITUDE" ;                                      
+
+    float zen(lat,lon) ;                                                  
+             zen:units = "Degrees" ;                                         
+             zen:title = "ZENITH ANGLE" ;                                                  
+
+data:                                                                           
+            lat   =   .10000E+01 ;
+            lon   =   .10000E+01 ;
+            zen   =   .30000E+02 ;
+
+}                                                                               

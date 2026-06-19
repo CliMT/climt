@@ -1,0 +1,19 @@
+#! /bin/bash
+#
+# SCRIPT TO RUN PROGRAM SETTING SRA AEROSOL PROFILE.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -p) PROFILE=$2 ; shift 2 ;;
+      -*) echo "Illegal Option" ; exit 1 ;;
+       *) BASENAME=$1 ; shift ;;
+   esac
+done
+cat > /tmp/ssp.$$ << EOF
+$BASENAME
+$PROFILE
+EOF
+set_sra_profile < /tmp/ssp.$$ > /dev/null
+rm -f /tmp/ssp.$$
+rm -f $LOCK_FILE 

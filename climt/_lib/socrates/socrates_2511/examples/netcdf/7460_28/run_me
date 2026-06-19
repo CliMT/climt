@@ -1,0 +1,164 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+# Test LW configuration on average columns
+cp 7460_28.surflw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_lw_hadgem1_3 -R 1 9 -I -t 12 +R -v 11 -g 2 -c -C 2 -K 1 -d 1 -i 1
+fmove 7460_28 lw_avg
+
+# Test SW
+cp 7460_28.surfsw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3
+fmove 7460_28 sw_avg
+
+# Test SW using delta-rescaling for the total flux but no rescaling for the direct flux 
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3 -ds 0 
+fmove 7460_28 sw_ds0_avg
+
+# Test SW using delta-rescaling for the total flux but csr-phase-function rescaling for the direct flux 
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3 -ds 2 -ha 2.5 
+fmove 7460_28 sw_ds2_avg
+
+# Test SW using different direct/diffuse albedos
+cp 7460_28.surfsw2 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3
+fmove 7460_28 sw2_avg
+
+# Use delta-rescaling for the total flux but no rescaling for the direct flux.
+# Different direct/diffuse albedos here allow the unscaled direct flux to
+# affect the total flux reflected at the surface.
+cp 7460_28.surfsw2 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3 -ds 0
+fmove 7460_28 sw2_ds0_avg
+
+# Test SW GA9 vs GA7 spectral files
+cp 7460_28.surfsw2 7460_28.surf
+Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -C 2 -K 1 -d 5 -i 8
+fmove 7460_28 sw_ga7_avg
+Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/ga9/sp_sw_ga9 -R 1 6 -S +R -g 4 -c -r -C 2 -K 1 -d 5 -i 8
+fmove 7460_28 sw_ga9_avg
+Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/ga9_ref/sp_sw_260_jm3 -R 1 260 -S +R -g 4 -c -r -C 2 -K 1 -d 5 -i 8
+fmove 7460_28 sw_260_avg
+
+# Test LW GA9 spectral files
+cp 7460_28.surflw 7460_28.surf
+Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/ga9/sp_lw_ga9 -R 1 9 -I +R -g 4 -c -C 2 -K 1 -d 5 -i 8
+fmove 7460_28 lw_ga9_avg
+Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/ga9_ref/sp_lw_300_jm3 -R 1 300 -I +R -g 4 -c -C 2 -K 1 -d 5 -i 8
+fmove 7460_28 lw_300_avg
+
+# Test for full array of columns
+cd ipa0
+
+cp 7460_28.surflw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_lw_hadgem1_3 -R 1 9 -I -t 12 +R -v 11 -g 2 -c -C 2 -K 1 -d 1 -i 1
+fmove 7460_28 lw
+
+cp 7460_28.surfsw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3
+fmove 7460_28 sw
+
+diff -q ref_lw.dflx lw.dflx || ierr=1
+diff -q ref_lw.hrts lw.hrts || ierr=1
+diff -q ref_lw.nflx lw.nflx || ierr=1
+diff -q ref_lw.uflx lw.uflx || ierr=1
+diff -q ref_sw.hrts sw.hrts || ierr=1
+diff -q ref_sw.nflx sw.nflx || ierr=1
+diff -q ref_sw.sflx sw.sflx || ierr=1
+diff -q ref_sw.uflx sw.uflx || ierr=1
+diff -q ref_sw.vflx sw.vflx || ierr=1
+diff -q ref_sw.dflx sw.dflx || ierr=1
+resrm lw
+resrm sw
+
+cd ..
+rm cdl_sw_avg* 2> /dev/null
+Ccdf2cdl -a sw_avg > /dev/null
+rm cdl_lw_avg* 2> /dev/null
+Ccdf2cdl -a lw_avg > /dev/null
+diff -q ref_lw_avg.dflx cdl_lw_avg.dflx || ierr=1
+diff -q ref_lw_avg.hrts cdl_lw_avg.hrts || ierr=1
+diff -q ref_lw_avg.nflx cdl_lw_avg.nflx || ierr=1
+diff -q ref_lw_avg.uflx cdl_lw_avg.uflx || ierr=1
+diff -q ref_sw_avg.hrts cdl_sw_avg.hrts || ierr=1
+diff -q ref_sw_avg.nflx cdl_sw_avg.nflx || ierr=1
+diff -q ref_sw_avg.sflx cdl_sw_avg.sflx || ierr=1
+diff -q ref_sw_avg.uflx cdl_sw_avg.uflx || ierr=1
+diff -q ref_sw_avg.vflx cdl_sw_avg.vflx || ierr=1
+diff -q ref_sw_avg.dflx cdl_sw_avg.dflx || ierr=1
+resrm lw_avg
+resrm sw_avg
+
+rm cdl_sw_ds0_avg* 2> /dev/null
+Ccdf2cdl -a sw_ds0_avg  > /dev/null
+diff -q ref_sw_ds0_avg.hrts cdl_sw_ds0_avg.hrts || ierr=1
+diff -q ref_sw_ds0_avg.nflx cdl_sw_ds0_avg.nflx || ierr=1
+diff -q ref_sw_ds0_avg.sflx cdl_sw_ds0_avg.sflx || ierr=1
+diff -q ref_sw_ds0_avg.uflx cdl_sw_ds0_avg.uflx || ierr=1
+diff -q ref_sw_ds0_avg.vflx cdl_sw_ds0_avg.vflx || ierr=1
+diff -q ref_sw_ds0_avg.dflx cdl_sw_ds0_avg.dflx || ierr=1
+resrm sw_ds0_avg
+
+rm cdl_sw_ds2_avg* 2> /dev/null
+Ccdf2cdl -a sw_ds2_avg  > /dev/null
+diff -q ref_sw_ds2_avg.hrts cdl_sw_ds2_avg.hrts || ierr=1
+diff -q ref_sw_ds2_avg.nflx cdl_sw_ds2_avg.nflx || ierr=1
+diff -q ref_sw_ds2_avg.sflx cdl_sw_ds2_avg.sflx || ierr=1
+diff -q ref_sw_ds2_avg.uflx cdl_sw_ds2_avg.uflx || ierr=1
+diff -q ref_sw_ds2_avg.vflx cdl_sw_ds2_avg.vflx || ierr=1
+diff -q ref_sw_ds2_avg.dflx cdl_sw_ds2_avg.dflx || ierr=1
+resrm sw_ds2_avg
+
+rm cdl_sw2_avg* 2> /dev/null
+Ccdf2cdl -a sw2_avg > /dev/null
+diff -q ref_sw2.hrts cdl_sw2_avg.hrts || ierr=1
+diff -q ref_sw2.nflx cdl_sw2_avg.nflx || ierr=1
+diff -q ref_sw2.sflx cdl_sw2_avg.sflx || ierr=1
+diff -q ref_sw2.uflx cdl_sw2_avg.uflx || ierr=1
+diff -q ref_sw2.vflx cdl_sw2_avg.vflx || ierr=1
+diff -q ref_sw2.dflx cdl_sw2_avg.dflx || ierr=1
+resrm sw2_avg
+
+rm cdl_sw2_ds0_avg* 2> /dev/null
+Ccdf2cdl -a sw2_ds0_avg > /dev/null
+diff -q ref_sw2_ds0.hrts cdl_sw2_ds0_avg.hrts || ierr=1
+diff -q ref_sw2_ds0.nflx cdl_sw2_ds0_avg.nflx || ierr=1
+diff -q ref_sw2_ds0.sflx cdl_sw2_ds0_avg.sflx || ierr=1
+diff -q ref_sw2_ds0.uflx cdl_sw2_ds0_avg.uflx || ierr=1
+diff -q ref_sw2_ds0.vflx cdl_sw2_ds0_avg.vflx || ierr=1
+diff -q ref_sw2_ds0.dflx cdl_sw2_ds0_avg.dflx || ierr=1
+resrm sw2_ds0_avg
+
+rm cdl_sw_ga9_avg* cdl_lw_ga9_avg* cdl_sw_260_avg* cdl_lw_300_avg* 2> /dev/null
+Ccdf2cdl -a sw_ga9_avg > /dev/null
+Ccdf2cdl -a lw_ga9_avg > /dev/null
+Ccdf2cdl -a sw_260_avg > /dev/null
+Ccdf2cdl -a lw_300_avg > /dev/null
+diff -q ref_sw_ga9_avg.nflx cdl_sw_ga9_avg.nflx || ierr=1
+diff -q ref_lw_ga9_avg.nflx cdl_lw_ga9_avg.nflx || ierr=1
+diff -q ref_sw_260_avg.nflx cdl_sw_260_avg.nflx || ierr=1
+diff -q ref_lw_300_avg.nflx cdl_lw_300_avg.nflx || ierr=1
+resrm sw_ga7_avg
+resrm sw_ga9_avg
+resrm lw_ga9_avg
+resrm sw_260_avg
+resrm lw_300_avg
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  resrm cdl_lw_avg
+  resrm cdl_sw_avg
+  resrm cdl_sw2_avg
+  resrm cdl_sw2_ds0_avg
+  resrm cdl_sw_ds0_avg
+  resrm cdl_sw_ds2_avg
+  resrm cdl_sw_ga9_avg
+  resrm cdl_lw_ga9_avg
+  resrm cdl_sw_260_avg
+  resrm cdl_lw_300_avg
+  echo OK
+  exit 0
+fi

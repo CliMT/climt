@@ -1,0 +1,21 @@
+#! /bin/bash
+
+ftype=`dd bs=3 count=1 if="$1" 2> /dev/null`
+
+if [ $ftype == "CDF" ]
+   then python $RAD_DIR/python/ncplot.py $*
+else
+   if [ $# == 2 ]
+      then
+         Ccdl2cdf -o nc$$_$1 $1 > /dev/null
+         Ccdl2cdf -o nc$$_$2 $2 > /dev/null
+         python $RAD_DIR/python/ncplot.py nc$$_$1 nc$$_$2
+         rm -f nc$$_$1 nc$$_$2
+      else
+         Ccdl2cdf -o nc$$_$1 $1 > /dev/null
+         python $RAD_DIR/python/ncplot.py nc$$_$1
+         rm -f nc$$_$1
+   fi
+fi
+
+exit 0

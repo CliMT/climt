@@ -1,0 +1,19 @@
+This directory contains input files for a case study from the CIRC
+(Continual Intercomparison of Radiation Codes) project run by
+Lazaros Oreopoulos at GSFC: http://circ.gsfc.nasa.gov
+
+Case 6: Cloudy sky case, adapted from BBHRP v. 1.4.1 SGP 3/17/2000, 
+julian day=77; thick overcast liquid cloud, moderate precipitable water, 
+SZA=45.5 degrees.
+
+Input files have been compiled using the IDL routine: idl/circ2nc.pro
+for use with the hadgem1_3 and ses_jm1_0 spectral files.
+
+To run the E-S code on the input files simply run the file: run_me
+Output profiles can be compared to the LW reference profiles provided
+by CIRC (from LBL calculations) and reference SW broad-band fluxes
+given below:
+
+SW fluxes in Wm-2 :
+                SFC_DN_TOT     SFC_DN_DIR     TOA_UP   
+                   92.11          0.00        628.83

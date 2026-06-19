@@ -1,0 +1,20 @@
+netcdf /temp/hc0300/haddb/cnvtest/YYY.vwazim{                                   
+
+dimensions:
+    direction          =   1 ;
+
+
+variables:
+    float direction(direction) ;
+             direction:units = "None" ;
+             direction:title = "GRID POINT" ;                                      
+
+    float vwazim(direction) ;                                                  
+             vwazim:units = "Degrees" ;
+             vwazim:title = "AZIM VIEWING ANGLE" ;                                                  
+
+data:                                                                           
+            direction  =   .10000E+01 ;
+            vwazim     =  2.25000E+02 ;
+
+}                                                                               

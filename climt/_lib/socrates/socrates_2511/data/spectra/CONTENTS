@@ -1,0 +1,151 @@
+This directory contains spectral files that have been formulated for specific
+purposes. The results are likely to be inaccurate if they are used for 
+purposes beyond their original remit. More information is available in
+docs/socrates_techguide.pdf.
+
+Last revision of this document: 1st April 2015
+
+
+ga7/:
+	Contains SW and LW spectral files proposed for Global Atmosphere
+configuration (GA) 7.0 and UKESM.
+
+
+ga7_ref/: sp_lw_300_jm2(_k) & sp_sw_260_jm2(_k)
+	High-resolution (300 band LW and 260 band SW) reference spectral
+files developed in conjunction with the broadband files for GA7.
+
+
+ga3_0/:
+	Contains SW and LW spectral files used for Global Atmosphere
+configuration 3.0/4.0/5.0/6.0 (HadGEM3 climate model).
+
+
+ga3_1/:
+	Contains SW and LW spectral files used for Global Atmosphere
+configuration 3.1 (operational NWP global model from PS26, 16/3/11 onwards).
+
+
+hadgem2/: sp_lw_hadgem1_5C
+	This has been converted from spec3a_lw_hadgem1_5C, the standard
+LW spectral file for HadGEM2. It was also used during the development of
+HadGEM3 and for the operational global forecast model from PS20
+(operational 25/11/08) onwards.
+
+
+hadgem2/: sp_sw_hadgem1_5o_rlfx
+	This has been converted from spec3a_sw_hadgem1_5o_rlfx, the standard
+SW spectral file for HadGEM2. It was also used during the development of
+HadGEM3 and for the operational global forecast model from PS20
+(operational 25/11/08) onwards.
+
+
+hadgem2/: sp_sw_hadgem1_5o_lean
+	This has been converted from spec3a_sw_hadgem1_5o_lean. It uses a
+solar spectrum from Lean (2000) data meaned over the period 1983-2004, and
+updated ozone data from Wenyi Zhong (Zhong et. al. 2008), for a more
+accurate treatment of the stratosphere. This has been used for HadGEM2 runs
+that incorporate a time varying solar spectrum.
+
+
+hadgem1/: sp_lw_hadgem1_3
+	This has been converted from spec3a_lw_hadgem1_3, the standard
+LW spectral file for HadGEM1.
+
+
+hadgem1/: sp_sw_hadgem1_3
+	This has been converted from spec3a_sw_hadgem1_3, the standard
+SW spectral file for HadGEM1. This file contains errors in the
+Rayleigh scattering coefficients.
+
+
+hadgem1/: sp_sw_hadgem1_3r
+	This is a corrected version of the standard SW spectral file for
+HadGEM1. It differs from the original only with updates to the Rayleigh
+scattering coefficients.
+
+
+hadam4/: sp_lw_hadcm4_N
+	This has been converted from spec3a_lw_hadcm4_N, the standard
+longwave spectral file used in HadAM4 runs.
+
+
+hadam4/: sp_sw_hadcm4
+	This has been converted from spec3a_sw_hadcm4, the standard
+shortwave spectral file used in HadAM4 runs. This file contains errors in
+the Rayleigh scattering coefficients.
+
+
+hadcm3/: sp_lw_hadcm3
+	This has been converted from spec3a_lw_asol2c_hadcm3, the definitive
+LW spectral file for HadCM3 runs with approved aerosol data. HadCM3 does not 
+impose limits on the size of droplets or ice crystals over which 
+parametrisations are valid. Limits have been added here based on the data 
+of Rockel from which the file was generated.
+
+
+hadcm3/: sp_sw_hadcm3
+	This has been converted from spec3a_sw_asol2c_hadcm3, the definitive
+SW spectral file for HadCM3 runs with approved aerosol data. HadCM3 does not 
+impose limits on the size of droplets or ice crystals over which 
+parametrisations are valid. Limits have been added here based on the data 
+of Rockel from which the file was generated. This file contains errors in
+the Rayleigh scattering coefficients.
+
+
+es96_ref/: sp_lw_300_orig
+	This is the original 300-band LW spectral file with data based on
+HITRAN92 derived by ESFT fitting using GENLN2. The CKD continuum is version
+2.1 (lines are adjusted for consistency with the CKD cut-off).
+
+
+es96_ref/: sp_sw_220_r
+	This is a corrected version of the 220-band SW spectral file
+differing from the original only with updates to the Rayleigh scattering
+coefficients. The data, based on HITRAN92, is derived by ESFT fitting using
+GENLN2. The CKD continuum is version 2.1 (lines are adjusted for
+consistency with the CKD cut-off). The solar spectrum is that of Labs and
+Neckel (1970).
+
+
+ses2/: ses_sw_jm1_1(_k) & ses_lw_jm1_1(_k)
+	Spectral files containing the gaseous absorption parametrisation
+from Sun Z. 2011 "Improving transmission calculations for the Edwards-Slingo
+radiation scheme using a correlated-k distribution method" Q.J.R. Meteorol.
+Soc. DOI:10.1002/qj.880.
+
+
+dev:/
+        Development spectral files.
+
+
+
+Generic Notes:
+
+Cloud data: the "type" of droplet or ice crystal is an abstract 
+quantity and has no absolute meaning. So far, we have used the following 
+conventional values:
+
+        SW:
+
+	Water: 2= Thin averaging (Slingo & Schrecker 1982)
+	       3= Thick averaging (Slingo & Schrecker 1982)
+	       4= Thin averaging (Pade approximant for larger range of re)
+	       5= Thick averaging (Pade approximant for larger range of re)
+	Ice:   2= Thin averaging (Slingo & Schrecker 1982)
+               3= Thick averaging (Slingo & Schrecker 1982)
+               7= ADT-based scheme for polycrystals (should be used with
+                    consistent sizes of crystals)
+               8= Ice-aggregate scheme (Anthony Baran)
+
+	LW:
+
+	Water: 1= Fit from (Slingo & Schrecker 1982) (spectral averaging is
+                  not a major issue)
+	       4= Thin averaging (Pade approximant for larger range of re)
+	       5= Thick averaging (Pade approximant for larger range of re)
+
+	Ice:   1= Fit from (Slingo & Schrecker 1982) (spectral averaging is
+                  not a major issue)
+               7= ADT scheme for polycrystals
+               8= Ice-aggregate scheme (Anthony Baran)

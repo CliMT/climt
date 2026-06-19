@@ -1,0 +1,290 @@
+#!/bin/bash
+
+echo -n 'Started mk_sp_sw_42_jm_mars: '; date
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+# Set environment variables
+# -------------------------
+procs=8
+. ./env_mars
+
+sp_dir="jm_mars_bb"
+mkdir -p ${sp_dir}
+
+# Create skeleton spectral file
+# -----------------------------
+specfile=${sp_dir}/sp_sw_42_jm_mars
+skelfile=${sp_dir}/sp_sw_42_jm_mars_skel
+./mk_sp_sw_42_jm_mars_skel $skelfile > /dev/null
+
+
+# Gas absorption coefficients
+# ---------------------------
+echo -n 'H2O '
+if [ ! -s $sp_dir/h2o_vis_l ] ; then
+  if [ ! -s $H2O_LBL_VIS ] ; then
+    echo ": No visible LBL file: please run ./mk_h2o_lbl_sw_276_jm_mars"
+    exit 1
+  else
+    echo -n "visible "
+    rm -f $sp_dir/h2o_vis_l*
+    Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} \
+      -R 2 6 -l 1 ${COL_MASS_K_H2O} -b 5.0e-3 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/h2o_vis_l -m $sp_dir/h2o_vis_lm \
+      -L $H2O_LBL_VIS \
+       > $sp_dir/h2o_vis_log
+  fi
+fi
+
+if [ ! -s $sp_dir/h2o_swf_l ] ; then
+  if [ ! -s $H2O_LBL_SWF ] ; then
+    echo ": No near-IR LBL file: please run ./mk_h2o_lbl_sw_276_jm_mars"
+    exit 1
+  else
+    echo -n "near-IR "
+    rm -f $sp_dir/h2o_swf_l*
+    Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} \
+      -R 7 42 -l 1 ${COL_MASS_K_H2O} -b 5.0e-3 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/h2o_swf_l -m $sp_dir/h2o_swf_lm \
+      -L $H2O_LBL_SWF \
+      -sm $sp_dir/h2o_swf_l_map.nc \
+       > $sp_dir/h2o_swf_log
+  fi
+fi
+echo 'done'
+
+if [ ! -s $sp_dir/h2o-h2o_sw_c ] ; then
+  echo "H2O self-broadened continuum"
+  rm -f $sp_dir/h2o-h2o_sw_c*
+  Ccorr_k -F $CONT_PT_FILE \
+    -R 7 42 -i 0.5 -ct 1 1 ${COL_H2OC} -t 1.0e-3 \
+    -e $CONT_H2O_S296 $CONT_H2O_S260 \
+    -s $skelfile +S $SOLSPEC -lk \
+    -o $sp_dir/h2o-h2o_sw_c -m $sp_dir/h2o-h2o_sw_cm \
+    -L $sp_dir/h2o-h2o_sw_clbl.nc \
+    -lw $sp_dir/h2o_swf_l_map.nc \
+     > $sp_dir/h2o-h2o_sw_clog
+fi
+
+echo -n 'CO2 '
+if [ ! -s $sp_dir/co2_sw_l ] ; then
+  if [ ! -s $CO2_LBL_SW ] ; then
+    echo ": No LBL file: please run ./mk_co2_lbl_sw_276_jm_mars"
+    exit 1
+  else
+    rm -f $sp_dir/co2_sw_l*
+    Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} \
+      -R 7 42 -l 2 ${COL_MASS_K_CO2} -b 5.0e-3 \
+      -sb ${GAS_DATA_DIR}/gas_fractions_09_10 -lp 2 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/co2_sw_l -m $sp_dir/co2_sw_lm \
+      -L $CO2_LBL_SW \
+       > $sp_dir/co2_sw_log
+  fi
+fi
+echo 'done'
+
+if [ ! -s $sp_dir/co2-co2_sw_c ] ; then
+  echo "CO2-CO2 CIA"
+  rm -f $sp_dir/co2-co2_sw_c*
+  Ccorr_k -F $CONT_PT_FILE -CIA $CONT_CO2_CO2 \
+    -R 35 42 -i 1.0 -ct 2 2 ${COL_CO2C} -t 1.0e-3 \
+    -k -s $skelfile +S $SOLSPEC -lk \
+    -o $sp_dir/co2-co2_sw_c -m $sp_dir/co2-co2_sw_cm \
+    -L $sp_dir/co2-co2_sw_clbl.nc \
+    -np $procs > $sp_dir/co2-co2_sw_clog
+fi
+
+echo -n 'SO2 '
+if [ ! -s $sp_dir/so2_sw_l ] ; then
+  if [ ! -s $SO2_LBL_SW ] ; then
+    echo ": No LBL file: please run ./mk_so2_lbl_sw_276_jm_mars"
+    exit 1
+  else
+    rm -f $sp_dir/so2_sw_l*
+    Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} \
+      -R 30 42 -l 9 ${COL_MASS_K_SO2} -b 5.0e-3 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/so2_sw_l -m $sp_dir/so2_sw_lm \
+      -L $SO2_LBL_SW \
+       > $sp_dir/so2_sw_log
+  fi
+fi
+echo 'done'
+
+if [ ! -s $sp_dir/so2_uv_l ] ; then
+  echo 'SO2 (UV)'
+  rm -f $sp_dir/so2_uv_l* $sp_dir/so2_lbl_uv.nc
+  Ccorr_k -F $SO2_PT_FILE -X $HITRAN_UV_SO2 \
+    -R 1 4 -i 1.0 -l 9 ${COL_MASS_K_SO2} -t 1.0e-3  \
+    -s $skelfile +S $SOLSPEC -q -r $REF_PT_FILE \
+    -o $sp_dir/so2_uv_l -m $sp_dir/so2_uv_lm -L $sp_dir/so2_lbl_uv.nc \
+    -np $procs > $sp_dir/so2_uv_log
+fi
+
+
+# Sulphuric acid aerosol
+# ----------------------
+if [ ! -s $sp_dir/sulphuric_sw.avg ] ; then
+  echo 'Sulphuric acid aerosol'
+  Cscatter_average -s $skelfile -P 1 -w -S $SOLSPEC \
+    -a $sp_dir/sulphuric_sw.avg $RAD_DATA/aerosol/sulphuric.mon
+fi
+
+
+# Dust aerosol
+# ------------
+if [ ! -s $sp_dir/dust_div1_sw.avg ] ; then
+  echo 'Dust division 1'
+  Cscatter_average -s $skelfile -P 1 -w -S $SOLSPEC \
+    -a $sp_dir/dust_div1_sw.avg $RAD_DATA/aerosol/dust_div1.mon
+fi
+if [ ! -s $sp_dir/dust_div2_sw.avg ] ; then
+  echo 'Dust division 2'
+  Cscatter_average -s $skelfile -P 1 -w -S $SOLSPEC \
+    -a $sp_dir/dust_div2_sw.avg $RAD_DATA/aerosol/dust_div2.mon
+fi
+if [ ! -s $sp_dir/dust_div3_sw.avg ] ; then
+  echo 'Dust division 3'
+  Cscatter_average -s $skelfile -P 1 -w -S $SOLSPEC \
+    -a $sp_dir/dust_div3_sw.avg $RAD_DATA/aerosol/dust_div3.mon
+fi
+if [ ! -s $sp_dir/dust_div4_sw.avg ] ; then
+  echo 'Dust division 4'
+  Cscatter_average -s $skelfile -P 1 -w -S $SOLSPEC \
+    -a $sp_dir/dust_div4_sw.avg $RAD_DATA/aerosol/dust_div4.mon
+fi
+if [ ! -s $sp_dir/dust_div5_sw.avg ] ; then
+  echo 'Dust division 5'
+  Cscatter_average -s $skelfile -P 1 -w -S $SOLSPEC \
+    -a $sp_dir/dust_div5_sw.avg $RAD_DATA/aerosol/dust_div5.mon
+fi
+if [ ! -s $sp_dir/dust_div6_sw.avg ] ; then
+  echo 'Dust division 6'
+  Cscatter_average -s $skelfile -P 1 -w -S $SOLSPEC \
+    -a $sp_dir/dust_div6_sw.avg $RAD_DATA/aerosol/dust_div6.mon
+fi
+
+
+# Cloud droplet and ice parametrisations
+# --------------------------------------
+if [ ! -s $sp_dir/fit_sw_drop5 ] ; then
+  echo 'Calculating type 5 droplet data'
+  rm -f $sp_dir/fit_sw_drop5 $sp_dir/mon_sw_drop5
+  Cscatter_average -s $skelfile -P 1 -t -S $SOLSPEC \
+    -f 5 $sp_dir/fit_sw_drop5 $sp_dir/mon_sw_drop5 1.e3 \
+    $RAD_DATA/cloud/scatter_drop_type5
+fi
+if [ ! -s $sp_dir/fit_sw_ice8 ] ; then
+  echo 'Calculating type 8 ice data'
+  rm -f $sp_dir/fit_sw_ice8 $sp_dir/mon_sw_ice8
+  Cscatter_average -s $skelfile -P 1 -t -S $SOLSPEC \
+    -f 12 $sp_dir/fit_sw_ice8 $sp_dir/mon_sw_ice8 920 \
+    $RAD_DATA/cloud/scatter_ice_sw_type8
+fi
+
+
+# Create the spectral file from the data calculated above
+# -------------------------------------------------------
+echo 'Constructing spectral file'
+mv ${specfile} ${specfile}_old 2> /dev/null
+mv ${specfile}_k ${specfile}_old_k 2> /dev/null
+prep_spec << EOF > ${specfile}_log 2>&1
+$skelfile
+n
+$specfile
+2
+n
+$SOLSPEC
+n
+3
+c
+4
+1
+2
+13
+37
+5
+$sp_dir/h2o_vis_l
+5
+y
+$sp_dir/h2o_swf_l
+5
+y
+$sp_dir/co2_sw_l
+5
+y
+$sp_dir/so2_sw_l
+5
+y
+$sp_dir/so2_uv_l
+19
+$sp_dir/h2o-h2o_sw_c
+19
+y
+$sp_dir/co2-co2_sw_c
+10
+5
+$sp_dir/fit_sw_drop5
+1.50000E-06 5.00000E-05
+11
+$sp_dir/sulphuric_sw.avg
+11
+$sp_dir/dust_div1_sw.avg
+11
+$sp_dir/dust_div2_sw.avg
+11
+$sp_dir/dust_div3_sw.avg
+11
+$sp_dir/dust_div4_sw.avg
+11
+$sp_dir/dust_div5_sw.avg
+11
+$sp_dir/dust_div6_sw.avg
+12
+8
+$sp_dir/fit_sw_ice8
+-1
+EOF
+
+# Rearrange so the major gas is listed first for each band and
+# gases are removed from bands where absorption is very weak.
+echo 'Tidying spectral file'
+tidy_90 << EOF > ${specfile}_tidy_log
+$specfile
+o
+8
+1
+0
+1
+$COL_MASS_K_H2O
+$COL_MASS_K_CO2
+$COL_MASS_K_SO2
+0.0
+0.0
+${COL_H2OC}
+${COL_CO2C}
+0.999990
+6
+$COL_MASS_K_H2O
+$COL_MASS_K_CO2
+$COL_MASS_K_SO2
+0.0
+0.0
+${COL_H2OC}
+${COL_CO2C}
+1.0e+6
+n
+-1
+EOF
+
+echo -n 'Finished mk_sp_sw_42_jm_mars: '; date
+exit 0

@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+while [ $# -gt 0 ]
+do case $1 in
+    -s) sw=T ; shift ;;
+    -l) lw=T ; shift ;;
+     *) echo "Unknown option: $1"; exit 1 ;;
+  esac
+done
+
+# Create GA9 SW & LW spectral files
+# Note, the creation of the high-resolution files takes a long time.
+# To run this step on spice at the Met Office you can use:
+# sbatch -n 24 -o ./mk_sp_sw_260_jm3_log -t 360 ./mk_sp_sw_260_jm3
+# sbatch -n 24 -o ./mk_sp_lw_300_jm3_log -t 360 ./mk_sp_lw_300_jm3
+# The job progress can be checked using:
+# sacct --format=jobname%50,jobid%9,submit,start,timelimit,elapsed,totalcpu,ncpus%5,reqmem,maxrss,nodelist%15,exitcode,state
+# Once completed, a LBL database file will be created so that re-running
+# this script will be much cheaper.
+if [ "$sw" ] ; then
+  echo 'Creating sp_sw_260_jm3...'
+  ./mk_sp_sw_260_jm3 > mk_sp_sw_260_jm3_log
+  echo 'Creating sp_sw_ga9...'
+  ./mk_sp_sw_ga9 > mk_sp_sw_ga9_log
+else
+  cp -n ../../data/spectra/ga9/sp_sw_ga9 .
+  cp -n ../../data/spectra/ga9/sp_sw_ga9_k .
+  cp -n ../../data/spectra/ga9_ref/sp_sw_260_jm3 .
+  cp -n ../../data/spectra/ga9_ref/sp_sw_260_jm3_k .
+fi
+if [ "$lw" ] ; then
+  echo 'Creating sp_lw_300_jm3...'
+  ./mk_sp_lw_300_jm3 > mk_sp_lw_300_jm3_log
+  echo 'Creating sp_lw_ga9...'
+  ./mk_sp_lw_ga9 > mk_sp_lw_ga9_log
+else
+  cp -n ../../data/spectra/ga9/sp_lw_ga9 .
+  cp -n ../../data/spectra/ga9/sp_lw_ga9_k .
+  cp -n ../../data/spectra/ga9_ref/sp_lw_300_jm3 .
+  cp -n ../../data/spectra/ga9_ref/sp_lw_300_jm3_k .
+fi
+
+# Create mcica_data file for reference spectral files
+echo 'Creating mcica_data_ga9_ref'
+assign_subcols > assign_subcols_ga9_ref_log << EOF
+sp_sw_260_jm3
+1000
+sp_lw_300_jm3
+1000
+../../data/spectra/ga7/mcica_data
+-2
+EOF
+mv mcica_data mcica_data_ga9_ref
+
+# Create mcica_data file for GA9 spectral files
+echo 'Creating mcica_data_ga9'
+rm -f mcica_data
+assign_subcols > assign_subcols_ga9_log << EOF
+sp_sw_ga9
+10
+sp_lw_ga9
+6
+../../data/spectra/ga7/mcica_data
+64
+EOF
+mv mcica_data mcica_data_ga9
+
+echo 'Testing output...'
+intel=0
+(diff -q sp_sw_ga9 ../../data/spectra/ga9/sp_sw_ga9 && \
+ echo 'Matched ifort GA9 SW output') && intel=1 || \
+(diff -q sp_sw_ga9 sp_sw_ga9_gfortran && \
+ echo 'Matched gfortran GA9 SW output') || ierr=1
+diff -q sp_lw_ga9 ../../data/spectra/ga9/sp_lw_ga9 || ierr=1
+diff -q mcica_data_ga9 ../../data/spectra/ga9/mcica_data || ierr=1
+
+if [ $intel -gt 0 ] ; then
+    # Only test hi-res output for ifort as results differ with gfortran
+    diff -q sp_sw_260_jm3 ../../data/spectra/ga9_ref/sp_sw_260_jm3 || ierr=1
+    diff -q sp_lw_300_jm3 ../../data/spectra/ga9_ref/sp_lw_300_jm3 || ierr=1
+    diff -q mcica_data_ga9_ref ../../data/spectra/ga9_ref/mcica_data
+fi
+
+if [ $ierr -gt 0 ] ; then
+    exit 1
+else
+    rm -f sp_sw_ga9 sp_sw_ga9_k sp_sw_ga9c sp_sw_ga9c_k sp_lw_ga9 sp_lw_ga9_k
+    rm -f sp_sw_260_jm3 sp_sw_260_jm3_k
+    rm -f sp_lw_300_jm3 sp_lw_300_jm3_k
+    rm -f mcica_data_ga9 mcica_data_ga9_ref
+    rm -f mk_sp_sw_ga9_log mk_sp_lw_ga9_log assign_subcols_ga9_log
+    rm -f mk_sp_sw_260_jm3_log mk_sp_lw_300_jm3_log assign_subcols_ga9_ref_log
+    rm -f h2o_s260_l* h2o_s260_s* h2o_s6_s*
+    rm -f h2o_l300_l* h2o_nir300_l* h2o_l300_s* h2o_nir300_s*
+    rm -f h2o_l9_s* h2o_nir9_s*
+    echo OK
+    exit 0
+fi

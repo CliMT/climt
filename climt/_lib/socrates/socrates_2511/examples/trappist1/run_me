@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Paleo Mars
+./mk_sp_cloud dsa_pm 16 46
+./mk_sp_cloud dsa_pm 350 280 _hr
+
+# Mars
+./mk_sp_cloud dsa_mars 17 42
+./mk_sp_cloud dsa_mars 350 280 _hr
+
+# Archean Earth (10 bar)
+./mk_sp_cloud dsa_ar10bar 15 43
+./mk_sp_cloud dsa_ar10bar 350 280 _hr
+
+# Earth
+./mk_sp_cloud dsa 12 21
+./mk_sp_cloud dsa 350 280 _hr
+
+exit 0

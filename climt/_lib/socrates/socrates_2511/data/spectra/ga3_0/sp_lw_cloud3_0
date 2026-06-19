@@ -1,0 +1,112 @@
+*BLOCK: TYPE =    0: SUBTYPE =    0: VERSION =    2
+Summary of spectral data.
+Number of spectral bands =     1
+Total number of gaseous absorbers =     3
+Maximum number of k-terms in a band =     1
+Total number of aerosols =     0
+List of indexing numbers and absorbers.
+Index       Absorber(identifier and name)
+    1           1       Water Vapour        
+    2           2       Carbon Dioxide      
+    3           3       Ozone               
+List of indexing numbers of aerosols.
+Index       Aerosol(type number and name)
+*END
+*BLOCK: TYPE =    1: SUBTYPE =    0: VERSION =    0
+Specification of spectral intervals
+Limits of spectral intervals (wavelengths in m.)
+Band        Lower limit         Upper limit
+    1        7.518796992E-06     1.333333333E-05
+*END
+*BLOCK: TYPE =    4: SUBTYPE =    0: VERSION =    0
+Gaseous absorbers in each interval
+(The number is the indexing number of the species as set out
+ in the summary block 0.)
+A zero indicates that there in no gaseous absorption in the interval.
+Band        Number of active absorbers followed by indexing numbers
+    1           1
+         1
+*END
+*BLOCK: TYPE =    5: SUBTYPE =    0: version =    0
+Exponential sum fiting coefficients: (exponents: m2/kg)
+Band        Gas, Number of k-terms, Scaling type and scaling function,
+             followed by reference pressure and temperature,
+                   k-terms, weights and scaling parameters.
+    1           1           1           2           2
+       1.000000000E+05       2.750000000E+02
+    1.782902323E-03    1.000000000E+00    5.476018003E-01    6.280970478E+00
+                                          1.291139027E+01
+*END
+*BLOCK: TYPE =    6: SUBTYPE =    0: version =    0
+Polynomial fit to thermal source function.
+Degree of polynomial =     4: Reference temperature =  2.224859546E+02
+Coefficients in each band.
+Band          w/m2
+    1       -1.573591838E+02     7.365221227E+02    -1.236815954E+03
+             8.211800396E+02    -1.302492136E+02
+*END
+*BLOCK: TYPE =    8: SUBTYPE =    0: VERSION =    0
+Continuum absorbers in each interval
+(The number is the indexing number of each type is as set out
+ in the module rad_pcf.)
+A zero indicates that there in no continuum absorption in the interval.
+Band         Number of active continua followed by indexing numbers
+    1           1
+         1
+Indexing numbers of gases for continua:
+     Index of water =     1
+*END
+*BLOCK: TYPE =    9: SUBTYPE =    0: VERSION =    0
+Continuum absorption coefficients: (units: m5/(kg.mol))
+Band        Continuum   scaling function followed by reference pressure and
+             Temperature, Extinction, and Scaling parameters
+    1           1           2
+       1.000000000E+05       2.750000000E+02
+       3.247424929E-02       4.454677860E-02      -6.933163565E+00
+                             2.584329247E+01
+*END
+*BLOCK: TYPE =   10: SUBTYPE =    0: VERSION =    2
+Parametrized scattering data for droplets.
+ Type number of droplets =     5
+Index of parametrization scheme =     5:   Number of parameters =    16
+Number of moments of the phase function =     1
+Range of validity of parametrization =  1.50000E-06 --  5.00000E-05
+Band =     1     Fitting parameters:
+     1.13993E+02     2.57659E+07     3.71596E+11    -4.79551E+04
+     1.77304E+10     2.33917E+14     9.69778E-01    -1.65810E+05
+     3.28887E+10    -5.06411E+04     6.01072E+10    -8.43841E-01
+    -6.44473E+05     1.66076E+12     4.28368E+05     1.70551E+12
+*END
+*BLOCK: TYPE =   12: SUBTYPE =    0: VERSION =    2
+Parametrized scattering data for ice crystals.
+ Type number of ice crystals =     8
+Index of parametrization scheme =    12:   number of parameters =    14
+Number of moments of the phase function =     1
+Range of validity of parametrization =  7.00000E-06 --  3.20000E-04
+Band =     1     Fitting parameters:
+     1.03926E+00     9.45419E+00    -5.28515E-02     3.06590E-04
+     4.89773E-01    -2.39334E-01     5.04946E-01    -3.03930E-01
+     3.06590E-04     8.27409E-01     8.09829E-01    -1.49561E+00
+     8.40315E-01     3.06590E-04
+*END
+*BLOCK: TYPE =   12: SUBTYPE =    0: VERSION =    2
+Parametrized scattering data for ice crystals.
+ Type number of ice crystals =     9
+Index of parametrization scheme =    17:   number of parameters =     9
+Number of moments of the phase function =     1
+Range of validity of parametrization =  0.00000E+00 --  0.00000E+00
+Band =     1     Fitting parameters:
+     3.63033E+00    -1.29724E-03     9.80027E-01     5.05389E-01
+     8.93174E-05    -3.98806E-04     9.36508E-01     2.46005E-04
+     4.11429E-03
+*END
+*BLOCK: TYPE =   12: SUBTYPE =    0: VERSION =    2
+Parametrized scattering data for ice crystals.
+ Type number of ice crystals =    11
+Index of parametrization scheme =    19:   number of parameters =     5
+Number of moments of the phase function =     1
+Range of validity of parametrization =  0.00000E+00 --  0.00000E+00
+Band =     1     Fitting parameters:
+     1.44000E+11     5.34591E-01     1.05982E-02     9.33800E-01
+     1.01260E-01
+*END

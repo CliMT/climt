@@ -1,0 +1,104 @@
+#! /usr/bin/perl
+#
+open(MAKEFILE, "> Mk_depend");
+&MakeDependsf90($ARGV[1]);
+#
+# &MakeDependsf90(f90 compiler); --- FORTRAN 90 dependency maker
+#
+sub MakeDependsf90 {
+   local($compiler) = &toLower(@_[0]);
+   local(@dependencies);
+   local(%filename);
+   local(@incs);
+   local(@modules);
+   local($objfile);
+   #
+   # Associate each module with the name of the file that contains it
+   #
+   foreach $file (<*.f90 *.f>) {
+      open(FILE, $file) || warn "Cannot open $file: $!\n";
+      while (<FILE>) {
+         /^\s*module\s+([^\s!]+)/i &&
+            ($filename{&toLower($1)} = $file) =~ s/\.f.*$/.o/;
+         }
+      }
+   #
+   # Print the dependencies of each file that has one or more include's or
+   # references one or more modules
+   #
+   foreach $file (<*.f90 *.f>) {
+      open(FILE, $file);
+      while (<FILE>) {
+         /^\s*include\s+["\']([^"\']+)["\']/i && push(@incs, $1);
+         /^\s*use\s+([^\s,!]+)/i && push(@modules, &toLower($1));
+         }
+      ($objfile = $file) =~ s/\.f.*$/.o/;
+      print MAKEFILE "$objfile: $file ";
+      if (@incs || @modules) {
+         undef @dependencies;
+         foreach $module (@modules) {
+            push(@dependencies, $filename{$module});
+            }
+         @dependencies = &uniq(sort(@dependencies));
+         &PrintWords(length($objfile) + 2, 0,
+                     @dependencies, &uniq(sort(@incs)));
+         undef @incs;
+         undef @modules;
+         }
+      print MAKEFILE "\n";
+      }
+   }
+#
+# &PrintWords(current output column, extra tab?, word list); --- print words
+#    nicely
+#
+sub PrintWords {
+   local($columns) = 78 - shift(@_);
+   local($extratab) = shift(@_);
+   local($wordlength);
+   #
+   print MAKEFILE @_[0];
+   $columns -= length(shift(@_));
+   foreach $word (@_) {
+      $wordlength = length($word);
+      if ($wordlength + 1 < $columns) {
+         print MAKEFILE " $word";
+         $columns -= $wordlength + 1;
+         }
+      else {
+         #
+         # Continue onto a new line
+         #
+         if ($extratab) {
+            print MAKEFILE " \\\n\t\t$word";
+            $columns = 62 - $wordlength;
+            }
+         else {
+            print MAKEFILE " \\\n\t$word";
+            $columns = 70 - $wordlength;
+            }
+         }
+      }
+   }
+
+#
+# &toLower(string); --- convert string into lower case
+#
+sub toLower {
+   local($string) = @_[0];
+   $string =~ tr/A-Z/a-z/;
+   $string;
+   }
+
+#
+# &uniq(sorted word list); --- remove adjacent duplicate words
+#
+sub uniq {
+   local(@words);
+   foreach $word (@_) {
+      if ($word ne $words[$#words]) {
+         push(@words, $word);
+         }
+      }
+   @words;
+   }

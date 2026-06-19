@@ -1,0 +1,101 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+echo -n 'Started mk_so2_sp_lw_17_dsa_mars: '; date
+
+if [ ! $LW_DATA ] ; then
+  LW_DATA=.
+fi
+
+SP_DIR="dsa_mars"
+HITRAN_DIR="$RAD_DATA/gases"
+HITRAN_SO2="$HITRAN_DIR/09_hit12.par"
+if [ ! -s $HITRAN_SO2 ] ; then
+    wget -nc https://lweb.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/09_hit12.zip
+    unzip 09_hit12.zip -d $HITRAN_DIR
+    rm -f 09_hit12.zip
+fi
+
+procs=8
+pt_file="$RAD_DATA/gases/pt793"
+specfile="$SP_DIR/sp_lw_17_dsa_mars_so2"
+
+mv ${specfile} ${specfile}_old
+mv ${specfile}_k ${specfile}_old_k
+cp $SP_DIR/sp_lw_17_dsa_mars $specfile
+cp $SP_DIR/sp_lw_17_dsa_mars_k ${specfile}_k
+
+# Add SO2 to the spectral file
+sed -i 's/Total number of gaseous absorbers =     2/Total number of gaseous absorbers =     3/' $specfile
+grep 'Sulphur dioxide' $specfile || \
+sed -i '11 a \    3           9       Sulphur dioxide     ' $specfile
+
+if [ ! -s $SP_DIR/so2_l17_l ] ; then
+  echo 'SO2'
+  rm -f $SP_DIR/so2_l17_l*
+  Ccorr_k -F $pt_file -D $HITRAN_SO2 \
+    -R 1 17 -c 2500.0 -i 0.2 -l 9 3.0e-4 -b 1.0e-3  \
+    -s $specfile +p -lk \
+    -o $SP_DIR/so2_l17_l -m $SP_DIR/so2_l17_lm -L $LW_DATA/so2_lbl_lw_350_dsa_mars.nc \
+    -np $procs \
+     > $SP_DIR/so2_l17_log
+fi
+
+# Add sulphuric acid aerosol
+grep 'Sulphuric Acid' $specfile || \
+sed -i '/Listing of continuum indexing numbers and gases./ i Total number of aerosols =     1\nList of indexing numbers of aerosols.\nIndex       Aerosol(type number and name)\n    1           6       Sulphuric Acid      ' $specfile
+
+if [ ! -s $SP_DIR/sulphuric_lw.avg ] ; then
+  echo "Sulphuric acid aerosol (LW)"
+  Cscatter_average -s $specfile -P 1 -w -p 250 \
+    -a $SP_DIR/sulphuric_lw.avg $RAD_DATA/aerosol/sulphuric.mon
+fi
+
+# Replace cloud droplet parametrisation
+if [ ! -s $SP_DIR/fit_lw_drop5 ] ; then
+  echo 'Calculating type 5 droplet data (LW)'
+  rm -f $SP_DIR/fit_lw_drop5 $SP_DIR/mon_lw_drop5
+  Cscatter_average -s $specfile -P 1 -t -p 250 \
+    -f 5 $SP_DIR/fit_lw_drop5 $SP_DIR/mon_lw_drop5 1.e3 \
+    $RAD_DATA/cloud/scatter_drop_type5
+fi
+
+echo 'Constructing spectral file'
+prep_spec << EOF
+$specfile
+a
+5
+y
+$SP_DIR/so2_l17_l
+10
+5
+y
+$SP_DIR/fit_lw_drop5
+1.50000E-06 5.00000E-05
+11
+$SP_DIR/sulphuric_lw.avg
+-1
+EOF
+
+# Remove k-terms with zero absorption
+tidy_90 <<EOF
+$specfile
+o
+1
+1.0e+03
+1.0e+05
+1.0
+1.0e+03
+1.0e6
+0.999999
+-1
+EOF
+
+echo -n 'Finished mk_so2_sp_lw_17_dsa_mars: '; date
+exit 0

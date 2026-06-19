@@ -1,0 +1,1253 @@
+! *****************************COPYRIGHT*******************************
+! (C) Crown copyright Met Office. All rights reserved.
+! For further details please refer to the file COPYRIGHT.txt
+! which you should have received as part of this distribution.
+! *****************************COPYRIGHT*******************************
+!
+!+ Module to define the SRA aerosol profiles.
+!
+MODULE aerosol_profile_pcf
+!
+! Description:
+!
+!   This module defines identifiers for the aerosol profiles 
+!   defined in the report WCRP 55. Each consists of a tropospheric
+!   and a stratospheric component.
+!
+!   IMPORTANT: The conversion of DATA statements to F90 is tricky.
+!   This module is therefore not complete. The statements are copied
+!   in but commented out for now.
+!
+!- End of header
+!
+!
+! Modules used
+  USE realtype_rd
+  USE dimensions_spec_ucf
+!
+!
+!
+  IMPLICIT NONE
+!
+!
+!
+  INTEGER, Parameter :: I_urban_bsa  =  1
+!   Index of profile
+  INTEGER, Parameter :: I_urban_vsa1 =  2
+!   Index of profile
+  INTEGER, Parameter :: I_urban_vsa2 =  3
+!   Index of profile
+  INTEGER, Parameter :: I_urban_vsa3 =  4
+!   Index of profile
+  INTEGER, Parameter :: I_urban_vsa4 =  5
+!   Index of profile
+!
+  INTEGER, Parameter :: I_cont1_bsa  =  6
+!   Index of profile
+  INTEGER, Parameter :: I_cont1_vsa1 =  7
+!   Index of profile
+  INTEGER, Parameter :: I_cont1_vsa2 =  8
+!   Index of profile
+  INTEGER, Parameter :: I_cont1_vsa3 =  9
+!   Index of profile
+  INTEGER, Parameter :: I_cont1_vsa4 = 10
+!   Index of profile
+!
+  INTEGER, Parameter :: I_mar1_bsa   = 11
+!   Index of profile
+  INTEGER, Parameter :: I_mar1_vsa1  = 12
+!   Index of profile
+  INTEGER, Parameter :: I_mar1_vsa2  = 13
+!   Index of profile
+  INTEGER, Parameter :: I_mar1_vsa3  = 14
+!   Index of profile
+  INTEGER, Parameter :: I_mar1_vsa4  = 15
+!   Index of profile
+!
+  INTEGER, Parameter :: I_cont2_bsa  = 16
+!   Index of profile
+  INTEGER, Parameter :: I_cont2_vsa1 = 17
+!   Index of profile
+  INTEGER, Parameter :: I_cont2_vsa2 = 18
+!   Index of profile
+  INTEGER, Parameter :: I_cont2_vsa3 = 19
+!   Index of profile
+  INTEGER, Parameter :: I_cont2_vsa4 = 20
+!   Index of profile
+!
+  INTEGER, Parameter :: I_mar2_bsa   = 21
+!   Index of profile
+  INTEGER, Parameter :: I_mar2_vsa1  = 22
+!   Index of profile
+  INTEGER, Parameter :: I_mar2_vsa2  = 23
+!   Index of profile
+  INTEGER, Parameter :: I_mar2_vsa3  = 24
+!   Index of profile
+  INTEGER, Parameter :: I_mar2_vsa4  = 25
+!   Index of profile
+!
+  INTEGER, Parameter :: I_cta_bsa   = 26
+!   Index of profile
+  INTEGER, Parameter :: I_cta_vsa1  = 27
+!   Index of profile
+  INTEGER, Parameter :: I_cta_vsa2  = 28
+!   Index of profile
+  INTEGER, Parameter :: I_cta_vsa3  = 29
+!   Index of profile
+  INTEGER, Parameter :: I_cta_vsa4  = 30
+!   Index of profile
+!
+!
+!
+  INTEGER, Parameter :: NPD_aerosol_profile      = 30
+!   Number of aerosol profiles
+  INTEGER, Parameter :: NPD_aerosol_layer        = 11
+!   Maximum number of aerosol layers
+  INTEGER, Parameter :: NPD_extinction_parameter =  5
+!   Maximum number of extinction parameters
+!
+!
+!
+  INTEGER, Dimension(NPD_aerosol_profile) :: n_aerosol_layer
+!   Number of layers in each profile
+  INTEGER, Dimension(NPD_aerosol_layer, NPD_aerosol_profile) :: &
+    i_aerosol_model
+!   Indices of models in each layer
+  INTEGER, Dimension(NPD_aerosol_layer, NPD_aerosol_profile) :: &
+    i_extinction_rep
+!   Variation of the aerosol with height
+  REAL  (RealK), Dimension(0: NPD_aerosol_layer, NPD_aerosol_profile) :: &
+    z_aerosol_layer
+!   Heights of aerosol levels
+  REAL  (RealK), Dimension(NPD_extinction_parameter, &
+    0: NPD_aerosol_layer, NPD_aerosol_profile) :: &
+    extinction_parameter
+!   Parameters usde to specify the extinction at 0.55 microns
+!
+  REAL  (RealK), Parameter :: z_null = 0.0_realK
+!       Null height
+!
+  INTEGER :: im
+!   Variable for implicit DO-loop
+!
+!
+! Unassimilated data state,ments follow.
+!@!     ------------------------------------------------------------------
+!@!     Module to set the heights of SRA aerosol profiles.
+!@!
+!@      DATA N_AEROSOL_LAYER(I_URBAN_BSA)/10/
+!@     &   , N_AEROSOL_LAYER(I_URBAN_VSA1)/10/
+!@     &   , N_AEROSOL_LAYER(I_URBAN_VSA2)/10/
+!@     &   , N_AEROSOL_LAYER(I_URBAN_VSA3)/10/
+!@     &   , N_AEROSOL_LAYER(I_URBAN_VSA4)/10/
+!@      DATA N_AEROSOL_LAYER(I_CONT1_BSA)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT1_VSA1)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT1_VSA2)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT1_VSA3)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT1_VSA4)/10/
+!@      DATA N_AEROSOL_LAYER(I_MAR1_BSA)/10/
+!@     &   , N_AEROSOL_LAYER(I_MAR1_VSA1)/10/
+!@     &   , N_AEROSOL_LAYER(I_MAR1_VSA2)/10/
+!@     &   , N_AEROSOL_LAYER(I_MAR1_VSA3)/10/
+!@     &   , N_AEROSOL_LAYER(I_MAR1_VSA4)/10/
+!@      DATA N_AEROSOL_LAYER(I_CONT2_BSA)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT2_VSA1)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT2_VSA2)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT2_VSA3)/10/
+!@     &   , N_AEROSOL_LAYER(I_CONT2_VSA4)/10/
+!@      DATA N_AEROSOL_LAYER(I_MAR2_BSA)/11/
+!@     &   , N_AEROSOL_LAYER(I_MAR2_VSA1)/11/
+!@     &   , N_AEROSOL_LAYER(I_MAR2_VSA2)/11/
+!@     &   , N_AEROSOL_LAYER(I_MAR2_VSA3)/11/
+!@     &   , N_AEROSOL_LAYER(I_MAR2_VSA4)/11/
+!@      DATA N_AEROSOL_LAYER(I_CTA_BSA)/10/
+!@     &   , N_AEROSOL_LAYER(I_CTA_VSA1)/10/
+!@     &   , N_AEROSOL_LAYER(I_CTA_VSA2)/10/
+!@     &   , N_AEROSOL_LAYER(I_CTA_VSA3)/10/
+!@     &   , N_AEROSOL_LAYER(I_CTA_VSA4)/10/
+!@!
+!@! ----------------------------------------------------------------------
+!@!     Settting of heights of layer boundaries:
+!@!
+!@      DATA (Z_AEROSOL_LAYER(INLIST, I_URBAN_BSA)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_URBAN_VSA1)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_URBAN_VSA2)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_URBAN_VSA3)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_URBAN_VSA4)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@      DATA (Z_AEROSOL_LAYER(INLIST, I_CONT1_BSA)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT1_VSA1)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT1_VSA2)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT1_VSA3)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT1_VSA4)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@      DATA (Z_AEROSOL_LAYER(INLIST, I_MAR1_BSA)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR1_VSA1)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR1_VSA2)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR1_VSA3)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR1_VSA4)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@      DATA (Z_AEROSOL_LAYER(INLIST, I_CONT2_BSA)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT2_VSA1)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT2_VSA2)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT2_VSA3)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CONT2_VSA4)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@      DATA (Z_AEROSOL_LAYER(INLIST, I_MAR2_BSA)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03
+!@     &   , 35.0E+03, 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR2_VSA1)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03
+!@     &   , 35.0E+03, 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR2_VSA2)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03
+!@     &   , 35.0E+03, 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR2_VSA3)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03
+!@     &   , 35.0E+03, 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_MAR2_VSA4)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 2.0E+03, 6.0E+03, 12.0E+03, 20.0E+03, 30.0E+03
+!@     &   , 35.0E+03, 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03/
+!@      DATA (Z_AEROSOL_LAYER(INLIST, I_CTA_BSA)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 4.382E3, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CTA_VSA1)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 4.382E3, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CTA_VSA2)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 4.382E3, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CTA_VSA3)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 4.382E3, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@     &   , (Z_AEROSOL_LAYER(INLIST, I_CTA_VSA4)
+!@     &   , INLIST=0, NPD_AEROSOL_LAYER)
+!@     &   /0.0E+00, 4.382E3, 12.0E+03, 20.0E+03, 30.0E+03, 35.0E+03
+!@     &   , 40.0E+03, 45.0E+03, 50.0E+03, 70.0E+03, 100.0E+03, Z_NULL/
+!@!
+!@!-----------------------------------------------------------------------
+!@!     Setting of the models in the various layers.
+!@!
+!@!     Urban Model:
+!@!
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_URBAN_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_URBAN_INDUSTRIAL, I_CONTINENTAL
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_URBAN_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_URBAN_INDUSTRIAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ASH, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_URBAN_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_URBAN_INDUSTRIAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_URBAN_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_URBAN_INDUSTRIAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_URBAN_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_URBAN_INDUSTRIAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Continental-1 Model:
+!@!
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT1_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT1_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ASH, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT1_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT1_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT1_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Maritime-1 model:
+!@!
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR1_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR1_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ASH, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR1_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR1_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR1_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Continental-2 Model
+!@!
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT2_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL , I_CONTINENTAL
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT2_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ASH, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT2_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT2_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CONT2_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Maritime-2 Model:
+!@!
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR2_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL , I_CONTINENTAL
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR2_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL , I_CONTINENTAL
+!@     &   , I_VOLCANIC_ASH, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR2_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL , I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR2_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL , I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_MAR2_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_MARITIME, I_CONTINENTAL , I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC/
+!@!
+!@!
+!@!     Convective Model:
+!@!
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CTA_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CTA_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ASH, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CTA_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ASH
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CTA_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@      DATA (I_AEROSOL_MODEL(INLIST, I_CTA_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONTINENTAL, I_CONTINENTAL
+!@     &   , I_VOLCANIC_ACID, I_VOLCANIC_ACID
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_STRATOSPHERIC, I_STRATOSPHERIC, I_STRATOSPHERIC
+!@     &   , I_NULL/
+!@!
+!@!     ------------------------------------------------------------------
+!@!     Representation of the extinction:
+!@!
+!@!     Urban Model:
+!@!
+!@      DATA (I_EXTINCTION_REP(INLIST, I_URBAN_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_URBAN_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_URBAN_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_URBAN_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_URBAN_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Continental-1 Model:
+!@!
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT1_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT1_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT1_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT1_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT1_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Maritime-1 Model:
+!@!
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR1_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR1_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR1_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR1_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR1_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Continental-2 Model:
+!@!
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT2_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT2_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT2_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT2_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CONT2_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@!
+!@!
+!@!     Maritime-2 Model:
+!@!
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR2_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR2_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR2_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR2_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_MAR2_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_CONSTANT, I_CONSTANT, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR/
+!@!
+!@!
+!@!     Convective Model:
+!@!
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CTA_BSA)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CTA_VSA1)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CTA_VSA2)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CTA_VSA3)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@      DATA (I_EXTINCTION_REP(INLIST, I_CTA_VSA4)
+!@     &   , INLIST=1, NPD_AEROSOL_LAYER)
+!@     &   /I_EXPONENTIAL, I_CONSTANT, I_CONSTANT, I_LINEAR
+!@     &   , I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR, I_LINEAR
+!@     &   , I_NULL/
+!@!
+!@!     ------------------------------------------------------------------
+!@!     Parameters for calculating the extinction:
+!@!
+!@!     Urban Model:
+!@!
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_URBAN_BSA)/5.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_URBAN_BSA)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_URBAN_BSA)/2.18E-07/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_URBAN_BSA)
+!@     &   , INLIST=1, 4)/2.18E-07, 3.32E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_URBAN_BSA)
+!@     &   , INLIST=1, 4)/3.32E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_URBAN_BSA)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_URBAN_BSA)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_URBAN_BSA)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_URBAN_BSA)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_URBAN_BSA)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_URBAN_VSA1)/5.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_URBAN_VSA1)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_URBAN_VSA1)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_URBAN_VSA1)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_URBAN_VSA1)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_URBAN_VSA1)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_URBAN_VSA1)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_URBAN_VSA1)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_URBAN_VSA1)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_URBAN_VSA1)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_URBAN_VSA2)/5.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_URBAN_VSA2)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_URBAN_VSA2)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_URBAN_VSA2)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_URBAN_VSA2)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_URBAN_VSA2)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_URBAN_VSA2)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_URBAN_VSA2)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_URBAN_VSA2)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_URBAN_VSA2)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_URBAN_VSA3)/5.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_URBAN_VSA3)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_URBAN_VSA3)/7.68E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_URBAN_VSA3)
+!@     &   , INLIST=1, 4)/7.68E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_URBAN_VSA3)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_URBAN_VSA3)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_URBAN_VSA3)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_URBAN_VSA3)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_URBAN_VSA3)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_URBAN_VSA3)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_URBAN_VSA4)/5.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_URBAN_VSA4)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_URBAN_VSA4)/3.83E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_URBAN_VSA4)
+!@     &   , INLIST=1, 4)/3.83E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_URBAN_VSA4)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_URBAN_VSA4)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_URBAN_VSA4)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_URBAN_VSA4)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_URBAN_VSA4)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_URBAN_VSA4)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@!
+!@!
+!@!     Continental-1 Model:
+!@!
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_CONT1_BSA)/1.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT1_BSA)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT1_BSA)/2.18E-07/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT1_BSA)
+!@     &   , INLIST=1, 4)/2.18E-07, 3.32E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT1_BSA)
+!@     &   , INLIST=1, 4)/3.32E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT1_BSA)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT1_BSA)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT1_BSA)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT1_BSA)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT1_BSA)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_CONT1_VSA1)/1.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT1_VSA1)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT1_VSA1)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT1_VSA1)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT1_VSA1)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT1_VSA1)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT1_VSA1)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT1_VSA1)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT1_VSA1)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT1_VSA1)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_CONT1_VSA2)/1.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT1_VSA2)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT1_VSA2)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT1_VSA2)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT1_VSA2)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT1_VSA2)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT1_VSA2)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT1_VSA2)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT1_VSA2)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT1_VSA2)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_CONT1_VSA3)/1.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT1_VSA3)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT1_VSA3)/7.68E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT1_VSA3)
+!@     &   , INLIST=1, 4)/7.68E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT1_VSA3)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT1_VSA3)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT1_VSA3)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT1_VSA3)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT1_VSA3)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT1_VSA3)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_CONT1_VSA4)/1.0E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT1_VSA4)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT1_VSA4)/3.83E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT1_VSA4)
+!@     &   , INLIST=1, 4)/3.83E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT1_VSA4)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT1_VSA4)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT1_VSA4)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT1_VSA4)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT1_VSA4)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT1_VSA4)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@!
+!@!
+!@!
+!@!     Maritime-1 Model:
+!@!
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR1_BSA)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR1_BSA)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR1_BSA)/2.18E-07/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_MAR1_BSA)
+!@     &   , INLIST=1, 4)/2.18E-07, 3.32E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR1_BSA)
+!@     &   , INLIST=1, 4)/3.32E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR1_BSA)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR1_BSA)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR1_BSA)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR1_BSA)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR1_BSA)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR1_VSA1)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR1_VSA1)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR1_VSA1)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_MAR1_VSA1)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR1_VSA1)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR1_VSA1)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR1_VSA1)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR1_VSA1)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR1_VSA1)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR1_VSA1)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR1_VSA2)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR1_VSA2)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR1_VSA2)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_MAR1_VSA2)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR1_VSA2)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR1_VSA2)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR1_VSA2)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR1_VSA2)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR1_VSA2)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR1_VSA2)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR1_VSA3)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR1_VSA3)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR1_VSA3)/7.68E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_MAR1_VSA3)
+!@     &   , INLIST=1, 4)/7.68E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR1_VSA3)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR1_VSA3)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR1_VSA3)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR1_VSA3)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR1_VSA3)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR1_VSA3)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR1_VSA4)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR1_VSA4)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR1_VSA4)/3.83E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_MAR1_VSA4)
+!@     &   , INLIST=1, 4)/3.83E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR1_VSA4)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR1_VSA4)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR1_VSA4)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR1_VSA4)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR1_VSA4)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR1_VSA4)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@!
+!@!
+!@!
+!@!     Continental-2 Model:
+!@!
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CONT2_BSA)
+!@     &   , INLIST=1, 2)/1.157E-03, 3.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT2_BSA)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT2_BSA)/2.18E-07/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT2_BSA)
+!@     &   , INLIST=1, 4)/2.18E-07, 3.32E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT2_BSA)
+!@     &   , INLIST=1, 4)/3.32E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT2_BSA)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT2_BSA)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT2_BSA)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT2_BSA)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT2_BSA)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CONT2_VSA1)
+!@     &   , INLIST=1, 2)/1.157E-03, 3.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT2_VSA1)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT2_VSA1)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT2_VSA1)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT2_VSA1)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT2_VSA1)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT2_VSA1)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT2_VSA1)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT2_VSA1)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT2_VSA1)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CONT2_VSA2)
+!@     &   , INLIST=1, 2)/1.157E-03, 3.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT2_VSA2)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT2_VSA2)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT2_VSA2)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT2_VSA2)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT2_VSA2)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT2_VSA2)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT2_VSA2)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT2_VSA2)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT2_VSA2)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CONT2_VSA3)
+!@     &   , INLIST=1, 2)/1.157E-03, 3.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT2_VSA3)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT2_VSA3)/7.68E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT2_VSA3)
+!@     &   , INLIST=1, 4)/7.68E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT2_VSA3)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT2_VSA3)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT2_VSA3)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT2_VSA3)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT2_VSA3)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT2_VSA3)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CONT2_VSA4)
+!@     &   , INLIST=1, 2)/1.157E-03, 3.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CONT2_VSA4)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CONT2_VSA4)/3.83E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CONT2_VSA4)
+!@     &   , INLIST=1, 4)/3.83E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CONT2_VSA4)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CONT2_VSA4)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CONT2_VSA4)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CONT2_VSA4)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CONT2_VSA4)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CONT2_VSA4)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@!
+!@!
+!@!
+!@!     Maritime-2 Model:
+!@!
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR2_BSA)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR2_BSA)/7.5E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR2_BSA)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 4, I_MAR2_BSA)/2.18E-07/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR2_BSA)
+!@     &   , INLIST=1, 4)/2.18E-07, 3.32E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR2_BSA)
+!@     &   , INLIST=1, 4)/3.32E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR2_BSA)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR2_BSA)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR2_BSA)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR2_BSA)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 11, I_MAR2_BSA)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR2_VSA1)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR2_VSA1)/7.5E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR2_VSA1)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 4, I_MAR2_VSA1)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR2_VSA1)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR2_VSA1)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR2_VSA1)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR2_VSA1)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR2_VSA1)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR2_VSA1)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 11, I_MAR2_VSA1)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR2_VSA2)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR2_VSA2)/7.5E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR2_VSA2)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 4, I_MAR2_VSA2)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR2_VSA2)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR2_VSA2)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR2_VSA2)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR2_VSA2)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR2_VSA2)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR2_VSA2)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 11, I_MAR2_VSA2)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR2_VSA3)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR2_VSA3)/7.5E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR2_VSA3)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 4, I_MAR2_VSA3)/7.68E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR2_VSA3)
+!@     &   , INLIST=1, 4)/7.68E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR2_VSA3)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR2_VSA3)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR2_VSA3)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR2_VSA3)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR2_VSA3)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 11, I_MAR2_VSA3)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA EXTINCTION_PARAMETER(1, 1, I_MAR2_VSA4)/2.5E-05/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_MAR2_VSA4)/7.5E-04/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_MAR2_VSA4)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 4, I_MAR2_VSA4)/3.83E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_MAR2_VSA4)
+!@     &   , INLIST=1, 4)/3.83E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_MAR2_VSA4)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_MAR2_VSA4)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_MAR2_VSA4)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_MAR2_VSA4)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_MAR2_VSA4)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 11, I_MAR2_VSA4)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@!
+!@!
+!@!     Convective Model:
+!@!
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CTA_BSA)
+!@     &   , INLIST=1, 2)/2.0E-04, 1.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CTA_BSA)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CTA_BSA)/2.18E-07/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CTA_BSA)
+!@     &   , INLIST=1, 4)/2.18E-07, 3.32E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CTA_BSA)
+!@     &   , INLIST=1, 4)/3.32E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CTA_BSA)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CTA_BSA)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CTA_BSA)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CTA_BSA)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CTA_BSA)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CTA_VSA1)
+!@     &   , INLIST=1, 2)/2.0E-04, 1.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CTA_VSA1)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CTA_VSA1)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CTA_VSA1)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CTA_VSA1)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CTA_VSA1)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CTA_VSA1)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CTA_VSA1)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CTA_VSA1)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CTA_VSA1)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CTA_VSA2)
+!@     &   , INLIST=1, 2)/2.0E-04, 1.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CTA_VSA2)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CTA_VSA2)/2.31E-05/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CTA_VSA2)
+!@     &   , INLIST=1, 4)/2.31E-05, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CTA_VSA2)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CTA_VSA2)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CTA_VSA2)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CTA_VSA2)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CTA_VSA2)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CTA_VSA2)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CTA_VSA3)
+!@     &   , INLIST=1, 2)/2.0E-04, 1.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CTA_VSA3)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CTA_VSA3)/7.68E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CTA_VSA3)
+!@     &   , INLIST=1, 4)/7.68E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CTA_VSA3)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CTA_VSA3)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CTA_VSA3)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CTA_VSA3)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CTA_VSA3)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CTA_VSA3)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@      DATA (EXTINCTION_PARAMETER(INLIST, 1, I_CTA_VSA4)
+!@     &   , INLIST=1, 2)/2.0E-04, 1.0E+03/
+!@     &   , EXTINCTION_PARAMETER(1, 2, I_CTA_VSA4)/2.5E-06/
+!@     &   , EXTINCTION_PARAMETER(1, 3, I_CTA_VSA4)/3.83E-06/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 4, I_CTA_VSA4)
+!@     &   , INLIST=1, 4)/3.83E-06, 3.2E-08, 20.0E+03, 30.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 5, I_CTA_VSA4)
+!@     &   , INLIST=1, 4)/3.2E-08, 2.45E-08, 30.0E+03, 35.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 6, I_CTA_VSA4)
+!@     &   , INLIST=1, 4)/2.45E-08, 8.00E-09, 35.0E+03, 40.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 7, I_CTA_VSA4)
+!@     &   , INLIST=1, 4)/8.00E-09, 4.02E-09, 40.0E+03, 45.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 8, I_CTA_VSA4)
+!@     &   , INLIST=1, 4)/4.02E-09, 2.10E-09, 45.0E+03, 50.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 9, I_CTA_VSA4)
+!@     &   , INLIST=1, 4)/2.10E-09, 1.60E-10, 50.0E+03, 70.0E+03/
+!@     &   , (EXTINCTION_PARAMETER(INLIST, 10, I_CTA_VSA4)
+!@     &   , INLIST=1, 4)/1.60E-10, 9.30E-13, 70.0E+03, 100.0E+03/
+!@!
+!@!
+!@!     ------------------------------------------------------------------
+!
+!
+END MODULE aerosol_profile_pcf

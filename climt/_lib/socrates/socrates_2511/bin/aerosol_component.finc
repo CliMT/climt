@@ -1,0 +1,105 @@
+! *****************************COPYRIGHT*******************************
+! (C) Crown copyright Met Office. All rights reserved.
+! For further details please refer to the file COPYRIGHT.txt
+! which you should have received as part of this distribution.
+! *****************************COPYRIGHT*******************************
+!
+!     ------------------------------------------------------------------
+!     Module to declare variables for aerosol components.
+!
+      REAL (RealK) :: EXT_550NM_COMPONENT(NPD_AEROSOL_COMPONENT)
+!           Extinctions of componenents
+!           Per unit volume fraction
+      REAL (RealK) :: DENSITY_COMPONENT(NPD_AEROSOL_COMPONENT)
+!           Density of each component
+!
+!     ------------------------------------------------------------------
+!     ------------------------------------------------------------------
+!     Extinctions at 550 nm. These are set only for aerosols in the SRA
+!     profiles. Other values are set to 0.
+!
+      DATA EXT_550NM_COMPONENT(IP_WATER_SOLUBLE)/4.721E+06_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DUST_LIKE)/1.629E+05_RealK/
+      DATA EXT_550NM_COMPONENT(IP_OCEANIC)/7.210E+05_RealK/
+      DATA EXT_550NM_COMPONENT(IP_SOOT)/9.276E+06_RealK/
+      DATA EXT_550NM_COMPONENT(IP_ASH)/5.970E+06_RealK/
+      DATA EXT_550NM_COMPONENT(IP_SULPHURIC)/6.382E+06_RealK/
+      DATA EXT_550NM_COMPONENT(IP_AMMONIUM_SULPHATE)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_SAHARAN_DUST)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_ACCUM_SULPHATE)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_AITKEN_SULPHATE)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_FRESH_SOOT)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_AGED_SOOT)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_SODIUM_CHLORIDE)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_SEASALT_FILM)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_SEASALT_JET)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DUST_DIV1)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DUST_DIV2)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DUST_DIV3)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DUST_DIV4)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DUST_DIV5)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DUST_DIV6)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_BIOMASS_1)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_BIOMASS_2)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_BIOGENIC)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_OCFF_FRESH)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_OCFF_AGED)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_DELTA)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_NITRATE)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_TWOBINDUST_1)/0.0E+00_RealK/
+      DATA EXT_550NM_COMPONENT(IP_TWOBINDUST_2)/0.0E+00_RealK/
+!
+!
+!     Densities for the sra aerosols. These are not actual densities,
+!     which are not known, but rather conventional values. Extreme
+!     care is required when setting mass mixing ratios in the radiation
+!     scheme to ensure that the values are consistent with the
+!     spectral data.
+!
+      DATA DENSITY_COMPONENT(IP_WATER_SOLUBLE)/1.00E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DUST_LIKE)/1.00E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_OCEANIC)/1.00E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_SOOT)/1.00E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_ASH)/1.00E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_SULPHURIC)/1.00E+03_RealK/
+!
+!     Density for Saharan dust, an extension to the SRA set. Again,
+!     this is a conventional value to be used consistently.
+      DATA DENSITY_COMPONENT(IP_SAHARAN_DUST)/1.000E+03_RealK/
+!
+!     Densities for other aerosols: again care is required over the
+!     question of consistency, but these values are fairly widely 
+!     accepted. In the case of fresh and aged soot, a value
+!     of 10^3 kgm-3 was originally used. From 20/11/01 a value
+!     of 1900 kgm-3 was adopted. This was modified to a value
+!     of 1500 kgm-3 by BTJ 2/1/17 to make it consistent with
+!     GLOMAP-mode as part of GMED ticket #257.
+!     Note: the value for delta aerosol is set equal to that for
+!     nitrate as identical optical properties are currently used
+!     for these aerosols.
+
+      DATA DENSITY_COMPONENT(IP_AMMONIUM_SULPHATE)/1.769E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_ACCUM_SULPHATE)/1.769E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_AITKEN_SULPHATE)/1.769E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_FRESH_SOOT)/1.500E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_AGED_SOOT)/1.500E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_SODIUM_CHLORIDE)/2.165E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_SEASALT_FILM)/2.165E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_SEASALT_JET)/2.165E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DUST_DIV1)/2.65E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DUST_DIV2)/2.65E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DUST_DIV3)/2.65E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DUST_DIV4)/2.65E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DUST_DIV5)/2.65E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DUST_DIV6)/2.65E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_BIOMASS_1)/1.35E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_BIOMASS_2)/1.35E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_BIOGENIC)/1.30E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_OCFF_FRESH)/1.35E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_OCFF_AGED)/1.35E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_DELTA)/1.725E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_NITRATE)/1.725E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_TWOBINDUST_1)/2.65E+03_RealK/
+      DATA DENSITY_COMPONENT(IP_TWOBINDUST_2)/2.65E+03_RealK/
+!
+!     ------------------------------------------------------------------

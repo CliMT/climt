@@ -1,0 +1,6 @@
+module purge
+module load latex
+module load csc gcc mpich netcdf-fortran
+module load nccmp
+export NETCDFF_ROOT=$(nf-config --prefix)
+export SOCRATES_DATA_DIR=/data/users/apprad/socrates

@@ -1,0 +1,8 @@
+#
+# Full list of flexchem programs
+#
+TARGET_FLEXCHEM: flexchem_driver
+
+flexchem_driver: flexchem_driver.o flexchemlib.$(LIBSUFFIX)
+	${LINK} -o flexchem_driver \
+	   flexchem_driver.o flexchemlib.$(LIBSUFFIX)

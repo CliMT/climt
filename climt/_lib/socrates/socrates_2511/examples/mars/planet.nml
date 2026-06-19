@@ -1,0 +1,7 @@
+&socrates_constants
+planet_radius=3.39e+06,
+mol_weight_air=43.34e-03,
+grav_acc=3.71,
+r_gas_dry=188.92,
+cp_air_dry=0.8312e+03
+/

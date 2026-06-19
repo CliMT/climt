@@ -1,0 +1,20 @@
+File setting a standard set of 48 combinations of pressure and temperature
+used to generate gaseous transmission data using correlated-k methods..
+*PTVAL
+1.00e0 190. 240. 290.
+2.15e0 190. 240. 290.
+4.64e0 190. 240. 290.
+1.00e1 190. 240. 290.
+2.15e1 190. 240. 290.
+4.64e1 190. 240. 290.
+1.00e2 190. 240. 290.
+2.15e2 190. 240. 290.
+4.64e2 190. 240. 290.
+1.00e3 190. 240. 290.
+2.15e3 190. 240. 290.
+4.64e3 190. 240. 290.
+1.00e4 190. 240. 290.
+2.15e4 190. 240. 290.
+4.64e4 190. 240. 290.
+1.00e5 190. 240. 290.
+*END

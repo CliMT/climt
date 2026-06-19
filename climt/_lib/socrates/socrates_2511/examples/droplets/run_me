@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+rm -f *w_ses convert scatter_drop* 2>/dev/null
+
+cc -o convert convert.c
+for RE in 1.0 1.5 2.0 3.0 4.5 6.0 7.5 9.0 10.5 12.0 13.5 15.0 16.5 18.0 \
+          20.0 22.0 24.0 26.0 28.0 30.0 33.0 36.0 39.0 42.0 46.0 50.0 55.0
+do
+  if [ ! -s Css${RE}_0.1 ] ; then
+    ./scatter ${RE} &
+  fi
+done
+wait
+
+if [ -f scatter_drop_type5 ] ; then rm -f scatter_drop_type5 ; fi
+for RE in 1.0 1.5 2.0 3.0 4.5 6.0 7.5 9.0 10.5 12.0 13.5 15.0 16.5 18.0 \
+          20.0 22.0 24.0 26.0 28.0 30.0 33.0 36.0 39.0 42.0 46.0 50.0 55.0
+do
+   cat Css${RE}* >> scatter_drop_type5
+done
+
+./scatter_average_ses
+(diff -q sp_lw_ses_ifort19  sp_lw_ses && echo 'Matched ifort19 LW output')  || \
+(diff -q sp_lw_ses_ifx2025  sp_lw_ses && echo 'Matched ifx2025 LW output')  || \
+(diff -q sp_lw_ses_gfortran12 sp_lw_ses && echo 'Matched gfortran12 LW output') || \
+ ierr=1
+(diff -q sp_sw_ses_ifort19  sp_sw_ses && echo 'Matched ifort19 SW output')  || \
+(diff -q sp_sw_ses_ifx2025  sp_sw_ses && echo 'Matched ifx2025 SW output')  || \
+(diff -q sp_sw_ses_gfortran12 sp_sw_ses && echo 'Matched gfortran12 SW output') || \
+(diff -q sp_sw_ses_gfortran12_debug sp_sw_ses && echo 'Matched gfortran12_debug SW output') || \
+(diff -q sp_sw_ses_gfortran5 sp_sw_ses && echo 'Matched gfortran5 SW output') || \
+(diff -q sp_sw_ses_gfortran14 sp_sw_ses && echo 'Matched gfortran14 SW output') || \
+ ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f C* *w_ses convert scatter_drop* 2>/dev/null
+  echo OK
+  exit 0
+fi

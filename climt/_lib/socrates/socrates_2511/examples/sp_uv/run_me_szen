@@ -1,0 +1,33 @@
+#!/bin/bash
+
+./mk_tropical
+
+cp tropical.surfsw tropical.surf
+Cl_run_cdf -B tropical -s sp_uv_photol -S -R 1 320 -ch 320 -g 3 -r -C 5 -o -sg
+fmove tropical tropical_320b_30z_sg
+Cl_run_cdf -B tropical -s sp_uv_photol -S -R 1 320 -g 3 -r -C 5 -o -sg
+fmove tropical tropical_1b_30z_sg
+Cl_run_cdf -B tropical -s sp_xsw_photol -S -R 1 26 -g 3 -r -C 5 -o -sg
+fmove tropical tropical_xsw_30z_sg
+
+cp tropical.szen tropical_orig.szen
+for szen in {0..75..5}
+do
+    echo -n " $szen"
+    python2.7 create_szen.py $szen > /dev/null
+    Cl_run_cdf -B tropical -s sp_uv_photol -S -R 1 320 -g 3 -r -C 5 -sg
+    fmove tropical "tropical_1b_${szen}z_sg"
+done
+for szen in {80..95}
+do
+    echo -n " $szen"
+    python2.7 create_szen.py $szen > /dev/null
+    Cl_run_cdf -B tropical -s sp_uv_photol -S -R 1 320 -g 3 -r -C 5 -sg
+    fmove tropical "tropical_1b_${szen}z_sg"
+done
+echo
+mv tropical_orig.szen tropical.szen
+
+tar cJvf ph_rates_tropical_120km.tar.xz tropical* run_me_szen create_szen.py sp_uv_photol sp_uv_photol_k sp_xsw_photol sp_xsw_photol_k
+
+exit 0

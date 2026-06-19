@@ -1,0 +1,33 @@
+# These scripts create LW spectral files from scratch and take a
+# long time to run (days). The HITRAN files required can be downloaded
+# from the web:
+
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/01_hit12.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/02_hit12.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/03_hit12.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/04_hit08.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/06_hit12.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/07_hit12.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/09_hit12.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/19_hit12.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/IR-XSect/Compressed-files/CFC-11_IR00.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/IR-XSect/Compressed-files/CFC-12_IR00.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/IR-XSect/Compressed-files/CFC-113_IR00.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/IR-XSect/Compressed-files/HCFC-22_IR01.zip
+wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/IR-XSect/Compressed-files/HFC-134a_IR00.zip
+unzip \*.zip -d $RAD_DATA/gases
+dos2unix $RAD_DATA/gases/*.par $RAD_DATA/gases/*.xsc
+
+# Choose a directory to store the line-by-line absorption coefficient files:
+# (Needs ~20G free space.)
+
+export LW_DATA=.
+
+# First run the script for the 300 band reference file (which also creates
+# the line-by-line absorption coefficients used for the 9 band file):
+
+mk_sp_lw_300_jm2
+
+# Then run the script for the 9 band spectral file:
+
+mk_sp_lw_9_jm3

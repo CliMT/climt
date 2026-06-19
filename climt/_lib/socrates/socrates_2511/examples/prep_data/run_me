@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# This example requires npd_band=220 or more.
+
+rm -f sulp_scat sulp_scatav sp_with_aer 2> /dev/null
+
+echo "Running scatter_90..."
+scatter_90 > /dev/null <<EOF
+$RAD_DATA/aerosol/wl_aerosol
+$RAD_DATA/aerosol/refract_sulphuric
+l
+n
+2
+1
+1.e8
+1
+1 0.1e-7 1.9
+1
+1
+sulp_scat
+1
+6
+EOF
+
+echo "Running scatter_average_90..."
+scatter_average_90 > /dev/null <<EOF
+sp_no_aer
+sulp_scat
+3
+$RAD_DATA/solar/kurucz_95_reduced
+1
+n
+y
+sulp_scatav
+1
+n
+EOF
+
+cp sp_no_aer sp_with_aer
+chmod +w sp_with_aer
+
+echo "Running prep_spec..."
+prep_spec > /dev/null <<EOF
+sp_with_aer
+a
+11
+sulp_scatav
+-1
+EOF
+
+(diff -q sp_with_aer sp_gfortran12 && echo "Matched gfortran12 output") || \
+(diff -q sp_with_aer sp_ifort19 && echo "Matched ifort19 output") || \
+(diff -q sp_with_aer sp_gfortran14 && echo "Matched gfortran14 output") || \
+(diff -q sp_with_aer sp_ifx2025 && echo "Matched ifx2025 output") || \
+exit 1
+rm sulp_scat sulp_scatav sp_with_aer
+echo OK
+exit 0

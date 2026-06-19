@@ -47,6 +47,7 @@ requirements = [
     "cython>=0.25",
     "scipy>=0.18.1",
     "importlib_resources",
+    "cffi>=1.0.0",
 ]
 
 test_requirements = [
@@ -317,6 +318,7 @@ setup(
         "bdist_wheel": climt_bdist_wheel,
     },
     ext_modules=ext_modules,
+    cffi_modules=["climt/_components/socrates/runesbuild.py:ffi_builder"],
     include_dirs=include_dirs,
     license="BSD license",
     zip_safe=False,

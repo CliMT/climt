@@ -1,0 +1,4 @@
+Default pressure and temperature for unscaled cross-sections
+*PTVAL
+100.0 298.0
+*END

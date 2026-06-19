@@ -1,0 +1,719 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+if [ ! $SW_DATA ] ; then
+  SW_DATA=.
+fi
+
+NUM_THREADS=8
+specfile="sp_2000"
+solspec="$RAD_DATA/solar/cmip6_cycle23_sep96-dec08"
+
+rm -f ch4.uvxsc
+dat2xsc CH4.dat ch4.uvxsc
+UV_CH4='ch4.uvxsc' #   6 - 151 nm
+
+rm -f co2.uvxsc
+dat2xsc CO2.dat co2.uvxsc
+UV_CO2='co2.uvxsc' #   1 - 299 nm
+
+rm -f co.uvxsc
+dat2xsc CO.dat co.uvxsc
+UV_CO='co.uvxsc'   #   7 - 163 nm
+
+rm -f h2.uvxsc
+dat2xsc H2.dat h2.uvxsc
+UV_H2='h2.uvxsc'   #   5 - 116 nm
+
+rm -f n2o.uvxsc
+dat2xsc N2O.dat n2o.uvxsc
+UV_N2O='n2o.uvxsc' #   7 - 249 nm
+
+rm -f no2.uvxsc
+dat2xsc NO2.dat no2.uvxsc
+UV_NO2='no2.uvxsc' #   7 - 723 nm
+
+HITRAN_UV_O3="$RAD_DATA/gases/O3_110nm-1100nm.xsc"
+o3_pt_file="$RAD_DATA/gases/pt_o3_uv"
+ref_pt_file="$RAD_DATA/gases/ref_pt"
+
+rm -f oh.uvxsc
+dat2xsc OH.dat oh.uvxsc
+UV_OH='oh.uvxsc'   #   5 - 612 nm
+
+rm -f n.uvxsc
+dat2xsc N.dat n.uvxsc
+UV_N='n.uvxsc' # 0.04 - 102.7 nm
+
+rm -f o.uvxsc
+dat2xsc O.dat o.uvxsc
+UV_O='o.uvxsc' # 0.04 - 102.7 nm
+
+rm -f o2_hires.uvxsc
+dat2xsc O2.dat o2_hires.uvxsc
+UV_O2_HIRES='o2_hires.uvxsc' # 0.04 - 294 nm
+
+rm -f n2_hires.uvxsc
+dat2xsc N2.dat n2_hires.uvxsc
+UV_N2_HIRES='n2_hires.uvxsc' # 0.04 - 102.7 nm
+
+rm -f h2o_jpl.uvxsc
+dat2xsc H2O.dat h2o_jpl.uvxsc
+UV_H2O='h2o_jpl.uvxsc' #   7 - 198 nm
+
+pt_file='pt_single'
+
+# Create skeleton spectral file
+mv ${specfile} ${specfile}_old 2> /dev/null
+mv ${specfile}_k ${specfile}_old_k 2> /dev/null
+prep_spec << EOF > prep_spec_skel_2klog
+${specfile}
+2000
+13
+1
+2
+3
+4
+5
+6
+7
+8
+10
+13
+23
+39
+40
+0
+0
+r
+m 0.1E-9 1.0E-9 0.9E-9
+m 1.0E-9 1.0E-6 1.0E-9
+c 10000.0 10.0 -10.0
+c 10.0 1.0 -9.0
+0*2000
+0*2000
+n
+2
+n
+${solspec}
+n
+3
+a
+-1
+EOF
+
+
+# Gases
+
+# Methane (CH4)
+if [ ! -s ch4_xuv_2kl ] || [ ! -s $SW_DATA/ch4_2klbl_xuv.nc ] ; then
+  echo 'CH4 (XUV continuum)'
+  rm -f ch4_xuv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CH4 \
+    -R 6 10 -i 100.0 -l 6 1.0e-2 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o ch4_xuv_2kl -m ch4_xuv_2klm -L $SW_DATA/ch4_2klbl_xuv.nc \
+    -np $NUM_THREADS \
+     > ch4_xuv_2klog
+fi
+if [ ! -s ch4_euv_2kl ] || [ ! -s $SW_DATA/ch4_2klbl_euv.nc ] ; then
+  echo 'CH4 (EUV continuum)'
+  rm -f ch4_euv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CH4 \
+    -R 11 100 -i 10.0 -l 6 1.0e-2 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o ch4_euv_2kl -m ch4_euv_2klm -L $SW_DATA/ch4_2klbl_euv.nc \
+    -np $NUM_THREADS \
+     > ch4_euv_2klog
+fi
+if [ ! -s ch4_uv_2kl ] || [ ! -s $SW_DATA/ch4_2klbl.nc ] ; then
+  echo 'CH4 (UV continuum)'
+  rm -f ch4_uv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CH4 \
+    -R 101 152 -i 1.0 -l 6 1.0e-2 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o ch4_uv_2kl -m ch4_uv_2klm -L $SW_DATA/ch4_2klbl.nc \
+    -np $NUM_THREADS \
+     > ch4_uv_2klog
+fi
+
+# Carbon Dioxide (CO2)
+if [ ! -s co2_xuv_2kl ] || [ ! -s $SW_DATA/co2_2klbl_xuv.nc ] ; then
+  echo 'CO2 (XUV continuum)'
+  rm -f co2_xuv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CO2 \
+    -R 1 10 -i 100.0 -l 2 1.0e1 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o co2_xuv_2kl -m co2_xuv_2klm -L $SW_DATA/co2_2klbl_xuv.nc \
+    -np $NUM_THREADS \
+     > co2_xuv_2klog
+fi
+if [ ! -s co2_euv_2kl ] || [ ! -s $SW_DATA/co2_2klbl_euv.nc ] ; then
+  echo 'CO2 (EUV continuum)'
+  rm -f co2_euv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CO2 \
+    -R 11 100 -i 10.0 -l 2 1.0e1 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o co2_euv_2kl -m co2_euv_2klm -L $SW_DATA/co2_2klbl_euv.nc \
+    -np $NUM_THREADS \
+     > co2_euv_2klog
+fi
+if [ ! -s co2_uv_2kl ] || [ ! -s $SW_DATA/co2_2klbl.nc ] ; then
+  echo 'CO2 (UV continuum)'
+  rm -f co2_uv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CO2 \
+    -R 101 300 -i 1.0 -l 2 1.0e1 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o co2_uv_2kl -m co2_uv_2klm -L $SW_DATA/co2_2klbl.nc \
+    -np $NUM_THREADS \
+     > co2_uv_2klog
+fi
+
+# Carbon Monoxide (CO)
+if [ ! -s co_xuv_2kl ] || [ ! -s $SW_DATA/co_2klbl_xuv.nc ] ; then
+  echo 'CO (XUV continuum)'
+  rm -f co_xuv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CO \
+    -R 7 10 -i 100.0 -l 5 2.0e-3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o co_xuv_2kl -m co_xuv_2klm -L $SW_DATA/co_2klbl_xuv.nc \
+    -np $NUM_THREADS \
+     > co_xuv_2klog
+fi
+if [ ! -s co_euv_2kl ] || [ ! -s $SW_DATA/co_2klbl_euv.nc ] ; then
+  echo 'CO (EUV continuum)'
+  rm -f co_euv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CO \
+    -R 11 100 -i 10.0 -l 5 2.0e-3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o co_euv_2kl -m co_euv_2klm -L $SW_DATA/co_2klbl_euv.nc \
+    -np $NUM_THREADS \
+     > co_euv_2klog
+fi
+if [ ! -s co_uv_2kl ] || [ ! -s $SW_DATA/co_2klbl.nc ] ; then
+  echo 'CO (UV continuum)'
+  rm -f co_uv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_CO \
+    -R 101 164 -i 1.0 -l 5 2.0e-3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o co_uv_2kl -m co_uv_2klm -L $SW_DATA/co_2klbl.nc \
+    -np $NUM_THREADS \
+     > co_uv_2klog
+fi
+
+# Hydrogen (H2)
+if [ ! -s h2_xuv_2kl ] || [ ! -s $SW_DATA/h2_2klbl_xuv.nc ] ; then
+  echo 'H2 (XUV continuum)'
+  rm -f h2_xuv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_H2 \
+    -R 5 10 -i 100.0 -l 23 5.0e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o h2_xuv_2kl -m h2_xuv_2klm -L $SW_DATA/h2_2klbl_xuv.nc \
+    -np $NUM_THREADS \
+     > h2_xuv_2klog
+fi
+if [ ! -s h2_euv_2kl ] || [ ! -s $SW_DATA/h2_2klbl_euv.nc ] ; then
+  echo 'H2 (EUV continuum)'
+  rm -f h2_euv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_H2 \
+    -R 11 100 -i 10.0 -l 23 5.0e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o h2_euv_2kl -m h2_euv_2klm -L $SW_DATA/h2_2klbl_euv.nc \
+    -np $NUM_THREADS \
+     > h2_euv_2klog
+fi
+if [ ! -s h2_uv_2kl ] || [ ! -s $SW_DATA/h2_2klbl.nc ] ; then
+  echo 'H2 (UV continuum)'
+  rm -f h2_uv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_H2 \
+    -R 101 117 -i 1.0 -l 23 5.0e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o h2_uv_2kl -m h2_uv_2klm -L $SW_DATA/h2_2klbl.nc \
+    -np $NUM_THREADS \
+     > h2_uv_2klog
+fi
+
+# Water vapour (H2O)
+if [ ! -s h2o_xuv_2kl ] || [ ! -s $SW_DATA/h2o_2klbl_xuv.nc ] ; then
+  echo 'H2O (XUV continuum)'
+  rm -f h2o_xuv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_H2O \
+    -R 7 10 -i 100.0 -l 1 1.0e-5 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o h2o_xuv_2kl -m h2o_xuv_2klm -L $SW_DATA/h2o_2klbl_xuv.nc \
+    -np $NUM_THREADS \
+     > h2o_xuv_2klog
+fi
+if [ ! -s h2o_euv_2kl ] || [ ! -s $SW_DATA/h2o_2klbl_euv.nc ] ; then
+  echo 'H2O (EUV continuum)'
+  rm -f h2o_euv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_H2O \
+    -R 11 100 -i 10.0 -l 1 1.0e-5 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o h2o_euv_2kl -m h2o_euv_2klm -L $SW_DATA/h2o_2klbl_euv.nc \
+    -np $NUM_THREADS \
+     > h2o_euv_2klog
+fi
+if [ ! -s h2o_uv_2kl ] || [ ! -s $SW_DATA/h2o_2klbl.nc ] ; then
+  echo 'H2O (UV continuum)'
+  rm -f h2o_uv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_H2O \
+    -R 101 199 -i 1.0 -l 1 1.0e-5 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o h2o_uv_2kl -m h2o_uv_2klm -L $SW_DATA/h2o_2klbl.nc \
+    -np $NUM_THREADS \
+     > h2o_uv_2klog
+fi
+
+# Nitrogen (N2)
+if [ ! -s n2_xuvhr_2kl ] || [ ! -s $SW_DATA/n2_2klbl_xuvhr.nc ] ; then
+  echo 'N2 (XUV continuum)'
+  rm -f n2_xuvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_N2_HIRES \
+    -R 1 10 -i 100.0 -l 13 7.5e3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o n2_xuvhr_2kl -m n2_xuvhr_2klm -L $SW_DATA/n2_2klbl_xuvhr.nc \
+    -np $NUM_THREADS \
+     > n2_xuvhr_2klog
+fi
+if [ ! -s n2_euvhr_2kl ] || [ ! -s $SW_DATA/n2_2klbl_euvhr.nc ] ; then
+  echo 'N2 (EUV continuum)'
+  rm -f n2_euvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_N2_HIRES \
+    -R 11 100 -i 10.0 -l 13 7.5e3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o n2_euvhr_2kl -m n2_euvhr_2klm -L $SW_DATA/n2_2klbl_euvhr.nc \
+    -np $NUM_THREADS \
+     > n2_euvhr_2klog
+fi
+
+# Dinitrogen Oxide (N2O)
+if [ ! -s n2o_xuv_2kl ] || [ ! -s $SW_DATA/n2o_2klbl_xuv.nc ] ; then
+  echo 'N2O (XUV continuum)'
+  rm -f n2o_xuv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_N2O \
+    -R 7 10 -i 100.0 -l 4 5.0e-3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o n2o_xuv_2kl -m n2o_xuv_2klm -L $SW_DATA/n2o_2klbl_xuv.nc \
+    -np $NUM_THREADS \
+     > n2o_xuv_2klog
+fi
+if [ ! -s n2o_euv_2kl ] || [ ! -s $SW_DATA/n2o_2klbl_euv.nc ] ; then
+  echo 'N2O (EUV continuum)'
+  rm -f n2o_euv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_N2O \
+    -R 11 100 -i 10.0 -l 4 5.0e-3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o n2o_euv_2kl -m n2o_euv_2klm -L $SW_DATA/n2o_2klbl_euv.nc \
+    -np $NUM_THREADS \
+     > n2o_euv_2klog
+fi
+if [ ! -s n2o_uv_2kl ] || [ ! -s $SW_DATA/n2o_2klbl.nc ] ; then
+  echo 'N2O (UV continuum)'
+  rm -f n2o_uv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_N2O \
+    -R 101 250 -i 1.0 -l 4 5.0e-3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o n2o_uv_2kl -m n2o_uv_2klm -L $SW_DATA/n2o_2klbl.nc \
+    -np $NUM_THREADS \
+     > n2o_uv_2klog
+fi
+
+# Nitrogen Dioxide (NO2)
+if [ ! -s no2_xuv_2kl ] || [ ! -s $SW_DATA/no2_2klbl_xuv.nc ] ; then
+  echo 'NO2 (XUV continuum)'
+  rm -f no2_xuv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_NO2 \
+    -R 7 10 -i 100.0 -l 10 5.0e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o no2_xuv_2kl -m no2_xuv_2klm -L $SW_DATA/no2_2klbl_xuv.nc \
+    -np $NUM_THREADS \
+     > no2_xuv_2klog
+fi
+if [ ! -s no2_euv_2kl ] || [ ! -s $SW_DATA/no2_2klbl_euv.nc ] ; then
+  echo 'NO2 (EUV continuum)'
+  rm -f no2_euv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_NO2 \
+    -R 11 100 -i 10.0 -l 10 5.0e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o no2_euv_2kl -m no2_euv_2klm -L $SW_DATA/no2_2klbl_euv.nc \
+    -np $NUM_THREADS \
+     > no2_euv_2klog
+fi
+if [ ! -s no2_uv_2kl ] || [ ! -s $SW_DATA/no2_2klbl.nc ] ; then
+  echo 'NO2 (UV continuum)'
+  rm -f no2_uv_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_NO2 \
+    -R 101 724 -i 1.0 -l 10 5.0e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o no2_uv_2kl -m no2_uv_2klm -L $SW_DATA/no2_2klbl.nc \
+    -np $NUM_THREADS \
+     > no2_uv_2klog
+fi
+
+# Oxygen (O2)
+if [ ! -s o2_xuvhr_2kl ] || [ ! -s $SW_DATA/o2_2klbl_xuvhr.nc ] ; then
+  echo 'O2 (XUV continuum)'
+  rm -f o2_xuvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_O2_HIRES \
+    -R 1 10 -i 100.0 -l 7 2.3e3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o o2_xuvhr_2kl -m o2_xuvhr_2klm -L $SW_DATA/o2_2klbl_xuvhr.nc \
+    -np $NUM_THREADS \
+     > o2_xuvhr_2klog
+fi
+if [ ! -s o2_euvhr_2kl ] || [ ! -s $SW_DATA/o2_2klbl_euvhr.nc ] ; then
+  echo 'O2 (EUV continuum)'
+  rm -f o2_euvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_O2_HIRES \
+    -R 11 100 -i 10.0 -l 7 2.3e3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o o2_euvhr_2kl -m o2_euvhr_2klm -L $SW_DATA/o2_2klbl_euvhr.nc \
+    -np $NUM_THREADS \
+     > o2_euvhr_2klog
+fi
+if [ ! -s o2_uvhr_2kl ] || [ ! -s $SW_DATA/o2_2klbl_uvhr.nc ] ; then
+  echo 'O2 (UV continuum)'
+  rm -f o2_uvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_O2_HIRES \
+    -R 101 294 -i 1.0 -l 7 2.3e3 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o o2_uvhr_2kl -m o2_uvhr_2klm -L $SW_DATA/o2_2klbl_uvhr.nc \
+    -np $NUM_THREADS \
+     > o2_uvhr_2klog
+fi
+
+# Ozone (O3)
+if [ ! -s o3_uvhr_2kl ] || [ ! -s $SW_DATA/o3_2klbl_uvhr.nc ] ; then
+  echo 'O3 (UV continuum)'
+  rm -f o3_uvhr_2kl*
+  Ccorr_k -F $o3_pt_file -X $HITRAN_UV_O3 \
+    -R 111 1091 -i 1.0 -l 3 1.0e-2 -t 1.0e-3  \
+    -s $specfile +S $solspec -q -r $ref_pt_file \
+    -o o3_uvhr_2kl -m o3_uvhr_2klm -L $SW_DATA/o3_2klbl_uvhr.nc \
+    -np $NUM_THREADS \
+     > o3_uvhr_2klog
+fi
+
+# Atomic Oxygen (O)
+if [ ! -s o_xuvhr_2kl ] || [ ! -s $SW_DATA/o_2klbl_xuvhr.nc ] ; then
+  echo 'O (XUV continuum)'
+  rm -f o_xuvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_O \
+    -R 1 10 -i 100.0 -l 39 2.6e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o o_xuvhr_2kl -m o_xuvhr_2klm -L $SW_DATA/o_2klbl_xuvhr.nc \
+    -np $NUM_THREADS \
+     > o_xuvhr_2klog
+fi
+if [ ! -s o_euvhr_2kl ] || [ ! -s $SW_DATA/o_2klbl_euvhr.nc ] ; then
+  echo 'O (EUV continuum)'
+  rm -f o_euvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_O \
+    -R 11 93 -i 10.0 -l 39 2.6e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o o_euvhr_2kl -m o_euvhr_2klm -L $SW_DATA/o_2klbl_euvhr.nc \
+    -np $NUM_THREADS \
+     > o_euvhr_2klog
+fi
+
+# Atomic Nitrogen (N)
+if [ ! -s n_xuvhr_2kl ] || [ ! -s $SW_DATA/n_2klbl_xuvhr.nc ] ; then
+  echo 'N (XUV continuum)'
+  rm -f n_xuvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_N \
+    -R 1 10 -i 100.0 -l 40 3.0e-10 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o n_xuvhr_2kl -m n_xuvhr_2klm -L $SW_DATA/n_2klbl_xuvhr.nc \
+    -np $NUM_THREADS \
+     > n_xuvhr_2klog
+fi
+if [ ! -s n_euvhr_2kl ] || [ ! -s $SW_DATA/n_2klbl_euvhr.nc ] ; then
+  echo 'N (EUV continuum)'
+  rm -f n_euvhr_2kl*
+  Ccorr_k -F $pt_file -UVX $UV_N \
+    -R 11 88 -i 10.0 -l 40 3.0e-10 -t 1.0e-3  \
+    -s $specfile +S $solspec \
+    -o n_euvhr_2kl -m n_euvhr_2klm -L $SW_DATA/n_2klbl_euvhr.nc \
+    -np $NUM_THREADS \
+     > n_euvhr_2klog
+fi
+
+# Construct spectral file
+prep_spec << EOF > prep_spec_2klog1
+${specfile}
+a
+5
+o2_xuvhr_2kl
+5
+y
+o2_euvhr_2kl
+5
+y
+o2_uvhr_2kl
+5
+y
+o3_uvhr_2kl
+5
+y
+ch4_xuv_2kl
+5
+y
+ch4_euv_2kl
+5
+y
+ch4_uv_2kl
+5
+y
+co2_xuv_2kl
+5
+y
+co2_euv_2kl
+5
+y
+co2_uv_2kl
+5
+y
+co_xuv_2kl
+5
+y
+co_euv_2kl
+5
+y
+co_uv_2kl
+5
+y
+h2_xuv_2kl
+5
+y
+h2_euv_2kl
+5
+y
+h2_uv_2kl
+5
+y
+h2o_xuv_2kl
+5
+y
+h2o_euv_2kl
+5
+y
+h2o_uv_2kl
+5
+y
+n2_xuvhr_2kl
+5
+y
+n2_euvhr_2kl
+5
+y
+n2o_xuv_2kl
+5
+y
+n2o_euv_2kl
+5
+y
+n2o_uv_2kl
+5
+y
+no2_xuv_2kl
+5
+y
+no2_euv_2kl
+5
+y
+no2_uv_2kl
+5
+y
+o_xuvhr_2kl
+5
+y
+o_euvhr_2kl
+5
+y
+n_xuvhr_2kl
+5
+y
+n_euvhr_2kl
+-1
+EOF
+
+# Column ammounts integrated down to  stratopause  |  mesopause
+# Column amount for Water Vapour      0.156458E-04    0.630611E-08
+# Column amount for Carbon Dioxide    0.251123E-02    0.708379E-05
+# Column amount for Ozone             0.784418E-05    0.128860E-07
+# Column amount for Dinitrogen Oxide  0.138654E-07    0.103199E-10
+# Column amount for Carbon monoxide   0.112071E-05    0.208955E-06
+# Column amount for Methane           0.399384E-06    0.123864E-08
+# Column amount for Oxygen            0.107215E+01    0.332647E-02
+# Column amount for Nitrogen monoxide 0.834753E-07    0.249072E-07
+# Column amount for Nitrogen dioxide  0.205777E-08    0.482538E-11
+# Column amount for Nitrogen          0.351191E+01    0.130265E-01
+# Column amount for Hydrogen          0.0             0.0
+# Column amount for Atomic Oxygen     0.262064E-03    0.228072E-03
+# Column amount for Atomic Nitrogen   0.299410E-09    0.260047E-09
+tidy_90 <<EOF > tidy_2klog
+${specfile}
+o
+6
+0.630611E-08
+0.708379E-05
+0.128860E-07
+0.103199E-10
+0.208955E-06
+0.123864E-08
+0.332647E-02
+0.249072E-07
+0.482538E-11
+0.130265E+00
+0.0         
+0.228072E-03
+0.260047E-09
+-1
+EOF
+
+prep_spec << EOF > prep_spec_2klog2
+${specfile}
+a
+17
+-1
+${solspec}
+a
+0
+0
+0
+20
+7
+1
+n
+O2_1.qy
+O2_1.pe
+20
+y
+7
+2
+n
+O2_2.qy
+O2_2.pe
+20
+y
+7
+6
+n
+O2_6.qy
+O2_6.pe
+20
+y
+7
+7
+n
+O2_7.qy
+O2_7.pe
+20
+y
+13
+1
+n
+N2_1.qy
+N2_1.pe
+20
+y
+13
+2
+n
+N2_2.qy
+N2_2.pe
+20
+y
+13
+3
+n
+N2_3.qy
+N2_3.pe
+20
+y
+39
+1
+n
+O_1.qy
+O_1.pe
+20
+y
+39
+2
+n
+O_2.qy
+O_2.pe
+20
+y
+39
+3
+n
+O_3.qy
+O_3.pe
+20
+y
+39
+4
+n
+O_4.qy
+O_4.pe
+20
+y
+39
+5
+n
+O_5.qy
+O_5.pe
+20
+y
+40
+1
+n
+N_1.qy
+N_1.pe
+20
+y
+1
+2
+n
+H2O_2.qy
+
+20
+y
+1
+3
+n
+H2O_3.qy
+
+20
+y
+1
+5
+n
+H2O_5.qy
+
+20
+y
+3
+1
+y
+O3_Matsumi2002_1.qy
+
+20
+y
+3
+4
+y
+O3_Matsumi2002_4.qy
+
+-1
+EOF
+
+exit 0

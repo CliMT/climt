@@ -1,0 +1,25 @@
+netcdf rc3.stoa{                                    
+
+dimensions:
+    lat         =   1;
+    lon         =   1;
+
+
+variables:
+    float lon(lon); 
+             lon:units = "degree"; 
+             lon:title = "LONGITUDE";
+    float lat(lat);                                                       
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                      
+
+    float stoa(lat,lon);                                                  
+             stoa:units = "Wm-2";                                         
+             stoa:title = "SOLAR TOA";                                                  
+
+data:                                                                           
+            lat   =   .000000E+01;
+            lon   =   .000000E+01;
+            stoa  =   .314159E+01;
+
+}                                                                               

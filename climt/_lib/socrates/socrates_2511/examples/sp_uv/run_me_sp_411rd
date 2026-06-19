@@ -1,0 +1,23 @@
+#!/bin/bash
+
+ierr=0
+
+rm -f o2_* o3_* o_* n_* n2_* h2o_*
+rm -f *.uvxsc
+rm -f sp_411rd sp_411rd_k
+rm -f prep_spec_log1 prep_spec_log2 tidy_log prep_spec_skel_log
+
+echo 'Creating sp_411rd spectral file'
+./mk_sp_411nm_reduced
+diff -q sp_411rd   sp_411rd_photol || ierr=1
+diff -q sp_411rd_k sp_411rd_photol_k || ierr=1
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  echo 'sp_411rd OK'
+  rm -f o2_* o3_* o_* n_* n2_* h2o_*
+  rm -f *.uvxsc
+  rm -f sp_411rd sp_411rd_k
+  rm -f prep_spec_log1 prep_spec_log2 tidy_log prep_spec_skel_log
+  exit 0
+fi

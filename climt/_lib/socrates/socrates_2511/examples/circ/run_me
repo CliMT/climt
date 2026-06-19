@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Run Continual Intercomparison of Radiation Codes (CIRC) case studies:
+#   i) Choice of CIRC cases 1-7.
+#  ii) Download case data from CIRC website.
+# iii) Convert data to Socrates netCDF input files.
+#  iv) Run LW and SW radiative transfer calculations using the GA7 and GA9
+#      spectral files, including the broadband and high-resolution versions.
+#   v) Compare with KGO where present.
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+if [ "$1" ] ; then
+  case=$1
+else
+  case='3'
+fi
+basename=case${case}
+rm cdl_${basename}* 2> /dev/null
+rm ${basename}* 2> /dev/null
+
+
+# Retrieve atmospheric profiles and reference data from CIRC website
+curl -k -o case${case}_input.zip https://earth.gsfc.nasa.gov/sites/default/files/lab_climate/case${case}_input.zip
+curl -k -o case${case}_output.zip https://earth.gsfc.nasa.gov/sites/default/files/lab_climate/case${case}_output.zip
+unzip case${case}_input.zip
+unzip case${case}_output.zip
+rm *.zip
+rm -r __MACOSX
+
+
+# Convert to Socrates input file format
+ln -s $RAD_DIR/python/nctools.py .
+ln -s $RAD_DIR/python/circ2nc.py .
+python circ2nc.py $case
+rm nctools.py circ2nc.py *.lwc *.iwc *.txt
+
+
+# LW
+cp ${basename}.surflw ${basename}.surf
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga9/sp_lw_ga9 -R 1 9 -I -g 4 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove ${basename} ${basename}_lw_ga9
+Ccdf2cdl -a ${basename}_lw_ga9 > /dev/null
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 -I -g 4 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove ${basename} ${basename}_lw_ga7
+Ccdf2cdl -a ${basename}_lw_ga7 > /dev/null
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga9_ref/sp_lw_300_jm3 -R 1 300 -I -g 2 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove ${basename} ${basename}_lw_ga9_300
+Ccdf2cdl -a ${basename}_lw_ga9_300 > /dev/null
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga7_ref/sp_lw_300_jm2 -R 1 300 -I -g 2 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove ${basename} ${basename}_lw_ga7_300
+Ccdf2cdl -a ${basename}_lw_ga7_300 > /dev/null
+
+
+# SW: 6 bands
+cp ${basename}.surfwsw_ga9 ${basename}.surf
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga9/sp_sw_ga9 -R 1 6 -S +R -g 4 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove ${basename} ${basename}_sw_ga9
+Ccdf2cdl -a ${basename}_sw_ga9 > /dev/null
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove ${basename} ${basename}_sw_ga7
+Ccdf2cdl -a ${basename}_sw_ga7 > /dev/null
+
+# SW: 260 bands
+cp ${basename}.surfwsw_260 ${basename}.surf
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga9_ref/sp_sw_260_jm3 -R 1 260 -S +R -g 2 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove ${basename} ${basename}_sw_ga9_260
+Ccdf2cdl -a ${basename}_sw_ga9_260 > /dev/null
+
+Cl_run_cdf -B ${basename} -s $RAD_DATA/spectra/ga7_ref/sp_sw_260_jm2 -R 1 260 -S +R -g 2 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove ${basename} ${basename}_sw_ga7_260
+Ccdf2cdl -a ${basename}_sw_ga7_260 > /dev/null
+
+
+# Test against known good output
+diff -q ref_${basename}_lw_ga9.hrts cdl_${basename}_lw_ga9.hrts || ierr=1
+diff -q ref_${basename}_lw_ga9_300.hrts cdl_${basename}_lw_ga9_300.hrts || ierr=1
+diff -q ref_${basename}_lw_ga7.hrts cdl_${basename}_lw_ga7.hrts || ierr=1
+diff -q ref_${basename}_lw_ga7_300.hrts cdl_${basename}_lw_ga7_300.hrts || ierr=1
+diff -q ref_${basename}_sw_ga9.hrts cdl_${basename}_sw_ga9.hrts || ierr=1
+diff -q ref_${basename}_sw_ga9_260.hrts cdl_${basename}_sw_ga9_260.hrts || ierr=1
+diff -q ref_${basename}_sw_ga7.hrts cdl_${basename}_sw_ga7.hrts || ierr=1
+diff -q ref_${basename}_sw_ga7_260.hrts cdl_${basename}_sw_ga7_260.hrts || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm cdl_${basename}*
+  rm ${basename}*
+  echo OK
+  exit 0
+fi

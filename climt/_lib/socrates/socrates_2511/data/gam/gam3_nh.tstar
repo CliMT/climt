@@ -1,0 +1,30 @@
+netcdf gam3_nh.tstar{                                                           
+
+dimensions:
+    lat            =   1;
+    lon            =   1;
+    plev           =   1;
+
+
+variables:
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                         
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "LONGITUDE";                                        
+    float plev(plev);                                                         
+             plev:units = "Pa";                                               
+             plev:title = "PRESSURE";                                        
+
+    float tstar(plev,lon,lat);                                                 
+             tstar:units = "K";                                               
+             tstar:title = "SURFACE TEMPERATURE";                                            
+
+data:                                                                           
+              lat =   .000000E+00;
+              lon =   .000000E+00;
+             plev =   .944467E+05;
+            tstar =   .277570E+03;
+
+}                                                                               

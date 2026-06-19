@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Mars
+./mk_sp_cloud_so2 dsa_mars 350 280 _hr
+./mk_sp_cloud_so2 dsa_mars 17 42
+
+# Paleo Mars
+# ./mk_sp_cloud_so2 dsa_pm 350 280 _hr
+# ./mk_sp_cloud_so2 dsa_pm 16 46
+
+exit 0

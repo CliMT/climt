@@ -1,0 +1,23 @@
+MODULES_GEN =	dimensions_cdl_ucf.f90 \
+		dimensions_fixed_pcf.f90 \
+		dimensions_pp_ucf.f90 \
+                realtypefx_rd.f90 \
+		def_inst_flt.f90 \
+		def_refract.f90 \
+		def_solarspec.f90 \
+		def_std_io_icf.f90 \
+		def_data_in_icf.f90 \
+		file_type_pcf.f90 \
+		error_pcf.f90 \
+		input_head_pcf.f90 \
+		interp_mode_pcf.f90 \
+		rad_pcf.f90 \
+		refract_re_ccf.f90 \
+		scatter_pp_pcf.f90 \
+		weighting_pcf.f90 \
+		unit_list_pcf.f90 \
+		dimensions_field_ucf.f90 \
+		coord_transforms.f90
+
+MODULES_CDF =	dimensions_cdf_ucf.f90 \
+		dimensions_field_cdf_ucf.f90

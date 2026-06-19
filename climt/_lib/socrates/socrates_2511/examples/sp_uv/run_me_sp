@@ -1,0 +1,23 @@
+#!/bin/bash
+
+ierr=0
+
+rm -f ch4_* co_* co2_* o2_* o3_* o_* n_* n2_* h2_* h2o_* n2o_* no2_* oh_*
+rm -f *.uvxsc
+rm -f sp_uv_skel sp_uv sp_uv_k
+rm -f prep_spec_log1 prep_spec_log2 tidy_log
+
+echo 'Creating sp_uv spectral file'
+./mk_sp_uv
+diff -q sp_uv   sp_uv_photol || ierr=1
+diff -q sp_uv_k sp_uv_photol_k || ierr=1
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  echo 'sp_uv OK'
+  rm -f ch4_* co_* co2_* o2_* o3_* o_* n_* n2_* h2_* h2o_* n2o_* no2_* oh_*
+  rm -f *.uvxsc
+  rm -f sp_uv_skel sp_uv sp_uv_k
+  rm -f prep_spec_log1 prep_spec_log2 tidy_log
+  exit 0
+fi

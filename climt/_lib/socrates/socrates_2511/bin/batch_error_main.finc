@@ -1,0 +1,16 @@
+! *****************************COPYRIGHT*******************************
+! (C) Crown copyright Met Office. All rights reserved.
+! For further details please refer to the file COPYRIGHT.txt
+! which you should have received as part of this distribution.
+! *****************************COPYRIGHT*******************************
+!
+c     ------------------------------------------------------------------
+c     module to set error control in batch mode.
+c
+      WRITE(iu_err, '(/a)') '*** locking file exists.'
+      WRITE(iu_err, '(a)')
+     &   'this condition is fatal when the locking file exists.'
+      WRITE(iu_err, '(a)') 'aborting...'
+      ierr=i_err_fatal
+      STOP
+c     ------------------------------------------------------------------

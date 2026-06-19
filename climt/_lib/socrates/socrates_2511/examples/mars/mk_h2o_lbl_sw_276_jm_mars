@@ -1,0 +1,60 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+# Set environment variables
+procs=24
+. ./env_mars
+
+# HITRAN2020 data downloaded from hitran.org on 11.11.22
+# (No CO2 broadening coefficients are available for H2O.)
+HITRAN_H2O="${ARCHIVE_DATA}/HITRAN2020/h2o_111122.par"
+
+# CAVIAR foreign-broadened continuum
+CONT_H2O_FRN="${RAD_DATA}/continua/caviar_frn"
+
+mkdir -p ${SW_DATA}
+
+skelfile="${SW_DATA}/sp_sw_276_jm_mars_skel"
+./mk_sp_sw_276_jm_mars_skel $skelfile > /dev/null
+
+lbl_base=${H2O_LBL_VIS%.nc}
+if [ ! -s ${lbl_base}.nc ] || [ ! -f ${lbl_base}.done ] ; then
+  echo "Generating H2O line absorption data: visible"
+  rm -f ${lbl_base}*
+  ck_args="Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} -D $HITRAN_H2O \
+    -lo 1 -R 13 65 -c 2500.0 -i 0.5 \
+    -s $skelfile -m ${lbl_base}_lm -L ${lbl_base}.nc \
+    -np $procs"
+  if command -v sbatch &> /dev/null ; then
+    sbatch -n $procs -o ${lbl_base}_log -t 360 ${ck_args} &
+  else
+    ${ck_args} > ${lbl_base}_log
+  fi
+else
+  echo "File exists:" $H2O_LBL_VIS
+fi
+
+lbl_base=${H2O_LBL_SWF%.nc}
+if [ ! -s ${lbl_base}.nc ] || [ ! -f ${lbl_base}.done ] ; then
+  echo "Generating H2O line + foreign continuum absorption data: near-IR"
+  rm -f ${lbl_base}*
+  ck_args="Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} -D $HITRAN_H2O \
+    -lo 1 -R 66 276 -c 2500.0 -i 0.5 -k -x $CONT_H2O_FRN \
+    -s $skelfile -m ${lbl_base}_lm -L ${lbl_base}.nc \
+    -np $procs"
+  if command -v sbatch &> /dev/null ; then
+    sbatch -n $procs -o ${lbl_base}_log -t 360 ${ck_args} &
+  else
+    ${ck_args} > ${lbl_base}_log
+  fi
+else
+  echo "File exists:" $H2O_LBL_SWF
+fi
+
+exit 0

@@ -1,0 +1,26 @@
+#!/bin/bash
+# Test the runes interface (as used by LFRic)
+
+cp $RAD_DATA/spectra/ga9/sp_sw_ga9* .
+cp $RAD_DATA/spectra/ga9/sp_lw_ga9* .
+
+# Run a simple driver using the runes interface
+runes_driver > output.txt
+
+# Test output against KGO
+ierr=0
+
+(diff -q output.txt gfortran_8_1_0.txt && \
+ echo 'Matched gfortran output') || \
+(diff -q output.txt ifort_19_0_0.txt && \
+ echo 'Matched ifort 19.0.0 output') || \
+(diff -q output.txt ifx_2025_0_4.txt && \
+ echo 'Matched ifx 2025.0.4 output') || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f sp_sw_ga9* sp_lw_ga9* output.txt
+  echo OK
+  exit 0
+fi

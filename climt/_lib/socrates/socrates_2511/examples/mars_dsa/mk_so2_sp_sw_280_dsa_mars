@@ -1,0 +1,118 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+echo -n 'Started mk_so2_sp_sw_280_dsa_mars: '; date
+
+if [ ! $SW_DATA ] ; then
+  SW_DATA=.
+fi
+
+solfile='sun'
+SP_DIR="dsa_mars_hr"
+HITRAN_DIR="$RAD_DATA/gases"
+HITRAN_SO2="$HITRAN_DIR/09_hit12.par"
+if [ ! -s $HITRAN_SO2 ] ; then
+    wget -nc https://lweb.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/09_hit12.zip
+    unzip 09_hit12.zip -d $HITRAN_DIR
+    rm -f 09_hit12.zip
+fi
+HITRAN_UV_SO2="$HITRAN_DIR/SO2_UV08.xsc"
+if [ ! -s $HITRAN_UV_SO2 ] ; then
+    wget -nc https://lweb.cfa.harvard.edu/hitran/HITRAN2012/UV/Cross-sections/SO2_UV08.zip
+    unzip SO2_UV08.zip -d $HITRAN_DIR
+    rm -f SO2_UV08.zip
+fi
+
+procs=8
+pt_file="$RAD_DATA/gases/pt793"
+so2_pt_file="$RAD_DATA/gases/pt_so2_uv"
+ref_pt_file="$RAD_DATA/gases/ref_pt"
+solspec=$RAD_DATA/solar/${solfile}
+specfile="$SP_DIR/sp_sw_280_dsa_mars_${solfile}_so2"
+
+mv ${specfile} ${specfile}_old
+mv ${specfile}_k ${specfile}_old_k
+cp $SP_DIR/sp_sw_280_dsa_mars_${solfile} $specfile
+cp $SP_DIR/sp_sw_280_dsa_mars_${solfile}_k ${specfile}_k
+
+# Add SO2 to the spectral file
+sed -i 's/Total number of gaseous absorbers =     4/Total number of gaseous absorbers =     5/' $specfile
+grep 'Sulphur dioxide' $specfile || \
+sed -i '13 a \    5           9       Sulphur dioxide     ' $specfile
+
+if [ ! -s $SP_DIR/so2_s280_l ] || [ ! -s $SW_DATA/so2_lbl_sw_280_dsa_mars.nc ] ; then
+  echo 'SO2'
+  rm -f $SP_DIR/so2_s280_l*
+  Ccorr_k -F $pt_file -D $HITRAN_SO2 \
+    -R 211 280 -c 2500.0 -i 0.2 -l 9 3.0e-4 -b 1.0e-3  \
+    -s $specfile +S $solspec -lk \
+    -o $SP_DIR/so2_s280_l -m $SP_DIR/so2_s280_lm -L $SW_DATA/so2_lbl_sw_280_dsa_mars.nc \
+    -np $procs \
+     > $SP_DIR/so2_s280_log
+fi
+if [ ! -s $SP_DIR/so2_u280_l ] || [ ! -s $SW_DATA/so2_lbl_uv.nc ] ; then
+  echo 'SO2 (UV)'
+  rm -f $SP_DIR/so2_u280_l*
+  Ccorr_k -F $so2_pt_file -X $HITRAN_UV_SO2 \
+    -R 1 50 -c 2500.0 -i 1.0 -l 9 3.0e-4 -t 1.0e-3  \
+    -s $specfile +S $solspec -q -r $ref_pt_file \
+    -o $SP_DIR/so2_u280_l -m $SP_DIR/so2_u280_lm -L $SW_DATA/so2_lbl_uv.nc \
+    -np $procs \
+     > $SP_DIR/so2_u280_log
+fi
+
+# Add sulphuric acid aerosol
+grep 'Sulphuric Acid' $specfile || \
+sed -i '/Listing of continuum indexing numbers and gases./ i Total number of aerosols =     1\nList of indexing numbers of aerosols.\nIndex       Aerosol(type number and name)\n    1           6       Sulphuric Acid      ' $specfile
+
+if [ ! -s $SP_DIR/sulphuric_sw.avg ] ; then
+  echo 'Sulphuric acid aerosol (SW)'
+  Cscatter_average -s $specfile -P 1 -w -S $solspec \
+    -a $SP_DIR/sulphuric_sw.avg $RAD_DATA/aerosol/sulphuric.mon
+fi
+
+# Replace cloud droplet parametrisation
+if [ ! -s $SP_DIR/fit_sw_drop5 ] ; then
+  echo 'Calculating type 5 droplet data (SW)'
+  rm -f $SP_DIR/fit_sw_drop5 $SP_DIR/mon_sw_drop5
+  Cscatter_average -s $specfile -P 1 -t -S $solspec \
+    -f 5 $SP_DIR/fit_sw_drop5 $SP_DIR/mon_sw_drop5 1.e3 \
+    $RAD_DATA/cloud/scatter_drop_type5
+fi
+
+echo 'Constructing spectral file'
+prep_spec << EOF
+$specfile
+a
+5
+y
+$SP_DIR/so2_s280_l
+5
+y
+$SP_DIR/so2_u280_l
+10
+5
+y
+$SP_DIR/fit_sw_drop5
+1.50000E-06 5.00000E-05
+11
+$SP_DIR/sulphuric_sw.avg
+-1
+EOF
+
+# Add at least one gas k-term in every band for compatibility with MCICA
+tidy_90 <<EOF
+$specfile
+o
+10
+-1
+EOF
+
+echo -n 'Finished mk_so2_sp_sw_280_dsa_mars: '; date
+exit 0

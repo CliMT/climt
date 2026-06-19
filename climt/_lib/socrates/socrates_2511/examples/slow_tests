@@ -1,0 +1,99 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Testing code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+err=0
+
+echo ---
+echo "Checking calc_horizon_angles utility:"
+cd orog
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Checking HITRAN Total Internal Partition Sums:"
+cd tips
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing spectral file creation for photolysis:"
+cd sp_uv
+./run_me_sp_411rd || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdf for photolysis intercomparison case:"
+cd sparcj
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing prep_spec for generating CMIP5 solar variability data:"
+cd spectral_var
+./run_me || err=1
+echo "Testing generation of CMIP6 solar variability data for GA9 files:"
+./run_cmip6 || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdf for CIRC case 3 (GA7 and GA9 spectral files):"
+cd circ
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdl for calculating radiances and fluxes with mls profile:"
+cd setup_atmos
+./run_me mls || err=1
+cd ../
+
+echo ---
+echo "Testing Cscatter, Cscatter_average and prep_spec for generating aerosol data:"
+cd aerosols
+./make_ga8_aerosol || err=1
+cd ../
+
+echo ---
+echo "Testing Cscatter_average and prep_spec for generating GA9 spectral files:"
+cd sp_ga9
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing Cscatter for generating cloud droplet parametrisations:"
+cd droplets
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing Cscatter for generating cloud ice parametrisations:"
+cd ice_crystals
+./run_2022 || err=1
+cd ../
+
+echo ---
+echo "Testing RFMIP profiles"
+cd rfmip
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing COSP:"
+cd cosp
+./run_me || err=1
+cd ../
+
+echo ---
+if [ $err -gt 0 ] ; then
+  echo "Some tests failed."
+  exit 1
+else
+  echo "All passed."
+  exit 0
+fi

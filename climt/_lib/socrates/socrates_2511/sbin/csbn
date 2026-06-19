@@ -1,0 +1,15 @@
+#! /bin/bash
+#
+# Script to rename all CDL-files with a given basename.
+#
+BASE=`basename $1`
+DIR=`dirname $1`
+TARGET_DIR=$PWD/`dirname $2`
+(
+cd $DIR
+for FILE in $BASE.*
+do
+   SUFFIX=`echo $FILE | sed -e "s/^$BASE\.//"`
+   mv $FILE $TARGET_DIR/$2.$SUFFIX
+done
+)

@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# This script adds cloud parametrisations to the trappist-1 spectral files
+# eg:
+# ./mk_sp_cloud dsa_pm 16 46
+# ./mk_sp_cloud dsa_pm 350 280 _hr
+#
+# ./mk_sp_cloud dsa_mars 17 42
+# ./mk_sp_cloud dsa_mars 350 280 _hr
+#
+# ./mk_sp_cloud dsa_ar10bar 15 43
+# ./mk_sp_cloud dsa_ar10bar 350 280 _hr
+#
+# ./mk_sp_cloud dsa 12 21
+# ./mk_sp_cloud dsa 350 280 _hr
+
+solfile='trappist1'
+sp_name=$1
+blw=$2
+bsw=$3
+hr=$4
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+solspec=$RAD_DATA/solar/${solfile}
+sw_specfile=sp_sw_${bsw}_${sp_name}_${solfile}
+lw_specfile=sp_lw_${blw}_${sp_name}
+
+mkdir -p ${sp_name}${hr}
+cd ${sp_name}${hr}
+
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_lw_${sp_name}/${lw_specfile}
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_lw_${sp_name}/${lw_specfile}_k
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_sw_${sp_name}/${sw_specfile}
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_sw_${sp_name}/${sw_specfile}_k
+
+# SW
+echo 'Calculating type 5 droplet data for SW file'
+rm -f fit_sw_drop5 mon_sw_drop5
+Cscatter_average -s $sw_specfile -P 1 -t -S $solspec \
+  -f 5 fit_sw_drop5 mon_sw_drop5 1.e3 \
+  $RAD_DATA/cloud/scatter_drop_type5
+
+prep_spec << EOF
+${sw_specfile}
+a
+10
+5
+y
+fit_sw_drop5
+1.50000E-06 5.00000E-05
+-1
+EOF
+
+# Add at least one gas k-term in every band for compatibility with MCICA
+tidy_90 <<EOF
+${sw_specfile}
+o
+10
+-1
+EOF
+
+# LW
+echo 'Calculating type 5 droplet data for LW file'
+rm -f fit_lw_drop5 mon_lw_drop5
+Cscatter_average -s $lw_specfile -P 1 -t -p 250 \
+  -f 5 fit_lw_drop5 mon_lw_drop5 1.e3 \
+  $RAD_DATA/cloud/scatter_drop_type5
+
+prep_spec << EOF
+${lw_specfile}
+a
+10
+5
+y
+fit_lw_drop5
+1.50000E-06 5.00000E-05
+-1
+EOF
+
+tidy_90 <<EOF
+${lw_specfile}
+o
+10
+-1
+EOF
+
+echo 'Creating mcica_data file'
+rm -f mcica_data
+cp $RAD_DATA/spectra/ga7/mcica_data mcica_data_ga7
+assign_subcols << EOF
+${sw_specfile}
+10
+${lw_specfile}
+6
+mcica_data_ga7
+64
+EOF
+
+rm mcica_data_ga7
+rm fit_lw_drop5
+rm fit_sw_drop5
+rm mon_lw_drop5
+rm mon_sw_drop5
+
+cd ..
+
+exit 0

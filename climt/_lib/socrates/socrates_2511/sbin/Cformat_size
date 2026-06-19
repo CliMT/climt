@@ -1,0 +1,21 @@
+#! /bin/bash
+#
+# SCRIPT TO RUN THE PROGRAM FORMATTING THE SIZE SPECTRA.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -B) BASE_NAME=$2 ; shift 2 ;;
+      -s) SHAPE=$2 ; shift 2 ;;
+      -*) echo "invalid option."; exit -1 ;;
+      *)  INFILE=$1 ; shift ;;
+   esac
+done
+cat > /tmp/fms.$$ << EOF
+$INFILE
+$BASE_NAME
+$SHAPE
+EOF
+format_size < /tmp/fms.$$ > /dev/null
+rm -f /tmp/fms.$$
+rm -f $LOCK_FILE

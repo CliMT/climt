@@ -1,0 +1,5 @@
+The files in this directory are given on the flux levels of the GFDL grid.
+They have been obtained by interpolating from the values given within layers
+on that grid, and as such will differ slightly from files obtained using
+Fels' program for interpolating temperatures and related material. In a precise
+comparison this may be of concern.

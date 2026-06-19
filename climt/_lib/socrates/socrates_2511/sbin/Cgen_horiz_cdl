@@ -1,0 +1,33 @@
+#! /bin/bash
+#
+# Script to run the program to generate a horizontal field.
+# This version works only with one point and basis function.
+#
+touch $LOCK_FILE
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -n) OUTNAME=$2 ; shift 2 ;;
+      -L) OUTLONG=$2 ; shift 2 ;;
+      -u) OUTUNIT=$2 ; shift 2 ;;
+      -F) FIELD=$2 ; shift 2 ;;
+      -N) LONS=$2 ; N_LON=1 ; shift 2 ;;
+      -T) LATS=$2 ; N_LAT=1 ; shift 2 ;;
+       *) echo "Unsupported version of command.\n" ; exit 1 ;;
+   esac
+done
+cat > /tmp/ghc.$$ << EOF
+$N_LON
+$N_LAT
+$LONS
+$LATS
+$FIELD
+$OUTFILE
+$OUTNAME
+$OUTUNIT
+$OUTLONG
+EOF
+gen_horiz_cdl < /tmp/ghc.$$ > /dev/null
+rm -f /tmp/ghc.$$
+rm -f $LOCK_FILE

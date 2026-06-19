@@ -1,0 +1,38 @@
+netcdf lsaw.o3{                                                                 
+
+dimensions:
+    lat            =   1;
+    lon            =   1;
+    plev           =  19;
+
+
+variables:
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                         
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "LONGITUDE";                                        
+    float plev(plev);                                                         
+             plev:units = "Pa";                                               
+             plev:title = "PRESSURE";                                        
+
+    float o3(plev,lon,lat);                                                    
+             o3:units = "None";                                               
+             o3:title = "MMR OF OZONE";                                                      
+
+data:                                                                           
+              lat =   .000000E+00;
+              lon =   .000000E+00;
+             plev =   .531825E+03,  .151950E+04,  .303900E+04,  .582475E+04,
+                      .101300E+05,  .151950E+05,  .202600E+05,  .253250E+05,
+                      .303900E+05,  .359615E+05,  .427993E+05,  .511565E+05,
+                      .607800E+05,  .709100E+05,  .802802E+05,  .881309E+05,
+                      .942596E+05,  .987675E+05,  .100996E+06;
+               o3 =   .119873E-04,  .901387E-05,  .827854E-05,  .630339E-05,
+                      .372233E-05,  .191435E-05,  .106793E-05,  .551575E-06,
+                      .283492E-06,  .147259E-06,  .908987E-07,  .638994E-07,
+                      .528008E-07,  .440535E-07,  .378931E-07,  .346771E-07,
+                      .326204E-07,  .309364E-07,  .300141E-07;
+
+}                                                                               
