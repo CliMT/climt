@@ -77,7 +77,9 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme:
+      - cosmo
+      - climt.scss
     toc: true
     code-fold: false
     code-tools: true
