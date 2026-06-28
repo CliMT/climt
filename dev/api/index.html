@@ -74,10 +74,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e4afb4e1a0694f2f4998bf6043370f38.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-51ec0baac84c74459878fd0df95b10e6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4b26238e72d4953c3ddeb3ffd2642033.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -176,7 +176,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#api-reference" id="toc-api-reference" class="nav-link active" data-scroll-target="#api-reference">API Reference</a>
   <ul class="collapse">
   <li><a href="#radiation" id="toc-radiation" class="nav-link" data-scroll-target="#radiation">Radiation</a></li>
-  <li><a href="#picket-fence-radiation" id="toc-picket-fence-radiation" class="nav-link" data-scroll-target="#picket-fence-radiation">Picket-fence radiation</a></li>
+  <li><a href="#cork-radiation" id="toc-cork-radiation" class="nav-link" data-scroll-target="#cork-radiation">Cork radiation</a></li>
   <li><a href="#convection" id="toc-convection" class="nav-link" data-scroll-target="#convection">Convection</a></li>
   <li><a href="#surface-ice" id="toc-surface-ice" class="nav-link" data-scroll-target="#surface-ice">Surface &amp; ice</a></li>
   <li><a href="#solar-insolation" id="toc-solar-insolation" class="nav-link" data-scroll-target="#solar-insolation">Solar &amp; insolation</a></li>
@@ -218,17 +218,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="picket-fence-radiation" class="level2">
-<h2 class="anchored" data-anchor-id="picket-fence-radiation">Picket-fence radiation</h2>
-<p>Non-grey correlated-k / Parmentier scheme.</p>
+<section id="cork-radiation" class="level2">
+<h2 class="anchored" data-anchor-id="cork-radiation">Cork radiation</h2>
+<p>Non-grey correlated-k (CORK) scheme.</p>
 <table class="caption-top table">
 <tbody>
 <tr class="odd">
-<td><a href="../api/PicketFenceLongwave.html#climt._components.picket_fence.lw.component.PicketFenceLongwave">PicketFenceLongwave</a></td>
+<td><a href="../api/CorkLongwaveRadiation.html#climt._components.cork.lw.component.CorkLongwaveRadiation">CorkLongwaveRadiation</a></td>
 <td></td>
 </tr>
 <tr class="even">
-<td><a href="../api/PicketFenceShortwave.html#climt._components.picket_fence.sw.component.PicketFenceShortwave">PicketFenceShortwave</a></td>
+<td><a href="../api/CorkShortwaveRadiation.html#climt._components.cork.sw.component.CorkShortwaveRadiation">CorkShortwaveRadiation</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -804,14 +804,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">GrayLongwaveRadiation</span><span class="co">](GrayLongwaveRadiation.qmd#climt.GrayLongwaveRadiation)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Frierson06LongwaveOpticalDepth</span><span class="co">](Frierson06LongwaveOpticalDepth.qmd#climt.Frierson06LongwaveOpticalDepth)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">## Picket-fence radiation</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cork radiation</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>Non-grey correlated-k / Parmentier scheme.</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>Non-grey correlated-k (CORK) scheme.</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">PicketFenceLongwave</span><span class="co">](PicketFenceLongwave.qmd#climt._components.picket_fence.lw.component.PicketFenceLongwave)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">PicketFenceShortwave</span><span class="co">](PicketFenceShortwave.qmd#climt._components.picket_fence.sw.component.PicketFenceShortwave)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CorkLongwaveRadiation</span><span class="co">](CorkLongwaveRadiation.qmd#climt._components.cork.lw.component.CorkLongwaveRadiation)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CorkShortwaveRadiation</span><span class="co">](CorkShortwaveRadiation.qmd#climt._components.cork.sw.component.CorkShortwaveRadiation)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">## Convection</span></span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>

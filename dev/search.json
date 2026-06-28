@@ -91,6 +91,13 @@
     "text": "Code\n\n\n\n\n\nDryConvectiveAdjustment\nDryConvectiveAdjustment()\nA conservative scheme to keep the temperature profile close to the dry adiabat if it is super-adiabatic."
   },
   {
+    "objectID": "api/CorkLongwaveRadiation.html",
+    "href": "api/CorkLongwaveRadiation.html",
+    "title": "",
+    "section": "",
+    "text": "Code\n\n\n\n\n\nCorkLongwaveRadiation\n_components.cork.lw.component.CorkLongwaveRadiation(\n    optics='parmentier',\n    table=None,\n    coefficients='solar_composition',\n    rosseland_mean_fit='freedman2014',\n    **kwargs,\n)"
+  },
+  {
     "objectID": "api/BergerSolarInsolation.html",
     "href": "api/BergerSolarInsolation.html",
     "title": "",
@@ -98,127 +105,127 @@
     "text": "Code\n\n\n\n\n\nBergerSolarInsolation\nBergerSolarInsolation(**kwargs)\nDetermines solar insolation using spectral solutions for orbital constants from Berger 1978. This is the same approach taken by CAM 3."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "",
-    "text": "Here is a moist column relaxed to radiative–convective equilibrium (RCE) two ways: once with RRTMG-LW, the workhorse longwave scheme, and once with climt’s picket-fence longwave (PicketFenceLongwave) using its first-cut 4-band Earth table. Same shortwave, same convection, same surface. Only the longwave differs.\n\n\n\nMoist RCE temperature profiles, before vs after. ★ marks the tropopause located by the θ-curvature criterion of §7.\n\n\nLook at the left panel. The picket-fence column (blue) is far warmer than RRTMG (green) through the whole troposphere. The numbers are stark:\n\n\n\nquantity (moist RCE)\n4-band default\nvs RRTMG\n\n\n\n\nsurface temperature\n+11.9 K warmer\nrunaway\n\n\nsurface humidity\n6.48 g/kg\nvs 2.02 (≈3× too moist)\n\n\ntropopause (θ-curvature)\n≈23 hPa\nvs 238 hPa — nowhere close\n\n\n\nA +12 K surface bias with a humidity runaway is not a tuning problem; it is a the scheme is wrong problem. The detective question for the rest of this post: is it the line data, or the scheme?"
+    "text": "Here is a moist column relaxed to radiative–convective equilibrium (RCE) two ways: once with RRTMG-LW, the workhorse longwave scheme, and once with climt’s cork longwave (CorkLongwaveRadiation) using its first-cut 4-band Earth table. Same shortwave, same convection, same surface. Only the longwave differs.\n\n\n\nMoist RCE temperature profiles, before vs after. ★ marks the tropopause located by the θ-curvature criterion of §7.\n\n\nLook at the left panel. The cork column (blue) is far warmer than RRTMG (green) through the whole troposphere. The numbers are stark:\n\n\n\nquantity (moist RCE)\n4-band default\nvs RRTMG\n\n\n\n\nsurface temperature\n+11.9 K warmer\nrunaway\n\n\nsurface humidity\n6.48 g/kg\nvs 2.02 (≈3× too moist)\n\n\ntropopause (θ-curvature)\n≈23 hPa\nvs 238 hPa — nowhere close\n\n\n\nA +12 K surface bias with a humidity runaway is not a tuning problem; it is a the scheme is wrong problem. The detective question for the rest of this post: is it the line data, or the scheme?"
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-symptom",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-symptom",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-symptom",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-symptom",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "",
-    "text": "Here is a moist column relaxed to radiative–convective equilibrium (RCE) two ways: once with RRTMG-LW, the workhorse longwave scheme, and once with climt’s picket-fence longwave (PicketFenceLongwave) using its first-cut 4-band Earth table. Same shortwave, same convection, same surface. Only the longwave differs.\n\n\n\nMoist RCE temperature profiles, before vs after. ★ marks the tropopause located by the θ-curvature criterion of §7.\n\n\nLook at the left panel. The picket-fence column (blue) is far warmer than RRTMG (green) through the whole troposphere. The numbers are stark:\n\n\n\nquantity (moist RCE)\n4-band default\nvs RRTMG\n\n\n\n\nsurface temperature\n+11.9 K warmer\nrunaway\n\n\nsurface humidity\n6.48 g/kg\nvs 2.02 (≈3× too moist)\n\n\ntropopause (θ-curvature)\n≈23 hPa\nvs 238 hPa — nowhere close\n\n\n\nA +12 K surface bias with a humidity runaway is not a tuning problem; it is a the scheme is wrong problem. The detective question for the rest of this post: is it the line data, or the scheme?"
+    "text": "Here is a moist column relaxed to radiative–convective equilibrium (RCE) two ways: once with RRTMG-LW, the workhorse longwave scheme, and once with climt’s cork longwave (CorkLongwaveRadiation) using its first-cut 4-band Earth table. Same shortwave, same convection, same surface. Only the longwave differs.\n\n\n\nMoist RCE temperature profiles, before vs after. ★ marks the tropopause located by the θ-curvature criterion of §7.\n\n\nLook at the left panel. The cork column (blue) is far warmer than RRTMG (green) through the whole troposphere. The numbers are stark:\n\n\n\nquantity (moist RCE)\n4-band default\nvs RRTMG\n\n\n\n\nsurface temperature\n+11.9 K warmer\nrunaway\n\n\nsurface humidity\n6.48 g/kg\nvs 2.02 (≈3× too moist)\n\n\ntropopause (θ-curvature)\n≈23 hPa\nvs 238 hPa — nowhere close\n\n\n\nA +12 K surface bias with a humidity runaway is not a tuning problem; it is a the scheme is wrong problem. The detective question for the rest of this post: is it the line data, or the scheme?"
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#a-primer-the-k-distribution-and-the-one-assumption-it-rests-on",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#a-primer-the-k-distribution-and-the-one-assumption-it-rests-on",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#a-primer-the-k-distribution-and-the-one-assumption-it-rests-on",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#a-primer-the-k-distribution-and-the-one-assumption-it-rests-on",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "2. A primer: the k-distribution, and the one assumption it rests on",
     "text": "2. A primer: the k-distribution, and the one assumption it rests on\n\n\n\n\n\n\nNoteHow correlated-k works (expand if it’s new)\n\n\n\n\n\nA longwave band spans many wavenumbers ν, and the gas absorption coefficient k(ν) varies wildly across it — by orders of magnitude between a transparent gap and the centre of an absorption line. The band-averaged transmission through a column of absorber amount \\(u\\) is\n\\[\\mathcal{T}(u) = \\big\\langle e^{-k(\\nu)\\,u} \\big\\rangle_\\nu .\\]\nYou cannot replace \\(k(\\nu)\\) by its mean: the average of an exponential is not the exponential of the average. Line-by-line integration does it honestly but is far too expensive for a climate model.\nThe k-distribution trick: that integral only depends on the distribution of k-values in the band, not on where in ν they sit. So sort k(ν) from weakest to strongest. You get a smooth, monotonic curve \\(k(g)\\), where \\(g \\in [0,1]\\) is the cumulative fraction of the band. A handful of quadrature points on \\(k(g)\\) — the g-points — then integrate the transmission cheaply. Low-g points are the transparent gaps that radiate to space; high-g points are the saturated line cores.\nThe “correlated” part is the load-bearing assumption. Stacking many layers requires that the rank ordering of k(ν) is preserved with height — that a given g-point corresponds to the same wavenumbers at every level. That holds when one absorber, scaling smoothly with pressure and temperature, dominates the band.\n\n\n\nKeep that last assumption in mind. It is exactly what will break."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#isolating-the-culprit",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#isolating-the-culprit",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#isolating-the-culprit",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#isolating-the-culprit",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "3. Isolating the culprit",
-    "text": "3. Isolating the culprit\nThe clean way to split “line data” from “scheme” is to compare against line-by-line truth — the absorption computed wavenumber by wavenumber, with no k-distribution approximation at all.\n\n\n\nLine-by-line spectral OLR (grey), with the band-integrated totals from line-by-line, picket-fence, and RRTMG.\n\n\nThe line-by-line total matches RRTMG. The picket-fence scheme, fed the same line data, traps more — its outgoing longwave is too low. The line data is fine. The correlated-k scheme is the culprit. Now we have to find out where inside it the error lives."
+    "text": "3. Isolating the culprit\nThe clean way to split “line data” from “scheme” is to compare against line-by-line truth — the absorption computed wavenumber by wavenumber, with no k-distribution approximation at all.\n\n\n\nLine-by-line spectral OLR (grey), with the band-integrated totals from line-by-line, cork, and RRTMG.\n\n\nThe line-by-line total matches RRTMG. The cork scheme, fed the same line data, traps more — its outgoing longwave is too low. The line data is fine. The correlated-k scheme is the culprit. Now we have to find out where inside it the error lives."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-dead-ends-this-is-the-useful-part",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-dead-ends-this-is-the-useful-part",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-dead-ends-this-is-the-useful-part",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-dead-ends-this-is-the-useful-part",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "4. The dead-ends (this is the useful part)",
     "text": "4. The dead-ends (this is the useful part)\nThe obvious instinct is that the scheme is under-resolved. It isn’t, and watching the obvious fixes fail is how you learn what the problem actually is.\n\n\n\n\n\n\nWarningWhat did not work\n\n\n\n\nMore g-points (8 → 16 → 32). The over-trapping barely moves. If this were a quadrature-resolution problem, more g-points would fix it. They don’t.\nFiner vertical resolution. Same story — no help.\nBoosting the line wings. A hack; rejected.\n\nWhen throwing resolution at an error doesn’t move it, you are not fighting a numerical problem. You are fighting a structural assumption — here, the correlated-k spectral-correlation floor. That reframing is what points at the two real levers below."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#root-cause-1-the-water-vapour-continuum-the-dominant-moist-lever",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "5. Root cause #1 — the water-vapour continuum (the dominant moist lever)",
     "text": "5. Root cause #1 — the water-vapour continuum (the dominant moist lever)\nThe H₂O continuum (Mlawer et al. 2012) is a broad, slowly varying absorption that rides underneath the lines. The first-cut table folded it into the line-sorted k-distribution and interpolated it linearly across log-spaced humidity nodes. Because the continuum scales roughly with the square of water-vapour amount, linear interpolation across log-spaced nodes systematically over-shoots — and it over-traps by about 17 W/m² in the moist column.\n\n\n\n\n\n\nTipThe fix (engineering)\n\n\n\nDecouple it. Build the k-distribution from the lines only, and carry the continuum as a separate, band-grey term interpolated in log-X. This is precisely the separation RRTMG uses — its tauself / taufor self- and foreign-continuum paths (Mlawer et al. 1997). Same physics, split into the two pieces that each interpolate cleanly."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#root-cause-2-band-structure-the-lumped-window",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#root-cause-2-band-structure-the-lumped-window",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#root-cause-2-band-structure-the-lumped-window",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#root-cause-2-band-structure-the-lumped-window",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "6. Root cause #2 — band structure (the lumped window)",
     "text": "6. Root cause #2 — band structure (the lumped window)\nThe second lever is the one the primer warned about. The 4-band table lumps the entire 800–1800 cm⁻¹ region into a single band — but that region contains two spectrally distinct populations: the transparent 8–12 µm window, and the opaque H₂O ν₂ band. Sort them together and you get the tell-tale shape:\n\n\n\nk(g) for the lumped window band (left): dry it is low and smooth, but moist it grows a low-g shelf (the window) and a high-g cliff (the H₂O lines). Right: the lumped two-piece curve next to spectrally coherent bands.\n\n\nThat shelf-and-cliff is the fingerprint of two populations in one band. One shared Planck weight and one shared set of g-points cannot represent both at once, so the transparent half can’t open up and gets over-absorbed. Notice the error is invisible when dry (both halves are transparent) and switches on with water vapour — exactly the dry/moist signature we measured.\nThe fix is surgical: a 14-band partition that isolates the window and refines the far-IR and ν₂ regions, so each band is again a single coherent population."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-payoff-and-which-diagnostic-to-trust",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-payoff-and-which-diagnostic-to-trust",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-payoff-and-which-diagnostic-to-trust",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-payoff-and-which-diagnostic-to-trust",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "7. The payoff — and which diagnostic to trust",
-    "text": "7. The payoff — and which diagnostic to trust\nPut both fixes together — decoupled continuum + 14-band structure — and re-run the same moist RCE (the right panel of the first figure):\n\n\n\n\n\n\n\n\nquantity (moist RCE vs RRTMG)\n4-band\n14-band\n\n\n\n\nsurface temperature\n+11.9 K\n+2.0 K\n\n\ndry surface temperature\n—\n+0.8 K\n\n\nsurface humidity\n6.48 vs 2.02 g/kg\n2.38 vs 2.02\n\n\ntropopause (θ-curvature)\n23 hPa vs RRTMG 238\n238 hPa — co-located\n\n\n\nThe warm runaway is gone, the humidity is sane, and the picket-fence tropopause now sits right on top of RRTMG’s.\n\n\n\n\n\n\nTipA diagnostic that survives a broken climate\n\n\n\nLocating the tropopause turned out to need its own work. The simple “potential temperature exceeds the surface value by 10 K” marker mislocated the runaway column badly — it reported a tropopause near 583 hPa, deep in the mid-troposphere, which is physically nonsense. This post instead uses a θ-curvature criterion: the tropopause is the kink where potential temperature stops being convectively well-mixed and shoots up into the stratosphere — the level of maximum |d²θ/d(ln p)²|. It locates the well-behaved 14-band column at 238 hPa (matching RRTMG) and correctly reports the broken 4-band column as pathological — convection driven absurdly deep, tropopause near 23 hPa. You can read it in scripts/experiments/tropopause.py.\n\n\n\n\n\n\n\n\nNoteWhich error metric should you believe?\n\n\n\nThere’s a trap here worth internalising. A fixed-profile single-column comparison reads about +11 W/m² of over-trapping for both the prototype and the shipped 14-band table — it looks like the band work barely helped. Yet the self-adjusting RCE column converges to only ~2 K. The fixed-profile metric over-states the error a column that can adjust its own humidity and lapse rate actually incurs. Always match the diagnostic to the question you’re asking."
+    "text": "7. The payoff — and which diagnostic to trust\nPut both fixes together — decoupled continuum + 14-band structure — and re-run the same moist RCE (the right panel of the first figure):\n\n\n\n\n\n\n\n\nquantity (moist RCE vs RRTMG)\n4-band\n14-band\n\n\n\n\nsurface temperature\n+11.9 K\n+2.0 K\n\n\ndry surface temperature\n—\n+0.8 K\n\n\nsurface humidity\n6.48 vs 2.02 g/kg\n2.38 vs 2.02\n\n\ntropopause (θ-curvature)\n23 hPa vs RRTMG 238\n238 hPa — co-located\n\n\n\nThe warm runaway is gone, the humidity is sane, and the cork tropopause now sits right on top of RRTMG’s.\n\n\n\n\n\n\nTipA diagnostic that survives a broken climate\n\n\n\nLocating the tropopause turned out to need its own work. The simple “potential temperature exceeds the surface value by 10 K” marker mislocated the runaway column badly — it reported a tropopause near 583 hPa, deep in the mid-troposphere, which is physically nonsense. This post instead uses a θ-curvature criterion: the tropopause is the kink where potential temperature stops being convectively well-mixed and shoots up into the stratosphere — the level of maximum |d²θ/d(ln p)²|. It locates the well-behaved 14-band column at 238 hPa (matching RRTMG) and correctly reports the broken 4-band column as pathological — convection driven absurdly deep, tropopause near 23 hPa. You can read it in scripts/experiments/tropopause.py.\n\n\n\n\n\n\n\n\nNoteWhich error metric should you believe?\n\n\n\nThere’s a trap here worth internalising. A fixed-profile single-column comparison reads about +11 W/m² of over-trapping for both the prototype and the shipped 14-band table — it looks like the band work barely helped. Yet the self-adjusting RCE column converges to only ~2 K. The fixed-profile metric over-states the error a column that can adjust its own humidity and lapse rate actually incurs. Always match the diagnostic to the question you’re asking."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#two-more-things-this-bought-us",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#two-more-things-this-bought-us",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#two-more-things-this-bought-us",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#two-more-things-this-bought-us",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "8. Two more things this bought us",
-    "text": "8. Two more things this bought us\nFast vs faithful. Making the table faithful — 14 bands, 8 g-points, a runtime CO₂ axis — made the Python optical-depth and Planck assembly the bottleneck, not the physics. Compiling the two hot loops with Numba’s @njit(parallel=True) (on top of the already-compiled transport kernel) recovered all of it, bit-for-bit:\n\n\n\nLongwave throughput. The faithful 14-band picket-fence scheme is faster than RRTMG.\n\n\nThe faithful scheme ends up faster than RRTMG (here 56.6 vs 65.3 µs/column; your absolute numbers will vary with machine and column count). The lesson is that accuracy and speed were never the trade-off — the cost was un-compiled assembly loops.\nThe free knob. The same table is CO₂-adjustable from 10 to 10 000 ppm through a single runtime axis, interpolated geometrically (log-k against log-X_CO₂). Interpolating CO₂ between table nodes turns out to be fidelity-free: the off-node bias against line-by-line equals the on-node bias. (A leave-one-out test puts log-k interpolation at 5.5 % vs 30.9 % for linear-k.) The probe lives in scripts/experiments/eval_co2_interp_accuracy.py."
+    "text": "8. Two more things this bought us\nFast vs faithful. Making the table faithful — 14 bands, 8 g-points, a runtime CO₂ axis — made the Python optical-depth and Planck assembly the bottleneck, not the physics. Compiling the two hot loops with Numba’s @njit(parallel=True) (on top of the already-compiled transport kernel) recovered all of it, bit-for-bit:\n\n\n\nLongwave throughput. The faithful 14-band cork scheme is faster than RRTMG.\n\n\nThe faithful scheme ends up faster than RRTMG (here 56.6 vs 65.3 µs/column; your absolute numbers will vary with machine and column count). The lesson is that accuracy and speed were never the trade-off — the cost was un-compiled assembly loops.\nThe free knob. The same table is CO₂-adjustable from 10 to 10 000 ppm through a single runtime axis, interpolated geometrically (log-k against log-X_CO₂). Interpolating CO₂ between table nodes turns out to be fidelity-free: the off-node bias against line-by-line equals the on-node bias. (A leave-one-out test puts log-k interpolation at 5.5 % vs 30.9 % for linear-k.) The probe lives in scripts/experiments/eval_co2_interp_accuracy.py."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-answer-key",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-answer-key",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-answer-key",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-answer-key",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "9. The answer key",
-    "text": "9. The answer key\nThe shipped recipe, for reference:\n\n14 bands, edges (cm⁻¹): 10, 250, 350, 500, 630, 700, 800, 980, 1080, 1180, 1250, 1400, 1600, 1800, 3250; 8 g-points per band.\nLine-only k-distribution + a decoupled band-grey H₂O continuum, log-X interpolated.\nA runtime CO₂ axis (10 log nodes, 10–10 000 ppm).\nQuadrilinear interpolation: T (linear), log p (linear), log X_H₂O (linear-k), log X_CO₂ (log-k).\n\nThe picket-fence optics follow the analytic non-grey framework of Parmentier and Guillot (2014); the table ships as earth_low_res_lw, with the original 4-band table preserved as earth_low_res_lw_4band_ngpt2_before for the before/after comparison above."
+    "text": "9. The answer key\nThe shipped recipe, for reference:\n\n14 bands, edges (cm⁻¹): 10, 250, 350, 500, 630, 700, 800, 980, 1080, 1180, 1250, 1400, 1600, 1800, 3250; 8 g-points per band.\nLine-only k-distribution + a decoupled band-grey H₂O continuum, log-X interpolated.\nA runtime CO₂ axis (10 log nodes, 10–10 000 ppm).\nQuadrilinear interpolation: T (linear), log p (linear), log X_H₂O (linear-k), log X_CO₂ (log-k).\n\nThe cork optics follow the analytic non-grey framework of Parmentier and Guillot (2014); the table ships as earth_low_res_lw, with the original 4-band table preserved as earth_low_res_lw_4band_ngpt2_before for the before/after comparison above."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#try-it-yourself",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#try-it-yourself",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#try-it-yourself",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#try-it-yourself",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "Try it yourself",
     "text": "Try it yourself\nEvery figure and number above is reproduced by the companion notebook, which loads the same regenerated artifacts and re-runs the analysis. Run it in the climt environment, or read it through here:"
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-symptom-1",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-symptom-1",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-symptom-1",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-symptom-1",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "1. The symptom",
-    "text": "1. The symptom\nThe shipped-before 4-band Earth-LW table, run to moist radiative-convective equilibrium against RRTMG, runs away: a much warmer surface, runaway humidity, and a tropopause nowhere near RRTMG’s.\n\nbefore = load_rce('rce_moist_before.npz')\nrr = next(l for l in before if l.startswith('RRTMG'))\npf = next(l for l in before if l.startswith('PF'))\n\ndT    = float(before[pf]['T_sfc']) - float(before[rr]['T_sfc'])\ntp_pf = find_tropopause(before[pf]['T'], before[pf]['p_hpa'])['p_curvature']\ntp_rr = find_tropopause(before[rr]['T'], before[rr]['p_hpa'])['p_curvature']\nprint(f'surface warming  PF - RRTMG : {dT:+.2f} K')\nprint(f'q_sfc  PF {float(before[pf][\"q\"][0])*1e3:.2f} g/kg   vs RRTMG {float(before[rr][\"q\"][0])*1e3:.2f} g/kg')\nprint(f'tropopause (theta-curvature)  PF {tp_pf:.0f} hPa   vs RRTMG {tp_rr:.0f} hPa')\n\n# Self-check: the 4-band default really does run away.\nassert dT &gt; 8.0, dT\nassert tp_pf &lt; 100.0, tp_pf   # convection driven absurdly deep vs RRTMG\n\nsurface warming  PF - RRTMG : +11.91 K\nq_sfc  PF 6.48 g/kg   vs RRTMG 2.02 g/kg\ntropopause (theta-curvature)  PF 23 hPa   vs RRTMG 238 hPa"
+    "text": "1. The symptom\nThe shipped-before 4-band Earth-LW table, run to moist radiative-convective equilibrium against RRTMG, runs away: a much warmer surface, runaway humidity, and a tropopause nowhere near RRTMG’s.\n\nbefore = load_rce('rce_moist_before.npz')\nrr = next(l for l in before if l.startswith('RRTMG'))\ncork = next(l for l in before if l.startswith('CORK'))\n\ndT    = float(before[cork]['T_sfc']) - float(before[rr]['T_sfc'])\ntp_cork = find_tropopause(before[cork]['T'], before[cork]['p_hpa'])['p_curvature']\ntp_rr = find_tropopause(before[rr]['T'], before[rr]['p_hpa'])['p_curvature']\nprint(f'surface warming  CORK - RRTMG : {dT:+.2f} K')\nprint(f'q_sfc  CORK {float(before[cork][\"q\"][0])*1e3:.2f} g/kg   vs RRTMG {float(before[rr][\"q\"][0])*1e3:.2f} g/kg')\nprint(f'tropopause (theta-curvature)  CORK {tp_cork:.0f} hPa   vs RRTMG {tp_rr:.0f} hPa')\n\n# Self-check: the 4-band default really does run away.\nassert dT &gt; 8.0, dT\nassert tp_cork &lt; 100.0, tp_cork   # convection driven absurdly deep vs RRTMG\n\nsurface warming  CORK - RRTMG : +11.91 K\nq_sfc  CORK 6.48 g/kg   vs RRTMG 2.02 g/kg\ntropopause (theta-curvature)  CORK 23 hPa   vs RRTMG 238 hPa"
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-k-distribution-and-how-it-fails",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-k-distribution-and-how-it-fails",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-k-distribution-and-how-it-fails",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-k-distribution-and-how-it-fails",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "2. The k-distribution, and how it fails",
     "text": "2. The k-distribution, and how it fails\nA correlated-k band replaces the messy absorption spectrum with its sorted values — a smooth k(g). That is exact for one band of one population. It breaks when a band lumps two populations (a transparent window + opaque lines): the sorted curve grows a low-g shelf and a high-g cliff, and one shared set of g-points / Planck weight can’t represent both. The regenerated figure shows exactly that for the 800–1800 cm⁻¹ window band.\n\ndisplay(Image(os.path.join(ARTIF, 'kg_window_band.png')))\n\n# Pure-Python toy (runs live, even under Pyodide): a k-distribution is just the\n# SORTED absorption coefficients of a band. Build a 'coherent' band (one\n# population) and a 'lumped' band (transparent window + opaque lines).\nrng = np.random.default_rng(0)\ng = np.linspace(0, 1, 2000)\ncoherent = np.sort(rng.lognormal(-2.0, 1.0, 2000))\nlumped = np.sort(np.concatenate([rng.lognormal(-8.0, 0.3, 1000),   # window: tiny k\n                                 rng.lognormal( 0.0, 0.5, 1000)]))  # lines: large k\nplt.figure(figsize=(6, 4))\nplt.semilogy(g, coherent, label='coherent band (one population)')\nplt.semilogy(g, lumped,   label='lumped band (window + lines)')\nplt.xlabel('g (cumulative fraction of band)'); plt.ylabel('k')\nplt.title('k(g): the lumped band\\'s shelf+cliff is the fingerprint of trouble')\nplt.legend(); plt.show()"
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#isolating-the-culprit-1",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#isolating-the-culprit-1",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#isolating-the-culprit-1",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#isolating-the-culprit-1",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "3. Isolating the culprit",
-    "text": "3. Isolating the culprit\nIs the warm bias bad line data, or the scheme? Line-by-line truth (linepyline at the PF diffusivity angle) matches RRTMG; PF over-traps. So it’s the correlated-k scheme, not the physics input.\n\nfig, axes = plt.subplots(1, 2, figsize=(13, 4), sharey=True)\nfor ax, kind in zip(axes, ('moist', 'dry')):\n    d = np.load(os.path.join(ARTIF, f'lbl_olr_spec_{kind}_co2_400ppm.npz'))\n    ax.plot(d['nu'], d['olr_spec'], lw=0.4, color='#444')\n    ax.set_title(f\"{kind}:  LBL={float(d['total']):.1f}   \"\n                 f\"PF={float(d['olr_pf']):.1f}   RRTMG={float(d['olr_rrtmg']):.1f} W/m2\")\n    ax.set_xlabel('wavenumber (cm$^{-1}$)')\naxes[0].set_ylabel('spectral OLR (W/m$^2$/cm$^{-1}$)')\nplt.tight_layout(); plt.show()\n# Lower OLR = more trapping. PF's scalar OLR sits below the line-by-line total."
+    "text": "3. Isolating the culprit\nIs the warm bias bad line data, or the scheme? Line-by-line truth (linepyline at the CORK diffusivity angle) matches RRTMG; CORK over-traps. So it’s the correlated-k scheme, not the physics input.\n\nfig, axes = plt.subplots(1, 2, figsize=(13, 4), sharey=True)\nfor ax, kind in zip(axes, ('moist', 'dry')):\n    d = np.load(os.path.join(ARTIF, f'lbl_olr_spec_{kind}.npz'))\n    ax.plot(d['nu'], d['olr_spec'], lw=0.4, color='#444')\n    ax.set_title(f\"{kind}:  LBL={float(d['total']):.1f}   \"\n                 f\"CORK={float(d['olr_cork']):.1f}   RRTMG={float(d['olr_rrtmg']):.1f} W/m2\")\n    ax.set_xlabel('wavenumber (cm$^{-1}$)')\naxes[0].set_ylabel('spectral OLR (W/m$^2$/cm$^{-1}$)')\nplt.tight_layout(); plt.show()\n# Lower OLR = more trapping. CORK's scalar OLR sits below the line-by-line total."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-dead-ends-and-why-resolution-doesnt-help",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-dead-ends-and-why-resolution-doesnt-help",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-dead-ends-and-why-resolution-doesnt-help",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-dead-ends-and-why-resolution-doesnt-help",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "4. The dead-ends (and why resolution doesn’t help)",
     "text": "4. The dead-ends (and why resolution doesn’t help)\nThe tempting fixes don’t work, and that’s the lesson:\n\nMore g-points (8 → 16 → 32): the over-trapping barely moves. It is not a quadrature-resolution problem.\nFiner vertical resolution: same — no help.\nWing-boost hacks: rejected.\n\nWhen adding resolution doesn’t move the error, you are fighting a structural assumption (the correlated-k spectral-correlation floor), not a numerical one. The real levers turn out to be the H₂O continuum (decouple it) and the band structure (split the lumped window band)."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-fix-and-the-payoff",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#the-fix-and-the-payoff",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#the-fix-and-the-payoff",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#the-fix-and-the-payoff",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "5. The fix, and the payoff",
-    "text": "5. The fix, and the payoff\nThe 14-band table with a decoupled, log-X-interpolated H₂O continuum co-locates PF with RRTMG and tames the surface warming from ~+12 K to ~+2 K.\n\nafter = load_rce('rce_moist_after.npz')\nfig, axes = plt.subplots(1, 2, figsize=(12, 6), sharey=True)\nfor ax, cols, title in ((axes[0], before, 'before: 4-band default'),\n                        (axes[1], after,  'after: 14-band CO$_2$ table')):\n    for label, s in cols.items():\n        ax.plot(s['T'], s['p_hpa'], '-o', ms=3, label=label)\n        tp = find_tropopause(s['T'], s['p_hpa'])['p_curvature']\n        ax.plot(np.interp(tp, s['p_hpa'][::-1], s['T'][::-1]), tp, '*', ms=16, mec='k')\n    ax.set_yscale('log'); ax.grid(alpha=0.3)\n    ax.set_title(title); ax.set_xlabel('Temperature (K)'); ax.legend(fontsize=7)\naxes[0].invert_yaxis()            # invert ONCE: the panels share the y-axis\naxes[0].set_ylabel('Pressure (hPa)')\nplt.tight_layout(); plt.show()\n\nrr2 = next(l for l in after if l.startswith('RRTMG'))\npf2 = next(l for l in after if l.startswith('PF'))\ndT_after = float(after[pf2]['T_sfc']) - float(after[rr2]['T_sfc'])\ntp_pf2 = find_tropopause(after[pf2]['T'], after[pf2]['p_hpa'])['p_curvature']\ntp_rr2 = find_tropopause(after[rr2]['T'], after[rr2]['p_hpa'])['p_curvature']\nprint(f'surface warming PF-RRTMG:  before {dT:+.1f} K  -&gt;  after {dT_after:+.1f} K')\nprint(f'after tropopause  PF {tp_pf2:.0f} hPa  vs RRTMG {tp_rr2:.0f} hPa  (co-located)')\nassert dT_after &lt; 3.0, dT_after\n\n\n\n\n\n\n\n\nsurface warming PF-RRTMG:  before +11.9 K  -&gt;  after +2.0 K\nafter tropopause  PF 238 hPa  vs RRTMG 238 hPa  (co-located)\n\n\n\nWhich diagnostic do you trust?\nA subtlety worth carrying away: a fixed-profile single-column LBL−PF comparison reads about +11 W/m² for both the prototype and the shipped table — yet the self-adjusting RCE column above converges to only ~2 K. The fixed-profile metric over-states the error a column that can adjust its own humidity and lapse rate actually incurs. Trust the diagnostic that matches the question you’re asking."
+    "text": "5. The fix, and the payoff\nThe 14-band table with a decoupled, log-X-interpolated H₂O continuum co-locates CORK with RRTMG and tames the surface warming from ~+12 K to ~+2 K.\n\nafter = load_rce('rce_moist_after.npz')\nfig, axes = plt.subplots(1, 2, figsize=(12, 6), sharey=True)\nfor ax, cols, title in ((axes[0], before, 'before: 4-band default'),\n                        (axes[1], after,  'after: 14-band CO$_2$ table')):\n    for label, s in cols.items():\n        ax.plot(s['T'], s['p_hpa'], '-o', ms=3, label=label)\n        tp = find_tropopause(s['T'], s['p_hpa'])['p_curvature']\n        ax.plot(np.interp(tp, s['p_hpa'][::-1], s['T'][::-1]), tp, '*', ms=16, mec='k')\n    ax.set_yscale('log'); ax.grid(alpha=0.3)\n    ax.set_title(title); ax.set_xlabel('Temperature (K)'); ax.legend(fontsize=7)\naxes[0].invert_yaxis()            # invert ONCE: the panels share the y-axis\naxes[0].set_ylabel('Pressure (hPa)')\nplt.tight_layout(); plt.show()\n\nrr2 = next(l for l in after if l.startswith('RRTMG'))\npf2 = next(l for l in after if l.startswith('CORK'))\ndT_after = float(after[pf2]['T_sfc']) - float(after[rr2]['T_sfc'])\ntp_pf2 = find_tropopause(after[pf2]['T'], after[pf2]['p_hpa'])['p_curvature']\ntp_rr2 = find_tropopause(after[rr2]['T'], after[rr2]['p_hpa'])['p_curvature']\nprint(f'surface warming CORK-RRTMG:  before {dT:+.1f} K  -&gt;  after {dT_after:+.1f} K')\nprint(f'after tropopause  CORK {tp_pf2:.0f} hPa  vs RRTMG {tp_rr2:.0f} hPa  (co-located)')\nassert dT_after &lt; 3.0, dT_after\n\n\n\n\n\n\n\n\nsurface warming CORK-RRTMG:  before +11.9 K  -&gt;  after +2.0 K\nafter tropopause  CORK 238 hPa  vs RRTMG 238 hPa  (co-located)\n\n\n\nWhich diagnostic do you trust?\nA subtlety worth carrying away: a fixed-profile single-column LBL−CORK comparison reads about +11 W/m² for both the prototype and the shipped table — yet the self-adjusting RCE column above converges to only ~2 K. The fixed-profile metric over-states the error a column that can adjust its own humidity and lapse rate actually incurs. Trust the diagnostic that matches the question you’re asking."
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#two-more-things-this-bought-us-1",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#two-more-things-this-bought-us-1",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#two-more-things-this-bought-us-1",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#two-more-things-this-bought-us-1",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "6. Two more things this bought us",
-    "text": "6. Two more things this bought us\nFast vs faithful. Making the table faithful made the Python optical-depth / Planck assembly the bottleneck. Compiling the two hot loops with @njit(parallel=True) made the faithful 14-band scheme faster than RRTMG, bit-for-bit. The free knob. The same table is CO₂-adjustable 10–10000 ppm via one runtime axis, log-k interpolated — interpolating between nodes is fidelity-free (see scripts/experiments/eval_co2_interp_accuracy.py).\n\nt = np.load(os.path.join(ARTIF, 'throughput.npz'))\nrr_us, pf_us = float(t['rrtmg_us_per_col']), float(t['pf_us_per_col'])\nprint(f'throughput @ NCOL={int(t[\"ncol\"])}:  '\n      f'RRTMG {rr_us:.1f} us/col   PF {pf_us:.1f} us/col   '\n      f'(PF/RRTMG = {pf_us/rr_us:.2f}x)')\n# The faithful 14-band PF scheme is faster than RRTMG.\nassert pf_us &lt; rr_us, (pf_us, rr_us)\n\nthroughput @ NCOL=100:  RRTMG 65.3 us/col   PF 56.6 us/col   (PF/RRTMG = 0.87x)"
+    "text": "6. Two more things this bought us\nFast vs faithful. Making the table faithful made the Python optical-depth / Planck assembly the bottleneck. Compiling the two hot loops with @njit(parallel=True) made the faithful 14-band scheme faster than RRTMG, bit-for-bit. The free knob. The same table is CO₂-adjustable 10–10000 ppm via one runtime axis, log-k interpolated — interpolating between nodes is fidelity-free (see scripts/experiments/eval_co2_interp_accuracy.py).\n\nt = np.load(os.path.join(ARTIF, 'throughput.npz'))\nrr_us, cork_us = float(t['rrtmg_us_per_col']), float(t['cork_us_per_col'])\nprint(f'throughput @ NCOL={int(t[\"ncol\"])}:  '\n      f'RRTMG {rr_us:.1f} us/col   CORK {cork_us:.1f} us/col   '\n      f'(CORK/RRTMG = {cork_us/rr_us:.2f}x)')\n# The faithful 14-band CORK scheme is faster than RRTMG.\nassert cork_us &lt; rr_us, (cork_us, rr_us)\n\nthroughput @ NCOL=100:  RRTMG 63.3 us/col   CORK 52.9 us/col   (CORK/RRTMG = 0.84x)"
   },
   {
-    "objectID": "experiments/2026-06-05-picket-fence-co2-bands/index.html#pyodide-live-cells-map",
-    "href": "experiments/2026-06-05-picket-fence-co2-bands/index.html#pyodide-live-cells-map",
+    "objectID": "experiments/2026-06-05-cork-co2-bands/index.html#pyodide-live-cells-map",
+    "href": "experiments/2026-06-05-cork-co2-bands/index.html#pyodide-live-cells-map",
     "title": "What it takes to build a longwave scheme that rivals RRTMG",
     "section": "Pyodide / live-cells map",
     "text": "Pyodide / live-cells map\nFor a future in-browser (JupyterLite) port, this notebook already separates cleanly:\n\nPure-Python-live (run under Pyodide as-is): the setup imports, the k(g) toy in §2, and the analysis/plotting of the pre-baked arrays.\nNeeds pre-baked _artifacts/*.npz (their producers — RRTMG Fortran and the linepyline line-by-line code — don’t run under Pyodide): the symptom (§1), the line-by-line overlay (§3), the before/after RCE (§5), and the throughput scalars (§6). The live RRTMGLongwave import is guarded by RRTMG_AVAILABLE so the notebook degrades gracefully.\n\nThat boundary is the concrete hand-off to the website spec’s deferred live-cells follow-up."
@@ -1110,27 +1117,6 @@
     ]
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "climt",
-    "section": "",
-    "text": "climt (Climate Modelling and Diagnostics Toolkit) is an open-source Python framework for building and running climate models. It provides modular, composable components — radiation, convection, surface, dynamics — with a consistent interface so they can be mixed, matched, and extended."
-  },
-  {
-    "objectID": "index.html#whats-here",
-    "href": "index.html#whats-here",
-    "title": "climt",
-    "section": "What’s here",
-    "text": "What’s here\n\nExperiments — long-form research case studies: reproducible investigations with full methodology, dead-ends and all.\nUser Guide — (coming soon) component reference, configuration, and worked examples.\nRadiative Transfer Walkthrough — (coming soon) a graduate-level tour of non-grey radiation, correlated-k, and the picket-fence scheme.\nAPI Reference — (coming soon) auto-generated from docstrings."
-  },
-  {
-    "objectID": "index.html#quick-links",
-    "href": "index.html#quick-links",
-    "title": "climt",
-    "section": "Quick links",
-    "text": "Quick links\n\nGitHub repository\nFirst experiment: building a longwave scheme that rivals RRTMG"
-  },
-  {
     "objectID": "get-started/quickstart.html",
     "href": "get-started/quickstart.html",
     "title": "Quickstart",
@@ -1618,7 +1604,7 @@
     "href": "experiments/index.html",
     "title": "Experiments",
     "section": "",
-    "text": "Long-form research case studies from the climt project — each a worked investigation, reproducible end to end.\n\n\n\n\n\n\n\n\n\n\n\nWhat it takes to build a longwave scheme that rivals RRTMG\n\n\nA picket-fence correlated-k table ran 12 K too warm. Chasing down why — and the dead-ends along the way — turned into a lesson in how correlated-k really works, and how it fails.\n\n\n\n\n\nJun 5, 2026\n\n\n\n\n\nNo matching items"
+    "text": "Long-form research case studies from the climt project — each a worked investigation, reproducible end to end.\n\n\n\n\n\n\n\n\n\n\n\nWhat it takes to build a longwave scheme that rivals RRTMG\n\n\nA cork correlated-k table ran 12 K too warm. Chasing down why — and the dead-ends along the way — turned into a lesson in how correlated-k really works, and how it fails.\n\n\n\n\n\nJun 5, 2026\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "api/BucketHydrology.html",
@@ -1633,6 +1619,13 @@
     "title": "",
     "section": "Methods",
     "text": "Methods\n\n\n\nName\nDescription\n\n\n\n\narray_call\nCalculates sensible and latent heat flux and returns\n\n\n\n\narray_call\nBucketHydrology.array_call(state, timestep)\nCalculates sensible and latent heat flux and returns surface temperature and soil moisture after timestep."
+  },
+  {
+    "objectID": "api/CorkShortwaveRadiation.html",
+    "href": "api/CorkShortwaveRadiation.html",
+    "title": "",
+    "section": "",
+    "text": "Code\n\n\n\n\n\nCorkShortwaveRadiation\n_components.cork.sw.component.CorkShortwaveRadiation(\n    optics='parmentier',\n    table=None,\n    coefficients='solar_composition',\n    stellar_spectrum='sun',\n    rosseland_mean_fit='freedman2014',\n    **kwargs,\n)"
   },
   {
     "objectID": "api/EmanuelConvection.html",
@@ -1705,11 +1698,11 @@
     "text": "Radiation\nLongwave and shortwave radiation components.\n\n\n\nRRTMGLongwave\nThe Rapid Radiative Transfer Model (RRTMG).\n\n\nRRTMGShortwave\nThe Rapid Radiative Transfer Model (RRTMG).\n\n\nGrayLongwaveRadiation\n\n\n\nFrierson06LongwaveOpticalDepth"
   },
   {
-    "objectID": "api/index.html#picket-fence-radiation",
-    "href": "api/index.html#picket-fence-radiation",
+    "objectID": "api/index.html#cork-radiation",
+    "href": "api/index.html#cork-radiation",
     "title": "",
-    "section": "Picket-fence radiation",
-    "text": "Picket-fence radiation\nNon-grey correlated-k / Parmentier scheme.\n\n\n\nPicketFenceLongwave\n\n\n\nPicketFenceShortwave"
+    "section": "Cork radiation",
+    "text": "Cork radiation\nNon-grey correlated-k (CORK) scheme.\n\n\n\nCorkLongwaveRadiation\n\n\n\nCorkShortwaveRadiation"
   },
   {
     "objectID": "api/index.html#convection",
