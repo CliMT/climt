@@ -5,12 +5,11 @@ from .dry_convection import DryConvectiveAdjustment
 from .emanuel import (
     EmanuelConvection,
     EmanuelConvectionPython,
-    EmanuelConvectionPythonV3,
 )
 from .grid_scale_condensation import GridScaleCondensation
 from .held_suarez import HeldSuarez
 from .instellation import Instellation
-from .picket_fence import PicketFenceLongwave, PicketFenceShortwave
+from .cork import CorkLongwaveRadiation, CorkShortwaveRadiation
 from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .simple_physics import SimplePhysics
@@ -28,13 +27,12 @@ __all__ = (
     RRTMGShortwave,
     EmanuelConvection,
     EmanuelConvectionPython,
-    EmanuelConvectionPythonV3,
     SlabSurface,
     DcmipInitialConditions,
     IceSheet,
     Instellation,
     DryConvectiveAdjustment,
     BucketHydrology,
-    PicketFenceLongwave,
-    PicketFenceShortwave,
+    CorkLongwaveRadiation,
+    CorkShortwaveRadiation,
 )

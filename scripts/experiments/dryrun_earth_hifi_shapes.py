@@ -8,7 +8,7 @@ import numpy as np
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_HERE, "..", ".."))
 sys.path.insert(0, os.path.join(_HERE, ".."))
-from pf_table_builder.k_distribution import kappa_to_k_coeffs
+from cork_table_builder.k_distribution import kappa_to_k_coeffs
 
 nT, nP, nX, nC, ngpt = 12, 8, 7, 10, 8
 band_edges = np.array([10.0, 250.0, 350.0, 500.0, 630.0, 700.0, 800.0,

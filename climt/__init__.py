@@ -8,7 +8,6 @@ from ._components import (
     DryConvectiveAdjustment,
     EmanuelConvection,
     EmanuelConvectionPython,
-    EmanuelConvectionPythonV3,
     Frierson06LongwaveOpticalDepth,
     GrayLongwaveRadiation,
     GridScaleCondensation,
@@ -20,7 +19,6 @@ from ._components import (
     SimplePhysics,
     SlabSurface,
 )
-from ._core.initialization import set_num_longwave_bands, set_num_shortwave_bands
 from ._core import (
     ConstantNotFoundError,
     UnytBackend,
@@ -73,7 +71,6 @@ __all__ = (
     RRTMGShortwave,
     EmanuelConvection,
     EmanuelConvectionPython,
-    EmanuelConvectionPythonV3,
     SlabSurface,
     DcmipInitialConditions,
     IceSheet,

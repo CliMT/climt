@@ -84,3 +84,15 @@ target/
 # Quarto site build output
 docs/_site/
 .quarto/
+
+# Scratch experiments & outputs (preserved on disk, never tracked)
+debug_data/
+.ipynb_checkpoints/
+
+# Quarto notebook render intermediates
+docs/**/*_files/
+
+# Local AI-assistant configs (CLAUDE.md is intentionally tracked)
+.claude/
+.gemini/
+GEMINI.md

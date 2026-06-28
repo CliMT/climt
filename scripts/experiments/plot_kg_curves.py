@@ -1,10 +1,10 @@
-"""Plot correlated-k k(g) curves from a picket-fence LW table — teaching figure.
+"""Plot correlated-k k(g) curves from a cork LW table — teaching figure.
 
 Demonstrates how a correlated-k distribution looks, and how it FAILS when a band
 lumps two spectrally distinct populations (the transparent 8-12 um window + the
 opaque H2O nu2 band in the 800-1800 cm^-1 band of the Earth LW table). See
 docs/notes/corr-k-explainer-seed.md and experiment #16 in
-docs/superpowers/plans/2026-05-16-pf-co2-band-refinement.md.
+docs/superpowers/plans/2026-05-16-cork-co2-band-refinement.md.
 
 k(g) = the band's absorption coefficients sorted from weakest to strongest, with
 g in [0,1] the cumulative fraction of the band. Panel A: the 800-1800 band dry
@@ -22,7 +22,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-TABLE = "climt/_data/picket_fence/correlated_k/earth_low_res_lw_co2refined_linepyline.nc"
+TABLE = "climt/_data/cork/correlated_k/earth_low_res_lw_co2refined_linepyline.nc"
 T_TARGET, P_TARGET = 290.0, 1e5      # K, Pa
 WINDOW_BAND = 4                       # index of 800-1800 cm^-1 in the 6-band table
 

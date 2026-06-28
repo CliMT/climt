@@ -1192,7 +1192,7 @@ climt installed:
 ```bash
 python -m climt.docs show RRTMGLongwave
 python -m climt.docs show set_backend
-python -m climt.docs list --filter Picket
+python -m climt.docs list --filter Cork
 ```
 
 `show` prints the constructor signature, full docstring, base class, the

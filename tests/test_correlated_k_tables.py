@@ -13,7 +13,7 @@ SHIPPED = [
 
 @pytest.mark.parametrize("name", SHIPPED)
 def test_shipped_table_loads_and_has_sane_values(name):
-    from climt._components.picket_fence.optics.correlated_k import load_k_table
+    from climt._components.cork.optics.correlated_k import load_k_table
 
     table = load_k_table(name)
     k = table["k_coefficients"]

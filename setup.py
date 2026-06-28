@@ -46,6 +46,7 @@ requirements = [
     "sympl>=0.5.0",
     "cython>=0.25",
     "scipy>=0.18.1",
+    "importlib_resources",
 ]
 
 test_requirements = [
@@ -302,7 +303,14 @@ setup(
         "climt",
     ],
     package_dir={"climt": "climt"},
-    include_package_data=True,
+    package_data={
+        "climt": [
+            "_data/ozone_profile.npy",
+            "_data/atmospheric_properties/*.toml",
+            "_data/picket_fence/correlated_k/*.nc",
+            "_data/picket_fence/correlated_k/*.npz",
+        ]
+    },
     install_requires=requirements,
     cmdclass={
         "build_ext": climt_build_ext,

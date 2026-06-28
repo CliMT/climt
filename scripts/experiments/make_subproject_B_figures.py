@@ -1,10 +1,10 @@
 # scripts/experiments/make_subproject_B_figures.py
-"""Single entry point for the picket-fence Experiments-post hero figures.
+"""Single entry point for the cork Experiments-post hero figures.
 
     --figure kg          window-band k(g) shelf+cliff (dry vs moist)
-    --figure lbl         PF vs RRTMG vs line-by-line OLR overlay
+    --figure lbl         CORK vs RRTMG vs line-by-line OLR overlay
     --figure rce         before/after moist RCE temperature + tropopause markers
-    --figure throughput  PF vs RRTMG throughput bar (us/col)
+    --figure throughput  CORK vs RRTMG throughput bar (us/col)
 
 Reads existing committed data (debug_data/*.npz) and the .npz produced by the
 RCE/bench --save hooks; writes one PNG to --out. Wired into the experiment's
@@ -33,19 +33,21 @@ def fig_kg(out):
 
 
 def fig_lbl(out):
-    """PF/RRTMG scalar OLR vs line-by-line spectrum, moist + dry at 400 ppm."""
+    """CORK/RRTMG scalar OLR vs line-by-line spectrum, moist + dry at the profile
+    CO2 (376 ppm). The profile-CO2 .npz carries real CORK/RRTMG references; the
+    --co2-override variants set them to NaN (meaningless under the override)."""
     fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
     for ax, kind in zip(axes, ("moist", "dry")):
-        d = np.load(os.path.join(DEBUG, f"lbl_olr_spec_{kind}_co2_400ppm.npz"))
+        d = np.load(os.path.join(DEBUG, f"lbl_olr_spec_{kind}.npz"))
         ax.plot(d["nu"], d["olr_spec"], lw=0.4, color="#444",
                 label="line-by-line")
         ax.set_title(f"{kind}: LBL={float(d['total']):.1f}  "
-                     f"PF={float(d['olr_pf']):.1f}  "
+                     f"CORK={float(d['olr_cork']):.1f}  "
                      f"RRTMG={float(d['olr_rrtmg']):.1f} W/m$^2$")
         ax.set_xlabel("wavenumber (cm$^{-1}$)")
         ax.legend(fontsize=8)
     axes[0].set_ylabel("spectral OLR (W/m$^2$/cm$^{-1}$)")
-    fig.suptitle("Line-by-line truth vs PF and RRTMG (CO$_2$=400 ppm)")
+    fig.suptitle("Line-by-line truth vs CORK and RRTMG (CO$_2$=376 ppm)")
     fig.tight_layout(rect=[0, 0, 1, 0.94])
     fig.savefig(out, dpi=140)
     plt.close(fig)
@@ -81,7 +83,7 @@ def fig_rce(out, before_npz, after_npz):
     # Inverting per-axis in the loop would double-invert back to upright.
     axes[0].invert_yaxis()
     axes[0].set_ylabel("Pressure (hPa)")
-    fig.suptitle("Moist RCE: PF vs RRTMG (★ = θ-curvature tropopause)")
+    fig.suptitle("Moist RCE: CORK vs RRTMG (★ = θ-curvature tropopause)")
     fig.tight_layout(rect=[0, 0, 1, 0.94])
     fig.savefig(out, dpi=140)
     plt.close(fig)
@@ -90,8 +92,8 @@ def fig_rce(out, before_npz, after_npz):
 def fig_throughput(out, npz):
     d = np.load(npz)
     fig, ax = plt.subplots(figsize=(5, 5))
-    vals = [float(d["rrtmg_us_per_col"]), float(d["pf_us_per_col"])]
-    ax.bar(["RRTMG-LW", "PF-LW\n(14b×8g, njit)"], vals,
+    vals = [float(d["rrtmg_us_per_col"]), float(d["cork_us_per_col"])]
+    ax.bar(["RRTMG-LW", "CORK-LW\n(14b×8g, njit)"], vals,
            color=["#888", "#1f77b4"])
     for i, v in enumerate(vals):
         ax.text(i, v, f"{v:.1f}", ha="center", va="bottom")
