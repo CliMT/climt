@@ -1,6 +1,8 @@
 {
-  "_artifacts/01_mean_of_exp.png": "0f03bc75d6fae150d8cbf21a210eb38ae5b744c2b4dfdb704d4f22a39f303c95",
-  "_artifacts/03_k_distribution_construction.png": "0f03bc75d6fae150d8cbf21a210eb38ae5b744c2b4dfdb704d4f22a39f303c95",
-  "_artifacts/06_picket_fence_opacity.png": "2941cf39c17e07cd0291c6a785a2eb7c74ef9e6c2bb7ffc4855a2b919cb53154",
-  "_artifacts/07_two_stream_phases.png": "886e97ded81ae7f20df38af3f39a69477b632e9a8b6a6e7a100fd6cad8015ebf"
+  "_artifacts/01_mean_of_exp.png": "5f82b8cef51e53015ba8a42133b8802236473da57d07e9dc3c5b8e32081343c2",
+  "_artifacts/02_lbl_H2O_1000_1200.png": "07861847a07af9f5e40daab6b588a641b842257d7789a47ac6fbcbe676418c09",
+  "_artifacts/03_k_distribution_construction.png": "5f82b8cef51e53015ba8a42133b8802236473da57d07e9dc3c5b8e32081343c2",
+  "_artifacts/04_correlation_across_T.png": "8d1cd4234ffac809033d7f176c1652a9f54bcd17a5bd3c7ebeb6affd06d8cbf5",
+  "_artifacts/06_picket_fence_opacity.png": "74a00bbc84968bff738f477544a85b7480f1db19aae7494731c55fc350033de9",
+  "_artifacts/07_two_stream_phases.png": "eda2bffa4ddf00ff8ac2ab1f2f4050a46b521b7e2a62394b6dde337269c09346"
 }

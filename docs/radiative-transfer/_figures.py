@@ -6,16 +6,15 @@ CORK module layout (``climt._components.cork.*`` — the scheme formerly named
 (``make experiments``): each artifact invokes this module with
 ``--figure NAME --out PATH`` and one PNG is written per call.
 
-Two figures depend on ``linepyline`` (an optional HITRAN line-by-line package):
-``02_lbl_H2O_1000_1200`` and ``04_correlation_across_T``. When ``linepyline`` is
-absent they print a skip notice and write nothing, so they are intentionally NOT
-wired into ``sources.yml`` (the build driver requires every manifest command to
-produce its output file). On a machine with ``linepyline`` installed, run them
-directly to (re)generate the committed PNGs, e.g.::
+Two figures (``02_lbl_H2O_1000_1200`` and ``04_correlation_across_T``) are
+line-by-line and depend on the optional ``linepyline`` package. To keep them
+reproducible here and in CI without that dependency, the heavy LBL arrays are
+frozen into ``.npz`` files (committed beside the PNGs) by ``_lbl_data.py``, which
+is run once in a ``linepyline`` env. These two functions just plot from the
+frozen ``.npz``; regenerate the inputs with::
 
-    python docs/radiative-transfer/_figures.py \
-        --figure 02_lbl_H2O_1000_1200 \
-        --out docs/radiative-transfer/_artifacts/02_lbl_H2O_1000_1200.png
+    python docs/radiative-transfer/_lbl_data.py \
+        --out-dir docs/radiative-transfer/_artifacts
 """
 import argparse
 import os
@@ -50,19 +49,24 @@ def fig_01_mean_of_exp(out):
     _save(fig, out)
 
 
+def _load_npz(out):
+    """Load the frozen LBL .npz that sits beside the target PNG."""
+    npz = os.path.splitext(out)[0] + ".npz"
+    if not os.path.exists(npz):
+        raise FileNotFoundError(
+            f"{npz} not found. Generate it once in a linepyline env:\n"
+            f"  python docs/radiative-transfer/_lbl_data.py "
+            f"--out-dir {os.path.dirname(out)}")
+    return np.load(npz)
+
+
 def fig_02_lbl_spectrum(out):
-    """Chapter 2: H2O absorption cross-section near 1000-1200 cm^-1 (linepyline)."""
-    try:
-        import linepyline as lpl
-    except ImportError:
-        print("linepyline not available; skipping 02_lbl_H2O_1000_1200")
-        return
-    wn = np.linspace(1000.0, 1200.0, 20000)
-    sigma = lpl.rtm(species="H2O", T=296.0, p=1.0e5, wavenumber=wn)
+    """Chapter 2: H2O LBL absorption near 1000-1200 cm^-1 (from frozen .npz)."""
+    d = _load_npz(out)
     fig, ax = plt.subplots(figsize=(6, 3.5))
-    ax.semilogy(wn, sigma, lw=0.4)
+    ax.semilogy(d["nu"], d["kappa"], lw=0.4)
     ax.set_xlabel("wavenumber (cm$^{-1}$)")
-    ax.set_ylabel(r"$\sigma$ (cm$^{2}$/molecule)")
+    ax.set_ylabel(r"$\kappa$ (m$^{2}$/kg)")
     ax.set_title("H$_2$O LBL absorption, T=296 K, p=1 bar")
     _save(fig, out)
 
@@ -89,20 +93,14 @@ def fig_03_k_distribution_construction(out):
 
 
 def fig_04_correlation_across_T(out):
-    """Chapter 4: sorted σ at two different T share rank order (linepyline)."""
-    try:
-        import linepyline as lpl
-    except ImportError:
-        print("linepyline not available; skipping 04_correlation_across_T")
-        return
-    wn = np.linspace(1000.0, 1200.0, 4000)
-    s1 = np.sort(lpl.rtm("H2O", 250.0, 1e5, wn))
-    s2 = np.sort(lpl.rtm("H2O", 350.0, 1e5, wn))
+    """Chapter 4: sorted κ at two different T share rank order (from frozen .npz)."""
+    d = _load_npz(out)
+    s1, s2 = d["k_lo"], d["k_hi"]
     fig, ax = plt.subplots(figsize=(5, 3.5))
     ax.loglog(s1, s2, ".", ms=1)
     ax.plot([s1.min(), s1.max()], [s1.min(), s1.max()], "k--", alpha=0.4)
-    ax.set_xlabel(r"sorted $\sigma$(T=250 K)")
-    ax.set_ylabel(r"sorted $\sigma$(T=350 K)")
+    ax.set_xlabel(r"sorted $\kappa$(T=250 K), m$^2$/kg")
+    ax.set_ylabel(r"sorted $\kappa$(T=350 K), m$^2$/kg")
     ax.set_title("Correlated-k assumption: rank order is approximately preserved")
     _save(fig, out)
 
