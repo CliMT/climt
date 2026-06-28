@@ -33,10 +33,12 @@ def fig_kg(out):
 
 
 def fig_lbl(out):
-    """CORK/RRTMG scalar OLR vs line-by-line spectrum, moist + dry at 400 ppm."""
+    """CORK/RRTMG scalar OLR vs line-by-line spectrum, moist + dry at the profile
+    CO2 (376 ppm). The profile-CO2 .npz carries real CORK/RRTMG references; the
+    --co2-override variants set them to NaN (meaningless under the override)."""
     fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
     for ax, kind in zip(axes, ("moist", "dry")):
-        d = np.load(os.path.join(DEBUG, f"lbl_olr_spec_{kind}_co2_400ppm.npz"))
+        d = np.load(os.path.join(DEBUG, f"lbl_olr_spec_{kind}.npz"))
         ax.plot(d["nu"], d["olr_spec"], lw=0.4, color="#444",
                 label="line-by-line")
         ax.set_title(f"{kind}: LBL={float(d['total']):.1f}  "
@@ -45,7 +47,7 @@ def fig_lbl(out):
         ax.set_xlabel("wavenumber (cm$^{-1}$)")
         ax.legend(fontsize=8)
     axes[0].set_ylabel("spectral OLR (W/m$^2$/cm$^{-1}$)")
-    fig.suptitle("Line-by-line truth vs CORK and RRTMG (CO$_2$=400 ppm)")
+    fig.suptitle("Line-by-line truth vs CORK and RRTMG (CO$_2$=376 ppm)")
     fig.tight_layout(rect=[0, 0, 1, 0.94])
     fig.savefig(out, dpi=140)
     plt.close(fig)

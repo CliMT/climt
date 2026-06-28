@@ -1,9 +1,8 @@
 {
-  "_artifacts/kg_window_band.png": "287fc3448c00f275751cd32a3801ce9fbcec1e9d64374637227211a206837fb5",
-  "_artifacts/lbl_overlay.png": "b86764e63163cbe7894f685b60fce3f5283af6a9dbed2a1d9b6f1477b50a6ad1",
-  "_artifacts/rce_before_after.png": "9426c3ebe49d5f752dd0c87105070566822c6a2f3eaad36992c83d9de5fb6f10",
-  "_artifacts/rce_moist_after.npz": "03a1f2bf375135090e07ae4e83f13b2ddd3a6dca930deac8f49fb3a9f6d81e93",
-  "_artifacts/rce_moist_before.npz": "38c2f8616af47a5d7d5bfb3d209a9beb9a3a617686a45929f3653e67d71b8a21",
-  "_artifacts/throughput.npz": "e85dd3037aaf80889ab0ca24d2546a3a15459973e80af8a227afba00b2be33bd",
-  "_artifacts/throughput.png": "30ca43aad49aadd86d6b0fa09cbce6b5b08a4278c48dabacf7cf2b15e8908d94"
+  "_artifacts/rce_moist_before.npz": "48a322a98b4f19f2f7a3dbca2b2feb2ed2964e80b49865af7ef49ce26b1f8ff7",
+  "_artifacts/rce_moist_after.npz": "54c01e73c8f8e9e089e056895ebe09524c000f4fb918d926fde1f4ae2e8bb6fc",
+  "_artifacts/throughput.npz": "4d7186aa4539494b0e03fa59adb68a316f254531d52ec79f6408d3310ceecc5a",
+  "_artifacts/lbl_overlay.png": "ec6141adb96194d37f115388c353a8b9f917adc7c6c3245557cd31144624f87a",
+  "_artifacts/rce_before_after.png": "0df50dd5b9ec7a6a59f107963d151d37ce52f6dcc821c1e7bd4a42464a7c39e7",
+  "_artifacts/throughput.png": "06343cf840aa675845969efa93984204be846fdf3ec1acf480e0ee9f47e23614"
 }
