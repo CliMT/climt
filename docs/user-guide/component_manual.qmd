@@ -1,0 +1,8 @@
+---
+title: "Component Manual"
+---
+
+Detailed documentation for specific climt components.
+
+- [RRTMG clouds](rrtmg_clouds.qmd) — Using RRTMG radiation with cloud properties
+- [Emanuel convection](emanuel_convection.qmd) — The Emanuel (1991) convection scheme
