@@ -40,37 +40,12 @@ manageable for 2–3 major absorbers.
 
 climt computes ESFT weights in `compute_esft_weights`:
 
-```python
-def compute_esft_weights(gpoint_weights, ngas):
-    """Compute ESFT combined g-point weights for multiple gases.
-
-    For N gases each with G g-points, produces G^N combined weights per band,
-    where the combined weight is the product of individual gas weights.
-
-    Args:
-        gpoint_weights: (nband, ngpt) per-gas g-point weights
-        ngas: number of gases
-
-    Returns:
-        combined_weights: (nband, ngpt**ngas) combined weights
-    """
-    nband, ngpt = gpoint_weights.shape
-    ngpt_combined = ngpt ** ngas
-    combined = np.zeros((nband, ngpt_combined))
-    for b in range(nband):
-        w = gpoint_weights[b]
-        for idx in range(ngpt_combined):
-            weight = 1.0
-            remainder = idx
-            for gas in range(ngas):
-                g_idx = remainder % ngpt
-                remainder //= ngpt
-                weight *= w[g_idx]
-            combined[b, idx] = weight
-    return combined
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.optics.correlated_k import compute_esft_weights
+print(inspect.getsource(compute_esft_weights))
 ```
-
-*(Source: `climt/_components/picket_fence/optics/correlated_k.py`)*
 
 ## Worked example
 
