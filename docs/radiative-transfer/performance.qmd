@@ -15,7 +15,7 @@ measured with 100 columns × 30 levels in a single process.
 
 ![**Figure A.1** — CORK-LW vs. RRTMG-LW throughput at 100 columns × 30 levels.
 CORK-LW (14 bands, 8 g-points) achieves 52.9 µs/col against RRTMG-LW's 63.3 µs/col
-— a 1.19× speedup. The profile breakdown shows that the Numba-compiled
+(0.84× relative wall-clock time — see table below). The profile breakdown shows that the Numba-compiled
 `_ck_tau_additive_co2_kernel` dominates the hot path.
 ](../experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png){#fig-throughput}
 
@@ -75,7 +75,7 @@ are performed **once per component call** inside `CorkLongwaveRadiation.array_ca
 before any kernel is invoked. The compiled kernels receive raw NumPy arrays of
 the correct shape and units and never touch Python objects.
 
-### Grace-ful no-Numba fallback
+### Graceful no-Numba fallback
 
 When Numba is unavailable (e.g. in a Pyodide/WebAssembly context), `common.py`
 replaces `@njit` with a no-op decorator and `prange` with the built-in `range`.
@@ -124,10 +124,11 @@ always make a warm-up call before recording.
 Run the benchmark script from the repo root (climt environment):
 
 ```bash
-conda run -n climt python scripts/benchmark_picket_fence.py
+conda run --no-capture-output -n climt python scripts/experiments/bench_cork_vs_rrtmg.py
 ```
 
-This prints the per-call timing and throughput breakdown and saves
+Pass `--save <path>.npz` to persist raw timing arrays. This prints the
+per-call timing and throughput breakdown and saves
 `docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png`.
 :::
 
