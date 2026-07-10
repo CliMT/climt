@@ -1,8 +1,7 @@
 name: docs
-
 on:
   push:
-    branches: [develop, main, feature/climt-website]
+    branches: [develop, main]
   pull_request:
     branches: [develop, main]
   workflow_dispatch:
@@ -10,34 +9,27 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
-
-      - uses: quarto-dev/quarto-actions/setup@v2
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
+      - uses: quarto-dev/quarto-actions/setup@v2
       - name: Install climt + docs deps
         run: |
-          pip install "griffe<2.0" quartodoc pyyaml
+          pip install quartodoc pyyaml jupyter matplotlib numpy
           pip install -e . --no-deps
-
+      - name: Verify experiment artifacts are not stale
+        run: python scripts/build_experiments.py --check
       - name: Build API reference
         run: cd docs && quartodoc build
-
       - name: Render site
         run: quarto render docs/
-
       - name: Upload site artifact
         uses: actions/upload-artifact@v4
         with:
           name: site
           path: docs/_site/
-
       - name: Deploy to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
