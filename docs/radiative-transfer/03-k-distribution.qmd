@@ -65,10 +65,15 @@ $k_i$ and $w_i$ above, tabulated on a T-p grid.
 ::: {.callout-tip}
 ## Try it yourself
 
-`examples/k_distribution_demo.ipynb`, cells 5–7: build $k(g)$ from an LBL
-spectrum and verify that 2-point quadrature reproduces the true band-averaged
-transmission to better than 2 % relative error.
+`examples/k_distribution_demo.ipynb` (embedded below): build $k(g)$ from a
+synthetic LBL spectrum, see why 2-gpoint quadrature falls short (~10 % error),
+then scale to 8-point Gauss-Legendre — matching what CORK uses — and verify
+the reconstruction error drops below 2 %.
 :::
+
+## Hands-on: k-distribution from scratch
+
+{{< embed k_distribution_demo.ipynb echo=true >}}
 
 ## Further reading
 
