@@ -1,7 +1,7 @@
-# PicketFenceShortwave { #climt._components.picket_fence.sw.component.PicketFenceShortwave }
+# CorkShortwaveRadiation { #climt._components.cork.sw.component.CorkShortwaveRadiation }
 
 ```python
-_components.picket_fence.sw.component.PicketFenceShortwave(
+_components.cork.sw.component.CorkShortwaveRadiation(
     optics='parmentier',
     table=None,
     coefficients='solar_composition',

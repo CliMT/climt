@@ -44,7 +44,7 @@ climt applies this inside `_delta_scale` before every two-stream solve.
 
 With per-layer $(R, T)$ known, the **adding method** combines layers bottom-up
 into a column albedo and flux profile. The `_adding` function in
-`climt/_components/picket_fence/sw/kernels.py` propagates both diffuse and
+`climt/_components/cork/sw/kernels.py` propagates both diffuse and
 direct-beam components in one downward-then-upward sweep.
 
 ## Longwave transport

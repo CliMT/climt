@@ -1,7 +1,7 @@
-# PicketFenceLongwave { #climt._components.picket_fence.lw.component.PicketFenceLongwave }
+# CorkLongwaveRadiation { #climt._components.cork.lw.component.CorkLongwaveRadiation }
 
 ```python
-_components.picket_fence.lw.component.PicketFenceLongwave(
+_components.cork.lw.component.CorkLongwaveRadiation(
     optics='parmentier',
     table=None,
     coefficients='solar_composition',

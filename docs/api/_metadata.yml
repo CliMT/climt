@@ -11,13 +11,13 @@ quartodoc:
         - RRTMGShortwave
         - GrayLongwaveRadiation
         - Frierson06LongwaveOpticalDepth
-    - title: "Picket-fence radiation"
-      desc: "Non-grey correlated-k / Parmentier scheme."
+    - title: "Cork radiation"
+      desc: "Non-grey correlated-k (CORK) scheme."
       contents:
-        - name: PicketFenceLongwave
-          package: climt._components.picket_fence.lw.component
-        - name: PicketFenceShortwave
-          package: climt._components.picket_fence.sw.component
+        - name: CorkLongwaveRadiation
+          package: climt._components.cork.lw.component
+        - name: CorkShortwaveRadiation
+          package: climt._components.cork.sw.component
     - title: "Convection"
       contents:
         - EmanuelConvection

@@ -11,14 +11,14 @@ Longwave and shortwave radiation components.
 | [GrayLongwaveRadiation](GrayLongwaveRadiation.qmd#climt.GrayLongwaveRadiation) |  |
 | [Frierson06LongwaveOpticalDepth](Frierson06LongwaveOpticalDepth.qmd#climt.Frierson06LongwaveOpticalDepth) |  |
 
-## Picket-fence radiation
+## Cork radiation
 
-Non-grey correlated-k / Parmentier scheme.
+Non-grey correlated-k (CORK) scheme.
 
 | | |
 | --- | --- |
-| [PicketFenceLongwave](PicketFenceLongwave.qmd#climt._components.picket_fence.lw.component.PicketFenceLongwave) |  |
-| [PicketFenceShortwave](PicketFenceShortwave.qmd#climt._components.picket_fence.sw.component.PicketFenceShortwave) |  |
+| [CorkLongwaveRadiation](CorkLongwaveRadiation.qmd#climt._components.cork.lw.component.CorkLongwaveRadiation) |  |
+| [CorkShortwaveRadiation](CorkShortwaveRadiation.qmd#climt._components.cork.sw.component.CorkShortwaveRadiation) |  |
 
 ## Convection
 
