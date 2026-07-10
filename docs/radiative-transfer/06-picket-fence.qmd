@@ -84,3 +84,12 @@ HD 209458b to radiative equilibrium.
 
 - @parmentier2014 — the original picket-fence analytical model.
 - @parmentier2015 — the ratio-coefficient tables used by climt.
+
+## Spectral anatomy: a hands-on tour
+
+The notebook below runs the CORK LW component in correlated-k mode on a
+standard Earth column, visualises per-band optical depth, transmittance, net
+flux, and heating-rate contributions for all 14 LW bands, and finishes with a
+CO₂-doubling experiment showing Δτ, Δheating rate, and ΔOLR per band.
+
+{{< embed spectral_radiation_anatomy.ipynb echo=true >}}
