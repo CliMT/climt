@@ -31,12 +31,12 @@ gas-forcing experiments (e.g., CO₂ doubling).
 For scenarios outside Chaverot's Zenodo coverage (Titan, TRAPPIST-1e,
 ad-hoc compositions), climt ships a second offline pipeline using
 [linepyline](https://github.com/exoclime/linepyline) and HITRAN 2024
-line data. The driver is `scripts/generate_pf_tables_linepyline.py`.
+line data. The driver is `scripts/generate_cork_tables_linepyline.py`.
 
 Building a Titan table (run from the `linepyline` conda env):
 
 ```bash
-conda run -n linepyline python scripts/generate_pf_tables_linepyline.py \
+conda run -n linepyline python scripts/generate_cork_tables_linepyline.py \
     --scenario titan --kind lw \
     --output climt/_data/cork/correlated_k/titan_lw.nc
 ```
