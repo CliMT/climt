@@ -142,9 +142,12 @@ is active.
 ::: {.callout-tip}
 ## Try it yourself
 
-`examples/picket_fence_vs_rrtmg.ipynb` compares Parmentier-mode hot-Jupiter
-and Earth T-p profiles and shows how to use `load_atmospheric_properties` to
-switch between them in a single notebook.
+`examples/cork_vs_rrtmg.ipynb` (embedded below) runs CORK across the two ends of
+its design range: a Parmentier-mode HD 209458b hot-Jupiter T-p profile checked
+against the Parmentier & Guillot (2014) analytic reference, and an Earth
+clear-sky correlated-k broadband LW flux compared directly against RRTMG on an
+identical atmospheric column. A closing discussion covers where the CORK/RRTMG
+agreement holds and where it breaks down (ozone, CO₂ sensitivity, throughput).
 :::
 
 ## Further reading
@@ -153,3 +156,7 @@ switch between them in a single notebook.
   radiative transfer worked out for terrestrial and gas-giant atmospheres.
 - @parmentier2015 — the ratio-coefficient tables that CORK uses; the same
   optics run unchanged across hot Jupiters and brown dwarfs.
+
+## Hands-on: CORK across planets, and against RRTMG
+
+{{< embed cork_vs_rrtmg.ipynb echo=true >}}
