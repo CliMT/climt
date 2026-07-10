@@ -1,7 +1,155 @@
 ---
 title: "Chapter 8: Switching planets"
+bibliography: ../../references.bib
 ---
 
-::: {.callout-note}
-This chapter is being written. See the [walkthrough index](index.qmd).
+Every radiation scheme makes hidden assumptions about planetary constants:
+gravitational acceleration $g$, the molar mass of dry air, heat capacity,
+rotation rate. Hard-coded Earth values make reuse on other planets painful.
+climt routes all of these through sympl's constants dictionary and exposes a
+**profile-swap API** that lets a single codebase run Earth, Mars, Titan, or a
+hot Jupiter without touching any component code.
+
+## The API
+
+```{python}
+#| echo: true
+import inspect
+from climt._core.atmospheric_properties import load_atmospheric_properties
+print(inspect.getsource(load_atmospheric_properties))
+```
+
+```{python}
+#| echo: true
+import inspect
+from climt._core.atmospheric_properties import reset_atmospheric_properties
+print(inspect.getsource(reset_atmospheric_properties))
+```
+
+A typical session switches profiles, runs the model, then restores Earth
+defaults:
+
+```python
+import climt
+
+# Default at import — Earth standard atmosphere
+climt.load_atmospheric_properties("earth")
+
+# Switch to Mars for one run
+climt.load_atmospheric_properties("mars")
+# ... run your Mars simulation ...
+climt.reset_atmospheric_properties()       # back to Earth
+
+# Or load a fully custom profile
+climt.load_atmospheric_properties("/path/to/my_exoplanet.toml")
+```
+
+Each call takes a deep-copy snapshot of the current constants, then overwrites
+only the keys present in the loaded TOML. `reset_atmospheric_properties()`
+restores from that snapshot.
+
+## Profile TOML format
+
+A profile TOML has three sections: `[planetary]`, `[bulk_atmosphere]`, and
+`[gas_species]`. Each entry is `{ value = ..., units = ... }`. A profile
+declares only the constants its planet needs — a bone-dry Mars profile can
+omit `molar_mass_of_water_vapor` entirely if no component asks for it.
+
+For example, the Mars profile at
+`climt/_data/atmospheric_properties/mars.toml` sets:
+
+```toml
+[planetary]
+gravitational_acceleration = { value = 3.721, units = "m/s^2" }
+planetary_radius           = { value = 3389500.0, units = "m" }
+
+[bulk_atmosphere]
+molar_mass_of_dry_air = { value = 43.34, units = "g/mol" }
+gas_constant_of_dry_air = { value = 191.8, units = "J/kg/K" }
+heat_capacity_of_dry_air_at_constant_pressure = { value = 735.0, units = "J/kg/K" }
+
+[condensible]
+species = "co2"
+```
+
+The `[condensible]` section tells climt which condensible species to track
+(CO₂ dry ice on Mars, CH₄ rain on Titan). Omitting it defaults to `h2o`.
+
+## Built-in profiles
+
+climt ships five built-in profiles:
+
+| Name | Description |
+|------|-------------|
+| `earth` | Earth standard atmosphere (loaded at `import climt`) |
+| `mars` | Mars CO₂-dominated atmosphere |
+| `titan` | Titan N₂/CH₄ atmosphere |
+| `hot_jupiter` | Generic H₂/He hot Jupiter |
+| `trappist1e` | TRAPPIST-1e estimated atmosphere |
+
+Adding your own is two steps: write a TOML following the format above, then
+pass its path to `load_atmospheric_properties`. No code changes in climt are
+required.
+
+## Missing-constant errors
+
+If a component asks for a constant the active profile does not declare, climt
+raises `ConstantNotFoundError` with a message pointing you to the fix:
+
+```text
+ConstantNotFoundError: 'molar_mass_of_water_vapor' is not set in the current
+atmospheric profile. To add it, either:
+  1. Add it to your profile TOML under the appropriate section:
+       molar_mass_of_water_vapor = { value = ..., units = ... }
+  2. Set it directly: climt.set_constant('molar_mass_of_water_vapor', value, 'units')
+Current profile: mars (climt/_data/atmospheric_properties/mars.toml)
+```
+
+`ConstantNotFoundError` subclasses `KeyError`, so legacy code that already
+catches `KeyError` continues to work.
+
+## Worked example — Earth RCE, then Mars
+
+```python
+import climt
+
+# Earth run
+climt.load_atmospheric_properties("earth")
+run_rce_earth()
+climt.reset_atmospheric_properties()
+
+# Mars run — same component constructors, different planetary constants
+climt.load_atmospheric_properties("mars")
+run_rce_mars()
+climt.reset_atmospheric_properties()
+```
+
+The `CorkLongwaveRadiation` and `CorkShortwaveRadiation` constructors are
+identical in both runs. What changes is only the sympl constants that the
+components read at call time: $g$, molar masses, heat capacities.
+
+::: {.callout-warning}
+## Profile swaps are process-global
+
+`load_atmospheric_properties` calls `sympl.set_constant`, which writes to a
+module-level dictionary. Don't load one profile in a notebook cell and then
+compute fluxes in another cell expecting a different profile to be active. If
+fluxes look wrong for the intended planet, call
+`get_constant("gravitational_acceleration", "m/s^2")` to verify which profile
+is active.
 :::
+
+::: {.callout-tip}
+## Try it yourself
+
+`examples/picket_fence_vs_rrtmg.ipynb` compares Parmentier-mode hot-Jupiter
+and Earth T-p profiles and shows how to use `load_atmospheric_properties` to
+switch between them in a single notebook.
+:::
+
+## Further reading
+
+- @pierrehumbert2010 — comprehensive treatment of planetary climate, with
+  radiative transfer worked out for terrestrial and gas-giant atmospheres.
+- @parmentier2015 — the ratio-coefficient tables that CORK uses; the same
+  optics run unchanged across hot Jupiters and brown dwarfs.
