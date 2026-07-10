@@ -9,6 +9,8 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -17,7 +19,7 @@ jobs:
       - uses: quarto-dev/quarto-actions/setup@v2
       - name: Install climt + docs deps
         run: |
-          pip install quartodoc pyyaml jupyter matplotlib numpy
+          pip install "griffe<2.0" quartodoc pyyaml jupyter matplotlib numpy
           pip install -e . --no-deps
       - name: Verify experiment artifacts are not stale
         run: python scripts/build_experiments.py --check
