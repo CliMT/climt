@@ -75,7 +75,7 @@ doubling). For that, switch to `optics="correlated_k"` with an Earth table.
 ::: {.callout-tip}
 ## Try it yourself
 
-`examples/picket_fence_vs_rrtmg.ipynb` compares the Parmentier-mode hot-Jupiter
+`examples/cork_vs_rrtmg.ipynb` compares the Parmentier-mode hot-Jupiter
 T-p profile against a reference. `tests/test_hd209458b_reproduction.py` runs
 HD 209458b to radiative equilibrium.
 :::
