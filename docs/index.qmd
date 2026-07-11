@@ -182,9 +182,9 @@ body{padding-top:0!important;margin-top:0!important;}
       <span>climt</span>
     </span>
     <span class="links">
-      <a class="l" href="quickstart.html">Docs</a>
-      <a class="l" href="user-guide.html">User Guide</a>
-      <a class="l" href="experiments.html">Experiments</a>
+      <a class="l" href="get-started/quickstart.html">Docs</a>
+      <a class="l" href="user-guide/introduction.html">User Guide</a>
+      <a class="l" href="experiments/index.html">Experiments</a>
       <a class="l" href="https://github.com/CliMT/climt">GitHub ↗</a>
     </span>
   </nav>
@@ -200,8 +200,8 @@ body{padding-top:0!important;margin-top:0!important;}
         <p class="lead">climt is a Climate Modelling and Diagnostics Toolkit — a modular, intuitive way to write
           numerical models of the climate system. State-of-the-art components, no Fortran required.</p>
         <div class="cta-row">
-          <a class="btn primary" href="quickstart.html">Get started <span>→</span></a>
-          <a class="btn secondary" href="quickstart.html">Read the docs</a>
+          <a class="btn primary" href="get-started/quickstart.html">Get started <span>→</span></a>
+          <a class="btn secondary" href="get-started/quickstart.html">Read the docs</a>
         </div>
         <div class="install">
           <span class="dollar">$</span>
@@ -275,9 +275,9 @@ tendencies, diagnostics = <span class="fn">radiation</span>(state)</code></pre>
       <div class="cols">
         <div>
           <h4>Docs</h4>
-          <a href="quickstart.html">Quickstart</a>
-          <a href="user-guide.html">User Guide</a>
-          <a href="api.html">API Reference</a>
+          <a href="get-started/quickstart.html">Quickstart</a>
+          <a href="user-guide/introduction.html">User Guide</a>
+          <a href="api/index.html">API Reference</a>
         </div>
         <div>
           <h4>Project</h4>
@@ -287,8 +287,8 @@ tendencies, diagnostics = <span class="fn">radiation</span>(state)</code></pre>
         </div>
         <div>
           <h4>Learn</h4>
-          <a href="#">Radiative Transfer</a>
-          <a href="experiments.html">Experiments</a>
+          <a href="radiative-transfer/index.html">Radiative Transfer</a>
+          <a href="experiments/index.html">Experiments</a>
           <a href="#">Citing climt</a>
         </div>
       </div>
