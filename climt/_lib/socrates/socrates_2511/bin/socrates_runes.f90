@@ -723,6 +723,26 @@ integer :: ierr = i_normal
 character (len=errormessagelength) :: cmessage
 character (len=*), parameter :: RoutineName = 'RUNES'
 
+! Band-resolved flux diagnostic dump (for comparing spectral files, e.g.
+! THAI trappist1e vs dsa_mars): file location and naming are controlled by
+! the SOCRATES_BAND_FLUX_DIR and SOCRATES_BAND_FLUX_TAG environment
+! variables so that repeated calls from a Python driver can be told apart.
+! Rows are appended, one block per logged call, so a time series of
+! band fluxes can be tracked as a time-stepping driver runs to
+! convergence. SOCRATES_BAND_FLUX_STRIDE throttles how often a call is
+! logged (every Nth call to this routine for that source), since a
+! driver such as compare_rtms_eq.py may call this every model timestep.
+character (len=256) :: band_flux_dir, band_flux_tag, band_flux_filename
+character (len=2)   :: band_flux_source
+integer :: band_flux_unit, band_flux_env_len, band_flux_env_status
+integer :: band_flux_stride
+integer, save :: band_flux_call_count_sw = 0
+integer, save :: band_flux_call_count_lw = 0
+integer :: band_flux_call_count
+logical :: band_flux_file_exists
+character (len=32) :: band_flux_stride_str
+integer :: i_band_diag
+
 nullify(spec, mcica)
 
 if (present(spectrum_name)) then
@@ -1052,7 +1072,83 @@ if (associated(diag%heating_rate) .or. &
     control%l_cloud_absorptivity .or. &
     control%l_cloud_extinction) then
   ! Calculate radiative transfer
+  control%l_flux_up_band   = .true.
+  control%l_flux_down_band = .true.
+  if (control%isolir == ip_source_illuminate) control%l_flux_direct_band = .true.
   call radiance_calc(control, dimen, spec, atm, cld, aer, bound, radout)
+
+  ! Append band-resolved fluxes for profile 1 to a text file, so that a
+  ! time series can be tracked as a time-stepping driver (e.g.
+  ! compare_rtms_eq.py) runs to convergence, and two spectral files
+  ! (e.g. different THAI cases) can be compared band-by-band.
+  if (control%isolir == ip_source_illuminate) then
+    band_flux_source = 'sw'
+    band_flux_call_count_sw = band_flux_call_count_sw + 1
+    band_flux_call_count = band_flux_call_count_sw
+  else
+    band_flux_source = 'lw'
+    band_flux_call_count_lw = band_flux_call_count_lw + 1
+    band_flux_call_count = band_flux_call_count_lw
+  end if
+
+  call get_environment_variable('SOCRATES_BAND_FLUX_STRIDE', band_flux_stride_str, &
+    band_flux_env_len, band_flux_env_status)
+  if (band_flux_env_status /= 0 .or. band_flux_env_len == 0) then
+    band_flux_stride = 1
+  else
+    read(band_flux_stride_str, *, iostat=band_flux_env_status) band_flux_stride
+    if (band_flux_env_status /= 0 .or. band_flux_stride < 1) band_flux_stride = 1
+  end if
+  write(band_flux_stride_str, '(I0)') band_flux_stride
+
+  if (mod(band_flux_call_count - 1, band_flux_stride) == 0) then
+    call get_environment_variable('SOCRATES_BAND_FLUX_DIR', band_flux_dir, &
+      band_flux_env_len, band_flux_env_status)
+    if (band_flux_env_status /= 0 .or. band_flux_env_len == 0) band_flux_dir = '.'
+    call get_environment_variable('SOCRATES_BAND_FLUX_TAG', band_flux_tag, &
+      band_flux_env_len, band_flux_env_status)
+    if (band_flux_env_status /= 0 .or. band_flux_env_len == 0) band_flux_tag = 'run'
+    band_flux_filename = trim(band_flux_dir)//'/band_fluxes_'// &
+      trim(band_flux_tag)//'_'//trim(band_flux_source)//'.txt'
+
+    inquire(file=trim(band_flux_filename), exist=band_flux_file_exists)
+    if (band_flux_file_exists) then
+      open(newunit=band_flux_unit, file=trim(band_flux_filename), &
+           status='old', position='append', action='write', form='formatted')
+    else
+      open(newunit=band_flux_unit, file=trim(band_flux_filename), &
+           status='replace', action='write', form='formatted')
+      write(band_flux_unit, '(A)')    '# SOCRATES band-resolved flux diagnostic (appended time series)'
+      write(band_flux_unit, '(A,A)')  '# source (sw/lw) = ', trim(band_flux_source)
+      write(band_flux_unit, '(A,I0)') '# n_profile      = ', n_profile
+      write(band_flux_unit, '(A,I0)') '# n_layer        = ', n_layer
+      write(band_flux_unit, '(A,I0)') '# n_band         = ', spec%basic%n_band
+      write(band_flux_unit, '(A)')    '# Profile 1 only. Level 0 = TOA, level n_layer = surface.'
+      write(band_flux_unit, '(A)')    '# call_index increments once per logged call to this '// &
+                                       'routine for this source (sw/lw), throttled by '// &
+                                       'SOCRATES_BAND_FLUX_STRIDE (currently every '// &
+                                       trim(adjustl(band_flux_stride_str))//' call(s)).'
+      write(band_flux_unit, '(A)')    '# column_absorption = net_down(TOA) - net_down(surface), '// &
+                                       'i.e. net energy this band deposits in the column.'
+      write(band_flux_unit, '(A)') '#call_index  band  wl_short_um  wl_long_um'// &
+        '  down_toa  up_toa  down_surf  up_surf  net_toa  net_surf  column_absorption'
+    end if
+
+    do i_band_diag = 1, spec%basic%n_band
+      write(band_flux_unit, '(2I8,2F13.6,7ES16.6E3)') band_flux_call_count, i_band_diag, &
+        spec%basic%wavelength_short(i_band_diag)*1.0e6, &
+        spec%basic%wavelength_long(i_band_diag)*1.0e6, &
+        radout%flux_down_band(1,0,i_band_diag), &
+        radout%flux_up_band(1,0,i_band_diag), &
+        radout%flux_down_band(1,n_layer,i_band_diag), &
+        radout%flux_up_band(1,n_layer,i_band_diag), &
+        radout%flux_down_band(1,0,i_band_diag) - radout%flux_up_band(1,0,i_band_diag), &
+        radout%flux_down_band(1,n_layer,i_band_diag) - radout%flux_up_band(1,n_layer,i_band_diag), &
+        (radout%flux_down_band(1,0,i_band_diag) - radout%flux_up_band(1,0,i_band_diag)) - &
+        (radout%flux_down_band(1,n_layer,i_band_diag) - radout%flux_up_band(1,n_layer,i_band_diag))
+    end do
+    close(band_flux_unit)
+  end if
 end if
 
 call set_diag(diag, &

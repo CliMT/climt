@@ -60,6 +60,7 @@ compile_librunes:
 	# Copy our wrapper files into bin/ (where all compile occurs) to be absolutely sure
 	cp patchfiles/runes_driver.f90 $(FILES_DIR)/runes_driver_copy.f90
 	cp patchfiles/runeswrap.f90 $(FILES_DIR)/runeswrap.f90
+	cp patchfiles/socrates_runes.f90 $(FILES_DIR)/socrates_runes.f90
 	# Compile wrapper files and pack everything into librunes.a
 	cd $(FILES_DIR) && \
 		$(FC) $(FFLAGS) -I. -c runes_driver_copy.f90 && \

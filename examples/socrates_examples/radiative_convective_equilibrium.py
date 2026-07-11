@@ -112,9 +112,6 @@ def set_values(obj, val):
 
 # Set initial/boundary values
 set_values(state['air_temperature'], 270)
-set_values(state['surface_albedo_for_direct_shortwave'], 0.5)
-set_values(state['surface_albedo_for_direct_near_infrared'], 0.5)
-set_values(state['surface_albedo_for_diffuse_shortwave'], 0.5)
 set_values(state['zenith_angle'], np.pi / 2.5)
 set_values(state['surface_temperature'], 300.)
 set_values(state['ocean_mixed_layer_thickness'], 5)

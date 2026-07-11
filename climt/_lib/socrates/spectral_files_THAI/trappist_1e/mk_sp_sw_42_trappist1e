@@ -1,0 +1,170 @@
+#!/bin/bash
+set -e
+
+# Number of bands and ID for TRAPPIST-1e
+NBANDS="42"
+SP_ID="trappist1e"
+
+echo "Started mk_sp_sw_${NBANDS}_${SP_ID}: $(date)"
+
+# Source environment
+. ./env_trappist1e
+
+if [ $RAD_BIN ] ; then
+  echo "Using SOCRATES binaries in: $RAD_BIN"
+else
+  echo "Path to SOCRATES binaries not set. Check env_trappist1e."
+  exit 1
+fi
+
+# 1. Create skeleton spectral file
+SKEL_FILE="sp_sw_${NBANDS}_${SP_ID}_skel"
+echo ">>> Creating skeleton: $SKEL_FILE"
+bash mk_sp_sw_42_trappist_skel
+
+# 2. Create directories for coefficients
+K_DIR="${SW_DATA}/k_coeffs_sw"
+mkdir -p "$K_DIR"
+
+procs=10
+
+echo ">>> Calculating k-coefficients..."
+
+# --- CO2 Lines ---
+if [ ! -s ${K_DIR}/co2_l ] ; then
+  echo "  - CO2 Lines"
+  rm -f ${K_DIR}/co2_l ${K_DIR}/co2_lm ${CO2_LBL_SW}
+  Ccorr_k -F ${PT_FILE} -D ${HITRAN_CO2} \
+    -lo 2 -R 1 ${NBANDS} -c 10000.0 -i 0.5 -l 2 ${COL_CO2} \
+    -t 5.0e-4 -s ${SKEL_FILE} +S $SOLSPEC -lk -np $procs \
+    -sb gas_fractions -lp 2 \
+    -o ${K_DIR}/co2_l -m ${K_DIR}/co2_lm -L ${CO2_LBL_SW} \
+    > ${K_DIR}/co2_log 2>&1
+fi
+
+# --- H2O Lines (Visible 1-6) ---
+if [ ! -s ${K_DIR}/h2o_vis_l ] ; then
+  echo "  - H2O Lines (Visible 1-6)"
+  rm -f ${K_DIR}/h2o_vis_l ${K_DIR}/h2o_vis_lm ${H2O_LBL_VIS}
+  Ccorr_k -F ${PT_FILE} -D ${HITRAN_H2O} \
+    -lo 1 -R 1 6 -c 2500.0 -i 0.5 -l 1 ${COL_H2O} \
+    -t 5.0e-4 -s ${SKEL_FILE} +S $SOLSPEC -lk -np $procs \
+    -o ${K_DIR}/h2o_vis_l -m ${K_DIR}/h2o_vis_lm -L ${H2O_LBL_VIS} \
+    > ${K_DIR}/h2o_vis_log 2>&1
+fi
+
+# --- H2O Lines (Near-IR 7-42) ---
+if [ ! -s ${K_DIR}/h2o_swf_l ] ; then
+  echo "  - H2O Lines (Near-IR 7-42)"
+  rm -f ${K_DIR}/h2o_swf_l ${K_DIR}/h2o_swf_lm ${K_DIR}/h2o_swf_map.nc ${H2O_LBL_SWF}
+  Ccorr_k -F ${PT_FILE} -D ${HITRAN_H2O} \
+    -lo 1 -R 7 ${NBANDS} -c 2500.0 -i 0.5 -l 1 ${COL_H2O} \
+    -t 5.0e-4 -s ${SKEL_FILE} +S $SOLSPEC -lk -np $procs \
+    -k -x ${CONT_H2O_FRN} \
+    -o ${K_DIR}/h2o_swf_l -m ${K_DIR}/h2o_swf_lm -L ${H2O_LBL_SWF} \
+    -sm ${K_DIR}/h2o_swf_map.nc \
+    > ${K_DIR}/h2o_swf_log 2>&1
+fi
+
+# --- H2O Self-Broadened Continuum (Elsey-Shine) ---
+if [ ! -s ${K_DIR}/h2o-h2o_c ] ; then
+  echo "  - H2O Self-Continuum"
+  rm -f ${K_DIR}/h2o-h2o_c ${K_DIR}/h2o-h2o_cm ${H2O_H2O_LBL_SW}
+  Ccorr_k -F ${CONT_PT_FILE} \
+    -R 7 ${NBANDS} -c 2500.0 -i 0.5 \
+    -ct 1 1 ${CIA_H2O_H2O} -t 5.0e-4 \
+    -e ${CONT_H2O_S296} ${CONT_H2O_S260} \
+    -k -s ${SKEL_FILE} +S $SOLSPEC -lk -np $procs \
+    -o ${K_DIR}/h2o-h2o_c -m ${K_DIR}/h2o-h2o_cm \
+    -lw ${K_DIR}/h2o_swf_map.nc -L ${H2O_H2O_LBL_SW} \
+     > ${K_DIR}/h2o-h2o_clog 2>&1
+fi
+
+# --- CO2-CO2 CIA ---
+if [ ! -s ${K_DIR}/co2-co2_c ] ; then
+  echo "  - CO2-CO2 CIA"
+  rm -f ${K_DIR}/co2-co2_c ${K_DIR}/co2-co2_cm ${CO2_CO2_LBL_SW}
+  Ccorr_k -F ${CONT_PT_FILE} -CIA ${CONT_CO2_CO2} \
+    -R 35 ${NBANDS} -i 1.0 -ct 2 2 ${CIA_CO2_CO2} -t 1.0e-3 \
+    -k -s ${SKEL_FILE} +S $SOLSPEC -lk -np $procs \
+    -o ${K_DIR}/co2-co2_c -m ${K_DIR}/co2-co2_cm \
+    -L ${CO2_CO2_LBL_SW} \
+     > ${K_DIR}/co2-co2_clog 2>&1
+fi
+
+# --- N2-N2 CIA ---
+if [ ! -s ${K_DIR}/n2-n2_c ] ; then
+  echo "  - N2-N2 CIA"
+  rm -f ${K_DIR}/n2-n2_c ${K_DIR}/n2-n2_cm ${N2_N2_LBL_SW}
+  Ccorr_k -F ${CONT_PT_FILE} -CIA ${CONT_N2_N2} \
+    -R 1 ${NBANDS} -i 1.0 -ct 13 13 ${CIA_N2_N2} -t 1.0e-3 \
+    -k -s ${SKEL_FILE} +S $SOLSPEC -lk -np $procs \
+    -o ${K_DIR}/n2-n2_c -m ${K_DIR}/n2-n2_cm \
+    -L ${N2_N2_LBL_SW} \
+     > ${K_DIR}/n2-n2_clog 2>&1
+fi
+
+echo ">>> Calculating cloud optical properties..."
+CLD_DIR="${SW_DATA}/cloud_coeffs_sw"
+mkdir -p "$CLD_DIR"
+
+if [ ! -s ${CLD_DIR}/fit_sw_drop5 ] ; then
+  echo "  - Droplets (Type 5)"
+  Cscatter_average -s ${SKEL_FILE} -P 1 -t -S $SOLSPEC \
+    -f 5 ${CLD_DIR}/fit_sw_drop5 \
+    ${CLD_DIR}/mon_sw_drop5 1.e3 \
+    ${RAD_DATA}/cloud/scatter_drop_type5 > /dev/null 2>&1
+fi
+
+if [ ! -s ${CLD_DIR}/fit_sw_ice8 ] ; then
+  echo "  - Ice (Type 8)"
+  Cscatter_average -s ${SKEL_FILE} -P 1 -t -S $SOLSPEC \
+    -f 12 ${CLD_DIR}/fit_sw_ice8 \
+    ${CLD_DIR}/mon_sw_ice8 920 \
+    ${RAD_DATA}/cloud/scatter_ice_sw_type8 > /dev/null 2>&1
+fi
+
+echo ">>> Assembling Final SW Spectral File..."
+
+FINAL_FILE="sp_sw_${NBANDS}_${SP_ID}"
+rm -f ${FINAL_FILE} ${FINAL_FILE}_k
+
+prep_spec << EOF > mk_sp_sw_${NBANDS}_${SP_ID}_out 2>&1
+${SKEL_FILE}
+n
+${FINAL_FILE}
+5
+${K_DIR}/h2o_vis_l
+5
+y
+${K_DIR}/h2o_swf_l
+5
+y
+${K_DIR}/co2_l
+19
+${K_DIR}/h2o-h2o_c
+19
+y
+${K_DIR}/co2-co2_c
+19
+y
+${K_DIR}/n2-n2_c
+10
+5
+${CLD_DIR}/fit_sw_drop5
+1.50000E-06 5.00000E-05
+12
+8
+${CLD_DIR}/fit_sw_ice8
+2
+n
+$SOLSPEC
+y
+3
+c
+a
+-1
+EOF
+
+echo "Finished mk_sp_sw_${NBANDS}_${SP_ID}: $(date)"
+exit 0
