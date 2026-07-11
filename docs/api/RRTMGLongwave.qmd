@@ -1,0 +1,20 @@
+# RRTMGLongwave { #climt.RRTMGLongwave }
+
+```python
+RRTMGLongwave(
+    calculate_change_up_flux=False,
+    cloud_overlap_method=None,
+    cloud_optical_properties='liquid_and_ice_clouds',
+    cloud_ice_properties='ebert_curry_two',
+    cloud_liquid_water_properties='radius_dependent_absorption',
+    calculate_interface_temperature=True,
+    mcica=False,
+    random_number_generator='mersenne_twister',
+    **kwargs,
+)
+```
+
+The Rapid Radiative Transfer Model (RRTMG).
+
+This module wraps RRTMG for longwave radiation
+(i.e, emission from the earth's surface).

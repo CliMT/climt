@@ -1,0 +1,95 @@
+---
+title: "Chapter 6: The picket-fence model"
+bibliography: ../../references.bib
+---
+
+Everything so far has been a generic correlated-k story. The picket-fence model
+is the simplest possible parameterisation of that story that still captures
+non-grey physics. It fits in half a page of algebra and runs at > 1 000 iter/s
+in pure Python.
+
+## The Parmentier & Guillot (2014) formulation
+
+The atmosphere has two opacities in the thermal (LW) and three in the visible
+(SW), all expressed as ratios of the Rosseland mean opacity $\kappa_R$:
+
+$$\gamma_1 = \kappa_1 / \kappa_R, \quad
+  \gamma_2 = \kappa_2 / \kappa_R, \quad
+  \gamma_{v_i} = \kappa_{v_i} / \kappa_R \quad (i=1,2,3).$$
+
+The Planck function in the LW is split: fraction $\beta$ goes to the opaque
+band 1, $(1-\beta)$ to the transparent band 2. In the window ($\gamma_2 \ll
+1$) most of the cooling-to-space happens; in the absorption band ($\gamma_1
+\sim 1$) the thermal blanketing is concentrated.
+
+This two-opacity caricature is the "picket fence": a spectrum that alternates
+tall opaque slats (CO₂/H₂O line clusters) and short transparent slats
+(the atmospheric window).
+
+## The Rosseland mean opacity
+
+$\kappa_R$ is the reciprocal of a Planck-weighted harmonic mean of
+$\sigma(\nu)$. climt uses the Freedman et al. (2014) polynomial fit for
+solar-composition gas-giant atmospheres:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.optics.parmentier import compute_rosseland_mean_opacity
+print(inspect.getsource(compute_rosseland_mean_opacity))
+```
+
+![**Figure 6.1** — Rosseland mean opacity as a function of pressure for a
+hot-Jupiter column. The shape drives the radiative-equilibrium T-p
+profile.](_artifacts/06_picket_fence_opacity.png){#fig-picket-fence-opacity}
+
+## The ratio coefficients $\gamma_i$ and $\beta$
+
+The ratios $\gamma_{v1}, \gamma_{v2}, \gamma_{v3}, \beta$ and $\gamma_P$ are
+piecewise-linear functions of effective temperature $T_\text{eff}$, fitted in
+@parmentier2015 Table 1. climt ships those coefficients and interpolates them
+at runtime:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.optics.parmentier import lookup_ratio_coefficients
+print(inspect.getsource(lookup_ratio_coefficients))
+```
+
+## What the picket-fence gets right
+
+- Radiative-equilibrium T-p profile: within 2–4 % of full LBL for
+  solar-composition atmospheres [@parmentier2014].
+- Qualitative stratospheric cooling.
+- Day-side/night-side temperature contrast on tidally-locked exoplanets.
+- Plugging in different tables re-targets to Mars, Venus, Titan, or hot Jupiters
+  (Chapter 8) with no code changes.
+
+::: {.callout-warning}
+The Parmentier optics mode (`optics="parmentier"`) lumps all opacity into
+$\kappa_R$ and cannot do gas-abundance forcing experiments (e.g., CO₂
+doubling). For that, switch to `optics="correlated_k"` with an Earth table.
+:::
+
+::: {.callout-tip}
+## Try it yourself
+
+`examples/cork_vs_rrtmg.ipynb` compares the Parmentier-mode hot-Jupiter
+T-p profile against a reference. `tests/test_hd209458b_reproduction.py` runs
+HD 209458b to radiative equilibrium.
+:::
+
+## Further reading
+
+- @parmentier2014 — the original picket-fence analytical model.
+- @parmentier2015 — the ratio-coefficient tables used by climt.
+
+## Spectral anatomy: a hands-on tour
+
+The notebook below runs the CORK LW component in correlated-k mode on a
+standard Earth column, visualises per-band optical depth, transmittance, net
+flux, and heating-rate contributions for all 14 LW bands, and finishes with a
+CO₂-doubling experiment showing Δτ, Δheating rate, and ΔOLR per band.
+
+{{< embed spectral_radiation_anatomy.ipynb echo=true >}}

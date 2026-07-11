@@ -76,17 +76,28 @@ def load_dictionary(filename):
     import pandas as pd
     import sympl
 
-    dataset = xr.open_dataset(filename, engine="scipy")
+    # Open with decode_times=False: on some numpy/xarray builds (observed on
+    # the py3.12 CI runners) xarray's C-level CF-datetime decoder segfaults
+    # while decoding even a trivial "days since 2000-01-01" scalar. We decode
+    # the scalar time coordinate ourselves below, which avoids that native
+    # crash and reproduces the exact same datetime the decoder would return.
+    dataset = xr.open_dataset(filename, engine="scipy", decode_times=False)
     return_dict = {}
     backend = sympl.get_backend()
 
     for name, var in dataset.variables.items():
         if name == "time":
-            val = var.values
-            if getattr(val, "ndim", 1) == 0 and isinstance(val, np.datetime64):
-                return_dict[name] = pd.Timestamp(val).to_pydatetime()
+            val = np.asarray(var.values)
+            units = var.attrs.get("units", "")
+            if getattr(val, "ndim", 1) == 0 and "since" in units:
+                # e.g. units="days since 2000-01-01 00:00:00"
+                interval, ref = units.split("since")
+                ref_date = pd.Timestamp(ref.strip())
+                return_dict[name] = (
+                    ref_date + pd.Timedelta(f"{float(val)} {interval.strip()}")
+                ).to_pydatetime()
             else:
-                return_dict[name] = val
+                return_dict[name] = var.values
         else:
             units = var.attrs.get("units", "")
             if hasattr(backend, "create_quantity"):

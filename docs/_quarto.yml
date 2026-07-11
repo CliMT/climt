@@ -1,23 +1,134 @@
-# docs/_quarto.yml
-# Minimal, forward-compatible seed of the full climt-website config
-# (docs/superpowers/specs/2026-05-18-climt-website-design.md). The site
-# migration extends this with nav, theme, and quartodoc; nothing here may
-# contradict that spec.
 project:
   type: website
   output-dir: _site
+  render:
+    - "index.qmd"
+    - "get-started/**/*.qmd"
+    - "user-guide/**/*.qmd"
+    - "radiative-transfer/**/*.qmd"
+    - "experiments/**/*.qmd"
+    - "api/**/*.qmd"
 
 website:
   title: "climt"
+  description: "A climate modelling toolkit"
+  repo-url: https://github.com/CliMT/climt
   navbar:
+    logo: climt_logo.jpg
+    logo-alt: "climt logo"
     left:
+      - text: "Get Started"
+        href: get-started/installation.qmd
+      - text: "User Guide"
+        href: user-guide/introduction.qmd
+      - text: "Radiative Transfer"
+        href: radiative-transfer/index.qmd
       - text: "Experiments"
         href: experiments/index.qmd
+      - text: "API"
+        href: api/index.qmd
+    right:
+      - icon: github
+        href: https://github.com/CliMT/climt
+  sidebar:
+    - title: "Get Started"
+      style: "docked"
+      contents:
+        - get-started/installation.qmd
+        - get-started/quickstart.qmd
+    - title: "User Guide"
+      style: "docked"
+      contents:
+        - user-guide/introduction.qmd
+        - user-guide/interaction.qmd
+        - user-guide/realistic.qmd
+        - user-guide/component_types.qmd
+        - user-guide/components.qmd
+        - user-guide/configuration.qmd
+        - user-guide/initialisation.qmd
+        - user-guide/utilities.qmd
+        - user-guide/naming.qmd
+        - user-guide/memory_management.qmd
+        - section: "Components"
+          contents:
+            - user-guide/emanuel_convection.qmd
+            - user-guide/rrtmg_clouds.qmd
+        - section: "Project"
+          contents:
+            - user-guide/contributing.qmd
+            - user-guide/authors.qmd
+            - user-guide/history.qmd
+    - title: "Radiative Transfer"
+      style: "docked"
+      contents:
+        - radiative-transfer/index.qmd
+        - radiative-transfer/01-why-nongrey.qmd
+        - radiative-transfer/02-line-by-line.qmd
+        - radiative-transfer/03-k-distribution.qmd
+        - radiative-transfer/04-correlated-k.qmd
+        - radiative-transfer/05-gas-overlap.qmd
+        - radiative-transfer/06-picket-fence.qmd
+        - radiative-transfer/07-two-stream.qmd
+        - radiative-transfer/08-multiplanet.qmd
+        - section: "Appendices"
+          contents:
+            - radiative-transfer/table-generation.qmd
+            - radiative-transfer/performance.qmd
 
 format:
   html:
-    theme: cosmo
+    theme:
+      - cosmo
+      - climt.scss
     toc: true
     code-fold: false
+    code-tools: true
 
-# Experiments listing is provided by docs/experiments/index.qmd (a later task).
+bibliography: ../references.bib
+
+quartodoc:
+  package: climt
+  dir: api
+  title: "API Reference"
+  style: pkgdown
+  sections:
+    - title: "Radiation"
+      desc: "Longwave and shortwave radiation components."
+      contents:
+        - RRTMGLongwave
+        - RRTMGShortwave
+        - GrayLongwaveRadiation
+        - Frierson06LongwaveOpticalDepth
+    - title: "Cork radiation"
+      desc: "Non-grey correlated-k (CORK) scheme."
+      contents:
+        - name: CorkLongwaveRadiation
+          package: climt._components.cork.lw.component
+        - name: CorkShortwaveRadiation
+          package: climt._components.cork.sw.component
+    - title: "Convection"
+      contents:
+        - EmanuelConvection
+        - DryConvectiveAdjustment
+    - title: "Surface & ice"
+      contents:
+        - SlabSurface
+        - IceSheet
+        - BucketHydrology
+    - title: "Solar & insolation"
+      contents:
+        - BergerSolarInsolation
+        - Instellation
+        - HeldSuarez
+    - title: "State & grid utilities"
+      contents:
+        - get_default_state
+        - get_grid
+        - mass_to_volume_mixing_ratio
+        - get_interface_values
+    - title: "Constants"
+      contents:
+        - list_available_constants
+        - set_constants_from_dict
+        - load_atmospheric_properties
+        - reset_atmospheric_properties

@@ -1,0 +1,51 @@
+# RRTMGShortwave { #climt.RRTMGShortwave }
+
+```python
+RRTMGShortwave(
+    cloud_overlap_method=None,
+    cloud_optical_properties='liquid_and_ice_clouds',
+    cloud_ice_properties='ebert_curry_two',
+    cloud_liquid_water_properties='radius_dependent_absorption',
+    solar_variability_method=0,
+    use_solar_constant_from_fortran=False,
+    ignore_day_of_year=False,
+    facular_sunspot_amplitude=None,
+    solar_variability_by_band=None,
+    aerosol_type='no_aerosol',
+    mcica=False,
+    random_number_generator='mersenne_twister',
+    **kwargs,
+)
+```
+
+The Rapid Radiative Transfer Model (RRTMG).
+
+This module wraps RRTMG for shortwave radiation
+(i.e, emission from the sun).
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [array_call](#climt.RRTMGShortwave.array_call) | Get heating tendencies and shortwave fluxes. |
+
+### array_call { #climt.RRTMGShortwave.array_call }
+
+```python
+RRTMGShortwave.array_call(state)
+```
+
+Get heating tendencies and shortwave fluxes.
+
+Args:
+
+    state (dict):
+        The model state dictionary.
+
+Returns:
+
+    tendencies (dict), diagnostics (dict):
+
+        * The shortwave heating tendency.
+        * The upward/downward shortwave fluxes for cloudy and clear
+          sky conditions.

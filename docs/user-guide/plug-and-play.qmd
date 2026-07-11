@@ -1,0 +1,73 @@
+---
+title: "Plug-and-Play Architecture"
+---
+
+CliMT is designed around a modular, plug-and-play architecture built on the `sympl` framework. Users can easily compose complex Earth system models by mixing and matching independent physical components.
+
+## Core Abstractions (`climt/_core`)
+To build a model, you first configure the core state and backend:
+- **`UnytBackend`**: Recommended backend for performance, handling units via the `unyt` library. (Set via `sympl.set_backend(UnytBackend())`).
+- **`get_grid`**: Utility to define the spatial dimensions (e.g., `nx`, `ny`, `nz`).
+- **`get_default_state`**: Allocates the required state arrays (temperature, pressure, etc.) for a given list of components and a grid.
+
+## Physical Components (`climt/_components`)
+Components represent physical processes. They compute tendencies or diagnostics and are passed to a time stepper (like `sympl.AdamsBashforth`).
+
+### Radiation
+- **`RRTMGLongwave` / `RRTMGShortwave`**: Highly accurate Rapid Radiative Transfer Model for GCMs.
+- **`CorkLongwaveRadiation` / `CorkShortwaveRadiation`**: Idealized multi-band correlated-k scheme.
+- **`GrayLongwaveRadiation` / `Frierson06LongwaveOpticalDepth`**: Simplified gray gas radiation.
+
+### Convection & Condensation
+- **`EmanuelConvection`**: Emanuel convection scheme (with pure Python and C-extension variants).
+- **`DryConvectiveAdjustment`**: Conservative scheme to maintain the dry adiabat.
+- **`GridScaleCondensation`**: Condenses supersaturated water vapor.
+
+### Surface & Boundary Layer
+- **`SlabSurface`**: Simple surface energy balance with a prescribed heat capacity/mixed layer depth.
+- **`BucketHydrology`**: Surface energy and moisture balance.
+- **`IceSheet`**: 1-D snow-ice energy balance model.
+- **`SimplePhysics`**: Interface to the Reed and Jablonowski (2012) simple physics for boundary layer tendencies.
+- **`StableBoundaryLayer`**: Diffusion-based boundary layer scheme.
+
+### Idealized Forcing & Insolation
+- **`HeldSuarez`**: Newtonian cooling and Rayleigh friction for idealized GCMs.
+- **`Instellation`**: Computes zenith angle and star-planet correction factors.
+- **`BergerSolarInsolation`**: Spectral solutions for orbital constants.
+
+### Initial Conditions
+- **`DcmipInitialConditions`**: Idealized test cases.
+
+## Example: Building a Model
+A typical workflow to build a column model or GCM:
+
+```python
+from datetime import timedelta
+import climt
+from sympl import set_backend, AdamsBashforth
+
+# 1. Set backend for performance
+set_backend(climt.UnytBackend())
+
+# 2. Initialize independent components
+rad_lw = climt.RRTMGLongwave()
+rad_sw = climt.RRTMGShortwave()
+conv = climt.EmanuelConvection()
+surface = climt.SlabSurface()
+
+components = [rad_lw, rad_sw, conv, surface]
+
+# 3. Create grid and allocate state
+grid = climt.get_grid(nx=1, ny=1, nz=30)
+state = climt.get_default_state(components, grid_state=grid)
+
+# 4. Group components in a time stepper
+stepper = AdamsBashforth(components)
+timestep = timedelta(minutes=10)
+
+# 5. Step forward
+for step in range(100):
+    diagnostics, new_state = stepper(state, timestep)
+    state.update(diagnostics)
+    state.update(new_state)
+```

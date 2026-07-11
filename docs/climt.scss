@@ -1,0 +1,77 @@
+/*-- scss:defaults --*/
+// =====================================================================
+// climt — Quarto/Bootstrap theme layer (sits on top of `cosmo`).
+// Maps the climt design-system tokens onto Quarto's SASS variables so
+// the live docs site inherits the brand. Generated from this design
+// system (tokens/colors.css, tokens/typography.css).
+// =====================================================================
+
+// Webfonts (IBM Plex Sans + JetBrains Mono)
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+// ---- Brand & surfaces ----
+$primary:        #d98a2b;   // ochre — brand accent
+$body-bg:        #faf3e6;   // warm sand paper (cream)
+$body-color:     #34302a;   // warm ink (body)
+$link-color:     #2c5378;   // ocean — links
+$link-hover-color: #234461;
+$border-color:   #e6dcc6;   // hairline sand (warmed)
+
+// ---- Type ----
+$font-family-sans-serif: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+$font-family-monospace:  "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+$headings-font-family:   "IBM Plex Sans", system-ui, sans-serif;
+$headings-font-weight:   600;
+$headings-color:         #211e1a;
+$font-size-root:         16px;
+$line-height-base:       1.6;
+
+// ---- Shape ----
+$border-radius:    .5rem;    // 8px
+$border-radius-sm: .25rem;
+$border-radius-lg: .75rem;
+
+// ---- Inline code ----
+$code-color: #974024;        // clay-600
+$code-bg:    #f3ebda;        // sand-100 (warmed)
+
+// ---- Quarto callouts → climt semantic colors ----
+$callout-color-note:      #3e6e96;   // ocean  · physics / student
+$callout-color-tip:       #7e8b53;   // sage   · engineering / contributor
+$callout-color-warning:   #b5532e;   // clay   · pitfalls
+$callout-color-important:  #d98a2b;  // ochre  · must-know defaults
+$callout-color-caution:   #c56b41;   // clay-400
+
+// ---- Navbar / sidebar ----
+$navbar-bg:  #f7efdf;
+$navbar-fg:  #34302a;
+
+/*-- scss:rules --*/
+// Polish that variables don't cover.
+
+.navbar-brand { font-weight: 600; letter-spacing: -0.01em; }
+
+// Sidebar active item gets the ochre rail (matches the DS docs kit)
+.sidebar-item .active {
+  color: #97591b;
+  border-left: 2px solid #d98a2b;
+  background: #fdf6ea;
+}
+
+// Code blocks: warm-dark surface like the DS CodeBlock component.
+div.sourceCode {
+  background: #211e1a;
+  border-radius: .75rem;
+  border: 1px solid #34302a;
+}
+div.sourceCode pre code { color: #f4eee2; }
+
+// Rounded, soft-shadow cards for the Experiments listing grid.
+.quarto-grid-item.card {
+  border: 1px solid #e6dcc6;
+  border-radius: .75rem;
+  box-shadow: 0 1px 3px rgba(33,30,26,.08);
+}
+
+// Selection in the brand tint.
+::selection { background: #f2d093; color: #211e1a; }

@@ -1,0 +1,12 @@
+# CorkLongwaveRadiation { #climt._components.cork.lw.component.CorkLongwaveRadiation }
+
+```python
+_components.cork.lw.component.CorkLongwaveRadiation(
+    optics='parmentier',
+    table=None,
+    coefficients='solar_composition',
+    rosseland_mean_fit='freedman2014',
+    **kwargs,
+)
+```
+

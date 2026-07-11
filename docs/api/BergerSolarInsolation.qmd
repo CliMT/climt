@@ -1,0 +1,8 @@
+# BergerSolarInsolation { #climt.BergerSolarInsolation }
+
+```python
+BergerSolarInsolation(**kwargs)
+```
+
+Determines solar insolation using spectral solutions for orbital
+constants from Berger 1978. This is the same approach taken by CAM 3.

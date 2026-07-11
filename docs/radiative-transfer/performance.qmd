@@ -1,0 +1,160 @@
+---
+title: "Appendix A: Performance"
+bibliography: ../../references.bib
+---
+
+climt's CORK radiation scheme is fast enough for interactive use and real-time
+column-model experiments. The design target is ≥ 400 column-calls per second
+for correlated-k mode (single column on a laptop). On a reference machine
+the CORK longwave scheme **outperforms RRTMG-LW** at equal spectral resolution.
+
+## Benchmark result
+
+The following figure shows throughput (columns per second) and per-call timing
+measured with 100 columns × 30 levels in a single process.
+
+![**Figure A.1** — CORK-LW vs. RRTMG-LW throughput at 100 columns × 30 levels.
+CORK-LW (14 bands, 8 g-points) achieves 52.9 µs/col against RRTMG-LW's 63.3 µs/col
+(0.84× relative wall-clock time — see table below). The profile breakdown shows that the Numba-compiled
+`_ck_tau_additive_co2_kernel` dominates the hot path.
+](../experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png){#fig-throughput}
+
+Key numbers from that run:
+
+| Scheme | ms / call (100 col) | µs / col | vs. RRTMG |
+|--------|--------------------:|----------:|----------:|
+| RRTMG-LW | 6.33 ± 0.02 | 63.3 | 1.00× |
+| CORK-LW (14b × 8g) | 5.29 ± 0.14 | 52.9 | **0.84×** |
+
+"0.84×" means CORK uses 84% of RRTMG's wall-clock time — it is faster.
+
+## What makes it fast
+
+### Numba `@njit(parallel=True)` with `prange`
+
+The outermost loop of every hot kernel iterates over *columns*, which are
+fully independent. CORK marks those loops with `prange` and compiles the
+whole function with `@njit(parallel=True)`. Numba dispatches the column loop
+to a thread pool (one thread per core) at zero Python overhead.
+
+The optical-depth kernel — the single most expensive function — is
+`_ck_tau_additive_co2_kernel`:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.optics.correlated_k import _ck_tau_additive_co2_kernel
+print(inspect.getsource(_ck_tau_additive_co2_kernel))
+```
+
+Notice `@njit(parallel=True)` at the top and `for i in prange(ncol)` as the
+outer loop: every column is dispatched to a separate thread.
+
+The same pattern appears in the LW transport kernel:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.lw.kernels import _lw_transport_kernel
+print(inspect.getsource(_lw_transport_kernel))
+```
+
+### Pure-NumPy k-table interpolation; no Python in the hot path
+
+k-table lookup involves a 4-D bilinear interpolation in $(T, p, x_\text{H_2O},
+x_\text{CO_2})$ space. The bracket-finding helpers (`_ck_bracket`) and
+interpolation helpers (`_ck_txx7`, `_ck_txx_cont`) are all `@njit`-compiled
+scalar functions. Once Numba has compiled the outer kernel on first call,
+*no Python bytecode executes* inside the column/level/band/g-point quadruple
+loop.
+
+### One-time unit conversion in `array_call`
+
+Reshaping, unit conversion (mole fraction → kg m⁻²), and output unpacking
+are performed **once per component call** inside `CorkLongwaveRadiation.array_call`,
+before any kernel is invoked. The compiled kernels receive raw NumPy arrays of
+the correct shape and units and never touch Python objects.
+
+### Graceful no-Numba fallback
+
+When Numba is unavailable (e.g. in a Pyodide/WebAssembly context), `common.py`
+replaces `@njit` with a no-op decorator and `prange` with the built-in `range`.
+The scheme still runs correctly in pure Python — just without the multi-threaded
+speed-up. Interactive notebooks in JupyterLite use this path.
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.common import njit
+print(inspect.getsource(njit))
+```
+
+## Profiling the hot path
+
+The profiler output recorded alongside the benchmark confirms that `array_call`
+accounts for essentially the entire call budget, with `_correlated_k_optics`
+(k-table lookup) taking the bulk of that:
+
+```
+ncalls  tottime  cumtime  filename:lineno(function)
+     1    0.001    0.005   cork/lw/component.py:200(array_call)
+     1    0.000    0.002   cork/lw/component.py:415(_correlated_k_optics)
+     1    0.000    0.002   cork/optics/correlated_k.py:347(compute_ck_optical_depth)
+     1    0.000    0.002   cork/optics/correlated_k.py:447(_compute_ck_optical_depth_additive)
+     1    0.000    0.002   cork/optics/correlated_k.py:498(_additive_co2_fast)
+     1    0.001    0.001   cork/optics/correlated_k.py:81(_ck_tau_additive_co2_kernel)
+```
+
+The outermost Python frame (`array_call`) costs 1 ms; the compiled
+`_ck_tau_additive_co2_kernel` costs another 1 ms on the reference machine.
+Everything else is sub-millisecond bookkeeping.
+
+::: {.callout-warning}
+## First-call JIT latency
+
+Numba compiles each kernel the first time it is called. Expect a 5–30 second
+pause on the very first `CorkLongwaveRadiation.__call__` in a fresh Python
+process. Subsequent calls are fast. If you are timing CORK in a benchmark,
+always make a warm-up call before recording.
+:::
+
+::: {.callout-tip}
+## Reproduce the benchmark
+
+Run the benchmark script from the repo root (climt environment):
+
+```bash
+conda run --no-capture-output -n climt python scripts/experiments/bench_cork_vs_rrtmg.py
+```
+
+Pass `--save <path>.npz` to persist raw timing arrays. This prints the
+per-call timing and throughput breakdown and saves
+`docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png`.
+:::
+
+## Heating-rate kernel
+
+The heating-rate calculation uses the same `@njit` / `prange` pattern.
+`compute_heating_rate` in `climt/_components/cork/common.py` iterates over
+columns in parallel:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.common import compute_heating_rate
+print(inspect.getsource(compute_heating_rate))
+```
+
+Because heating rates are derived from flux divergence — a simple subtraction
+per layer — this kernel is negligibly cheap compared with the optical-depth
+computation.
+
+## Further reading
+
+- @pincus2019 — RRTMGP design paper; discusses the accuracy–efficiency
+  trade-off in production correlated-k codes and the rationale for the
+  g-point ordering used by CORK.
+- @lacis1991 — the original correlated-k distribution paper; the
+  mathematical framework CORK implements.
+- @lam2015 — Numba: a JIT compiler for numerical Python. Describes the
+  `@njit`/`prange` model used throughout CORK's hot path.

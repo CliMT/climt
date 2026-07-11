@@ -1,0 +1,108 @@
+---
+title: "Installation"
+---
+
+## Stable release
+
+::: {.callout-note}
+The GFS dynamical core has been made into a seperate package called
+[gfs_dynamical_core](https://github.com/Ai33L/gfs_dynamical_core) for
+ease of maintenance.
+:::
+
+If you need the dynamical core, please install this package from source
+or directly using pip. Doing this will automatically install climt as
+well.
+
+``` console
+$ pip install gfs_dynamical_core
+```
+
+You can install climt by simply typing
+
+``` console
+$ pip install climt
+```
+
+This is the preferred method to install climt, as it will always install
+the most recent stable release. On Ubuntu Linux, you might need to
+prefix the above command with `sudo`. This command should work on Linux,
+Mac and Windows. For Mac and Windows, it is recommended to use the
+[anaconda](https://www.continuum.io/downloads) python distribution to
+make installation simpler.
+
+::: {.callout-note}
+If you are not using Anaconda, please ensure you have the libpython
+library installed. See the next section for instructions to install
+libpython.
+:::
+
+Since by default pip attempts to install a binary wheel, you won't need
+a compiler on your system.
+
+If you don't have [pip](https://pip.pypa.io) installed, this [Python
+installation
+guide](http://docs.python-guide.org/en/latest/starting/installation/)
+can guide you through the process.
+
+## Installing from source
+
+The sources for climt can be downloaded from the [Github
+repo](https://github.com/climt/climt).
+
+You can either clone the public repository:
+
+``` console
+$ git clone git://github.com/CliMT/climt
+```
+
+Or download the
+[tarball](https://github.com/CliMT/climt/tarball/master):
+
+``` console
+$ curl  -OL https://github.com/CliMT/climt/tarball/master
+```
+
+Once you have a copy of the source, you can install it with:
+
+``` console
+$ pip install -r requirements_dev.txt
+$ python setup.py install
+```
+
+Both commands may require the use of `sudo`.
+
+### Dependencies for source installations
+
+climt depends on some easily installable libraries. For an installation
+from source, it also requires that C and fortran compilers be installed.
+
+On Ubuntu Linux, for example, these dependencies can be installed by:
+
+``` console
+$ sudo apt-get install gcc
+$ sudo apt-get install gfortran
+$ sudo apt-get install python-dev
+$ sudo pip install -U cython
+$ sudo pip install -U numpy
+```
+
+use `pip3` and `python3-dev` if you use Python 3.
+
+On Mac OSX, it is recommended that you use
+[anaconda](https://www.continuum.io/downloads) as your python
+distribution. This will eliminate the need to install cython, numpy and
+python-dev. Once you have anaconda installed, you will need to do the
+following:
+
+``` console
+$ brew install gcc
+$ export CC=gcc-x
+$ export FC=gfortran-x
+```
+
+Where `gcc-x,gfortran-x` are the names of the C,Fortran compilers that
+Homebrew installs. Exporting the name of the compiler is essential on
+Mac since the default compiler that ships with Mac (called `gcc`, but is
+actually a different compiler) cannot compile OpenMP programs, like the
+dynamical core in climt.

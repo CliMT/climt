@@ -1,0 +1,54 @@
+# EmanuelConvection { #climt.EmanuelConvection }
+
+```python
+EmanuelConvection(
+    minimum_convecting_layer=1,
+    autoconversion_water_content_threshold=0.0011,
+    autoconversion_temperature_threshold=-55,
+    entrainment_mixing_coefficient=1.5,
+    downdraft_area_fraction=0.05,
+    precipitation_fraction_outside_cloud=0.12,
+    speed_water_droplets=50.0,
+    speed_snow=5.5,
+    rain_evaporation_coefficient=1.0,
+    snow_evaporation_coefficient=0.8,
+    convective_momentum_transfer_coefficient=0.7,
+    downdraft_surface_velocity_coefficient=10.0,
+    convection_bouyancy_threshold=0.9,
+    mass_flux_relaxation_rate=0.1,
+    mass_flux_damping_rate=0.1,
+    reference_mass_flux_timescale=300.0,
+    **kwargs,
+)
+```
+
+The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_
+
+.. _[Emanuel and Zivkovic-Rothman]:
+        http://journals.ametsoc.org/doi/abs/10.1175/1520-0469(1999)056%3C1766%3ADAEOAC%3E2.0.CO%3B2
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [array_call](#climt.EmanuelConvection.array_call) | Get convective heating and moistening. |
+
+### array_call { #climt.EmanuelConvection.array_call }
+
+```python
+EmanuelConvection.array_call(raw_state, timestep)
+```
+
+Get convective heating and moistening.
+
+Args:
+
+    raw_state (dict):
+        The state dictionary of numpy arrays satisfying this
+        component's input properties.
+
+Returns:
+
+    tendencies (dict), diagnostics (dict):
+        * The heating and moistening tendencies
+        * Any diagnostics associated.

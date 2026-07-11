@@ -1,0 +1,40 @@
+# docs/radiative-transfer/sources.yml
+# Walkthrough chapter figures. Paths in `out` are relative to this file's dir;
+# `cmd`/`deps` paths are relative to the repo root. The driver
+# (scripts/build_experiments.py, `make experiments`) content-hashes deps and
+# only re-runs stale artifacts.
+#
+# NOTE: figures 02 and 04 are line-by-line. The heavy linepyline computation is
+# frozen into committed .npz files by docs/radiative-transfer/_lbl_data.py (run
+# once in a linepyline env); the plotting below reads those .npz in the climt env
+# and needs no linepyline, so it is fully reproducible here and in CI. Regenerate
+# the .npz inputs only when the LBL parameters change.
+artifacts:
+  - out: _artifacts/01_mean_of_exp.png
+    cmd: conda run --no-capture-output -n climt python docs/radiative-transfer/_figures.py --figure 01_mean_of_exp --out docs/radiative-transfer/_artifacts/01_mean_of_exp.png
+    deps:
+      - docs/radiative-transfer/_figures.py
+  - out: _artifacts/02_lbl_H2O_1000_1200.png
+    cmd: conda run --no-capture-output -n climt python docs/radiative-transfer/_figures.py --figure 02_lbl_H2O_1000_1200 --out docs/radiative-transfer/_artifacts/02_lbl_H2O_1000_1200.png
+    deps:
+      - docs/radiative-transfer/_figures.py
+      - docs/radiative-transfer/_artifacts/02_lbl_H2O_1000_1200.npz
+  - out: _artifacts/03_k_distribution_construction.png
+    cmd: conda run --no-capture-output -n climt python docs/radiative-transfer/_figures.py --figure 03_k_distribution_construction --out docs/radiative-transfer/_artifacts/03_k_distribution_construction.png
+    deps:
+      - docs/radiative-transfer/_figures.py
+  - out: _artifacts/04_correlation_across_T.png
+    cmd: conda run --no-capture-output -n climt python docs/radiative-transfer/_figures.py --figure 04_correlation_across_T --out docs/radiative-transfer/_artifacts/04_correlation_across_T.png
+    deps:
+      - docs/radiative-transfer/_figures.py
+      - docs/radiative-transfer/_artifacts/04_correlation_across_T.npz
+  - out: _artifacts/06_picket_fence_opacity.png
+    cmd: conda run --no-capture-output -n climt python docs/radiative-transfer/_figures.py --figure 06_picket_fence_opacity --out docs/radiative-transfer/_artifacts/06_picket_fence_opacity.png
+    deps:
+      - docs/radiative-transfer/_figures.py
+      - climt/_components/cork/optics/parmentier.py
+  - out: _artifacts/07_two_stream_phases.png
+    cmd: conda run --no-capture-output -n climt python docs/radiative-transfer/_figures.py --figure 07_two_stream_phases --out docs/radiative-transfer/_artifacts/07_two_stream_phases.png
+    deps:
+      - docs/radiative-transfer/_figures.py
+      - climt/_components/cork/sw/kernels.py

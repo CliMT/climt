@@ -1,0 +1,14 @@
+# HeldSuarez { #climt.HeldSuarez }
+
+```python
+HeldSuarez(
+    sigma_boundary_layer_top=0.7,
+    k_f=1 / 86400.0,
+    k_a=1 / 40.0 / 86400.0,
+    k_s=1 / 4.0 / 86400.0,
+    equator_pole_temperature_difference=60,
+    delta_theta_z=10,
+    **kwargs,
+)
+```
+

@@ -32,11 +32,9 @@ T_INT = 500.0  # K
 OLR_TARGET = STEFAN_BOLTZMANN * (T_IRR**4 + T_INT**4)  # ≈ 254 203 W/m²
 
 # ── File paths ────────────────────────────────────────────────────────────────
-_FIGS = os.path.join(
-    os.path.dirname(__file__), "..", "docs", "radiative_transfer", "figures"
-)
-REF_PATH = os.path.join(_FIGS, "hd209458b_reference.csv")
-EQUIL_PATH = os.path.join(_FIGS, "hd209458b_model_equilibrium.csv")
+_DATA = os.path.join(os.path.dirname(__file__), "hd209458b")
+REF_PATH = os.path.join(_DATA, "hd209458b_reference.csv")
+EQUIL_PATH = os.path.join(_DATA, "hd209458b_model_equilibrium.csv")
 
 # ── Integration parameters ────────────────────────────────────────────────────
 N_STEPS = 150_000  # 60s × 1M ≈ 1.9 years of simulation time

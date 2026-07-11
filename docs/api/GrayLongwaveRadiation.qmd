@@ -1,0 +1,6 @@
+# GrayLongwaveRadiation { #climt.GrayLongwaveRadiation }
+
+```python
+GrayLongwaveRadiation()
+```
+

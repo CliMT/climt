@@ -1,0 +1,40 @@
+# get_interface_values { #climt.get_interface_values }
+
+```python
+get_interface_values(
+    mid_level_values,
+    surface_value,
+    mid_level_pressure,
+    interface_level_pressure,
+)
+```
+
+Calculate interface values given mid-level values.
+
+Given 3D values of a quantity on model mid levels (cell centers) and the 2D surface
+value, return the 3D values of that quantity on model full levels (cell interfaces).
+If the vertical dimension of :code:`mid_level_values` is length K, the returned array will have a
+vertical dimension of length K+1.
+
+Routine borrowed from CESM (radiation.F90 in rrtmg folder)
+
+Args:
+
+    mid_level_values (array):
+        The values of the quantity on mid-levels.
+
+    surface_value (array):
+        The value of the quantity at the surface. Must be in the
+        same units as :code:`mid_level_values`
+
+    mid_level_pressure (array):
+        Pressure values on mid-levels. Can be in any units.
+
+    interface_level_pressure (array):
+        Pressure values on interface levels. Must be in
+        in the same units as :code:`mid_level_pressure`.
+
+Returns:
+
+    interface_values (array):
+        values of the quantity on mid-levels.

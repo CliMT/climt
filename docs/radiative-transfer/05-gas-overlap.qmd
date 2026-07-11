@@ -1,0 +1,65 @@
+---
+title: "Chapter 5: Gas overlap: additive vs ESFT"
+bibliography: ../../references.bib
+---
+
+A k-distribution is built for *one gas*. Real atmospheres have H₂O, CO₂, O₃,
+CH₄ all absorbing in the same spectral bands. We need to combine them.
+
+## Additive overlap
+
+If gases are "strongly correlated" within a band — their strongest features
+fall in the same spectral sub-ranges — the combined $k(g)$ is simply
+
+$$k_\text{total}(g) = \sum_i k_i(g)\,q_i,$$
+
+where $q_i$ is the column amount of species $i$. This assumes the ordering of
+opacities is the same for every gas: the same g-point that is the strongest
+absorber for H₂O is also the strongest for CO₂.
+
+Additive overlap is what climt uses in its low-resolution Earth tables, where
+the bands are broad enough that co-location of strong features is a reasonable
+approximation.
+
+## ESFT overlap
+
+For narrow, finely-resolved bands where the gases are *uncorrelated* — H₂O
+strongly absorbing where CO₂ is weak and vice versa — the band-averaged
+transmission factorises over gases:
+
+$$\langle T(L)\rangle = \langle T_1(L)\rangle \cdot \langle T_2(L)\rangle \cdots$$
+
+This means the combined k-distribution is the **outer product** of the
+individual ones (the Equivalent Sum of Exponential Terms, ESFT). For two gases
+with $G$ g-points each, ESFT produces $G^2$ combined g-points:
+
+$$k_{ij} = k^{(1)}_i\,q_1 + k^{(2)}_j\,q_2, \qquad w_{ij} = w^{(1)}_i\,w^{(2)}_j.$$
+
+The combined weights still sum to 1. Cost scales as $G^N$ for $N$ gases —
+manageable for 2–3 major absorbers.
+
+climt computes ESFT weights in `compute_esft_weights`:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.optics.correlated_k import compute_esft_weights
+print(inspect.getsource(compute_esft_weights))
+```
+
+## Worked example
+
+Take two gases with 4 g-points each.
+
+| Overlap method | Combined g-points | Error vs. LBL |
+|---|---|---|
+| Additive | 4 | ~20–30 % if gases truly uncorrelated |
+| ESFT | 16 | < 1 % |
+
+For the picket-fence Earth tables where the bands are already broad caricatures,
+additive overlap is accurate enough. For the high-resolution CO₂-adjustable
+tables (Task 9 in the picket-fence plan), ESFT is used for the H₂O + CO₂ pair.
+
+## Further reading
+
+- @mlawer1997 §4 — the ESFT treatment used in RRTM.
