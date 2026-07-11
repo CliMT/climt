@@ -40,9 +40,13 @@ artifacts:
   - out: _artifacts/lbl_overlay.png
     cmd: conda run --no-capture-output -n climt python scripts/experiments/make_subproject_B_figures.py --figure lbl --out docs/experiments/2026-06-05-cork-co2-bands/_artifacts/lbl_overlay.png
     deps:
+      # The LBL reference spectra are committed alongside this experiment's
+      # artifacts (byte-identical to the debug_data/ scratch copies the
+      # generator writes). Depend on the committed copies so `--check` works
+      # from a clean checkout (debug_data/ is gitignored and absent in CI).
       - scripts/experiments/make_subproject_B_figures.py
-      - debug_data/lbl_olr_spec_moist.npz
-      - debug_data/lbl_olr_spec_dry.npz
+      - docs/experiments/2026-06-05-cork-co2-bands/_artifacts/lbl_olr_spec_moist.npz
+      - docs/experiments/2026-06-05-cork-co2-bands/_artifacts/lbl_olr_spec_dry.npz
   - out: _artifacts/rce_before_after.png
     cmd: conda run --no-capture-output -n climt python scripts/experiments/make_subproject_B_figures.py --figure rce --before-npz docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_before.npz --after-npz docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_after.npz --out docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_before_after.png
     deps:
