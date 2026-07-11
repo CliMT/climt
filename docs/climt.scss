@@ -58,13 +58,14 @@ $navbar-fg:  #34302a;
   background: #fdf6ea;
 }
 
-// Code blocks: warm-dark surface like the DS CodeBlock component.
+// Code blocks: warm light surface matching inline code, so the light-theme
+// syntax-highlight token colors stay legible (a dark surface hid them).
 div.sourceCode {
-  background: #211e1a;
+  background: #f6efe0;            // warm cream, a touch deeper than the page
   border-radius: .75rem;
-  border: 1px solid #34302a;
+  border: 1px solid #e6dcc6;     // hairline sand
 }
-div.sourceCode pre code { color: #f4eee2; }
+div.sourceCode pre code { color: #34302a; }   // warm ink for un-tokenized text
 
 // Rounded, soft-shadow cards for the Experiments listing grid.
 .quarto-grid-item.card {
