@@ -19,7 +19,8 @@ jobs:
       - uses: quarto-dev/quarto-actions/setup@v2
       - name: Install climt + docs deps
         run: |
-          pip install "griffe<2.0" quartodoc pyyaml jupyter matplotlib numpy
+          pip install "griffe<2.0" quartodoc pyyaml jupyter matplotlib numpy \
+            pint unyt xarray "sympl>=0.5.0" scipy cython importlib_resources
           pip install -e . --no-deps
       - name: Verify experiment artifacts are not stale
         run: python scripts/build_experiments.py --check
