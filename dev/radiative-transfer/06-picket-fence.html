@@ -300,7 +300,7 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../radiative-transfer/performance.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Performance</span></a>
+ <span class="menu-text">Appendix A: Performance</span></a>
   </div>
 </li>
       </ul>
@@ -320,8 +320,20 @@ window.Quarto = {
   <li><a href="#the-ratio-coefficients-gamma_i-and-beta" id="toc-the-ratio-coefficients-gamma_i-and-beta" class="nav-link" data-scroll-target="#the-ratio-coefficients-gamma_i-and-beta">The ratio coefficients <span class="math inline">\(\gamma_i\)</span> and <span class="math inline">\(\beta\)</span></a></li>
   <li><a href="#what-the-picket-fence-gets-right" id="toc-what-the-picket-fence-gets-right" class="nav-link" data-scroll-target="#what-the-picket-fence-gets-right">What the picket-fence gets right</a></li>
   <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further reading</a></li>
+  <li><a href="#spectral-anatomy-a-hands-on-tour" id="toc-spectral-anatomy-a-hands-on-tour" class="nav-link" data-scroll-target="#spectral-anatomy-a-hands-on-tour">Spectral anatomy: a hands-on tour</a></li>
+  <li><a href="#why-the-stratosphere-cools-a-spectral-tour" id="toc-why-the-stratosphere-cools-a-spectral-tour" class="nav-link" data-scroll-target="#why-the-stratosphere-cools-a-spectral-tour">Why the stratosphere cools: a spectral tour</a>
+  <ul class="collapse">
+  <li><a href="#load-a-standard-earth-atmosphere" id="toc-load-a-standard-earth-atmosphere" class="nav-link" data-scroll-target="#load-a-standard-earth-atmosphere">1. Load a standard Earth atmosphere</a></li>
+  <li><a href="#per-band-optical-depth-τp" id="toc-per-band-optical-depth-τp" class="nav-link" data-scroll-target="#per-band-optical-depth-τp">2. Per-band optical depth τ(p)</a></li>
+  <li><a href="#per-band-layer-transmittance" id="toc-per-band-layer-transmittance" class="nav-link" data-scroll-target="#per-band-layer-transmittance">3. Per-band layer transmittance</a></li>
+  <li><a href="#per-band-net-longwave-flux-profiles" id="toc-per-band-net-longwave-flux-profiles" class="nav-link" data-scroll-target="#per-band-net-longwave-flux-profiles">4. Per-band net longwave flux profiles</a></li>
+  <li><a href="#per-band-heating-rate-contributions" id="toc-per-band-heating-rate-contributions" class="nav-link" data-scroll-target="#per-band-heating-rate-contributions">5. Per-band heating-rate contributions</a></li>
+  <li><a href="#co₂-doubling-experimentwe-run-the-component-a-second-time-with-co₂-doubled-560-ppm-2-pre-industrialand-compare--δτ-per-band-which-bands-gain-the-most-optical-depth--δheating-rate-per-band-which-bands-change-their-cooling-profile--δolr-the-instantaneous-radiative-forcing-before-temperature-adjustment.the-earth_low_res_lw-table-has-a-co₂-vmr-axis-so-the-component-readsmole_fraction_of_carbon_dioxide_in_air-from-the-state-and-interpolates-inthe-k-table-no-code-changes-needed.-caveat-on-the-δolr-magnitude.-the-value-computed-below-0.20.3-w-m²-is-roughly-an-order-of-magnitude-smaller-than-the-canonical-co₂-doubling-instantaneous-forcing-of-2.53.7-w-m²-reported-by-line-by-line-models-and-ipcc-assessments.-the-gap-is-an-artefact-of-resolution-the-earth_low_res_lw-table-uses-only-14-bands-8-g-points-which-under-resolves-the-narrow-15-μm-co₂-absorption-feature.-a-higher-resolution-k-table-or-a-line-by-line-calculation-recovers-the-full-forcing.-read-the-result-here-qualitatively-it-correctly-shows-the-sign-identifies-band-4-630700-cm¹-as-the-dominant-contributor-and-demonstrates-the-spectral-mechanism-but-should-not-be-taken-as-a-quantitative-forcing-estimate." id="toc-co₂-doubling-experimentwe-run-the-component-a-second-time-with-co₂-doubled-560-ppm-2-pre-industrialand-compare--δτ-per-band-which-bands-gain-the-most-optical-depth--δheating-rate-per-band-which-bands-change-their-cooling-profile--δolr-the-instantaneous-radiative-forcing-before-temperature-adjustment.the-earth_low_res_lw-table-has-a-co₂-vmr-axis-so-the-component-readsmole_fraction_of_carbon_dioxide_in_air-from-the-state-and-interpolates-inthe-k-table-no-code-changes-needed.-caveat-on-the-δolr-magnitude.-the-value-computed-below-0.20.3-w-m²-is-roughly-an-order-of-magnitude-smaller-than-the-canonical-co₂-doubling-instantaneous-forcing-of-2.53.7-w-m²-reported-by-line-by-line-models-and-ipcc-assessments.-the-gap-is-an-artefact-of-resolution-the-earth_low_res_lw-table-uses-only-14-bands-8-g-points-which-under-resolves-the-narrow-15-μm-co₂-absorption-feature.-a-higher-resolution-k-table-or-a-line-by-line-calculation-recovers-the-full-forcing.-read-the-result-here-qualitatively-it-correctly-shows-the-sign-identifies-band-4-630700-cm¹-as-the-dominant-contributor-and-demonstrates-the-spectral-mechanism-but-should-not-be-taken-as-a-quantitative-forcing-estimate." class="nav-link" data-scroll-target="#co₂-doubling-experimentwe-run-the-component-a-second-time-with-co₂-doubled-560-ppm-2-pre-industrialand-compare--δτ-per-band-which-bands-gain-the-most-optical-depth--δheating-rate-per-band-which-bands-change-their-cooling-profile--δolr-the-instantaneous-radiative-forcing-before-temperature-adjustment.the-earth_low_res_lw-table-has-a-co₂-vmr-axis-so-the-component-readsmole_fraction_of_carbon_dioxide_in_air-from-the-state-and-interpolates-inthe-k-table-no-code-changes-needed.-caveat-on-the-δolr-magnitude.-the-value-computed-below-0.20.3-w-m²-is-roughly-an-order-of-magnitude-smaller-than-the-canonical-co₂-doubling-instantaneous-forcing-of-2.53.7-w-m²-reported-by-line-by-line-models-and-ipcc-assessments.-the-gap-is-an-artefact-of-resolution-the-earth_low_res_lw-table-uses-only-14-bands-8-g-points-which-under-resolves-the-narrow-15-μm-co₂-absorption-feature.-a-higher-resolution-k-table-or-a-line-by-line-calculation-recovers-the-full-forcing.-read-the-result-here-qualitatively-it-correctly-shows-the-sign-identifies-band-4-630700-cm¹-as-the-dominant-contributor-and-demonstrates-the-spectral-mechanism-but-should-not-be-taken-as-a-quantitative-forcing-estimate.">6. CO₂-doubling experimentWe run the component a second time with CO₂ doubled (560 ppm, 2× pre-industrial)and compare:- <strong>Δτ per band</strong> — which bands gain the most optical depth?- <strong>Δheating rate per band</strong> — which bands change their cooling profile?- <strong>ΔOLR</strong> — the instantaneous radiative forcing before temperature adjustment.The <code>earth_low_res_lw</code> table has a CO₂ VMR axis, so the component reads<code>mole_fraction_of_carbon_dioxide_in_air</code> from the state and interpolates inthe k-table — no code changes needed.&gt; <strong>Caveat on the ΔOLR magnitude.</strong> The value computed below (~0.2–0.3 W m⁻²)&gt; is roughly <strong>an order of magnitude smaller</strong> than the canonical CO₂-doubling&gt; instantaneous forcing of ~2.5–3.7 W m⁻² reported by line-by-line models and&gt; IPCC assessments. The gap is an artefact of resolution: the&gt; <code>earth_low_res_lw</code> table uses only <strong>14 bands / 8 g-points</strong>, which&gt; under-resolves the narrow 15 μm CO₂ absorption feature. A higher-resolution&gt; k-table or a line-by-line calculation recovers the full forcing. Read the&gt; result here <strong>qualitatively</strong> — it correctly shows the sign, identifies&gt; Band 4 (630–700 cm⁻¹) as the dominant contributor, and demonstrates the&gt; spectral mechanism — but should <strong>not</strong> be taken as a quantitative forcing&gt; estimate.</a></li>
+  <li><a href="#summary-the-co₂-forcing-decomposed" id="toc-summary-the-co₂-forcing-decomposed" class="nav-link" data-scroll-target="#summary-the-co₂-forcing-decomposed">7. Summary: the CO₂ forcing decomposed</a></li>
+  <li><a href="#takeaways1.-window-bands-are-transparent-low-τ-transmittance-1-and-contribute-most-of-the-olr-from-lower-tropospheric-levels.2.-co₂-and-h₂o-rotation-bands-are-opaque-high-τ-and-keep-the-troposphere-in-radiative-convective-balance-by-absorbing-upwelling-radiation-and-re-emitting-at-the-local-temperature.3.-stratospheric-cooling-is-driven-by-the-co₂-15-μm-band-the-stratosphere-absorbs-little-from-below-but-emits-efficiently-to-space-producing-the-characteristic-2-kday-cooling-above-the-tropopause.4.-co₂-doubling-reduces-olr-by-increasing-the-optical-depth-in-the-15-μm-band.-the-δolr-computed-above-0.20.3-w-m²-is-qualitatively-correct-in-sign-and-spectral-attribution-but-is-an-order-of-magnitude-below-the-canonical-instantaneous-forcing-2.53.7-w-m²-because-the-coarse-14-band-8-g-point-earth_low_res_lw-table-under-resolves-the-15-μm-co₂-feature.-a-line-by-line-or-higher-resolution-k-table-recovers-the-full-forcing.5.-the-cork-component-correlated-k-mode-resolves-all-of-this-with-just-14-bands-8-g-points-per-band-112-quadrature-points-compared-to-thousands-of-spectral-lines-in-a-line-by-line-calculation.next-steps--chapter-7-of-the-climt-docs-walkthrough-extends-this-analysis-to-the-two-stream-sw-component-corkshortwaveradiation.--examplesk_distribution_demo.ipynb-shows-how-the-k-distribution-quadrature-is-derived-from-first-principles.--the-cork-architecture-is-explained-in-chapter-5-and-the-component-manual." id="toc-takeaways1.-window-bands-are-transparent-low-τ-transmittance-1-and-contribute-most-of-the-olr-from-lower-tropospheric-levels.2.-co₂-and-h₂o-rotation-bands-are-opaque-high-τ-and-keep-the-troposphere-in-radiative-convective-balance-by-absorbing-upwelling-radiation-and-re-emitting-at-the-local-temperature.3.-stratospheric-cooling-is-driven-by-the-co₂-15-μm-band-the-stratosphere-absorbs-little-from-below-but-emits-efficiently-to-space-producing-the-characteristic-2-kday-cooling-above-the-tropopause.4.-co₂-doubling-reduces-olr-by-increasing-the-optical-depth-in-the-15-μm-band.-the-δolr-computed-above-0.20.3-w-m²-is-qualitatively-correct-in-sign-and-spectral-attribution-but-is-an-order-of-magnitude-below-the-canonical-instantaneous-forcing-2.53.7-w-m²-because-the-coarse-14-band-8-g-point-earth_low_res_lw-table-under-resolves-the-15-μm-co₂-feature.-a-line-by-line-or-higher-resolution-k-table-recovers-the-full-forcing.5.-the-cork-component-correlated-k-mode-resolves-all-of-this-with-just-14-bands-8-g-points-per-band-112-quadrature-points-compared-to-thousands-of-spectral-lines-in-a-line-by-line-calculation.next-steps--chapter-7-of-the-climt-docs-walkthrough-extends-this-analysis-to-the-two-stream-sw-component-corkshortwaveradiation.--examplesk_distribution_demo.ipynb-shows-how-the-k-distribution-quadrature-is-derived-from-first-principles.--the-cork-architecture-is-explained-in-chapter-5-and-the-component-manual." class="nav-link" data-scroll-target="#takeaways1.-window-bands-are-transparent-low-τ-transmittance-1-and-contribute-most-of-the-olr-from-lower-tropospheric-levels.2.-co₂-and-h₂o-rotation-bands-are-opaque-high-τ-and-keep-the-troposphere-in-radiative-convective-balance-by-absorbing-upwelling-radiation-and-re-emitting-at-the-local-temperature.3.-stratospheric-cooling-is-driven-by-the-co₂-15-μm-band-the-stratosphere-absorbs-little-from-below-but-emits-efficiently-to-space-producing-the-characteristic-2-kday-cooling-above-the-tropopause.4.-co₂-doubling-reduces-olr-by-increasing-the-optical-depth-in-the-15-μm-band.-the-δolr-computed-above-0.20.3-w-m²-is-qualitatively-correct-in-sign-and-spectral-attribution-but-is-an-order-of-magnitude-below-the-canonical-instantaneous-forcing-2.53.7-w-m²-because-the-coarse-14-band-8-g-point-earth_low_res_lw-table-under-resolves-the-15-μm-co₂-feature.-a-line-by-line-or-higher-resolution-k-table-recovers-the-full-forcing.5.-the-cork-component-correlated-k-mode-resolves-all-of-this-with-just-14-bands-8-g-points-per-band-112-quadrature-points-compared-to-thousands-of-spectral-lines-in-a-line-by-line-calculation.next-steps--chapter-7-of-the-climt-docs-walkthrough-extends-this-analysis-to-the-two-stream-sw-component-corkshortwaveradiation.--examplesk_distribution_demo.ipynb-shows-how-the-k-distribution-quadrature-is-derived-from-first-principles.--the-cork-architecture-is-explained-in-chapter-5-and-the-component-manual.">8. Takeaways1. <strong>Window bands are transparent</strong> (low τ, transmittance ≈ 1) and contribute most of the OLR from lower-tropospheric levels.2. <strong>CO₂ and H₂O rotation bands are opaque</strong> (high τ) and keep the troposphere in radiative-convective balance by absorbing upwelling radiation and re-emitting at the local temperature.3. <strong>Stratospheric cooling</strong> is driven by the CO₂ 15 μm band: the stratosphere absorbs little from below but emits efficiently to space, producing the characteristic −2 K/day cooling above the tropopause.4. <strong>CO₂ doubling reduces OLR</strong> by increasing the optical depth in the 15 μm band. The ΔOLR computed above (~0.2–0.3 W m⁻²) is <strong>qualitatively correct in sign and spectral attribution</strong> but is <strong>an order of magnitude below</strong> the canonical instantaneous forcing (~2.5–3.7 W m⁻²) because the coarse 14-band / 8-g-point <code>earth_low_res_lw</code> table under-resolves the 15 μm CO₂ feature. A line-by-line or higher-resolution k-table recovers the full forcing.5. The CORK component (correlated-k mode) resolves all of this with just 14 bands × 8 g-points per band = <strong>112 quadrature points</strong>, compared to thousands of spectral lines in a line-by-line calculation.—<strong>Next steps:</strong>- Chapter 7 of the climt docs walkthrough extends this analysis to the two-stream SW component (<code>CorkShortwaveRadiation</code>).- <code>examples/k_distribution_demo.ipynb</code> shows how the k-distribution quadrature is derived from first principles.- The CORK architecture is explained in Chapter 5 and the component manual.</a></li>
+  </ul></li>
   </ul>
-</nav>
+<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="spectral_radiation_anatomy-preview.html"><i class="bi bi-journal-code"></i>Why the stratosphere cools: a spectral tour</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -360,74 +372,107 @@ window.Quarto = {
 <section id="the-rosseland-mean-opacity" class="level2">
 <h2 class="anchored" data-anchor-id="the-rosseland-mean-opacity">The Rosseland mean opacity</h2>
 <p><span class="math inline">\(\kappa_R\)</span> is the reciprocal of a Planck-weighted harmonic mean of <span class="math inline">\(\sigma(\nu)\)</span>. climt uses the Freedman et al.&nbsp;(2014) polynomial fit for solar-composition gas-giant atmospheres:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_rosseland_mean_opacity(T, p, coeffs):</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute the Freedman et al. (2014) Rosseland mean opacity.</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">        T: temperature, K (scalar)</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">        p: pressure, Pa (scalar)</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: coefficient dict from load_freedman2014_coefficients()</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">        kappa_R: Rosseland mean opacity, m²/kg (scalar)</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    log_T <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(T), <span class="fl">10.0</span>))</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    log_P <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(p) <span class="op">*</span> <span class="fl">10.0</span>, <span class="fl">1.0</span>))  <span class="co"># Pa → dyne/cm²</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> T <span class="op">&lt;</span> <span class="bu">float</span>(coeffs[<span class="st">"T_boundary"</span>]):</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_lo"</span>]) <span class="op">*</span> log_T</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_lo"</span>]) <span class="op">*</span> log_P</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_lo"</span>]))</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_hi"</span>]) <span class="op">*</span> log_T</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_hi"</span>]) <span class="op">*</span> log_P</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_hi"</span>]))</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">10.0</span><span class="op">**</span>log_k <span class="op">*</span> <span class="fl">0.1</span>   <span class="co"># cm²/g → m²/kg</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>(Source: <code>climt/_components/picket_fence/optics/parmentier.py</code>)</em></p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
+<div id="f6a00792" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.parmentier <span class="im">import</span> compute_rosseland_mean_opacity</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(compute_rosseland_mean_opacity))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>def compute_rosseland_mean_opacity(T, p, coeffs):
+    """Compute the Freedman et al. (2014) Rosseland mean opacity.
+
+    Args:
+        T: temperature, K (scalar)
+        p: pressure, Pa (scalar)
+        coeffs: coefficient dict from load_freedman2014_coefficients()
+
+    Returns:
+        kappa_R: Rosseland mean opacity, m^2/kg (scalar)
+    """
+    log_T = np.log10(max(float(T), 10.0))
+    log_P = np.log10(max(float(p) * 10.0, 1.0))  # Pa → dyne/cm^2
+    if T &lt; float(coeffs["T_boundary"]):
+        log_k = float(coeffs["a_lo"]) * log_T + float(coeffs["b_lo"]) * log_P + float(coeffs["c_lo"])
+    else:
+        log_k = float(coeffs["a_hi"]) * log_T + float(coeffs["b_hi"]) * log_P + float(coeffs["c_hi"])
+    return 10.0**log_k * 0.1  # cm^2/g → m^2/kg
+</code></pre>
 </div>
 </div>
-<div class="callout-body-container callout-body">
-<p><strong>Figure 6.1</strong> — Rosseland mean opacity as a function of pressure for a hot-Jupiter column at <span class="math inline">\(T_\text{eff}\)</span> = 1 000 K. The shape drives the T-p profile. <em>(Generated by <code>_figures.py</code> — Task 7.)</em></p>
+<div id="fig-picket-fence-opacity" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-picket-fence-opacity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="_artifacts/06_picket_fence_opacity.png" class="img-fluid figure-img">
 </div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-picket-fence-opacity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: <strong>Figure 6.1</strong> — Rosseland mean opacity as a function of pressure for a hot-Jupiter column. The shape drives the radiative-equilibrium T-p profile.
+</figcaption>
+</figure>
 </div>
 </section>
 <section id="the-ratio-coefficients-gamma_i-and-beta" class="level2">
 <h2 class="anchored" data-anchor-id="the-ratio-coefficients-gamma_i-and-beta">The ratio coefficients <span class="math inline">\(\gamma_i\)</span> and <span class="math inline">\(\beta\)</span></h2>
 <p>The ratios <span class="math inline">\(\gamma_{v1}, \gamma_{v2}, \gamma_{v3}, \beta\)</span> and <span class="math inline">\(\gamma_P\)</span> are piecewise-linear functions of effective temperature <span class="math inline">\(T_\text{eff}\)</span>, fitted in <span class="citation" data-cites="parmentier2015">Parmentier et al. (<a href="#ref-parmentier2015" role="doc-biblioref">2016</a>)</span> Table 1. climt ships those coefficients and interpolates them at runtime:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lookup_ratio_coefficients(coeffs, T_eff):</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Look up Parmentier ratio coefficients for a given T_eff.</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: loaded coefficient data (from load_parmentier_coefficients)</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">        T_eff: effective temperature, K (scalar)</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">        gamma_v1, gamma_v2, gamma_v3, beta, gamma_P, R</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.log10(<span class="bu">max</span>(T_eff, <span class="fl">10.0</span>))</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    boundaries <span class="op">=</span> coeffs[<span class="st">"T_eff_boundaries"</span>]</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    region <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(boundaries) <span class="op">-</span> <span class="dv">1</span>):</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> T_eff <span class="op">&gt;=</span> boundaries[i] <span class="kw">and</span> T_eff <span class="op">&lt;</span> boundaries[i <span class="op">+</span> <span class="dv">1</span>]:</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>            region <span class="op">=</span> i</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _eval_linear(ab_array, region_idx, X_val):</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> ab_array[region_idx]</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> a <span class="op">+</span> b <span class="op">*</span> X_val</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    log10_gv3 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v3_ab"</span>], region, X)</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    log10_gv2 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v2_ab"</span>], region, X)</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    log10_gv1 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v1_ab"</span>], region, X)</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    beta_val   <span class="op">=</span> np.clip(_eval_linear(coeffs[<span class="st">"beta_ab"</span>], region, X), <span class="fl">0.01</span>, <span class="fl">0.99</span>)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>(Source: <code>climt/_components/picket_fence/optics/parmentier.py</code>)</em></p>
+<div id="f124e9aa" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.parmentier <span class="im">import</span> lookup_ratio_coefficients</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(lookup_ratio_coefficients))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>def lookup_ratio_coefficients(coeffs, T_eff):
+    """Look up Parmentier ratio coefficients for a given T_eff.
+
+    Args:
+        coeffs: loaded coefficient data (from load_parmentier_coefficients)
+        T_eff: effective temperature, K (scalar)
+
+    Returns:
+        gamma_v1, gamma_v2, gamma_v3, beta, gamma_P, R
+    """
+    X = np.log10(max(T_eff, 10.0))  # avoid log10(0)
+    boundaries = coeffs["T_eff_boundaries"]
+
+    # Find region index
+    region = 0
+    for i in range(len(boundaries) - 1):
+        if T_eff &gt;= boundaries[i] and T_eff &lt; boundaries[i + 1]:
+            region = i
+            break
+
+    def _eval_linear(ab_array, region_idx, X_val):
+        a, b = ab_array[region_idx]
+        return a + b * X_val
+
+    log10_gv3 = _eval_linear(coeffs["log10_gamma_v3_ab"], region, X)
+    log10_gv2 = _eval_linear(coeffs["log10_gamma_v2_ab"], region, X)
+    log10_gv1 = _eval_linear(coeffs["log10_gamma_v1_ab"], region, X)
+    beta_val = _eval_linear(coeffs["beta_ab"], region, X)
+    beta_val = np.clip(beta_val, 0.01, 0.99)
+
+    quad = coeffs["log10_gamma_P_quad"]
+    log10_gP = quad[0] + quad[1] * X + quad[2] * X**2
+
+    gamma_v1 = 10.0**log10_gv1
+    gamma_v2 = 10.0**log10_gv2
+    gamma_v3 = 10.0**log10_gv3
+    gamma_P = 10.0**log10_gP
+    gamma_P = max(gamma_P, 1.0)
+
+    # R from gamma_P and beta using Parmentier &amp; Guillot (2014) Eq. 96
+    gp_minus_1 = gamma_P - 1.0
+    discriminant = gp_minus_1**2 + 4.0 * beta_val * (1.0 - beta_val) * gp_minus_1
+    if discriminant &lt; 0:
+        R = 1.0
+    else:
+        R = (
+            1.0
+            + gp_minus_1 / (2.0 * beta_val * (1.0 - beta_val))
+            + np.sqrt(discriminant) / (2.0 * beta_val * (1.0 - beta_val))
+        )
+        R = max(R, 1.0)
+
+    return gamma_v1, gamma_v2, gamma_v3, beta_val, gamma_P, R
+</code></pre>
+</div>
+</div>
 </section>
 <section id="what-the-picket-fence-gets-right" class="level2">
 <h2 class="anchored" data-anchor-id="what-the-picket-fence-gets-right">What the picket-fence gets right</h2>
@@ -460,7 +505,7 @@ Warning
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>examples/picket_fence_vs_rrtmg.ipynb</code> compares the Parmentier-mode hot-Jupiter T-p profile against a reference. <code>tests/test_hd209458b_reproduction.py</code> runs HD 209458b to radiative equilibrium.</p>
+<p><code>examples/cork_vs_rrtmg.ipynb</code> compares the Parmentier-mode hot-Jupiter T-p profile against a reference. <code>tests/test_hd209458b_reproduction.py</code> runs HD 209458b to radiative equilibrium.</p>
 </div>
 </div>
 </section>
@@ -470,12 +515,644 @@ Warning
 <li><span class="citation" data-cites="parmentier2014">Parmentier and Guillot (<a href="#ref-parmentier2014" role="doc-biblioref">2014</a>)</span> — the original picket-fence analytical model.</li>
 <li><span class="citation" data-cites="parmentier2015">Parmentier et al. (<a href="#ref-parmentier2015" role="doc-biblioref">2016</a>)</span> — the ratio-coefficient tables used by climt.</li>
 </ul>
+</section>
+<section id="spectral-anatomy-a-hands-on-tour" class="level2">
+<h2 class="anchored" data-anchor-id="spectral-anatomy-a-hands-on-tour">Spectral anatomy: a hands-on tour</h2>
+<p>The notebook below runs the CORK LW component in correlated-k mode on a standard Earth column, visualises per-band optical depth, transmittance, net flux, and heating-rate contributions for all 14 LW bands, and finishes with a CO₂-doubling experiment showing Δτ, Δheating rate, and ΔOLR per band.</p>
+</section>
+<section id="why-the-stratosphere-cools-a-spectral-tour" class="level1 quarto-embed-nb-cell">
+<h1>Why the stratosphere cools: a spectral tour</h1>
+<p>This notebook dissects the longwave radiation field of a standard Earth atmosphere <strong>band by band</strong>, using climt’s CORK (<code>CorkLongwaveRadiation</code>) component in correlated-k mode with the shipped <code>earth_low_res_lw</code> 14-band table.</p>
+<p>Key questions answered:</p>
+<ol type="1">
+<li>Which spectral bands are optically thick (opaque) and which are transparent?</li>
+<li>How does per-band transmittance vary with pressure?</li>
+<li>Where does each band cool (or warm) the atmosphere?</li>
+<li>What happens to <strong>optical depth</strong>, <strong>heating rate</strong>, and <strong>OLR</strong> when CO₂ doubles?</li>
+</ol>
+<p>All per-band diagnostics are read directly from the component — nothing is re-computed by hand.</p>
+<div id="a1b2c3d4-0002-4002-8002-aabbccdd0002" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:11.169038Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:11.168655Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:14.283647Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:14.282965Z&quot;}}" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.gridspec <span class="im">as</span> gridspec</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sympl</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pathlib, os</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork <span class="im">import</span> CorkLongwaveRadiation</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(sympl.DataArrayBackend())</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'climt CORK notebook ready'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>climt CORK notebook ready</code></pre>
+</div>
+</div>
+<section id="load-a-standard-earth-atmosphere" class="level2">
+<h2 class="anchored" data-anchor-id="load-a-standard-earth-atmosphere">1. Load a standard Earth atmosphere</h2>
+<p>We use <code>get_default_state</code> to build a 30-level column with climt’s built-in standard-atmosphere profiles, then add a realistic specific humidity profile and set pre-industrial CO₂ (280 ppm).</p>
+<p>The component is instantiated with <code>optics='correlated_k'</code> and the <code>earth_low_res_lw</code> table (14 bands, 8 g-points per band). In Parmentier mode (<code>optics='parmentier'</code>, the default) all opacity is folded into two analytical bands — suitable for exoplanet exploration but unable to resolve the CO₂ forcing experiment below.</p>
+<div id="a1b2c3d4-0004-4004-8004-aabbccdd0004" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:14.285794Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:14.285543Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:14.350919Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:14.350223Z&quot;}}" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- instantiate CORK in correlated-k mode with the Earth LW table -----------</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>lw <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">'correlated_k'</span>, table<span class="op">=</span><span class="st">'earth_low_res_lw'</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Number of LW bands : </span><span class="sc">{</span>lw<span class="sc">.</span>num_longwave_bands<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Has CO2 axis       : </span><span class="sc">{</span>lw<span class="sc">.</span>_has_co2_axis<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># --- read band edges from the shipped k-table --------------------------------</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>_repo <span class="op">=</span> pathlib.Path(os.path.abspath(<span class="st">''</span>)).parent   <span class="co"># climt/ repo root (examples/../)</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>_nc   <span class="op">=</span> _repo <span class="op">/</span> <span class="st">'climt'</span> <span class="op">/</span> <span class="st">'_data'</span> <span class="op">/</span> <span class="st">'cork'</span> <span class="op">/</span> <span class="st">'correlated_k'</span> <span class="op">/</span> <span class="st">'earth_low_res_lw.nc'</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>ds_table <span class="op">=</span> xr.open_dataset(<span class="bu">str</span>(_nc))</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>band_edges <span class="op">=</span> ds_table[<span class="st">'band_wavenumber_limits'</span>].values   <span class="co"># (14, 2) in cm⁻¹</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>ds_table.close()</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>band_labels <span class="op">=</span> [</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f'</span><span class="sc">{</span><span class="bu">int</span>(lo)<span class="sc">}</span><span class="ss">–</span><span class="sc">{</span><span class="bu">int</span>(hi)<span class="sc">}</span><span class="ss"> cm⁻¹'</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> lo, hi <span class="kw">in</span> band_edges</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'</span><span class="ch">\n</span><span class="st">Band edges (cm⁻¹):'</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, lbl <span class="kw">in</span> <span class="bu">enumerate</span>(band_labels):</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  Band </span><span class="sc">{</span>i<span class="sc">:2d}</span><span class="ss">: </span><span class="sc">{</span>lbl<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Number of LW bands : 14
+Has CO2 axis       : True
+
+Band edges (cm⁻¹):
+  Band  0: 10–250 cm⁻¹
+  Band  1: 250–350 cm⁻¹
+  Band  2: 350–500 cm⁻¹
+  Band  3: 500–630 cm⁻¹
+  Band  4: 630–700 cm⁻¹
+  Band  5: 700–800 cm⁻¹
+  Band  6: 800–980 cm⁻¹
+  Band  7: 980–1080 cm⁻¹
+  Band  8: 1080–1180 cm⁻¹
+  Band  9: 1180–1250 cm⁻¹
+  Band 10: 1250–1400 cm⁻¹
+  Band 11: 1400–1600 cm⁻¹
+  Band 12: 1600–1800 cm⁻¹
+  Band 13: 1800–3250 cm⁻¹</code></pre>
+</div>
+</div>
+<div id="a1b2c3d4-0005-4005-8005-aabbccdd0005" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:14.352510Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:14.352367Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:14.362331Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:14.361837Z&quot;}}" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- build the input state ---------------------------------------------------</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>NZ <span class="op">=</span> <span class="dv">30</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span>NZ)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>grid)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Pressure levels (Pa) — used as the vertical coordinate throughout</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>p_mid <span class="op">=</span> state[<span class="st">'air_pressure'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]       <span class="co"># (NZ,) in Pa</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>p_hPa <span class="op">=</span> p_mid <span class="op">/</span> <span class="fl">100.0</span>                               <span class="co"># convert to hPa</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Realistic temperature profile (interpolated from shipped npz) -----------</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># thermodynamic_profiles.npz carries a 60-level Earth sounding:</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   index 0 = surface (high p, warm T); index 59 = TOA (low p)</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Both arrays are surface-first (decreasing pressure), so we reverse them</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co"># to make pressure strictly increasing before calling np.interp.</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>_prof     <span class="op">=</span> np.load(pathlib.Path(os.path.abspath(<span class="st">''</span>)).joinpath(<span class="st">'thermodynamic_profiles.npz'</span>))</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>_p_prof   <span class="op">=</span> _prof[<span class="st">'air_pressure'</span>]    <span class="co"># (60,) surface-first</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>_T_prof   <span class="op">=</span> _prof[<span class="st">'air_temperature'</span>] <span class="co"># (60,) surface-first</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>_p_inc    <span class="op">=</span> _p_prof[::<span class="op">-</span><span class="dv">1</span>]  <span class="co"># now increasing</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>_T_inc    <span class="op">=</span> _T_prof[::<span class="op">-</span><span class="dv">1</span>]  <span class="co"># corresponding T</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>T_real    <span class="op">=</span> np.interp(np.log(p_mid), np.log(_p_inc), _T_inc)  <span class="co"># log-p interpolation</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'air_temperature'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">=</span> T_real</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Surface temperature consistent with the bottom of the sounding (~299 K)</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'surface_temperature'</span>].values[:] <span class="op">=</span> <span class="bu">float</span>(_T_prof[<span class="dv">0</span>])</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Realistic humidity: ~10 g/kg near surface, falling off with altitude</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>q_profile <span class="op">=</span> <span class="fl">1e-2</span> <span class="op">*</span> np.exp(<span class="op">-</span>p_hPa <span class="op">/</span> <span class="fl">800.0</span>)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'specific_humidity'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">=</span> q_profile</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Pre-industrial CO₂: 280 ppm</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>CO2_PREINDUSTRIAL <span class="op">=</span> <span class="fl">280e-6</span>   <span class="co"># mole/mole</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>state[<span class="st">'mole_fraction_of_carbon_dioxide_in_air'</span>].values[:] <span class="op">=</span> CO2_PREINDUSTRIAL</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'State summary:'</span>)</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  Levels        : </span><span class="sc">{</span>NZ<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  p range       : </span><span class="sc">{</span>p_hPa<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.1f}</span><span class="ss"> – </span><span class="sc">{</span>p_hPa<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1f}</span><span class="ss"> hPa'</span>)</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  T range       : </span><span class="sc">{</span>state[<span class="st">"air_temperature"</span>]<span class="sc">.</span>values<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.1f}</span><span class="ss"> – '</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'</span><span class="sc">{</span>state[<span class="st">"air_temperature"</span>]<span class="sc">.</span>values<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1f}</span><span class="ss"> K'</span>)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  surface T     : </span><span class="sc">{</span><span class="bu">float</span>(state[<span class="st">"surface_temperature"</span>].values.flat[<span class="dv">0</span>])<span class="sc">:.2f}</span><span class="ss"> K'</span>)</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  q range       : </span><span class="sc">{</span>state[<span class="st">"specific_humidity"</span>]<span class="sc">.</span>values<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2e}</span><span class="ss"> – '</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'</span><span class="sc">{</span>state[<span class="st">"specific_humidity"</span>]<span class="sc">.</span>values<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2e}</span><span class="ss"> kg/kg'</span>)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  CO₂           : </span><span class="sc">{</span>CO2_PREINDUSTRIAL<span class="op">*</span><span class="fl">1e6</span><span class="sc">:.0f}</span><span class="ss"> ppm'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>State summary:
+  Levels        : 30
+  p range       : 2.4 – 1010.6 hPa
+  T range       : 197.3 – 299.4 K
+  surface T     : 299.38 K
+  q range       : 2.83e-03 – 9.97e-03 kg/kg
+  CO₂           : 280 ppm</code></pre>
+</div>
+</div>
+<div id="a1b2c3d4-0006-4006-8006-aabbccdd0006" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:14.363890Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:14.363748Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:18.904892Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:18.904030Z&quot;}}" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- run the CORK LW component -----------------------------------------------</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>tendencies, diagnostics <span class="op">=</span> lw(state)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract per-band diagnostics: shape (NZ, 1, 1, Nbands) for mid-level fields</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>tau_band   <span class="op">=</span> diagnostics[<span class="st">'longwave_optical_depth_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]   <span class="co"># (NZ, Nbands)</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>trans_band <span class="op">=</span> diagnostics[<span class="st">'longwave_transmittance_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]   <span class="co"># (NZ, Nbands)</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>hr_band    <span class="op">=</span> diagnostics[<span class="st">'air_temperature_tendency_from_longwave_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]  <span class="co"># (NZ, Nbands)</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Per-band flux: shape (NZ+1, 1, 1, Nbands) on interface levels</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>up_band   <span class="op">=</span> diagnostics[<span class="st">'upwelling_longwave_flux_in_air_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]    <span class="co"># (NZ+1, Nbands)</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>down_band <span class="op">=</span> diagnostics[<span class="st">'downwelling_longwave_flux_in_air_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]  <span class="co"># (NZ+1, Nbands)</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Band-integrated (broadband)</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>up_broad   <span class="op">=</span> diagnostics[<span class="st">'upwelling_longwave_flux_in_air'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]    <span class="co"># (NZ+1,)</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>down_broad <span class="op">=</span> diagnostics[<span class="st">'downwelling_longwave_flux_in_air'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]  <span class="co"># (NZ+1,)</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>hr_broad   <span class="op">=</span> diagnostics[<span class="st">'air_temperature_tendency_from_longwave'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]  <span class="co"># (NZ,)</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify per-band sums match broadband</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>np.testing.assert_allclose(up_band.<span class="bu">sum</span>(axis<span class="op">=-</span><span class="dv">1</span>), up_broad, rtol<span class="op">=</span><span class="fl">1e-8</span>,</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>                           err_msg<span class="op">=</span><span class="st">'Per-band upwelling flux does not sum to broadband'</span>)</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>np.testing.assert_allclose(hr_band.<span class="bu">sum</span>(axis<span class="op">=-</span><span class="dv">1</span>), hr_broad, rtol<span class="op">=</span><span class="fl">1e-8</span>,</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>                           err_msg<span class="op">=</span><span class="st">'Per-band heating rates do not sum to broadband'</span>)</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="co"># OLR = upwelling flux at TOA (top interface level)</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>OLR_baseline <span class="op">=</span> <span class="bu">float</span>(up_broad[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>NBANDS <span class="op">=</span> tau_band.shape[<span class="dv">1</span>]</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Bands returned: </span><span class="sc">{</span>NBANDS<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'OLR (280 ppm CO₂): </span><span class="sc">{</span>OLR_baseline<span class="sc">:.2f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Peak broadband heating rate: </span><span class="sc">{</span>hr_broad<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2f}</span><span class="ss"> K/day (at p=</span><span class="sc">{</span>p_hPa[np.argmin(hr_broad)]<span class="sc">:.1f}</span><span class="ss"> hPa)'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Bands returned: 14
+OLR (280 ppm CO₂): 208.88 W m⁻²
+Peak broadband heating rate: -67.78 K/day (at p=2.4 hPa)</code></pre>
+</div>
+</div>
+</section>
+<section id="per-band-optical-depth-τp" class="level2">
+<h2 class="anchored" data-anchor-id="per-band-optical-depth-τp">2. Per-band optical depth τ(p)</h2>
+<p>The optical depth of each layer tells us how opaque it is in that band. Large τ means the layer absorbs (and re-emits) radiation locally; small τ means photons escape to space — this is the <strong>window region</strong>.</p>
+<p>The 15 μm CO₂ band (630–700 cm⁻¹, Band 4) dominates in the upper troposphere and stratosphere; the atmospheric window (800–980 cm⁻¹, Band 6) stays transparent throughout.</p>
+<div id="a1b2c3d4-0008-4008-8008-aabbccdd0008" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:18.906912Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:18.906756Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:19.548645Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:19.547990Z&quot;}}" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Figure 1: per-band optical depth τ(p) -----------------------------------</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify the 6 most interesting bands by total column optical depth</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>col_tau <span class="op">=</span> tau_band.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)    <span class="co"># (Nbands,) — column-integrated τ</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>top6    <span class="op">=</span> np.argsort(col_tau)[::<span class="op">-</span><span class="dv">1</span>][:<span class="dv">6</span>]   <span class="co"># indices of 6 most optically thick bands</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>cmap <span class="op">=</span> plt.cm.tab10</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [cmap(i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(NBANDS)]</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Left panel: all 14 bands (thin lines)</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">0</span>]</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    ax.semilogy(tau_band[:, b], p_hPa, lw<span class="op">=</span><span class="fl">0.7</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, color<span class="op">=</span>colors[b])</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Optical depth per layer τ'</span>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Pressure (hPa)'</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'All 14 LW bands'</span>)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>ax.set_xscale(<span class="st">'log'</span>)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="fl">1e-6</span>, <span class="dv">10</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.8</span>, ls<span class="op">=</span><span class="st">'--'</span>, label<span class="op">=</span><span class="st">'τ = 1 (optically thick layer)'</span>)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Right panel: top 6 bands with labels</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">1</span>]</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> top6:</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    ax.semilogy(tau_band[:, b], p_hPa, lw<span class="op">=</span><span class="fl">1.5</span>, color<span class="op">=</span>colors[b],</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Also plot the most transparent band</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>least_opaque <span class="op">=</span> <span class="bu">int</span>(np.argmin(col_tau))</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> least_opaque <span class="kw">not</span> <span class="kw">in</span> top6:</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    ax.semilogy(tau_band[:, least_opaque], p_hPa, lw<span class="op">=</span><span class="fl">1.5</span>, ls<span class="op">=</span><span class="st">':'</span>, color<span class="op">=</span>colors[least_opaque],</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>                label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>least_opaque<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[least_opaque]<span class="sc">}</span><span class="ss"> (window)'</span>)</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.8</span>, ls<span class="op">=</span><span class="st">'--'</span>)</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Optical depth per layer τ'</span>)</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Selected bands'</span>)</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>ax.set_xscale(<span class="st">'log'</span>)</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="fl">1e-6</span>, <span class="dv">10</span>)</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">'Per-layer LW optical depth τ(p)  [280 ppm CO₂]'</span>, fontsize<span class="op">=</span><span class="dv">13</span>, y<span class="op">=</span><span class="fl">1.01</span>)</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Most opaque band   : Band </span><span class="sc">{</span>top6[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> — </span><span class="sc">{</span>band_labels[top6[<span class="dv">0</span>]]<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Most transparent   : Band </span><span class="sc">{</span>least_opaque<span class="sc">}</span><span class="ss"> — </span><span class="sc">{</span>band_labels[least_opaque]<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="06-picket-fence_files/figure-html/spectral_radiation_anatomy-cell-6-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Most opaque band   : Band 0 — 10–250 cm⁻¹
+Most transparent   : Band 7 — 980–1080 cm⁻¹</code></pre>
+</div>
+</div>
+</section>
+<section id="per-band-layer-transmittance" class="level2">
+<h2 class="anchored" data-anchor-id="per-band-layer-transmittance">3. Per-band layer transmittance</h2>
+<p>The per-band transmittance is directly returned by the component (it incorporates the diffusivity approximation for off-axis photon paths that is standard in broadband two-stream schemes). A transmittance near 1 means the layer is essentially transparent; near 0 it is opaque.</p>
+<p>The atmospheric window bands (low τ) stay near transmittance = 1 throughout the column — radiation escapes to space with little impediment, making these bands responsible for most of the <strong>cooling to space</strong> in clear sky.</p>
+<div id="a1b2c3d4-0010-4010-8010-aabbccdd0010" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:19.550675Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:19.550530Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:19.656977Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:19.656344Z&quot;}}" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Figure 2: per-band layer transmittance ----------------------------------</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">5</span>))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    lw_style <span class="op">=</span> <span class="st">'-'</span> <span class="cf">if</span> b <span class="kw">in</span> top6 <span class="cf">else</span> <span class="st">':'</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    alpha    <span class="op">=</span> <span class="fl">0.9</span> <span class="cf">if</span> b <span class="kw">in</span> top6 <span class="cf">else</span> <span class="fl">0.35</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    label    <span class="op">=</span> <span class="ss">f'Band </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span> <span class="cf">if</span> b <span class="kw">in</span> top6 <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    ax.plot(trans_band[:, b], p_hPa, lw<span class="op">=</span><span class="fl">1.4</span>, ls<span class="op">=</span>lw_style, alpha<span class="op">=</span>alpha,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>colors[b], label<span class="op">=</span>label)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the window band separately if not in top6</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> least_opaque <span class="kw">not</span> <span class="kw">in</span> top6:</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    ax.plot(trans_band[:, least_opaque], p_hPa, lw<span class="op">=</span><span class="fl">1.8</span>, ls<span class="op">=</span><span class="st">'--'</span>,</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>colors[least_opaque],</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>least_opaque<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[least_opaque]<span class="sc">}</span><span class="ss"> (window)'</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Band transmittance'</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Pressure (hPa)'</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Per-band layer transmittance  [280 ppm CO₂]'</span>)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="fl">7.5</span>, loc<span class="op">=</span><span class="st">'center right'</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="fl">0.02</span>, <span class="fl">1.05</span>)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="fl">0.5</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.7</span>, ls<span class="op">=</span><span class="st">'--'</span>, alpha<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="06-picket-fence_files/figure-html/spectral_radiation_anatomy-cell-7-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="per-band-net-longwave-flux-profiles" class="level2">
+<h2 class="anchored" data-anchor-id="per-band-net-longwave-flux-profiles">4. Per-band net longwave flux profiles</h2>
+<p>Net flux = upwelling − downwelling. A large positive net flux means radiation is escaping efficiently upward with little downward return — typical of the window band. In the strong absorption bands the atmosphere is nearly in local thermal equilibrium and the net flux is small.</p>
+<p>Note that the broadband net flux (dashed black) is the sum of all per-band contributions.</p>
+<div id="a1b2c3d4-0012-4012-8012-aabbccdd0012" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:19.658832Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:19.658694Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:19.784029Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:19.783409Z&quot;}}" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Figure 3: per-band net flux profiles ------------------------------------</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Flux arrays are on interface levels (NZ+1 points); use mid-point for plotting</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>p_int <span class="op">=</span> state[<span class="st">'air_pressure_on_interface_levels'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]   <span class="co"># (NZ+1,)</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>p_int_hPa <span class="op">=</span> p_int <span class="op">/</span> <span class="fl">100.0</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>net_band  <span class="op">=</span> up_band <span class="op">-</span> down_band    <span class="co"># (NZ+1, Nbands)</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>net_broad <span class="op">=</span> up_broad <span class="op">-</span> down_broad  <span class="co"># (NZ+1,)</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">5</span>))</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    lw_style <span class="op">=</span> <span class="st">'-'</span> <span class="cf">if</span> b <span class="kw">in</span> top6 <span class="cf">else</span> <span class="st">':'</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    alpha    <span class="op">=</span> <span class="fl">0.85</span> <span class="cf">if</span> b <span class="kw">in</span> top6 <span class="cf">else</span> <span class="fl">0.3</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    label    <span class="op">=</span> <span class="ss">f'Band </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span> <span class="cf">if</span> b <span class="kw">in</span> top6 <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    ax.plot(net_band[:, b], p_int_hPa, lw<span class="op">=</span><span class="fl">1.3</span>, ls<span class="op">=</span>lw_style, alpha<span class="op">=</span>alpha,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>colors[b], label<span class="op">=</span>label)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> least_opaque <span class="kw">not</span> <span class="kw">in</span> top6:</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    ax.plot(net_band[:, least_opaque], p_int_hPa, lw<span class="op">=</span><span class="fl">1.8</span>, ls<span class="op">=</span><span class="st">'--'</span>,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>colors[least_opaque],</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>least_opaque<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[least_opaque]<span class="sc">}</span><span class="ss"> (window)'</span>)</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>ax.plot(net_broad, p_int_hPa, <span class="st">'k--'</span>, lw<span class="op">=</span><span class="fl">2.0</span>, label<span class="op">=</span><span class="st">'Broadband (sum)'</span>)</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Net LW flux  F↑ − F↓  (W m⁻²)'</span>)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Pressure (hPa)'</span>)</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Per-band net longwave flux profiles  [280 ppm CO₂]'</span>)</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Broadband OLR (top interface): </span><span class="sc">{</span>net_broad[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.2f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Per-band OLR contributions at TOA:'</span>)</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  Band </span><span class="sc">{</span>b<span class="sc">:2d}</span><span class="ss"> (</span><span class="sc">{</span>band_labels[b]<span class="sc">:&gt;18s}</span><span class="ss">): </span><span class="sc">{</span>net_band[<span class="op">-</span><span class="dv">1</span>, b]<span class="sc">:+7.2f}</span><span class="ss"> W m⁻²'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="06-picket-fence_files/figure-html/spectral_radiation_anatomy-cell-8-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Broadband OLR (top interface): 208.88 W m⁻²
+Per-band OLR contributions at TOA:
+  Band  0 (       10–250 cm⁻¹):  +19.38 W m⁻²
+  Band  1 (      250–350 cm⁻¹):  +19.65 W m⁻²
+  Band  2 (      350–500 cm⁻¹):  +28.04 W m⁻²
+  Band  3 (      500–630 cm⁻¹):  +20.07 W m⁻²
+  Band  4 (      630–700 cm⁻¹):  +10.06 W m⁻²
+  Band  5 (      700–800 cm⁻¹):  +16.35 W m⁻²
+  Band  6 (      800–980 cm⁻¹):  +38.26 W m⁻²
+  Band  7 (     980–1080 cm⁻¹):  +20.33 W m⁻²
+  Band  8 (    1080–1180 cm⁻¹):  +16.29 W m⁻²
+  Band  9 (    1180–1250 cm⁻¹):   +7.51 W m⁻²
+  Band 10 (    1250–1400 cm⁻¹):   +3.73 W m⁻²
+  Band 11 (    1400–1600 cm⁻¹):   +3.18 W m⁻²
+  Band 12 (    1600–1800 cm⁻¹):   +1.60 W m⁻²
+  Band 13 (    1800–3250 cm⁻¹):   +4.43 W m⁻²</code></pre>
+</div>
+</div>
+</section>
+<section id="per-band-heating-rate-contributions" class="level2">
+<h2 class="anchored" data-anchor-id="per-band-heating-rate-contributions">5. Per-band heating-rate contributions</h2>
+<p>The radiative heating rate (K day⁻¹) is the divergence of the net flux. Negative heating rates mean <strong>cooling</strong> — the layer loses energy to space faster than it receives it from below.</p>
+<p>The per-band heating rates sum exactly to the broadband rate. This lets us decompose the stratospheric cooling signal into spectral contributions: which bands are responsible for the −2 K/day cooling at 30 hPa?</p>
+<div id="a1b2c3d4-0014-4014-8014-aabbccdd0014" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:19.786019Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:19.785891Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:20.139788Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:20.139139Z&quot;}}" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Figure 4: per-band heating-rate contributions ---------------------------</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">5</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Left: all bands stacked</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">0</span>]</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>hr_sum <span class="op">=</span> np.zeros(NZ)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    ax.plot(hr_band[:, b], p_hPa, lw<span class="op">=</span><span class="fl">0.9</span>, color<span class="op">=</span>colors[b],</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>ax.plot(hr_broad, p_hPa, <span class="st">'k--'</span>, lw<span class="op">=</span><span class="fl">2.0</span>, label<span class="op">=</span><span class="st">'Broadband'</span>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Heating rate (K day⁻¹)'</span>)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Pressure (hPa)'</span>)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'All 14 bands + broadband'</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="fl">6.5</span>, ncol<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Right: selected bands only — the dominant cooling contributors</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">1</span>]</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Find the bands with strongest (most negative) column-mean heating rates</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>mean_hr <span class="op">=</span> hr_band.mean(axis<span class="op">=</span><span class="dv">0</span>)   <span class="co"># (Nbands,)</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>top_cooling <span class="op">=</span> np.argsort(mean_hr)[:<span class="dv">6</span>]   <span class="co"># most negative = most cooling</span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> top_cooling:</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>    ax.plot(hr_band[:, b], p_hPa, lw<span class="op">=</span><span class="fl">1.5</span>, color<span class="op">=</span>colors[b],</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>ax.plot(hr_broad, p_hPa, <span class="st">'k--'</span>, lw<span class="op">=</span><span class="fl">2.0</span>, label<span class="op">=</span><span class="st">'Broadband'</span>)</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Heating rate (K day⁻¹)'</span>)</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Top cooling bands'</span>)</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">'Per-band LW heating rates  [280 ppm CO₂]'</span>, fontsize<span class="op">=</span><span class="dv">13</span>, y<span class="op">=</span><span class="fl">1.01</span>)</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Broadband peak cooling: </span><span class="sc">{</span>hr_broad<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2f}</span><span class="ss"> K/day at '</span></span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'</span><span class="sc">{</span>p_hPa[np.argmin(hr_broad)]<span class="sc">:.1f}</span><span class="ss"> hPa'</span>)</span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Top 3 cooling bands (column-mean K/day):'</span>)</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> top_cooling[:<span class="dv">3</span>]:</span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  Band </span><span class="sc">{</span>b<span class="sc">:2d}</span><span class="ss"> (</span><span class="sc">{</span>band_labels[b]<span class="sc">:&gt;18s}</span><span class="ss">): </span><span class="sc">{</span>mean_hr[b]<span class="sc">:+.3f}</span><span class="ss"> K/day'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="06-picket-fence_files/figure-html/spectral_radiation_anatomy-cell-9-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Broadband peak cooling: -67.78 K/day at 2.4 hPa
+Top 3 cooling bands (column-mean K/day):
+  Band  0 (       10–250 cm⁻¹): -0.918 K/day
+  Band  1 (      250–350 cm⁻¹): -0.742 K/day
+  Band  2 (      350–500 cm⁻¹): -0.733 K/day</code></pre>
+</div>
+</div>
+</section>
+<section id="co₂-doubling-experimentwe-run-the-component-a-second-time-with-co₂-doubled-560-ppm-2-pre-industrialand-compare--δτ-per-band-which-bands-gain-the-most-optical-depth--δheating-rate-per-band-which-bands-change-their-cooling-profile--δolr-the-instantaneous-radiative-forcing-before-temperature-adjustment.the-earth_low_res_lw-table-has-a-co₂-vmr-axis-so-the-component-readsmole_fraction_of_carbon_dioxide_in_air-from-the-state-and-interpolates-inthe-k-table-no-code-changes-needed.-caveat-on-the-δolr-magnitude.-the-value-computed-below-0.20.3-w-m²-is-roughly-an-order-of-magnitude-smaller-than-the-canonical-co₂-doubling-instantaneous-forcing-of-2.53.7-w-m²-reported-by-line-by-line-models-and-ipcc-assessments.-the-gap-is-an-artefact-of-resolution-the-earth_low_res_lw-table-uses-only-14-bands-8-g-points-which-under-resolves-the-narrow-15-μm-co₂-absorption-feature.-a-higher-resolution-k-table-or-a-line-by-line-calculation-recovers-the-full-forcing.-read-the-result-here-qualitatively-it-correctly-shows-the-sign-identifies-band-4-630700-cm¹-as-the-dominant-contributor-and-demonstrates-the-spectral-mechanism-but-should-not-be-taken-as-a-quantitative-forcing-estimate." class="level2">
+<h2 class="anchored" data-anchor-id="co₂-doubling-experimentwe-run-the-component-a-second-time-with-co₂-doubled-560-ppm-2-pre-industrialand-compare--δτ-per-band-which-bands-gain-the-most-optical-depth--δheating-rate-per-band-which-bands-change-their-cooling-profile--δolr-the-instantaneous-radiative-forcing-before-temperature-adjustment.the-earth_low_res_lw-table-has-a-co₂-vmr-axis-so-the-component-readsmole_fraction_of_carbon_dioxide_in_air-from-the-state-and-interpolates-inthe-k-table-no-code-changes-needed.-caveat-on-the-δolr-magnitude.-the-value-computed-below-0.20.3-w-m²-is-roughly-an-order-of-magnitude-smaller-than-the-canonical-co₂-doubling-instantaneous-forcing-of-2.53.7-w-m²-reported-by-line-by-line-models-and-ipcc-assessments.-the-gap-is-an-artefact-of-resolution-the-earth_low_res_lw-table-uses-only-14-bands-8-g-points-which-under-resolves-the-narrow-15-μm-co₂-absorption-feature.-a-higher-resolution-k-table-or-a-line-by-line-calculation-recovers-the-full-forcing.-read-the-result-here-qualitatively-it-correctly-shows-the-sign-identifies-band-4-630700-cm¹-as-the-dominant-contributor-and-demonstrates-the-spectral-mechanism-but-should-not-be-taken-as-a-quantitative-forcing-estimate.">6. CO₂-doubling experimentWe run the component a second time with CO₂ doubled (560 ppm, 2× pre-industrial)and compare:- <strong>Δτ per band</strong> — which bands gain the most optical depth?- <strong>Δheating rate per band</strong> — which bands change their cooling profile?- <strong>ΔOLR</strong> — the instantaneous radiative forcing before temperature adjustment.The <code>earth_low_res_lw</code> table has a CO₂ VMR axis, so the component reads<code>mole_fraction_of_carbon_dioxide_in_air</code> from the state and interpolates inthe k-table — no code changes needed.&gt; <strong>Caveat on the ΔOLR magnitude.</strong> The value computed below (~0.2–0.3 W m⁻²)&gt; is roughly <strong>an order of magnitude smaller</strong> than the canonical CO₂-doubling&gt; instantaneous forcing of ~2.5–3.7 W m⁻² reported by line-by-line models and&gt; IPCC assessments. The gap is an artefact of resolution: the&gt; <code>earth_low_res_lw</code> table uses only <strong>14 bands / 8 g-points</strong>, which&gt; under-resolves the narrow 15 μm CO₂ absorption feature. A higher-resolution&gt; k-table or a line-by-line calculation recovers the full forcing. Read the&gt; result here <strong>qualitatively</strong> — it correctly shows the sign, identifies&gt; Band 4 (630–700 cm⁻¹) as the dominant contributor, and demonstrates the&gt; spectral mechanism — but should <strong>not</strong> be taken as a quantitative forcing&gt; estimate.</h2>
+<div id="a1b2c3d4-0016-4016-8016-aabbccdd0016" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:20.141729Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:20.141619Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:20.150210Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:20.149843Z&quot;}}" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Build a doubled-CO₂ state and run CORK ----------------------------------</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> copy</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>CO2_DOUBLED <span class="op">=</span> CO2_PREINDUSTRIAL <span class="op">*</span> <span class="fl">2.0</span>   <span class="co"># 560 ppm</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>state2 <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>grid)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the same realistic temperature, humidity profiles</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>state2[<span class="st">'air_temperature'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">=</span> T_real</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>state2[<span class="st">'surface_temperature'</span>].values[:]   <span class="op">=</span> <span class="bu">float</span>(_T_prof[<span class="dv">0</span>])</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>state2[<span class="st">'specific_humidity'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">=</span> q_profile</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>state2[<span class="st">'mole_fraction_of_carbon_dioxide_in_air'</span>].values[:] <span class="op">=</span> CO2_DOUBLED</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>tendencies2, diagnostics2 <span class="op">=</span> lw(state2)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract doubled-CO₂ diagnostics</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>tau_band2 <span class="op">=</span> diagnostics2[<span class="st">'longwave_optical_depth_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>hr_band2  <span class="op">=</span> diagnostics2[<span class="st">'air_temperature_tendency_from_longwave_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>up_broad2 <span class="op">=</span> diagnostics2[<span class="st">'upwelling_longwave_flux_in_air'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>OLR_doubled <span class="op">=</span> <span class="bu">float</span>(up_broad2[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>delta_OLR   <span class="op">=</span> OLR_doubled <span class="op">-</span> OLR_baseline</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'OLR (280 ppm): </span><span class="sc">{</span>OLR_baseline<span class="sc">:.3f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'OLR (560 ppm): </span><span class="sc">{</span>OLR_doubled<span class="sc">:.3f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'ΔOLR (CO₂ doubling): </span><span class="sc">{</span>delta_OLR<span class="sc">:+.3f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'(Negative ΔOLR = reduced emission to space = CO₂ forcing)'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>OLR (280 ppm): 208.881 W m⁻²
+OLR (560 ppm): 208.637 W m⁻²
+ΔOLR (CO₂ doubling): -0.245 W m⁻²
+(Negative ΔOLR = reduced emission to space = CO₂ forcing)</code></pre>
+</div>
+</div>
+<div id="a1b2c3d4-0017-4017-8017-aabbccdd0017" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:20.151902Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:20.151771Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:20.495906Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:20.495266Z&quot;}}" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Figure 5: Δτ per band ---------------------------------------------------</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>delta_tau <span class="op">=</span> tau_band2 <span class="op">-</span> tau_band    <span class="co"># (NZ, Nbands)</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Find bands with largest increase in column optical depth</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>col_delta_tau <span class="op">=</span> delta_tau.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)   <span class="co"># (Nbands,)</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>top_delta     <span class="op">=</span> np.argsort(col_delta_tau)[::<span class="op">-</span><span class="dv">1</span>][:<span class="dv">6</span>]</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">5</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">0</span>]</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> <span class="fl">0.9</span> <span class="cf">if</span> b <span class="kw">in</span> top_delta <span class="cf">else</span> <span class="fl">0.2</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    ax.semilogx(np.<span class="bu">abs</span>(delta_tau[:, b]) <span class="op">+</span> <span class="fl">1e-10</span>, p_hPa, lw<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>                alpha<span class="op">=</span>alpha, color<span class="op">=</span>colors[b])</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> top_delta:</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    ax.semilogx(np.<span class="bu">abs</span>(delta_tau[:, b]) <span class="op">+</span> <span class="fl">1e-10</span>, p_hPa, lw<span class="op">=</span><span class="fl">1.6</span>,</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>                color<span class="op">=</span>colors[b], label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'|Δτ| per layer (log scale)'</span>)</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Pressure (hPa)'</span>)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Change in per-layer optical depth</span><span class="ch">\n</span><span class="st">(CO₂ 280 → 560 ppm)'</span>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Bar chart of column-integrated Δτ</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">1</span>]</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>bar_colors <span class="op">=</span> [colors[b] <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS)]</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>bars <span class="op">=</span> ax.barh(<span class="bu">range</span>(NBANDS), col_delta_tau, color<span class="op">=</span>bar_colors)</span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(NBANDS))</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels([<span class="ss">f'B</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span> <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS)], fontsize<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Column Δτ (sum over layers)'</span>)</span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Per-band column Δτ'</span>)</span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">'Optical depth change: CO₂ doubling (280 → 560 ppm)'</span>, fontsize<span class="op">=</span><span class="dv">13</span>, y<span class="op">=</span><span class="fl">1.01</span>)</span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Top 5 bands by column Δτ (CO₂ doubling):'</span>)</span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> top_delta[:<span class="dv">5</span>]:</span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  Band </span><span class="sc">{</span>b<span class="sc">:2d}</span><span class="ss"> (</span><span class="sc">{</span>band_labels[b]<span class="sc">:&gt;18s}</span><span class="ss">): Δτ_col = </span><span class="sc">{</span>col_delta_tau[b]<span class="sc">:+.4f}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="06-picket-fence_files/figure-html/spectral_radiation_anatomy-cell-11-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Top 5 bands by column Δτ (CO₂ doubling):
+  Band  4 (      630–700 cm⁻¹): Δτ_col = +568.7555
+  Band 13 (    1800–3250 cm⁻¹): Δτ_col = +131.3713
+  Band  5 (      700–800 cm⁻¹): Δτ_col = +9.4109
+  Band  3 (      500–630 cm⁻¹): Δτ_col = +4.4946
+  Band  7 (     980–1080 cm⁻¹): Δτ_col = +0.0298</code></pre>
+</div>
+</div>
+<div id="a1b2c3d4-0018-4018-8018-aabbccdd0018" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:20.497870Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:20.497742Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:20.876840Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:20.876302Z&quot;}}" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Figure 6: Δheating rate per band ----------------------------------------</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>delta_hr      <span class="op">=</span> hr_band2 <span class="op">-</span> hr_band      <span class="co"># (NZ, Nbands)</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>delta_hr_broad <span class="op">=</span> diagnostics2[<span class="st">'air_temperature_tendency_from_longwave'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">-</span> hr_broad</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">5</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Left: per-band Δheating rates</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">0</span>]</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>top_delta_hr <span class="op">=</span> np.argsort(np.<span class="bu">abs</span>(delta_hr).mean(axis<span class="op">=</span><span class="dv">0</span>))[::<span class="op">-</span><span class="dv">1</span>][:<span class="dv">6</span>]</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> <span class="fl">0.85</span> <span class="cf">if</span> b <span class="kw">in</span> top_delta_hr <span class="cf">else</span> <span class="fl">0.2</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    ax.plot(delta_hr[:, b], p_hPa, lw<span class="op">=</span><span class="fl">0.8</span>, alpha<span class="op">=</span>alpha, color<span class="op">=</span>colors[b])</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> top_delta_hr:</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    ax.plot(delta_hr[:, b], p_hPa, lw<span class="op">=</span><span class="fl">1.6</span>, color<span class="op">=</span>colors[b],</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="ss">f'Band </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>ax.plot(delta_hr_broad, p_hPa, <span class="st">'k--'</span>, lw<span class="op">=</span><span class="fl">2.0</span>, label<span class="op">=</span><span class="st">'Broadband Δ'</span>)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Δ Heating rate (K day⁻¹)'</span>)</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Pressure (hPa)'</span>)</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Per-band heating-rate change</span><span class="ch">\n</span><span class="st">(CO₂ 280 → 560 ppm)'</span>)</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Right: broadband Δ heating rate with per-band decomposition</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">1</span>]</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.zeros(NZ)</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>    ax.barh(p_hPa, delta_hr[:, b], left<span class="op">=</span>x, height<span class="op">=</span>np.gradient(p_hPa)<span class="op">*</span><span class="fl">0.8</span>,</span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>colors[b], alpha<span class="op">=</span><span class="fl">0.7</span>, label<span class="op">=</span><span class="ss">f'B</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">+</span> delta_hr[:, b]</span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>ax.plot(delta_hr_broad, p_hPa, <span class="st">'k-'</span>, lw<span class="op">=</span><span class="fl">2.0</span>, label<span class="op">=</span><span class="st">'Broadband Δ'</span>)</span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Δ Heating rate (K day⁻¹)'</span>)</span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Stacked per-band contributions'</span>)</span>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">'Heating-rate change: CO₂ doubling (280 → 560 ppm)'</span>, fontsize<span class="op">=</span><span class="dv">13</span>, y<span class="op">=</span><span class="fl">1.01</span>)</span>
+<span id="cb24-38"><a href="#cb24-38" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb24-39"><a href="#cb24-39" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb24-40"><a href="#cb24-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-41"><a href="#cb24-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Broadband peak Δ heating rate: </span><span class="sc">{</span>delta_hr_broad<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> K/day at '</span></span>
+<span id="cb24-42"><a href="#cb24-42" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'</span><span class="sc">{</span>p_hPa[np.argmin(delta_hr_broad)]<span class="sc">:.1f}</span><span class="ss"> hPa'</span>)</span>
+<span id="cb24-43"><a href="#cb24-43" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Top contributing bands to the Δ heating rate change:'</span>)</span>
+<span id="cb24-44"><a href="#cb24-44" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> top_delta_hr[:<span class="dv">4</span>]:</span>
+<span id="cb24-45"><a href="#cb24-45" aria-hidden="true" tabindex="-1"></a>    mean_Δhr <span class="op">=</span> delta_hr[:, b].mean()</span>
+<span id="cb24-46"><a href="#cb24-46" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  Band </span><span class="sc">{</span>b<span class="sc">:2d}</span><span class="ss"> (</span><span class="sc">{</span>band_labels[b]<span class="sc">:&gt;18s}</span><span class="ss">): column-mean Δ = </span><span class="sc">{</span>mean_<span class="sc">Δ</span>hr<span class="sc">:+.4f}</span><span class="ss"> K/day'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="06-picket-fence_files/figure-html/spectral_radiation_anatomy-cell-12-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Broadband peak Δ heating rate: -1.877 K/day at 2.4 hPa
+Top contributing bands to the Δ heating rate change:
+  Band  4 (      630–700 cm⁻¹): column-mean Δ = -0.0596 K/day
+  Band  5 (      700–800 cm⁻¹): column-mean Δ = -0.0143 K/day
+  Band  3 (      500–630 cm⁻¹): column-mean Δ = -0.0063 K/day
+  Band  6 (      800–980 cm⁻¹): column-mean Δ = -0.0035 K/day</code></pre>
+</div>
+</div>
+</section>
+<section id="summary-the-co₂-forcing-decomposed" class="level2">
+<h2 class="anchored" data-anchor-id="summary-the-co₂-forcing-decomposed">7. Summary: the CO₂ forcing decomposed</h2>
+<p>The instantaneous (fixed-atmosphere) forcing from CO₂ doubling is the ΔOLR computed above — the reduction in outgoing longwave radiation before any temperature response. A more negative ΔOLR means stronger radiative forcing.</p>
+<div id="a1b2c3d4-0020-4020-8020-aabbccdd0020" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T18:19:20.878976Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T18:19:20.878836Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T18:19:20.998421Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T18:19:20.997793Z&quot;}}" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Figure 7: ΔOLR per band -------------------------------------------------</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>net_band2 <span class="op">=</span> (diagnostics2[<span class="st">'upwelling_longwave_flux_in_air_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>             <span class="op">-</span> diagnostics2[<span class="st">'downwelling_longwave_flux_in_air_per_band'</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :])</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>delta_OLR_band <span class="op">=</span> net_band2[<span class="op">-</span><span class="dv">1</span>, :] <span class="op">-</span> net_band[<span class="op">-</span><span class="dv">1</span>, :]   <span class="co"># change in TOA net flux per band</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>))</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>bar_colors_signed <span class="op">=</span> [<span class="st">'#c0392b'</span> <span class="cf">if</span> d <span class="op">&lt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="st">'#27ae60'</span> <span class="cf">for</span> d <span class="kw">in</span> delta_OLR_band]</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>ax.bar(<span class="bu">range</span>(NBANDS), delta_OLR_band, color<span class="op">=</span>bar_colors_signed, edgecolor<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>ax.axhline(delta_OLR, color<span class="op">=</span><span class="st">'navy'</span>, lw<span class="op">=</span><span class="fl">1.5</span>, ls<span class="op">=</span><span class="st">'--'</span>,</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>           label<span class="op">=</span><span class="ss">f'Total ΔOLR = </span><span class="sc">{</span>delta_OLR<span class="sc">:+.2f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(<span class="bu">range</span>(NBANDS))</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>ax.set_xticklabels([<span class="ss">f'B</span><span class="sc">{</span>b<span class="sc">}</span><span class="ch">\n</span><span class="sc">{</span>band_labels[b]<span class="sc">}</span><span class="ss">'</span> <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS)],</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>                   rotation<span class="op">=</span><span class="dv">45</span>, ha<span class="op">=</span><span class="st">'right'</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'ΔOLR (W m⁻²)'</span>)</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Per-band ΔOLR: CO₂ doubling (280 → 560 ppm)</span><span class="ch">\n</span><span class="st">'</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>             <span class="st">'Red = less OLR (more trapping);  Green = more OLR'</span>)</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'CO₂-doubling summary:'</span>)</span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  OLR (280 ppm) : </span><span class="sc">{</span>OLR_baseline<span class="sc">:8.3f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  OLR (560 ppm) : </span><span class="sc">{</span>OLR_doubled<span class="sc">:8.3f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  ΔOLR          : </span><span class="sc">{</span>delta_OLR<span class="sc">:+8.3f}</span><span class="ss"> W m⁻²'</span>)</span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Per-band ΔOLR breakdown:'</span>)</span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(NBANDS):</span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>    flag <span class="op">=</span> <span class="st">'  &lt;-- CO₂ bands'</span> <span class="cf">if</span> <span class="bu">abs</span>(delta_OLR_band[b]) <span class="op">&gt;</span> <span class="fl">0.1</span> <span class="cf">else</span> <span class="st">''</span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  Band </span><span class="sc">{</span>b<span class="sc">:2d}</span><span class="ss"> (</span><span class="sc">{</span>band_labels[b]<span class="sc">:&gt;18s}</span><span class="ss">): </span><span class="sc">{</span>delta_OLR_band[b]<span class="sc">:+.3f}</span><span class="ss"> W m⁻²</span><span class="sc">{</span>flag<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="06-picket-fence_files/figure-html/spectral_radiation_anatomy-cell-13-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CO₂-doubling summary:
+  OLR (280 ppm) :  208.881 W m⁻²
+  OLR (560 ppm) :  208.637 W m⁻²
+  ΔOLR          :   -0.245 W m⁻²
+
+Per-band ΔOLR breakdown:
+  Band  0 (       10–250 cm⁻¹): -0.000 W m⁻²
+  Band  1 (      250–350 cm⁻¹): -0.000 W m⁻²
+  Band  2 (      350–500 cm⁻¹): -0.000 W m⁻²
+  Band  3 (      500–630 cm⁻¹): -0.003 W m⁻²
+  Band  4 (      630–700 cm⁻¹): +0.736 W m⁻²  &lt;-- CO₂ bands
+  Band  5 (      700–800 cm⁻¹): -0.625 W m⁻²  &lt;-- CO₂ bands
+  Band  6 (      800–980 cm⁻¹): -0.132 W m⁻²  &lt;-- CO₂ bands
+  Band  7 (     980–1080 cm⁻¹): -0.166 W m⁻²  &lt;-- CO₂ bands
+  Band  8 (    1080–1180 cm⁻¹): -0.034 W m⁻²
+  Band  9 (    1180–1250 cm⁻¹): +0.000 W m⁻²
+  Band 10 (    1250–1400 cm⁻¹): +0.000 W m⁻²
+  Band 11 (    1400–1600 cm⁻¹): -0.000 W m⁻²
+  Band 12 (    1600–1800 cm⁻¹): -0.000 W m⁻²
+  Band 13 (    1800–3250 cm⁻¹): -0.020 W m⁻²</code></pre>
+</div>
+</div>
+</section>
+<section id="takeaways1.-window-bands-are-transparent-low-τ-transmittance-1-and-contribute-most-of-the-olr-from-lower-tropospheric-levels.2.-co₂-and-h₂o-rotation-bands-are-opaque-high-τ-and-keep-the-troposphere-in-radiative-convective-balance-by-absorbing-upwelling-radiation-and-re-emitting-at-the-local-temperature.3.-stratospheric-cooling-is-driven-by-the-co₂-15-μm-band-the-stratosphere-absorbs-little-from-below-but-emits-efficiently-to-space-producing-the-characteristic-2-kday-cooling-above-the-tropopause.4.-co₂-doubling-reduces-olr-by-increasing-the-optical-depth-in-the-15-μm-band.-the-δolr-computed-above-0.20.3-w-m²-is-qualitatively-correct-in-sign-and-spectral-attribution-but-is-an-order-of-magnitude-below-the-canonical-instantaneous-forcing-2.53.7-w-m²-because-the-coarse-14-band-8-g-point-earth_low_res_lw-table-under-resolves-the-15-μm-co₂-feature.-a-line-by-line-or-higher-resolution-k-table-recovers-the-full-forcing.5.-the-cork-component-correlated-k-mode-resolves-all-of-this-with-just-14-bands-8-g-points-per-band-112-quadrature-points-compared-to-thousands-of-spectral-lines-in-a-line-by-line-calculation.next-steps--chapter-7-of-the-climt-docs-walkthrough-extends-this-analysis-to-the-two-stream-sw-component-corkshortwaveradiation.--examplesk_distribution_demo.ipynb-shows-how-the-k-distribution-quadrature-is-derived-from-first-principles.--the-cork-architecture-is-explained-in-chapter-5-and-the-component-manual." class="level2">
+<h2 class="anchored" data-anchor-id="takeaways1.-window-bands-are-transparent-low-τ-transmittance-1-and-contribute-most-of-the-olr-from-lower-tropospheric-levels.2.-co₂-and-h₂o-rotation-bands-are-opaque-high-τ-and-keep-the-troposphere-in-radiative-convective-balance-by-absorbing-upwelling-radiation-and-re-emitting-at-the-local-temperature.3.-stratospheric-cooling-is-driven-by-the-co₂-15-μm-band-the-stratosphere-absorbs-little-from-below-but-emits-efficiently-to-space-producing-the-characteristic-2-kday-cooling-above-the-tropopause.4.-co₂-doubling-reduces-olr-by-increasing-the-optical-depth-in-the-15-μm-band.-the-δolr-computed-above-0.20.3-w-m²-is-qualitatively-correct-in-sign-and-spectral-attribution-but-is-an-order-of-magnitude-below-the-canonical-instantaneous-forcing-2.53.7-w-m²-because-the-coarse-14-band-8-g-point-earth_low_res_lw-table-under-resolves-the-15-μm-co₂-feature.-a-line-by-line-or-higher-resolution-k-table-recovers-the-full-forcing.5.-the-cork-component-correlated-k-mode-resolves-all-of-this-with-just-14-bands-8-g-points-per-band-112-quadrature-points-compared-to-thousands-of-spectral-lines-in-a-line-by-line-calculation.next-steps--chapter-7-of-the-climt-docs-walkthrough-extends-this-analysis-to-the-two-stream-sw-component-corkshortwaveradiation.--examplesk_distribution_demo.ipynb-shows-how-the-k-distribution-quadrature-is-derived-from-first-principles.--the-cork-architecture-is-explained-in-chapter-5-and-the-component-manual.">8. Takeaways1. <strong>Window bands are transparent</strong> (low τ, transmittance ≈ 1) and contribute most of the OLR from lower-tropospheric levels.2. <strong>CO₂ and H₂O rotation bands are opaque</strong> (high τ) and keep the troposphere in radiative-convective balance by absorbing upwelling radiation and re-emitting at the local temperature.3. <strong>Stratospheric cooling</strong> is driven by the CO₂ 15 μm band: the stratosphere absorbs little from below but emits efficiently to space, producing the characteristic −2 K/day cooling above the tropopause.4. <strong>CO₂ doubling reduces OLR</strong> by increasing the optical depth in the 15 μm band. The ΔOLR computed above (~0.2–0.3 W m⁻²) is <strong>qualitatively correct in sign and spectral attribution</strong> but is <strong>an order of magnitude below</strong> the canonical instantaneous forcing (~2.5–3.7 W m⁻²) because the coarse 14-band / 8-g-point <code>earth_low_res_lw</code> table under-resolves the 15 μm CO₂ feature. A line-by-line or higher-resolution k-table recovers the full forcing.5. The CORK component (correlated-k mode) resolves all of this with just 14 bands × 8 g-points per band = <strong>112 quadrature points</strong>, compared to thousands of spectral lines in a line-by-line calculation.—<strong>Next steps:</strong>- Chapter 7 of the climt docs walkthrough extends this analysis to the two-stream SW component (<code>CorkShortwaveRadiation</code>).- <code>examples/k_distribution_demo.ipynb</code> shows how the k-distribution quadrature is derived from first principles.- The CORK architecture is explained in Chapter 5 and the <a href="../user-guide/component_manual.html">component manual</a>.</h2>
+</section>
+<a class="quarto-notebook-link" id="nblink-1" href="spectral_radiation_anatomy-preview.html#a1b2c3d4-0001-4001-8001-aabbccdd0001">Source: Why the stratosphere cools: a spectral tour</a></section>
 
 
 <!-- -->
 
 
-</section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
 <div id="ref-parmentier2015" class="csl-entry" role="listitem">
@@ -936,139 +1613,102 @@ Parmentier, V., and T. Guillot. 2014. <span>“A Non-Grey Analytical Model for I
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 6: The picket-fence model"</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>Everything so far has been a generic correlated-k story. The picket-fence model</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>is the simplest possible parameterisation of that story that still captures</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>non-grey physics. It fits in half a page of algebra and runs at &gt; 1 000 iter/s</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>in pure Python.</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Parmentier &amp; Guillot (2014) formulation</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>The atmosphere has two opacities in the thermal (LW) and three in the visible</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>(SW), all expressed as ratios of the Rosseland mean opacity $\kappa_R$:</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>$$\gamma_1 = \kappa_1 / \kappa_R, \quad</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  \gamma_2 = \kappa_2 / \kappa_R, \quad</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  \gamma_{v_i} = \kappa_{v_i} / \kappa_R \quad (i=1,2,3).$$</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>The Planck function in the LW is split: fraction $\beta$ goes to the opaque</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>band 1, $(1-\beta)$ to the transparent band 2. In the window ($\gamma_2 \ll</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>1$) most of the cooling-to-space happens; in the absorption band ($\gamma_1</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>\sim 1$) the thermal blanketing is concentrated.</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>This two-opacity caricature is the "picket fence": a spectrum that alternates</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>tall opaque slats (CO₂/H₂O line clusters) and short transparent slats</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>(the atmospheric window).</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Rosseland mean opacity</span></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>$\kappa_R$ is the reciprocal of a Planck-weighted harmonic mean of</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>$\sigma(\nu)$. climt uses the Freedman et al. (2014) polynomial fit for</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>solar-composition gas-giant atmospheres:</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_rosseland_mean_opacity(T, p, coeffs):</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute the Freedman et al. (2014) Rosseland mean opacity.</span></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="co">        T: temperature, K (scalar)</span></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="co">        p: pressure, Pa (scalar)</span></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: coefficient dict from load_freedman2014_coefficients()</span></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="co">        kappa_R: Rosseland mean opacity, m²/kg (scalar)</span></span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    log_T <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(T), <span class="fl">10.0</span>))</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    log_P <span class="op">=</span> np.log10(<span class="bu">max</span>(<span class="bu">float</span>(p) <span class="op">*</span> <span class="fl">10.0</span>, <span class="fl">1.0</span>))  <span class="co"># Pa → dyne/cm²</span></span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> T <span class="op">&lt;</span> <span class="bu">float</span>(coeffs[<span class="st">"T_boundary"</span>]):</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_lo"</span>]) <span class="op">*</span> log_T</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_lo"</span>]) <span class="op">*</span> log_P</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_lo"</span>]))</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        log_k <span class="op">=</span> (<span class="bu">float</span>(coeffs[<span class="st">"a_hi"</span>]) <span class="op">*</span> log_T</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"b_hi"</span>]) <span class="op">*</span> log_P</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> <span class="bu">float</span>(coeffs[<span class="st">"c_hi"</span>]))</span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">10.0</span><span class="op">**</span>log_k <span class="op">*</span> <span class="fl">0.1</span>   <span class="co"># cm²/g → m²/kg</span></span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>*(Source: `climt/_components/picket_fence/optics/parmentier.py`)*</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>**Figure 6.1** — Rosseland mean opacity as a function of pressure for a</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>hot-Jupiter column at $T_\text{eff}$ = 1 000 K. The shape drives the T-p</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>profile. *(Generated by `_figures.py` — Task 7.)*</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## The ratio coefficients $\gamma_i$ and $\beta$</span></span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>The ratios $\gamma_{v1}, \gamma_{v2}, \gamma_{v3}, \beta$ and $\gamma_P$ are</span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>piecewise-linear functions of effective temperature $T_\text{eff}$, fitted in</span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>@parmentier2015 Table 1. climt ships those coefficients and interpolates them</span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>at runtime:</span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lookup_ratio_coefficients(coeffs, T_eff):</span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Look up Parmentier ratio coefficients for a given T_eff.</span></span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="co">        coeffs: loaded coefficient data (from load_parmentier_coefficients)</span></span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a><span class="co">        T_eff: effective temperature, K (scalar)</span></span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="co">        gamma_v1, gamma_v2, gamma_v3, beta, gamma_P, R</span></span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.log10(<span class="bu">max</span>(T_eff, <span class="fl">10.0</span>))</span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>    boundaries <span class="op">=</span> coeffs[<span class="st">"T_eff_boundaries"</span>]</span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    region <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(boundaries) <span class="op">-</span> <span class="dv">1</span>):</span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> T_eff <span class="op">&gt;=</span> boundaries[i] <span class="kw">and</span> T_eff <span class="op">&lt;</span> boundaries[i <span class="op">+</span> <span class="dv">1</span>]:</span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>            region <span class="op">=</span> i</span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _eval_linear(ab_array, region_idx, X_val):</span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> ab_array[region_idx]</span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> a <span class="op">+</span> b <span class="op">*</span> X_val</span>
-<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>    log10_gv3 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v3_ab"</span>], region, X)</span>
-<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>    log10_gv2 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v2_ab"</span>], region, X)</span>
-<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>    log10_gv1 <span class="op">=</span> _eval_linear(coeffs[<span class="st">"log10_gamma_v1_ab"</span>], region, X)</span>
-<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>    beta_val   <span class="op">=</span> np.clip(_eval_linear(coeffs[<span class="st">"beta_ab"</span>], region, X), <span class="fl">0.01</span>, <span class="fl">0.99</span>)</span>
-<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>    ...</span>
-<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>*(Source: `climt/_components/picket_fence/optics/parmentier.py`)*</span>
-<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a><span class="fu">## What the picket-fence gets right</span></span>
-<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Radiative-equilibrium T-p profile: within 2–4 % of full LBL for</span>
-<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>  solar-composition atmospheres <span class="co">[</span><span class="ot">@parmentier2014</span><span class="co">]</span>.</span>
-<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Qualitative stratospheric cooling.</span>
-<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Day-side/night-side temperature contrast on tidally-locked exoplanets.</span>
-<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Plugging in different tables re-targets to Mars, Venus, Titan, or hot Jupiters</span>
-<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>  (Chapter 8) with no code changes.</span>
-<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
-<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>The Parmentier optics mode (<span class="in">`optics="parmentier"`</span>) lumps all opacity into</span>
-<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>$\kappa_R$ and cannot do gas-abundance forcing experiments (e.g., CO₂</span>
-<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>doubling). For that, switch to <span class="in">`optics="correlated_k"`</span> with an Earth table.</span>
-<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
-<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a><span class="in">`examples/picket_fence_vs_rrtmg.ipynb`</span> compares the Parmentier-mode hot-Jupiter</span>
-<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>T-p profile against a reference. <span class="in">`tests/test_hd209458b_reproduction.py`</span> runs</span>
-<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>HD 209458b to radiative equilibrium.</span>
-<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further reading</span></span>
-<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@parmentier2014 — the original picket-fence analytical model.</span>
-<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@parmentier2015 — the ratio-coefficient tables used by climt.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 6: The picket-fence model"</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>Everything so far has been a generic correlated-k story. The picket-fence model</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>is the simplest possible parameterisation of that story that still captures</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>non-grey physics. It fits in half a page of algebra and runs at &gt; 1 000 iter/s</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>in pure Python.</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Parmentier &amp; Guillot (2014) formulation</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>The atmosphere has two opacities in the thermal (LW) and three in the visible</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>(SW), all expressed as ratios of the Rosseland mean opacity $\kappa_R$:</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>$$\gamma_1 = \kappa_1 / \kappa_R, \quad</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>  \gamma_2 = \kappa_2 / \kappa_R, \quad</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>  \gamma_{v_i} = \kappa_{v_i} / \kappa_R \quad (i=1,2,3).$$</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>The Planck function in the LW is split: fraction $\beta$ goes to the opaque</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>band 1, $(1-\beta)$ to the transparent band 2. In the window ($\gamma_2 \ll</span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>1$) most of the cooling-to-space happens; in the absorption band ($\gamma_1</span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>\sim 1$) the thermal blanketing is concentrated.</span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>This two-opacity caricature is the "picket fence": a spectrum that alternates</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>tall opaque slats (CO₂/H₂O line clusters) and short transparent slats</span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a>(the atmospheric window).</span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Rosseland mean opacity</span></span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a>$\kappa_R$ is the reciprocal of a Planck-weighted harmonic mean of</span>
+<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a>$\sigma(\nu)$. climt uses the Freedman et al. (2014) polynomial fit for</span>
+<span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a>solar-composition gas-giant atmospheres:</span>
+<span id="cb28-34"><a href="#cb28-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-37"><a href="#cb28-37" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb28-38"><a href="#cb28-38" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb28-39"><a href="#cb28-39" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb28-40"><a href="#cb28-40" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.parmentier <span class="im">import</span> compute_rosseland_mean_opacity</span>
+<span id="cb28-41"><a href="#cb28-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(compute_rosseland_mean_opacity))</span>
+<span id="cb28-42"><a href="#cb28-42" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb28-43"><a href="#cb28-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-44"><a href="#cb28-44" aria-hidden="true" tabindex="-1"></a>![**Figure 6.1** — Rosseland mean opacity as a function of pressure for a</span>
+<span id="cb28-45"><a href="#cb28-45" aria-hidden="true" tabindex="-1"></a>hot-Jupiter column. The shape drives the radiative-equilibrium T-p</span>
+<span id="cb28-46"><a href="#cb28-46" aria-hidden="true" tabindex="-1"></a>profile.](_artifacts/06_picket_fence_opacity.png){#fig-picket-fence-opacity}</span>
+<span id="cb28-47"><a href="#cb28-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-48"><a href="#cb28-48" aria-hidden="true" tabindex="-1"></a><span class="fu">## The ratio coefficients $\gamma_i$ and $\beta$</span></span>
+<span id="cb28-49"><a href="#cb28-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-50"><a href="#cb28-50" aria-hidden="true" tabindex="-1"></a>The ratios $\gamma_{v1}, \gamma_{v2}, \gamma_{v3}, \beta$ and $\gamma_P$ are</span>
+<span id="cb28-51"><a href="#cb28-51" aria-hidden="true" tabindex="-1"></a>piecewise-linear functions of effective temperature $T_\text{eff}$, fitted in</span>
+<span id="cb28-52"><a href="#cb28-52" aria-hidden="true" tabindex="-1"></a>@parmentier2015 Table 1. climt ships those coefficients and interpolates them</span>
+<span id="cb28-53"><a href="#cb28-53" aria-hidden="true" tabindex="-1"></a>at runtime:</span>
+<span id="cb28-54"><a href="#cb28-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-57"><a href="#cb28-57" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb28-58"><a href="#cb28-58" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb28-59"><a href="#cb28-59" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb28-60"><a href="#cb28-60" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.parmentier <span class="im">import</span> lookup_ratio_coefficients</span>
+<span id="cb28-61"><a href="#cb28-61" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(lookup_ratio_coefficients))</span>
+<span id="cb28-62"><a href="#cb28-62" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb28-63"><a href="#cb28-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-64"><a href="#cb28-64" aria-hidden="true" tabindex="-1"></a><span class="fu">## What the picket-fence gets right</span></span>
+<span id="cb28-65"><a href="#cb28-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-66"><a href="#cb28-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Radiative-equilibrium T-p profile: within 2–4 % of full LBL for</span>
+<span id="cb28-67"><a href="#cb28-67" aria-hidden="true" tabindex="-1"></a>  solar-composition atmospheres <span class="co">[</span><span class="ot">@parmentier2014</span><span class="co">]</span>.</span>
+<span id="cb28-68"><a href="#cb28-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Qualitative stratospheric cooling.</span>
+<span id="cb28-69"><a href="#cb28-69" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Day-side/night-side temperature contrast on tidally-locked exoplanets.</span>
+<span id="cb28-70"><a href="#cb28-70" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Plugging in different tables re-targets to Mars, Venus, Titan, or hot Jupiters</span>
+<span id="cb28-71"><a href="#cb28-71" aria-hidden="true" tabindex="-1"></a>  (Chapter 8) with no code changes.</span>
+<span id="cb28-72"><a href="#cb28-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-73"><a href="#cb28-73" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb28-74"><a href="#cb28-74" aria-hidden="true" tabindex="-1"></a>The Parmentier optics mode (<span class="in">`optics="parmentier"`</span>) lumps all opacity into</span>
+<span id="cb28-75"><a href="#cb28-75" aria-hidden="true" tabindex="-1"></a>$\kappa_R$ and cannot do gas-abundance forcing experiments (e.g., CO₂</span>
+<span id="cb28-76"><a href="#cb28-76" aria-hidden="true" tabindex="-1"></a>doubling). For that, switch to <span class="in">`optics="correlated_k"`</span> with an Earth table.</span>
+<span id="cb28-77"><a href="#cb28-77" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb28-78"><a href="#cb28-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-79"><a href="#cb28-79" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb28-80"><a href="#cb28-80" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
+<span id="cb28-81"><a href="#cb28-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-82"><a href="#cb28-82" aria-hidden="true" tabindex="-1"></a><span class="in">`examples/cork_vs_rrtmg.ipynb`</span> compares the Parmentier-mode hot-Jupiter</span>
+<span id="cb28-83"><a href="#cb28-83" aria-hidden="true" tabindex="-1"></a>T-p profile against a reference. <span class="in">`tests/test_hd209458b_reproduction.py`</span> runs</span>
+<span id="cb28-84"><a href="#cb28-84" aria-hidden="true" tabindex="-1"></a>HD 209458b to radiative equilibrium.</span>
+<span id="cb28-85"><a href="#cb28-85" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb28-86"><a href="#cb28-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-87"><a href="#cb28-87" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further reading</span></span>
+<span id="cb28-88"><a href="#cb28-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-89"><a href="#cb28-89" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@parmentier2014 — the original picket-fence analytical model.</span>
+<span id="cb28-90"><a href="#cb28-90" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@parmentier2015 — the ratio-coefficient tables used by climt.</span>
+<span id="cb28-91"><a href="#cb28-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-92"><a href="#cb28-92" aria-hidden="true" tabindex="-1"></a><span class="fu">## Spectral anatomy: a hands-on tour</span></span>
+<span id="cb28-93"><a href="#cb28-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-94"><a href="#cb28-94" aria-hidden="true" tabindex="-1"></a>The notebook below runs the CORK LW component in correlated-k mode on a</span>
+<span id="cb28-95"><a href="#cb28-95" aria-hidden="true" tabindex="-1"></a>standard Earth column, visualises per-band optical depth, transmittance, net</span>
+<span id="cb28-96"><a href="#cb28-96" aria-hidden="true" tabindex="-1"></a>flux, and heating-rate contributions for all 14 LW bands, and finishes with a</span>
+<span id="cb28-97"><a href="#cb28-97" aria-hidden="true" tabindex="-1"></a>CO₂-doubling experiment showing Δτ, Δheating rate, and ΔOLR per band.</span>
+<span id="cb28-98"><a href="#cb28-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-99"><a href="#cb28-99" aria-hidden="true" tabindex="-1"></a>{{&lt; embed spectral_radiation_anatomy.ipynb echo=true &gt;}}</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

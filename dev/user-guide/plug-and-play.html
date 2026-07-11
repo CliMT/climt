@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>picketfencelongwave – climt</title>
+<title>Plug-and-Play Architecture – climt</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -173,25 +173,121 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#climt._components.picket_fence.lw.component.PicketFenceLongwave" id="toc-climt._components.picket_fence.lw.component.PicketFenceLongwave" class="nav-link active" data-scroll-target="#climt._components.picket_fence.lw.component.PicketFenceLongwave">PicketFenceLongwave</a></li>
+  <li><a href="#core-abstractions-climt_core" id="toc-core-abstractions-climt_core" class="nav-link active" data-scroll-target="#core-abstractions-climt_core">Core Abstractions (<code>climt/_core</code>)</a></li>
+  <li><a href="#physical-components-climt_components" id="toc-physical-components-climt_components" class="nav-link" data-scroll-target="#physical-components-climt_components">Physical Components (<code>climt/_components</code>)</a>
+  <ul class="collapse">
+  <li><a href="#radiation" id="toc-radiation" class="nav-link" data-scroll-target="#radiation">Radiation</a></li>
+  <li><a href="#convection-condensation" id="toc-convection-condensation" class="nav-link" data-scroll-target="#convection-condensation">Convection &amp; Condensation</a></li>
+  <li><a href="#surface-boundary-layer" id="toc-surface-boundary-layer" class="nav-link" data-scroll-target="#surface-boundary-layer">Surface &amp; Boundary Layer</a></li>
+  <li><a href="#idealized-forcing-insolation" id="toc-idealized-forcing-insolation" class="nav-link" data-scroll-target="#idealized-forcing-insolation">Idealized Forcing &amp; Insolation</a></li>
+  <li><a href="#initial-conditions" id="toc-initial-conditions" class="nav-link" data-scroll-target="#initial-conditions">Initial Conditions</a></li>
+  </ul></li>
+  <li><a href="#example-building-a-model" id="toc-example-building-a-model" class="nav-link" data-scroll-target="#example-building-a-model">Example: Building a Model</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Plug-and-Play Architecture</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<section id="climt._components.picket_fence.lw.component.PicketFenceLongwave" class="level1">
-<h1>PicketFenceLongwave</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>_components.picket_fence.lw.component.PicketFenceLongwave(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    optics<span class="op">=</span><span class="st">'parmentier'</span>,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    table<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    coefficients<span class="op">=</span><span class="st">'solar_composition'</span>,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    rosseland_mean_fit<span class="op">=</span><span class="st">'freedman2014'</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>CliMT is designed around a modular, plug-and-play architecture built on the <code>sympl</code> framework. Users can easily compose complex Earth system models by mixing and matching independent physical components.</p>
+<section id="core-abstractions-climt_core" class="level2">
+<h2 class="anchored" data-anchor-id="core-abstractions-climt_core">Core Abstractions (<code>climt/_core</code>)</h2>
+<p>To build a model, you first configure the core state and backend: - <strong><code>UnytBackend</code></strong>: Recommended backend for performance, handling units via the <code>unyt</code> library. (Set via <code>sympl.set_backend(UnytBackend())</code>). - <strong><code>get_grid</code></strong>: Utility to define the spatial dimensions (e.g., <code>nx</code>, <code>ny</code>, <code>nz</code>). - <strong><code>get_default_state</code></strong>: Allocates the required state arrays (temperature, pressure, etc.) for a given list of components and a grid.</p>
+</section>
+<section id="physical-components-climt_components" class="level2">
+<h2 class="anchored" data-anchor-id="physical-components-climt_components">Physical Components (<code>climt/_components</code>)</h2>
+<p>Components represent physical processes. They compute tendencies or diagnostics and are passed to a time stepper (like <code>sympl.AdamsBashforth</code>).</p>
+<section id="radiation" class="level3">
+<h3 class="anchored" data-anchor-id="radiation">Radiation</h3>
+<ul>
+<li><strong><code>RRTMGLongwave</code> / <code>RRTMGShortwave</code></strong>: Highly accurate Rapid Radiative Transfer Model for GCMs.</li>
+<li><strong><code>CorkLongwaveRadiation</code> / <code>CorkShortwaveRadiation</code></strong>: Idealized multi-band correlated-k scheme.</li>
+<li><strong><code>GrayLongwaveRadiation</code> / <code>Frierson06LongwaveOpticalDepth</code></strong>: Simplified gray gas radiation.</li>
+</ul>
+</section>
+<section id="convection-condensation" class="level3">
+<h3 class="anchored" data-anchor-id="convection-condensation">Convection &amp; Condensation</h3>
+<ul>
+<li><strong><code>EmanuelConvection</code></strong>: Emanuel convection scheme (with pure Python and C-extension variants).</li>
+<li><strong><code>DryConvectiveAdjustment</code></strong>: Conservative scheme to maintain the dry adiabat.</li>
+<li><strong><code>GridScaleCondensation</code></strong>: Condenses supersaturated water vapor.</li>
+</ul>
+</section>
+<section id="surface-boundary-layer" class="level3">
+<h3 class="anchored" data-anchor-id="surface-boundary-layer">Surface &amp; Boundary Layer</h3>
+<ul>
+<li><strong><code>SlabSurface</code></strong>: Simple surface energy balance with a prescribed heat capacity/mixed layer depth.</li>
+<li><strong><code>BucketHydrology</code></strong>: Surface energy and moisture balance.</li>
+<li><strong><code>IceSheet</code></strong>: 1-D snow-ice energy balance model.</li>
+<li><strong><code>SimplePhysics</code></strong>: Interface to the Reed and Jablonowski (2012) simple physics for boundary layer tendencies.</li>
+<li><strong><code>StableBoundaryLayer</code></strong>: Diffusion-based boundary layer scheme.</li>
+</ul>
+</section>
+<section id="idealized-forcing-insolation" class="level3">
+<h3 class="anchored" data-anchor-id="idealized-forcing-insolation">Idealized Forcing &amp; Insolation</h3>
+<ul>
+<li><strong><code>HeldSuarez</code></strong>: Newtonian cooling and Rayleigh friction for idealized GCMs.</li>
+<li><strong><code>Instellation</code></strong>: Computes zenith angle and star-planet correction factors.</li>
+<li><strong><code>BergerSolarInsolation</code></strong>: Spectral solutions for orbital constants.</li>
+</ul>
+</section>
+<section id="initial-conditions" class="level3">
+<h3 class="anchored" data-anchor-id="initial-conditions">Initial Conditions</h3>
+<ul>
+<li><strong><code>DcmipInitialConditions</code></strong>: Idealized test cases.</li>
+</ul>
+</section>
+</section>
+<section id="example-building-a-model" class="level2">
+<h2 class="anchored" data-anchor-id="example-building-a-model">Example: Building a Model</h2>
+<p>A typical workflow to build a column model or GCM:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympl <span class="im">import</span> set_backend, AdamsBashforth</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Set backend for performance</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>set_backend(climt.UnytBackend())</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Initialize independent components</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>rad_lw <span class="op">=</span> climt.RRTMGLongwave()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>rad_sw <span class="op">=</span> climt.RRTMGShortwave()</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>conv <span class="op">=</span> climt.EmanuelConvection()</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>surface <span class="op">=</span> climt.SlabSurface()</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>components <span class="op">=</span> [rad_lw, rad_sw, conv, surface]</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Create grid and allocate state</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> climt.get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state(components, grid_state<span class="op">=</span>grid)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Group components in a time stepper</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>stepper <span class="op">=</span> AdamsBashforth(components)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>timestep <span class="op">=</span> timedelta(minutes<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Step forward</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    diagnostics, new_state <span class="op">=</span> stepper(state, timestep)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    state.update(diagnostics)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    state.update(new_state)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 <!-- -->
@@ -650,17 +746,79 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># PicketFenceLongwave { #climt._components.picket_fence.lw.component.PicketFenceLongwave }</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>_components.picket_fence.lw.component.PicketFenceLongwave(</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    optics<span class="op">=</span><span class="st">'parmentier'</span>,</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    table<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    coefficients<span class="op">=</span><span class="st">'solar_composition'</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    rosseland_mean_fit<span class="op">=</span><span class="st">'freedman2014'</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Plug-and-Play Architecture"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>CliMT is designed around a modular, plug-and-play architecture built on the <span class="in">`sympl`</span> framework. Users can easily compose complex Earth system models by mixing and matching independent physical components.</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Core Abstractions (`climt/_core`)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>To build a model, you first configure the core state and backend:</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`UnytBackend`**: Recommended backend for performance, handling units via the <span class="in">`unyt`</span> library. (Set via <span class="in">`sympl.set_backend(UnytBackend())`</span>).</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`get_grid`**: Utility to define the spatial dimensions (e.g., <span class="in">`nx`</span>, <span class="in">`ny`</span>, <span class="in">`nz`</span>).</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`get_default_state`**: Allocates the required state arrays (temperature, pressure, etc.) for a given list of components and a grid.</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">## Physical Components (`climt/_components`)</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>Components represent physical processes. They compute tendencies or diagnostics and are passed to a time stepper (like <span class="in">`sympl.AdamsBashforth`</span>).</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="fu">### Radiation</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`RRTMGLongwave` / `RRTMGShortwave`**: Highly accurate Rapid Radiative Transfer Model for GCMs.</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`CorkLongwaveRadiation` / `CorkShortwaveRadiation`**: Idealized multi-band correlated-k scheme.</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`GrayLongwaveRadiation` / `Frierson06LongwaveOpticalDepth`**: Simplified gray gas radiation.</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="fu">### Convection &amp; Condensation</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`EmanuelConvection`**: Emanuel convection scheme (with pure Python and C-extension variants).</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`DryConvectiveAdjustment`**: Conservative scheme to maintain the dry adiabat.</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`GridScaleCondensation`**: Condenses supersaturated water vapor.</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="fu">### Surface &amp; Boundary Layer</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`SlabSurface`**: Simple surface energy balance with a prescribed heat capacity/mixed layer depth.</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`BucketHydrology`**: Surface energy and moisture balance.</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`IceSheet`**: 1-D snow-ice energy balance model.</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`SimplePhysics`**: Interface to the Reed and Jablonowski (2012) simple physics for boundary layer tendencies.</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`StableBoundaryLayer`**: Diffusion-based boundary layer scheme.</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="fu">### Idealized Forcing &amp; Insolation</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`HeldSuarez`**: Newtonian cooling and Rayleigh friction for idealized GCMs.</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`Instellation`**: Computes zenith angle and star-planet correction factors.</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`BergerSolarInsolation`**: Spectral solutions for orbital constants.</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### Initial Conditions</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`DcmipInitialConditions`**: Idealized test cases.</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example: Building a Model</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>A typical workflow to build a column model or GCM:</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympl <span class="im">import</span> set_backend, AdamsBashforth</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Set backend for performance</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>set_backend(climt.UnytBackend())</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Initialize independent components</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>rad_lw <span class="op">=</span> climt.RRTMGLongwave()</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>rad_sw <span class="op">=</span> climt.RRTMGShortwave()</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>conv <span class="op">=</span> climt.EmanuelConvection()</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>surface <span class="op">=</span> climt.SlabSurface()</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>components <span class="op">=</span> [rad_lw, rad_sw, conv, surface]</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Create grid and allocate state</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> climt.get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state(components, grid_state<span class="op">=</span>grid)</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Group components in a time stepper</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>stepper <span class="op">=</span> AdamsBashforth(components)</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>timestep <span class="op">=</span> timedelta(minutes<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Step forward</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    diagnostics, new_state <span class="op">=</span> stepper(state, timestep)</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    state.update(diagnostics)</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>    state.update(new_state)</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
