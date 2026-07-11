@@ -96,7 +96,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-e4afb4e1a0694f2f4998bf6043370f38.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4b26238e72d4953c3ddeb3ffd2642033.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-848de544ea47a6391cf38bad5eb2bd30.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -360,7 +360,7 @@ window.Quarto = {
 <p><span class="math display">\[k_{ij} = k^{(1)}_i\,q_1 + k^{(2)}_j\,q_2, \qquad w_{ij} = w^{(1)}_i\,w^{(2)}_j.\]</span></p>
 <p>The combined weights still sum to 1. Cost scales as <span class="math inline">\(G^N\)</span> for <span class="math inline">\(N\)</span> gases — manageable for 2–3 major absorbers.</p>
 <p>climt computes ESFT weights in <code>compute_esft_weights</code>:</p>
-<div id="f6a36fe6" class="cell" data-execution_count="1">
+<div id="27294a9c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> compute_esft_weights</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(compute_esft_weights))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
