@@ -1,15 +1,12 @@
 from ..._core import ensure_contiguous_state
 from sympl import Stepper, get_constant
-import logging
 
+_FORTRAN_AVAILABLE = False
 try:
     from . import _simple_physics as phys
-except ImportError as error:
-    logging.warning(
-        "Import failed. Simple Physics is likely not compiled and will not be"
-        "available."
-    )
-    print(error)
+    _FORTRAN_AVAILABLE = True
+except ImportError:
+    phys = None
 
 
 class SimplePhysics(Stepper):
@@ -160,6 +157,11 @@ class SimplePhysics(Stepper):
             maximum_momentum_drag_coefficient (float):
                 This drag coefficient is used for surface wind speeds exceeding :math:`20 m/s`.
         """
+        if not _FORTRAN_AVAILABLE:
+            raise ImportError(
+                "SimplePhysics requires compiled Fortran extensions, which are "
+                "not available in this (pure-Python) install of climt."
+            )
 
         self._cyclone = simulate_cyclone
         self._lsc = large_scale_condensation

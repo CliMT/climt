@@ -3,14 +3,14 @@ from sympl import (
     initialize_numpy_arrays_with_properties,
     get_constant,
 )
-import logging
 import numpy as np
 
+_FORTRAN_AVAILABLE = False
 try:
     from . import _dcmip
-except ImportError as error:
-    logging.warning("Import Failed. DCMIP initial conditions will not be available.")
-    print(error)
+    _FORTRAN_AVAILABLE = True
+except ImportError:
+    _dcmip = None
 
 
 class DcmipInitialConditions(DiagnosticComponent):
@@ -98,6 +98,13 @@ class DcmipInitialConditions(DiagnosticComponent):
                 Whether a perturbation must be added. Only applies
                 to the baroclinic wave test.
         """
+        if not _FORTRAN_AVAILABLE:
+            raise ImportError(
+                "DcmipInitialConditions requires compiled Fortran extensions, "
+                "which are not available in this (pure-Python) install of "
+                "climt."
+            )
+
         if condition_type not in ["baroclinic_wave", "tropical_cyclone"]:
             raise ValueError("type_of_output has to be one \
                              of 'baroclinic_wave' or 'tropical_cyclone'")

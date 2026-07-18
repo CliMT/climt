@@ -79,4 +79,14 @@ __all__ = (
     BucketHydrology,
 )
 
+
+def has_fortran_extensions():
+    """Return True if compiled Fortran extensions are available."""
+    try:
+        from climt._components.simple_physics import _simple_physics  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 __version__ = "0.20.0"
