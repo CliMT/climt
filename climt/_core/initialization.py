@@ -2,7 +2,6 @@ import sys
 from datetime import datetime
 
 import numpy as np
-from scipy.interpolate import CubicSpline
 from sympl import (
     DiagnosticComponent,
     combine_component_properties,
@@ -1072,8 +1071,9 @@ def init_ozone(p, ps):
     data_path = importlib_resources.files("climt._data").joinpath("ozone_profile.npy")
     with importlib_resources.as_file(data_path) as f:
         ozone_ref = np.load(f)
-    spline = CubicSpline(p_ref[::-1], ozone_ref[::-1])  # x must be increasing
-    return spline(p)
+    # np.interp requires the reference x-array (xp) to be increasing;
+    # p_ref is descending (surface->TOA), so pass reversed views.
+    return np.interp(p, p_ref[::-1], ozone_ref[::-1])
 
 
 init_diagnostics = [

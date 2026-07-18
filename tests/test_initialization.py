@@ -245,5 +245,16 @@ def test_3d_initialization_is_full_based_on_wildcard():
             assert set(state[quantity_name].dims[1:]) == {'lat', 'lon'}
 
 
+def test_initialization_does_not_import_scipy():
+    import sys, importlib
+    for m in list(sys.modules):
+        if m == "scipy" or m.startswith("scipy."):
+            del sys.modules[m]
+    import climt._core.initialization as init
+    importlib.reload(init)
+    assert not any(m == "scipy" or m.startswith("scipy.") for m in sys.modules), \
+        "initialization.py must not import scipy"
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
