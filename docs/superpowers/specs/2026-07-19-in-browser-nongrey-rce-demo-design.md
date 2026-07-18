@@ -48,6 +48,7 @@ hosted as a **GitHub release asset** (a stable, versioned URL anyone can
 | Packaging scope | **In-scope.** One deliverable: finish the minimal pure-Python wheel, host it, then build the demo. |
 | Placement | **Retrofit key chapters** (Ch.1, Ch.6) **plus one flagship RCE page.** |
 | Flagship physics | **Pure radiative equilibrium** (radiation + `SlabSurface`, no convection). Cleanest isolation of the radiation difference; fastest to run. |
+| Gray vs non-grey mechanism | **Same `CorkLongwaveRadiation` component for both**, swapping only `table=`: a single-band constant-k table (gray) vs the multi-band Earth table (non-grey). **No `GrayLongwaveRadiation` in the flagship.** The reader sees that grey-vs-non-grey lives entirely in the absorption *data*, not the code. This is already proven bit-exact by `tests/test_grey_limit.py`. |
 | Ch.8 multiplanet | **Deferred.** Out of scope for this deliverable. |
 | Wheel hosting | **GitHub release asset** (versioned URL, reusable as a template by third-party sites). |
 | IceSheet TDMA | **In-scope.** Complete full scipy removal now rather than leave a loose end. |
@@ -83,11 +84,24 @@ A pinned, versioned URL means (a) the demo is reproducible, (b) any external
 site can copy the same one-liner. The tag/version is defined **once** in a
 shared include so bumping it updates every page.
 
-### Data: Earth k-tables as `.npz`, no scipy
+### Data: gray + non-grey CORK tables as `.npz`, no scipy
 
-CORK's Earth k-tables ship **inside** the wheel as `.npz` and are read by a
-small numpy loader — no `scipy.io.netcdf_file`. Earth-only keeps the browser
-download small. (Mars/Venus tables are not needed here; Ch.8 is deferred.)
+Both flagship cases run through `CorkLongwaveRadiation`; only the k-table
+differs. **Both** tables must therefore load in-browser, so the `.npz`/numpy
+reader is on the critical path (not optional). The k-tables ship **inside** the
+wheel as `.npz`, read by a small numpy loader — no `scipy.io.netcdf_file`.
+
+Tables shipped for the demo (all already exist as `.nc`, to be converted to
+`.npz`):
+
+- `single_band_unit_lw` — the **gray** table (1 band, 1 g-point, constant k;
+  956 bytes). Built by `scripts/generate_single_band_unit_table.py`.
+- `earth_low_res_lw` (3 MB `.nc`) + `earth_low_res_sw` (17 KB) — the
+  **non-grey** Earth correlated-k tables. `.npz` (compressed) should be
+  comparable or smaller; this dominates the page-weight budget.
+
+Earth-only keeps the download bounded. (Mars/Venus tables are not needed here;
+Ch.8 is deferred.)
 
 ### Boot boilerplate hidden, science visible
 
@@ -113,13 +127,17 @@ sidebar in `_quarto.yml` after Ch.8 (or repositioned as the section's live
 capstone).
 
 - **Setup cell** (folded): boot + install + `integrate_to_equilibrium`.
-- **Cell A — gray:** `GrayLongwaveRadiation` + `SlabSurface`; build a single
-  column via `get_default_state`, integrate to RE, plot T(p).
-- **Cell B — non-grey:** `CorkLongwaveRadiation` + `CorkShortwaveRadiation`
-  + `SlabSurface` (+ `Instellation`); integrate to RE; overlay T(p) on Cell A.
+- **Cell A — gray:** `CorkLongwaveRadiation(optics="correlated_k",
+  table="single_band_unit_lw")` + `SlabSurface`; build a single column via
+  `get_default_state`, integrate to RE, plot T(p). (Shortwave held identical
+  to Cell B so only the LW spectral treatment differs.)
+- **Cell B — non-grey:** the **same** `CorkLongwaveRadiation` call with
+  `table="earth_low_res_lw"` (+ `CorkShortwaveRadiation` /`Instellation`) +
+  `SlabSurface`; integrate to RE; overlay T(p) on Cell A. The diff between
+  Cell A and Cell B is *one string* — the pedagogical punchline.
 - **Cell C — the payoff:** OLR / per-band flux diagnostics showing the
-  **stratosphere and stratospheric cooling** the non-grey model produces and
-  the gray model cannot; call out gray's convectively-unstable troposphere as
+  **stratosphere and stratospheric cooling** the non-grey table produces and
+  the gray table cannot; call out gray's convectively-unstable troposphere as
   a teachable deficiency (motivates the deferred RCE follow-up).
 - **Cell D — CO₂ knob:** editable ppm; re-run to watch the forcing move the
   effective emission level. All cells are editable.
@@ -166,9 +184,14 @@ revision. File paths per that document.
    - `climt/_core/initialization.py`: `scipy.interpolate.CubicSpline` →
      `np.interp` (top-level import, so required for a clean scipy-free
      `import climt`).
-   - CORK k-table reader (`cork/optics/correlated_k.py`): add a numpy/`.npz`
-     reader; ship `.npz` Earth tables in the pure wheel; drop the
-     `scipy.io.netcdf_file` path for the pure wheel.
+   - CORK k-table reader (`cork/optics/correlated_k.py`): the `scipy.io`
+     import is already function-local (`_load_netcdf_table`), so it does not
+     block `import climt`. But **both** flagship tables load at demo runtime,
+     so this is critical-path: convert the shipped `.nc` tables the demo uses
+     (`single_band_unit_lw`, `earth_low_res_lw`, `earth_low_res_sw`) to `.npz`,
+     make `load_k_table` resolve `.npz` without scipy, and give a clear error
+     if a `.nc` table is requested without scipy. (Conversion can reuse
+     `scripts/generate_single_band_unit_table.py` for the gray table.)
    - IceSheet: new `climt/_core/tridiagonal.py` (Thomas/TDMA solver,
      numba-optional) replacing `scipy.sparse.spdiags + spsolve` in
      `climt/_components/surface_ice.py`. **Validate TDMA against scipy before
@@ -203,13 +226,15 @@ seconds to a few minutes in-browser. Mitigations:
 - The folded setup cell installs the wheel **while the reader reads the prose**,
   so the wait overlaps with reading.
 - A visible progress indication during the integration loop.
-- Gray remains the fast path; CORK is the "worth the wait" payoff.
+- The gray single-band table is far cheaper (1 band × 1 g-point) than the
+  multi-band Earth table, so Cell A is the fast path and Cell B the payoff.
 
 ## Verification
 
 1. **Real wheel, fresh venv:** `pip wheel` the pure wheel, install in a clean
-   venv (no editable checkout, no scipy), and run an RE loop headless — both
-   gray and CORK reach a stable profile.
+   venv (no editable checkout, no scipy), and run an RE loop headless — the
+   gray-table and non-grey-table CORK columns both reach a stable profile, and
+   the non-grey column develops a stratosphere the gray one lacks.
 2. **Clean import:** `import climt` triggers no scipy import and no Fortran
    warnings; `has_fortran_extensions()` returns False on the pure wheel;
    Fortran components raise a clear `ImportError` on instantiation.
