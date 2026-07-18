@@ -307,8 +307,8 @@ setup(
         "climt": [
             "_data/ozone_profile.npy",
             "_data/atmospheric_properties/*.toml",
-            "_data/picket_fence/correlated_k/*.nc",
-            "_data/picket_fence/correlated_k/*.npz",
+            "_data/cork/correlated_k/*.nc",
+            "_data/cork/correlated_k/*.npz",
         ]
     },
     install_requires=requirements,
