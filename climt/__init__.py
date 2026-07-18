@@ -4,6 +4,8 @@ import sympl
 from ._components import (
     BergerSolarInsolation,
     BucketHydrology,
+    CorkLongwaveRadiation,
+    CorkShortwaveRadiation,
     DcmipInitialConditions,
     DryConvectiveAdjustment,
     EmanuelConvection,
@@ -69,6 +71,8 @@ __all__ = (
     SimplePhysics,
     RRTMGLongwave,
     RRTMGShortwave,
+    CorkLongwaveRadiation,
+    CorkShortwaveRadiation,
     EmanuelConvection,
     EmanuelConvectionPython,
     SlabSurface,
