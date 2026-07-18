@@ -118,7 +118,13 @@ def _ck_tau_additive_co2_kernel(
 
 
 def _load_netcdf_table(path):
-    from scipy.io import netcdf_file
+    try:
+        from scipy.io import netcdf_file
+    except ImportError as exc:
+        raise ImportError(
+            "Reading .nc k-tables requires scipy. Install scipy, or use a .npz "
+            "table (the shipped demo tables are available as .npz)."
+        ) from exc
 
     with netcdf_file(path, "r", mmap=False) as nc:
         out = {}
@@ -166,8 +172,8 @@ def load_k_table(name_or_path):
         name_or_path: table name (e.g., ``"test_2band_lw"``) or path to a
             ``.npz`` / ``.nc`` file. Shipped tables under
             ``climt/_data/cork/correlated_k/`` are resolved by name,
-            preferring ``.nc`` (design-spec format) then falling back to
-            ``.npz`` (legacy unit fixtures).
+            preferring ``.npz`` (numpy-native, scipy-free) then falling back
+            to ``.nc`` (design-spec format, requires scipy).
 
     Returns:
         dict-like object exposing ``k_coefficients``, ``gpoint_weights``,
@@ -180,14 +186,17 @@ def load_k_table(name_or_path):
         return np.load(name_or_path, allow_pickle=True)
 
     pkg = importlib_resources.files("climt._data.cork.correlated_k")
+    npz_path = pkg.joinpath(f"{name_or_path}.npz")
+    with importlib_resources.as_file(npz_path) as f:
+        if os.path.isfile(f):
+            return np.load(f, allow_pickle=True)
+
     nc_path = pkg.joinpath(f"{name_or_path}.nc")
     with importlib_resources.as_file(nc_path) as f:
         if os.path.isfile(f):
             return _load_netcdf_table(str(f))
 
-    npz_path = pkg.joinpath(f"{name_or_path}.npz")
-    with importlib_resources.as_file(npz_path) as f:
-        return np.load(f, allow_pickle=True)
+    raise FileNotFoundError(f"No k-table named {name_or_path!r} (.npz or .nc)")
 
 
 def interpolate_k(table, T, p, h2o_vmr=None, co2_vmr=None):
