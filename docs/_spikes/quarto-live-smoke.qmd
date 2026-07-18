@@ -1,0 +1,34 @@
+---
+title: quarto-live smoke test
+format: live-html
+engine: jupyter
+---
+
+This throwaway page de-risks the in-browser runtime: can `quarto-live`
+(Pyodide + micropip) install the climt pure wheel from a URL, import it, and
+render a matplotlib figure?
+
+During local spiking the wheel is served from a CORS-enabled localhost server
+(`http://127.0.0.1:8912/climt-0.20.0-py3-none-any.whl`). In production this URL
+becomes the GitHub release asset
+(`https://github.com/CliMT/climt/releases/download/web-demo-v0.20.0/climt-0.20.0-py3-none-any.whl`).
+
+```{pyodide}
+#| autorun: true
+import micropip
+await micropip.install("http://127.0.0.1:8912/climt-0.20.0-py3-none-any.whl")
+import climt
+print("climt", climt.__version__, "has_fortran:", climt.has_fortran_extensions())
+```
+
+```{pyodide}
+#| autorun: true
+import numpy as np
+import matplotlib.pyplot as plt
+x = np.linspace(0, 1, 50)
+fig, ax = plt.subplots()
+ax.plot(x, np.sqrt(x))
+ax.set_title("matplotlib in Pyodide")
+ax.set_xlabel("x"); ax.set_ylabel("sqrt(x)")
+plt.show()
+```
