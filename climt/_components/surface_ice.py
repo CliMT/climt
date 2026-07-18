@@ -1,9 +1,7 @@
 from sympl import Stepper, get_constant, initialize_numpy_arrays_with_properties
 import numpy as np
 
-# from scipy.interpolate import CubicSpline
-from scipy import sparse
-from scipy.sparse.linalg import spsolve
+from .._core.tridiagonal import solve_tridiagonal
 
 
 class IceSheet(Stepper):
@@ -428,32 +426,31 @@ class IceSheet(Stepper):
         a_sub[:-2] = -mu_inv_int * K_mid[:-1]
         a_sup[2:] = -mu_inv_int * K_mid[1:]
 
-        mat_lhs = sparse.spdiags(
-            [a_sub, dp, a_sup], [-1, 0, 1], num_layers, num_layers, format="csc"
-        )
+        n = num_layers
+        lower = np.zeros(n)      # lower[i] = A[i, i-1]
+        upper = np.zeros(n)      # upper[i] = A[i, i+1]
+        diag = dp.copy()         # diag[i]  = A[i, i]
+        lower[1:] = a_sub[:-1]
+        upper[:-1] = a_sup[1:]
 
-        mat_rhs = sparse.spdiags(
-            [-a_sub, dm, -a_sup], [-1, 0, 1], num_layers, num_layers, format="csc"
-        )
-
-        rhs = mat_rhs * temp_profile
+        # rhs = mat_rhs @ temp_profile, mat_rhs diagonals [-a_sub, dm, -a_sup]
+        rhs = dm * temp_profile
+        rhs[1:] += -a_sub[:-1] * temp_profile[:-1]
+        rhs[:-1] += -a_sup[1:] * temp_profile[1:]
 
         # Set flux condition if temperature is below melting point,
         # and dirichlet condition above melting point
         if surf_temperature < self._melting_temperature - self._epsilon:
-            mat_lhs[-1, -1] = -1
-            mat_lhs[-1, -2] = 1
+            diag[-1] = -1.0
+            lower[-1] = 1.0
             rhs[-1] = -net_flux * dz / K_mid[-1]
         else:
-            mat_lhs[-1, -1] = 1
-            mat_lhs[-1, -2] = 0
+            diag[-1] = 1.0
+            lower[-1] = 0.0
             rhs[-1] = self._melting_temperature
 
-        mat_lhs[0, 0] = 1
-        mat_lhs[0, 1] = 0
-        if soil_temperature is None:
-            rhs[0] = self._melting_temperature
-        else:
-            rhs[0] = soil_temperature
+        diag[0] = 1.0
+        upper[0] = 0.0
+        rhs[0] = self._melting_temperature if soil_temperature is None else soil_temperature
 
-        return spsolve(mat_lhs, rhs)
+        return solve_tridiagonal(lower, diag, upper, rhs)
