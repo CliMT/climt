@@ -7,6 +7,9 @@ on:
 jobs:
     build_wheels:
         name: Build wheels on ${{ matrix.os }}
+        # Prereleases (e.g. the in-browser docs demo wheel) must not build the
+        # platform wheels or publish to PyPI. Only build-pure-wheel runs for them.
+        if: ${{ !github.event.release.prerelease }}
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
@@ -53,6 +56,7 @@ jobs:
                   path: dist/
     publish-to-pypi:
         name: Publishing to PyPI
+        if: ${{ !github.event.release.prerelease }}
         needs:
             - build_wheels
         runs-on: ubuntu-latest
