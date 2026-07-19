@@ -5,9 +5,10 @@ engine: jupyter
 pyodide:
   packages:
     # Installed by micropip at document setup, before any cell runs.
-    # LOCAL preview: served from a CORS-enabled localhost server (see note below).
-    # Published site: swap for the GitHub release asset URL.
-    - "http://127.0.0.1:8912/climt-0.20.0-py3-none-any.whl"
+    # PoC pure wheel hosted as a GitHub prerelease asset (works locally and on
+    # the published site; GitHub serves it cross-origin). Superseded by the next
+    # real climt release.
+    - "https://github.com/CliMT/climt/releases/download/web-demo-preview/climt-0.20.0-py3-none-any.whl"
 ---
 
 ::: {.callout-note}
@@ -17,18 +18,23 @@ This page runs **climt itself** in your browser via Pyodide — no install, no
 server-side compute. The first cell downloads a ~6 MB pure-Python wheel and
 boots the numpy/matplotlib stack, so give it a few seconds.
 
-**Local preview:** the wheel is installed at document setup from the
-`pyodide: packages:` URL in this page's front matter (`http://127.0.0.1:8912/…`).
-The Pyodide worker fetches it cross-origin, so it must be served with CORS
-headers (plain `python -m http.server` will *not* work). Build the pure wheel
-and serve it with the helper before `quarto preview`:
+The wheel installs automatically from a GitHub release asset (`pyodide:
+packages:` in this page's front matter), so `quarto preview` just works — no
+local server needed.
+
+::: {.callout-tip collapse="true"}
+## Testing an unreleased wheel locally
+
+To point the page at a local build instead of the release asset, serve the
+wheel with CORS headers (plain `python -m http.server` will *not* work — the
+Pyodide worker fetches cross-origin) and swap the front-matter URL:
 
 ```sh
 CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
 python docs/radiative-transfer/_live/serve_wheel.py /tmp/climt_wh 8912
+# then set pyodide.packages to http://127.0.0.1:8912/climt-0.20.0-py3-none-any.whl
 ```
-
-For the published site this URL becomes the GitHub release asset instead.
+:::
 :::
 
 {{< include ../_includes/climt-live-setup.qmd >}}
