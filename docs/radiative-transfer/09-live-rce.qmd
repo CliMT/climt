@@ -107,3 +107,15 @@ to space, so it radiates more efficiently and settles to a different profile tha
 the single-band gray column — cooler where the windows are transparent, with a
 steeper drop-off aloft. (At the default `N_STEPS = 400` neither column is fully
 equilibrated; increase it to watch each profile settle.)
+
+### Why the stratosphere here is isothermal
+
+This setup has **no shortwave absorption in the atmosphere** — sunlight is
+absorbed only at the surface (there is no ozone, and the longwave-only radiation
+does not heat the air with sunlight). In pure radiative equilibrium without a
+solar absorber aloft, the upper atmosphere relaxes to a constant *skin
+temperature*: an **isothermal stratosphere**. This is different from Earth's real
+stratosphere, where ozone absorbs ultraviolet sunlight and drives a temperature
+*inversion* (temperature rising with height). Add a shortwave component with
+ozone and the isothermal top would tilt into that inversion — a natural next
+experiment.
