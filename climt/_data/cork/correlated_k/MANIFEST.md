@@ -44,6 +44,22 @@ The `.npz` files in this directory are pre-existing unit-test fixtures and
 are not subject to the Chaverot provenance above. `single_band_unit_lw.nc`
 is a synthetic constant-k fixture for the grey-limit unit test.
 
+`single_band_gray_lw.nc` is a synthetic single-band, constant-k fixture whose
+diffusivity-scaled column optical depth is calibrated to climt's **default**
+gray longwave optical depth (`tau0 * (1 - p/ps)`, `tau0 = 1`; see the
+`longwave_optical_depth` entry in `climt/_core/initialization.py`). It lets the
+CORK component stand in for `GrayLongwaveRadiation` as the "gray" baseline of
+the in-browser radiative-equilibrium demo. Regenerate (scipy-free) with
+
+```sh
+python scripts/generate_gray_default_table.py \
+    --output climt/_data/cork/correlated_k/single_band_gray_lw.nc
+python scripts/convert_ck_table_to_npz.py \
+    climt/_data/cork/correlated_k/single_band_gray_lw.nc
+```
+
+and verify with `tests/test_gray_default_table.py`.
+
 ## linepyline-derived tables
 
 Built offline by `scripts/generate_cork_tables_linepyline.py` from
