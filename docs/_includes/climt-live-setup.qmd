@@ -8,9 +8,11 @@ literal include shortcode in this comment: Quarto resolves include shortcodes
 at the text level, before HTML comments are stripped, so a literal one here
 would make this file include itself.
 
-It boots Pyodide, micropip-installs the pinned pure-Python climt wheel (the
-GitHub release asset — the wheel URL/tag is defined ONCE here), and defines
-`integrate_to_equilibrium(...)` for the RCE pages.
+It imports numpy/matplotlib/climt/sympl and defines
+`integrate_to_equilibrium(...)` for the RCE pages. The climt wheel itself is
+installed by micropip at document setup via the including page's
+`pyodide: packages:` front-matter block (a CORS-served localhost wheel locally;
+the GitHub release asset for the published site).
 
 The `integrate_to_equilibrium` body below is duplicated in the natively
 testable twin `docs/radiative-transfer/_live/rce_helpers.py`; keep the two

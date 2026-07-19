@@ -19,15 +19,16 @@ boots the numpy/matplotlib stack, so give it a few seconds.
 
 **Local preview:** the wheel is installed at document setup from the
 `pyodide: packages:` URL in this page's front matter (`http://127.0.0.1:8912/…`).
-Before `quarto preview`, serve the wheel from a CORS-enabled localhost server,
-e.g.
+The Pyodide worker fetches it cross-origin, so it must be served with CORS
+headers (plain `python -m http.server` will *not* work). Build the pure wheel
+and serve it with the helper before `quarto preview`:
 
 ```sh
-python -m http.server 8912 --directory /tmp/climt_wh
+CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
+python docs/radiative-transfer/_live/serve_wheel.py /tmp/climt_wh 8912
 ```
 
-(point `--directory` at wherever `climt-0.20.0-py3-none-any.whl` lives). For the
-published site this URL becomes the GitHub release asset instead.
+For the published site this URL becomes the GitHub release asset instead.
 :::
 
 {{< include ../_includes/climt-live-setup.qmd >}}
