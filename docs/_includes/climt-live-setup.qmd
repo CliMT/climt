@@ -1,0 +1,50 @@
+<!--
+Shared quarto-live boot include for the in-browser climt demo pages.
+
+Include it once, near the top of any `format: live-html` / `engine: jupyter`
+page, with:
+
+    {{< include ../_includes/climt-live-setup.qmd >}}
+
+It boots Pyodide, micropip-installs the pinned pure-Python climt wheel (the
+GitHub release asset — the wheel URL/tag is defined ONCE here), and defines
+`integrate_to_equilibrium(...)` for the RCE pages.
+
+The `integrate_to_equilibrium` body below is duplicated in the natively
+testable twin `docs/radiative-transfer/_live/rce_helpers.py`; keep the two
+bodies IDENTICAL (only `tests/test_live_rce_demo.py` guards the twin).
+-->
+
+```{pyodide}
+#| autorun: true
+#| edit: false
+import micropip
+await micropip.install(
+    "https://github.com/CliMT/climt/releases/download/web-demo-v0.20.0/climt-0.20.0-py3-none-any.whl"
+)
+import numpy as np
+import matplotlib.pyplot as plt
+import climt
+from sympl import AdamsBashforth
+from datetime import timedelta
+
+
+def integrate_to_equilibrium(tendency_components, stepper_components, state,
+                             timestep, n_steps):
+    """Step tendency + stepper components forward toward radiative equilibrium.
+
+    Keep this body in sync with the copy in
+    docs/radiative-transfer/_live/rce_helpers.py.
+    """
+    model = AdamsBashforth(list(tendency_components))
+    for _ in range(n_steps):
+        diagnostics, new_state = model(state, timestep)
+        state.update(diagnostics)
+        state.update(new_state)
+        for stepper in stepper_components:
+            s_diag, s_new = stepper(state, timestep)
+            state.update(s_diag)
+            state.update(s_new)
+        state["time"] += timestep
+    return state
+```
