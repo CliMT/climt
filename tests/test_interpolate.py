@@ -40,9 +40,13 @@ def test_matches_scipy_cubic_spline_including_extrapolation(n):
 
 
 def test_matches_scipy_on_real_ozone_profile_with_extrapolation():
-    ozone_ref = np.load(
-        "/Users/joymonteiro/github/climt/climt/_data/ozone_profile.npy"
+    import importlib.resources as importlib_resources
+
+    data_path = importlib_resources.files("climt._data").joinpath(
+        "ozone_profile.npy"
     )
+    with importlib_resources.as_file(data_path) as f:
+        ozone_ref = np.load(f)
     p_ref = 1e5 * np.linspace(0.998, 0.001, 30)
 
     # np.interp/spline both require increasing xp; p_ref is descending.
