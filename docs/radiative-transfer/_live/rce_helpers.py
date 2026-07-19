@@ -18,15 +18,20 @@ def integrate_to_equilibrium(tendency_components, stepper_components, state,
 
     Keep this body in sync with the copy in
     docs/_includes/climt-live-setup.qmd.
+
+    Update order matters: the new (prognostic) state is applied *before* the
+    diagnostics, so flux diagnostics (e.g. the longwave fluxes SlabSurface
+    consumes) survive into the next step instead of being clobbered by the
+    stepper carrying those fields forward at their pre-step value.
     """
     model = AdamsBashforth(list(tendency_components))
     for _ in range(n_steps):
         diagnostics, new_state = model(state, timestep)
-        state.update(diagnostics)
         state.update(new_state)
+        state.update(diagnostics)
         for stepper in stepper_components:
             s_diag, s_new = stepper(state, timestep)
-            state.update(s_diag)
             state.update(s_new)
+            state.update(s_diag)
         state["time"] += timestep
     return state
