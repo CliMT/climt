@@ -1,0 +1,108 @@
+---
+title: "Radiative equilibrium: gray vs non-grey — live"
+format: live-html
+engine: jupyter
+pyodide:
+  packages:
+    # Installed by micropip at document setup, before any cell runs.
+    # LOCAL preview: served from a CORS-enabled localhost server (see note below).
+    # Published site: swap for the GitHub release asset URL.
+    - "http://127.0.0.1:8912/climt-0.20.0-py3-none-any.whl"
+---
+
+::: {.callout-note}
+## Runs in your browser
+
+This page runs **climt itself** in your browser via Pyodide — no install, no
+server-side compute. The first cell downloads a ~6 MB pure-Python wheel and
+boots the numpy/matplotlib stack, so give it a few seconds.
+
+**Local preview:** the wheel is installed at document setup from the
+`pyodide: packages:` URL in this page's front matter (`http://127.0.0.1:8912/…`).
+Before `quarto preview`, serve the wheel from a CORS-enabled localhost server,
+e.g.
+
+```sh
+python -m http.server 8912 --directory /tmp/climt_wh
+```
+
+(point `--directory` at wherever `climt-0.20.0-py3-none-any.whl` lives). For the
+published site this URL becomes the GitHub release asset instead.
+:::
+
+{{< include ../_includes/climt-live-setup.qmd >}}
+
+Gray and non-grey longwave radiation are the **same component** here — one
+`CorkLongwaveRadiation` — differing only in the absorption *table* passed to it.
+The gray table (`single_band_gray_lw`) is a single band whose optical depth
+reproduces climt's default gray scheme (`GrayLongwaveRadiation`); the non-grey
+table (`earth_low_res_lw`) resolves 14 bands of real H₂O/CO₂ line absorption.
+**Change one string and re-run** to see how spectral structure reshapes the
+equilibrium.
+
+Each column is a single air parcel over a 5 m slab ocean, heated by a fixed
+absorbed shortwave flux at the surface and cooled by longwave radiation, stepped
+toward radiative equilibrium with `sympl.AdamsBashforth`.
+
+## Gray column
+
+```{pyodide}
+#| autorun: true
+from datetime import timedelta
+import sympl
+from climt import (get_default_state, get_grid, SlabSurface,
+                   CorkLongwaveRadiation)
+sympl.set_backend(sympl.DataArrayBackend())
+
+SOLAR = 240.0                     # prescribed absorbed shortwave at surface, W/m^2
+NZ, DT_HOURS, N_STEPS = 18, 2, 400   # raise N_STEPS (e.g. 3000) to near equilibrium
+
+
+def radiative_equilibrium(table):
+    """Step a single column with the given LW table to (near) equilibrium."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
+    surface = SlabSurface()
+    state = get_default_state([lw, surface], grid_state=get_grid(nx=1, ny=1, nz=NZ))
+    state["ocean_mixed_layer_thickness"].values[:] = 5.0
+    # Fixed shortwave heating of the slab surface (no shortwave component).
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state = integrate_to_equilibrium([lw, surface], [], state,
+                                     timedelta(hours=DT_HOURS), N_STEPS)
+    p = state["air_pressure"].values[:, 0, 0]
+    T = state["air_temperature"].values[:, 0, 0]
+    return p, T
+
+
+p, T_gray = radiative_equilibrium("single_band_gray_lw")
+fig, ax = plt.subplots()
+ax.plot(T_gray, p / 100)
+ax.invert_yaxis()
+ax.set_xlabel("temperature (K)")
+ax.set_ylabel("pressure (hPa)")
+ax.set_title("Gray radiative equilibrium")
+plt.show()
+```
+
+## Non-grey column — change one string
+
+```{pyodide}
+p, T_nongrey = radiative_equilibrium("earth_low_res_lw")  # <- the only change
+
+fig, ax = plt.subplots()
+ax.plot(T_gray, p / 100, label="gray (1 band)")
+ax.plot(T_nongrey, p / 100, label="non-grey (14 bands)")
+ax.invert_yaxis()
+ax.legend()
+ax.set_xlabel("temperature (K)")
+ax.set_ylabel("pressure (hPa)")
+ax.set_title("Same CORK component, different absorption table")
+plt.show()
+```
+
+The non-grey column's spectral **windows** let surface radiation escape directly
+to space, so it radiates more efficiently and settles to a different profile than
+the single-band gray column — cooler where the windows are transparent, with a
+steeper drop-off aloft. (At the default `N_STEPS = 400` neither column is fully
+equilibrated; increase it to watch each profile settle.)

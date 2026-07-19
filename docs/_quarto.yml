@@ -70,6 +70,7 @@ website:
         - radiative-transfer/06-picket-fence.qmd
         - radiative-transfer/07-two-stream.qmd
         - radiative-transfer/08-multiplanet.qmd
+        - radiative-transfer/09-live-rce.qmd
         - section: "Appendices"
           contents:
             - radiative-transfer/table-generation.qmd

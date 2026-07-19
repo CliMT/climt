@@ -2,9 +2,11 @@
 Shared quarto-live boot include for the in-browser climt demo pages.
 
 Include it once, near the top of any `format: live-html` / `engine: jupyter`
-page, with:
-
-    {{< include ../_includes/climt-live-setup.qmd >}}
+page, with a Quarto include shortcode pointing at this file (see
+radiative-transfer/09-live-rce.qmd for the exact line). Do NOT repeat the
+literal include shortcode in this comment: Quarto resolves include shortcodes
+at the text level, before HTML comments are stripped, so a literal one here
+would make this file include itself.
 
 It boots Pyodide, micropip-installs the pinned pure-Python climt wheel (the
 GitHub release asset — the wheel URL/tag is defined ONCE here), and defines
@@ -18,10 +20,12 @@ bodies IDENTICAL (only `tests/test_live_rce_demo.py` guards the twin).
 ```{pyodide}
 #| autorun: true
 #| edit: false
-import micropip
-await micropip.install(
-    "https://github.com/CliMT/climt/releases/download/web-demo-v0.20.0/climt-0.20.0-py3-none-any.whl"
-)
+# The climt wheel is installed by micropip at document setup (before any cell
+# runs) via the `pyodide: packages:` block in the page front matter — see
+# radiative-transfer/09-live-rce.qmd. Installing here with `await
+# micropip.install(...)` instead would race: quarto-live does not await one
+# autorun cell's async work before starting the next, so a downstream cell can
+# run before the wheel finishes installing. So this cell is synchronous.
 import numpy as np
 import matplotlib.pyplot as plt
 import climt
@@ -52,4 +56,10 @@ def integrate_to_equilibrium(tendency_components, stepper_components, state,
             state.update(s_diag)
         state["time"] += timestep
     return state
+
+
+# End on a plain statement (not a def): quarto-live captures each cell's final
+# value for display, and marshalling a bare function object through JS interop
+# yields an unhashable JsProxy that aborts the cell.
+print("climt", climt.__version__, "ready — has_fortran:", climt.has_fortran_extensions())
 ```
