@@ -103,7 +103,9 @@ DataOcean(
 - **Reading**: open via xarray (netCDF). climt already depends on xarray/sympl, so no new hard dependency; SST files are optional at import.
 - **Expected schema** (documented; HadISST / AMIP-II-like): coordinates `time`, `lat`, `lon`; SST variable in K or °C (units read from attrs, converted to K). Land/missing values masked.
 - **Time interpolation**: default **mid-month** — monthly-mean SSTs are treated as mid-month values and interpolated with the AMIP-II correction (Taylor, Williamson & Zwiers, 2000) so monthly means are preserved. `"linear"` offered as a simpler option.
-- **Spatial interpolation**: bilinear from the dataset grid to climt's grid; nearest-neighbour fallback at coastlines. Precomputed weights cached on first call (grid is fixed).
+- **Spatial interpolation (resolution-agnostic, all sea cells)**: the interpolation target is **every model column with `area_type == "sea"`** — no other cell type is touched. Weights are built from the **model grid's own latitude/longitude coordinates read from the state**, not from any assumed resolution, so DataOcean works at arbitrary model resolution (coarser *or* finer than the source SST grid) and on regular or irregular grids. Bilinear interpolation from the observed source grid to each sea cell's (lat, lon).
+  - **Coastline / masking guarantee**: because the model land–sea mask (`area_type`) generally does not align with the source dataset's mask, some sea cells can fall over source points that are land/missing. Every such cell is filled from the **nearest valid (unmasked) source SST** (a masked-array fill / nearest-neighbour extrapolation step) so **no `area_type=="sea"` cell is ever left masked or NaN**. This is asserted in the component.
+  - Precomputed interpolation + fill weights are cached on first call (the model grid and `area_type` are fixed for a run) and reused every step.
 - **Caching**: the dataset handle and the bracketing time slices are cached between steps; only re-read when the model time crosses into a new bracket.
 
 ## Section 2.3 — Outputs
@@ -113,6 +115,8 @@ Diagnostics: `sea_surface_temperature`, `surface_temperature` (sea cells set to 
 ## Section 2.4 — Tests
 
 - Reads a small synthetic netCDF, prescribes SST at a known time, asserts sea cells match the (time-interpolated) obs and land/ice cells are untouched.
+- **Arbitrary resolution**: the same source dataset is interpolated onto model grids both coarser and finer than the source; asserts every `area_type=="sea"` cell receives a finite SST and results are consistent (interpolated values bounded by local source neighbourhood).
+- **Full sea coverage**: with a model land–sea mask deliberately offset from the source mask (sea cells over source-land points), assert no sea cell is NaN/masked — the nearest-valid fill covers all of them.
 - Mid-month interpolation preserves monthly means to tolerance over a synthetic annual cycle.
 - Spatial interpolation weight caching returns identical results across steps and is invariant to repeated calls.
 
