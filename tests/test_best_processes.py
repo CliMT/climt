@@ -41,3 +41,38 @@ def test_albedo_bare_soil_and_land_ice():
     out3 = alb(sp("clay", "land_ice"), wetness=0.0, area_type="land_ice")
     assert np.isclose(out3["alpha_sw"], 0.66)
     assert np.isclose(out3["alpha_lw"], 0.66 / 3.0)
+
+
+from climt._components.second_best.processes.surface_layer import BestSurfaceLayer
+
+
+def test_surface_layer_neutral_matches_neutral_drag():
+    sl = BestSurfaceLayer()
+    z_mid, z0 = 10.0, 0.01
+    out = sl(z_mid, z0, wind_speed=5.0, T_surf=300.0, T_air=300.0,
+             area_type="land")   # neutral: T_surf == T_air -> Ri = 0
+    kappa = 0.4
+    C_DN = (kappa / (np.log(z_mid) - np.log(z0))) ** 2
+    assert np.isclose(out["Ri"], 0.0)
+    assert np.isclose(out["C_DN"], C_DN)
+    # at Ri=0 the stable branch reduces to C_DN
+    assert np.isclose(out["C_Dm"], C_DN)
+    assert np.isclose(out["C_Dh"], C_DN)
+
+
+def test_surface_layer_unstable_increases_drag():
+    sl = BestSurfaceLayer()
+    out = sl(10.0, 0.01, wind_speed=5.0, T_surf=290.0, T_air=300.0,
+             area_type="land")   # T_surf < T_air is stable; flip for unstable
+    unstable = sl(10.0, 0.01, wind_speed=5.0, T_surf=310.0, T_air=300.0,
+                  area_type="land")
+    assert unstable["Ri"] < 0.0
+    assert unstable["C_Dh"] > unstable["C_DN"]   # unstable enhances exchange
+
+
+def test_surface_layer_drag_positive_over_ri_sweep():
+    sl = BestSurfaceLayer()
+    for dT in np.linspace(-20, 20, 41):
+        out = sl(10.0, 0.01, 5.0, 300.0 + dT, 300.0, "land")
+        assert out["C_Dm"] > 0.0 and np.isfinite(out["C_Dm"])
+        assert out["C_Dh"] > 0.0 and np.isfinite(out["C_Dh"])
