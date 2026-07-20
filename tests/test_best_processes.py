@@ -76,3 +76,33 @@ def test_surface_layer_drag_positive_over_ri_sweep():
         out = sl(10.0, 0.01, 5.0, 300.0 + dT, 300.0, "land")
         assert out["C_Dm"] > 0.0 and np.isfinite(out["C_Dm"])
         assert out["C_Dh"] > 0.0 and np.isfinite(out["C_Dh"])
+
+
+from climt._components.second_best.processes.fluxes import BestSurfaceFluxes
+
+
+def test_sensible_heat_flux_bulk_formula():
+    from sympl import get_constant
+    fx = BestSurfaceFluxes()
+    C_Dh = 0.003354
+    drag = {"C_Dm": C_Dh, "C_Dh": C_Dh, "C_DN": C_Dh, "Ri": 0.0}
+    atmos = {"air_density": 1.2, "wind_speed": 5.0, "air_temperature": 295.0,
+             "air_specific_humidity": 0.01, "u": 5.0, "v": 0.0}
+    soil = {"surface_temperature": 300.0, "saturation_specific_humidity": 0.02,
+            "W_Lu": 1.0, "W_Fu": 0.0}
+    out = fx(drag, atmos, soil, soil_props={"porosity": 0.6}, timestep=100.0)
+    Cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK")
+    expected_shf = 1.2 * Cpd * 5.0 * C_Dh * (300.0 - 295.0)
+    assert np.isclose(out["sensible_heat_flux"], expected_shf, rtol=1e-6)
+    assert out["latent_heat_flux"] > 0.0   # surface wetter than air
+
+
+def test_latent_flux_zero_when_no_humidity_gradient():
+    fx = BestSurfaceFluxes()
+    drag = {"C_Dm": 0.003, "C_Dh": 0.003, "C_DN": 0.003, "Ri": 0.0}
+    atmos = {"air_density": 1.2, "wind_speed": 5.0, "air_temperature": 300.0,
+             "air_specific_humidity": 0.02, "u": 5.0, "v": 0.0}
+    soil = {"surface_temperature": 300.0, "saturation_specific_humidity": 0.02,
+            "W_Lu": 1.0, "W_Fu": 0.0}
+    out = fx(drag, atmos, soil, {"porosity": 0.6}, 100.0)
+    assert np.isclose(out["latent_heat_flux"], 0.0)
