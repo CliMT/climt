@@ -69,6 +69,19 @@ def get_ice_grid(grid_state, interface=False, horizontal=False):
         return (z - 1, y, x), ("ice_mid_levels", y_dim, x_dim)
 
 
+def get_soil_grid(grid_state, interface=False, horizontal=False):
+    y, x = grid_state["latitude"].shape
+    y_dim, x_dim = grid_state["latitude"].dims
+    z = grid_state["height_on_soil_interface_levels"].shape[0]
+
+    if horizontal:
+        return (y, x), (y_dim, x_dim)
+    if interface:
+        return (z, y, x), ("soil_interface_levels", y_dim, x_dim)
+    else:
+        return (z - 1, y, x), ("soil_mid_levels", y_dim, x_dim)
+
+
 def get_scalar_grid(grid_state, interface=False, horizontal=False):
     return (), ()
 
@@ -79,6 +92,7 @@ domain_shape_descriptor = {
     "land": get_land_grid,
     "ocean": get_ocean_grid,
     "ice": get_ice_grid,
+    "soil": get_soil_grid,
     "scalar": get_scalar_grid,
 }
 
@@ -438,6 +452,7 @@ def get_grid(
     ny=None,
     nz=28,
     n_ice_interface_levels=10,
+    n_soil_interface_levels=4,
     p_surf_in_Pa=None,
     p_toa_in_Pa=None,
     proportion_sigma_levels=0.1,
@@ -456,6 +471,9 @@ def get_grid(
             Number of vertical mid levels.
         n_ice_interface_levels (int, optional): Number of vertical
             interface levels to use for ice. Use None to disable the ice
+            vertical grid.
+        n_soil_interface_levels (int, optional): Number of vertical
+            interface levels to use for soil. Use None to disable the soil
             vertical grid.
         p_surf_in_Pa : float, optional
             Surface pressure in Pa.
@@ -541,6 +559,13 @@ def get_grid(
             "height_on_ice_interface_levels",
             "m",
             ("ice_interface_levels",),
+        )
+    if n_soil_interface_levels is not None:
+        return_state["height_on_soil_interface_levels"] = get_backend().create_quantity(
+            np.linspace(0.0, 2.0, n_soil_interface_levels),
+            "height_on_soil_interface_levels",
+            "m",
+            ("soil_interface_levels",),
         )
     return return_state
 
@@ -904,7 +929,12 @@ default_values = {
         "dtype": "S100",
         "domain": "land_horizontal",
     },
-    "soil_temperature": {"value": 274.0, "units": "degK", "domain": "land_horizontal"},
+    "soil_temperature": {
+        "value": 285.0, "units": "degK", "domain": "soil_interface"},
+    "soil_liquid_water_content": {
+        "value": 0.2, "units": "m^3/m^3", "domain": "soil_interface"},
+    "soil_ice_content": {
+        "value": 0.0, "units": "m^3/m^3", "domain": "soil_interface"},
     "soil_layer_thickness": {"value": 50.0, "units": "m", "domain": "land_horizontal"},
     "upward_heat_flux_at_ground_level_in_soil": {
         "value": 0.0,
@@ -1047,7 +1077,9 @@ def compute_all_diagnostics(state, diagnostic_list):
     return return_dict
 
 
-def get_default_state(component_list, grid_state=None, n_ice_interface_levels=30):
+def get_default_state(
+    component_list, grid_state=None, n_ice_interface_levels=30, n_soil_interface_levels=4
+):
     """
     Retrieves a reasonable initial state for the set of components given.
 
@@ -1059,11 +1091,17 @@ def get_default_state(component_list, grid_state=None, n_ice_interface_levels=30
         n_ice_interface_levels (int, optional): Number of vertical
             interface levels to use for ice. Use None to disable the ice
             vertical grid.
+        n_soil_interface_levels (int, optional): Number of vertical
+            interface levels to use for soil. Use None to disable the soil
+            vertical grid.
 
     Returns:
         default_state (dict): A reasonable initial state.
     """
-    grid_state = grid_state or get_grid(n_ice_interface_levels=n_ice_interface_levels)
+    grid_state = grid_state or get_grid(
+        n_ice_interface_levels=n_ice_interface_levels,
+        n_soil_interface_levels=n_soil_interface_levels,
+    )
     input_properties = aggregate_input_properties(component_list)
     diagnostic_list = get_diagnostics_for(input_properties, grid_state)
     return_state = {}
