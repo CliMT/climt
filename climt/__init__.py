@@ -16,6 +16,7 @@ from ._components import (
     Instellation,
     RRTMGLongwave,
     RRTMGShortwave,
+    SecondBEST,
     SimplePhysics,
     SlabSurface,
 )
@@ -78,6 +79,7 @@ __all__ = (
     Instellation,
     DryConvectiveAdjustment,
     BucketHydrology,
+    SecondBEST,
 )
 
 __version__ = "0.20.0"

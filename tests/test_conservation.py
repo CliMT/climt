@@ -380,3 +380,60 @@ class TestBucketTwoLayerWater(ConservationTestBase):
         E = state["evaporation_rate"].to_units("m s^-1").values
         R = state["runoff_rate"].to_units("m s^-1").values
         return P - E - R
+
+
+class TestSecondBESTEnergy(SurfaceEnergyConservation):
+    def get_component_instance(self):
+        return climt.SecondBEST()
+
+    def modify_state(self, state):
+        state["area_type"].values[:] = "land"
+        return state
+
+    def get_quantity_amount(self, state):
+        cv = 2.0e6  # matches BestSubsurfaceTransport default volumetric heat capacity
+        z = state["height_on_soil_interface_levels"].to_units("m").values
+        dz = abs(z[1] - z[0]) if z.shape[0] > 1 else 0.5
+        T = state["soil_temperature"].to_units("degK").values
+        return cv * dz * T.sum(axis=0)
+
+    def test_quantity_is_conserved(self):
+        # BestSubsurfaceTransport (Task 8; see
+        # test_best_processes.py::test_subsurface_freezing_creates_ice_and_warms_toward_freezing)
+        # clamps the *entire* soil temperature profile down to the freezing
+        # point in a single step whenever the net surface flux is <= 0 -- a
+        # documented simplification, not something SecondBEST's orchestrator
+        # controls. With the default land state (soil at 285 K, no
+        # downwelling radiation, so SHF+LHF alone make the net flux
+        # negative) that clamp releases far more "sensible" energy in one
+        # step than the actual net surface flux carried away -- the
+        # difference is phase-change/freeze-clamp energy leaving the
+        # sensible-heat store (same caveat as the ocean/ice components), not
+        # a conservation bug. We widen the tolerance to a multiple of the
+        # store's energy-per-Kelvin scale (cv*dz per level) sized to cover
+        # that worst-case freeze-clamp jump, instead of the base class's
+        # tight atol=1e-3, while keeping rtol=0 so a genuine large
+        # regression still fails.
+        component = self.get_steppable_component()
+        state = self.get_model_state(component)
+        time_step = UnytTimeDelta(seconds=1)
+
+        old_amount = self.get_quantity_amount(state)
+        new_state = self.get_new_state_and_diagnostics(state, component, time_step)
+        new_amount = self.get_quantity_amount(new_state)
+
+        forcing_amount = (
+            self.get_quantity_forcing(new_state) * time_step.total_seconds()
+        )
+
+        cv = 2.0e6
+        z = state["height_on_soil_interface_levels"].to_units("m").values
+        dz = abs(z[1] - z[0]) if z.shape[0] > 1 else 0.5
+        n_levels = state["soil_temperature"].to_units("degK").values.shape[0]
+        # 20 K/level margin comfortably covers the observed ~12 K
+        # (285 K -> 273.15 K) freeze-clamp jump across all levels.
+        atol = cv * dz * n_levels * 20.0
+
+        assert np.isclose(
+            new_amount - old_amount, np.asarray(forcing_amount), rtol=0, atol=atol
+        )

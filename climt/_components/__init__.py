@@ -12,6 +12,7 @@ from .instellation import Instellation
 from .cork import CorkLongwaveRadiation, CorkShortwaveRadiation
 from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
+from .second_best import SecondBEST
 from .simple_physics import SimplePhysics
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
@@ -35,4 +36,5 @@ __all__ = (
     BucketHydrology,
     CorkLongwaveRadiation,
     CorkShortwaveRadiation,
+    SecondBEST,
 )

@@ -642,6 +642,21 @@ class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
         return state
 
 
+class TestSecondBEST(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.SecondBEST()
+
+    def get_1d_input_state(self, component=None):
+        state = super(TestSecondBEST, self).get_1d_input_state(component)
+        state["area_type"].values[:] = "land"
+        return state
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestSecondBEST, self).get_3d_input_state(component)
+        state["area_type"].values[:] = "land"
+        return state
+
+
 #
 #
 # def test_ice_sheet_too_high():
