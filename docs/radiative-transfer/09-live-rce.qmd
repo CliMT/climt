@@ -50,6 +50,9 @@ toward radiative equilibrium with `sympl.AdamsBashforth`.
 
 ## Gray column
 
+Watch the profiles evolve live — temperature, longwave heating rate, and the
+up/downwelling longwave fluxes — as the column steps toward equilibrium.
+
 ```{pyodide}
 #| autorun: true
 from datetime import timedelta
@@ -62,8 +65,8 @@ SOLAR = 240.0                     # prescribed absorbed shortwave at surface, W/
 NZ, DT_HOURS, N_STEPS = 18, 2, 400   # raise N_STEPS (e.g. 3000) to near equilibrium
 
 
-def radiative_equilibrium(table):
-    """Step a single column with the given LW table to (near) equilibrium."""
+def make_column(table):
+    """Build a single air column over a 5 m slab with prescribed surface SW."""
     lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
     surface = SlabSurface()
     state = get_default_state([lw, surface], grid_state=get_grid(nx=1, ny=1, nz=NZ))
@@ -72,37 +75,22 @@ def radiative_equilibrium(table):
     state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
     state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
     state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
-    state = integrate_to_equilibrium([lw, surface], [], state,
-                                     timedelta(hours=DT_HOURS), N_STEPS)
-    p = state["air_pressure"].values[:, 0, 0]
-    T = state["air_temperature"].values[:, 0, 0]
-    return p, T
+    return [lw, surface], state
 
 
-p, T_gray = radiative_equilibrium("single_band_gray_lw")
-fig, ax = plt.subplots()
-ax.plot(T_gray, p / 100)
-ax.invert_yaxis()
-ax.set_xlabel("temperature (K)")
-ax.set_ylabel("pressure (hPa)")
-ax.set_title("Gray radiative equilibrium")
-plt.show()
+components, state = make_column("single_band_gray_lw")
+state = await animate_to_equilibrium(
+    components, state, timedelta(hours=DT_HOURS), N_STEPS,
+    title="Gray radiative equilibrium")
 ```
 
 ## Non-grey column — change one string
 
 ```{pyodide}
-p, T_nongrey = radiative_equilibrium("earth_low_res_lw")  # <- the only change
-
-fig, ax = plt.subplots()
-ax.plot(T_gray, p / 100, label="gray (1 band)")
-ax.plot(T_nongrey, p / 100, label="non-grey (14 bands)")
-ax.invert_yaxis()
-ax.legend()
-ax.set_xlabel("temperature (K)")
-ax.set_ylabel("pressure (hPa)")
-ax.set_title("Same CORK component, different absorption table")
-plt.show()
+components, state = make_column("earth_low_res_lw")   # <- the only change: the table
+state = await animate_to_equilibrium(
+    components, state, timedelta(hours=DT_HOURS), N_STEPS,
+    title="Non-grey radiative equilibrium (14 bands)")
 ```
 
 The non-grey column's spectral **windows** let surface radiation escape directly

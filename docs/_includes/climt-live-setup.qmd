@@ -28,11 +28,66 @@ bodies IDENTICAL (only `tests/test_live_rce_demo.py` guards the twin).
 # micropip.install(...)` instead would race: quarto-live does not await one
 # autorun cell's async work before starting the next, so a downstream cell can
 # run before the wheel finishes installing. So this cell is synchronous.
+import asyncio
+
 import numpy as np
 import matplotlib.pyplot as plt
 import climt
 from sympl import AdamsBashforth
 from datetime import timedelta
+
+
+async def animate_to_equilibrium(tendency_components, state, timestep, n_steps,
+                                 redraw_every=20, title=""):
+    """Step forward toward radiative equilibrium, live-updating three panels:
+    temperature, longwave heating rate, and up/downwelling longwave flux.
+
+    Browser-only (async + matplotlib). The stepping is the same loop, with the
+    same update order, as ``integrate_to_equilibrium`` (which the native test
+    guards); ``await asyncio.sleep(0)`` yields to the browser so it repaints the
+    canvas between redraws — the Pyodide equivalent of ``%matplotlib`` live
+    updating. Only tendency components are supported (the RCE demo uses none of
+    the stepper kind).
+    """
+    model = AdamsBashforth(list(tendency_components))
+    p = state["air_pressure"].values[:, 0, 0] / 100.0
+    p_int = state["air_pressure_on_interface_levels"].values[:, 0, 0] / 100.0
+
+    fig, (ax_t, ax_h, ax_f) = plt.subplots(1, 3, figsize=(11, 4.2), sharey=True)
+    (line_t,) = ax_t.plot(state["air_temperature"].values[:, 0, 0], p)
+    (line_h,) = ax_h.plot(np.zeros_like(p), p)
+    (line_u,) = ax_f.plot(np.zeros_like(p_int), p_int, label="up")
+    (line_d,) = ax_f.plot(np.zeros_like(p_int), p_int, label="down")
+    ax_t.set_ylabel("pressure (hPa)")
+    ax_t.set_xlabel("temperature (K)"); ax_t.set_title("Temperature")
+    ax_h.set_xlabel("LW heating (K day$^{-1}$)"); ax_h.set_title("Heating rate")
+    ax_f.set_xlabel("LW flux (W m$^{-2}$)"); ax_f.set_title("Up / down flux")
+    ax_f.legend(loc="upper right")
+    ax_t.invert_yaxis()  # shared y: inverts all three
+    for ax in (ax_t, ax_h, ax_f):
+        ax.grid(alpha=0.3)
+    if title:
+        fig.suptitle(title)
+    fig.tight_layout()
+    plt.show()
+
+    for i in range(n_steps):
+        diagnostics, new_state = model(state, timestep)
+        state.update(new_state)
+        state.update(diagnostics)
+        state["time"] += timestep
+        if i % redraw_every == 0 or i == n_steps - 1:
+            line_t.set_xdata(state["air_temperature"].values[:, 0, 0])
+            line_h.set_xdata(
+                state["air_temperature_tendency_from_longwave"].values[:, 0, 0])
+            line_u.set_xdata(state["upwelling_longwave_flux_in_air"].values[:, 0, 0])
+            line_d.set_xdata(state["downwelling_longwave_flux_in_air"].values[:, 0, 0])
+            for ax in (ax_t, ax_h, ax_f):
+                ax.relim()
+                ax.autoscale_view(scalex=True, scaley=False)
+            fig.canvas.draw()
+            await asyncio.sleep(0)
+    return state
 
 
 def integrate_to_equilibrium(tendency_components, stepper_components, state,
