@@ -35,11 +35,12 @@ Read of `surface_ice.py`:
 
 ## Design overview
 
-Three workstreams:
+Four workstreams:
 
 1. **SlabSurface** gains an additive ocean heat-transport term over sea = prescribed q-flux (arbitrary forcing) + optional diagnosed Ekman convergence. Backward compatible (both zero by default).
 2. **DataOcean** — new `DiagnosticComponent` that reads an observed SST dataset and prescribes sea-cell `surface_temperature` / `sea_surface_temperature` as diagnostics, plus surface fluxes.
 3. **Ice split** — `SeaIce` + `LandIce` over a shared `_snow_ice_column` implicit solver, fixing defects 1–8.
+4. **EarthMask** — new `DiagnosticComponent` that sets `area_type` to the present-day Earth land/sea/ice configuration, at arbitrary model resolution (Part 4). Foundational: DataOcean and the land/ice components all key off `area_type`.
 
 All follow climt/sympl conventions and ship with cached-result tests.
 
@@ -85,7 +86,7 @@ Keep `SlabSurface` a `TendencyComponent` with the numba kernel. Changes:
 
 ## Section 2.1 — Type and role
 
-`DataOcean` is a **`DiagnosticComponent`** — it prescribes, it does not prognose. Each step it reads the current model time from the state, interpolates an observed SST dataset to that time and the model grid, and **returns** `surface_temperature` and `sea_surface_temperature` over sea cells as **diagnostics** (plus surface fluxes). No timestep, no prognostic ownership of SST. This is the correct sympl idiom for AMIP forcing and composes cleanly: the atmosphere sees prescribed SSTs; sea-ice-covered cells are owned by `SeaIce` (Part 3) via `area_type`.
+`DataOcean` is a **`DiagnosticComponent`** — it prescribes, it does not prognose. Each step it reads the current model time from the state, interpolates an observed SST dataset to that time and the model grid, and **returns** `surface_temperature` and `sea_surface_temperature` over sea cells as **diagnostics** (plus surface fluxes). The set of sea cells comes from `area_type` — typically produced by `EarthMask` (Part 4) for Earth runs. No timestep, no prognostic ownership of SST. This is the correct sympl idiom for AMIP forcing and composes cleanly: the atmosphere sees prescribed SSTs; sea-ice-covered cells are owned by `SeaIce` (Part 3) via `area_type`.
 
 ```python
 DataOcean(
@@ -165,16 +166,52 @@ solve_column(rho, c, kappa, T_profile, dt, dz,
 
 ---
 
-## Build order
+# Part 4 — EarthMask: default Earth land/sea/ice configuration
 
-1. `_snow_ice_column` shared core (unblocks the ice split and the land-surface `SubsurfaceTransport`).
-2. Ice split: `SeaIce`, `LandIce`, `IceSheet` shim + defect fixes.
-3. `SlabSurface` q-flux + Ekman.
-4. `DataOcean` (depends on a shared surface-flux helper — Part 4 below).
+Realistic runs need every column tagged `land` / `sea` / `land_ice` — but climt's state default is `area_type = "sea"` everywhere (`_core/initialization.py:885`), fine for single columns and aquaplanets, useless for Earth geography. Rather than baking geography into state init (which would break the aquaplanet default and single-column use), provide a **separate `DiagnosticComponent`** that *sets* `area_type`.
 
-## Part 4 — Shared surface-flux helper (cross-cutting)
+### Section 4.1 — Type and role
+
+`EarthMask` is a `DiagnosticComponent` that reads the model grid's `latitude`/`longitude` from the state and **returns `area_type`** as a diagnostic, filled with the present-day Earth configuration. It is the natural companion to `DataOcean`: same pattern (bundled reference data → interpolate to the model grid → diagnostic), and `DataOcean` / the land / ice components all key off the `area_type` it produces.
+
+```python
+EarthMask(
+    mask_dataset=None,        # None = bundled default Earth mask; or path / xarray.Dataset
+    include_land_ice=True,    # tag Greenland & Antarctica as land_ice
+)
+```
+
+### Section 4.2 — Data and interpolation (arbitrary resolution)
+
+- **Categories set**: `land`, `sea`, and (when `include_land_ice`) `land_ice` for the permanent ice sheets (Greenland, Antarctica). **`sea_ice` is *not* set here** — sea ice is dynamic and is owned by the `SeaIce` component (Part 3), which promotes `sea` → `sea_ice` as ice forms. `EarthMask` sets the *static* geography only.
+- **Arbitrary resolution**: `area_type` is categorical, so interpolation from the reference geography to the model grid is **nearest-neighbour** (never bilinear), driven by the model grid's own lat/lon read from the state. Works at any resolution, regular or Gaussian, coarser or finer than the source — mirroring DataOcean's resolution-agnostic design.
+- **Bundled default**: ship a compact low-resolution land/sea/ice-sheet raster (kept small in the spirit of the recent `chore/wheel-slim` work); users can override with `mask_dataset`. Nearest-neighbour upsampling means even a coarse bundled mask yields a valid mask at high model resolution (with the expected blockiness — documented; a finer bundled source is a follow-up).
+
+### Section 4.3 — Composition and ordering
+
+`EarthMask` runs **first** in a run's diagnostic set so downstream components (`DataOcean`, `SlabSurface`, `SeaIce`, `LandIce`, BucketHydrology, SecondBEST) see the correct `area_type`. Because it is a `DiagnosticComponent` returning `area_type`, it can also be evaluated once at setup to stamp the initial state. It composes with `DataOcean` (which then prescribes SST on exactly the `sea` cells this produces) and with the ice components (which further tag `sea_ice`).
+
+### Section 4.4 — Tests
+
+- Bundled mask on a coarse grid reproduces expected gross geography (e.g. a mid-Pacific cell is `sea`, a central-Asia cell is `land`, an Antarctic cell is `land_ice`).
+- **Arbitrary resolution**: the same source mask stamped onto coarse and fine model grids yields only valid category strings, every cell assigned, and land fraction converging toward the source as resolution increases.
+- Composition: `EarthMask` → `DataOcean` prescribes SST on precisely the `sea` cells and leaves `land`/`land_ice` untouched.
+
+---
+
+# Part 5 — Shared surface-flux helper (cross-cutting)
 
 `SlabSurface`, `DataOcean`, BucketHydrology and SecondBEST all compute bulk SHF/LHF. Factor the bulk aerodynamic formulae into one helper (`_core/surface_fluxes.py`) so the ocean/data-ocean paths and the land paths use a single, tested implementation. This is a light refactor, done when `DataOcean` needs it, not a big-bang change.
+
+---
+
+## Build order
+
+1. `EarthMask` (`DiagnosticComponent` setting `area_type`) + bundled default mask — foundational; everything else keys off `area_type`.
+2. `_snow_ice_column` shared core (unblocks the ice split and the land-surface `SubsurfaceTransport`).
+3. Ice split: `SeaIce`, `LandIce`, `IceSheet` shim + defect fixes.
+4. `SlabSurface` q-flux + Ekman.
+5. Shared surface-flux helper (Part 5), then `DataOcean` (depends on it and on `EarthMask`).
 
 ## Open questions / decisions deferred to implementation
 
