@@ -59,25 +59,34 @@ where `C_ml = ρ_sw c_sw h_ml` is the existing mixed-layer heat capacity and `Q_
 
 **Prescribed q-flux (`Q_flux_prescribed`)** — a new input field `ocean_heat_transport_convergence` (W m⁻², default 0). This is the standard slab-ocean "q-flux": arbitrary, user-prescribable forcing that proxies for dynamical ocean heat convergence. Zero default = exactly today's behaviour.
 
-**Ekman transport (`Q_ekman`, optional)** — wind-driven horizontal heat transport diagnosed from surface wind stress:
+**Ekman energy transport (`Q_ekman`, optional)** — the convergence of wind-driven Ekman *energy* transport, computed from the **wind stress curl**. Define the vertically integrated Ekman **mass** transport per unit width (rotated from the stress by Coriolis):
 ```
-Ekman mass transport:  M = (τ_y, −τ_x) / f          (per unit length, f = Coriolis)
-Q_ekman = −ρ_sw c_sw · ∇·( M · T_ml )                (convergence of Ekman heat transport)
+M = (k̂ × τ) / f     →   M_x = τ_y / f ,   M_y = −τ_x / f          [kg m⁻¹ s⁻¹]
 ```
-Enabled by `include_ekman=True`. Requires surface wind stress (`surface_downward_eastward_stress`, `surface_downward_northward_stress`) and latitude/`coriolis_parameter`. Near the equator `f → 0`; apply the conventional cap (bound `1/f`, or blend to zero within a few degrees of the equator) — documented. The divergence needs horizontal grid geometry; computed with climt's existing lat/lon spacing, falling back to zero (single-column) when the grid is degenerate.
+The Ekman **energy** transport per unit width is `F_Ek = c_sw θ_ml M`, and the heating of the mixed-layer column is its convergence:
+```
+Q_ekman = −∇·F_Ek = −c_sw ∇·(θ_ml M)
+        = −c_sw [ θ_ml (∇·M)  +  M·∇θ_ml ]                          [W m⁻²]
+```
+- The first term is the **wind-stress-curl / Ekman-pumping** contribution: `∇·M = ρ_sw w_Ek = k̂·∇×(τ/f)` is exactly the curl of the stress over Coriolis (Ekman pumping moving water into/out of the mixed layer). This is the term the "compute transport from wind stress curl" requirement is about, and it is the dominant driver of the gyre-scale energy convergence pattern.
+- The second term is horizontal Ekman advection of the SST gradient.
+
+Both terms are retained. (Note: `M = τ/f` is already a *mass* transport per unit width, so the energy flux is `c_sw θ M` with **no** extra `ρ_sw` factor — this corrects a stray density in an earlier draft.)
+
+Enabled by `include_ekman=True`. Requires surface wind stress (`surface_downward_eastward_stress`, `surface_downward_northward_stress`), `sea_water_density`, `heat_capacity_of_sea_water`, and latitude/`coriolis_parameter`. Near the equator `f → 0`; apply the conventional cap (bound `1/f`, or blend to zero within a few degrees of the equator) — documented. Computing the curl/divergence needs horizontal grid geometry (spherical `∂/∂x`, `∂/∂y` from climt's lat/lon spacing); in single-column / degenerate grids the horizontal derivatives are zero, so `Q_ekman` falls back to zero. Diagnostics expose `ekman_pumping` (the wind-stress-curl term `w_Ek`) and `ekman_heat_transport_convergence` separately.
 
 ## Section 1.2 — Component surface
 
 Keep `SlabSurface` a `TendencyComponent` with the numba kernel. Changes:
 - `__init__(include_ekman=False, equatorial_ekman_cap_latitude=5.0, **kwargs)`.
-- New optional inputs: `ocean_heat_transport_convergence` (default 0 via state init), and — only when `include_ekman` — the two stress components and `coriolis_parameter`.
-- New diagnostics: `ocean_heat_transport_convergence` (echo of total applied), `ekman_heat_transport_convergence` (the diagnosed part), so runs can separate prescribed vs diagnosed contributions.
+- New optional inputs: `ocean_heat_transport_convergence` (default 0 via state init), and — only when `include_ekman` — the two stress components, `coriolis_parameter`, `sea_water_density`, and `heat_capacity_of_sea_water` (plus the grid lat/lon already in state for the curl).
+- New diagnostics: `ocean_heat_transport_convergence` (echo of total applied), `ekman_heat_transport_convergence` (the diagnosed Ekman energy convergence), and `ekman_pumping` (the wind-stress-curl term `w_Ek`), so runs can separate prescribed vs diagnosed contributions and inspect the curl-driven pumping directly.
 - Kernel adds `Q_transport / C_ml` to the sea-cell tendency only.
 
 ## Section 1.3 — Tests
 
 - q-flux: with a constant `ocean_heat_transport_convergence`, equilibrium SST shifts by exactly `Q_flux / (surface flux sensitivity)`; zero field reproduces current cached results.
-- Ekman: idealised zonal wind stress over an f-plane produces the analytic Ekman convergence sign (upwelling/downwelling) at the expected latitudes.
+- Ekman: an idealised zonal wind stress with nonzero curl (e.g. `τ_x = τ_0 cos(lat)` over a β/f-plane) reproduces the analytic wind-stress-curl Ekman pumping `w_Ek = k̂·∇×(τ/f)` (sign and magnitude), and the resulting `Q_ekman` heats/cools the mixed layer with the sign expected from Ekman convergence/divergence at the trade-wind and westerly latitudes. Zero-curl uniform stress gives zero pumping.
 - Backward compat: `include_ekman=False`, no q-flux ⇒ bit-for-bit with current `SlabSurface`.
 
 ---
