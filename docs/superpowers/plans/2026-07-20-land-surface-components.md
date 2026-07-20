@@ -359,7 +359,7 @@ git commit -m "feat(bucket): two-layer (deep+shallow) water and thermal stores w
 - Test: `tests/test_second_best.py` (grid smoke test)
 
 **Interfaces:**
-- Produces: `get_grid(..., n_soil_interface_levels=4)` adds `height_on_soil_interface_levels` to the grid state; `domain_shape_descriptor["soil"] = get_soil_grid`; new `default_values` for `soil_column_temperature` (degK), `soil_liquid_water_content` (m^3/m^3), `soil_ice_content` (m^3/m^3) on domain `soil_interface`; `surface_snow_thickness` already exists. The profile temperature is named `soil_column_temperature` (not `soil_temperature`) to avoid clobbering the existing scalar `soil_temperature` `land_horizontal` default.
+- Produces: `get_grid(..., n_soil_interface_levels=4)` adds `height_on_soil_interface_levels` to the grid state; `domain_shape_descriptor["soil"] = get_soil_grid`; the existing `soil_temperature` default is redomained to `soil_interface` (degK), and `soil_liquid_water_content` (m^3/m^3), `soil_ice_content` (m^3/m^3) are added on domain `soil_interface`; `surface_snow_thickness` already exists.
 
 - [ ] **Step 1: Write the failing grid test**
 
@@ -411,10 +411,10 @@ Add `n_soil_interface_levels=4` to the `get_grid(...)` signature (~line 436) and
         )
 ```
 
-Add soil-profile `default_values` (near the land block):
+**Change** the existing `soil_temperature` default (currently at `initialization.py:907`, a scalar `land_horizontal` placeholder `{"value": 274.0, "units": "degK", "domain": "land_horizontal"}` that is defined but consumed nowhere — it was reserved for exactly this kind of land model) to a soil-profile quantity, and **add** the liquid/ice profile quantities alongside it:
 
 ```python
-    "soil_column_temperature": {
+    "soil_temperature": {
         "value": 285.0, "units": "degK", "domain": "soil_interface"},
     "soil_liquid_water_content": {
         "value": 0.2, "units": "m^3/m^3", "domain": "soil_interface"},
@@ -422,7 +422,7 @@ Add soil-profile `default_values` (near the land block):
         "value": 0.0, "units": "m^3/m^3", "domain": "soil_interface"},
 ```
 
-Note: a scalar `soil_temperature` (`274.0`, `land_horizontal`) already exists in `default_values` (~line 914) and is left untouched. SecondBEST's *profile* temperature is a distinct quantity named `soil_column_temperature` on the `soil_interface` domain, so the two never collide. Use `soil_column_temperature`, `soil_liquid_water_content`, `soil_ice_content` for the profile throughout.
+`soil_temperature` is thus SecondBEST's prognostic profile temperature on the `soil_interface` domain. Verify nothing else references it as a scalar: `grep -rn '"soil_temperature"' climt tests` should show only `initialization.py` (which you are editing) — the two-layer bucket uses `surface_temperature`/`deep_soil_temperature`, not `soil_temperature`.
 
 - [ ] **Step 4: Run the grid test** → PASS.
 
@@ -1012,7 +1012,7 @@ git commit -m "feat(second-best): BestSubsurfaceTransport coupled heat/liquid/ic
 
 **Interfaces:**
 - Consumes: all five `Best*` processes (Tasks 4-8), the soil grid (Task 3).
-- Produces: `SecondBEST(soil_type="clay", num_soil_layers=3, minimum_wind_speed=1.0, soil_properties=None, albedo=None, surface_layer=None, fluxes=None, subsurface=None, **kwargs)`, a `Stepper`. Inputs: lowest-level `air_temperature`, `specific_humidity`, `northward_wind`, `eastward_wind`, `air_pressure`, SW/LW down/up fluxes, `area_type`, and soil-profile state (`soil_column_temperature`, `soil_liquid_water_content`, `soil_ice_content`, `surface_snow_thickness`, `surface_temperature`). Diagnostics: `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux`, `evaporation_rate`, `surface_albedo_for_direct_shortwave`, `surface_albedo_for_diffuse_shortwave`, `surface_drag_coefficient_for_heat`, `surface_drag_coefficient_for_momentum`.
+- Produces: `SecondBEST(soil_type="clay", num_soil_layers=3, minimum_wind_speed=1.0, soil_properties=None, albedo=None, surface_layer=None, fluxes=None, subsurface=None, **kwargs)`, a `Stepper`. Inputs: lowest-level `air_temperature`, `specific_humidity`, `northward_wind`, `eastward_wind`, `air_pressure`, SW/LW down/up fluxes, `area_type`, and soil-profile state (`soil_temperature`, `soil_liquid_water_content`, `soil_ice_content`, `surface_snow_thickness`, `surface_temperature`). Diagnostics: `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux`, `evaporation_rate`, `surface_albedo_for_direct_shortwave`, `surface_albedo_for_diffuse_shortwave`, `surface_drag_coefficient_for_heat`, `surface_drag_coefficient_for_momentum`.
 
 - [ ] **Step 1: Write the failing substitution test (proves the interface)**
 
@@ -1077,7 +1077,7 @@ class SecondBEST(Stepper):
         "area_type": {"dims": ["*"], "units": "dimensionless"},
         "surface_temperature": {"dims": ["*"], "units": "degK"},
         "surface_air_pressure": {"dims": ["*"], "units": "Pa"},
-        "soil_column_temperature": {"dims": ["soil_interface_levels", "*"], "units": "degK"},
+        "soil_temperature": {"dims": ["soil_interface_levels", "*"], "units": "degK"},
         "soil_liquid_water_content": {"dims": ["soil_interface_levels", "*"], "units": "m^3/m^3"},
         "soil_ice_content": {"dims": ["soil_interface_levels", "*"], "units": "m^3/m^3"},
         "surface_snow_thickness": {"dims": ["*"], "units": "m"},
@@ -1085,7 +1085,7 @@ class SecondBEST(Stepper):
     }
     output_properties = {
         "surface_temperature": {"dims": ["*"], "units": "degK"},
-        "soil_column_temperature": {"dims": ["soil_interface_levels", "*"], "units": "degK"},
+        "soil_temperature": {"dims": ["soil_interface_levels", "*"], "units": "degK"},
         "soil_liquid_water_content": {"dims": ["soil_interface_levels", "*"], "units": "m^3/m^3"},
         "soil_ice_content": {"dims": ["soil_interface_levels", "*"], "units": "m^3/m^3"},
         "surface_snow_thickness": {"dims": ["*"], "units": "m"},
@@ -1163,11 +1163,11 @@ class SecondBEST(Stepper):
             z = state["height_on_soil_interface_levels"][:, col]
             dz = float(abs(z[1] - z[0])) if z.shape[0] > 1 else 0.5
             new_prof = self._subsurface(
-                {"T": state["soil_column_temperature"][:, col],
+                {"T": state["soil_temperature"][:, col],
                  "X_w": X_w, "X_i": state["soil_ice_content"][:, col]},
                 surface_flux_bc=net, timestep=timestep.total_seconds(), dz=dz)
 
-            outputs["soil_column_temperature"][:, col] = new_prof["T"]
+            outputs["soil_temperature"][:, col] = new_prof["T"]
             outputs["soil_liquid_water_content"][:, col] = new_prof["X_w"]
             outputs["soil_ice_content"][:, col] = new_prof["X_i"]
             outputs["surface_temperature"][col] = new_prof["T"][-1]
@@ -1258,7 +1258,7 @@ class TestSecondBESTEnergy(SurfaceEnergyConservation):
         cv = 2.0e6  # matches BestSubsurfaceTransport default volumetric heat capacity
         z = state["height_on_soil_interface_levels"].to_units("m").values
         dz = abs(z[1] - z[0]) if z.shape[0] > 1 else 0.5
-        T = state["soil_column_temperature"].to_units("degK").values
+        T = state["soil_temperature"].to_units("degK").values
         return cv * dz * T.sum(axis=0)
 ```
 
@@ -1369,7 +1369,6 @@ Expected: PASS (1-layer default unchanged).
 
 **Deliberate deviations from the spec (flagged):**
 1. **Two-layer bucket uses scalar `deep_soil_moisture_content`/`deep_soil_temperature` fields, not a `soil_levels` grid dim** (spec §1.2). `get_land_grid` raises for 3-D land; scalar fields keep the existing `lwe_thickness_of_soil_moisture_content` at `["*"]` in both modes, preserving the bit-for-bit 1-layer guarantee with far less core-grid risk. Physics is identical.
-2. **SecondBEST's soil-profile temperature field is named `soil_column_temperature`** (not `soil_temperature`) to avoid clobbering the existing scalar `soil_temperature` `land_horizontal` default.
-3. **`BestSubsurfaceTransport` is self-contained** (its own sparse tridiagonal) rather than sharing the ocean/ice plan's `_core/snow_ice_column.py`, so this plan runs independently. Unifying the two solvers into one `_core` module is a reasonable follow-up.
+2. **`BestSubsurfaceTransport` is self-contained** (its own sparse tridiagonal) rather than sharing the ocean/ice plan's `_core/snow_ice_column.py`, so this plan runs independently. Unifying the two solvers into one `_core` module is a reasonable follow-up.
 
 **Deferred (spec open questions):** exact `moisture_diffusion_timescale` (default 5 days) and `k_soil` (2.0 W/m/degK) values are exposed as constants/config and can be tuned; the `soil` grid uses a simple `linspace(0, 2m)` default profile that a later task can refine.
