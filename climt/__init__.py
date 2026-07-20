@@ -41,6 +41,7 @@ from ._core import (
 
 
 sympl.set_constant("top_of_model_pressure", 20.0, "Pa")
+sympl.set_constant("von_karman_constant", 0.4, "dimensionless")
 
 __all__ = (
     get_default_state,
