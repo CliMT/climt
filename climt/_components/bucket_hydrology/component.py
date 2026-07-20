@@ -109,14 +109,23 @@ class BucketHydrology(Stepper):
 
     def __init__(
         self,
+        num_layers=1,
         soil_moisture_max=0.15,
         beta_parameter=0.75,
         specific_latent_heat_of_water=2260000,
         bulk_coefficient=0.0011,
+        deep_soil_moisture_max=0.50,
+        moisture_diffusion_timescale=None,
+        deep_layer_thickness_ratio=10.0,
+        deep_drainage_timescale=None,
         **kwargs,
     ):
         """
         Args:
+        num_layers:
+            Number of soil moisture layers (1 or 2). With ``num_layers=1``
+            (the default), behaviour is unchanged from the single-layer
+            bucket model.
         soil_moisture_max:
             The maximum moisture that can be held by the surface_temperature
         beta_parameter:
@@ -124,11 +133,30 @@ class BucketHydrology(Stepper):
         bulk_coefficient:
             The bulk transfer coefficient that is used to calculate
             maximum evaporation rate and sensible heat flux
+        deep_soil_moisture_max:
+            The maximum moisture that can be held by the deep soil layer
+            (used only when ``num_layers=2``).
+        moisture_diffusion_timescale:
+            Timescale governing moisture diffusion between the surface and
+            deep soil layers (used only when ``num_layers=2``).
+        deep_layer_thickness_ratio:
+            Ratio of the deep layer thickness to the surface layer
+            thickness (used only when ``num_layers=2``).
+        deep_drainage_timescale:
+            Timescale governing drainage out of the deep soil layer (used
+            only when ``num_layers=2``).
         """
+        if num_layers not in (1, 2):
+            raise ValueError("num_layers must be 1 or 2")
+        self._num_layers = num_layers
         self._smax = soil_moisture_max
         self._g = beta_parameter
         self._c = bulk_coefficient
         self._l = specific_latent_heat_of_water
+        self._deep_smax = deep_soil_moisture_max
+        self._tau_m = moisture_diffusion_timescale
+        self._deep_ratio = deep_layer_thickness_ratio
+        self._tau_drain = deep_drainage_timescale
         super(BucketHydrology, self).__init__(**kwargs)
 
     def array_call(self, state, timestep):
@@ -213,7 +241,7 @@ class BucketHydrology(Stepper):
         new_state["lwe_thickness_of_soil_moisture_content"] = np.minimum(
             state["lwe_thickness_of_soil_moisture_content"]
             + (soil_moisture_tendency * timestep.total_seconds()),
-            0.15,
+            self._smax,
         )
 
         return diagnostics, new_state
