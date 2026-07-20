@@ -21,7 +21,8 @@ def reset_sympl_backend():
     sympl.reset_constants()
     # Re-set climt's custom constants that reset_constants() clears
     sympl.set_constant("top_of_model_pressure", 20.0, "Pa")
-    
+    sympl.set_constant("von_karman_constant", 0.4, "dimensionless")
+
     try:
         from climt._core.condensibles import _H2O_DEFAULTS
         for _name, (_val, _units) in _H2O_DEFAULTS.items():
