@@ -67,6 +67,14 @@ class SecondBEST(Stepper):
         diagnostics = initialize_numpy_arrays_with_properties(
             self.diagnostic_properties, state, self.input_properties)
 
+        # Pre-fill every output from the matching input so columns whose
+        # area_type is not "land"/"land_ice" (e.g. "sea") pass through
+        # unchanged instead of being left at the zero-fill that
+        # initialize_numpy_arrays_with_properties applies above. Mirrors the
+        # convention in IceSheet.array_call (climt/_components/surface_ice.py).
+        for name in self.output_properties:
+            outputs[name][:] = state[name]
+
         Rd = get_constant("gas_constant_of_dry_air", "J/kg/degK")
         ncol = state["area_type"].shape[0]
         # timestep.total_seconds() returns a plain float for datetime.timedelta,
