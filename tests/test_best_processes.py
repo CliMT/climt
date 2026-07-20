@@ -106,3 +106,33 @@ def test_latent_flux_zero_when_no_humidity_gradient():
             "W_Lu": 1.0, "W_Fu": 0.0}
     out = fx(drag, atmos, soil, {"porosity": 0.6}, 100.0)
     assert np.isclose(out["latent_heat_flux"], 0.0)
+
+
+from climt._components.second_best.processes.subsurface import BestSubsurfaceTransport
+
+
+def test_subsurface_freezing_creates_ice_and_warms_toward_freezing():
+    st = BestSubsurfaceTransport()
+    n = 6
+    profiles = {
+        "T": np.full(n, 270.0),        # below freezing (273)
+        "X_w": np.full(n, 0.2),        # liquid water present
+        "X_i": np.zeros(n),
+    }
+    out = st(profiles, surface_flux_bc=-20.0, timestep=600.0, dz=0.1)
+    assert np.all(out["X_i"] >= 0.0)
+    assert out["X_i"].sum() > 0.0          # some water froze
+    assert out["X_w"].sum() < profiles["X_w"].sum()  # liquid decreased
+    assert np.all(out["T"] <= 273.0 + 1e-6)          # cannot exceed freezing here
+    assert not np.any(np.isnan(out["T"]))
+
+
+def test_subsurface_conserves_total_water_mass():
+    st = BestSubsurfaceTransport()
+    n = 8
+    profiles = {"T": np.full(n, 268.0), "X_w": np.full(n, 0.15),
+                "X_i": np.full(n, 0.05)}
+    total0 = profiles["X_w"].sum() + profiles["X_i"].sum()
+    out = st(profiles, surface_flux_bc=-10.0, timestep=300.0, dz=0.1)
+    total1 = out["X_w"].sum() + out["X_i"].sum()
+    assert np.isclose(total0, total1, atol=1e-9)   # phase change moves mass, conserves it
