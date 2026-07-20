@@ -79,18 +79,22 @@ def make_column(table):
 
 
 components, state = make_column("single_band_gray_lw")
-state = await animate_to_equilibrium(
+await animate_to_equilibrium(
     components, state, timedelta(hours=DT_HOURS), N_STEPS,
     title="Gray radiative equilibrium")
+# End on a plain statement (not the awaited state): quarto-live hashes each
+# cell's final value, and a sympl state marshals to an unhashable JsProxy.
+print(f"surface temperature: {float(state['surface_temperature'].values.ravel()[0]):.1f} K")
 ```
 
 ## Non-grey column — change one string
 
 ```{pyodide}
 components, state = make_column("earth_low_res_lw")   # <- the only change: the table
-state = await animate_to_equilibrium(
+await animate_to_equilibrium(
     components, state, timedelta(hours=DT_HOURS), N_STEPS,
     title="Non-grey radiative equilibrium (14 bands)")
+print(f"surface temperature: {float(state['surface_temperature'].values.ravel()[0]):.1f} K")
 ```
 
 The non-grey column's spectral **windows** let surface radiation escape directly
