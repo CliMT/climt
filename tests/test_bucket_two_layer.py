@@ -62,37 +62,85 @@ def test_two_layer_total_water_conserved():
 
 
 def test_two_layer_deep_store_is_slower_than_shallow():
-    comp, state = _two_layer_state()
-    dt = timedelta(seconds=3600)
-    # Drive with an oscillating precip signal and compare the step-to-step
-    # variability of the shallow vs. deep store.
+    # Drive with a sustained oscillating precip signal and compare the
+    # step-to-step variability of the shallow vs. deep store, once both are
+    # tracking the periodic forcing in quasi-equilibrium rather than
+    # responding to initial transients.
     #
-    # Deviation from the brief's literal numbers, and why: the brief's
-    # original amplitude (0.001 m/s applied to convective_precipitation_rate,
-    # on top of the fixture's 0.001 m/s stratiform baseline) saturates the
-    # 0.15 m shallow bucket on the very first step (0.001 m/s * 3600 s = 3.6 m
-    # >> 0.15 m capacity) and pins it there for the whole run, so
-    # std(diff(shallow)) == 0 for any correct implementation -- this is a
-    # units/magnitude issue in the test fixture, not the two-layer physics.
-    # Separately, convective_precipitation_rate's default state array carries
-    # units "mm day^-1" (climt/_core/initialization.py) while the component
-    # consumes "m s^-1"; writing raw m/s-scale floats into `.values` is
-    # silently divided by ~8.64e7 by sympl's unit conversion on the next
-    # `comp()` call, so the intended oscillation barely registers regardless.
-    # Here the oscillation instead drives `stratiform_precipitation_rate`
-    # (units already "m s^-1", no silent conversion) at a magnitude that
-    # perturbs the shallow store without permanently saturating it, which
-    # preserves the property under test: the shallow store responds more
-    # strongly to the fast oscillation than the deep store does.
+    # Two artifacts to avoid, found by instrumenting an earlier version of
+    # this test:
+    #
+    # 1. Saturation clipping. This fixture has zero evaporation (wind speed
+    #    defaults to 0, so potential_evaporation == 0), and the shared
+    #    `_two_layer_state()` fixture sets no `deep_drainage_timescale`, so
+    #    the only way water leaves the shallow store is the shallow<->deep
+    #    exchange flux, and nothing leaves the deep store at all. Under any
+    #    positive-mean forcing both stores climb monotonically toward their
+    #    caps; once the shallow store pins at 0.15 m, std(diff(shallow))
+    #    stops measuring "tracks the oscillation" and starts measuring
+    #    "ran into a wall". Fix: build a local two-layer state (not the
+    #    shared fixture) with `deep_drainage_timescale` set, so the deep
+    #    store can lose water and the whole system settles into a periodic
+    #    quasi-equilibrium instead of saturating.
+    # 2. Transient drainage. The shared fixture starts the shallow and deep
+    #    stores at different relative saturations (0.08/0.15 = 53% vs.
+    #    0.20/0.5 = 40%), so the first many steps are dominated by the
+    #    shallow<->deep exchange flux draining that initial imbalance, not
+    #    by the oscillating forcing. Fix: start both layers at the same
+    #    relative saturation, and discard an initial spin-up window before
+    #    comparing variability.
+    #
+    # Amplitude was checked for robustness across roughly 8e-8-3e-7 m/s
+    # (holding mean == amplitude, forcing always >= 0): the shallow/deep
+    # std(diff(.)) ratio stays close to ~2.8-2.9 with the shallow store
+    # never pinned at its cap in the post-spin-up window; at 1.6e-5 m/s
+    # (an amplitude tried during investigation of the original test) both
+    # stores are pinned at saturation almost immediately and the comparison
+    # becomes meaningless, confirming this must stay well below the
+    # store's fill rate rather than being an arbitrarily large "stronger
+    # signal is better" choice.
+    comp = BucketHydrology(num_layers=2, soil_moisture_max=0.15,
+                           deep_soil_moisture_max=0.5,
+                           moisture_diffusion_timescale=86400.0,
+                           deep_drainage_timescale=30 * 86400.0)
+    state = get_default_state([comp], grid_state=get_grid(nx=1, ny=1, nz=10))
+    state["downwelling_shortwave_flux_in_air"].values[:] = 200.0
+    state["downwelling_longwave_flux_in_air"].values[:] = 300.0
+    state["upwelling_shortwave_flux_in_air"].values[:] = 50.0
+    state["upwelling_longwave_flux_in_air"].values[:] = 300.0
+    state["soil_layer_thickness"].values[:] = 1.0
+    state["surface_temperature"].values[:] = 295.0
+    state["deep_soil_temperature"].values[:] = 290.0
+    state["convective_precipitation_rate"].values[:] = 0.0
+    # both layers start at the same 40% relative saturation
+    state["lwe_thickness_of_soil_moisture_content"].values[:] = 0.4 * 0.15
+    state["deep_soil_moisture_content"].values[:] = 0.4 * 0.5
+
+    dt = timedelta(seconds=3600)
+    amplitude = 1.5e-7  # m/s
+    nsteps, spinup = 600, 300
     shallow, deep = [], []
-    for step in range(200):
-        # subseasonal (fast) precip signal
-        fast = 2e-6 * (1 + np.sin(2 * np.pi * step / 24))
-        state["stratiform_precipitation_rate"].values[:] = max(fast, 0.0)
-        state["convective_precipitation_rate"].values[:] = 0.0
+    for step in range(nsteps):
+        # sustained diurnal-ish oscillation, always non-negative
+        precip = amplitude * (1 + np.sin(2 * np.pi * step / 24))
+        state["stratiform_precipitation_rate"].values[:] = precip
         diag, new = comp(state, dt)
         state.update(new); state.update(diag)
         shallow.append(float(new["lwe_thickness_of_soil_moisture_content"].values[0]))
         deep.append(float(new["deep_soil_moisture_content"].values[0]))
-    # shallow store tracks the fast forcing more strongly than the deep store
-    assert np.std(np.diff(shallow)) > np.std(np.diff(deep))
+
+    # discard the spin-up window; only compare quasi-equilibrium tracking
+    shallow = np.array(shallow[spinup:])
+    deep = np.array(deep[spinup:])
+
+    # guard against the saturation-clipping artifact silently creeping back
+    # in (e.g. via a future change to amplitude or drainage timescale)
+    assert np.mean(shallow >= 0.15 - 1e-9) < 0.5, (
+        "shallow store is pinned at its cap for most of the measurement "
+        "window; the variability comparison below would reflect runoff "
+        "clipping, not timescale separation"
+    )
+
+    # shallow store tracks the fast oscillation substantially more than the
+    # low-pass-filtered deep store, once both are in quasi-equilibrium
+    assert np.std(np.diff(shallow)) > 2 * np.std(np.diff(deep))
