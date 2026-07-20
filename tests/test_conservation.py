@@ -357,3 +357,26 @@ class TestSlabSurfaceOnlyRadiative(SlabSurfaceConservation):
         state["ocean_mixed_layer_thickness"].values[:] = 1.0
 
         return state
+
+
+class TestBucketTwoLayerWater(ConservationTestBase):
+    def get_component_instance(self):
+        return climt.BucketHydrology(num_layers=2,
+                                     moisture_diffusion_timescale=86400.0)
+
+    def modify_state(self, state):
+        state["stratiform_precipitation_rate"].values[:] = 0.001
+        state["lwe_thickness_of_soil_moisture_content"].values[:] = 0.08
+        state["deep_soil_moisture_content"].values[:] = 0.2
+        return state
+
+    def get_quantity_amount(self, state):
+        return (state["lwe_thickness_of_soil_moisture_content"].to_units("m").values
+                + state["deep_soil_moisture_content"].to_units("m").values)
+
+    def get_quantity_forcing(self, state):
+        P = (state["convective_precipitation_rate"].to_units("m s^-1").values
+             + state["stratiform_precipitation_rate"].to_units("m s^-1").values)
+        E = state["evaporation_rate"].to_units("m s^-1").values
+        R = state["runoff_rate"].to_units("m s^-1").values
+        return P - E - R

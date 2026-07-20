@@ -157,6 +157,41 @@ class BucketHydrology(Stepper):
         self._tau_m = moisture_diffusion_timescale
         self._deep_ratio = deep_layer_thickness_ratio
         self._tau_drain = deep_drainage_timescale
+
+        if num_layers == 2:
+            # Instance-level overrides so a num_layers=1 instance retains an
+            # interface that is byte-for-byte identical to before this
+            # feature existed (no deep-soil inputs/outputs/diagnostics).
+            self.input_properties = dict(self.input_properties)
+            self.input_properties["deep_soil_moisture_content"] = {
+                "dims": ["*"],
+                "units": "m",
+            }
+            self.input_properties["deep_soil_temperature"] = {
+                "dims": ["*"],
+                "units": "degK",
+            }
+
+            self.output_properties = dict(self.output_properties)
+            self.output_properties["deep_soil_moisture_content"] = {
+                "dims": ["*"],
+                "units": "m",
+            }
+            self.output_properties["deep_soil_temperature"] = {
+                "dims": ["*"],
+                "units": "degK",
+            }
+
+            self.diagnostic_properties = dict(self.diagnostic_properties)
+            self.diagnostic_properties["runoff_rate"] = {
+                "dims": ["*"],
+                "units": "m s^-1",
+            }
+            self.diagnostic_properties["deep_soil_moisture_fraction"] = {
+                "dims": ["*"],
+                "units": "dimensionless",
+            }
+
         super(BucketHydrology, self).__init__(**kwargs)
 
     def array_call(self, state, timestep):
@@ -204,12 +239,6 @@ class BucketHydrology(Stepper):
         evaporation_rate = beta_factor * potential_evaporation
         diagnostics["evaporation_rate"] = evaporation_rate
 
-        soil_moisture_tendency = np.zeros(soil_moisture.shape)
-        mask = np.logical_or(
-            soil_moisture < self._smax, precipitation_rate <= evaporation_rate
-        )
-        soil_moisture_tendency[mask] = precipitation_rate[mask] - evaporation_rate[mask]
-
         surface_upward_latent_heat_flux = self._l * evaporation_rate
         surface_upward_sensible_heat_flux = (
             self._c
@@ -230,18 +259,79 @@ class BucketHydrology(Stepper):
             - surface_upward_latent_heat_flux
         )
 
-        mass_surface_slab = (
-            state["surface_material_density"] * state["soil_layer_thickness"]
-        )
-        heat_capacity_surface = mass_surface_slab * state["heat_capacity_of_soil"]
+        if self._num_layers == 1:
+            soil_moisture_tendency = np.zeros(soil_moisture.shape)
+            mask = np.logical_or(
+                soil_moisture < self._smax, precipitation_rate <= evaporation_rate
+            )
+            soil_moisture_tendency[mask] = (
+                precipitation_rate[mask] - evaporation_rate[mask]
+            )
 
-        new_state["surface_temperature"] = state["surface_temperature"] + (
-            net_heat_flux / heat_capacity_surface * timestep.total_seconds()
-        )
-        new_state["lwe_thickness_of_soil_moisture_content"] = np.minimum(
-            state["lwe_thickness_of_soil_moisture_content"]
-            + (soil_moisture_tendency * timestep.total_seconds()),
-            self._smax,
-        )
+            mass_surface_slab = (
+                state["surface_material_density"] * state["soil_layer_thickness"]
+            )
+            heat_capacity_surface = mass_surface_slab * state["heat_capacity_of_soil"]
+
+            new_state["surface_temperature"] = state["surface_temperature"] + (
+                net_heat_flux / heat_capacity_surface * timestep.total_seconds()
+            )
+            new_state["lwe_thickness_of_soil_moisture_content"] = np.minimum(
+                state["lwe_thickness_of_soil_moisture_content"]
+                + (soil_moisture_tendency * timestep.total_seconds()),
+                self._smax,
+            )
+
+        if self._num_layers == 2:
+            # float() strips any unit wrapper (e.g. under UnytBackend,
+            # UnytTimeDelta.total_seconds() returns a unyt_quantity with
+            # units 's'); raw_state arrays passed into array_call are always
+            # plain unitless floats, so dt must be too.
+            dt = float(timestep.total_seconds())
+            w_s = state["lwe_thickness_of_soil_moisture_content"]
+            w_d = state["deep_soil_moisture_content"]
+            S_s, S_d = self._smax, self._deep_smax
+            tau_m = self._tau_m if self._tau_m is not None else 5 * 86400.0
+
+            # shallow<->deep exchange toward equal relative saturation.
+            # evaporation_rate above already uses the shallow-wetness beta
+            # limiter, identical to the num_layers=1 branch.
+            F_sd = (w_s / S_s - w_d / S_d) * (0.5 * (S_s + S_d)) / tau_m
+            # optional deep drainage
+            D = (w_d / self._tau_drain) if self._tau_drain is not None else 0.0
+
+            w_s_new = w_s + (precipitation_rate - evaporation_rate - F_sd) * dt
+            w_d_new = w_d + (F_sd - D) * dt
+
+            # runoff from overflow of either layer
+            over_s = np.maximum(w_s_new - S_s, 0.0)
+            over_d = np.maximum(w_d_new - S_d, 0.0)
+            runoff = (over_s + over_d) / dt
+            w_s_new = np.clip(w_s_new - over_s, 0.0, S_s)
+            w_d_new = np.clip(w_d_new - over_d, 0.0, S_d)
+
+            diagnostics["runoff_rate"] = runoff
+            diagnostics["deep_soil_moisture_fraction"] = w_d_new / S_d
+
+            # thermal: shallow (skin) + deep store coupled by conduction
+            k_soil = 2.0  # W/m/degK; documented constant
+            dz_s = state["soil_layer_thickness"]
+            dz_d = self._deep_ratio * dz_s
+            C_s = (
+                state["surface_material_density"] * dz_s
+                * state["heat_capacity_of_soil"]
+            )
+            C_d = (
+                state["surface_material_density"] * dz_d
+                * state["heat_capacity_of_soil"]
+            )
+            T_s = state["surface_temperature"]
+            T_d = state["deep_soil_temperature"]
+            G_sd = k_soil * (T_s - T_d) / (0.5 * (dz_s + dz_d))
+            # net_heat_flux computed above from radiation - SHF - LHF
+            new_state["surface_temperature"] = T_s + (net_heat_flux - G_sd) / C_s * dt
+            new_state["deep_soil_temperature"] = T_d + G_sd / C_d * dt
+            new_state["lwe_thickness_of_soil_moisture_content"] = w_s_new
+            new_state["deep_soil_moisture_content"] = w_d_new
 
         return diagnostics, new_state

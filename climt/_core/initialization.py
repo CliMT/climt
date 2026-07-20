@@ -916,6 +916,12 @@ default_values = {
         "units": "J kg^-1 degK^-1",
         "domain": "land_horizontal",
     },
+    "deep_soil_moisture_content": {
+        "value": 0.25, "units": "m", "domain": "land_horizontal"},
+    "deep_soil_temperature": {
+        "value": 285.0, "units": "degK", "domain": "land_horizontal"},
+    "runoff_rate": {
+        "value": 0.0, "units": "m s^-1", "domain": "land_horizontal"},
     "sea_water_density": {
         "value": 1.029e3,
         "units": "kg m^-3",

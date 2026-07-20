@@ -569,6 +569,12 @@ class TestBucketHydrology(ComponentBaseColumn, ComponentBase3D):
         return BucketHydrology()
 
 
+class TestBucketHydrologyTwoLayer(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.BucketHydrology(num_layers=2,
+                                     moisture_diffusion_timescale=86400.0)
+
+
 class TestEmanuel(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         emanuel = EmanuelConvection()
