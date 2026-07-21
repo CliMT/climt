@@ -167,3 +167,36 @@ def test_screen_level_diagnostics_zero_on_non_land():
     assert diag["eastward_wind_at_10m"].values[0, 1] == 0.0
     # the land column was populated
     assert diag["air_temperature_at_2m"].values[0, 0] > 0.0
+
+
+def test_screen_wind_bounded_under_light_unstable_wind():
+    comp = SecondBEST()
+    state = get_default_state([comp], grid_state=get_grid(
+        nx=1, ny=1, nz=10, n_soil_interface_levels=4))
+    state["area_type"].values[:] = "land"
+    state["eastward_wind"].values[:] = 1.0
+    state["northward_wind"].values[:] = 0.0
+    state["surface_temperature"].values[:] = 295.0   # warmer than air -> unstable
+    diag, _ = comp(state, timedelta(seconds=100))
+    u10 = diag["eastward_wind_at_10m"].values.item(0)
+    v10 = diag["northward_wind_at_10m"].values.item(0)
+    spd10 = np.sqrt(u10 ** 2 + v10 ** 2)
+    # min_wind default is 1.0, so the lowest-level speed used is 1.0
+    assert 0.0 < spd10 <= 1.0 + 1e-9
+
+
+class _FluxesNoBeta:
+    def __call__(self, drag, atmos, soil, soil_props, timestep):
+        return {"sensible_heat_flux": 10.0, "latent_heat_flux": 5.0,
+                "momentum_flux": np.array([0.0, 0.0]), "evaporation": 0.0}
+
+
+def test_q2m_finite_when_flux_process_omits_beta():
+    # a SurfaceFluxes that predates the beta return must not break q2m
+    comp = SecondBEST(fluxes=_FluxesNoBeta())
+    state = get_default_state([comp], grid_state=get_grid(
+        nx=1, ny=1, nz=10, n_soil_interface_levels=4))
+    state["area_type"].values[:] = "land"
+    diag, _ = comp(state, timedelta(seconds=100))
+    q2m = diag["specific_humidity_at_2m"].values.item(0)
+    assert np.isfinite(q2m) and q2m >= 0.0

@@ -165,7 +165,7 @@ class SecondBEST(Stepper):
             # stability profile (see SurfaceLayer.interpolate_to_height). q2m
             # interpolates from the *effective* surface humidity implied by the
             # evaporative beta, since dry soil is not saturated.
-            q_air = state["specific_humidity"][0, col]
+            q_air = atmos["air_specific_humidity"]
             beta = flux.get("beta", 1.0)
             q_surf_eff = beta * q_sat + (1.0 - beta) * q_air
             diagnostics["air_temperature_at_2m"][col] = \

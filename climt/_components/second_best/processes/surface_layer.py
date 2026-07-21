@@ -34,8 +34,11 @@ class SurfaceLayer:
             # psi_m recovered from momentum drag; u* profile.
             psi_m = ln_mid - kappa / np.sqrt(C_Dm)
             denom = ln_mid - psi_m                      # == kappa/sqrt(C_Dm) > 0
-            num = max(ln_tgt - psi_m * frac, 0.0)
-            return level_value * num / denom
+            # Clamp to [0, 1] as for scalars: under instability the raw ratio
+            # can exceed 1, which would put the diagnostic wind above the
+            # lowest-level speed it is being interpolated down from.
+            weight = min(max((ln_tgt - psi_m * frac) / denom, 0.0), 1.0)
+            return level_value * weight
         # psi_h recovered from heat drag; scalar profile.
         psi_h = ln_mid - kappa * np.sqrt(C_Dm) / C_Dh
         denom = ln_mid - psi_h                          # == kappa*sqrt(C_Dm)/C_Dh > 0

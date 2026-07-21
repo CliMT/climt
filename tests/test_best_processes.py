@@ -173,3 +173,17 @@ def test_interpolate_bounded_and_stability_direction():
     # unstable = stronger mixing -> 2m closer to the (well-mixed) air value;
     # stable = strong near-surface gradient -> 2m closer to the surface value
     assert t_uns < t_neu < t_sta
+
+
+def test_interpolate_wind_not_exceeding_level_under_instability():
+    sl = BestSurfaceLayer()
+    z0, z_mid = 0.01, 30.0
+    # mild instability produced by the scheme itself (light wind, warm surface)
+    drag = sl(z_mid, z0, wind_speed=1.0, T_surf=295.0, T_air=290.0,
+              area_type="land")
+    assert drag["Ri"] < 0.0
+    spd10 = sl.interpolate_to_height(drag, z0, z_mid, 10.0,
+                                     surface_value=0.0, level_value=1.0,
+                                     kind="wind")
+    # the 10 m wind cannot exceed the lowest-level wind it is interpolated from
+    assert 0.0 < spd10 <= 1.0
