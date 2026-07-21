@@ -76,6 +76,7 @@ class SecondBEST(Stepper):
             outputs[name][:] = state[name]
 
         Rd = get_constant("gas_constant_of_dry_air", "J/kg/degK")
+        g = get_constant("gravitational_acceleration", "m/s^2")
         ncol = state["area_type"].shape[0]
         # timestep.total_seconds() returns a plain float for datetime.timedelta,
         # but a unyt_quantity (units "s") for sympl's UnytTimeDelta when the
@@ -97,7 +98,17 @@ class SecondBEST(Stepper):
             T_air = state["air_temperature"][0, col]
             p = state["air_pressure"][0, col]
             rho = p / (Rd * T_air)
-            z_mid = Rd * T_air / get_constant("gravitational_acceleration", "m/s^2")
+            # Surface-layer reference height = geometric height of the lowest
+            # model level above the surface, from the hypsometric equation
+            # z = (Rd*T/g) * ln(p_surface / p_lowest). This is the height the
+            # bulk drag profile is anchored to (tens of metres for a typical
+            # column), not the atmospheric scale height. Dry temperature is
+            # used (consistent with the dry Rd used elsewhere here); the floor
+            # guards the degenerate p_surface <= p_lowest case so ln(z_mid) in
+            # the drag law stays finite.
+            p_surf = state["surface_air_pressure"][col]
+            z_mid = (Rd * T_air / g) * np.log(p_surf / p)
+            z_mid = max(float(z_mid), 2.0)
             z0 = 0.01 if area == "land" else 0.001
 
             T_surf = state["surface_temperature"][col]

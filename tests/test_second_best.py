@@ -83,3 +83,43 @@ def test_extending_second_best_swap_example():
     state["area_type"].values[:] = "land"
     diag, _ = comp(state, timedelta(seconds=100))
     assert np.isclose(diag["surface_drag_coefficient_for_heat"].values[0], 0.002)
+
+
+def _land_state_for_drag():
+    comp = SecondBEST()
+    state = get_default_state([comp], grid_state=get_grid(
+        nx=1, ny=1, nz=10, n_soil_interface_levels=4))
+    state["area_type"].values[:] = "land"
+    # unstable-neutral-ish, nonzero wind so drag is well defined
+    state["eastward_wind"].values[:] = 5.0
+    state["surface_temperature"].values[:] = 290.0
+    return comp, state
+
+
+def test_surface_layer_reference_height_uses_lowest_model_level():
+    # The drag reference height is the hypsometric height of the lowest model
+    # level above the surface, derived from surface_air_pressure vs the lowest
+    # mid-level pressure. The old code used a fixed scale height (Rd*T/g,
+    # ~8-9 km) independent of the pressure gap, so changing surface_air_pressure
+    # would NOT move the drag. Here we make the lowest layer thicker (larger
+    # p_surface/p_lowest gap) and require the neutral drag coefficient to drop,
+    # which can only happen if the reference height tracks the pressure gap.
+    comp, state = _land_state_for_drag()
+    p_lowest = float(state["air_pressure"].values[0, 0, 0])
+
+    # thin lowest layer: surface pressure just above lowest mid-level
+    state["surface_air_pressure"].values[:] = p_lowest + 200.0
+    d_thin, _ = comp(state, timedelta(seconds=1))
+    cdn_thin = d_thin["surface_drag_coefficient_for_momentum"].values.item(0)
+
+    # thick lowest layer: much larger gap -> larger reference height
+    comp2, state2 = _land_state_for_drag()
+    state2["surface_air_pressure"].values[:] = p_lowest + 3000.0
+    d_thick, _ = comp2(state2, timedelta(seconds=1))
+    cdn_thick = d_thick["surface_drag_coefficient_for_momentum"].values.item(0)
+
+    # taller reference height -> smaller neutral drag coefficient
+    assert cdn_thick < cdn_thin
+    # and both are physically plausible surface drag coefficients (~1e-3),
+    # not the ~9e-4 the km-scale reference height produced
+    assert 1e-3 < cdn_thin < 6e-3
