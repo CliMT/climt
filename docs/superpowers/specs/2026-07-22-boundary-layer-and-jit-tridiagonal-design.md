@@ -31,6 +31,26 @@ It is the companion to climt's existing `Frierson06LongwaveOpticalDepth`:
 simplified Monin–Obukhov bulk surface exchange, a K-profile eddy diffusivity
 capped by a critical Richardson number, and a diagnosed boundary-layer height.
 
+**Important physics modification (from the thesis, not canonical Frierson).**
+The concrete implementation follows Abel's MSc thesis
+(`Abel_Master_s_thesis_signed_JMM.pdf`, §2.1.1), which modifies the
+surface-layer diffusion coefficient `Kb`. Canonical Frierson (Eqn 2.6) uses
+the *local* Richardson number `Ri(z)` in the `Kb` multiplier, which is
+discontinuous at `Ria = 0`. The thesis (Eqn 2.8) replaces it with the
+*surface-layer* Richardson number `Ria`, giving a multiplier that is
+continuous at `Ria = 0` and decays from 1 → 0 as `Ria → Ric`:
+
+```
+Kb ∝ [ 1 + (Ria/Ric) · ln(z/z0) / (1 - Ria/Ric) ]^-1     for Ria > 0
+Kb ∝ 1                                                    for Ria <= 0
+```
+
+**The supplied prototype used the un-modified local-`Ri` form (canonical 2.6);
+the climt component must implement the thesis `Ria` form (2.8).** So
+`_richardson_diffusivity` takes `Ri_a` (not the local `Ri`) in the denominator.
+The local Richardson profile is still computed to diagnose the boundary-layer
+top, just not used in the `Kb` multiplier.
+
 ## Scope
 
 ### In scope
@@ -98,7 +118,9 @@ Rewrite of the prototype to climt conventions:
   import, so the numba-optional fallback (pure Python when numba absent) works
   like every other component.
 - Prototype nested helpers become module-level `@jit_compile` functions:
-  - `_richardson_diffusivity` (the `K_b` profile function)
+  - `_richardson_diffusivity` (the `K_b` profile function) — **modified to use
+    the surface-layer `Ri_a` per thesis Eqn 2.8, not the prototype's local
+    `Ri`** (see Reference section).
   - `_diffuse_profile` (assembles the implicit diffusion matrix, then calls
     `solve_tridiagonal`)
 - Physics constants bundled in a `NamedTuple` (`BoundaryLayerParams`) passed
