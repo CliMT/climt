@@ -1,0 +1,248 @@
+---
+title: "BucketHydrology"
+---
+
+## Introduction
+
+`BucketHydrology` is a [`Stepper`](component_types.qmd) implementing the classic
+**bucket model** of land surface hydrology and thermodynamics. The surface is a
+slab with a finite heat capacity and a finite moisture-holding capacity — a
+"bucket". It takes precipitation, radiation and near-surface atmospheric state
+as input and steps forward the soil moisture and surface temperature, returning
+the surface sensible and latent heat fluxes along the way.
+
+It supports two configurations, selected by `num_layers`:
+
+- **`num_layers=1`** (default): the original single-bucket model — one soil
+  moisture store and one surface temperature.
+- **`num_layers=2`**: an added deep soil layer, giving a shallow (skin) store
+  coupled to a slower deep store for both moisture and heat, plus runoff and
+  optional drainage.
+
+The single-layer default is preserved **bit-for-bit**, so enabling the deep
+layer never changes existing single-layer runs.
+
+## Shared surface physics
+
+Both configurations first compute the same near-surface quantities.
+
+**Wind speed** from the lowest model level:
+$U = \sqrt{u_0^2 + v_0^2}$.
+
+**Potential evaporation** from a bulk aerodynamic formula:
+
+$$
+E_{\text{pot}} = c_D\, U\, (q_s - q_{a,0}),
+$$
+
+using the surface and lowest-level specific humidities and the bulk transfer
+coefficient `bulk_coefficient`.
+
+**Evaporation** is potential evaporation limited by a wetness factor $\beta$
+that throttles evaporation as the shallow soil dries out:
+
+$$
+E = \beta\, E_{\text{pot}}, \qquad
+\beta = \begin{cases}
+\dfrac{w_s}{g\, S_s} & w_s \le g\, S_s \\[2ex]
+1 & \text{otherwise}
+\end{cases}
+$$
+
+where $w_s$ is the shallow soil moisture, $S_s$ = `soil_moisture_max`, and $g$
+= `beta_parameter`.
+
+**Fluxes.** The latent and sensible heat fluxes follow as
+
+$$
+H_l = L\, E, \qquad
+H_s = c_D\, U\, (T_s - T_{a,0}),
+$$
+
+and the net surface heat flux is
+
+$$
+Q_{\text{net}} = SW^{\downarrow} + LW^{\downarrow} - SW^{\uparrow} - LW^{\uparrow} - H_s - H_l .
+$$
+
+All of `precipitation_rate` (convective + stratiform), `evaporation_rate`, and
+the two flux components are emitted as diagnostics in both configurations.
+
+## Single-layer model (`num_layers=1`)
+
+The surface temperature integrates the net flux against the slab heat capacity
+$C = \rho\, \Delta z\, c$:
+
+$$
+T_s^{\,n+1} = T_s^{\,n} + \frac{Q_{\text{net}}}{C}\,\Delta t .
+$$
+
+Soil moisture accumulates precipitation minus evaporation, capped at the bucket
+capacity:
+
+$$
+w_s^{\,n+1} = \min\!\big(w_s^{\,n} + (P - E)\,\Delta t,\; S_s\big).
+$$
+
+::: {.callout-note}
+## Clamp bug fix
+
+The moisture cap previously used a hardcoded literal `0.15` regardless of the
+configured `soil_moisture_max`. It now clamps to `self._smax`
+(= `soil_moisture_max`). Since the default `soil_moisture_max` *is* `0.15`, the
+default single-layer run is numerically identical to before; only non-default
+`soil_moisture_max` values are affected.
+:::
+
+## Two-layer model (`num_layers=2`)
+
+Enabling the deep layer adds a second moisture store $w_d$ (capacity $S_d$ =
+`deep_soil_moisture_max`) and a deep temperature $T_d$, together with runoff and
+optional drainage. It reads and writes two extra state fields
+(`deep_soil_moisture_content`, `deep_soil_temperature`) and emits two extra
+diagnostics (`runoff_rate`, `deep_soil_moisture_fraction`).
+
+### Moisture
+
+Water moves between the shallow and deep stores toward **equal relative
+saturation**, on a timescale $\tau_m$ = `moisture_diffusion_timescale` (default
+5 days):
+
+$$
+F_{sd} = \left(\frac{w_s}{S_s} - \frac{w_d}{S_d}ight)\frac{S_s + S_d}{2\,\tau_m}.
+$$
+
+An optional deep **drainage** term $D = w_d / \tau_{\text{drain}}$ (only when
+`deep_drainage_timescale` is set) removes water from the deep store entirely.
+The two stores update as
+
+$$
+w_s^{\,n+1} = w_s + (P - E - F_{sd})\,\Delta t, \qquad
+w_d^{\,n+1} = w_d + (F_{sd} - D)\,\Delta t,
+$$
+
+and any excess above either capacity becomes **runoff**:
+
+$$
+R = \frac{\max(w_s^{n+1} - S_s, 0) + \max(w_d^{n+1} - S_d, 0)}{\Delta t},
+$$
+
+with the stores then clipped into $[0, S]$. In the absence of drainage, total
+column water is conserved: $\Delta(w_s + w_d) = (P - E - R)\,\Delta t$.
+
+### Heat
+
+The shallow (skin) and deep stores are coupled by conduction. With a soil
+conductivity $k_{\text{soil}} = 2\ \mathrm{W\,m^{-1}\,K^{-1}}$ and heat
+capacities $C_s, C_d$ built from the layer thicknesses (the deep layer is
+`deep_layer_thickness_ratio` times thicker than the shallow one):
+
+$$
+G_{sd} = k_{\text{soil}}\,\frac{T_s - T_d}{\tfrac{1}{2}(\Delta z_s + \Delta z_d)},
+$$
+
+$$
+T_s^{\,n+1} = T_s + \frac{Q_{\text{net}} - G_{sd}}{C_s}\,\Delta t, \qquad
+T_d^{\,n+1} = T_d + \frac{G_{sd}}{C_d}\,\Delta t .
+$$
+
+The larger deep heat capacity gives the deep store a longer memory, so it damps
+and lags the shallow store's response to fast forcing.
+
+## Constructor
+
+``` python
+climt.BucketHydrology(num_layers=1, soil_moisture_max=0.15,
+                      beta_parameter=0.75,
+                      specific_latent_heat_of_water=2260000,
+                      bulk_coefficient=0.0011,
+                      deep_soil_moisture_max=0.50,
+                      moisture_diffusion_timescale=None,
+                      deep_layer_thickness_ratio=10.0,
+                      deep_drainage_timescale=None)
+```
+
+| Argument | Default | Applies to | Description |
+|----------|---------|-----------|-------------|
+| `num_layers` | `1` | — | `1` or `2`; anything else raises `ValueError`. |
+| `soil_moisture_max` | `0.15` | both | Shallow bucket capacity $S_s$ (m). |
+| `beta_parameter` | `0.75` | both | $g$ in the evaporation $\beta$ limiter. |
+| `specific_latent_heat_of_water` | `2260000` | both | Latent heat $L$ (J kg⁻¹). |
+| `bulk_coefficient` | `0.0011` | both | Bulk transfer coefficient $c_D$. |
+| `deep_soil_moisture_max` | `0.50` | 2-layer | Deep bucket capacity $S_d$ (m). |
+| `moisture_diffusion_timescale` | `None` | 2-layer | $\tau_m$ for shallow⇄deep exchange (defaults to 5 days when `None`). |
+| `deep_layer_thickness_ratio` | `10.0` | 2-layer | Deep-to-shallow thickness ratio. |
+| `deep_drainage_timescale` | `None` | 2-layer | $\tau_{\text{drain}}$; `None` disables drainage. |
+
+The deep-layer inputs, outputs and diagnostics are added to instance-level
+copies of the property dictionaries only when `num_layers=2`, so a
+`num_layers=1` instance exposes exactly the original interface.
+
+## State
+
+### Inputs (both configurations)
+
+| Quantity | Dims | Units |
+|----------|------|-------|
+| `downwelling_/upwelling_ shortwave_/longwave_flux_in_air` | `[*, interface_levels]` | `W m^-2` |
+| `surface_temperature` | `[*]` | `degK` |
+| `surface_material_density` | `[*]` | `kg m^-3` |
+| `soil_layer_thickness` | `[*]` | `m` |
+| `heat_capacity_of_soil` | `[*]` | `J kg^-1 degK^-1` |
+| `lwe_thickness_of_soil_moisture_content` | `[*]` | `m` |
+| `convective_precipitation_rate`, `stratiform_precipitation_rate` | `[*]` | `m s^-1` |
+| `specific_humidity`, `air_temperature`, `northward_wind`, `eastward_wind` | `[mid_levels, *]` | `kg/kg`, `degK`, `m s^-1` |
+| `surface_specific_humidity` | `[*]` | `kg/kg` |
+| `area_type` | `[*]` | `dimensionless` |
+
+### Additional state when `num_layers=2`
+
+| Role | Quantity | Dims | Units |
+|------|----------|------|-------|
+| in/out | `deep_soil_moisture_content` | `[*]` | `m` |
+| in/out | `deep_soil_temperature` | `[*]` | `degK` |
+| diag | `runoff_rate` | `[*]` | `m s^-1` |
+| diag | `deep_soil_moisture_fraction` | `[*]` | `dimensionless` |
+
+### Outputs and diagnostics (both)
+
+| Role | Quantity | Dims | Units |
+|------|----------|------|-------|
+| out | `surface_temperature` | `[*]` | `degK` |
+| out | `lwe_thickness_of_soil_moisture_content` | `[*]` | `m` |
+| diag | `precipitation_rate`, `evaporation_rate` | `[*]` | `m s^-1` |
+| diag | `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux` | `[*]` | `W m^-2` |
+
+## Examples
+
+Single-layer (default):
+
+``` python
+from datetime import timedelta
+import climt
+from climt import get_default_state, get_grid
+
+bucket = climt.BucketHydrology()
+state = get_default_state([bucket], grid_state=get_grid(nx=1, ny=1, nz=10))
+diagnostics, new_state = bucket(state, timedelta(seconds=600))
+```
+
+Two-layer with shallow⇄deep exchange:
+
+``` python
+bucket = climt.BucketHydrology(num_layers=2,
+                               moisture_diffusion_timescale=86400.0)
+state = get_default_state([bucket], grid_state=get_grid(nx=1, ny=1, nz=10))
+state["stratiform_precipitation_rate"].values[:] = 0.001
+diagnostics, new_state = bucket(state, timedelta(seconds=600))
+print(diagnostics["runoff_rate"].values,
+      new_state["deep_soil_moisture_content"].values)
+```
+
+## Source
+
+- Component: [`climt/_components/bucket_hydrology/component.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/bucket_hydrology/component.py)
+- Deep-layer state defaults: `climt/_core/initialization.py`
+
+For a richer, process-based land surface model, see
+[`SecondBEST`](second_best.qmd).

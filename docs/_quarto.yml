@@ -51,8 +51,21 @@ website:
         - user-guide/memory_management.qmd
         - section: "Components"
           contents:
-            - user-guide/emanuel_convection.qmd
             - user-guide/rrtmg_clouds.qmd
+            - user-guide/gray_radiation.qmd
+            - user-guide/emanuel_convection.qmd
+            - user-guide/dry_convective_adjustment.qmd
+            - user-guide/grid_scale_condensation.qmd
+            - user-guide/insolation.qmd
+            - user-guide/held_suarez.qmd
+            - user-guide/simple_physics.qmd
+            - user-guide/dcmip.qmd
+            - user-guide/land_mask.qmd
+            - user-guide/sea_land_ice.qmd
+            - user-guide/slab_ocean.qmd
+            - user-guide/data_ocean.qmd
+            - user-guide/bucket_hydrology.qmd
+            - user-guide/second_best.qmd
         - section: "Project"
           contents:
             - user-guide/contributing.qmd

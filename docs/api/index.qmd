@@ -20,21 +20,31 @@ Non-grey correlated-k (CORK) scheme.
 | [CorkLongwaveRadiation](CorkLongwaveRadiation.qmd#climt._components.cork.lw.component.CorkLongwaveRadiation) |  |
 | [CorkShortwaveRadiation](CorkShortwaveRadiation.qmd#climt._components.cork.sw.component.CorkShortwaveRadiation) |  |
 
-## Convection
+## Convection & condensation
 
 | | |
 | --- | --- |
 | [EmanuelConvection](EmanuelConvection.qmd#climt.EmanuelConvection) | The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_ |
 | [DryConvectiveAdjustment](DryConvectiveAdjustment.qmd#climt.DryConvectiveAdjustment) | A conservative scheme to keep the temperature profile close to the |
+| [GridScaleCondensation](GridScaleCondensation.qmd#climt.GridScaleCondensation) | Calculate condensation due to supersaturation of water. |
 
 ## Surface & ice
 
 | | |
 | --- | --- |
 | [SlabSurface](SlabSurface.qmd#climt.SlabSurface) | Calculate the surface energy balance. |
-| [IceSheet](IceSheet.qmd#climt.IceSheet) | 1-d snow-ice energy balance model. |
+| [IceSheet](IceSheet.qmd#climt.IceSheet) | 1-d snow-ice energy balance model (deprecated shim over SeaIce/LandIce). |
+| [SeaIce](SeaIce.qmd#climt.SeaIce) | 1-D thermodynamic sea-ice model over sea-ice cells. |
+| [LandIce](LandIce.qmd#climt.LandIce) | 1-D thermodynamic snow/ice model over land and land-ice cells. |
 | [BucketHydrology](BucketHydrology.qmd#climt.BucketHydrology) | Manages surface energy and moisture balance |
 | [SecondBEST](SecondBEST.qmd#climt.SecondBEST) | Modular intermediate-complexity BEST land surface model. |
+
+## Ocean & land surface data
+
+| | |
+| --- | --- |
+| [LandMask](LandMask.qmd#climt.LandMask) | Set area_type to a present-day Earth land/sea/land_ice configuration. |
+| [DataOcean](DataOcean.qmd#climt.DataOcean) | Prescribe observed SSTs on sea cells (AMIP-style). |
 
 ## Solar & insolation
 
@@ -43,6 +53,13 @@ Non-grey correlated-k (CORK) scheme.
 | [BergerSolarInsolation](BergerSolarInsolation.qmd#climt.BergerSolarInsolation) | Determines solar insolation using spectral solutions for orbital |
 | [Instellation](Instellation.qmd#climt.Instellation) | Calculates the zenith angle and star-planet correction |
 | [HeldSuarez](HeldSuarez.qmd#climt.HeldSuarez) |  |
+
+## Idealised & test physics
+
+| | |
+| --- | --- |
+| [SimplePhysics](SimplePhysics.qmd#climt.SimplePhysics) | Interface to the simple physics package. |
+| [DcmipInitialConditions](DcmipInitialConditions.qmd#climt.DcmipInitialConditions) | Climt interface to the DCMIP initial conditions. |
 
 ## State & grid utilities
 

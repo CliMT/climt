@@ -1,0 +1,146 @@
+---
+title: "LandMask"
+---
+
+## Introduction
+
+`LandMask` is a [`DiagnosticComponent`](component_types.qmd) that stamps a
+present-day Earth land/sea/land-ice geography onto the model grid. It sets a
+single output quantity, `area_type`, which the surface components
+([`SlabSurface`](slab_ocean.qmd), [`SeaIce`, `LandIce`](sea_land_ice.qmd),
+[`BucketHydrology`](bucket_hydrology.qmd), [`SecondBEST`](second_best.qmd),
+[`DataOcean`](data_ocean.qmd)) read to decide, per column, which surface
+physics applies.
+
+It exists because the surface components are *area-type aware*: each one owns a
+subset of columns and passes the rest through unchanged. Without a component to
+populate `area_type`, every column defaults to `"sea"` (the registered default
+in `get_default_state`). `LandMask` gives you a realistic coastline at
+**arbitrary model resolution** without shipping a mask for each grid.
+
+::: {.callout-note}
+`LandMask` sets only the static geography — `sea`, `land`, and `land_ice`. It
+does **not** set `sea_ice`, which is dynamic and owned by
+[`SeaIce`](sea_land_ice.qmd). Running `SeaIce` will overwrite the `area_type` of
+columns where sea ice forms; running `LandMask` again would revert them, so
+apply `LandMask` once at setup rather than every timestep.
+:::
+
+## How the mask is applied
+
+The component holds a source raster — a categorical field
+`area_type_code(lat, lon)` with integer codes — and maps it onto the model grid
+by **nearest-neighbour** lookup. For every model column it finds the source cell
+whose latitude and longitude are closest, and copies that cell's category.
+
+The index weights are computed once, on the first call, and cached, so repeated
+calls on a fixed grid are cheap:
+
+``` python
+lat_idx = np.abs(src_lat[None, :] - model_lat[:, None]).argmin(axis=1)
+lon_idx = np.abs(src_lon[None, :] - model_lon[:, None]).argmin(axis=1)
+```
+
+Model longitudes are wrapped into `[0, 360)` with `np.mod(lon, 360)` before the
+lookup, so a grid using either `[-180, 180)` or `[0, 360)` conventions resolves
+correctly against the bundled `0–360` source.
+
+Because the lookup is nearest-neighbour rather than interpolation, the output is
+always one of the valid category strings — there are no fractional or blended
+cells, and the categorical nature of `area_type` is preserved at any target
+resolution.
+
+### Category codes
+
+The source raster stores integer codes, mapped to the byte-string categories
+`climt` uses for `area_type`:
+
+| Code | `area_type` | Meaning |
+|------|-------------|---------|
+| 0 | `b"sea"` | ocean |
+| 1 | `b"land"` | ice-free land |
+| 2 | `b"land_ice"` | permanent land ice (Antarctica, Greenland) |
+
+With `include_land_ice=False`, code 2 cells are emitted as `b"land"` instead, so
+land-ice columns are treated as ordinary land (useful when you are not running
+an ice component and want land-surface physics everywhere on land).
+
+## The bundled Earth mask
+
+The default source is a 2° raster bundled with `climt` at
+`climt/_data/land_mask/earth_landmask_2deg.nc`. It is generated at build time
+from [`regionmask`](https://regionmask.readthedocs.io/)'s Natural Earth land
+polygons by `scripts/build_land_mask.py`, which rasterises land vs. sea and then
+tags Antarctica and Greenland as `land_ice`. `regionmask` is a **build-time
+dependency only** — it is not needed to *use* `LandMask`, only to regenerate the
+bundled file.
+
+The netCDF stores coordinates `lat` (degrees north, ascending) and `lon`
+(degrees east, `0–360`) and an integer variable `area_type_code` with CF
+`flag_values = [0, 1, 2]` / `flag_meanings = "sea land land_ice"`.
+
+### Supplying your own mask
+
+Pass `mask_dataset` to override the bundle — either a path to a netCDF or an
+already-open `xarray.Dataset`. It must expose the same structure: `lat`, `lon`,
+and an integer `area_type_code` using the code convention above. This is how you
+would drive a paleoclimate configuration, an idealised aquaplanet-with-a-
+continent, or a different-planet geography.
+
+## Constructor
+
+``` python
+climt.LandMask(mask_dataset=None, include_land_ice=True)
+```
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `mask_dataset` | `None` | Path to a netCDF, or an `xarray.Dataset`, providing `area_type_code(lat, lon)`. `None` uses the bundled 2° Earth mask. |
+| `include_land_ice` | `True` | If `False`, `land_ice` (code 2) cells are emitted as `land`. |
+
+## State
+
+### Inputs
+
+| Quantity | Dims | Units |
+|----------|------|-------|
+| `latitude` | `[*]` | `degrees_north` |
+| `longitude` | `[*]` | `degrees_east` |
+
+### Diagnostics (outputs)
+
+| Quantity | Dims | Units | Notes |
+|----------|------|-------|-------|
+| `area_type` | `[*]` | `dimensionless` | Byte strings `b"sea"` / `b"land"` / `b"land_ice"` (dtype `S100`). |
+
+## Example
+
+``` python
+import climt
+from climt import get_grid, get_default_state
+
+mask = climt.LandMask()
+state = get_default_state([mask], grid_state=get_grid(nx=128, ny=62, nz=30))
+
+# Apply the geography once at setup.
+state.update(mask(state))
+
+area = state["area_type"].values.astype(str)
+print(sorted(set(area.ravel())))   # ['land', 'land_ice', 'sea']
+```
+
+To treat land ice as plain land:
+
+``` python
+mask = climt.LandMask(include_land_ice=False)
+```
+
+To drive an idealised geography (northern hemisphere land, southern hemisphere
+ocean) from your own raster, build an `xarray.Dataset` with an integer
+`area_type_code(lat, lon)` and pass it as `mask_dataset`.
+
+## Source
+
+- Component: [`climt/_components/land_mask/component.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/land_mask/component.py)
+- Bundled raster generator: [`scripts/build_land_mask.py`](https://github.com/CliMT/climt/blob/develop/scripts/build_land_mask.py)
+- Default state / `area_type` registration: `climt/_core/initialization.py`
