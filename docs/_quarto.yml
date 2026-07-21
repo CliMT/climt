@@ -119,10 +119,11 @@ quartodoc:
           package: climt._components.cork.lw.component
         - name: CorkShortwaveRadiation
           package: climt._components.cork.sw.component
-    - title: "Convection"
+    - title: "Convection & condensation"
       contents:
         - EmanuelConvection
         - DryConvectiveAdjustment
+        - GridScaleCondensation
     - title: "Surface & ice"
       contents:
         - SlabSurface
@@ -133,6 +134,10 @@ quartodoc:
         - BergerSolarInsolation
         - Instellation
         - HeldSuarez
+    - title: "Idealised & test physics"
+      contents:
+        - SimplePhysics
+        - DcmipInitialConditions
     - title: "State & grid utilities"
       contents:
         - get_default_state

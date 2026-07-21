@@ -27,14 +27,7 @@ quartodoc:
       contents:
         - SlabSurface
         - IceSheet
-        - SeaIce
-        - LandIce
         - BucketHydrology
-        - SecondBEST
-    - title: "Ocean & land surface data"
-      contents:
-        - LandMask
-        - DataOcean
     - title: "Solar & insolation"
       contents:
         - BergerSolarInsolation
