@@ -26,6 +26,22 @@ regressions from either half.
 
 ---
 
+## Enhancements added after the initial review
+
+- **Surface-layer reference height (A1) — fixed.** See A1 below.
+- **Stability-consistent 2m/10m diagnostics — added.** `SecondBEST` now emits
+  `air_temperature_at_2m`, `specific_humidity_at_2m`, `eastward_wind_at_10m`,
+  `northward_wind_at_10m` on land columns. `SurfaceLayer.interpolate_to_height`
+  recovers Monin–Obukhov `psi_m`/`psi_h` from the scheme's own bulk drag
+  coefficients (so the profile is consistent with the fluxes, not neutral) and
+  scales them linearly across the surface layer; q2m uses the effective surface
+  humidity implied by the evaporative `beta` (now returned by
+  `BestSurfaceFluxes`). Reviewed; a wind-branch overshoot bug (10 m speed could
+  exceed the lowest-level speed under light-wind instability) was found and
+  fixed with a `[0,1]` clamp + regression tests. *Method note:* the linear-`psi`
+  scaling is a first-order MO assumption; a full Obukhov-length treatment is a
+  possible future refinement.
+
 ## A. Needs a human decision
 
 ### A1. `SecondBEST` `z_mid` reference height — RESOLVED

@@ -17,6 +17,11 @@ Unreleased
   ``SurfaceLayer``, ``SurfaceFluxes``, ``SubsurfaceTransport``), each
   with a ``Best*`` default. Adds a ``soil`` vertical grid, soil-profile
   state quantities, and registers the ``von_karman_constant``.
+  ``SecondBEST`` also emits stability-consistent screen-level
+  diagnostics on land columns (``air_temperature_at_2m``,
+  ``specific_humidity_at_2m``, ``eastward_wind_at_10m``,
+  ``northward_wind_at_10m``), interpolated between the surface and the
+  lowest model level using the surface layer's own stability profile.
 * New components for ocean/ice surface physics: ``LandMask``,
   ``SeaIce``, ``LandIce`` and ``DataOcean``, plus a slab-ocean q-flux
   (prescribed ``ocean_heat_transport_convergence``) and optional Ekman
