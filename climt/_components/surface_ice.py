@@ -1,5 +1,6 @@
 import warnings
 
+import numpy as np
 from sympl import Stepper, initialize_numpy_arrays_with_properties
 
 from .land_ice.component import LandIce
@@ -26,6 +27,16 @@ class IceSheet(Stepper):
         ``SeaIce`` and a ``LandIce`` instance and merges their per-column
         results, kept only so that existing callers keep working. New code
         should use ``SeaIce``/``LandIce`` directly.
+
+        **Known behavior change:** the ``surface_downward_heat_flux_in_sea_ice``
+        diagnostic is now produced only by the internal ``SeaIce`` instance,
+        so it is meaningful only on ``sea_ice`` columns. Unlike the old
+        monolith -- which computed a conducted surface flux uniformly for
+        ``sea_ice``, ``land_ice`` *and* ``land`` columns -- this shim reports
+        the registered default of ``0.0`` on ``land``/``land_ice`` columns
+        for this diagnostic. Callers needing an equivalent conducted-flux
+        diagnostic on land/land-ice columns should use ``LandIce``'s
+        ``upward_heat_flux_at_ground_level_in_soil`` instead.
     """
 
     input_properties = {
@@ -193,24 +204,29 @@ class IceSheet(Stepper):
         # The one field that is NOT a simple input pass-through on
         # non-owned cells is `surface_temperature`: neither SeaIce nor
         # LandIce takes it as an input at all -- both instead *derive* it,
-        # for every column, from `snow_and_ice_temperature[-1, col]` (the
-        # top of the shared temperature profile), only overwriting it with
-        # the newly solved value on their own owned cells. Since both
-        # components compute this the same way from the same shared input,
-        # they agree with each other on cells neither owns, but a plain
-        # merge-by-union would silently prefer whichever component's dict
-        # is copied last rather than reflecting real per-cell ownership.
-        # So instead of assuming disjoint writes, every shared
-        # output/diagnostic field below is combined with an explicit
-        # `area_type` mask: default to the LandIce result (correct for
-        # `land`/`land_ice` columns, and equal to an input pass-through for
-        # any other area type, e.g. plain "sea"/"ocean" with no ice), then
-        # overwrite `sea_ice`-owned columns with the SeaIce result.
+        # UNCONDITIONALLY for every column (not just their owned ones),
+        # from `snow_and_ice_temperature[-1, col]` (the top of the shared
+        # temperature profile), only overwriting it with the newly solved
+        # value on their own owned cells. So on a cell owned by NEITHER
+        # component (plain "sea", the global default area_type), each
+        # sub-component's `surface_temperature` is a derived proxy, not
+        # the real `surface_temperature` input -- a naive two-way mask
+        # (default to one component's result, overwrite the other's owned
+        # cells) silently drops the true input on those un-owned cells.
+        # So `surface_temperature` gets an explicit three-way merge below:
+        # base = the real input (correct for un-owned "sea" cells), then
+        # overwrite `land`/`land_ice`-owned cells with LandIce's solved
+        # value, then overwrite `sea_ice`-owned cells with SeaIce's solved
+        # value. Every other shared field below is a genuine pass-through
+        # on non-owned cells in both sub-components, so the simpler
+        # default-to-LandIce/overwrite-with-SeaIce mask remains correct
+        # for those.
         sea_diagnostics, sea_outputs = self._sea.array_call(raw_state, timestep)
         land_diagnostics, land_outputs = self._land.array_call(raw_state, timestep)
 
         area_type = raw_state["area_type"].astype(str)
         sea_mask = area_type == "sea_ice"
+        land_mask = np.isin(area_type, ("land", "land_ice"))
 
         outputs = initialize_numpy_arrays_with_properties(
             self.output_properties, raw_state, self.input_properties
@@ -219,10 +235,23 @@ class IceSheet(Stepper):
             self.diagnostic_properties, raw_state, self.input_properties
         )
 
-        # Shared 1-D output fields: mask by area_type.
-        for key in ("surface_snow_thickness", "surface_temperature"):
+        # Shared 1-D output fields that ARE genuine pass-throughs on
+        # non-owned cells in both sub-components: mask by area_type.
+        for key in ("surface_snow_thickness",):
             outputs[key][:] = land_outputs[key]
             outputs[key][sea_mask] = sea_outputs[key][sea_mask]
+
+        # surface_temperature: three-way merge (see comment above). Base
+        # on the real input so un-owned "sea" cells keep their true
+        # surface_temperature instead of either sub-component's derived
+        # proxy value.
+        outputs["surface_temperature"][:] = raw_state["surface_temperature"]
+        outputs["surface_temperature"][land_mask] = land_outputs[
+            "surface_temperature"
+        ][land_mask]
+        outputs["surface_temperature"][sea_mask] = sea_outputs["surface_temperature"][
+            sea_mask
+        ]
 
         # Shared 2-D (level, column) output fields: mask on the column axis.
         for key in ("snow_and_ice_temperature", "height_on_ice_interface_levels"):
