@@ -25,6 +25,11 @@ fluxes over the ocean.
 a prescribed-SST (rather than interactive) lower boundary — the standard
 configuration for AMIP-type atmosphere-only experiments.
 
+![*The bundled climatological SST prescribed by* `DataOcean` *on the* `sea`
+*cells of a 128×62 Gaussian model grid (15 July), with land greyed. The
+land/ocean boundary matches the* `area_type` *set by* [`LandMask`](land_mask.qmd)
+*— the two components share the same geography.*](data_ocean_sst.png)
+
 ## Loading and preparing the dataset
 
 The constructor loads a `(time, lat, lon)` SST field from `sst_dataset`
@@ -165,6 +170,41 @@ state.update(mask(state))          # set the land/sea geography first
 diagnostics = ocean(state)
 state.update(diagnostics)          # sea cells now carry the observed SST
 ```
+
+## Bundled data source
+
+`climt` ships a ready-to-use 12-month climatological SST at
+`climt/_data/data_ocean/earth_sst_climatology_1deg.nc` so you can drive a
+prescribed-SST run out of the box:
+
+``` python
+import os, climt
+sst = os.path.join(os.path.dirname(climt.__file__),
+                   "_data", "data_ocean", "earth_sst_climatology_1deg.nc")
+ocean = climt.DataOcean(sst)   # variable "tos", degC auto-detected
+```
+
+Because `DataOcean` interpolates purely by **day-of-year** (with a cyclic
+Dec→Jan wrap), a single 12-month file loops indefinitely across any model year —
+the model spins up a long-term climate from one climatological annual cycle.
+
+| | |
+|---|---|
+| **Dataset** | NOAA OI SST V2, monthly long-term mean (climatology) |
+| **Base period** | 1991–2020 |
+| **Provider** | NOAA Physical Sciences Laboratory (PSL), Boulder, Colorado, USA |
+| **Download** | <https://downloads.psl.noaa.gov/Datasets/noaa.oisst.v2/sst.ltm.1991-2020.nc> ([product page](https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html)) |
+| **Native grid** | 1°×1° global, 12 monthly means, variable `sst` in °C |
+| **Bundled form** | variable renamed `sst`→`tos`; written as netCDF-3 classic (the `scipy` engine used here reads classic netCDF only — the PSL source is netCDF-4/HDF5) |
+| **Generator** | [`scripts/build_sst_climatology.py`](https://github.com/CliMT/climt/blob/develop/scripts/build_sst_climatology.py) (re-downloads and rebuilds the file) |
+
+Alternative products you can substitute (pass your own path to `sst_dataset`):
+**HadISST** (Met Office, for a longer base period) and the **PCMDI AMIP-II**
+boundary dataset (the exact SST/sea-ice forcing used by PLASIM; transient
+monthly rather than a single climatology).
+
+*Acknowledgement:* data provided by the NOAA PSL, Boulder, Colorado, USA, from
+<https://psl.noaa.gov>.
 
 ## Source
 

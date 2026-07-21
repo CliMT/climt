@@ -310,6 +310,27 @@ diagnostics, new_state = ice(state, timedelta(seconds=3600))
 print(new_state["sea_ice_thickness"].values)   # ice has grown
 ```
 
+## Bundled data source (initial ice thickness)
+
+`land_ice_thickness` defaults to zero in `get_default_state`, so the ice sheets
+start bare. The easiest way to initialise `LandIce` (or `IceSheet`) with the
+present-day Greenland and Antarctic ice sheets is to run
+[`LandMask`](land_mask.qmd) at setup — it emits `land_ice_thickness` (from the
+bundled ETOPO-derived [topography file](topography.qmd)) alongside `area_type`:
+
+``` python
+import climt
+mask = climt.LandMask()          # load_topography=True by default
+state.update(mask(state))        # sets area_type AND land_ice_thickness
+```
+
+The underlying data (ice-surface minus bedrock, ETOPO 2022) and how to swap in
+your own is documented under [Topography](topography.qmd).
+
+`sea_ice_thickness` is prognostic and evolves from zero; a sea-ice-concentration
+climatology (e.g. NOAA PSL `icec.ltm.1991-2020.nc`, alongside the bundled SST)
+can be used to warm-start it if desired.
+
 ## Source
 
 - `SeaIce`: [`climt/_components/sea_ice/component.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/sea_ice/component.py)

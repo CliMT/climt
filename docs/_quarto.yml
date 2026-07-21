@@ -61,6 +61,7 @@ website:
             - user-guide/simple_physics.qmd
             - user-guide/dcmip.qmd
             - user-guide/land_mask.qmd
+            - user-guide/topography.qmd
             - user-guide/sea_land_ice.qmd
             - user-guide/slab_ocean.qmd
             - user-guide/data_ocean.qmd
