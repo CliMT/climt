@@ -197,6 +197,25 @@ class SlabSurfaceConservation(SurfaceEnergyConservation):
 
         return mass * C * T
 
+    def get_quantity_forcing(self, state):
+        # SurfaceEnergyConservation accounts for the radiative/sensible/
+        # latent terms only. ocean_heat_transport_convergence (the "q-flux")
+        # is an additional external energy source that SlabSurface's kernel
+        # adds directly into net_heat_flux for non-ice sea columns
+        # (_slab_surface_kernel_np: `if sea_mask and not sea_ice_mask:
+        # net_heat_flux += ocean_heat_transport[i]`). It must be included
+        # here too, or conservation will not close whenever a subclass sets
+        # it nonzero.
+        forcing = super().get_quantity_forcing(state)
+
+        if "ocean_heat_transport_convergence" in state:
+            area_type = np.asarray(state["area_type"].values).astype(str)
+            sea_non_ice_mask = area_type == "sea"
+            oht = state["ocean_heat_transport_convergence"].to_units("W/m^2").values
+            forcing = forcing + np.where(sea_non_ice_mask, oht, 0.0)
+
+        return forcing
+
 
 #####################
 # Start Actual Tests
@@ -354,6 +373,21 @@ class TestSlabSurfaceOnlyRadiative(SlabSurfaceConservation):
         state["upwelling_longwave_flux_in_air"].values[:] = 40.0
         state["downwelling_shortwave_flux_in_air"].values[:] = 40.0
         state["downwelling_longwave_flux_in_air"].values[:] = 40.0
+        state["ocean_mixed_layer_thickness"].values[:] = 1.0
+
+        return state
+
+
+class TestSlabSurfaceOnlyOceanHeatTransport(SlabSurfaceConservation):
+    # Exercises the q-flux term added in Task 7: default get_default_state
+    # area_type is uniformly "sea", so a nonzero
+    # ocean_heat_transport_convergence here is added straight into
+    # net_heat_flux by the kernel (sea, non-sea-ice branch). The
+    # SlabSurfaceConservation.get_quantity_forcing override above accounts
+    # for that same term, so this closes exactly like the other
+    # single-term SlabSurface conservation tests above.
+    def modify_state(self, state):
+        state["ocean_heat_transport_convergence"].values[:] = 25.0
         state["ocean_mixed_layer_thickness"].values[:] = 1.0
 
         return state
