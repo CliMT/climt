@@ -329,6 +329,27 @@ class SlabSurface(TendencyComponent):
                 )
             )
             theta_2d = np.asarray(surf_temp_flat, dtype=float).reshape(lat2d.shape)
+            rho_2d = np.asarray(sea_water_dens, dtype=float).reshape(lat2d.shape)
+
+            # Only open-ocean (sea, not land/land-ice/sea-ice) cells get the
+            # Ekman convergence added to their q-flux, matching the Task-7
+            # `sea_mask and not sea_ice_mask` convention.
+            open_ocean_mask_2d = (
+                area_type_code.reshape(lat2d.shape) == AREA_MAP["sea"]
+            )
+
+            # Zero the wind stress over non-sea cells BEFORE differentiating,
+            # not just on the output. Otherwise a coastal sea cell's
+            # divergence/curl stencil (a centered finite difference) reaches
+            # into neighboring land/sea-ice cells and picks up their wind
+            # stress (and, via theta_2d, their soil/ice surface temperature)
+            # as if it were open-ocean transport. Zeroing tau here gives a
+            # no-flux-at-coast boundary treatment: Mx/My/w_ek are then also
+            # zero on non-sea cells, so theta_2d's land/ice value at those
+            # cells never enters the theta*Mx / theta*My divergence used by
+            # a neighboring coastal sea cell.
+            tau_x = np.where(open_ocean_mask_2d, tau_x, 0.0)
+            tau_y = np.where(open_ocean_mask_2d, tau_y, 0.0)
 
             omega = get_constant("planetary_rotation_rate", "s^-1")
             c_sw = get_constant("heat_capacity_of_sea_water", "J/kg/degK")
@@ -340,27 +361,34 @@ class SlabSurface(TendencyComponent):
             f_sign = np.where(f >= 0.0, 1.0, -1.0)
             f_capped = f_sign * np.maximum(np.abs(f), f_floor)
 
-            # Ekman mass transport per unit width (kg m^-1 s^-1).
+            # Ekman mass transport per unit width (kg m^-1 s^-1). This
+            # retains the full spatial variation of 1/f, and is what drives
+            # the Q_ekman heat-transport tendency below.
             Mx = tau_y / f_capped
             My = -tau_x / f_capped
 
-            # Ekman pumping w_ek = curl_z(tau) / f: take the curl of the
-            # raw wind stress first, then divide by f. Dividing by f before
-            # differentiating (i.e. curl_z(tau/f, ...)) would spuriously
-            # pick up the meridional variation of f itself even for a
-            # spatially uniform wind stress, which has zero physical curl.
-            w_ek = curl_z(tau_x, tau_y, lat2d, lon2d) / f_capped
+            # Ekman pumping w_ek = curl_z(tau) / (rho * f): take the curl of
+            # the raw wind stress first, then divide by (rho * f). Dividing
+            # by f before differentiating (i.e. curl_z(tau/f, ...)) would
+            # spuriously pick up the meridional variation of f itself even
+            # for a spatially uniform wind stress, which has zero physical
+            # curl. Local-f approximation: f (and here rho) are treated as
+            # locally constant when forming this diagnostic, dropping the
+            # beta term (d f/dy contribution to the curl) -- this is
+            # standard for an Ekman-pumping *diagnostic* but is intentionally
+            # inconsistent with Mx/My above, which keep the full spatial 1/f
+            # variation because they feed the actual transport tendency.
+            # w_ek is a diagnostic proxy only; it is not "textbook-exact".
+            w_ek = curl_z(tau_x, tau_y, lat2d, lon2d) / (f_capped * rho_2d)
             q_ekman_2d = -c_sw * divergence(
                 theta_2d * Mx, theta_2d * My, lat2d, lon2d
             )
 
-            # Only open-ocean (sea, not sea-ice) cells get the Ekman
-            # convergence added to their q-flux, matching the Task-7
-            # `sea_mask and not sea_ice_mask` convention.
-            open_ocean_mask_2d = (
-                area_type_code.reshape(lat2d.shape) == AREA_MAP["sea"]
-            )
+            # Output masking is now redundant for the zeroed-stress cells
+            # (Mx/My/w_ek are already exactly zero there) but is kept as a
+            # harmless belt-and-suspenders guard.
             q_ekman_2d = np.where(open_ocean_mask_2d, q_ekman_2d, 0.0)
+            w_ek = np.where(open_ocean_mask_2d, w_ek, 0.0)
 
             ekman_heat_transport_flat = flat(q_ekman_2d)
             ekman_pumping_flat = flat(w_ek)
