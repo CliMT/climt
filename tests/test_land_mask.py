@@ -60,3 +60,40 @@ def test_land_mask_arbitrary_resolution_all_assigned(nx, ny):
     assert at.size == state["latitude"].values.size
     assert np.all(np.isin(at, ["sea", "land", "land_ice"]))  # every cell valid
     assert not np.any(at == "")                              # none left blank
+
+
+G = 9.80665
+
+
+def test_land_mask_loads_topography_by_default():
+    from climt import LandMask
+    mask = LandMask()  # load_topography=True by default
+    assert set(mask.diagnostic_properties) == {
+        "area_type", "surface_geopotential", "land_ice_thickness"}
+    state = get_default_state(
+        [mask], grid_state=get_grid(nx=128, ny=62, nz=10))
+    diag = mask(state)
+    area = diag["area_type"].values.astype(str)
+    orog = diag["surface_geopotential"].values / G
+    ice = diag["land_ice_thickness"].values
+
+    # non-negative everywhere, finite, and flat/ice-free over ocean
+    assert np.isfinite(orog).all() and np.isfinite(ice).all()
+    assert orog.min() >= 0.0 and ice.min() >= 0.0
+    assert np.allclose(orog[area == "sea"], 0.0)
+    assert np.allclose(ice[area == "sea"], 0.0)
+    # gross geography: real highlands and the two ice sheets show up
+    assert orog.max() > 3000.0          # Himalaya/Antarctic plateau
+    assert 2000.0 < ice.max() < 5000.0  # Antarctica ~4 km, not runaway
+    assert np.any(ice[area == "land_ice"] > 1000.0)
+
+
+def test_land_mask_topography_can_be_disabled():
+    from climt import LandMask
+    mask = LandMask(load_topography=False)
+    assert set(mask.diagnostic_properties) == {"area_type"}
+    state = get_default_state(
+        [mask], grid_state=get_grid(nx=32, ny=16, nz=10))
+    diag = mask(state)
+    assert "surface_geopotential" not in diag
+    assert "land_ice_thickness" not in diag
