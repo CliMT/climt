@@ -1,16 +1,16 @@
-# Graph Report - climt  (2026-07-21)
+# Graph Report - climt  (2026-07-22)
 
 ## Corpus Check
-- 444 files · ~1,239,847 words
+- 559 files · ~1,506,866 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 27269 nodes · 35801 edges · 1116 communities (996 shown, 120 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 1377 edges (avg confidence: 0.78)
+- 32543 nodes · 41548 edges · 1253 communities (1130 shown, 123 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 1402 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a130d094`
+- Built from commit: `05783a25`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -593,6 +593,7 @@
 - [[_COMMUNITY_Community 594|Community 594]]
 - [[_COMMUNITY_Community 595|Community 595]]
 - [[_COMMUNITY_Community 596|Community 596]]
+- [[_COMMUNITY_Community 597|Community 597]]
 - [[_COMMUNITY_Community 598|Community 598]]
 - [[_COMMUNITY_Community 599|Community 599]]
 - [[_COMMUNITY_Community 600|Community 600]]
@@ -1072,13 +1073,150 @@
 - [[_COMMUNITY_Community 1110|Community 1110]]
 - [[_COMMUNITY_Community 1111|Community 1111]]
 - [[_COMMUNITY_Community 1112|Community 1112]]
+- [[_COMMUNITY_Community 1113|Community 1113]]
+- [[_COMMUNITY_Community 1114|Community 1114]]
 - [[_COMMUNITY_Community 1115|Community 1115]]
+- [[_COMMUNITY_Community 1117|Community 1117]]
+- [[_COMMUNITY_Community 1118|Community 1118]]
+- [[_COMMUNITY_Community 1119|Community 1119]]
+- [[_COMMUNITY_Community 1120|Community 1120]]
+- [[_COMMUNITY_Community 1121|Community 1121]]
+- [[_COMMUNITY_Community 1122|Community 1122]]
+- [[_COMMUNITY_Community 1123|Community 1123]]
+- [[_COMMUNITY_Community 1124|Community 1124]]
+- [[_COMMUNITY_Community 1125|Community 1125]]
+- [[_COMMUNITY_Community 1126|Community 1126]]
+- [[_COMMUNITY_Community 1127|Community 1127]]
+- [[_COMMUNITY_Community 1128|Community 1128]]
+- [[_COMMUNITY_Community 1129|Community 1129]]
+- [[_COMMUNITY_Community 1130|Community 1130]]
+- [[_COMMUNITY_Community 1131|Community 1131]]
+- [[_COMMUNITY_Community 1132|Community 1132]]
+- [[_COMMUNITY_Community 1133|Community 1133]]
+- [[_COMMUNITY_Community 1134|Community 1134]]
+- [[_COMMUNITY_Community 1135|Community 1135]]
+- [[_COMMUNITY_Community 1136|Community 1136]]
+- [[_COMMUNITY_Community 1137|Community 1137]]
+- [[_COMMUNITY_Community 1138|Community 1138]]
+- [[_COMMUNITY_Community 1139|Community 1139]]
+- [[_COMMUNITY_Community 1140|Community 1140]]
+- [[_COMMUNITY_Community 1141|Community 1141]]
+- [[_COMMUNITY_Community 1142|Community 1142]]
+- [[_COMMUNITY_Community 1143|Community 1143]]
+- [[_COMMUNITY_Community 1144|Community 1144]]
+- [[_COMMUNITY_Community 1145|Community 1145]]
+- [[_COMMUNITY_Community 1146|Community 1146]]
+- [[_COMMUNITY_Community 1147|Community 1147]]
+- [[_COMMUNITY_Community 1148|Community 1148]]
+- [[_COMMUNITY_Community 1149|Community 1149]]
+- [[_COMMUNITY_Community 1150|Community 1150]]
+- [[_COMMUNITY_Community 1151|Community 1151]]
+- [[_COMMUNITY_Community 1152|Community 1152]]
+- [[_COMMUNITY_Community 1153|Community 1153]]
+- [[_COMMUNITY_Community 1154|Community 1154]]
+- [[_COMMUNITY_Community 1155|Community 1155]]
+- [[_COMMUNITY_Community 1156|Community 1156]]
+- [[_COMMUNITY_Community 1157|Community 1157]]
+- [[_COMMUNITY_Community 1158|Community 1158]]
+- [[_COMMUNITY_Community 1159|Community 1159]]
+- [[_COMMUNITY_Community 1160|Community 1160]]
+- [[_COMMUNITY_Community 1161|Community 1161]]
+- [[_COMMUNITY_Community 1162|Community 1162]]
+- [[_COMMUNITY_Community 1163|Community 1163]]
+- [[_COMMUNITY_Community 1164|Community 1164]]
+- [[_COMMUNITY_Community 1165|Community 1165]]
+- [[_COMMUNITY_Community 1166|Community 1166]]
+- [[_COMMUNITY_Community 1167|Community 1167]]
+- [[_COMMUNITY_Community 1168|Community 1168]]
+- [[_COMMUNITY_Community 1169|Community 1169]]
+- [[_COMMUNITY_Community 1170|Community 1170]]
+- [[_COMMUNITY_Community 1171|Community 1171]]
+- [[_COMMUNITY_Community 1172|Community 1172]]
+- [[_COMMUNITY_Community 1173|Community 1173]]
+- [[_COMMUNITY_Community 1174|Community 1174]]
+- [[_COMMUNITY_Community 1175|Community 1175]]
+- [[_COMMUNITY_Community 1176|Community 1176]]
+- [[_COMMUNITY_Community 1177|Community 1177]]
+- [[_COMMUNITY_Community 1178|Community 1178]]
+- [[_COMMUNITY_Community 1179|Community 1179]]
+- [[_COMMUNITY_Community 1180|Community 1180]]
+- [[_COMMUNITY_Community 1181|Community 1181]]
+- [[_COMMUNITY_Community 1182|Community 1182]]
+- [[_COMMUNITY_Community 1183|Community 1183]]
+- [[_COMMUNITY_Community 1184|Community 1184]]
+- [[_COMMUNITY_Community 1185|Community 1185]]
+- [[_COMMUNITY_Community 1186|Community 1186]]
+- [[_COMMUNITY_Community 1187|Community 1187]]
+- [[_COMMUNITY_Community 1188|Community 1188]]
+- [[_COMMUNITY_Community 1189|Community 1189]]
+- [[_COMMUNITY_Community 1190|Community 1190]]
+- [[_COMMUNITY_Community 1191|Community 1191]]
+- [[_COMMUNITY_Community 1192|Community 1192]]
+- [[_COMMUNITY_Community 1193|Community 1193]]
+- [[_COMMUNITY_Community 1194|Community 1194]]
+- [[_COMMUNITY_Community 1195|Community 1195]]
+- [[_COMMUNITY_Community 1196|Community 1196]]
+- [[_COMMUNITY_Community 1197|Community 1197]]
+- [[_COMMUNITY_Community 1198|Community 1198]]
+- [[_COMMUNITY_Community 1199|Community 1199]]
+- [[_COMMUNITY_Community 1200|Community 1200]]
+- [[_COMMUNITY_Community 1201|Community 1201]]
+- [[_COMMUNITY_Community 1202|Community 1202]]
+- [[_COMMUNITY_Community 1203|Community 1203]]
+- [[_COMMUNITY_Community 1204|Community 1204]]
+- [[_COMMUNITY_Community 1205|Community 1205]]
+- [[_COMMUNITY_Community 1206|Community 1206]]
+- [[_COMMUNITY_Community 1207|Community 1207]]
+- [[_COMMUNITY_Community 1208|Community 1208]]
+- [[_COMMUNITY_Community 1209|Community 1209]]
+- [[_COMMUNITY_Community 1210|Community 1210]]
+- [[_COMMUNITY_Community 1211|Community 1211]]
+- [[_COMMUNITY_Community 1212|Community 1212]]
+- [[_COMMUNITY_Community 1213|Community 1213]]
+- [[_COMMUNITY_Community 1214|Community 1214]]
+- [[_COMMUNITY_Community 1215|Community 1215]]
+- [[_COMMUNITY_Community 1216|Community 1216]]
+- [[_COMMUNITY_Community 1217|Community 1217]]
+- [[_COMMUNITY_Community 1218|Community 1218]]
+- [[_COMMUNITY_Community 1219|Community 1219]]
+- [[_COMMUNITY_Community 1220|Community 1220]]
+- [[_COMMUNITY_Community 1221|Community 1221]]
+- [[_COMMUNITY_Community 1222|Community 1222]]
+- [[_COMMUNITY_Community 1223|Community 1223]]
+- [[_COMMUNITY_Community 1224|Community 1224]]
+- [[_COMMUNITY_Community 1225|Community 1225]]
+- [[_COMMUNITY_Community 1226|Community 1226]]
+- [[_COMMUNITY_Community 1227|Community 1227]]
+- [[_COMMUNITY_Community 1228|Community 1228]]
+- [[_COMMUNITY_Community 1229|Community 1229]]
+- [[_COMMUNITY_Community 1230|Community 1230]]
+- [[_COMMUNITY_Community 1231|Community 1231]]
+- [[_COMMUNITY_Community 1232|Community 1232]]
+- [[_COMMUNITY_Community 1233|Community 1233]]
+- [[_COMMUNITY_Community 1234|Community 1234]]
+- [[_COMMUNITY_Community 1235|Community 1235]]
+- [[_COMMUNITY_Community 1236|Community 1236]]
+- [[_COMMUNITY_Community 1237|Community 1237]]
+- [[_COMMUNITY_Community 1238|Community 1238]]
+- [[_COMMUNITY_Community 1239|Community 1239]]
+- [[_COMMUNITY_Community 1240|Community 1240]]
+- [[_COMMUNITY_Community 1241|Community 1241]]
+- [[_COMMUNITY_Community 1242|Community 1242]]
+- [[_COMMUNITY_Community 1243|Community 1243]]
+- [[_COMMUNITY_Community 1244|Community 1244]]
+- [[_COMMUNITY_Community 1245|Community 1245]]
+- [[_COMMUNITY_Community 1246|Community 1246]]
+- [[_COMMUNITY_Community 1247|Community 1247]]
+- [[_COMMUNITY_Community 1248|Community 1248]]
+- [[_COMMUNITY_Community 1249|Community 1249]]
+- [[_COMMUNITY_Community 1250|Community 1250]]
+- [[_COMMUNITY_Community 1251|Community 1251]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Emanuel Convection (Python)` - 553 edges
 2. `SimplePhysics` - 503 edges
-3. `get_default_state()` - 185 edges
-4. `get_grid()` - 164 edges
+3. `get_default_state()` - 189 edges
+4. `get_grid()` - 169 edges
 5. `language` - 112 edges
 6. `language` - 112 edges
 7. `language` - 112 edges
@@ -1089,108 +1227,108 @@
 ## Surprising Connections (you probably didn't know these)
 - `UnytBackend` --aliases--> `UnytBackend`  [INFERRED]
   docs/PLUG_AND_PLAY_ARCHITECTURE.md → /Users/joymonteiro/github/climt/climt/_core/unyt_backend.py
+- `SimplePhysics` --aliases--> `SimplePhysics`  [INFERRED]
+  docs/PLUG_AND_PLAY_ARCHITECTURE.md → /Users/joymonteiro/github/climt/climt/_components/simple_physics/component.py
+- `SimplePhysics` --aliases--> `SimplePhysics`  [INFERRED]
+  graphify-out/memory/query_20260517_102630_how_do_i_build_a_model_with_specific_components_an.md → /Users/joymonteiro/github/climt/climt/_components/simple_physics/component.py
 - `DcmipInitialConditions` --aliases--> `DcmipInitialConditions`  [INFERRED]
   docs/PLUG_AND_PLAY_ARCHITECTURE.md → /Users/joymonteiro/github/climt/climt/_components/dcmip/component.py
 - `ComponentBaseColumn` --aliases--> `ComponentBaseColumn`  [INFERRED]
   graphify-out/memory/query_20260517_102630_how_do_i_build_a_model_with_specific_components_an.md → tests/test_components.py
-- `ComponentBase3D` --aliases--> `ComponentBase3D`  [INFERRED]
-  graphify-out/memory/query_20260517_102630_how_do_i_build_a_model_with_specific_components_an.md → tests/test_components.py
-- `get_grid` --aliases--> `get_grid()`  [INFERRED]
-  docs/PLUG_AND_PLAY_ARCHITECTURE.md → climt/_core/initialization.py
 
-## Communities (1116 total, 120 thin omitted)
+## Communities (1253 total, 123 thin omitted)
 
 ### Community 0 - "_rrtmg_lw.c"
 Cohesion: 0.01
-Nodes (94): __pyx_array___len__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_6__len__(), __Pyx_c_abs_double(), __Pyx_c_abs_float(), __Pyx_c_abs_long__double(), __Pyx_c_pow_double(), __Pyx_c_pow_float(), __Pyx_c_pow_long__double() (+86 more)
+Nodes (97): abs_py_ssize_t(), __pyx_array___dealloc__(), __pyx_array___len__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_4__dealloc__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_6__len__(), __Pyx_c_abs_double(), __Pyx_c_abs_float(), __Pyx_c_abs_long__double() (+89 more)
 
 ### Community 1 - "_rrtmg_sw.c"
 Cohesion: 0.01
-Nodes (284): abs_py_ssize_t(), __Pyx_AllocateExtensionType(), __Pyx__ArgTypeTest(), __pyx_array___dealloc__(), __pyx_array___getattr__(), __pyx_array_getbuffer(), __pyx_array___getitem__(), __pyx_array___len__() (+276 more)
+Nodes (285): abs_py_ssize_t(), __Pyx_AllocateExtensionType(), __Pyx__ArgTypeTest(), __pyx_array___dealloc__(), __pyx_array___getattr__(), __pyx_array___getitem__(), __pyx_array___len__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_10__getitem__() (+277 more)
 
 ### Community 2 - "pure_python.py"
-Cohesion: 0.04
-Nodes (46): Numba JIT Backend, run_benchmark(), benchmark_emanuel(), climt._components.emanuel.pure_python_v3.EmanuelConvectionPythonV3, climt._components.emanuel.pure_python_v3.py, convect(), emanuel_convection(), init_emanuel_convection_fortran() (+38 more)
+Cohesion: 0.05
+Nodes (43): climt._components.emanuel.pure_python_v3.EmanuelConvectionPythonV3, climt._components.emanuel.pure_python_v3.py, convect(), emanuel_convection(), init_emanuel_convection_fortran(), init_emanuel_convection(), EmanuelConvection, numpy_version_of() (+35 more)
 
 ### Community 3 - "simple_physics_custom.f90"
 Cohesion: 0.01
-Nodes (344): SimplePhysics, SimplePhysics, Interface to the simple physics package.      Reed and Jablonowski 2012:     tit, SimplePhysics, abs_py_ssize_t(), _copy_strided_to_strided(), set_physical_constants_func(), simple_physics_fort (+336 more)
+Nodes (352): __pyx_memview_get_nn___pyx_t_5numpy_double_t(), Interface to the simple physics package.      Reed and Jablonowski 2012:     tit, SimplePhysics, abs_py_ssize_t(), _copy_strided_to_strided(), set_physical_constants_func(), simple_physics_fort, simple_physics_func() (+344 more)
 
 ### Community 4 - "_berger_solar_insolation.c"
 Cohesion: 0.02
-Nodes (101): __pyx_atomic_int_cmp_exchange(), __pyx_bisect_code_objects(), __Pyx_c_abs_double(), __Pyx_c_abs_float(), __Pyx_c_abs_long__double(), __Pyx_c_pow_double(), __Pyx_c_pow_float(), __Pyx_c_pow_long__double() (+93 more)
+Nodes (111): __pyx_atomic_int_cmp_exchange(), __pyx_bisect_code_objects(), __Pyx_c_abs_double(), __Pyx_c_abs_float(), __Pyx_c_abs_long__double(), __Pyx_c_pow_double(), __Pyx_c_pow_float(), __Pyx_c_pow_long__double() (+103 more)
 
 ### Community 5 - "_dcmip.c"
 Cohesion: 0.02
-Nodes (130): __Pyx_AddTraceback(), __Pyx_c_abs_double(), __Pyx_c_abs_float(), __Pyx_c_abs_long__double(), __Pyx_c_neg_double(), __Pyx_c_pow_double(), __Pyx_c_pow_float(), __Pyx_c_pow_long__double() (+122 more)
+Nodes (133): __Pyx_c_abs_double(), __Pyx_c_abs_float(), __Pyx_c_abs_long__double(), __Pyx_c_neg_double(), __Pyx_c_pow_double(), __Pyx_c_pow_float(), __Pyx_c_pow_long__double(), __Pyx_c_prod_double() (+125 more)
 
 ### Community 6 - "unyt_backend.py"
-Cohesion: 0.09
-Nodes (27): ComponentBase3D, ComponentBaseColumn, cache_dictionary(), compare_one_state_pair(), ComponentBase3D, ComponentBaseColumn, load_dictionary(), TestBergerSolarInsolation (+19 more)
+Cohesion: 0.1
+Nodes (35): UnytBackend, ComponentBase3D, ComponentBaseColumn, UnytBackend, cache_dictionary(), compare_one_state_pair(), ComponentBase, ComponentBase3D (+27 more)
 
 ### Community 7 - "assert_direct_dimensions()"
-Cohesion: 0.05
-Nodes (80): assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __Pyx_CreateCodeObjectForTraceback(), __Pyx_div_long(), __Pyx_div_Py_ssize_t(), __pyx_f_5numpy_import_array(), __pyx_f_5numpy_import_ufunc() (+72 more)
+Cohesion: 0.04
+Nodes (108): assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __pyx_array_get_memview(), __Pyx_CreateCodeObjectForTraceback(), __Pyx_div_long(), __Pyx_div_Py_ssize_t(), __pyx_f_5numpy_import_array() (+100 more)
 
 ### Community 8 - "_unellipsify()"
 Cohesion: 0.03
-Nodes (150): assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __pyx_array___cinit__(), __pyx_array_get_memview(), __pyx_array_getbuffer(), __pyx_array_new(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__() (+142 more)
+Nodes (153): assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __pyx_array___cinit__(), __pyx_array_get_memview(), __pyx_array_getbuffer(), __pyx_array___getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_10__getitem__() (+145 more)
 
 ### Community 9 - "assert_direct_dimensions()"
 Cohesion: 0.04
-Nodes (132): assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __pyx_array___cinit__(), __pyx_array_get_memview(), __Pyx_BufFmt_Init(), __pyx_check_strides(), __pyx_check_suboffsets() (+124 more)
+Nodes (129): assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __pyx_array___cinit__(), __pyx_array_get_memview(), __pyx_array_getbuffer(), __pyx_array_new(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__() (+121 more)
 
 ### Community 10 - "assert_direct_dimensions()"
-Cohesion: 0.31
-Nodes (9): __Pyx_InBases(), __Pyx_inner_PyErr_GivenExceptionMatches2(), __Pyx_IsAnySubtype2(), __Pyx_IsSubtype(), __Pyx_PyErr_ExceptionMatchesInState(), __Pyx_PyErr_ExceptionMatchesTuple(), __Pyx_PyErr_GivenExceptionMatches(), __Pyx_PyErr_GivenExceptionMatches2() (+1 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 11 - "benchmark_berger_insolation.py"
-Cohesion: 0.03
-Nodes (107): Window closure with increasing water vapour using the hot-moist LW table.  Shows, run(), lw_convergence(), lw_metrics(), Accuracy metrics for PicketFence correlated-k vs RRTMG on a standard Earth colum, sw_metrics(), get_default_state(), Configure the shortwave band count used by get_default_state(). (+99 more)
+Cohesion: 0.04
+Nodes (59): Window closure with increasing water vapour using the hot-moist LW table.  Shows, run(), lw_convergence(), lw_metrics(), Accuracy metrics for PicketFence correlated-k vs RRTMG on a standard Earth colum, PicketFenceLongwave, Cooling to Space Diagnostic, Cooling-to-space diagnostic: RRTMG LW vs. Picket Fence LW on an isothermal colum (+51 more)
 
 ### Community 13 - "JAX Backend"
-Cohesion: 0.05
-Nodes (50): CorkLongwaveRadiation, CorkShortwaveRadiation, compute_column_amount(), compute_heating_rate(), njit(), Compute heating rate (K/s) from net flux divergence.      Args:         net_flux, Compute column amount (kg/m^2) of a gas in each layer.      Args:         q: (nl, diagnostic_properties() (+42 more)
+Cohesion: 0.09
+Nodes (25): CorkLongwaveRadiation, compute_column_amount(), compute_heating_rate(), njit(), Compute heating rate (K/s) from net flux divergence.      Args:         net_flux, Compute column amount (kg/m^2) of a gas in each layer.      Args:         q: (nl, diagnostic_properties(), input_properties() (+17 more)
 
 ### Community 14 - "__Pyx__ArgTypeTest()"
-Cohesion: 0.08
-Nodes (33): __Pyx__ArgTypeTest(), __pyx_array___getattr__(), __pyx_array___getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_10__getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_12__setitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_8__getattr__(), __pyx_array___setitem__(), __Pyx_GetAttr() (+25 more)
+Cohesion: 0.05
+Nodes (47): __Pyx__ArgTypeTest(), __pyx_array___getattr__(), __pyx_array___getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_10__getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_12__setitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_8__getattr__(), __pyx_array___setitem__(), __Pyx_CyFunction_get_is_coroutine() (+39 more)
 
 ### Community 15 - "_unellipsify()"
-Cohesion: 0.09
-Nodes (41): __pyx_array___cinit__(), __pyx_f_5climt_11_components_5rrtmg_2lw_9_rrtmg_lw_rrtm_calculate_longwave_fluxes(), __pyx_f_5climt_11_components_5rrtmg_2lw_9_rrtmg_lw_rrtm_calculate_longwave_fluxes_mcica(), __pyx_fatalerror(), __Pyx_INC_MEMVIEW(), __Pyx_MatchKeywordArg(), __Pyx_MatchKeywordArg_nostr(), __Pyx_MatchKeywordArg_str() (+33 more)
+Cohesion: 0.08
+Nodes (46): __pyx_f_5climt_11_components_5rrtmg_2lw_9_rrtmg_lw_rrtm_calculate_longwave_fluxes(), __pyx_f_5climt_11_components_5rrtmg_2lw_9_rrtmg_lw_rrtm_calculate_longwave_fluxes_mcica(), __pyx_fatalerror(), __Pyx_GetAttr3(), __Pyx_GetAttr3Default(), __Pyx_INC_MEMVIEW(), __Pyx_MatchKeywordArg(), __Pyx_MatchKeywordArg_nostr() (+38 more)
 
 ### Community 16 - "__pyx_array_get_memview()"
-Cohesion: 0.08
-Nodes (36): __Pyx__ArgTypeTest(), __pyx_array_get_memview(), __pyx_array___getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_10__getitem__(), __Pyx_CyFunction_get_is_coroutine(), __Pyx_CyFunction_get_is_coroutine_value(), __Pyx__CyFunction_SetClassObj(), __Pyx_GetItemInt_Fast() (+28 more)
+Cohesion: 0.06
+Nodes (42): __pyx_array_get_memview(), __Pyx_check_single_interpreter(), __Pyx_copy_object_array(), __Pyx_copy_spec_to_module(), __Pyx_CyFunction_get_is_coroutine(), __Pyx_CyFunction_get_is_coroutine_value(), __Pyx__CyFunction_SetClassObj(), __Pyx_GetCurrentInterpreterId() (+34 more)
 
 ### Community 17 - "correlated_k.py"
-Cohesion: 0.05
-Nodes (110): a(), ae(), An(), ar(), at(), b(), be(), bn() (+102 more)
+Cohesion: 0.06
+Nodes (120): a(), ae(), An(), ar(), at(), b(), be(), bn() (+112 more)
 
 ### Community 18 - "__Pyx__ArgTypeTest()"
-Cohesion: 0.08
-Nodes (32): __pyx_array___getattr__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_12__setitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_8__getattr__(), __pyx_array___setitem__(), __Pyx_GetAttr(), __pyx_getprop___pyx_memoryview_nbytes(), __Pyx_HasAttr(), __pyx_memoryview___pyx_pf_15View_dot_MemoryView_10memoryview_12__repr__() (+24 more)
+Cohesion: 0.07
+Nodes (38): __Pyx__ArgTypeTest(), __pyx_array___getattr__(), __pyx_array___getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_10__getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_12__setitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_8__getattr__(), __pyx_array___setitem__(), __Pyx_GetAttr() (+30 more)
 
 ### Community 19 - "__Pyx_check_binary_version()"
 Cohesion: 0.03
-Nodes (109): Baseline Error Weighting, Emanuel Convection (Python), Emanuel Residual Correction NN, __Pyx_c_eq_long__double(), __Pyx_c_is_zero_double(), __Pyx_call_type_traverse(), __Pyx_check_binary_version(), __Pyx_CLineForTraceback() (+101 more)
+Nodes (126): Baseline Error Weighting, Emanuel Convection (Python), Emanuel Residual Correction NN, _copy_strided_to_strided(), __pyx_array___dealloc__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_4__dealloc__(), __pyx_bisect_code_objects(), __Pyx_c_eq_double() (+118 more)
 
 ### Community 20 - "benchmark_emanuel_v3_backends.py"
-Cohesion: 0.04
-Nodes (72): benchmark(), get_timestep_quantity(), run_simulation(), Runs a radiative-convective equilibrium simulation for a given backend and conve, run_benchmark(), get_values_as_numpy(), run_gmd_simulation(), set_values() (+64 more)
+Cohesion: 0.03
+Nodes (79): get_values_as_numpy(), run_gmd_simulation(), set_values(), sw_metrics(), PicketFenceShortwave, RRTMGLongwave, RRTMGShortwave, Column Code with Slab Surface (+71 more)
 
 ### Community 21 - "__pyx_array_get_memview()"
 Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 22 - "Atmospheric Profiles"
-Cohesion: 0.04
-Nodes (64): ConstantNotFoundError, Atmospheric Profiles, get_active_condensible(), get_constant_checked(), load_atmospheric_properties(), _parse_toml(), _parse_toml_from_dict(), Multi-planet atmospheric properties via TOML profiles.  Loads named or custom at (+56 more)
+Cohesion: 0.05
+Nodes (56): ConstantNotFoundError, Atmospheric Profiles, get_active_condensible(), get_constant_checked(), load_atmospheric_properties(), _parse_toml(), _parse_toml_from_dict(), Multi-planet atmospheric properties via TOML profiles.  Loads named or custom at (+48 more)
 
 ### Community 23 - "abs_py_ssize_t()"
-Cohesion: 0.12
-Nodes (19): __pyx_array_getbuffer(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(), __Pyx_GetAttr3(), __Pyx_GetAttr3Default(), __Pyx_GetKwValue_FASTCALL(), __pyx_memoryview___getitem__(), __pyx_memoryview___pyx_pf_15View_dot_MemoryView_10memoryview_4__getitem__(), __pyx_memoryview___pyx_pf_15View_dot_MemoryView_10memoryview_6__setitem__() (+11 more)
+Cohesion: 0.08
+Nodes (34): __Pyx_AllocateExtensionType(), __pyx_array___cinit__(), __pyx_array_new(), __Pyx_InBases(), __Pyx_inner_PyErr_GivenExceptionMatches2(), __Pyx_IsAnySubtype2(), __Pyx_IsSubtype(), __pyx_memoryview_fromslice() (+26 more)
 
 ### Community 24 - "__Pyx_call_type_traverse()"
 Cohesion: 0.07
@@ -1201,8 +1339,8 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 26 - "__Pyx_check_binary_version()"
-Cohesion: 0.07
-Nodes (35): __Pyx_check_binary_version(), __pyx_CommonTypesMetaclass_init(), __Pyx_CreateCodeObjects(), __Pyx_CyFunction_Init(), __Pyx_CyFunction_New(), __Pyx_CyFunction_SetDefaultsTuple(), __Pyx_DecompressString(), __Pyx_FetchCommonTypeFromSpec() (+27 more)
+Cohesion: 0.06
+Nodes (36): __Pyx_check_binary_version(), __pyx_CommonTypesMetaclass_init(), __Pyx_CreateCodeObjects(), __Pyx_CyFunction_Init(), __Pyx_CyFunction_New(), __Pyx_CyFunction_SetDefaultsTuple(), __Pyx_DecompressString(), __Pyx_FetchCommonTypeFromSpec() (+28 more)
 
 ### Community 27 - "__Pyx_c_abs_double()"
 Cohesion: 0.02
@@ -1213,28 +1351,28 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 29 - "__Pyx_CyOrPyCFunction_GET_SELF()"
-Cohesion: 0.06
-Nodes (53): __Pyx_GetItemInt_Fast(), __Pyx_GetItemInt_Generic(), __Pyx_PyObject_CallMethO(), __Pyx_PyObject_GetIndex(), __Pyx_PyObject_GetItem(), __Pyx__ArgTypeTest(), __pyx_array___getitem__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_10__getitem__() (+45 more)
+Cohesion: 0.07
+Nodes (45): __Pyx_GetItemInt_Fast(), __Pyx_GetItemInt_Generic(), __Pyx_PyObject_CallMethO(), __Pyx_PyObject_GetIndex(), __Pyx_PyObject_GetItem(), __Pyx__ArgTypeTest(), __Pyx__CyFunction_SetClassObj(), __Pyx_GetAttr3() (+37 more)
 
 ### Community 30 - "__pyx_array_get_memview()"
 Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 31 - "component.py"
-Cohesion: 0.08
-Nodes (25): list_available_constants(), Modify/Add constants in the library.      Args:         constant_descriptions (d, Prints all the constants currently registered with sympl., set_constants_from_dict(), bolton_dqsat_dT(), bolton_q_sat(), calculate_q_sat(), ensure_contiguous_state() (+17 more)
+Cohesion: 0.14
+Nodes (20): list_available_constants(), Modify/Add constants in the library.      Args:         constant_descriptions (d, Prints all the constants currently registered with sympl., set_constants_from_dict(), bolton_dqsat_dT(), calculate_q_sat(), ensure_contiguous_state(), get_interface_values() (+12 more)
 
 ### Community 32 - "__Pyx__ArgTypeTest()"
-Cohesion: 0.18
-Nodes (15): __Pyx__ArgTypeTest(), __Pyx_CyFunction_get_is_coroutine(), __Pyx_CyFunction_get_is_coroutine_value(), __Pyx__CyFunction_SetClassObj(), __Pyx_NewRef(), __Pyx_Owned_Py_None(), __Pyx_PyBool_FromLong(), __Pyx_PyLong_As_int() (+7 more)
+Cohesion: 0.09
+Nodes (31): __Pyx__ArgTypeTest(), __Pyx_CyFunction_get_is_coroutine(), __Pyx_CyFunction_get_is_coroutine_value(), __Pyx__CyFunction_SetClassObj(), __Pyx_GetBuiltinName(), __Pyx__GetModuleGlobalName(), __Pyx_HasAttr(), __Pyx_NewRef() (+23 more)
 
 ### Community 33 - "__pyx_fatalerror()"
 Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 34 - "component.py"
-Cohesion: 0.13
-Nodes (16): DcmipInitialConditions, Climt interface to the DCMIP initial conditions.     Currently only provides int, dcmip_initial_conditions_test_4, epv(), eta_from_z(), geopotential(), horiz_mean_geopotential(), surface_geopotential() (+8 more)
+Cohesion: 0.05
+Nodes (31): DcmipInitialConditions, Climt interface to the DCMIP initial conditions.     Currently only provides int, Initialize the DCMIP module.          Args:             condition_type (str, opt, dcmip_initial_conditions_test_1_2_3, test1_advection_deformation(), test1_advection_hadley(), test1_advection_orography(), test2_schaer_mountain() (+23 more)
 
 ### Community 35 - "object"
 Cohesion: 0.05
@@ -1257,12 +1395,12 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 40 - "main()"
-Cohesion: 0.11
-Nodes (15): benchmark_held_suarez(), main(), Benchmark: Held-Suarez GCM with GFS dynamical core.  Runs 300 time steps of the, run_config(), hs, HeldSuarez, HeldSuarezParams, _held_suarez_kernel_np() (+7 more)
+Cohesion: 0.13
+Nodes (13): main(), Benchmark: Held-Suarez GCM with GFS dynamical core.  Runs 300 time steps of the, run_config(), HeldSuarez, HeldSuarezParams, _held_suarez_kernel_np(), HeldSuarez, HeldSuarezParams (+5 more)
 
 ### Community 41 - "__Pyx_BufFmt_Init()"
 Cohesion: 0.06
-Nodes (31): BestSurfaceAlbedo, Surface albedo process (BEST Eqs 5.5-5.8)., SurfaceAlbedo, BestSurfaceFluxes, Surface flux process (BEST Section 8): bulk SHF/LHF with beta wetness., Return a dict with ``sensible_heat_flux``, ``latent_heat_flux``,         ``momen, SurfaceFluxes, Pluggable process objects for SecondBEST.  Each process is a plain class exposin (+23 more)
+Nodes (30): BestSurfaceAlbedo, Surface albedo process (BEST Eqs 5.5-5.8)., SurfaceAlbedo, BestSurfaceFluxes, Surface flux process (BEST Section 8): bulk SHF/LHF with beta wetness., Return a dict with ``sensible_heat_flux``, ``latent_heat_flux``,         ``momen, SurfaceFluxes, Pluggable process objects for SecondBEST.  Each process is a plain class exposin (+22 more)
 
 ### Community 42 - "abs_py_ssize_t()"
 Cohesion: 0.02
@@ -1273,8 +1411,8 @@ Cohesion: 0.12
 Nodes (15): A1. `SecondBEST` `z_mid` reference height — RESOLVED, A2. Flux/Neumann boundary is a quasi-steady algebraic constraint (Important, ocean-ice), A. Needs a human decision, B1. SeaIce/LandIce basal-flux sign inversion (ocean-ice), B2. Singular mid-month SST solve (ocean-ice, `DataOcean`), B3. IceSheet clobbered non-owned cells (ocean-ice, Critical — fixed), B4. SecondBEST zeroed non-land columns (land-surface, Critical — fixed), B. Plan defects found and fixed during implementation (human-visible) (+7 more)
 
 ### Community 44 - "__Pyx_copy_object_array()"
-Cohesion: 0.08
-Nodes (55): netcdf, rrlw_kg01, rrlw_kg02, rrlw_kg03, rrlw_kg04, rrlw_kg05, rrlw_kg06, rrlw_kg07 (+47 more)
+Cohesion: 0.07
+Nodes (68): netcdf, rrlw_kg01, rrlw_kg02, rrlw_kg03, rrlw_kg04, rrlw_kg05, rrlw_kg06, rrlw_kg07 (+60 more)
 
 ### Community 45 - "lbl_band_mean()"
 Cohesion: 0.13
@@ -1289,36 +1427,36 @@ Cohesion: 0.13
 Nodes (23): __Pyx_CachedCFunction_GetAndSetInitializing(), __Pyx_CachedCFunction_SetFinishedInitializing(), __Pyx_CallUnboundCMethod0(), __Pyx_CallUnboundCMethod2(), __Pyx_PyDict_Items(), __Pyx_PyDict_NextRef(), __Pyx_PyDict_Values(), __Pyx_PyObject_CallOneArg() (+15 more)
 
 ### Community 48 - "atmospheric_properties.py"
-Cohesion: 0.2
-Nodes (14): initialise_rrtm_radiation(), initialise_rrtm_radiation_mcica(), set_constants(), RRTMGShortwave, rrtmg_sw_init, rrtmg_sw_rad, rrtmg_sw_rad_nomcica, mcica_subcol_sw_wrapper() (+6 more)
+Cohesion: 0.19
+Nodes (15): initialise_rrtm_radiation(), initialise_rrtm_radiation_mcica(), set_constants(), RRTMGShortwave, mcica_subcol_gen_sw, rrtmg_sw_init, rrtmg_sw_rad, rrtmg_sw_rad_nomcica (+7 more)
 
 ### Community 49 - "_delta_scale()"
-Cohesion: 0.08
-Nodes (28): With zero optical depth, direct beam reaches surface unattenuated., With very large optical depth and zero scattering, no flux reaches surface., In a pure-absorption atmosphere, reflected photons are absorbed going back up., With ssa=1 and no absorption, total flux (up+down) is conserved at every level., With g=1 (perfect forward scattering), the result approaches the no-scattering l, With zero atmosphere, upward flux equals albedo * downward flux at surface., diagnostics_level=0 returns the same 4-tuple as before., diagnostics_level=1 returns per-layer diffuse R/T and direct beam profile. (+20 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 50 - "__Pyx_InBases()"
 Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 51 - "initialization.py"
-Cohesion: 0.04
-Nodes (38): aggregate_input_properties(), compute_all_diagnostics(), ConstantDefaultValue, gaussian_latitudes(), get_diagnostics_for(), get_exponent_for_sigma(), get_hybrid_sigma_pressure_levels(), get_init_diagnostic() (+30 more)
+Cohesion: 0.05
+Nodes (33): aggregate_input_properties(), compute_all_diagnostics(), ConstantDefaultValue, gaussian_latitudes(), get_diagnostics_for(), get_exponent_for_sigma(), get_hybrid_sigma_pressure_levels(), get_init_diagnostic() (+25 more)
 
 ### Community 52 - "test_initialization.py"
-Cohesion: 0.24
-Nodes (10): lw_transport(), _lw_transport_kernel(), _lw_transport_single_gpt(), planck_sources_kernel(), Multi-band, multi-g-point LW radiative transfer (consolidated kernel).      Args, Per-(band, g-point, level, column) Planck layer + surface sources.      Linear-i, LW transport for a single g-point within a single band.      Uses a diffusivity, Multi-band, multi-g-point LW radiative transfer.      Args:         T: (nlev, nc (+2 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 53 - "__pyx_fatalerror()"
 Cohesion: 0.12
 Nodes (25): __Pyx_BufFmt_Init(), __pyx_check_strides(), __pyx_check_suboffsets(), __pyx_fatalerror(), __Pyx_INC_MEMVIEW(), __pyx_memoryview_check(), __pyx_pf_5climt_11_components_7emanuel_19_emanuel_convection_2convect(), __pyx_pw_5climt_11_components_7emanuel_19_emanuel_convection_3convect() (+17 more)
 
 ### Community 54 - "__pyx_getprop___pyx_memoryview_itemsize()"
-Cohesion: 0.23
-Nodes (14): __Pyx_BufFmt_CheckString(), __Pyx_BufFmt_DescribeTypeChar(), __Pyx_BufFmt_ExpectNumber(), __pyx_buffmt_parse_array(), __Pyx_BufFmt_ParseNumber(), __Pyx_BufFmt_ProcessTypeChunk(), __Pyx_BufFmt_RaiseExpected(), __Pyx_BufFmt_RaiseUnexpectedChar() (+6 more)
+Cohesion: 0.18
+Nodes (17): __Pyx_BufFmt_CheckString(), __Pyx_BufFmt_DescribeTypeChar(), __Pyx_BufFmt_ExpectNumber(), __Pyx_BufFmt_Init(), __pyx_buffmt_parse_array(), __Pyx_BufFmt_ParseNumber(), __Pyx_BufFmt_ProcessTypeChunk(), __Pyx_BufFmt_RaiseExpected() (+9 more)
 
 ### Community 55 - "__Pyx_AddTraceback()"
-Cohesion: 0.08
-Nodes (45): __Pyx_GetBuiltinName(), __Pyx__GetModuleGlobalName(), __Pyx_HasAttr(), __Pyx_PyDict_GetItemRef(), __Pyx_PyLong_From_long(), __Pyx_PyObject_GetAttrStr_ClearAttributeError(), __Pyx_PyObject_GetAttrStrNoError(), __Pyx_CyFunction_get_is_coroutine() (+37 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 56 - "__Pyx_BufFmt_CheckString()"
 Cohesion: 0.23
@@ -1334,31 +1472,31 @@ Nodes (17): build_profile(), _get_pressure_grid(), main(), moist_adiabat_dT_dlnp
 
 ### Community 59 - "compute_qs()"
 Cohesion: 0.04
-Nodes (82): EmanuelConvectionPythonComponent, EmanuelConvectionPythonV2, EmanuelParams, EmanuelConvectionPython, EmanuelParams, CondensibleParams, __call__(), EmanuelEmulator (+74 more)
+Nodes (71): EmanuelConvectionPythonComponent, EmanuelConvectionPythonV2, EmanuelParams, EmanuelConvectionPython, EmanuelParams, CondensibleParams, EmanuelCorrection, train() (+63 more)
 
 ### Community 60 - "CondensibleParams"
 Cohesion: 0.02
-Nodes (38): parkind, parrrtm, rrlw_cld, rrlw_kg01, rrlw_kg02, rrlw_kg03, rrlw_kg04, rrlw_kg05 (+30 more)
+Nodes (36): parkind, parrrtm, rrlw_cld, rrlw_kg01, rrlw_kg02, rrlw_kg03, rrlw_kg04, rrlw_kg05 (+28 more)
 
 ### Community 61 - "bolton_q_sat()"
-Cohesion: 0.14
-Nodes (30): _additive_co2_fast(), _ck_bracket(), _ck_tau_additive_co2_kernel(), _ck_txx7(), _ck_txx_cont(), compute_ck_optical_depth(), _compute_ck_optical_depth_additive(), _compute_ck_optical_depth_esft() (+22 more)
+Cohesion: 0.11
+Nodes (36): _additive_co2_fast(), _ck_bracket(), _ck_tau_additive_co2_kernel(), _ck_txx7(), _ck_txx_cont(), compute_ck_optical_depth(), _compute_ck_optical_depth_additive(), _compute_ck_optical_depth_esft() (+28 more)
 
 ### Community 62 - "abs_py_ssize_t()"
-Cohesion: 0.36
-Nodes (10): _adding(), _delta_scale(), Adding method for diffuse fluxes (Shonk & Hogan 2008).      Convention: index 0, Multi-band, multi-g-point SW radiative transfer.      Meador & Weaver (1980) two, Apply delta-Eddington scaling to optical properties.      Removes the forward sc, Multi-band, multi-g-point SW radiative transfer.      Meador & Weaver (1980) two, Compute per-layer diffuse R/T and direct-beam source terms.      Following RRTMG, _sw_dif_and_source() (+2 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 63 - "__Pyx_CallUnboundCMethod0()"
-Cohesion: 0.13
-Nodes (17): __Pyx_CallUnboundCMethod0(), __Pyx_CallUnboundCMethod2(), __Pyx_MatchKeywordArg(), __Pyx_MatchKeywordArg_nostr(), __Pyx_MatchKeywordArg_str(), __Pyx_ParseKeywordDict(), __Pyx_ParseKeywordDictToDict(), __Pyx_ParseKeywordsTuple() (+9 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 64 - "_unellipsify()"
-Cohesion: 0.15
-Nodes (7): rrsw_tbl, rrtmg_sw_reftra, rrtmg_sw_reftra, rrtmg_sw_spcvmc, rrtmg_sw_spcvrt, rrtmg_sw_taumol, rrtmg_sw_vrtqdr
+Cohesion: 0.07
+Nodes (14): rrsw_cld, rrsw_ref, rrsw_tbl, rrsw_vsn, rrtmg_sw_reftra, rrtmg_sw_cldprmc, rrtmg_sw_cldprop, swdatinit() (+6 more)
 
 ### Community 65 - "component.py"
-Cohesion: 0.09
-Nodes (22): benchmark_instellation(), Instellation, Instellation, days_from_2000(), fractional_day(), _gmst_jit(), Instellation, _instellation_kernel_np() (+14 more)
+Cohesion: 0.2
+Nodes (8): assert_state_is_full(), call_component(), ComponentQuantityInitializationTests, create_1d_grid_test_for(), create_3d_grid_test_for(), create_default_test_for(), GetGridTests, test_3d_initialization_is_full_based_on_wildcard()
 
 ### Community 66 - "_band_planck_fraction()"
 Cohesion: 0.2
@@ -1382,19 +1520,19 @@ Nodes (13): build_rayleigh_per_band(), build_solar_source_per_gpoint(), SW band-
 
 ### Community 71 - "grid_scale_condensation.py"
 Cohesion: 0.05
-Nodes (28): mcica_subcol_gen_lw, rrlw_cld, rrlw_con, rrlw_tbl, rrlw_vsn, rrlw_wvn, rrtmg_lw_cldprmc, rrtmg_lw_cldprop (+20 more)
+Nodes (50): mcica_subcol_gen_lw, parrrtm, rrlw_cld, rrlw_con, rrlw_tbl, rrlw_vsn, rrlw_wvn, rrtmg_lw_cldprmc (+42 more)
 
 ### Community 72 - "__Pyx_BufFmt_CheckString()"
-Cohesion: 0.23
-Nodes (14): __Pyx_BufFmt_CheckString(), __Pyx_BufFmt_DescribeTypeChar(), __Pyx_BufFmt_ExpectNumber(), __pyx_buffmt_parse_array(), __Pyx_BufFmt_ParseNumber(), __Pyx_BufFmt_ProcessTypeChunk(), __Pyx_BufFmt_RaiseExpected(), __Pyx_BufFmt_RaiseUnexpectedChar() (+6 more)
+Cohesion: 0.09
+Nodes (30): __Pyx_BufFmt_CheckString(), __Pyx_BufFmt_DescribeTypeChar(), __Pyx_BufFmt_ExpectNumber(), __Pyx_BufFmt_Init(), __pyx_buffmt_parse_array(), __Pyx_BufFmt_ParseNumber(), __Pyx_BufFmt_ProcessTypeChunk(), __Pyx_BufFmt_RaiseExpected() (+22 more)
 
 ### Community 73 - "__Pyx_CyFunction_Call()"
 Cohesion: 0.04
 Nodes (40): code:block1 (climt/), code:python ("longwave_optical_depth_per_band": {), code:python (# Per-band optical depth: sum over g-points (weighted)), code:python ("longwave_optical_depth_per_band": tau_band_out,), code:python ("shortwave_optical_depth_per_band": {), code:bash (git add climt/_components/picket_fence/lw/component.py climt), code:python (def test_sw_parmentier_cloud_increases_reflection(get_defaul), code:python (# Cloud optical properties for SW (default zero = clear sky)) (+32 more)
 
 ### Community 74 - "__Pyx_AddTraceback()"
-Cohesion: 0.07
-Nodes (40): __Pyx_AddTraceback(), __Pyx_BufFmt_Init(), __Pyx_CLineForTraceback(), __Pyx_CreateCodeObjectForTraceback(), __Pyx_ErrFetchInState(), __Pyx_ErrRestoreInState(), __pyx_f_5climt_11_components_24_berger_solar_insolation_get_fixed_vernal_equinox_longitude_of_perihelion(), __pyx_f_5climt_11_components_24_berger_solar_insolation_get_orbital_parameters() (+32 more)
+Cohesion: 0.08
+Nodes (35): __Pyx_AddTraceback(), __Pyx_BufFmt_Init(), __Pyx_CLineForTraceback(), __Pyx_CreateCodeObjectForTraceback(), __Pyx_ErrFetchInState(), __Pyx_ErrRestoreInState(), __pyx_f_5climt_11_components_24_berger_solar_insolation_get_fixed_vernal_equinox_longitude_of_perihelion(), __pyx_f_5climt_11_components_24_berger_solar_insolation_get_orbital_parameters() (+27 more)
 
 ### Community 75 - "__Pyx_BufFmt_CheckString()"
 Cohesion: 0.23
@@ -1413,12 +1551,12 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 79 - "_h2o_kappa()"
-Cohesion: 0.11
-Nodes (21): main(), pf_band_means(), Experiment #13 — PF table H2O-VMR-axis fidelity vs LBL (lines + MT_CKD).  All pr, PF table band-mean k (m^2/kg) at exact (T, p, X) nodes -> dict[band_edge] = arra, _h2o_kappa(), _mass_fraction(), Sample linepyline line-by-line mass absorption coefficients on a (T, p[, X_H2O]), H2O kappa (lines + optional MT_CKD continuum), shape (nT, nP, nNu). (+13 more)
+Cohesion: 0.13
+Nodes (17): _h2o_kappa(), _mass_fraction(), Sample linepyline line-by-line mass absorption coefficients on a (T, p[, X_H2O]), H2O kappa (lines + optional MT_CKD continuum), shape (nT, nP, nNu)., H2O kappa (lines + optional MT_CKD continuum), shape (nT, nP, nNu)., Mass fraction of `species` in a moist gas mixture., Mass fraction of `species` in a moist gas mixture., Compute mass absorption coefficient kappa(T, p[, X_H2O], nu).      Args: (+9 more)
 
 ### Community 80 - "Correlated-k Method"
-Cohesion: 0.14
-Nodes (13): Correlated-k Method, main(), Experiment #8 — does the GL band-mean converge to LBL as ngpt grows?  Exp #7 lef, kappa_to_k_coeffs(), Band-bin κ(ν) and quadrature to a small number of g-points., Convert line-by-line κ to per-band k-distribution coefficients.      Args:, Within a band, k_coeffs at successive g-points are monotone increasing., Builder is shape-agnostic in the leading kappa axes. (+5 more)
+Cohesion: 0.18
+Nodes (11): Correlated-k Method, kappa_to_k_coeffs(), Band-bin κ(ν) and quadrature to a small number of g-points., Convert line-by-line κ to per-band k-distribution coefficients.      Args:, Within a band, k_coeffs at successive g-points are monotone increasing., Builder is shape-agnostic in the leading kappa axes., A uniform kappa(nu) in a band should give k_coeffs = kappa at every g-point., test_kappa_to_k_coeffs_two_peaks_orders_correctly() (+3 more)
 
 ### Community 81 - "Collision Induced Absorption (CIA)"
 Cohesion: 0.21
@@ -1433,8 +1571,8 @@ Cohesion: 0.15
 Nodes (13): Backend Performance Benchmark, Berger Insolation Benchmark, Dry Convection Benchmark, GMD Paper Simulation Benchmark, Gray Radiation Benchmark, Held-Suarez Performance Benchmark, Instellation Benchmark, Numba Speedup Detailed Benchmark (+5 more)
 
 ### Community 84 - "_diag_scalars()"
-Cohesion: 0.12
-Nodes (22): integrate_spectrum_over_bands(), load_stellar_spectrum(), Integrate a stellar spectrum over spectral bands.      Args:         spectrum: d, Load a stellar spectrum from a built-in name or file path.      Args:         na, The solar spectrum should integrate to approximately 1361 W/m^2., Band integration distributes total flux across bands., A very narrow band should get a small fraction of total flux., Loading the solar spectrum returns arrays with matching shapes. (+14 more)
+Cohesion: 0.1
+Nodes (25): Configure the shortwave band count used by get_default_state()., Configure the shortwave band count used by get_default_state()., set_num_shortwave_bands(), integrate_spectrum_over_bands(), load_stellar_spectrum(), Integrate a stellar spectrum over spectral bands.      Args:         spectrum: d, Load a stellar spectrum from a built-in name or file path.      Args:         na, The solar spectrum should integrate to approximately 1361 W/m^2. (+17 more)
 
 ### Community 85 - "__pyx_getprop___pyx_memoryview_shape()"
 Cohesion: 0.17
@@ -1445,20 +1583,20 @@ Cohesion: 0.29
 Nodes (8): __pyx_m_clear(), __Pyx_ModuleStateLookup_wait_until_no_readers(), __Pyx_State_AddModule(), __Pyx_State_AddModuleInterpIdAsIndex(), __Pyx_State_ConvertFromInterpIdAsIndex(), __Pyx_State_FindModule(), __Pyx_State_FindModuleStateLookupTableLowerBound(), __Pyx_State_RemoveModule()
 
 ### Community 87 - "__Pyx_ParseKeywordsTuple()"
-Cohesion: 0.17
-Nodes (20): __Pyx_MatchKeywordArg(), __Pyx_MatchKeywordArg_nostr(), __Pyx_MatchKeywordArg_str(), __Pyx_ParseKeywordDict(), __Pyx_ParseKeywordDictToDict(), __Pyx_ParseKeywords(), __Pyx_ParseKeywordsTuple(), __Pyx_RaiseDoubleKeywordsError() (+12 more)
+Cohesion: 0.12
+Nodes (34): __Pyx_MatchKeywordArg(), __Pyx_MatchKeywordArg_nostr(), __Pyx_MatchKeywordArg_str(), __Pyx_ParseKeywordDict(), __Pyx_ParseKeywordDictToDict(), __Pyx_ParseKeywords(), __Pyx_ParseKeywordsTuple(), __Pyx_RaiseDoubleKeywordsError() (+26 more)
 
 ### Community 88 - "__Pyx_CyFunction_Call()"
-Cohesion: 0.23
-Nodes (12): __Pyx_CyFunction_Call(), __Pyx_CyFunction_CallAsMethod(), __Pyx_CyFunction_CallMethod(), __Pyx_CyFunction_get_name(), __Pyx_CyFunction_get_name_locked(), __Pyx_CyFunction_raise_argument_count_error(), __Pyx_CyFunction_raise_type_error(), __Pyx_CyFunction_Vectorcall_CheckArgs() (+4 more)
+Cohesion: 0.13
+Nodes (20): __Pyx_CallUnboundCMethod0(), __Pyx_CallUnboundCMethod2(), __Pyx_CyFunction_Call(), __Pyx_CyFunction_CallAsMethod(), __Pyx_CyFunction_CallMethod(), __Pyx_CyFunction_get_name(), __Pyx_CyFunction_get_name_locked(), __Pyx_CyFunction_raise_argument_count_error() (+12 more)
 
 ### Community 89 - "shijilBL-checkpoint.py"
 Cohesion: 0.07
 Nodes (35): __Pyx_c_abs_double(), __Pyx_c_abs_float(), __Pyx_c_abs_long__double(), __Pyx_c_conj_double(), __Pyx_c_conj_float(), __Pyx_c_conj_long__double(), __Pyx_c_diff_double(), __Pyx_c_diff_float() (+27 more)
 
 ### Community 90 - "boundary()"
-Cohesion: 0.32
-Nodes (7): do_simple_physics(), set_fortran_constants(), get_new_state(), init_simple_physics(), set_physical_constants(), SimplePhysics, simple_physics
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 91 - "ShijilBL_copy-checkpoint.py"
 Cohesion: 0.06
@@ -1482,7 +1620,7 @@ Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as
 
 ### Community 96 - "__Pyx_MatchKeywordArg()"
 Cohesion: 0.05
-Nodes (85): abs_py_ssize_t(), assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(), __Pyx_CLineForTraceback(), __Pyx_CreateCodeObjectForTraceback(), __Pyx_div_long() (+77 more)
+Nodes (76): assert_direct_dimensions(), __Pyx_AddTraceback(), __pyx_array_allocate_buffer(), __pyx_array_getbuffer(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(), __Pyx_CheckUnpickleChecksum(), __Pyx_CLineForTraceback() (+68 more)
 
 ### Community 97 - "In the optically thick limit, OLR approaches sigma * T_skin^4.          With ver"
 Cohesion: 0.1
@@ -1505,16 +1643,16 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 102 - "BucketHydrology"
-Cohesion: 0.11
-Nodes (20): bulk_fluxes(), Shared bulk aerodynamic surface-flux formulae.  Matches the convention in Bucket, DataOcean, Prescribe observed SSTs on ``area_type == 'sea'`` cells (AMIP-style).      Loads, _day_of_year(), interp_time(), mid_month_values(), Mid-month (Taylor, Williamson & Zwiers 2000) SST time interpolation.  Monthly-me (+12 more)
+Cohesion: 0.07
+Nodes (24): bulk_fluxes(), Shared bulk aerodynamic surface-flux formulae.  Matches the convention in Bucket, DataOcean, Prescribe observed SSTs on ``area_type == 'sea'`` cells (AMIP-style).      Loads, _day_of_year(), interp_time(), mid_month_values(), Mid-month (Taylor, Williamson & Zwiers 2000) SST time interpolation.  Monthly-me (+16 more)
 
 ### Community 103 - "_band_planck_fraction()"
-Cohesion: 0.1
-Nodes (23): _ensure_parent(), Write picket-fence correlated-k netCDF tables in climt's schema., Write LW k-table.      k_coefficients shape:         (ngas, nband, ngpt, nT, nP), Write LW k-table.      k_coefficients shape:         (ngas, nband, ngpt, nT, nP), write_lw_table(), write_sw_table(), _band_planck_fraction(), build_uniform_planck_fraction() (+15 more)
+Cohesion: 0.15
+Nodes (17): _ensure_parent(), Write picket-fence correlated-k netCDF tables in climt's schema., Write LW k-table.      k_coefficients shape:         (ngas, nband, ngpt, nT, nP), Write LW k-table.      k_coefficients shape:         (ngas, nband, ngpt, nT, nP), write_lw_table(), write_sw_table(), test_write_lw_table_roundtrip(), test_write_lw_table_with_co2_axis_roundtrip() (+9 more)
 
 ### Community 104 - "_ensure_parent()"
-Cohesion: 0.1
-Nodes (28): With zero optical depth, direct beam reaches surface unattenuated., With very large optical depth and zero scattering, no flux reaches surface., In a pure-absorption atmosphere, reflected photons are absorbed going back up., With ssa=1 and no absorption, total flux (up+down) is conserved at every level., With g=1 (perfect forward scattering), the result approaches the no-scattering l, With zero atmosphere, upward flux equals albedo * downward flux at surface., diagnostics_level=0 returns the same 4-tuple as before., diagnostics_level=1 returns per-layer diffuse R/T and direct beam profile. (+20 more)
+Cohesion: 0.05
+Nodes (66): _adding(), _delta_scale(), Adding method for diffuse fluxes (Shonk & Hogan 2008).      Convention: index 0, Multi-band, multi-g-point SW radiative transfer.      Meador & Weaver (1980) two, Apply delta-Eddington scaling to optical properties.      Removes the forward sc, Multi-band, multi-g-point SW radiative transfer.      Meador & Weaver (1980) two, Compute per-layer diffuse R/T and direct-beam source terms.      Following RRTMG, _sw_dif_and_source() (+58 more)
 
 ### Community 105 - "build_libraries()"
 Cohesion: 0.33
@@ -1541,40 +1679,44 @@ Cohesion: 0.15
 Nodes (12): Code changes (extend the existing H₂O-axis machinery), Context / motivation, Design, Design — CO₂-adjustable, RRTMG-fidelity Earth-LW picket-fence table, Goal, Key files, Non-goals (future / separate), Performance pass (+4 more)
 
 ### Community 111 - "Earth Radiative-Convective Shijil BL"
-Cohesion: 0.24
-Nodes (11): _diag_scalars(), _empty_history(), _find_rad_pair(), _integrate(), main(), Single-column radiative-equilibrium comparison: PicketFence vs. RRTMG.  Runs two, Step ``components`` forward ``n_steps`` times, record history., Return (lw_component, sw_component) regardless of order. (+3 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 112 - "test_emanuel_optimization.py"
-Cohesion: 0.1
-Nodes (24): _LocIndexer, UnytBackend, UnytStateContainer, UnytTimeDelta, Unit Handling with unyt, attrs(), loc(), _LocIndexer (+16 more)
+Cohesion: 0.07
+Nodes (26): _LocIndexer, UnytBackend, UnytStateContainer, UnytTimeDelta, Unit Handling with unyt, attrs(), loc(), _LocIndexer (+18 more)
 
 ### Community 113 - "__Pyx_PyObject_FastCall_fallback()"
-Cohesion: 0.27
-Nodes (10): __Pyx_CyOrPyCFunction_GET_SELF(), __Pyx_PyObject_Call(), __Pyx_PyObject_CallMethO(), __Pyx_PyObject_FastCall_fallback(), __Pyx_PyObject_FastCallDict(), __Pyx_PyVectorcall_Function(), __Pyx_PyObject_Call(), __Pyx_PyObject_FastCall_fallback() (+2 more)
+Cohesion: 0.36
+Nodes (8): __Pyx_PyObject_Call(), __Pyx_PyObject_FastCall_fallback(), __Pyx_PyObject_FastCallDict(), __Pyx_PyVectorcall_Function(), __Pyx_PyObject_Call(), __Pyx_PyObject_FastCall_fallback(), __Pyx_PyObject_FastCallDict(), __Pyx_PyVectorcall_Function()
 
 ### Community 114 - "__pyx_array___dealloc__()"
-Cohesion: 0.08
-Nodes (31): __Pyx_AllocateExtensionType(), __pyx_array_get_memview(), __pyx_array_new(), __Pyx_CyFunction_get_is_coroutine(), __Pyx_CyFunction_get_is_coroutine_value(), __pyx_getprop___pyx_memoryview_ndim(), __Pyx_init_memviewslice(), __pyx_memoryview_copy_fortran() (+23 more)
+Cohesion: 0.29
+Nodes (7): __Pyx_AllocateExtensionType(), __pyx_array_new(), __pyx_tp_new_5climt_11_components_7emanuel_19_emanuel_convection___pyx_defaults(), __pyx_tp_new_array(), __pyx_tp_new_Enum(), __pyx_tp_new_memoryview(), __pyx_tp_new__memoryviewslice()
 
 ### Community 116 - "get_data()"
 Cohesion: 0.43
 Nodes (6): get_data(), plot_function(), Helper to get numpy array from either DataArray or UnytStateContainer., Helper to convert units for either DataArray or UnytStateContainer., set_values(), to_units()
 
 ### Community 117 - "Compare picket-fence against RRTMG for Earth standard atmosphere."
-Cohesion: 0.2
-Nodes (7): BucketHydrology, Args:         soil_moisture_max:             The maximum moisture that can be he, Args:         num_layers:             Number of soil moisture layers (1 or 2). W, Calculates sensible and latent heat flux and returns         surface temperature, Calculates sensible and latent heat flux and returns         surface temperature, Manages surface energy and moisture balance     This component assumes that the, BucketHydrology
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 118 - "__Pyx_CyOrPyCFunction_GET_SELF()"
 Cohesion: 0.07
 Nodes (26): 4a. Add pytest tests for Emanuel V3, 4b. Fix flaky test_adding_constant, 4c. Re-run benchmark_numba_x_backend.py at 512 columns, climt Release Plan, code:block1 (conda activate climt), code:block2 (Component               | DA+noJIT | DA+Numba | Unyt+noJIT |), code:block3 (python benchmarks/benchmark_numba_x_backend.py > benchmarks/), code:block4 (python benchmarks/benchmark_numba_x_backend.py --ncol 512 --) (+18 more)
 
 ### Community 119 - "__Pyx_CyOrPyCFunction_GET_SELF()"
-Cohesion: 0.21
-Nodes (8): call_with_timestep_if_needed(), compare_outputs(), ComponentBase, get_component_instance(), TestIceSheetLand, TestRRTMGLongwaveMCICA, TestRRTMGShortwave, TestSlabSurface
+Cohesion: 0.26
+Nodes (6): call_with_timestep_if_needed(), compare_outputs(), get_component_instance(), TestRRTMGLongwaveMCICA, TestRRTMGShortwave, TestSlabSurface
 
 ### Community 120 - "__Pyx_MatchKeywordArg()"
 Cohesion: 0.08
 Nodes (22): 1. Two Wheels from One Source, 2. Silent Import Degradation, 3. BergerSolarInsolation: Remove Dead Cython Import, 4. Remove scipy Dependency, 4a. TDMA Tridiagonal Solver (shared utility), 4b. Replace CubicSpline with numpy, 4c. Update setup.py, 5. Runtime Discoverability (+14 more)
+
+### Community 121 - "component.py"
+Cohesion: 0.14
+Nodes (11): do_simple_physics(), set_fortran_constants(), get_new_state(), init_simple_physics(), set_physical_constants(), SimplePhysics, SimplePhysics, SimplePhysics (+3 more)
 
 ### Community 122 - "__Pyx_CyOrPyCFunction_GET_SELF()"
 Cohesion: 0.09
@@ -1589,12 +1731,12 @@ Cohesion: 0.29
 Nodes (7): metadata, engines, fig-responsive, lang, quarto-version, theme, title
 
 ### Community 125 - "test_resolution_convergence.py"
-Cohesion: 0.07
-Nodes (40): lw_convergence(), lw_metrics(), Accuracy metrics for Cork correlated-k vs RRTMG on a standard Earth column.  Pri, _rrtmg_available(), sw_metrics(), cork_olr(), main(), pf_olr() (+32 more)
+Cohesion: 0.06
+Nodes (42): lw_convergence(), lw_metrics(), Accuracy metrics for Cork correlated-k vs RRTMG on a standard Earth column.  Pri, _rrtmg_available(), sw_metrics(), equilibrate_and_diagnose(), Diagnose the vertical opacity structure of the CORK k-tables, using the componen, cork_olr() (+34 more)
 
 ### Community 126 - "build_table()"
 Cohesion: 0.22
-Nodes (6): Background the engineer needs, CO₂-adjustable, RRTMG-fidelity Earth-LW picket-fence table — Implementation Plan, code:bash (git add scripts/pf_table_builder/netcdf_writer.py \), File structure, Self-review against the spec, Task 2: Loader — read `co2_vmr_grid`
+Nodes (6): Background the engineer needs, CO₂-adjustable, RRTMG-fidelity Earth-LW picket-fence table — Implementation Plan, code:python (def test_write_lw_table_with_co2_axis_roundtrip(tmp_path):), File structure, Self-review against the spec, Task 1: Writer — add CO₂ axis to `write_lw_table`
 
 ### Community 127 - "get_data()"
 Cohesion: 0.4
@@ -1677,8 +1819,8 @@ Cohesion: 0.07
 Nodes (28): Build order, code:block10 (__call__(profiles{T, X_w, X_i}, surface_flux_bc, timestep, d), code:block11 (c_v T_t = G_z + L_f Γ + c_pw R T_z            (heat)), code:block2 (w_s ← clamp(w_s + (P − E − F_sd) · dt, 0, S_s)), code:block3 (C_s dT_s/dt = Q_net − G_sd), code:python (class SecondBEST(Stepper):), code:block5 (state (atmos lowest level, radiation, soil/snow state)), code:block6 (__call__(soil_type, area_type) -> {) (+20 more)
 
 ### Community 186 - "__init__.py"
-Cohesion: 0.08
-Nodes (21): run_benchmark(), benchmark_gray_radiation(), Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, Frierson06LongwaveOpticalDepth, _frierson_tau_kernel_np(), _gray_lw_kernel_np(), GrayLongwaveRadiation (+13 more)
+Cohesion: 0.14
+Nodes (13): benchmark_gray_radiation(), bench_gray_radiation(), Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, Frierson06LongwaveOpticalDepth, _frierson_tau_kernel_np(), _gray_lw_kernel_np(), GrayLongwaveRadiation (+5 more)
 
 ### Community 220 - "get_grid"
 Cohesion: 0.2
@@ -1726,15 +1868,15 @@ Nodes (14): 10. File Organization, 11. Table Generation Workflow (External), 12.
 
 ### Community 231 - "SlabSurface"
 Cohesion: 0.03
-Nodes (74): benchmark_component(), get_timestep_quantity(), main(), run_simulation(), benchmark_berger_insolation(), run_benchmark(), benchmark_slab_surface(), EmanuelCorrection (+66 more)
+Nodes (112): JAX Backend, Numba JIT Backend, benchmark_berger_insolation(), benchmark_dry_convection(), run_benchmark(), benchmark_emanuel(), benchmark_grid_scale_condensation(), benchmark_held_suarez() (+104 more)
 
 ### Community 232 - "BucketHydrology"
 Cohesion: 0.12
 Nodes (14): Artifact regeneration, Audience, climt Website Design, code:block1 (docs/experiments/2026-05-18-cork-co2-bands/), code:yaml (artifacts:), Deferred: in-browser executable code, Deployment, Experiments format (+6 more)
 
 ### Community 233 - "IceSheet"
-Cohesion: 0.07
-Nodes (26): Climt Package Initialization, IceSheet, 1-d snow-ice energy balance model., Deprecated monolithic 1-d snow-ice energy balance model.      .. deprecated::, Args:             maximum_snow_ice_height (float):                 The maximum c, Args:             maximum_snow_ice_height (float):                 The maximum c, Dirichlet, Flux (+18 more)
+Cohesion: 0.05
+Nodes (40): Climt Package Initialization, IceSheet, 1-d snow-ice energy balance model., Deprecated monolithic 1-d snow-ice energy balance model.      .. deprecated::, Args:             maximum_snow_ice_height (float):                 The maximum c, Args:             maximum_snow_ice_height (float):                 The maximum c, Dirichlet, Flux (+32 more)
 
 ### Community 234 - "SimplePhysics"
 Cohesion: 0.02
@@ -1761,8 +1903,8 @@ Cohesion: 0.33
 Nodes (6): dcmipBaroclinicWave(), dcmipTropicalCyclone(), get_baroclinic_wave_ics(), get_tropical_cyclone_ics(), DcmipInitialConditions, DcmipInitialConditions
 
 ### Community 240 - "RRTMGLongwave"
-Cohesion: 0.08
-Nodes (35): compute_thermal_opacities(), Compute the two thermal band opacities from Parmentier parameters.      From Par, Compute the two thermal band opacities from Parmentier parameters.      From Par, Loading a test table returns expected dimensions., k-coefficient interpolation returns plausible values., CO2 and other non-H2O gases must be declared as mole/mole, not kg/kg., Correlated-k optics produces optical depths with correct shape., Loading the SW test table returns expected dimensions and SW-specific fields. (+27 more)
+Cohesion: 0.1
+Nodes (26): Loading a test table returns expected dimensions., k-coefficient interpolation returns plausible values., CO2 and other non-H2O gases must be declared as mole/mole, not kg/kg., Correlated-k optics produces optical depths with correct shape., Loading the SW test table returns expected dimensions and SW-specific fields., With one gas, ESFT should give the same result as additive overlap., When R > 1, kappa_1 > kappa_R > kappa_2., ESFT combined weights for 2 gases × 2 g-points should sum to 1 per band. (+18 more)
 
 ### Community 241 - "RRTMGShortwave"
 Cohesion: 0.02
@@ -1809,8 +1951,8 @@ Cohesion: 0.17
 Nodes (10): 1. Architectural Changes, 2. Optimization Strategy & Performance, 3. Verification and Differentiability, 4. Summary of New Components, Continuous Parity Check, Core Abstraction Layer (`climt/_core/backend.py`), Differentiability, Emanuel Convection Optimization Report (+2 more)
 
 ### Community 254 - "Community 254"
-Cohesion: 0.17
-Nodes (10): CliMT Plug-and-Play Architecture, code:python (from datetime import timedelta), Convection & Condensation, Core Abstractions (`climt/_core`), Example: Building a Model, Idealized Forcing & Insolation, Initial Conditions, Physical Components (`climt/_components`) (+2 more)
+Cohesion: 0.06
+Nodes (37): benchmark_component(), get_timestep_quantity(), main(), run_simulation(), benchmark(), get_timestep_quantity(), run_simulation(), compare_tendencies_jax_vs_numpy() (+29 more)
 
 ### Community 255 - "Community 255"
 Cohesion: 0.18
@@ -1841,8 +1983,8 @@ Cohesion: 0.2
 Nodes (10): code:python ("""Convert a Chaverot (Exo_k-format) correlated-k table into), code:rst (Generating correlated-k tables), code:bash (git add scripts/generate_picket_fence_tables.py docs/radiati), code:python (import numpy as np), code:bash (export CHAV=~/data/chaverot), code:markdown (# Shipped correlated-k tables), code:bash (git add climt/_data/picket_fence/correlated_k/*.nc climt/_da), Part B — Chaverot → Exo_k → climt correlated-k table pipeline (+2 more)
 
 ### Community 262 - "Community 262"
-Cohesion: 0.12
-Nodes (35): parrrtm, rrlw_ref, rrlw_wvn, cmbgb1(), cmbgb10(), cmbgb11(), cmbgb12(), cmbgb13() (+27 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 263 - "Community 263"
 Cohesion: 0.2
@@ -1893,16 +2035,16 @@ Cohesion: 0.25
 Nodes (8): code:toml ([condensible]), code:toml ([condensible]), code:toml ([condensible]), code:bash (conda run -n climt pytest tests/test_atmospheric_properties.), code:bash (conda run -n climt python -c "), code:block34 (species: ch4), code:bash (git add climt/_data/atmospheric_properties/earth.toml \), Task 5: Add condensible sections to TOML files
 
 ### Community 275 - "Community 275"
-Cohesion: 0.1
-Nodes (23): test_write_lw_table_roundtrip(), test_write_lw_table_with_co2_axis_roundtrip(), test_write_lw_table_with_h2o_axis_roundtrip(), test_write_sw_table_roundtrip(), load_k_table(), Load a correlated-k table.      Args:         name_or_path: table name (e.g., ``, Load a correlated-k table.      Args:         name_or_path: table name (e.g., ``, Load a correlated-k table.      Args:         name_or_path: table name (e.g., `` (+15 more)
+Cohesion: 0.07
+Nodes (34): _ensure_parent(), Write cork correlated-k netCDF tables in climt's schema., Write LW k-table.      k_coefficients shape:         (ngas, nband, ngpt, nT, nP), write_lw_table(), write_sw_table(), test_write_lw_table_roundtrip(), test_write_lw_table_with_co2_axis_roundtrip(), test_write_lw_table_with_h2o_axis_roundtrip() (+26 more)
 
 ### Community 276 - "Community 276"
 Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 277 - "Community 277"
-Cohesion: 0.13
-Nodes (24): benchmark_dry_convection(), bench_berger(), bench_dry_convection(), bench_gray_radiation(), bench_gsc(), bench_held_suarez(), bench_instellation(), bench_slab_surface() (+16 more)
+Cohesion: 0.08
+Nodes (36): bench_berger(), bench_dry_convection(), bench_gsc(), bench_held_suarez(), bench_instellation(), bench_slab_surface(), Benchmark numba speedup for each optimized component.  Timings are wall-clock se, report() (+28 more)
 
 ### Community 278 - "Community 278"
 Cohesion: 0.29
@@ -1929,8 +2071,8 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 284 - "Community 284"
-Cohesion: 0.36
-Nodes (7): _build_co2_table(), At an exact grid node, quadrilinear interp returns the stored k., Halfway (in log-X_CO2) between two CO2 nodes, log-k interp returns the     geome, Higher CO2 VMR yields larger optical depth where the table's CO2 axis     increa, test_compute_ck_optical_depth_threads_co2(), test_interpolate_k_co2_geometric_midpoint(), test_interpolate_k_recovers_node_value()
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 285 - "Community 285"
 Cohesion: 0.48
@@ -1975,6 +2117,10 @@ Nodes (5): code:python (LABELS = [), code:python (out_path = os.path.join(os.pat
 ### Community 295 - "Community 295"
 Cohesion: 0.33
 Nodes (6): code:python (import time), code:python (import json), code:python (def build_registry() -> Registry:), code:bash (echo "climt/_docs/_cache.json" >> .gitignore), code:bash (git add climt/_docs/registry.py tests/_docs/test_cache.py .g), Task 11: On-disk cache keyed by source mtime hash
+
+### Community 296 - "Community 296"
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 297 - "Community 297"
 Cohesion: 0.02
@@ -2325,24 +2471,28 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 405 - "Community 405"
-Cohesion: 0.06
-Nodes (68): Ae(), ai, as, be(), Ce(), ci, Ct, De() (+60 more)
+Cohesion: 0.07
+Nodes (81): _(), Ae(), ai, as, be(), Ce(), ci, Ct (+73 more)
 
 ### Community 406 - "Community 406"
-Cohesion: 0.05
-Nodes (35): activateCategories(), arrConflictingEls, childNodes, columnEl, conflictingEls, findAndActivateCategories(), findNearestParentListing(), getMeta() (+27 more)
+Cohesion: 0.08
+Nodes (51): activateCategories(), arrConflictingEls, childNodes, columnEl, conflictingEls, distpatchShinyEvents(), findAndActivateCategories(), findNearestParentListing() (+43 more)
 
 ### Community 407 - "Community 407"
-Cohesion: 0.06
-Nodes (4): c(), cs, On, us
+Cohesion: 0.07
+Nodes (5): c(), cs, Jn, us, Xn()
 
 ### Community 408 - "Community 408"
-Cohesion: 0.06
-Nodes (42): advanceMatch(), arrayMapPush(), clearHighlight(), clipEnd(), clipStart(), configurePlugins(), createDocumentCard(), createErrorCard() (+34 more)
+Cohesion: 0.09
+Nodes (51): advanceMatch(), algoliaSearch(), arrayMapPush(), clearHighlight(), clipEnd(), clipStart(), configurePlugins(), createDocumentCard() (+43 more)
 
 ### Community 409 - "Community 409"
 Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
+
+### Community 410 - "Community 410"
+Cohesion: 0.06
+Nodes (5): b(), n(), On, qn, sn
 
 ### Community 411 - "Community 411"
 Cohesion: 0.05
@@ -2355,10 +2505,6 @@ Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code
 ### Community 413 - "Community 413"
 Cohesion: 0.06
 Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
-
-### Community 414 - "Community 414"
-Cohesion: 0.11
-Nodes (6): _(), d(), g(), k(), st, ui()
 
 ### Community 415 - "Community 415"
 Cohesion: 0.06
@@ -2481,16 +2627,16 @@ Cohesion: 0.06
 Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 445 - "Community 445"
-Cohesion: 0.08
-Nodes (3): l(), qi, r()
+Cohesion: 0.05
+Nodes (7): h(), l(), o(), qi, r(), W, Y
 
 ### Community 446 - "Community 446"
-Cohesion: 0.25
-Nodes (27): _(), b(), c(), d(), de(), E(), f(), g() (+19 more)
+Cohesion: 0.3
+Nodes (31): _(), b(), c(), d(), de(), E(), f(), fe() (+23 more)
 
 ### Community 447 - "Community 447"
-Cohesion: 0.12
-Nodes (26): _(), a(), b(), c(), d(), de(), e(), f() (+18 more)
+Cohesion: 0.17
+Nodes (30): _(), a(), b(), c(), d(), de(), e(), f() (+22 more)
 
 ### Community 448 - "Community 448"
 Cohesion: 0.02
@@ -2501,8 +2647,8 @@ Cohesion: 0.09
 Nodes (28): Adaptations made to the brief, Assertion Added, Cache-seeding confirmation, code:bash (~/miniconda3/envs/climt/bin/python -m pytest tests/test_surf), code:block2 (ModuleNotFoundError: No module named 'climt._core.surface_fl), code:bash (~/miniconda3/envs/climt/bin/python -m pytest tests/test_surf), code:block4 (tests/test_surface_fluxes.py::test_bulk_sensible_heat_matche), code:python (assert np.isclose(out["sensible_heat_flux"][0], expected_shf) (+20 more)
 
 ### Community 451 - "Community 451"
-Cohesion: 0.19
-Nodes (24): _(), a(), b(), c(), d(), E(), f(), g() (+16 more)
+Cohesion: 0.25
+Nodes (25): _(), a(), b(), c(), d(), E(), f(), g() (+17 more)
 
 ### Community 452 - "Community 452"
 Cohesion: 0.08
@@ -2641,8 +2787,8 @@ Cohesion: 0.13
 Nodes (22): fig_kg(), fig_lbl(), fig_rce(), fig_throughput(), _load_rce(), main(), Delegate to plot_kg_curves.py --out (it owns the k(g) construction)., CORK/RRTMG scalar OLR vs line-by-line spectrum, moist + dry at the profile     C (+14 more)
 
 ### Community 486 - "Community 486"
-Cohesion: 0.11
-Nodes (18): activeItem, announceDismiss(), announceRegister(), btn, dashboardOffset(), footerOffset(), headerEl, headerOffset() (+10 more)
+Cohesion: 0.19
+Nodes (21): activeItem, announceDismiss(), announceRegister(), btn, dashboardOffset(), footerOffset(), headerEl, headerOffset() (+13 more)
 
 ### Community 487 - "Community 487"
 Cohesion: 0.13
@@ -2652,17 +2798,13 @@ Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, 
 Cohesion: 0.09
 Nodes (22): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+14 more)
 
-### Community 489 - "Community 489"
-Cohesion: 0.19
-Nodes (3): b(), n(), Vs
-
 ### Community 490 - "Community 490"
-Cohesion: 0.08
-Nodes (8): h(), Jn, o(), s(), t, W, x(), Xn()
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 491 - "Community 491"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 492 - "Community 492"
 Cohesion: 0.1
@@ -2677,8 +2819,8 @@ Cohesion: 0.1
 Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 495 - "Community 495"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 496 - "Community 496"
 Cohesion: 0.1
@@ -2689,8 +2831,8 @@ Cohesion: 0.1
 Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 498 - "Community 498"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 499 - "Community 499"
 Cohesion: 0.1
@@ -2705,20 +2847,20 @@ Cohesion: 0.1
 Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 502 - "Community 502"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 503 - "Community 503"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 504 - "Community 504"
 Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 505 - "Community 505"
-Cohesion: 0.13
-Nodes (15): __Pyx_AllocateExtensionType(), __pyx_array_new(), __Pyx_BufFmt_Init(), __pyx_check_strides(), __pyx_check_suboffsets(), __Pyx_init_memviewslice(), __pyx_memoryview_check(), __pyx_memoryview_copy_new_contig() (+7 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 506 - "Community 506"
 Cohesion: 0.02
@@ -2749,12 +2891,12 @@ Cohesion: 0.13
 Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 513 - "Community 513"
-Cohesion: 0.16
-Nodes (4): a(), Es, I(), toggleExpanded()
+Cohesion: 0.17
+Nodes (3): a(), Es, I()
 
 ### Community 514 - "Community 514"
 Cohesion: 0.13
-Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+Nodes (15): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+7 more)
 
 ### Community 515 - "Community 515"
 Cohesion: 0.1
@@ -2765,8 +2907,8 @@ Cohesion: 0.1
 Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 517 - "Community 517"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 518 - "Community 518"
 Cohesion: 0.14
@@ -2781,8 +2923,8 @@ Cohesion: 0.1
 Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 521 - "Community 521"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 522 - "Community 522"
 Cohesion: 0.1
@@ -2793,28 +2935,28 @@ Cohesion: 0.1
 Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 524 - "Community 524"
-Cohesion: 0.14
-Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 525 - "Community 525"
 Cohesion: 0.1
 Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
 
 ### Community 526 - "Community 526"
+Cohesion: 0.1
+Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
+
+### Community 527 - "Community 527"
 Cohesion: 0.14
 Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
 
-### Community 527 - "Community 527"
-Cohesion: 0.1
-Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
-
 ### Community 528 - "Community 528"
-Cohesion: 0.1
-Nodes (21): multiFile, book, html, extensions, identifier, metadata, pandoc, base-format (+13 more)
+Cohesion: 0.14
+Nodes (14): multiFile, book, html, extensions, identifier, metadata, base-format, display-name (+6 more)
 
 ### Community 529 - "Community 529"
-Cohesion: 0.21
-Nodes (6): c(), h(), o(), p(), r(), v()
+Cohesion: 0.31
+Nodes (12): c(), d(), e(), h(), i(), l(), m(), o() (+4 more)
 
 ### Community 530 - "Community 530"
 Cohesion: 0.02
@@ -2845,8 +2987,8 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 538 - "Community 538"
-Cohesion: 0.15
-Nodes (14): formats, contents, fields, sort, markdown, containsRefs, markdown, srcMarkdownNoYaml (+6 more)
+Cohesion: 0.2
+Nodes (9): formats, markdown, containsRefs, markdown, srcMarkdownNoYaml, yaml, projectFormats, title (+1 more)
 
 ### Community 539 - "Community 539"
 Cohesion: 0.2
@@ -2973,8 +3115,8 @@ Cohesion: 0.39
 Nodes (7): _artifacts/kg_window_band.png, _artifacts/lbl_overlay.png, _artifacts/rce_before_after.png, _artifacts/rce_moist_after.npz, _artifacts/rce_moist_before.npz, _artifacts/throughput.npz, _artifacts/throughput.png
 
 ### Community 570 - "Community 570"
-Cohesion: 0.06
-Nodes (33): JAX Backend, benchmark_grid_scale_condensation(), GridScaleCondensation, GSCParams, GridScaleCondensation, _gsc_kernel_np(), GSCParams, njit() (+25 more)
+Cohesion: 0.05
+Nodes (36): BucketHydrology, Args:         soil_moisture_max:             The maximum moisture that can be he, Args:         num_layers:             Number of soil moisture layers (1 or 2). W, Calculates sensible and latent heat flux and returns         surface temperature, Calculates sensible and latent heat flux and returns         surface temperature, Manages surface energy and moisture balance     This component assumes that the, GridScaleCondensation, GSCParams (+28 more)
 
 ### Community 571 - "Community 571"
 Cohesion: 0.02
@@ -3053,16 +3195,16 @@ Cohesion: 0.02
 Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 590 - "Community 590"
-Cohesion: 0.47
-Nodes (4): d(), n(), o(), s()
+Cohesion: 0.57
+Nodes (5): d(), n(), o(), s(), t()
 
 ### Community 591 - "Community 591"
-Cohesion: 0.15
-Nodes (15): __Pyx_CheckUnpickleChecksum(), __Pyx_CyOrPyCFunction_GET_SELF(), __pyx_memoryview_assign_item_from_object(), __pyx_memoryviewslice_assign_item_from_object(), __pyx_pf_15View_dot_MemoryView___pyx_unpickle_Enum(), __pyx_pf___pyx_MemviewEnum_2__setstate_cython__(), __Pyx_PyObject_Call(), __Pyx_PyObject_CallMethO() (+7 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 592 - "Community 592"
-Cohesion: 0.29
-Nodes (7): metadata, engines, fig-responsive, lang, quarto-version, theme, title
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 593 - "Community 593"
 Cohesion: 0.04
@@ -3178,7 +3320,7 @@ Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code
 
 ### Community 624 - "Community 624"
 Cohesion: 0.03
-Nodes (113): _copy_strided_to_strided(), __pyx_add_acquisition_count_locked(), __pyx_array___dealloc__(), __pyx_array___len__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_4__dealloc__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_6__len__(), __pyx_bisect_code_objects(), __Pyx_c_eq_double() (+105 more)
+Nodes (112): __pyx_add_acquisition_count_locked(), __pyx_array___len__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_6__len__(), __Pyx_c_eq_long__double(), __Pyx_c_is_zero_float(), __Pyx_c_is_zero_long__double(), __Pyx_check_single_interpreter(), __Pyx_CheckUnicodeValue() (+104 more)
 
 ### Community 625 - "Community 625"
 Cohesion: 0.06
@@ -3514,15 +3656,15 @@ Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engin
 
 ### Community 708 - "Community 708"
 Cohesion: 0.09
-Nodes (22): code:rst (Chapter 1 — Why non-grey?), code:bash (git add docs/radiative_transfer/01_why_nongrey.rst), code:rst (Chapter 3 — The k-distribution), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim), code:rst (Chapter 5 — Gas overlap), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim), code:rst (Chapter 6 — The cork model), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim) (+14 more)
+Nodes (22): code:rst (Chapter 1 — Why non-grey?), code:bash (git add docs/radiative_transfer/01_why_nongrey.rst), code:rst (Chapter 2 — Line-by-line physics), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim), code:rst (Chapter 3 — The k-distribution), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim), code:rst (Chapter 4 — The correlated-k approximation), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim) (+14 more)
 
 ### Community 709 - "Community 709"
 Cohesion: 0.13
 Nodes (18): _h2o_kappa(), _mass_fraction(), Sample linepyline line-by-line mass absorption coefficients on a (T, p[, X_H2O]), H2O kappa (lines + optional MT_CKD continuum), shape (nT, nP, nNu)., Mass fraction of `species` in a moist gas mixture., Compute mass absorption coefficient kappa(T, p[, X_H2O][, X_CO2], nu).      Args, sample_kappa_grid(), Tests for the linepyline kappa sampler.  These tests are skipped unless linepyli (+10 more)
 
 ### Community 710 - "Community 710"
-Cohesion: 0.18
-Nodes (13): build_rayleigh_per_band(), build_solar_source_per_gpoint(), SW band-integrated solar source and Rayleigh cross-section., Band-mean Rayleigh mass scattering coefficient (m²/kg).      Uses Bodhaine et al, Distribute toa_irradiance across bands (by spectral shape) and g-points.      Ar, Relative fractions per band should depend on spectrum shape, not normalization., toa_irradiance controls total flux regardless of spectrum's absolute scale., Sum of solar_source across (band, gpt) equals toa_irradiance exactly. (+5 more)
+Cohesion: 0.14
+Nodes (17): build_rayleigh_per_band(), build_solar_source_per_gpoint(), SW band-integrated solar source and Rayleigh cross-section., Band-mean Rayleigh mass scattering coefficient (m²/kg).      Uses Bodhaine et al, Distribute toa_irradiance across bands (by spectral shape) and g-points.      Ar, Relative fractions per band should depend on spectrum shape, not normalization., toa_irradiance controls total flux regardless of spectrum's absolute scale., Sum of solar_source across (band, gpt) equals toa_irradiance exactly. (+9 more)
 
 ### Community 711 - "Community 711"
 Cohesion: 0.13
@@ -3545,8 +3687,8 @@ Cohesion: 0.19
 Nodes (17): cork_band_mean(), lbl_band_mean(), main(), planck_wavenumber(), Compare Planck-weighted band-mean k from LBL vs CORK correlated-k tables.  Reads, Planck radiance B(ν, T) per cm⁻¹ (arbitrary units OK — we normalize)., Planck-weighted band mean of k_LBL over [lo, hi] cm⁻¹., Return (band_edges (nband,2), k_cork (nband,), p_grid_pa, T_grid, h2o_grid). (+9 more)
 
 ### Community 716 - "Community 716"
-Cohesion: 0.22
-Nodes (13): rrtmg_set_constants(), initialise_rrtm_radiation(), initialise_rrtm_radiation_mcica(), set_constants(), RRTMGLongwave, rrtmg_lw_init, rrtmg_lw_rad, rrtmg_lw_rad_nomcica (+5 more)
+Cohesion: 0.2
+Nodes (14): rrtmg_set_constants(), initialise_rrtm_radiation(), initialise_rrtm_radiation_mcica(), set_constants(), RRTMGLongwave, __pyx_pf_5climt_11_components_5rrtmg_2lw_9_rrtmg_lw_initialise_rrtm_radiation_mcica(), rrtmg_lw_init, rrtmg_lw_rad (+6 more)
 
 ### Community 717 - "Community 717"
 Cohesion: 0.11
@@ -3565,8 +3707,8 @@ Cohesion: 0.24
 Nodes (15): _band_planck_fraction(), main(), _planck_B_wavenumber(), Convert a Chaverot (Exo_k-format) correlated-k table into climt's cork netCDF fo, Per-band solar irradiance (W/m²) from a T_sun blackbody scaled to S0.      Band, Solar-spectrum-weighted Rayleigh coefficient per band (m²/kg-of-air).      σ_R(ν, Two-stretch Gauss-Legendre nodes on [0, 1].      Places ngpt//2 GL nodes on [0,, Re-bin an Exo_k Ktable/Ktable5d to new bands with ``ngpt`` g-points per band. (+7 more)
 
 ### Community 721 - "Community 721"
-Cohesion: 0.11
-Nodes (18): multiFile, book, formats, html, extensions, identifier, pandoc, base-format (+10 more)
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 722 - "Community 722"
 Cohesion: 0.13
@@ -3581,8 +3723,8 @@ Cohesion: 0.13
 Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 725 - "Community 725"
-Cohesion: 0.11
-Nodes (18): multiFile, book, formats, html, extensions, identifier, pandoc, base-format (+10 more)
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 726 - "Community 726"
 Cohesion: 0.13
@@ -3593,8 +3735,8 @@ Cohesion: 0.13
 Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 728 - "Community 728"
-Cohesion: 0.11
-Nodes (18): multiFile, book, formats, html, extensions, identifier, pandoc, base-format (+10 more)
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 729 - "Community 729"
 Cohesion: 0.13
@@ -3625,8 +3767,8 @@ Cohesion: 0.13
 Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 736 - "Community 736"
-Cohesion: 0.13
-Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+Cohesion: 0.11
+Nodes (18): multiFile, book, formats, html, extensions, identifier, pandoc, base-format (+10 more)
 
 ### Community 737 - "Community 737"
 Cohesion: 0.13
@@ -3665,8 +3807,8 @@ Cohesion: 0.13
 Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 746 - "Community 746"
-Cohesion: 0.13
-Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+Cohesion: 0.12
+Nodes (17): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+9 more)
 
 ### Community 747 - "Community 747"
 Cohesion: 0.13
@@ -3681,8 +3823,8 @@ Cohesion: 0.13
 Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 750 - "Community 750"
-Cohesion: 0.11
-Nodes (18): multiFile, book, formats, html, extensions, identifier, pandoc, base-format (+10 more)
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
 
 ### Community 751 - "Community 751"
 Cohesion: 0.13
@@ -3797,8 +3939,8 @@ Cohesion: 0.14
 Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
 
 ### Community 779 - "Community 779"
-Cohesion: 0.14
-Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+Cohesion: 0.12
+Nodes (17): metadata, anchor-sections, bibliography, engines, fig-responsive, lang, page-layout, pagetitle (+9 more)
 
 ### Community 780 - "Community 780"
 Cohesion: 0.14
@@ -3909,8 +4051,8 @@ Cohesion: 0.14
 Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
 
 ### Community 807 - "Community 807"
-Cohesion: 0.22
-Nodes (9): classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText, markdown (+1 more)
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
 
 ### Community 808 - "Community 808"
 Cohesion: 0.15
@@ -3941,8 +4083,8 @@ Cohesion: 0.15
 Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
 
 ### Community 815 - "Community 815"
-Cohesion: 0.22
-Nodes (9): classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText, markdown (+1 more)
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
 
 ### Community 816 - "Community 816"
 Cohesion: 0.15
@@ -3965,8 +4107,8 @@ Cohesion: 0.15
 Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
 
 ### Community 821 - "Community 821"
-Cohesion: 0.22
-Nodes (9): classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText, markdown (+1 more)
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
 
 ### Community 822 - "Community 822"
 Cohesion: 0.15
@@ -4033,8 +4175,8 @@ Cohesion: 0.15
 Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
 
 ### Community 838 - "Community 838"
-Cohesion: 0.15
-Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
+Cohesion: 0.22
+Nodes (9): classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText, markdown (+1 more)
 
 ### Community 839 - "Community 839"
 Cohesion: 0.15
@@ -4109,8 +4251,8 @@ Cohesion: 0.17
 Nodes (11): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+3 more)
 
 ### Community 857 - "Community 857"
-Cohesion: 0.25
-Nodes (8): markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, bibliography, title
+Cohesion: 0.17
+Nodes (11): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+3 more)
 
 ### Community 858 - "Community 858"
 Cohesion: 0.17
@@ -4133,8 +4275,8 @@ Cohesion: 0.17
 Nodes (10): 2026-06-04 — Sub-project A: CO₂-adjustable 14-band table (`earth_hifi_lw`) productionized, code:bash (cd /Users/joymonteiro/github/climt), code:python (LABELS.append("CORK 7-band 2s g=0.97 (deeper)")), code:bash (conda run -n climt python examples/cooling_to_space_gsplit_s), code:bash (ls -la /Users/joymonteiro/github/climt/climt/_data/cork/corr), Cork LW: CO2 15 μm Band Refinement Implementation Plan, PERFORMANCE — CORK-LW njit pass (2026-06-04), Self-Review Notes (+2 more)
 
 ### Community 863 - "Community 863"
-Cohesion: 0.28
-Nodes (9): _ensure_parent(), Write cork correlated-k netCDF tables in climt's schema., Write LW k-table.      k_coefficients shape:         (ngas, nband, ngpt, nT, nP), write_lw_table(), write_sw_table(), build_table(), _load_stellar_spectrum(), main() (+1 more)
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 864 - "Community 864"
 Cohesion: 0.18
@@ -4145,8 +4287,8 @@ Cohesion: 0.18
 Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
 
 ### Community 866 - "Community 866"
-Cohesion: 0.18
-Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+Cohesion: 0.11
+Nodes (18): html, formats, css, include-in-header, markdown, containsRefs, headingText, markdown (+10 more)
 
 ### Community 867 - "Community 867"
 Cohesion: 0.18
@@ -4213,12 +4355,12 @@ Cohesion: 0.15
 Nodes (13): code:bash (cd /Users/joymonteiro/github/climt), code:bash (git add -A docs readthedocs.yml), code:bash (cd /Users/joymonteiro/github/climt/docs), code:bash (git add docs/get-started docs/user-guide), code:markdown (---), code:bash (git add docs/index.qmd docs/user-guide/second-best.qmd docs/), code:bash (git rm "docs/aa22342-13.pdf" "docs/Louis.79.pdf" "docs/stab1), code:bash (git add references.bib docs) (+5 more)
 
 ### Community 883 - "Community 883"
-Cohesion: 0.2
-Nodes (9): formats, markdown, containsRefs, markdown, srcMarkdownNoYaml, yaml, projectFormats, title (+1 more)
+Cohesion: 0.17
+Nodes (11): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+3 more)
 
 ### Community 884 - "Community 884"
-Cohesion: 0.2
-Nodes (9): formats, markdown, containsRefs, markdown, srcMarkdownNoYaml, yaml, projectFormats, title (+1 more)
+Cohesion: 0.17
+Nodes (11): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+3 more)
 
 ### Community 885 - "Community 885"
 Cohesion: 0.2
@@ -4362,7 +4504,7 @@ Nodes (6): code:bash (cp climt/_data/cork/correlated_k/earth_hifi_lw.nc \), code
 
 ### Community 920 - "Community 920"
 Cohesion: 0.05
-Nodes (46): mcica_subcol_gen_sw, parrrsw, rrsw_aer, rrsw_cld, rrsw_con, rrsw_vsn, rrsw_wvn, rrtmg_sw_cldprmc (+38 more)
+Nodes (41): parrrsw, rrsw_aer, rrsw_con, rrsw_wvn, rrtmg_sw_cldprmc, rrtmg_sw_cldprop, rrsw_kg16, rrsw_kg19 (+33 more)
 
 ### Community 921 - "Community 921"
 Cohesion: 0.53
@@ -4461,8 +4603,8 @@ Cohesion: 0.2
 Nodes (9): code:python (from datetime import timedelta), Convection & Condensation, Core Abstractions (`climt/_core`), Example: Building a Model, Idealized Forcing & Insolation, Initial Conditions, Physical Components (`climt/_components`), Radiation (+1 more)
 
 ### Community 953 - "Community 953"
-Cohesion: 0.16
-Nodes (16): __pyx_getprop___pyx_memoryview_nbytes(), __pyx_getprop___pyx_memoryview_shape(), __pyx_getprop___pyx_memoryview_strides(), __Pyx_ListComp_Append(), __pyx_pf_15View_dot_MemoryView_10memoryview_5shape___get__(), __pyx_pf_15View_dot_MemoryView_10memoryview_6nbytes___get__(), __pyx_pf_15View_dot_MemoryView_10memoryview_7strides___get__(), __pyx_pw_15View_dot_MemoryView_10memoryview_5shape_1__get__() (+8 more)
+Cohesion: 0.25
+Nodes (11): __pyx_getprop___pyx_memoryview_nbytes(), __pyx_getprop___pyx_memoryview_shape(), __Pyx_ListComp_Append(), __pyx_pf_15View_dot_MemoryView_10memoryview_5shape___get__(), __pyx_pw_15View_dot_MemoryView_10memoryview_5shape_1__get__(), __pyx_pw_15View_dot_MemoryView_10memoryview_6nbytes_1__get__(), __pyx_getprop___pyx_memoryview_ndim(), __pyx_getprop___pyx_memoryview_T() (+3 more)
 
 ### Community 965 - "Community 965"
 Cohesion: 0.2
@@ -4485,16 +4627,16 @@ Cohesion: 0.25
 Nodes (10): code:python (# tests/test_surface_fluxes.py), code:python (# climt/_core/surface_fluxes.py), code:python (# tests/test_surface_fluxes.py  (append)), code:bash (git add climt/_core/surface_fluxes.py tests/test_surface_flu), code:python (# tests/test_components.py  (append)), code:python (# tests/test_conservation.py  (append)), code:bash (git add climt/_components/second_best climt/_components/__in), Phase E — Documentation (+2 more)
 
 ### Community 970 - "Community 970"
-Cohesion: 0.22
-Nodes (8): API Reference {.doc .doc-index}, Constants, Convection, Cork radiation, Radiation, Solar & insolation, State & grid utilities, Surface & ice
+Cohesion: 0.18
+Nodes (10): API Reference {.doc .doc-index}, Constants, Convection, Convection & condensation, Cork radiation, Idealised & test physics, Radiation, Solar & insolation (+2 more)
 
 ### Community 971 - "Community 971"
-Cohesion: 0.38
-Nodes (5): G-point resolution convergence for the Earth LW option-B correlated-k tables.  V, OLR difference must shrink as g-points double: |4gpt−2gpt| > |8gpt−4gpt|., Print OLR at each resolution so the numbers appear in the test log., test_olr_converges_monotonically(), test_olr_values_reported()
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 972 - "Community 972"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 973 - "Community 973"
 Cohesion: 0.25
@@ -4545,12 +4687,12 @@ Cohesion: 0.29
 Nodes (6): Episodic Mixing and Buoyancy Sorting, Introduction, Key Concepts, Microphysics and Precipitation, Subcloud-Layer Quasi-Equilibrium, Unsaturated Downdrafts
 
 ### Community 986 - "Community 986"
-Cohesion: 0.12
-Nodes (20): __pyx_array_getbuffer(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(), __Pyx_GetAttr3(), __Pyx_GetAttr3Default(), __Pyx_GetKwValue_FASTCALL(), __pyx_memoryview___getitem__(), __pyx_memoryview___pyx_pf_15View_dot_MemoryView_10memoryview_4__getitem__(), __pyx_memoryview___pyx_pf_15View_dot_MemoryView_10memoryview_6__setitem__() (+12 more)
+Cohesion: 0.19
+Nodes (13): __pyx_array_getbuffer(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(), __Pyx_GetKwValue_FASTCALL(), __pyx_memoryview___getitem__(), __pyx_memoryview___pyx_pf_15View_dot_MemoryView_10memoryview_4__getitem__(), __pyx_memoryview___pyx_pf_15View_dot_MemoryView_10memoryview_6__setitem__(), __Pyx_PyBytes_Equals(), __Pyx_PyObject_IsTrue() (+5 more)
 
 ### Community 987 - "Community 987"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 988 - "Community 988"
 Cohesion: 0.29
@@ -4581,16 +4723,16 @@ Cohesion: 0.25
 Nodes (10): code:python (sympl.set_constant("heat_capacity_of_sea_water", 3985.0, "J/), code:python (# tests/test_horizontal_operators.py), code:python (# climt/_core/horizontal_operators.py), code:python (# tests/test_slab_ocean_transport.py  (append)), code:python (# in SlabSurface.__init__), code:bash (git add climt/_core/horizontal_operators.py climt/_component), Phase D — SecondBEST orchestrator, Phase E — Shared flux helper + DataOcean (+2 more)
 
 ### Community 995 - "Community 995"
-Cohesion: 0.12
-Nodes (20): abs_py_ssize_t(), __pyx_fill_contig_strides_array(), __pyx_get_array_memory_extents(), __pyx_get_best_slice_order(), __pyx_memoryview_broadcast_leading(), __pyx_memoryview_copy_contents(), __pyx_memoryview_copy_data_to_temp(), __pyx_memoryview_err_extents() (+12 more)
+Cohesion: 0.22
+Nodes (11): abs_py_ssize_t(), __pyx_fill_contig_strides_array(), __pyx_get_array_memory_extents(), __pyx_get_best_slice_order(), __pyx_memoryview_broadcast_leading(), __pyx_memoryview_copy_contents(), __pyx_memoryview_copy_data_to_temp(), __pyx_memoryview_err_no_memory() (+3 more)
 
 ### Community 996 - "Community 996"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 997 - "Community 997"
-Cohesion: 0.33
-Nodes (6): __pyx_array___dealloc__(), __pyx_array___pyx_pf_15View_dot_MemoryView_5array_4__dealloc__(), __pyx_memoryview_refcount_copying(), __pyx_memoryview_refcount_objects_in_slice(), __pyx_memoryview_refcount_objects_in_slice_with_gil(), __pyx_tp_dealloc_array()
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 998 - "Community 998"
 Cohesion: 0.33
@@ -4617,8 +4759,8 @@ Cohesion: 0.18
 Nodes (14): fig_01_mean_of_exp(), fig_02_lbl_spectrum(), fig_03_k_distribution_construction(), fig_04_correlation_across_T(), fig_07_two_stream_phases(), _load_npz(), Walkthrough figure functions for the radiative-transfer chapters.  Ported from t, Chapter 7: diffuse R and T as functions of optical depth for ssa=1, g=0.5. (+6 more)
 
 ### Community 1004 - "Community 1004"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.02
+Nodes (112): language, appendix-attribution-bibtex, appendix-attribution-cite-as, appendix-view-license, article-notebook-label, back-to-top, callout-caution-title, callout-important-title (+104 more)
 
 ### Community 1005 - "Community 1005"
 Cohesion: 0.1
@@ -4641,8 +4783,8 @@ Cohesion: 0.33
 Nodes (5): Algorithmic Configuration, Compositional Configuration, Interfacial Configuration, Memory/Array Configuration, Physical Configuration
 
 ### Community 1010 - "Community 1010"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.08
+Nodes (29): Compute optical depths and sources for Parmentier mode., Compute optical depths and sources for Parmentier mode., Compute optical depths and sources for Parmentier mode., bond_albedo_from_fluxes(), compute_rosseland_mean_opacity(), compute_thermal_opacities(), load_freedman2014_coefficients(), load_parmentier_coefficients() (+21 more)
 
 ### Community 1011 - "Community 1011"
 Cohesion: 0.18
@@ -4681,8 +4823,8 @@ Cohesion: 0.39
 Nodes (7): code:python ("ocean_heat_transport_convergence": {), code:python (# tests/test_slab_ocean_transport.py), code:python (# inside the kernel, sea branch:), code:python (# tests/test_slab_ocean_transport.py  (append)), code:bash (git add climt/_components/slab_surface.py climt/_core/initia), Task 7: `BestSurfaceFluxes`, Task 7: SlabSurface prescribed q-flux
 
 ### Community 1020 - "Community 1020"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.05
+Nodes (38): Boundary Layer + Canonical JIT Tridiagonal Solver Implementation Plan, code:python (import numpy as np), code:python (class TestSimpleBoundaryLayer(ComponentBaseColumn, Component), code:python (def test_simple_boundary_layer_properties():), code:python (def test_simple_boundary_layer_conserves_column_integrals():), code:bash (git add tests/test_components.py tests/cached_component_outp), code:python (import numpy as np), code:python (def solve_column(rho, c, kappa, temperature, dt, dz, top_bc,) (+30 more)
 
 ### Community 1021 - "Community 1021"
 Cohesion: 0.4
@@ -4697,12 +4839,12 @@ Cohesion: 0.5
 Nodes (4): _kappa(), main(), Generate the line-by-line .npz inputs for the linepyline-based figures.  ``linep, H2O mass absorption coefficient (m^2/kg) on the wavenumber grid.
 
 ### Community 1024 - "Community 1024"
-Cohesion: 0.4
-Nodes (4): climt Website (Quarto Migration + RT Walkthrough) Implementation Plan, code:block1 (docs/), File Structure, Self-Review
+Cohesion: 0.22
+Nodes (8): climt Website (Quarto Migration + RT Walkthrough) Implementation Plan, code:block1 (docs/), code:yaml (artifacts:), code:bash (git add docs/radiative-transfer/_figures.py docs/radiative-t), File Structure, PART D — Walkthrough figure pipeline (reuse B's build_experiments), Self-Review, Task 7: Port the figure functions and wire them through build_experiments
 
 ### Community 1025 - "Community 1025"
-Cohesion: 0.18
-Nodes (7): dcmip_initial_conditions_test_1_2_3, test1_advection_deformation(), test1_advection_hadley(), test1_advection_orography(), test2_schaer_mountain(), test2_steady_state_mountain(), test3_gravity_wave()
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1026 - "Community 1026"
 Cohesion: 0.4
@@ -4717,8 +4859,8 @@ Cohesion: 0.4
 Nodes (5): code:python (# tests/test_best_processes.py  (append)), code:python (# climt/_components/second_best/processes/fluxes.py), code:python (# tests/test_best_processes.py  (append)), code:bash (git add climt/_components/second_best/processes/fluxes.py te), Task 7: `BestSurfaceFluxes`
 
 ### Community 1029 - "Community 1029"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1030 - "Community 1030"
 Cohesion: 0.36
@@ -4729,16 +4871,16 @@ Cohesion: 0.4
 Nodes (5): 6.5.1 Optional intermediate diagnostics, 6.5.2 Component-level pedagogical diagnostics, 6.5.3 Kernel function decomposition, 6.5.4 Worked Jupyter notebooks, 6.5 Pedagogical introspection and entry points
 
 ### Community 1032 - "Community 1032"
-Cohesion: 0.18
-Nodes (4): iso_c_binding, parkind, rrlw_con, parkind
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1033 - "Community 1033"
-Cohesion: 0.33
-Nodes (7): curl_z(), divergence(), _earth_radius(), _grads(), Spherical horizontal differential operators on a lat/lon grid (degrees).  Fields, test_curl_of_solid_body_field_is_constant(), test_single_column_returns_zero()
+Cohesion: 0.05
+Nodes (38): Runs a radiative-convective equilibrium simulation for a given backend and conve, run_benchmark(), run_benchmark(), Args:             include_ekman (bool, optional): If True, additionally compute, Calculate the surface energy balance.      This component assumes the surface is, Calculate the surface energy balance.      This component assumes the surface is, _slab_surface_kernel_np(), SlabSurface (+30 more)
 
 ### Community 1034 - "Community 1034"
-Cohesion: 0.22
-Nodes (10): __Pyx_GetKwValue_FASTCALL(), __Pyx_PyBytes_Equals(), __Pyx_PyObject_IsTrue(), __Pyx_PyObject_IsTrueAndDecref(), __Pyx_PyUnicode_Equals(), __Pyx_GetKwValue_FASTCALL(), __Pyx_PyBytes_Equals(), __Pyx_PyObject_IsTrue() (+2 more)
+Cohesion: 0.4
+Nodes (5): __Pyx_GetKwValue_FASTCALL(), __Pyx_PyBytes_Equals(), __Pyx_PyObject_IsTrue(), __Pyx_PyObject_IsTrueAndDecref(), __Pyx_PyUnicode_Equals()
 
 ### Community 1035 - "Community 1035"
 Cohesion: 0.5
@@ -4753,8 +4895,8 @@ Cohesion: 0.5
 Nodes (3): code:python (import climt), code:python (model_time_step = timedelta(hours=1)), code:python (for step in range(10):)
 
 ### Community 1038 - "Community 1038"
-Cohesion: 0.5
-Nodes (4): code:yaml (artifacts:), code:bash (git add docs/radiative-transfer/_figures.py docs/radiative-t), PART D — Walkthrough figure pipeline (reuse B's build_experiments), Task 7: Port the figure functions and wire them through build_experiments
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1039 - "Community 1039"
 Cohesion: 0.5
@@ -4785,36 +4927,40 @@ Cohesion: 0.67
 Nodes (3): code:bash (conda run -n linepyline python -c "), code:bash (git add climt/_data/cork/cia/*.cia), Task 10: Download HITRAN CIA files for Titan
 
 ### Community 1066 - "Community 1066"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1067 - "Community 1067"
 Cohesion: 0.39
 Nodes (7): Earth Radiative-Convective Shijil BL, get_data(), plot_function(), Helper to get numpy array from either DataArray or UnytStateContainer., Helper to convert units for either DataArray or UnytStateContainer., to_units(), Stable Boundary Layer Implementation
 
 ### Community 1072 - "Community 1072"
-Cohesion: 0.29
-Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1095 - "Community 1095"
-Cohesion: 0.57
-Nodes (6): _build(), _inputs(), Oracle: per-level interpolate_k (+ interpolate_continuum) assembly., _reference_tau(), test_njit_co2_path_matches_oracle_no_continuum(), test_njit_co2_path_matches_oracle_with_continuum()
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1096 - "Community 1096"
-Cohesion: 0.48
-Nodes (5): Frozen copy of the original pure-Python Planck-source loop (oracle)., T below/above the grid clamps the fraction, matching the oracle., _reference(), test_planck_sources_kernel_clamps_out_of_range_T(), test_planck_sources_kernel_matches_reference()
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1097 - "Community 1097"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1098 - "Community 1098"
 Cohesion: 0.29
 Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
 
 ### Community 1099 - "Community 1099"
-Cohesion: 0.33
-Nodes (6): __Pyx_PyObject_AsString(), __Pyx_PyObject_AsStringAndSize(), __Pyx_PyUnicode_AsStringAndSize(), __Pyx_PyObject_AsString(), __Pyx_PyObject_AsStringAndSize(), __Pyx_PyUnicode_AsStringAndSize()
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1100 - "Community 1100"
-Cohesion: 0.4
-Nodes (6): __Pyx_CyOrPyCFunction_GET_SELF(), __Pyx_PyObject_Call(), __Pyx_PyObject_CallMethO(), __Pyx_PyObject_FastCall_fallback(), __Pyx_PyObject_FastCallDict(), __Pyx_PyVectorcall_Function()
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1101 - "Community 1101"
 Cohesion: 0.29
@@ -4825,52 +4971,584 @@ Cohesion: 0.67
 Nodes (4): main(), _make_state(), Benchmark Cork-LW (consolidated njit(parallel) transport) vs RRTMG-LW.  Wall-clo, _time_component()
 
 ### Community 1103 - "Community 1103"
-Cohesion: 0.33
-Nodes (4): dcmip_initial_conditions_test_5, fpidfdz(), fpif(), test5_tropical_cyclone()
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1104 - "Community 1104"
 Cohesion: 0.4
 Nodes (5): code:python (# tests/test_best_processes.py  (append)), code:python (# climt/_components/second_best/processes/surface_layer.py), code:python (# tests/test_best_processes.py  (append)), code:bash (git add climt/_components/second_best/processes/surface_laye), Task 6: `BestSurfaceLayer` (drag / Richardson number)
 
 ### Community 1105 - "Community 1105"
-Cohesion: 0.67
-Nodes (3): Emanuel Scheme Optimization, JAX State Backend, Pure Python V3 Kernel
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1106 - "Community 1106"
 Cohesion: 0.5
 Nodes (3): TestInstellation, Verify that the optimized Instellation matches original behavior., test_instellation_parity()
 
 ### Community 1107 - "Community 1107"
-Cohesion: 0.67
-Nodes (3): code:rst (Chapter 2 — Line-by-line physics), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim), Task 18: Chapter 2 — "Line-by-line physics"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
 
 ### Community 1108 - "Community 1108"
 Cohesion: 0.5
 Nodes (4): AdamsBashforth, sympl, UnytBackend, docs/PLUG_AND_PLAY_ARCHITECTURE.md
 
 ### Community 1110 - "Community 1110"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1112 - "Community 1112"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1113 - "Community 1113"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1114 - "Community 1114"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1115 - "Community 1115"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1117 - "Community 1117"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1118 - "Community 1118"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1119 - "Community 1119"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1120 - "Community 1120"
+Cohesion: 0.06
+Nodes (35): render, code-fold, code-line-numbers, code-link, code-overflow, code-tools, fig-align, fig-env (+27 more)
+
+### Community 1121 - "Community 1121"
+Cohesion: 0.08
+Nodes (25): Albedo, Basal-flux sign convention (`SeaIce`), Boundary conditions, Bundled data source (initial ice thickness), code:python (from climt._core.snow_ice_column import solve_column, Dirich), code:python (import warnings), code:python (climt.SeaIce(maximum_snow_ice_height=10, albedo_snow=0.8,), code:python (from datetime import timedelta) (+17 more)
+
+### Community 1122 - "Community 1122"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1123 - "Community 1123"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1124 - "Community 1124"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1125 - "Community 1125"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1126 - "Community 1126"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1127 - "Community 1127"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1128 - "Community 1128"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1129 - "Community 1129"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1130 - "Community 1130"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1131 - "Community 1131"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1132 - "Community 1132"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1133 - "Community 1133"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1134 - "Community 1134"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1135 - "Community 1135"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1136 - "Community 1136"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1137 - "Community 1137"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1138 - "Community 1138"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1139 - "Community 1139"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1140 - "Community 1140"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1141 - "Community 1141"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1142 - "Community 1142"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1143 - "Community 1143"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1144 - "Community 1144"
+Cohesion: 0.08
+Nodes (25): cache, daemon, daemon-restart, debug, df-print, echo, enabled, engine (+17 more)
+
+### Community 1145 - "Community 1145"
+Cohesion: 0.09
+Nodes (22): 1. Soil properties (`BestSoilProperties`), 2. Surface layer (`BestSurfaceLayer`), 3. Albedo (`BestSurfaceAlbedo`), 4. Surface fluxes (`BestSurfaceFluxes`), 5. Subsurface transport (`BestSubsurfaceTransport`), code:python (from climt._components.second_best.processes import SurfaceL), code:python (grid = get_grid(nx=4, ny=2, nz=10, n_soil_interface_levels=4), code:python (climt.SecondBEST(soil_type="clay", num_soil_layers=3, minimu) (+14 more)
+
+### Community 1146 - "Community 1146"
+Cohesion: 0.1
+Nodes (20): 1. Canonical solver — `climt/_core/tridiagonal.py`, 2. `SimpleBoundaryLayer` — `climt/_components/simple_boundary_layer/`, 3. Migrate `snow_ice_column` off scipy (affects `SeaIce`, `LandIce`), 4. Migrate `second_best` subsurface off scipy, Architecture, code:block1 (Kb ∝ [ 1 + (Ria/Ric) · ln(z/z0) / (1 - Ria/Ric) ]^-1     for), code:python (from .backend import jit_compile), Design: `SimpleBoundaryLayer` component + canonical jit tridiagonal solver (+12 more)
+
+### Community 1147 - "Community 1147"
+Cohesion: 0.13
+Nodes (20): __Pyx_AddTraceback(), __Pyx_CLineForTraceback(), __Pyx_CreateCodeObjectForTraceback(), __Pyx_ErrFetchInState(), __Pyx_ErrRestoreInState(), __pyx_f_5numpy_import_array(), __pyx_f_5numpy_import_ufunc(), __pyx_f_5numpy_import_umath() (+12 more)
+
+### Community 1148 - "Community 1148"
+Cohesion: 0.11
+Nodes (18): metadata, author, bibliography, categories, date, description, engines, fig-responsive (+10 more)
+
+### Community 1149 - "Community 1149"
+Cohesion: 0.11
+Nodes (17): Additional state when `num_layers=2`, Clamp bug fix, code:python (climt.BucketHydrology(num_layers=1, soil_moisture_max=0.15,), code:python (from datetime import timedelta), code:python (bucket = climt.BucketHydrology(num_layers=2,), Constructor, Examples, Heat (+9 more)
+
+### Community 1150 - "Community 1150"
+Cohesion: 0.11
+Nodes (17): Additional inputs when `compute_fluxes=True`, Bundled data source, code:python (climt.DataOcean(sst_dataset, sst_variable="tos",), code:python (import climt), code:python (import os, climt), Constructor, Diagnostics, Example (+9 more)
+
+### Community 1151 - "Community 1151"
+Cohesion: 0.11
+Nodes (17): Additional inputs when `include_ekman=True`, code:python (climt.SlabSurface(include_ekman=False, equatorial_ekman_cap_), code:python (import climt), code:python (slab = climt.SlabSurface(include_ekman=True)), Constructor, Ekman energy transport, Examples, Formulation (+9 more)
+
+### Community 1152 - "Community 1152"
+Cohesion: 0.12
+Nodes (16): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+8 more)
+
+### Community 1153 - "Community 1153"
+Cohesion: 0.22
+Nodes (12): StableBoundaryLayer, boundary(), calculate_fields_boundary(), calculate_fields_flux(), flux(), Args:         roughness_length:             A measure of the surface roughness, Takes temperature, humidty and wind profiles for each column and         return, StableBoundaryLayer (+4 more)
+
+### Community 1154 - "Community 1154"
+Cohesion: 0.12
+Nodes (16): Bundled data source, Category codes, code:python (lat_idx = np.abs(src_lat[None, :] - model_lat[:, None]).argm), code:python (climt.LandMask(mask_dataset=None, include_land_ice=True,), code:python (import climt), code:python (mask = climt.LandMask(include_land_ice=False)), Constructor, Diagnostics (outputs) (+8 more)
+
+### Community 1155 - "Community 1155"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1156 - "Community 1156"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1157 - "Community 1157"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1158 - "Community 1158"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1159 - "Community 1159"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1160 - "Community 1160"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1161 - "Community 1161"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1162 - "Community 1162"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1163 - "Community 1163"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1164 - "Community 1164"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1165 - "Community 1165"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1166 - "Community 1166"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1167 - "Community 1167"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1168 - "Community 1168"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1169 - "Community 1169"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1170 - "Community 1170"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1171 - "Community 1171"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1172 - "Community 1172"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1173 - "Community 1173"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1174 - "Community 1174"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1175 - "Community 1175"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1176 - "Community 1176"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1177 - "Community 1177"
+Cohesion: 0.13
+Nodes (15): multiFile, book, html, extensions, identifier, pandoc, base-format, display-name (+7 more)
+
+### Community 1178 - "Community 1178"
+Cohesion: 0.14
+Nodes (12): code:python (import climt), Constructor, Example, Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation, Introduction, Physics, Physics (+4 more)
+
+### Community 1179 - "Community 1179"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1180 - "Community 1180"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1181 - "Community 1181"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1182 - "Community 1182"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1183 - "Community 1183"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1184 - "Community 1184"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1185 - "Community 1185"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1186 - "Community 1186"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1187 - "Community 1187"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1188 - "Community 1188"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1189 - "Community 1189"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1190 - "Community 1190"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1191 - "Community 1191"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1192 - "Community 1192"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1193 - "Community 1193"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1194 - "Community 1194"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1195 - "Community 1195"
+Cohesion: 0.14
+Nodes (14): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+6 more)
+
+### Community 1196 - "Community 1196"
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
+
+### Community 1197 - "Community 1197"
+Cohesion: 0.15
+Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
+
+### Community 1198 - "Community 1198"
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
+
+### Community 1199 - "Community 1199"
+Cohesion: 0.15
+Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
+
+### Community 1200 - "Community 1200"
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
+
+### Community 1201 - "Community 1201"
+Cohesion: 0.15
+Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
+
+### Community 1202 - "Community 1202"
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
+
+### Community 1203 - "Community 1203"
+Cohesion: 0.15
+Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
+
+### Community 1204 - "Community 1204"
+Cohesion: 0.15
+Nodes (12): formats, classes, id, keyvalue, markdown, containsRefs, headingAttr, headingText (+4 more)
+
+### Community 1205 - "Community 1205"
+Cohesion: 0.15
+Nodes (13): metadata, bibliography, engines, fig-responsive, lang, quarto-version, quartodoc, theme (+5 more)
+
+### Community 1206 - "Community 1206"
+Cohesion: 0.24
+Nodes (7): CorkShortwaveRadiation, diagnostic_properties(), input_properties(), num_shortwave_bands(), # TODO: ESFT expands g-points as the outer product across gases., # TODO: ESFT expands g-points as the outer product across gases., tendency_properties()
+
+### Community 1207 - "Community 1207"
+Cohesion: 0.29
+Nodes (8): boundary(), calculate_fields_boundary(), calculate_fields_flux(), flux(), Args:         roughness_length:             A measure of the surface roughness, Takes temperature, humidty and wind profiles for each column and         return, StableBoundaryLayer, TDMAsolver()
+
+### Community 1208 - "Community 1208"
+Cohesion: 0.29
+Nodes (8): boundary(), calculate_fields_boundary(), calculate_fields_flux(), flux(), Args:         roughness_length:             A measure of the surface roughness, Takes temperature, humidty and wind profiles for each column and         return, StableBoundaryLayer, TDMAsolver()
+
+### Community 1209 - "Community 1209"
+Cohesion: 0.17
+Nodes (11): code:python (climt.HeldSuarez(sigma_boundary_layer_top=0.7,), code:python (import climt), Constructor, Example, Introduction, Physics, Rayleigh friction, Reference (+3 more)
+
+### Community 1210 - "Community 1210"
+Cohesion: 0.17
+Nodes (11): Boundary-layer height and stability, code:python (import climt), Eddy diffusivity, Implicit diffusion and conservation, Inputs, outputs and diagnostics, Introduction, Modification to the surface-layer coefficient, Parameters (+3 more)
+
+### Community 1211 - "Community 1211"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1212 - "Community 1212"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1213 - "Community 1213"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1214 - "Community 1214"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1215 - "Community 1215"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1216 - "Community 1216"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1217 - "Community 1217"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1218 - "Community 1218"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1219 - "Community 1219"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1220 - "Community 1220"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1221 - "Community 1221"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1222 - "Community 1222"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1223 - "Community 1223"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1224 - "Community 1224"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1225 - "Community 1225"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1226 - "Community 1226"
+Cohesion: 0.18
+Nodes (10): formats, markdown, containsRefs, headingText, markdown, srcMarkdownNoYaml, yaml, projectFormats (+2 more)
+
+### Community 1227 - "Community 1227"
+Cohesion: 0.18
+Nodes (10): BergerSolarInsolation, code:python (import climt), code:python (zen = climt.Instellation()), Example, Instellation, Introduction, Physics, Reference (+2 more)
+
+### Community 1228 - "Community 1228"
+Cohesion: 0.18
+Nodes (10): code:python (climt.SimplePhysics(simulate_cyclone=False,), code:python (from datetime import timedelta), code:python (physics = climt.SimplePhysics(surface_fluxes=False, large_sc), Configuration, Constructor, Example, Introduction, Reference (+2 more)
+
+### Community 1230 - "Community 1230"
+Cohesion: 0.2
+Nodes (9): formats, markdown, containsRefs, markdown, srcMarkdownNoYaml, yaml, projectFormats, title (+1 more)
+
+### Community 1231 - "Community 1231"
+Cohesion: 0.2
+Nodes (9): code:python (climt.DcmipInitialConditions(condition_type="baroclinic_wave), code:python (import climt), Constructor, Example, Introduction, Reference, Source, State (+1 more)
+
+### Community 1232 - "Community 1232"
+Cohesion: 0.22
+Nodes (8): code:python (climt.DryConvectiveAdjustment()), code:python (from datetime import timedelta), Constructor, Example, Introduction, Physics, Source, State
+
+### Community 1233 - "Community 1233"
+Cohesion: 0.22
+Nodes (8): code:python (climt.GridScaleCondensation()), code:python (from datetime import timedelta), Constructor, Example, Introduction, Physics, Source, State
+
+### Community 1234 - "Community 1234"
+Cohesion: 0.28
+Nodes (7): _band_planck_fraction(), build_uniform_planck_fraction(), _planck_B_wavenumber(), Planck-source distribution across g-points within each LW band., Per-band Planck integral, replicated across g-points within each band.      The, planck_fraction[band, gpt, T] must equal the band's blackbody share,     constan, test_uniform_planck_fraction_band_integral()
+
+### Community 1235 - "Community 1235"
+Cohesion: 0.29
+Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+
+### Community 1236 - "Community 1236"
+Cohesion: 0.38
+Nodes (6): _bin_to_2deg(), main(), Generate the bundled Earth topography + land-ice-thickness boundary file.  Build, Return (lat, lon[0-360], surface, bed) at ~0.25 deg, cached on disk., Area-mean a fine (lat, lon) field onto the 2 deg target-cell centres., _read_strided()
+
+### Community 1237 - "Community 1237"
+Cohesion: 0.38
+Nodes (6): build_table(), _load_stellar_spectrum(), main(), Load stellar spectrum from a built-in name or .npz path., Load stellar spectrum from a built-in name or .npz path., Load stellar spectrum from a built-in name or .npz path.
+
+### Community 1238 - "Community 1238"
+Cohesion: 0.29
+Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+
+### Community 1239 - "Community 1239"
+Cohesion: 0.29
+Nodes (7): pandoc, default-image-extension, output-file, standalone, to, toc, wrap
+
+### Community 1240 - "Community 1240"
+Cohesion: 0.33
+Nodes (4): array_call { #climt.SimplePhysics.array_call }, code:python (SimplePhysics.array_call(state, timestep)), Methods, SimplePhysics { #climt.SimplePhysics }
+
+### Community 1241 - "Community 1241"
+Cohesion: 0.33
+Nodes (5): Bundled data source, code:python (import climt), Introduction, Source, Usage
+
+### Community 1242 - "Community 1242"
+Cohesion: 0.53
+Nodes (4): main(), Generate a single-band, single-g-point, constant-opacity cork correlated-k table, Write a single-band, single-g-point LW k-table with constant opacity.      Args:, write_single_band_unit_lw()
+
+### Community 1243 - "Community 1243"
+Cohesion: 0.5
+Nodes (4): main(), pf_band_means(), Experiment #13 — PF table H2O-VMR-axis fidelity vs LBL (lines + MT_CKD).  All pr, PF table band-mean k (m^2/kg) at exact (T, p, X) nodes -> dict[band_edge] = arra
+
+### Community 1246 - "Community 1246"
 Cohesion: 0.67
-Nodes (3): code:rst (Chapter 4 — The correlated-k approximation), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim), Task 20: Chapter 4 — "Correlated-k"
+Nodes (3): _download(), main(), Generate the bundled 12-month climatological SST for ``DataOcean``.  Build-time
+
+### Community 1249 - "Community 1249"
+Cohesion: 0.67
+Nodes (3): code:rst (Chapter 7 — The two-stream solver), code:bash (cd /Users/joymonteiro/github/climt/docs && conda run -n clim), Task 23: Chapter 7 — "The two-stream solver"
+
+### Community 1250 - "Community 1250"
+Cohesion: 0.67
+Nodes (3): code:rst (Performance), code:bash (git add docs/radiative_transfer/performance.rst), Task 25: Performance appendix page
 
 ## Knowledge Gaps
-- **18488 isolated node(s):** `project`, `version`, `count`, `items`, `_artifacts/01_mean_of_exp.png` (+18483 more)
+- **23178 isolated node(s):** `project`, `version`, `count`, `items`, `_artifacts/01_mean_of_exp.png` (+23173 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **120 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **123 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `SimplePhysics` connect `simple_physics_custom.f90` to `_rrtmg_lw.c`, `_rrtmg_sw.c`, `pure_python.py`, `unyt_backend.py`, `Community 1032`, `_unellipsify()`, `assert_direct_dimensions()`, `benchmark_emanuel_v3_backends.py`, `Community 277`, `Atmospheric Profiles`, `__Pyx_CyOrPyCFunction_GET_SELF()`, `Community 953`, `Community 570`, `__init__.py`, `boundary()`, `__Pyx_PyObject_FastCall_fallback()`, `Community 1011`, `__Pyx_CyOrPyCFunction_GET_SELF()`, `component.py`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **Why does `get_default_state()` connect `benchmark_berger_insolation.py` to `pure_python.py`, `unyt_backend.py`, `JAX Backend`, `benchmark_emanuel_v3_backends.py`, `Community 277`, `Atmospheric Profiles`, `component.py`, `main()`, `initialization.py`, `Community 570`, `__init__.py`, `build_profile()`, `component.py`, `Community 1102`, `Community 977`, `Community 1106`, `Community 981`, `GrayLongwaveRadiation`, `BucketHydrology`, `SlabSurface`, `IceSheet`, `Community 365`, `Earth Radiative-Convective Shijil BL`, `test_emanuel_optimization.py`, `Community 1011`, `load_atmospheric_properties()`, `test_resolution_convergence.py`?**
+- **Why does `SimplePhysics` connect `simple_physics_custom.f90` to `_rrtmg_sw.c`, `pure_python.py`, `component.py`, `unyt_backend.py`, `_unellipsify()`, `Community 1033`, `assert_direct_dimensions()`, `__Pyx_PyObject_FastCall_fallback()`, `Community 1011`, `benchmark_emanuel_v3_backends.py`, `Community 277`, `__Pyx_CyOrPyCFunction_GET_SELF()`, `component.py`, `Community 570`, `Community 953`, `__Pyx_CyOrPyCFunction_GET_SELF()`, `Community 254`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+- **Why does `get_default_state()` connect `SlabSurface` to `pure_python.py`, `unyt_backend.py`, `Community 1033`, `benchmark_berger_insolation.py`, `benchmark_emanuel_v3_backends.py`, `Community 277`, `Atmospheric Profiles`, `component.py`, `main()`, `initialization.py`, `Community 570`, `__init__.py`, `build_profile()`, `component.py`, `Community 1102`, `Community 977`, `Community 1106`, `Community 981`, `GrayLongwaveRadiation`, `BucketHydrology`, `IceSheet`, `Community 365`, `test_emanuel_optimization.py`, `Community 1011`, `load_atmospheric_properties()`, `test_resolution_convergence.py`, `Community 254`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._
-- **Why does `__pyx_memview_get_nn___pyx_t_5numpy_double_t()` connect `_rrtmg_lw.c` to `simple_physics_custom.f90`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `hs` connect `Community 405` to `main()`, `SlabSurface`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **Are the 17 inferred relationships involving `Emanuel Convection (Python)` (e.g. with `get_component_instance()` and `create_test_state()`) actually correct?**
   _`Emanuel Convection (Python)` has 17 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 16 inferred relationships involving `SimplePhysics` (e.g. with `.get_component_instance()` and `.get_component_instance()`) actually correct?**
   _`SimplePhysics` has 16 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 177 inferred relationships involving `get_default_state()` (e.g. with `test_cork_lw_parmentier_runs()` and `test_cork_lw_per_band_sum()`) actually correct?**
-  _`get_default_state()` has 177 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 157 inferred relationships involving `get_grid()` (e.g. with `test_cork_lw_parmentier_runs()` and `test_cork_lw_per_band_sum()`) actually correct?**
-  _`get_grid()` has 157 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 181 inferred relationships involving `get_default_state()` (e.g. with `test_cork_lw_parmentier_runs()` and `test_cork_lw_per_band_sum()`) actually correct?**
+  _`get_default_state()` has 181 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 162 inferred relationships involving `get_grid()` (e.g. with `test_cork_lw_parmentier_runs()` and `test_cork_lw_per_band_sum()`) actually correct?**
+  _`get_grid()` has 162 INFERRED edges - model-reasoned connections that need verification._
