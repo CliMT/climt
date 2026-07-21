@@ -46,6 +46,10 @@ class SecondBEST(Stepper):
         "surface_albedo_for_diffuse_shortwave": {"dims": ["*"], "units": "dimensionless"},
         "surface_drag_coefficient_for_heat": {"dims": ["*"], "units": "dimensionless"},
         "surface_drag_coefficient_for_momentum": {"dims": ["*"], "units": "dimensionless"},
+        "air_temperature_at_2m": {"dims": ["*"], "units": "degK"},
+        "specific_humidity_at_2m": {"dims": ["*"], "units": "kg/kg"},
+        "eastward_wind_at_10m": {"dims": ["*"], "units": "m s^-1"},
+        "northward_wind_at_10m": {"dims": ["*"], "units": "m s^-1"},
     }
 
     def __init__(self, soil_type="clay", num_soil_layers=3, minimum_wind_speed=1.0,
@@ -155,6 +159,27 @@ class SecondBEST(Stepper):
             diagnostics["surface_albedo_for_diffuse_shortwave"][col] = albedo["alpha_sw"]
             diagnostics["surface_drag_coefficient_for_heat"][col] = drag["C_Dh"]
             diagnostics["surface_drag_coefficient_for_momentum"][col] = drag["C_Dm"]
+
+            # Screen/anemometer-level diagnostics, interpolated between the
+            # surface and the lowest model level with the surface-layer's own
+            # stability profile (see SurfaceLayer.interpolate_to_height). q2m
+            # interpolates from the *effective* surface humidity implied by the
+            # evaporative beta, since dry soil is not saturated.
+            q_air = state["specific_humidity"][0, col]
+            beta = flux.get("beta", 1.0)
+            q_surf_eff = beta * q_sat + (1.0 - beta) * q_air
+            diagnostics["air_temperature_at_2m"][col] = \
+                self._surface_layer.interpolate_to_height(
+                    drag, z0, z_mid, 2.0, T_surf, T_air, "scalar")
+            diagnostics["specific_humidity_at_2m"][col] = \
+                self._surface_layer.interpolate_to_height(
+                    drag, z0, z_mid, 2.0, q_surf_eff, q_air, "scalar")
+            spd10 = self._surface_layer.interpolate_to_height(
+                drag, z0, z_mid, 10.0, 0.0, wind, "wind")
+            spd = np.sqrt(u * u + v * v)
+            if spd > 0.0:
+                diagnostics["eastward_wind_at_10m"][col] = spd10 * u / spd
+                diagnostics["northward_wind_at_10m"][col] = spd10 * v / spd
         return diagnostics, outputs
 
 

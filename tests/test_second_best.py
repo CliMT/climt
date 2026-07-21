@@ -123,3 +123,47 @@ def test_surface_layer_reference_height_uses_lowest_model_level():
     # and both are physically plausible surface drag coefficients (~1e-3),
     # not the ~9e-4 the km-scale reference height produced
     assert 1e-3 < cdn_thin < 6e-3
+
+
+def test_screen_level_diagnostics_are_physical():
+    comp = SecondBEST()
+    state = get_default_state([comp], grid_state=get_grid(
+        nx=1, ny=1, nz=10, n_soil_interface_levels=4))
+    state["area_type"].values[:] = "land"
+    state["eastward_wind"].values[:] = 6.0
+    state["northward_wind"].values[:] = -2.0
+    state["surface_temperature"].values[:] = 298.0
+    diag, _ = comp(state, timedelta(seconds=100))
+
+    T_surf = 298.0
+    T_air = float(state["air_temperature"].values[0, 0, 0])
+    t2m = diag["air_temperature_at_2m"].values.item(0)
+    # 2m temperature lies between the surface and the lowest-level air value
+    assert min(T_surf, T_air) - 1e-9 <= t2m <= max(T_surf, T_air) + 1e-9
+
+    q2m = diag["specific_humidity_at_2m"].values.item(0)
+    assert np.isfinite(q2m) and q2m >= 0.0
+
+    u10 = diag["eastward_wind_at_10m"].values.item(0)
+    v10 = diag["northward_wind_at_10m"].values.item(0)
+    spd_lo = np.sqrt(6.0 ** 2 + 2.0 ** 2)
+    spd10 = np.sqrt(u10 ** 2 + v10 ** 2)
+    # 10 m is below the lowest model level, so the 10 m speed is reduced
+    assert 0.0 < spd10 < spd_lo
+    # direction is preserved (eastward positive, northward negative)
+    assert u10 > 0.0 and v10 < 0.0
+    assert np.isclose(u10 / v10, 6.0 / -2.0)
+
+
+def test_screen_level_diagnostics_zero_on_non_land():
+    comp = SecondBEST()
+    state = get_default_state([comp], grid_state=get_grid(
+        nx=2, ny=1, nz=10, n_soil_interface_levels=4))
+    state["area_type"].values[:] = "land"
+    state["area_type"].values[0, 1] = "sea"
+    diag, _ = comp(state, timedelta(seconds=100))
+    # SecondBEST does not own "sea": its screen diagnostics stay at the default
+    assert diag["air_temperature_at_2m"].values[0, 1] == 0.0
+    assert diag["eastward_wind_at_10m"].values[0, 1] == 0.0
+    # the land column was populated
+    assert diag["air_temperature_at_2m"].values[0, 0] > 0.0

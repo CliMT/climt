@@ -5,6 +5,10 @@ from sympl import get_constant
 
 class SurfaceFluxes:
     def __call__(self, drag, atmos, soil, soil_props, timestep):
+        """Return a dict with ``sensible_heat_flux``, ``latent_heat_flux``,
+        ``momentum_flux``, ``evaporation`` and ``beta`` (the surface
+        evaporative-wetness factor in [0, 1], used to form the effective
+        surface humidity for screen-level diagnostics)."""
         raise NotImplementedError
 
 
@@ -47,4 +51,5 @@ class BestSurfaceFluxes(SurfaceFluxes):
         u, v = atmos["u"], atmos["v"]
         momentum_flux = -rho * drag["C_Dm"] * U * np.array([u, v])
         return {"sensible_heat_flux": float(shf), "latent_heat_flux": float(lhf),
-                "momentum_flux": momentum_flux, "evaporation": float(evaporation)}
+                "momentum_flux": momentum_flux, "evaporation": float(evaporation),
+                "beta": float(np.clip(beta_u, 0.0, 1.0))}

@@ -136,3 +136,40 @@ def test_subsurface_conserves_total_water_mass():
     out = st(profiles, surface_flux_bc=-10.0, timestep=300.0, dz=0.1)
     total1 = out["X_w"].sum() + out["X_i"].sum()
     assert np.isclose(total0, total1, atol=1e-9)   # phase change moves mass, conserves it
+
+
+def test_interpolate_neutral_reduces_to_log_law():
+    sl = BestSurfaceLayer()
+    z0, z_mid = 0.01, 69.0
+    cdn = (0.4 / np.log(z_mid / z0)) ** 2
+    neutral = {"C_Dm": cdn, "C_Dh": cdn, "C_DN": cdn, "Ri": 0.0}
+    # scalar: weight is the neutral log ratio
+    w = np.log(2.0 / z0) / np.log(z_mid / z0)
+    t2m = sl.interpolate_to_height(neutral, z0, z_mid, 2.0,
+                                   surface_value=300.0, level_value=290.0,
+                                   kind="scalar")
+    assert np.isclose(t2m, 300.0 + (290.0 - 300.0) * w)
+    # wind: neutral log ratio of the lowest-level speed
+    u10 = sl.interpolate_to_height(neutral, z0, z_mid, 10.0,
+                                   surface_value=0.0, level_value=8.0,
+                                   kind="wind")
+    assert np.isclose(u10, 8.0 * np.log(10.0 / z0) / np.log(z_mid / z0))
+
+
+def test_interpolate_bounded_and_stability_direction():
+    sl = BestSurfaceLayer()
+    z0, z_mid = 0.01, 69.0
+    cdn = (0.4 / np.log(z_mid / z0)) ** 2
+    neutral = {"C_Dm": cdn, "C_Dh": cdn, "C_DN": cdn, "Ri": 0.0}
+    unstable = {"C_Dm": cdn * 1.5, "C_Dh": cdn * 1.8, "C_DN": cdn, "Ri": -0.3}
+    stable = {"C_Dm": cdn * 0.7, "C_Dh": cdn * 0.6, "C_DN": cdn, "Ri": 0.15}
+    Ts, Ta = 300.0, 290.0
+    t_neu = sl.interpolate_to_height(neutral, z0, z_mid, 2.0, Ts, Ta, "scalar")
+    t_uns = sl.interpolate_to_height(unstable, z0, z_mid, 2.0, Ts, Ta, "scalar")
+    t_sta = sl.interpolate_to_height(stable, z0, z_mid, 2.0, Ts, Ta, "scalar")
+    # all bounded between surface and air
+    for t in (t_neu, t_uns, t_sta):
+        assert Ta <= t <= Ts
+    # unstable = stronger mixing -> 2m closer to the (well-mixed) air value;
+    # stable = strong near-surface gradient -> 2m closer to the surface value
+    assert t_uns < t_neu < t_sta

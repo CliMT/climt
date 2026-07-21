@@ -7,6 +7,42 @@ class SurfaceLayer:
     def __call__(self, z_mid, z0, wind_speed, T_surf, T_air, area_type):
         raise NotImplementedError
 
+    def interpolate_to_height(self, drag, z0, z_mid, z_target,
+                              surface_value, level_value, kind):
+        """Diagnose a value at ``z_target`` between the surface and the lowest
+        model level, consistent with the stability-dependent drag in ``drag``.
+
+        The Monin-Obukhov stability functions are recovered from the bulk
+        transfer coefficients this process returned (``C_Dm``/``C_Dh`` relative
+        to the neutral ``C_DN``) and assumed to vary linearly with height across
+        the surface layer, so the diagnosed profile is consistent with the
+        surface fluxes rather than a neutral log-law. Reduces exactly to the
+        neutral log-law when ``C_Dm == C_Dh == C_DN``.
+
+        ``kind='wind'``: ``level_value`` is the lowest-level wind *speed*; the
+        surface value is 0. Returns the wind speed at ``z_target``.
+        ``kind='scalar'``: interpolates between ``surface_value`` (at the
+        roughness height) and ``level_value`` (at ``z_mid``).
+        """
+        kappa = get_constant("von_karman_constant", "dimensionless")
+        ln_mid = np.log(z_mid / z0)
+        ln_tgt = np.log(z_target / z0)
+        C_Dm = drag["C_Dm"]
+        C_Dh = drag["C_Dh"]
+        frac = z_target / z_mid
+        if kind == "wind":
+            # psi_m recovered from momentum drag; u* profile.
+            psi_m = ln_mid - kappa / np.sqrt(C_Dm)
+            denom = ln_mid - psi_m                      # == kappa/sqrt(C_Dm) > 0
+            num = max(ln_tgt - psi_m * frac, 0.0)
+            return level_value * num / denom
+        # psi_h recovered from heat drag; scalar profile.
+        psi_h = ln_mid - kappa * np.sqrt(C_Dm) / C_Dh
+        denom = ln_mid - psi_h                          # == kappa*sqrt(C_Dm)/C_Dh > 0
+        weight = (ln_tgt - psi_h * frac) / denom
+        weight = min(max(weight, 0.0), 1.0)
+        return surface_value + (level_value - surface_value) * weight
+
 
 class BestSurfaceLayer(SurfaceLayer):
     def __call__(self, z_mid, z0, wind_speed, T_surf, T_air, area_type):
