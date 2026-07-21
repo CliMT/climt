@@ -35,6 +35,7 @@ from climt import (
     HeldSuarez,
     IceSheet,
     Instellation,
+    LandMask,
     RRTMGLongwave,
     RRTMGShortwave,
     SimplePhysics,
@@ -708,6 +709,11 @@ class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
             current_tendency["air_temperature"].values
             != new_tendency["air_temperature"].values
         )
+
+
+class TestLandMask(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.LandMask()
 
 
 if __name__ == "__main__":
