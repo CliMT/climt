@@ -78,6 +78,37 @@ def _make_sst_file(tmp_path):
     return path
 
 
+def _make_sst_file_celsius(tmp_path, units_string):
+    lat = np.arange(-88.0, 90.0, 4.0)
+    lon = np.arange(2.0, 360.0, 4.0)
+    time = np.arange(12)  # month index
+    # Constant ~25 degC source, so a correct conversion yields ~298.15 K.
+    data = np.full((12, lat.size, lon.size), 25.0)
+    ds = xr.Dataset(
+        {"tos": (("time", "lat", "lon"), data)},
+        coords={"time": time, "lat": lat, "lon": lon},
+    )
+    ds["tos"].attrs["units"] = units_string
+    path = str(tmp_path / "sst_celsius.nc")
+    ds.to_netcdf(path, engine="scipy")
+    return path
+
+
+@pytest.mark.parametrize("units_string", ["Celsius", "degrees_C", "degC "])
+def test_data_ocean_converts_non_exact_celsius_spellings(tmp_path, units_string):
+    from climt import DataOcean
+    ocean = DataOcean(_make_sst_file_celsius(tmp_path, units_string), sst_variable="tos")
+    state = get_default_state([ocean], grid_state=get_grid(nx=32, ny=16, nz=10))
+    state["area_type"].values[:] = "sea"
+    state["time"] = datetime(2000, 7, 15, 12)
+    sst = ocean(state)["sea_surface_temperature"].values
+    assert np.all(np.isfinite(sst))
+    # 25 degC should become ~298.15 K, not remain ~25 (which would indicate
+    # the Celsius->Kelvin conversion was silently skipped due to a units
+    # spelling/case/whitespace mismatch).
+    assert np.allclose(sst, 298.15, atol=2.0)
+
+
 def test_data_ocean_prescribes_sea_only(tmp_path):
     from climt import DataOcean
     ocean = DataOcean(_make_sst_file(tmp_path), sst_variable="tos")

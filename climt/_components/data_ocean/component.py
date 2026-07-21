@@ -57,7 +57,9 @@ class DataOcean(DiagnosticComponent):
         ds = sst_dataset if isinstance(sst_dataset, xr.Dataset) else \
             xr.open_dataset(sst_dataset, engine="scipy")
         sst = ds[sst_variable]
-        if sst.attrs.get("units", "K") in ("degC", "C", "celsius"):
+        units = sst.attrs.get("units", "K").strip().lower()
+        if units in ("degc", "c", "celsius", "degrees_c", "degrees c",
+                     "degrees celsius", "deg_c"):
             sst = sst + 273.15
         self._src_lat = np.asarray(ds["lat"].values, float)
         self._src_lon = np.asarray(ds["lon"].values, float)
