@@ -545,10 +545,19 @@ class TestLandIceEnergyConservation(ConservationTestBase):
         # task-4-report.md); it is inherited unchanged from IceSheet and is
         # out of scope to fix here. So, as with
         # TestSeaIceEnergyConservation and TestSecondBESTEnergy, this test
-        # is kept to a state where the step is genuinely a no-op instead of
-        # chasing atol closure under real soil forcing (which is separately,
-        # meaningfully covered -- direction only, not magnitude -- by
-        # tests/test_land_ice.py::test_land_ice_surface_energy_forcing_direction).
+        # is kept to a state where the step is genuinely a no-op -- the
+        # always-on Dirichlet base snap makes atol closure under a real
+        # soil/ice mismatch impossible here -- rather than chasing atol
+        # closure under real soil forcing. This does not leave the
+        # soil/ice mismatch or the basal flux direction uncovered:
+        # tests/test_land_ice.py::test_land_ice_surface_energy_forcing_direction
+        # covers direction only (not magnitude) for the atmosphere-side
+        # surface forcing, and
+        # tests/test_land_ice.py::test_land_ice_reports_soil_heat_flux_and_conserves_mass
+        # plus
+        # tests/test_land_ice.py::test_land_ice_basal_flux_reverses_sign_when_soil_is_colder
+        # assert the sign of upward_heat_flux_at_ground_level_in_soil in
+        # both directions (soil warmer than ice, and soil colder than ice).
         state["soil_surface_temperature"].values[:] = 255.0
         return state
 

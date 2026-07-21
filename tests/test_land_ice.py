@@ -16,7 +16,35 @@ def test_land_ice_reports_soil_heat_flux_and_conserves_mass():
     state["soil_surface_temperature"].values[:] = 272.0
     diag, new = ice(state, timedelta(seconds=3600))
     assert "upward_heat_flux_at_ground_level_in_soil" in diag
+    # Soil (272 K) is warmer than the ice column (255 K): heat should
+    # conduct upward out of the soil into the snow/ice column, so the
+    # basal flux diagnostic must be positive.
+    assert diag["upward_heat_flux_at_ground_level_in_soil"].values[0] > 0
     assert new["land_ice_thickness"].values[0] >= 0.0
+    assert not np.any(np.isnan(new["snow_and_ice_temperature"].values))
+
+
+def test_land_ice_basal_flux_reverses_sign_when_soil_is_colder():
+    # Companion to test_land_ice_reports_soil_heat_flux_and_conserves_mass:
+    # locks in the opposite basal-flux sign when the soil is colder than
+    # the ice column, so a future sign-flip regression in the base-node
+    # conduction formula (see array_call's ``heat_flux_to_soil``) is
+    # caught. Neither of these two cases is exercised by
+    # TestLandIceEnergyConservation (tests/test_conservation.py), which
+    # deliberately keeps soil_surface_temperature equal to the initial
+    # snow_and_ice_temperature so that step is a true no-op.
+    ice = LandIce()
+    state = get_default_state([ice], grid_state=get_grid(nx=1, ny=1, nz=10))
+    state["area_type"].values[:] = "land_ice"
+    state["land_ice_thickness"].values[:] = 3.0
+    state["surface_snow_thickness"].values[:] = 0.5
+    state["snow_and_ice_temperature"].values[:] = 255.0
+    state["soil_surface_temperature"].values[:] = 240.0
+    diag, new = ice(state, timedelta(seconds=3600))
+    # Soil (240 K) is colder than the ice column (255 K): heat should
+    # conduct downward from the column into the soil, so the basal flux
+    # diagnostic must be negative.
+    assert diag["upward_heat_flux_at_ground_level_in_soil"].values[0] < 0
     assert not np.any(np.isnan(new["snow_and_ice_temperature"].values))
 
 
