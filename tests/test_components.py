@@ -773,5 +773,66 @@ class TestLandMask(ComponentBaseColumn, ComponentBase3D):
         return climt.LandMask()
 
 
+class TestSimpleBoundaryLayer(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.SimpleBoundaryLayer()
+
+
+def test_simple_boundary_layer_properties():
+    c = climt.SimpleBoundaryLayer()
+    assert set(c.input_properties) == {
+        "air_temperature",
+        "specific_humidity",
+        "air_pressure",
+        "air_pressure_on_interface_levels",
+        "northward_wind",
+        "eastward_wind",
+        "surface_air_pressure",
+        "surface_temperature",
+        "surface_specific_humidity",
+    }
+    assert set(c.output_properties) == {
+        "air_temperature",
+        "specific_humidity",
+        "northward_wind",
+        "eastward_wind",
+    }
+    assert set(c.diagnostic_properties) == {
+        "northward_wind_stress",
+        "eastward_wind_stress",
+        "boundary_layer_height",
+    }
+    assert c.diagnostic_properties["boundary_layer_height"]["units"] == "m"
+    assert c.output_properties["air_temperature"]["units"] == "degK"
+
+
+def test_simple_boundary_layer_conserves_column_integrals():
+    component = climt.SimpleBoundaryLayer()
+    state = climt.get_default_state(
+        [component], grid_state=get_grid(nx=None, ny=None, nz=30)
+    )
+    # perturb winds/humidity so there is something to diffuse
+    np.asarray(state["northward_wind"])[:] = 5.0
+    np.asarray(state["eastward_wind"])[:] = -3.0
+    np.asarray(state["specific_humidity"])[:] = 0.005
+
+    diagnostics, new_state = component(
+        state, timestep=timedelta(seconds=600)
+    )
+
+    p_int = np.asarray(state["air_pressure_on_interface_levels"])
+    # mid-levels axis is axis 0 for a single column here
+    dp = p_int[:-1] - p_int[1:]
+    for name in (
+        "air_temperature",
+        "specific_humidity",
+        "northward_wind",
+        "eastward_wind",
+    ):
+        before = np.sum(np.asarray(state[name]) * dp)
+        after = np.sum(np.asarray(new_state[name]) * dp)
+        assert np.isclose(before, after, rtol=1e-8, atol=1e-6), name
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
