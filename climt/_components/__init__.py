@@ -9,6 +9,7 @@ from .emanuel import (
 from .grid_scale_condensation import GridScaleCondensation
 from .held_suarez import HeldSuarez
 from .instellation import Instellation
+from .land_ice import LandIce
 from .land_mask import LandMask
 from .cork import CorkLongwaveRadiation, CorkShortwaveRadiation
 from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
@@ -41,4 +42,5 @@ __all__ = (
     CorkShortwaveRadiation,
     SecondBEST,
     SeaIce,
+    LandIce,
 )

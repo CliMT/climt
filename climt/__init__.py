@@ -14,6 +14,7 @@ from ._components import (
     HeldSuarez,
     IceSheet,
     Instellation,
+    LandIce,
     LandMask,
     RRTMGLongwave,
     RRTMGShortwave,
@@ -84,6 +85,7 @@ __all__ = (
     BucketHydrology,
     SecondBEST,
     SeaIce,
+    LandIce,
 )
 
 __version__ = "0.20.0"

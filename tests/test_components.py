@@ -35,6 +35,7 @@ from climt import (
     HeldSuarez,
     IceSheet,
     Instellation,
+    LandIce,
     LandMask,
     RRTMGLongwave,
     RRTMGShortwave,
@@ -652,6 +653,17 @@ class TestSeaIce(ComponentBaseColumn, ComponentBase3D):
         state = super(TestSeaIce, self).get_3d_input_state(component)
         state["area_type"].values[:] = "sea_ice"
         state["sea_ice_thickness"].values[:] = 1.0
+        return state
+
+
+class TestLandIce(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.LandIce()
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestLandIce, self).get_3d_input_state(component)
+        state["area_type"].values[:] = "land_ice"
+        state["land_ice_thickness"].values[:] = 3.0
         return state
 
 
