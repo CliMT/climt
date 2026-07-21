@@ -17,6 +17,7 @@ from ._components import (
     LandMask,
     RRTMGLongwave,
     RRTMGShortwave,
+    SeaIce,
     SecondBEST,
     SimplePhysics,
     SlabSurface,
@@ -82,6 +83,7 @@ __all__ = (
     DryConvectiveAdjustment,
     BucketHydrology,
     SecondBEST,
+    SeaIce,
 )
 
 __version__ = "0.20.0"

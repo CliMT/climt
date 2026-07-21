@@ -38,6 +38,7 @@ from climt import (
     LandMask,
     RRTMGLongwave,
     RRTMGShortwave,
+    SeaIce,
     SimplePhysics,
     SlabSurface,
     UnytTimeDelta,
@@ -640,6 +641,17 @@ class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
         state["area_type"].values[:] = "land"
         state["surface_snow_thickness"].values[:] = 3
 
+        return state
+
+
+class TestSeaIce(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.SeaIce()
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestSeaIce, self).get_3d_input_state(component)
+        state["area_type"].values[:] = "sea_ice"
+        state["sea_ice_thickness"].values[:] = 1.0
         return state
 
 
