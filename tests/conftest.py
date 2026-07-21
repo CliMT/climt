@@ -22,6 +22,7 @@ def reset_sympl_backend():
     # Re-set climt's custom constants that reset_constants() clears
     sympl.set_constant("top_of_model_pressure", 20.0, "Pa")
     sympl.set_constant("von_karman_constant", 0.4, "dimensionless")
+    sympl.set_constant("heat_capacity_of_sea_water", 3985.0, "J/kg/degK")
 
     try:
         from climt._core.condensibles import _H2O_DEFAULTS

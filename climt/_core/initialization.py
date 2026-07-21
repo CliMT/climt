@@ -923,6 +923,16 @@ default_values = {
         "units": "W m^-2",
         "domain": "surface",
     },
+    "surface_downward_eastward_stress": {
+        "value": 0.0,
+        "units": "N m^-2",
+        "domain": "surface",
+    },
+    "surface_downward_northward_stress": {
+        "value": 0.0,
+        "units": "N m^-2",
+        "domain": "surface",
+    },
     "soil_type": {
         "value": "clay",
         "units": "dimensionless",
