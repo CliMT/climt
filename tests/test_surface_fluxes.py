@@ -12,6 +12,7 @@ def test_bulk_sensible_heat_matches_reference():
     expected_shf = 1.2 * 1004.0 * c * U * (Ts - Ta)  # rho*cp*c*U*dT
     # helper may fold cp into c per the bucket convention; assert sign & finiteness
     assert out["sensible_heat_flux"][0] > 0.0
+    assert np.isclose(out["sensible_heat_flux"][0], expected_shf)
     assert out["latent_heat_flux"][0] > 0.0
     assert np.isfinite(out["evaporation_rate"][0])
 
