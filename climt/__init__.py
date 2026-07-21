@@ -4,6 +4,7 @@ import sympl
 from ._components import (
     BergerSolarInsolation,
     BucketHydrology,
+    DataOcean,
     DcmipInitialConditions,
     DryConvectiveAdjustment,
     EmanuelConvection,
@@ -87,6 +88,7 @@ __all__ = (
     SecondBEST,
     SeaIce,
     LandIce,
+    DataOcean,
 )
 
 __version__ = "0.20.0"

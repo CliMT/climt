@@ -1,5 +1,6 @@
 from .berger_solar_insolation import BergerSolarInsolation
 from .bucket_hydrology import BucketHydrology
+from .data_ocean import DataOcean
 from .dcmip import DcmipInitialConditions
 from .dry_convection import DryConvectiveAdjustment
 from .emanuel import (
@@ -43,4 +44,5 @@ __all__ = (
     SecondBEST,
     SeaIce,
     LandIce,
+    DataOcean,
 )

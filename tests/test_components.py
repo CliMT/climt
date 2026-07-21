@@ -667,6 +667,39 @@ class TestLandIce(ComponentBaseColumn, ComponentBase3D):
         return state
 
 
+class TestDataOcean(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        import os
+        import tempfile
+
+        # write a tiny fixed dataset once to a temp path stored on the class
+        if not hasattr(self.__class__, "_sst_path"):
+            lat = np.arange(-88.0, 90.0, 8.0)
+            lon = np.arange(4.0, 360.0, 8.0)
+            data = np.repeat(
+                (290.0 + 0 * lat[:, None] + 0 * lon[None, :])[None], 12, 0
+            )
+            ds = xr.Dataset(
+                {"tos": (("time", "lat", "lon"), data)},
+                coords={"time": np.arange(12), "lat": lat, "lon": lon},
+            )
+            ds["tos"].attrs["units"] = "K"
+            p = os.path.join(tempfile.gettempdir(), "climt_test_sst.nc")
+            ds.to_netcdf(p, engine="scipy")
+            self.__class__._sst_path = p
+        return climt.DataOcean(self.__class__._sst_path, sst_variable="tos")
+
+    def get_1d_input_state(self, component=None):
+        state = super(TestDataOcean, self).get_1d_input_state(component)
+        state["time"] = datetime(2000, 1, 15, 12)
+        return state
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestDataOcean, self).get_3d_input_state(component)
+        state["time"] = datetime(2000, 1, 15, 12)
+        return state
+
+
 class TestSecondBEST(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         return climt.SecondBEST()

@@ -1,8 +1,11 @@
 import numpy as np
+import pytest
+import xarray as xr
 from datetime import datetime
 from climt._components.data_ocean._sst_interpolation import (
     mid_month_values, interp_time,
 )
+from climt import get_default_state, get_grid
 
 
 def test_mid_month_preserves_monthly_means():
@@ -56,3 +59,69 @@ def test_interp_time_within_bounds():
     for month in range(1, 13):
         val = interp_time(mm, datetime(2000, month, 15, 12))
         assert mm.min() - 1e-6 <= val <= mm.max() + 1e-6
+
+
+def _make_sst_file(tmp_path):
+    lat = np.arange(-88.0, 90.0, 4.0)
+    lon = np.arange(2.0, 360.0, 4.0)
+    time = np.arange(12)  # month index
+    # SST = 300 - (lat/3)^2 scaled, constant in time for a simple check
+    base = 300.0 - (lat[:, None] / 3.0) ** 2 * 0.01 + 0 * lon[None, :]
+    data = np.repeat(base[None, :, :], 12, axis=0)
+    ds = xr.Dataset(
+        {"tos": (("time", "lat", "lon"), data)},
+        coords={"time": time, "lat": lat, "lon": lon},
+    )
+    ds["tos"].attrs["units"] = "K"
+    path = str(tmp_path / "sst.nc")
+    ds.to_netcdf(path, engine="scipy")
+    return path
+
+
+def test_data_ocean_prescribes_sea_only(tmp_path):
+    from climt import DataOcean
+    ocean = DataOcean(_make_sst_file(tmp_path), sst_variable="tos")
+    state = get_default_state([ocean], grid_state=get_grid(nx=32, ny=16, nz=10))
+    lat = state["latitude"].values
+    state["area_type"].values[:] = "sea"
+    state["area_type"].values[lat > 45.0] = "land"
+    land_before = state["surface_temperature"].values[lat > 45.0].copy()
+    state["time"] = datetime(2000, 7, 15, 12)
+    diag = ocean(state)
+    sst = diag["sea_surface_temperature"].values
+    # every sea cell finite
+    assert np.all(np.isfinite(sst[lat <= 45.0]))
+    # land cells passed through unchanged in surface_temperature
+    assert np.allclose(diag["surface_temperature"].values[lat > 45.0], land_before)
+
+
+@pytest.mark.parametrize("nx,ny", [(8, 4), (64, 40)])
+def test_data_ocean_arbitrary_resolution(tmp_path, nx, ny):
+    from climt import DataOcean
+    ocean = DataOcean(_make_sst_file(tmp_path), sst_variable="tos")
+    state = get_default_state([ocean], grid_state=get_grid(nx=nx, ny=ny, nz=10))
+    state["area_type"].values[:] = "sea"
+    state["time"] = datetime(2000, 1, 15, 12)
+    sst = ocean(state)["sea_surface_temperature"].values
+    assert np.all(np.isfinite(sst))
+    assert sst.min() > 200.0 and sst.max() < 350.0  # bounded/physical
+
+
+def test_data_ocean_full_sea_coverage_offset_mask(tmp_path):
+    from climt import DataOcean
+    # source with a land hole; model sea cells over the hole must still be filled
+    lat = np.arange(-88.0, 90.0, 4.0)
+    lon = np.arange(2.0, 360.0, 4.0)
+    data = np.full((12, lat.size, lon.size), 290.0)
+    data[:, lat.size // 2, lon.size // 2] = np.nan  # masked source point
+    ds = xr.Dataset({"tos": (("time", "lat", "lon"), data)},
+                    coords={"time": np.arange(12), "lat": lat, "lon": lon})
+    ds["tos"].attrs["units"] = "K"
+    path = str(tmp_path / "holey.nc")
+    ds.to_netcdf(path, engine="scipy")
+    ocean = DataOcean(path, sst_variable="tos")
+    state = get_default_state([ocean], grid_state=get_grid(nx=90, ny=45, nz=10))
+    state["area_type"].values[:] = "sea"
+    state["time"] = datetime(2000, 6, 15, 12)
+    sst = ocean(state)["sea_surface_temperature"].values
+    assert np.all(np.isfinite(sst))   # nearest-valid fill covered the hole
