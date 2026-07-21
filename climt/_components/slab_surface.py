@@ -81,6 +81,10 @@ class SlabSurface(TendencyComponent):
             "dims": ["*"],
             "units": "kg m^-3",
         },
+        "ocean_heat_transport_convergence": {
+            "dims": ["*"],
+            "units": "W m^-2",
+        },
     }
 
     tendency_properties = {
@@ -94,6 +98,10 @@ class SlabSurface(TendencyComponent):
         "depth_of_slab_surface": {
             "dims": ["*"],
             "units": "m",
+        },
+        "ocean_heat_transport_convergence": {
+            "dims": ["*"],
+            "units": "W m^-2",
         },
     }
 
@@ -205,6 +213,13 @@ class SlabSurface(TendencyComponent):
             )
         )
 
+        ocean_heat_transport_raw = state["ocean_heat_transport_convergence"]
+        ocean_heat_transport = flat(
+            getattr(
+                ocean_heat_transport_raw, "data", ocean_heat_transport_raw
+            )
+        )
+
         tend_ts, depth = _slab_surface_kernel_np(
             sw_down,
             lw_down,
@@ -221,10 +236,14 @@ class SlabSurface(TendencyComponent):
             surf_therm_cap,
             ocean_mix_thick,
             soil_layer_thick,
+            ocean_heat_transport,
         )
 
         return {"surface_temperature": np.reshape(tend_ts, area_type_raw.shape)}, {
-            "depth_of_slab_surface": np.reshape(depth, area_type_raw.shape)
+            "depth_of_slab_surface": np.reshape(depth, area_type_raw.shape),
+            "ocean_heat_transport_convergence": np.reshape(
+                ocean_heat_transport, area_type_raw.shape
+            ),
         }
 
 
@@ -245,6 +264,7 @@ def _slab_surface_kernel_np(
     surf_therm_cap,
     ocean_mix_thick,
     soil_layer_thick,
+    ocean_heat_transport,
 ):
 
     ncol = area_type.size
@@ -264,6 +284,9 @@ def _slab_surface_kernel_np(
             net_heat_flux = -up_heat_soil[i]
         elif sea_ice_mask:
             net_heat_flux = heat_flux_sea_ice[i]
+
+        if sea_mask and not sea_ice_mask:
+            net_heat_flux = net_heat_flux + ocean_heat_transport[i]
 
         if sea_mask:
             final_dens = sea_water_dens[i]

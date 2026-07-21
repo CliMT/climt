@@ -967,6 +967,11 @@ default_values = {
         "units": "m",
         "domain": "ocean_horizontal",
     },
+    "ocean_heat_transport_convergence": {
+        "value": 0.0,
+        "units": "W m^-2",
+        "domain": "ocean_horizontal",
+    },
     "snow_and_ice_temperature": {
         "value": 270.0,
         "units": "degK",
