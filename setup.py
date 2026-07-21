@@ -309,6 +309,7 @@ setup(
             "_data/atmospheric_properties/*.toml",
             "_data/picket_fence/correlated_k/*.nc",
             "_data/picket_fence/correlated_k/*.npz",
+            "_data/land_mask/*.nc",
         ]
     },
     install_requires=requirements,
