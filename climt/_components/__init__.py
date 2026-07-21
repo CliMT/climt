@@ -17,6 +17,7 @@ from .radiation import Frierson06LongwaveOpticalDepth, GrayLongwaveRadiation
 from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .sea_ice import SeaIce
 from .second_best import SecondBEST
+from .simple_boundary_layer import SimpleBoundaryLayer
 from .simple_physics import SimplePhysics
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
@@ -45,4 +46,5 @@ __all__ = (
     SeaIce,
     LandIce,
     DataOcean,
+    SimpleBoundaryLayer,
 )

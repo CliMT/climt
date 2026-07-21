@@ -21,6 +21,7 @@ from ._components import (
     RRTMGShortwave,
     SeaIce,
     SecondBEST,
+    SimpleBoundaryLayer,
     SimplePhysics,
     SlabSurface,
 )
@@ -89,6 +90,7 @@ __all__ = (
     SeaIce,
     LandIce,
     DataOcean,
+    SimpleBoundaryLayer,
 )
 
 __version__ = "0.20.0"
