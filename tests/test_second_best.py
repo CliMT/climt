@@ -67,3 +67,19 @@ def test_second_best_reaches_reasonable_state():
     T = state["surface_temperature"].values
     assert np.all(np.isfinite(T))
     assert np.all((T > 200.0) & (T < 350.0))
+
+
+def test_extending_second_best_swap_example():
+    """Documents how to swap a process — a constant-drag SurfaceLayer."""
+    from climt._components.second_best.processes import SurfaceLayer
+
+    class ConstantDrag(SurfaceLayer):
+        def __call__(self, z_mid, z0, wind_speed, T_surf, T_air, area_type):
+            return {"C_Dm": 0.002, "C_Dh": 0.002, "C_DN": 0.002, "Ri": 0.0}
+
+    comp = SecondBEST(surface_layer=ConstantDrag())
+    state = get_default_state([comp], grid_state=get_grid(
+        nx=1, ny=1, nz=10, n_soil_interface_levels=4))
+    state["area_type"].values[:] = "land"
+    diag, _ = comp(state, timedelta(seconds=100))
+    assert np.isclose(diag["surface_drag_coefficient_for_heat"].values[0], 0.002)
