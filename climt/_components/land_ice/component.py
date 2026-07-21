@@ -3,9 +3,152 @@ import logging
 import numpy as np
 from sympl import Stepper, get_constant, initialize_numpy_arrays_with_properties
 
-from ..._core.snow_ice_column import Dirichlet, Flux, solve_column
+from ..._core.backend import jit_compile, prange
+from ..._core.snow_ice_column import (
+    _BC_DIRICHLET,
+    _BC_FLUX,
+    _solve_column_kernel,
+)
 
 logger = logging.getLogger(__name__)
+
+
+@jit_compile
+def _round6(x):
+    # Match Python's round(x, 6) (round-half-to-even) inside njit.
+    return np.round(x * 1e6) / 1e6
+
+
+@jit_compile(parallel=True)
+def _land_ice_columns(
+    active, temperature_in, land_ice_thickness_in, surface_snow_thickness_in,
+    soil_surface_temperature, net_flux, dt,
+    rho_ice, rho_snow, C_ice, C_snow, Kice, Ksnow, Lf, T_melt, eps,
+    albedo_snow, albedo_ice, albedo_melt,
+    land_ice_thickness_out, surface_snow_thickness_out, temperature_out,
+    surface_temperature_out, height_out, ground_flux_out, albedo_out,
+    neg_energy_flag, neg_energy_value,
+):
+    """Per-column land-ice / snow-on-land thermodynamics, parallel over columns.
+
+    Pass-through columns must be pre-filled by the caller; this kernel only
+    writes columns flagged ``active[col] != 0``. Columns are independent.
+    """
+    num_cols = active.shape[0]
+    num_layers = temperature_in.shape[0]
+    n_iface = height_out.shape[0]
+
+    for col in prange(num_cols):
+        if active[col] == 0:
+            continue
+
+        total_height = (
+            land_ice_thickness_in[col] + surface_snow_thickness_in[col]
+        )
+        snow_height_fraction = surface_snow_thickness_in[col] / total_height
+
+        temp_profile = temperature_in[:, col].copy()
+        dz = total_height / num_layers
+        snow_level = int((1.0 - snow_height_fraction) * num_layers) - 1
+
+        rho_snow_ice = np.empty(num_layers - 1)
+        heat_capacity_snow_ice = np.empty(num_layers - 1)
+        kappa_snow_ice = np.empty(num_layers - 1)
+        for i in range(num_layers - 1):
+            if i > snow_level:
+                rho_snow_ice[i] = rho_snow
+                heat_capacity_snow_ice[i] = C_snow
+                kappa_snow_ice[i] = Ksnow
+            else:
+                rho_snow_ice[i] = rho_ice
+                heat_capacity_snow_ice[i] = C_ice
+                kappa_snow_ice[i] = Kice
+
+        check_melting = temp_profile[-1] >= T_melt - eps
+
+        bot_flag = _BC_DIRICHLET
+        bot_val = soil_surface_temperature[col]
+        if check_melting:
+            top_flag = _BC_DIRICHLET
+            top_val = T_melt
+        else:
+            top_flag = _BC_FLUX
+            top_val = net_flux[col]
+
+        new_temperature = _solve_column_kernel(
+            rho_snow_ice, heat_capacity_snow_ice, kappa_snow_ice,
+            temp_profile, dt, dz, top_flag, top_val, bot_flag, bot_val,
+        )
+
+        heat_flux_through_ice = (
+            (new_temperature[-1] - new_temperature[-2])
+            * (kappa_snow_ice[-1] + kappa_snow_ice[-2]) * 0.5 / dz
+        )
+        if temp_profile[-1] > T_melt - eps:
+            if heat_flux_through_ice > net_flux[col]:
+                temp_profile[-1] = temp_profile[-1] - 10.0 * eps
+                top_flag = _BC_FLUX
+                top_val = net_flux[col]
+                new_temperature = _solve_column_kernel(
+                    rho_snow_ice, heat_capacity_snow_ice, kappa_snow_ice,
+                    temp_profile, dt, dz, top_flag, top_val, bot_flag, bot_val,
+                )
+                check_melting = False
+
+        ground_flux_out[col] = (
+            (new_temperature[0] - new_temperature[1]) * kappa_snow_ice[0] / dz
+        )
+
+        heat_flux_through_ice = (
+            (new_temperature[-1] - new_temperature[-2])
+            * (kappa_snow_ice[-1] + kappa_snow_ice[-2]) * 0.5 / dz
+        )
+
+        height_of_melting_ice = 0.0
+        if check_melting:
+            energy_to_melt_ice = _round6(
+                (net_flux[col] - heat_flux_through_ice) * dt
+            )
+            if energy_to_melt_ice < 0:
+                neg_energy_flag[col] = 1
+                neg_energy_value[col] = energy_to_melt_ice
+            if energy_to_melt_ice < 0.0:
+                energy_to_melt_ice = 0.0
+
+            height_of_melting_ice = energy_to_melt_ice / (
+                rho_snow_ice[-1] * Lf
+            )
+            if height_of_melting_ice > surface_snow_thickness_in[col]:
+                land_ice_thickness_out[col] -= (
+                    height_of_melting_ice - surface_snow_thickness_in[col]
+                )
+                surface_snow_thickness_out[col] = 0.0
+            else:
+                surface_snow_thickness_out[col] = (
+                    surface_snow_thickness_in[col] - height_of_melting_ice
+                )
+
+        if land_ice_thickness_out[col] < 0.0:
+            land_ice_thickness_out[col] = 0.0
+        if surface_snow_thickness_out[col] < 0.0:
+            surface_snow_thickness_out[col] = 0.0
+
+        total_height = (
+            land_ice_thickness_out[col] + surface_snow_thickness_out[col]
+        )
+        for j in range(num_layers):
+            temperature_out[j, col] = new_temperature[j]
+        surface_temperature_out[col] = new_temperature[-1]
+        for j in range(n_iface):
+            height_out[j, col] = total_height * j / (n_iface - 1)
+
+        if surface_snow_thickness_out[col] > 0:
+            albedo = albedo_snow
+        else:
+            albedo = albedo_ice
+        if height_of_melting_ice > 0:
+            albedo = albedo_melt
+        albedo_out[col] = albedo
 
 
 class LandIce(Stepper):
@@ -214,213 +357,64 @@ class LandIce(Stepper):
             "height_on_ice_interface_levels"
         ]
 
-        for col in range(num_cols):
-            area_type = raw_state["area_type"][col].astype(str)
-            if area_type not in ("land_ice", "land"):
-                continue
+        # Active columns: land / land-ice cells with a non-negligible
+        # snow+ice column. area_type is a string array, so the mask is built
+        # here (in Python), not inside the jit kernel.
+        area_type = raw_state["area_type"].astype(str)
+        land_ice_thickness = np.asarray(
+            raw_state["land_ice_thickness"], dtype=float
+        )
+        snow = np.asarray(raw_state["surface_snow_thickness"], dtype=float)
+        total_height_in = land_ice_thickness + snow
+        is_land = (area_type == "land_ice") | (area_type == "land")
+        active = (is_land & (total_height_in >= self._epsilon)).astype(np.int8)
 
-            total_height = (
-                raw_state["land_ice_thickness"][col]
-                + raw_state["surface_snow_thickness"][col]
-            )
-            if total_height > self._max_height:
-                raise ValueError(
-                    "Total height exceeds maximum value of {} m.".format(
-                        self._max_height
-                    )
+        if np.any(is_land & (total_height_in > self._max_height)):
+            raise ValueError(
+                "Total height exceeds maximum value of {} m.".format(
+                    self._max_height
                 )
-
-            if total_height < self._epsilon:  # Some epsilon
-                continue
-
-            snow_height_fraction = (
-                raw_state["surface_snow_thickness"][col] / total_height
             )
 
-            temp_profile = raw_state["snow_and_ice_temperature"][:, col].copy()
-            num_layers = temp_profile.shape[0]
-            dz = float(total_height / num_layers)
+        neg_energy_flag = np.zeros(num_cols, dtype=np.int8)
+        neg_energy_value = np.zeros(num_cols)
 
-            snow_level = int((1 - snow_height_fraction) * num_layers) - 1
-            levels = np.arange(num_layers - 1)
+        _land_ice_columns(
+            active,
+            np.ascontiguousarray(
+                raw_state["snow_and_ice_temperature"], dtype=float
+            ),
+            land_ice_thickness,
+            snow,
+            np.ascontiguousarray(
+                raw_state["soil_surface_temperature"], dtype=float
+            ),
+            np.ascontiguousarray(net_heat_flux, dtype=float),
+            dt,
+            self._rho_ice, self._rho_snow, self._C_ice, self._C_snow,
+            self._Kice, self._Ksnow, self._Lf, self._melting_temperature,
+            self._epsilon, self._albedo_snow, self._albedo_ice,
+            self._albedo_melt,
+            outputs["land_ice_thickness"],
+            outputs["surface_snow_thickness"],
+            outputs["snow_and_ice_temperature"],
+            outputs["surface_temperature"],
+            outputs["height_on_ice_interface_levels"],
+            diagnostics["upward_heat_flux_at_ground_level_in_soil"],
+            diagnostics["surface_albedo_for_direct_shortwave"],
+            neg_energy_flag,
+            neg_energy_value,
+        )
+        diagnostics["surface_albedo_for_diffuse_shortwave"][:] = diagnostics[
+            "surface_albedo_for_direct_shortwave"
+        ]
 
-            # Create vertically varying profiles. Index convention here
-            # (and for solve_column) is node 0 = bottom (soil interface),
-            # node n-1 = top (atmosphere-facing surface), matching IceSheet.
-            rho_snow_ice = self._rho_ice * np.ones(num_layers - 1)
-            rho_snow_ice[levels > snow_level] = self._rho_snow
-
-            heat_capacity_snow_ice = self._C_ice * np.ones(num_layers - 1)
-            heat_capacity_snow_ice[levels > snow_level] = self._C_snow
-
-            kappa_snow_ice = self._Kice * np.ones(num_layers - 1)
-            kappa_snow_ice[levels > snow_level] = self._Ksnow
-
-            surface_temperature = temp_profile[-1]
-            check_melting = True
-            if surface_temperature < self._melting_temperature - self._epsilon:
-                check_melting = False
-
-            # Basal BC (unchanged land physics): the base of the column is
-            # tied directly to the soil surface temperature via a Dirichlet
-            # condition, so no basal-flux sign convention is needed here
-            # (unlike SeaIce's ocean-flux Flux boundary).
-            bottom_bc = Dirichlet(raw_state["soil_surface_temperature"][col])
-            top_bc = (
-                Dirichlet(self._melting_temperature)
-                if check_melting
-                else Flux(net_heat_flux[col])
+        for col in np.nonzero(neg_energy_flag)[0]:
+            logger.debug(
+                "Negative melt energy %s at column %d (net_flux=%s, "
+                "conducted_flux=%s); clamping to 0.",
+                neg_energy_value[col], int(col), net_heat_flux[col],
+                diagnostics["upward_heat_flux_at_ground_level_in_soil"][col],
             )
-
-            new_temperature = solve_column(
-                rho_snow_ice,
-                heat_capacity_snow_ice,
-                kappa_snow_ice,
-                temp_profile,
-                dt,
-                dz,
-                top_bc,
-                bottom_bc,
-            )
-
-            # Cool down from melting temperature if heat flux through ice
-            # is greater than net forcing heat flux at surface.
-            heat_flux_through_ice = (
-                (new_temperature[-1] - new_temperature[-2])
-                * (kappa_snow_ice[-1] + kappa_snow_ice[-2])
-                * 0.5
-                / dz
-            )
-
-            if temp_profile[-1] > self._melting_temperature - self._epsilon:
-                if heat_flux_through_ice > net_heat_flux[col]:
-                    surface_temperature = temp_profile[-1] - 10 * self._epsilon
-                    temp_profile[-1] = temp_profile[-1] - 10 * self._epsilon
-
-                    top_bc = Flux(net_heat_flux[col])
-                    new_temperature = solve_column(
-                        rho_snow_ice,
-                        heat_capacity_snow_ice,
-                        kappa_snow_ice,
-                        temp_profile,
-                        dt,
-                        dz,
-                        top_bc,
-                        bottom_bc,
-                    )
-
-                    check_melting = False
-
-            # Base-node conduction (soil interface): this mirrors the
-            # original IceSheet formula for the land/land_ice branch
-            # exactly -- (T[0]-T[1])*kappa[0]/dz, using the single
-            # bottommost-layer conductivity (not a two-layer average, as
-            # SeaIce's basal-ocean formula uses), which is the correctly
-            # discretized flux across the bottommost layer matching
-            # solve_column's own Dirichlet/Flux discretization at that
-            # node. Positive means T[0] > T[1], i.e. heat conducts
-            # upward out of the soil into the snow/ice column -- hence
-            # "upward_heat_flux_at_ground_level_in_soil".
-            heat_flux_to_soil = (
-                (new_temperature[0] - new_temperature[1]) * kappa_snow_ice[0] / dz
-            )
-            diagnostics["upward_heat_flux_at_ground_level_in_soil"][
-                col
-            ] = heat_flux_to_soil
-
-            # No basal ocean flux / basal growth for land or land ice.
-            height_of_growing_ice = 0.0
-
-            # Energy balance at atmosphere surface
-            heat_flux_through_ice = (
-                (new_temperature[-1] - new_temperature[-2])
-                * (kappa_snow_ice[-1] + kappa_snow_ice[-2])
-                * 0.5
-                / dz
-            )
-
-            height_of_melting_ice = 0.0
-            # Surface is melting
-            if check_melting:
-                energy_to_melt_ice = (
-                    net_heat_flux[col] - heat_flux_through_ice
-                ) * dt
-                energy_to_melt_ice = round(energy_to_melt_ice, 6)
-                if energy_to_melt_ice < 0:
-                    # Defect fix: this used to be `print(...); assert
-                    # False`. A slightly negative value here is a benign
-                    # consequence of the melting-temperature bookkeeping
-                    # above (rounding / the 10*epsilon nudge), not a
-                    # physical inconsistency worth crashing over, so clip
-                    # it to zero and log it for diagnosis instead.
-                    logger.debug(
-                        "Negative melt energy %s at column %d "
-                        "(net_flux=%s, conducted_flux=%s); clamping to 0.",
-                        energy_to_melt_ice,
-                        col,
-                        net_heat_flux[col],
-                        heat_flux_through_ice,
-                    )
-                energy_to_melt_ice = np.clip(energy_to_melt_ice, 0.0, None)
-
-                height_of_melting_ice = energy_to_melt_ice / (
-                    rho_snow_ice[-1] * self._Lf
-                )
-
-                if height_of_melting_ice > raw_state["surface_snow_thickness"][col]:
-                    # Defect fix: the original IceSheet code decremented
-                    # ``sea_ice_thickness`` here even for the land/land_ice
-                    # branch (an apparent copy/paste artifact from the
-                    # sea-ice branch of the same function). The physically
-                    # relevant reservoir for land/land-ice columns is
-                    # ``land_ice_thickness``.
-                    outputs["land_ice_thickness"][col] -= (
-                        height_of_melting_ice
-                        - raw_state["surface_snow_thickness"][col]
-                    )
-                    outputs["surface_snow_thickness"][col] = 0
-                else:
-                    outputs["surface_snow_thickness"][col] -= height_of_melting_ice
-
-            # Defect fix: clamp land_ice_thickness and surface_snow_thickness
-            # to be non-negative (mirrors the SeaIce clamp fix). Unlike
-            # SeaIce, there is no ocean to route leftover melt energy into;
-            # the mass balance here is glacier mass balance (accumulation,
-            # implicit in the surface_snow_thickness input, minus surface
-            # melt), so any melt energy in excess of the available
-            # snow+ice column simply has nothing left to melt.
-            outputs["land_ice_thickness"][col] = np.clip(
-                outputs["land_ice_thickness"][col], 0.0, None
-            )
-            outputs["surface_snow_thickness"][col] = np.clip(
-                outputs["surface_snow_thickness"][col], 0.0, None
-            )
-
-            total_height = (
-                outputs["land_ice_thickness"][col]
-                + outputs["surface_snow_thickness"][col]
-            )
-
-            outputs["snow_and_ice_temperature"][:, col] = new_temperature
-            outputs["surface_temperature"][col] = new_temperature[-1]
-            outputs["height_on_ice_interface_levels"][:, col] = np.linspace(
-                0,
-                total_height,
-                outputs["height_on_ice_interface_levels"].shape[0],
-                endpoint=True,
-            )
-
-            # Defect fix: single unambiguous albedo branch (no duplicate
-            # `elif`), using the configurable albedo values.
-            if outputs["surface_snow_thickness"][col] > 0:
-                albedo = self._albedo_snow
-            else:
-                albedo = self._albedo_ice
-
-            if height_of_melting_ice > 0:
-                albedo = self._albedo_melt
-
-            diagnostics["surface_albedo_for_direct_shortwave"][col] = albedo
-            diagnostics["surface_albedo_for_diffuse_shortwave"][col] = albedo
 
         return diagnostics, outputs
