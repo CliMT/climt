@@ -28,15 +28,14 @@ regressions from either half.
 
 ## A. Needs a human decision
 
-### A1. `SecondBEST` `z_mid` is a scale height, not a reference height (Important)
-`climt/_components/second_best/component.py` feeds the surface-layer process
-`z_mid = Rd·T_air/g` (~8–9 km atmospheric scale height), whereas
-`BestSurfaceLayer`'s own unit tests assume a near-surface reference height
-(~10 m). The drag formula stays finite and positive, but the resulting drag
-coefficients are implausibly small. **This is verbatim from the plan's Task 9
-code**, so it was not silently changed. Decide whether to use a real reference
-height (e.g. the lowest model-level height) before relying on `SecondBEST`'s
-turbulent fluxes quantitatively.
+### A1. `SecondBEST` `z_mid` reference height — RESOLVED
+~~`z_mid = Rd·T_air/g` (~8–9 km scale height) produced implausibly small drag
+coefficients.~~ **Fixed:** the surface-layer reference height is now the
+hypsometric height of the lowest model level above the surface,
+`z = (Rd·T/g)·ln(p_surface/p_lowest)` (~tens of metres), which also makes
+`surface_air_pressure` (previously a declared-but-unread input) actually used.
+Covered by `test_surface_layer_reference_height_uses_lowest_model_level`;
+`TestSecondBEST` cached output reseeded.
 
 ### A2. Flux/Neumann boundary is a quasi-steady algebraic constraint (Important, ocean-ice)
 `_core/snow_ice_column.py`'s `Flux` boundary condition is an algebraic
@@ -121,8 +120,8 @@ loop (mirrors `IceSheet`'s convention); covered by a passthrough regression test
   in the bucket/`SecondBEST` code (plan-sanctioned; consider a kwarg/registry).
 - `z0 = 0.01/0.001` surface-roughness lengths are hardcoded inline in
   `SecondBEST` (area-type-keyed, like the soil property tables).
-- `SurfaceFluxes.momentum_flux` is computed but discarded by the orchestrator;
-  `surface_air_pressure` is a declared-but-unread input.
+- `SurfaceFluxes.momentum_flux` is computed but discarded by the orchestrator.
+  (`surface_air_pressure` is now read — see A1.)
 - Dead placeholder `B = 4.0` line in `fluxes.py` (always overwritten/unused).
 - `docs/api/BucketHydrology.qmd` shows a stale signature — regenerate via
   `quartodoc build` (the `.qmd` pages are docstring-generated build artifacts;
