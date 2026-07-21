@@ -37,26 +37,41 @@ def solve_column(rho, c, kappa, temperature, dt, dz, top_bc, bottom_bc):
     a_sub[:-2] = -mu_inv_int * K_mid[:-1]
     a_sup[2:] = -mu_inv_int * K_mid[1:]
 
-    mat_lhs = sparse.spdiags([a_sub, dp, a_sup], [-1, 0, 1],
-                             num_layers, num_layers, format="csc")
     mat_rhs = sparse.spdiags([-a_sub, dm, -a_sup], [-1, 0, 1],
                              num_layers, num_layers, format="csc")
     rhs = mat_rhs * temperature
 
+    # Boundary rows are folded into the diagonal arrays BEFORE spdiags
+    # assembles mat_lhs, so the CSC matrix is built once with its final
+    # sparsity structure. (Previously mat_lhs was built via spdiags and
+    # then had these entries poked in with mat_lhs[i, j] = ...; since
+    # spdiags/tocsc drops exact-zero diagonal entries from the stored
+    # structure, some of those boundary assignments introduced new
+    # structural nonzeros into an already-built CSC matrix on every call,
+    # which is expensive and triggers SparseEfficiencyWarning. Setting the
+    # same values into a_sub/dp/a_sup up front yields a mathematically
+    # identical matrix, assembled once.)
+    dp_lhs = dp.copy()
+    a_sub_lhs = a_sub.copy()
+    a_sup_lhs = a_sup.copy()
+
     # Top boundary (node n-1)
     if isinstance(top_bc, Dirichlet):
-        mat_lhs[-1, -1] = 1; mat_lhs[-1, -2] = 0
+        dp_lhs[-1] = 1; a_sub_lhs[-2] = 0
         rhs[-1] = top_bc.value
     else:  # Flux (Neumann): K dT/dz = -flux at the top face
-        mat_lhs[-1, -1] = -1; mat_lhs[-1, -2] = 1
+        dp_lhs[-1] = -1; a_sub_lhs[-2] = 1
         rhs[-1] = -top_bc.value * dz / K_mid[-1]
 
     # Bottom boundary (node 0)
     if isinstance(bottom_bc, Dirichlet):
-        mat_lhs[0, 0] = 1; mat_lhs[0, 1] = 0
+        dp_lhs[0] = 1; a_sup_lhs[1] = 0
         rhs[0] = bottom_bc.value
     else:  # Flux into the base
-        mat_lhs[0, 0] = -1; mat_lhs[0, 1] = 1
+        dp_lhs[0] = -1; a_sup_lhs[1] = 1
         rhs[0] = -bottom_bc.value * dz / K_mid[0]
+
+    mat_lhs = sparse.spdiags([a_sub_lhs, dp_lhs, a_sup_lhs], [-1, 0, 1],
+                             num_layers, num_layers, format="csc")
 
     return spsolve(mat_lhs, rhs)

@@ -41,6 +41,33 @@ def test_ekman_pumping_from_wind_stress_curl():
     assert not np.any(np.isnan(tend["surface_temperature"].values))
 
 
+def test_ocean_heat_transport_convergence_reports_total_with_ekman():
+    # Fix (final review): ocean_heat_transport_convergence must report the
+    # TOTAL (prescribed q-flux + Ekman) actually applied to sea cells when
+    # include_ekman=True, not just echo the prescribed input. This locks
+    # that behavior: with a nonzero prescribed q-flux AND a nonzero Ekman
+    # contribution (from a wind-stress curl), the diagnostic must equal
+    # prescribed + ekman_heat_transport_convergence pointwise.
+    sympl.set_backend(sympl.DataArrayBackend())
+    slab = SlabSurface(include_ekman=True)
+    state = get_default_state([slab], grid_state=get_grid(nx=32, ny=16, nz=10))
+    state["area_type"].values[:] = "sea"
+    lat = state["latitude"].values
+    state["surface_downward_eastward_stress"].values[:] = 0.1 * np.cos(np.deg2rad(lat))
+    state["surface_downward_northward_stress"].values[:] = 0.0
+    prescribed = 15.0
+    state["ocean_heat_transport_convergence"].values[:] = prescribed
+    _, diag = slab(state)
+
+    ekman_conv = diag["ekman_heat_transport_convergence"].values
+    assert np.any(ekman_conv != 0.0)  # sanity: Ekman actually contributes here
+
+    np.testing.assert_allclose(
+        diag["ocean_heat_transport_convergence"].values,
+        prescribed + ekman_conv,
+    )
+
+
 def test_ekman_zero_curl_gives_zero_pumping():
     sympl.set_backend(sympl.DataArrayBackend())
     slab = SlabSurface(include_ekman=True)

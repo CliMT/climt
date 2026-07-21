@@ -101,6 +101,9 @@ class SlabSurface(TendencyComponent):
             "units": "m",
         },
         "ocean_heat_transport_convergence": {
+            # Total q-flux applied to sea cells: prescribed input plus the
+            # Ekman convergence when include_ekman=True (Ekman-only value is
+            # reported separately as ekman_heat_transport_convergence).
             "dims": ["*"],
             "units": "W m^-2",
         },
@@ -111,7 +114,11 @@ class SlabSurface(TendencyComponent):
         Args:
             include_ekman (bool, optional): If True, additionally compute an
                 Ekman heat-transport convergence from wind-stress curl and
-                fold it into the ocean heat-transport q-flux. Requires
+                fold it into the ocean heat-transport q-flux. The emitted
+                ``ocean_heat_transport_convergence`` diagnostic then reports
+                the TOTAL (prescribed + Ekman) actually applied to sea
+                cells, while ``ekman_heat_transport_convergence`` reports
+                the Ekman component alone. Requires
                 ``surface_downward_eastward_stress``,
                 ``surface_downward_northward_stress``, ``latitude`` and
                 ``longitude`` as 2-D (lat, lon) inputs. Off by default for
@@ -416,8 +423,15 @@ class SlabSurface(TendencyComponent):
 
         diagnostics = {
             "depth_of_slab_surface": np.reshape(depth, area_type_raw.shape),
+            # ocean_heat_transport_convergence is the TOTAL q-flux actually
+            # applied to sea cells: prescribed input + Ekman convergence
+            # (when include_ekman=True; Ekman is 0 otherwise, so this is
+            # unchanged from the prescribed-only value in the default case).
+            # ekman_heat_transport_convergence (below) is the Ekman-only
+            # breakdown, so a user closing the surface energy budget from
+            # ocean_heat_transport_convergence alone gets the right total.
             "ocean_heat_transport_convergence": np.reshape(
-                ocean_heat_transport, area_type_raw.shape
+                total_ocean_heat_transport, area_type_raw.shape
             ),
         }
         if self._include_ekman:
