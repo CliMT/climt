@@ -27,6 +27,7 @@ quartodoc:
         - SlabSurface
         - IceSheet
         - BucketHydrology
+        - SecondBEST
     - title: "Solar & insolation"
       contents:
         - BergerSolarInsolation

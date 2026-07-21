@@ -34,6 +34,7 @@ Non-grey correlated-k (CORK) scheme.
 | [SlabSurface](SlabSurface.qmd#climt.SlabSurface) | Calculate the surface energy balance. |
 | [IceSheet](IceSheet.qmd#climt.IceSheet) | 1-d snow-ice energy balance model. |
 | [BucketHydrology](BucketHydrology.qmd#climt.BucketHydrology) | Manages surface energy and moisture balance |
+| [SecondBEST](SecondBEST.qmd#climt.SecondBEST) | Modular intermediate-complexity BEST land surface model. |
 
 ## Solar & insolation
 
