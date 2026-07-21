@@ -6,8 +6,9 @@ length n-1 arrays defined on the layers between nodes.
 """
 from dataclasses import dataclass
 import numpy as np
-from scipy import sparse
-from scipy.sparse.linalg import spsolve
+
+from .backend import jit_compile
+from .tridiagonal import solve_tridiagonal, tridiagonal_matvec
 
 
 @dataclass
@@ -20,58 +21,90 @@ class Flux:
     value: float  # W/m^2, positive downward INTO the column at that boundary
 
 
-def solve_column(rho, c, kappa, temperature, dt, dz, top_bc, bottom_bc):
+# Integer boundary-condition tags for the jit kernel (dataclasses / isinstance
+# cannot cross the njit boundary).
+_BC_DIRICHLET = 0
+_BC_FLUX = 1
+
+
+@jit_compile
+def _solve_column_kernel(rho, c, kappa, temperature, dt, dz,
+                         top_flag, top_val, bot_flag, bot_val):
+    """Jitable core of :func:`solve_column`.
+
+    Assembles the Crank-Nicolson tridiagonal system with the two boundary
+    rows folded into the diagonals, then solves it with the shared Thomas
+    solver. Mathematically identical to the previous ``scipy.sparse``/
+    ``spsolve`` implementation.
+    """
     num_layers = temperature.shape[0]
     K_mid = kappa
     K_interface = 0.5 * (kappa[:-1] + kappa[1:])
     heat_capacity = rho * c
     heat_capacity_int = 0.5 * (heat_capacity[:-1] + heat_capacity[1:])
-    mu_inv_int = dt / (heat_capacity_int * 2 * dz * dz)
+    mu_inv_int = dt / (heat_capacity_int * 2.0 * dz * dz)
 
     r = np.zeros(num_layers)
     a_sub = np.zeros(num_layers)
     a_sup = np.zeros(num_layers)
     r[1:-1] = K_interface * mu_inv_int
-    dp = 1 + 2 * r
-    dm = 1 - 2 * r
+    dp = 1.0 + 2.0 * r
+    dm = 1.0 - 2.0 * r
     a_sub[:-2] = -mu_inv_int * K_mid[:-1]
     a_sup[2:] = -mu_inv_int * K_mid[1:]
 
-    mat_rhs = sparse.spdiags([-a_sub, dm, -a_sup], [-1, 0, 1],
-                             num_layers, num_layers, format="csc")
-    rhs = mat_rhs * temperature
+    # RHS = mat_rhs @ temperature, where mat_rhs has diagonal dm and
+    # off-diagonals -a_sub / -a_sup. Matching scipy.spdiags' offset
+    # convention (verified: sub-diagonal = a_sub[:-1], super-diagonal =
+    # a_sup[1:]), the banded layout used by solve_tridiagonal takes the
+    # sub-diagonal from -a_sub[:-1] and the super-diagonal from -a_sup[1:].
+    rhs = tridiagonal_matvec(-a_sub[:-1], dm, -a_sup[1:], temperature)
 
-    # Boundary rows are folded into the diagonal arrays BEFORE spdiags
-    # assembles mat_lhs, so the CSC matrix is built once with its final
-    # sparsity structure. (Previously mat_lhs was built via spdiags and
-    # then had these entries poked in with mat_lhs[i, j] = ...; since
-    # spdiags/tocsc drops exact-zero diagonal entries from the stored
-    # structure, some of those boundary assignments introduced new
-    # structural nonzeros into an already-built CSC matrix on every call,
-    # which is expensive and triggers SparseEfficiencyWarning. Setting the
-    # same values into a_sub/dp/a_sup up front yields a mathematically
-    # identical matrix, assembled once.)
     dp_lhs = dp.copy()
     a_sub_lhs = a_sub.copy()
     a_sup_lhs = a_sup.copy()
 
     # Top boundary (node n-1)
-    if isinstance(top_bc, Dirichlet):
-        dp_lhs[-1] = 1; a_sub_lhs[-2] = 0
-        rhs[-1] = top_bc.value
+    if top_flag == _BC_DIRICHLET:
+        dp_lhs[-1] = 1.0
+        a_sub_lhs[-2] = 0.0
+        rhs[-1] = top_val
     else:  # Flux (Neumann): K dT/dz = -flux at the top face
-        dp_lhs[-1] = -1; a_sub_lhs[-2] = 1
-        rhs[-1] = -top_bc.value * dz / K_mid[-1]
+        dp_lhs[-1] = -1.0
+        a_sub_lhs[-2] = 1.0
+        rhs[-1] = -top_val * dz / K_mid[-1]
 
     # Bottom boundary (node 0)
-    if isinstance(bottom_bc, Dirichlet):
-        dp_lhs[0] = 1; a_sup_lhs[1] = 0
-        rhs[0] = bottom_bc.value
+    if bot_flag == _BC_DIRICHLET:
+        dp_lhs[0] = 1.0
+        a_sup_lhs[1] = 0.0
+        rhs[0] = bot_val
     else:  # Flux into the base
-        dp_lhs[0] = -1; a_sup_lhs[1] = 1
-        rhs[0] = -bottom_bc.value * dz / K_mid[0]
+        dp_lhs[0] = -1.0
+        a_sup_lhs[1] = 1.0
+        rhs[0] = -bot_val * dz / K_mid[0]
 
-    mat_lhs = sparse.spdiags([a_sub_lhs, dp_lhs, a_sup_lhs], [-1, 0, 1],
-                             num_layers, num_layers, format="csc")
+    return solve_tridiagonal(a_sub_lhs[:-1], dp_lhs, a_sup_lhs[1:], rhs)
 
-    return spsolve(mat_lhs, rhs)
+
+def solve_column(rho, c, kappa, temperature, dt, dz, top_bc, bottom_bc):
+    """Solve one implicit snow/ice/soil heat-diffusion column.
+
+    ``top_bc``/``bottom_bc`` are :class:`Dirichlet` or :class:`Flux`
+    instances; they are translated to integer tags + scalar values before
+    calling the jitable :func:`_solve_column_kernel`.
+    """
+    top_flag = _BC_DIRICHLET if isinstance(top_bc, Dirichlet) else _BC_FLUX
+    bot_flag = _BC_DIRICHLET if isinstance(bottom_bc, Dirichlet) else _BC_FLUX
+    return _solve_column_kernel(
+        np.asarray(rho, dtype=float),
+        np.asarray(c, dtype=float),
+        np.asarray(kappa, dtype=float),
+        np.asarray(temperature, dtype=float),
+        float(dt),
+        float(dz),
+        top_flag,
+        float(top_bc.value),
+        bot_flag,
+        float(bottom_bc.value),
+    )
