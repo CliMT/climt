@@ -5,6 +5,18 @@ History
 Unreleased
 ----------
 
+* New land-surface physics: ``BucketHydrology`` gains an optional
+  two-layer (deep + shallow) mode via ``num_layers=2``, adding
+  ``deep_soil_moisture_content`` / ``deep_soil_temperature`` stores and
+  ``runoff_rate`` diagnostics. The ``num_layers=1`` default is
+  unchanged (bit-for-bit). A stray hardcoded soil-moisture clamp that
+  ignored the configured ``soil_moisture_max`` was also fixed.
+* New component ``SecondBEST``: a modular, intermediate-complexity BEST
+  land-surface model built as a thin ``Stepper`` orchestrator over five
+  swappable process objects (``SoilProperties``, ``SurfaceAlbedo``,
+  ``SurfaceLayer``, ``SurfaceFluxes``, ``SubsurfaceTransport``), each
+  with a ``Best*`` default. Adds a ``soil`` vertical grid, soil-profile
+  state quantities, and registers the ``von_karman_constant``.
 * New components for ocean/ice surface physics: ``LandMask``,
   ``SeaIce``, ``LandIce`` and ``DataOcean``, plus a slab-ocean q-flux
   (prescribed ``ocean_heat_transport_convergence``) and optional Ekman
