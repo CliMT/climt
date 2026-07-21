@@ -113,3 +113,109 @@ def test_ekman_masks_stress_at_coast():
         tend["surface_temperature"].values[non_sea_mask],
         tend_no_ekman["surface_temperature"].values[non_sea_mask],
     )
+
+
+def test_ekman_coastal_sea_cells_independent_of_land_stress():
+    # Discriminating regression test for the pre-differencing stress mask
+    # (slab_surface.py ~L341-352, inside the `include_ekman` block).
+    #
+    # test_ekman_masks_stress_at_coast (above) checks that sea cells are
+    # finite and that land/sea_ice cells are exactly zero -- but BOTH of
+    # those hold even if the pre-differencing mask were deleted: land/
+    # sea_ice outputs are zeroed unconditionally by a separate output-
+    # masking step (L390-391) regardless of what the curl/divergence
+    # stencil actually saw, and smooth stress never produces a NaN even
+    # when it leaks across the coast. So that test would NOT catch a
+    # regression that removed the pre-differencing mask.
+    #
+    # This test closes that gap directly: it runs SlabSurface(include_
+    # ekman=True) twice on grids that are identical in every way except
+    # the wind stress assigned to the LAND cells (the sea-cell stress is
+    # byte-for-byte the same in both runs). If the land stress is zeroed
+    # BEFORE the curl/divergence finite-difference stencil runs (the
+    # fix), it can never influence a neighboring sea cell's derivative,
+    # so the two runs' sea-cell Ekman diagnostics must be IDENTICAL.
+    # If the mask were removed, the differing land-cell stress would
+    # leak into the coastal sea cells' centered-difference stencil (which
+    # reaches one cell into land in the longitude direction) and the two
+    # runs would differ there. So: identical sea-cell output across
+    # differing land input is only explained by the land stress having
+    # been masked to zero prior to differentiation -- exactly what the
+    # fix does.
+    sympl.set_backend(sympl.DataArrayBackend())
+    grid = get_grid(nx=8, ny=8, nz=10)
+
+    def make_state():
+        state = get_default_state([SlabSurface(include_ekman=True)], grid_state=grid)
+        area_type = np.empty((8, 8), dtype="S100")
+        # land occupies lon columns 0:4 (a coastal neighbor of the sea
+        # column at index 4 in the longitude / axis=1 direction, which is
+        # the direction differentiated by dfdlon in both divergence and
+        # curl -- see climt/_core/horizontal_operators.py).
+        area_type[:, :4] = b"land"
+        area_type[:, 4:6] = b"sea"
+        area_type[:, 6:] = b"sea_ice"
+        state["area_type"].values[:] = area_type
+
+        lat = state["latitude"].values
+        lon = state["longitude"].values
+        # Identical, spatially-structured stress for EVERY run (sea and
+        # non-sea alike, initially); the land-only override is applied by
+        # the caller afterward, so the sea-cell values below are common
+        # to both run A and run B.
+        state["surface_downward_eastward_stress"].values[:] = 0.1 * np.cos(
+            np.deg2rad(lat)
+        ) * np.sin(np.deg2rad(lon))
+        state["surface_downward_northward_stress"].values[:] = 0.05 * np.sin(
+            np.deg2rad(lat)
+        )
+        state["surface_temperature"].values[:] = 300.0
+        return state, (area_type == b"land")
+
+    slab = SlabSurface(include_ekman=True)
+
+    # Run A: land cells get one nonzero stress pattern.
+    state_a, land_mask = make_state()
+    state_a["surface_downward_eastward_stress"].values[land_mask] = 7.0
+    state_a["surface_downward_northward_stress"].values[land_mask] = -3.0
+    tend_a, diag_a = slab(state_a)
+
+    # Run B: land cells get a DIFFERENT nonzero stress pattern. Sea-cell
+    # stress (assigned in make_state before this override) is untouched
+    # and therefore identical to run A.
+    state_b, _ = make_state()
+    state_b["surface_downward_eastward_stress"].values[land_mask] = -42.0
+    state_b["surface_downward_northward_stress"].values[land_mask] = 19.0
+    tend_b, diag_b = slab(state_b)
+
+    sea_mask = ~land_mask & (state_a["area_type"].values != b"sea_ice")
+    assert np.any(sea_mask), "test setup must include sea cells"
+
+    # The point of the test: differing land stress must NOT change any
+    # sea cell's Ekman diagnostics or surface_temperature tendency.
+    assert np.allclose(
+        diag_a["ekman_heat_transport_convergence"].values[sea_mask],
+        diag_b["ekman_heat_transport_convergence"].values[sea_mask],
+    )
+    assert np.allclose(
+        diag_a["ekman_pumping"].values[sea_mask],
+        diag_b["ekman_pumping"].values[sea_mask],
+    )
+    assert np.allclose(
+        tend_a["surface_temperature"].values[sea_mask],
+        tend_b["surface_temperature"].values[sea_mask],
+    )
+
+    # Sanity check that the two runs actually differ somewhere (on the
+    # land cells' own diagnostics would be zero by output-masking, so
+    # instead confirm the inputs genuinely diverged) -- otherwise this
+    # test would pass vacuously.
+    assert not np.allclose(
+        state_a["surface_downward_eastward_stress"].values[land_mask],
+        state_b["surface_downward_eastward_stress"].values[land_mask],
+    )
+
+    # Fold in the original (non-discriminating but still valid)
+    # assertions from test_ekman_masks_stress_at_coast for good measure.
+    assert not np.any(np.isnan(diag_a["ekman_pumping"].values[sea_mask]))
+    assert not np.any(np.isnan(diag_a["ekman_heat_transport_convergence"].values[sea_mask]))
