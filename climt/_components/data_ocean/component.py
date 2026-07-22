@@ -106,9 +106,9 @@ class DataOcean(DiagnosticComponent):
         interp = RegularGridInterpolator(
             (self._src_lat, self._src_lon), field,
             bounds_error=False, fill_value=None)   # None -> linear extrapolation beyond
-            # the source grid edges (finite, still bounded in practice since climt's
-            # Gaussian model grids stay within ~87 deg of the poles, inside the usual
-            # +/-88 deg extent of AMIP-style SST source grids).
+        # the source grid edges (finite, still bounded in practice since climt's
+        # Gaussian model grids stay within ~87 deg of the poles, inside the usual
+        # +/-88 deg extent of AMIP-style SST source grids).
         sst_flat = interp(np.c_[self._lat_flat, self._lon_flat])
         area = np.reshape(np.asarray(state["area_type"]).astype(str), (-1,))
         sea = area == "sea"
