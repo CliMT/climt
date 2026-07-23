@@ -1,0 +1,30 @@
+viewof _pyodide_editor_{{block_id}} = {
+  const { PyodideExerciseEditor, b64Decode } = window._exercise_ojs_runtime;
+
+  const scriptContent = document.querySelector(`script[type=\"pyodide-{{block_id}}-contents\"]`).textContent;
+  const block = JSON.parse(b64Decode(scriptContent));
+
+  // Default exercise configuration
+  const options = Object.assign(
+    {
+      id: "pyodide-{{block_id}}-contents",
+      envir: `exercise-env-${block.attr.exercise}`,
+      error: false,
+      caption: 'Exercise',
+    },
+    block.attr
+  );
+
+  const editor = new PyodideExerciseEditor(pyodideOjs.pyodidePromise, block.code, options);
+  return editor.container;
+}
+viewof _pyodide_value_{{block_id}} = pyodideOjs.process(_pyodide_editor_{{block_id}}, {{block_input}});
+_pyodide_feedback_{{block_id}} = {
+  const { PyodideGrader } = window._exercise_ojs_runtime;
+  const emptyFeedback = document.createElement('div');
+
+  const grader = new PyodideGrader(_pyodide_value_{{block_id}}.evaluator);
+  const feedback = await grader.gradeExercise();
+  if (!feedback) return emptyFeedback;
+  return feedback;
+}

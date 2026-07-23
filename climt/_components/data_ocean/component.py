@@ -1,8 +1,9 @@
 import numpy as np
 import xarray as xr
-from scipy.interpolate import RegularGridInterpolator
-from scipy.spatial import cKDTree
 from sympl import DiagnosticComponent
+# scipy is imported lazily inside the methods that need it so that
+# ``import climt`` stays scipy-free for the Pyodide/pure-wheel target
+# (see tests/test_no_scipy_import.py).
 from ._sst_interpolation import mid_month_values, interp_time
 from ..._core.surface_fluxes import bulk_fluxes
 
@@ -74,6 +75,7 @@ class DataOcean(DiagnosticComponent):
 
     def _fill_source(self, raw):
         # nearest-valid fill of masked/NaN source points, per month
+        from scipy.spatial import cKDTree
         out = raw.copy()
         for t in range(out.shape[0]):
             layer = out[t]
@@ -96,6 +98,7 @@ class DataOcean(DiagnosticComponent):
         shape = lat.shape
         lat_flat = np.reshape(lat, (-1,)).astype(float)
         lon_flat = np.reshape(np.asarray(state["longitude"]), (-1,)).astype(float)
+        from scipy.interpolate import RegularGridInterpolator
         if self._weights is None:
             self._build_weights(lat_flat, lon_flat)
         # time-interpolated source field (nlat, nlon)

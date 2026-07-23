@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import logging
-
 import numpy as np
 from sympl import (
     ImplicitTendencyComponent,
@@ -10,14 +8,12 @@ from sympl import (
 
 from ..._core import bolton_q_sat, ensure_contiguous_state
 
+_FORTRAN_AVAILABLE = False
 try:
     from . import _emanuel_convection
-except ImportError as error:
-    logging.warning(
-        "Import failed. Emanuel Convection is likely not compiled and will not "
-        "be available."
-    )
-    print(error)
+    _FORTRAN_AVAILABLE = True
+except ImportError:
+    _emanuel_convection = None
 
 
 class EmanuelConvection(ImplicitTendencyComponent):
@@ -191,6 +187,12 @@ class EmanuelConvection(ImplicitTendencyComponent):
                 :code:`mass_flux_damping_rate` and the current time step.
 
         """
+        if not _FORTRAN_AVAILABLE:
+            raise ImportError(
+                "EmanuelConvection (Fortran) requires compiled Fortran "
+                "extensions, which are not available in this (pure-Python) "
+                "install of climt. Use EmanuelConvectionPython instead."
+            )
 
         if (
             convective_momentum_transfer_coefficient < 0

@@ -2,7 +2,6 @@ import sys
 from datetime import datetime
 
 import numpy as np
-from scipy.interpolate import CubicSpline
 from sympl import (
     DiagnosticComponent,
     combine_component_properties,
@@ -15,6 +14,8 @@ if sys.version_info < (3, 9):
     import importlib_resources
 else:
     import importlib.resources as importlib_resources
+
+from .interpolate import cubic_spline_interpolate
 
 
 def get_atmosphere_grid(grid_state, interface=False, horizontal=False):
@@ -1131,8 +1132,13 @@ def init_ozone(p, ps):
     data_path = importlib_resources.files("climt._data").joinpath("ozone_profile.npy")
     with importlib_resources.as_file(data_path) as f:
         ozone_ref = np.load(f)
-    spline = CubicSpline(p_ref[::-1], ozone_ref[::-1])  # x must be increasing
-    return spline(p)
+    # cubic_spline_interpolate requires the reference x-array to be
+    # increasing; p_ref is descending (surface->TOA), so pass reversed
+    # views. A not-a-knot cubic spline (rather than np.interp's linear
+    # interpolation) is used to reproduce scipy.interpolate.CubicSpline's
+    # default behavior bit-closely, since RRTMG's cached-output tests were
+    # generated against that scipy-based ozone profile.
+    return cubic_spline_interpolate(p, p_ref[::-1], ozone_ref[::-1])
 
 
 init_diagnostics = [

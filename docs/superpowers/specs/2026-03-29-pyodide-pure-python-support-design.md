@@ -1,7 +1,16 @@
 # Pyodide-Compatible Pure Python climt
 
 **Date**: 2026-03-29
-**Status**: Draft
+**Status**: Draft — **superseded in part by the 2026-07-19 revision below**
+
+> **Revision 2026-07-19 (CORK-aware Phase 2).** This design predates the CORK
+> correlated-k radiation scheme and the pure-Python Emanuel port, so its
+> premise ("the pedagogical case only needs gray radiation") is now obsolete.
+> The pure-Python **science** stack for a non-grey radiative-convective
+> equilibrium (RCE) already exists and works. The remaining work is packaging
+> and dependency plumbing. Read the [**CORK-aware Phase 2 revision**](#revision-2026-07-19--cork-aware-phase-2)
+> at the end of this document; where it conflicts with the original text, the
+> revision wins.
 
 ## Context
 
@@ -204,3 +213,100 @@ and all analysis/plotting of pre-baked arrays are pure-Python-live under Pyodide
 while the cells that *produce* the data (RRTMG Fortran, linepyline line-by-line)
 read committed `_artifacts/*.npz` instead. When this wheel lands, that notebook is
 ready to go live with no re-mapping.
+
+---
+
+## Revision 2026-07-19 — CORK-aware Phase 2
+
+Since the original draft, two things changed the picture:
+
+1. **CORK** (correlated-k non-grey radiation; `CorkLongwaveRadiation` /
+   `CorkShortwaveRadiation`) landed. It is **100% pure Python** — no `.pyx`, no
+   Fortran — with a numba-*optional* kernel layer (`climt/_components/cork/common.py`
+   defines an `njit` no-op fallback when numba is absent).
+2. The **pure-Python Emanuel** port (`EmanuelConvectionPython`, v3) is exported
+   at the top level.
+
+Together these mean the **science stack for a real non-grey RCE** —
+`CorkLongwaveRadiation` + `CorkShortwaveRadiation` + `EmanuelConvectionPython`
++ `SlabSurface` + `get_default_state`/`get_grid` + sympl steppers — is already
+pure Python and verified to instantiate and step (2026-07-19). The pedagogical
+target is no longer "gray-only toy" but a genuine non-grey RCE in the browser.
+
+### Performance is not the blocker
+
+Benchmark (single column, 28 levels, native CPython, `climt` env, 2026-07-19),
+comparing numba-JIT vs. `NUMBA_DISABLE_JIT=1` (the closest analog to Pyodide's
+no-numba path):
+
+| Call        | JIT (ms) | No-JIT (ms) |
+|-------------|---------:|------------:|
+| CORK-LW     |     2.7  |        1.9  |
+| CORK-SW     |     1.9  |        2.7  |
+| Emanuel(py) |     3.2  |        2.2  |
+| **RCE step**|   **7.8**|      **6.8**|
+
+At this problem size numba gives **no meaningful speedup** — Python/sympl
+wrapper overhead dominates the njit inner loops — so losing numba in Pyodide
+costs essentially nothing. A full equilibrium run (~2000–5000 steps) is ~15–35 s
+native; apply a ~3–10× WASM-interpreter factor and it is tens of seconds to a
+few minutes in-browser. Acceptable for a "run it and watch" notebook. Gray
+radiation remains the fast fallback.
+
+### Revised blocker list (packaging/plumbing, not physics)
+
+The original Design sections 1–6 still apply. Additions/corrections:
+
+- **[DONE 2026-07-19] `package_data` stale path.** `setup.py` still globbed
+  `_data/picket_fence/correlated_k/*.nc|*.npz` after the picket-fence→CORK
+  rename; the tables live at `_data/cork/correlated_k/`. Fixed to point at
+  `_data/cork/...` (14 `.nc` + 2 `.npz` now matched). Latent bug: CORK tables
+  shipped in *no* built wheel — masked because the dev install is editable.
+
+- **`packages=["climt"]` excludes subpackages.** `setup.py` lists only the
+  top-level package (no `find_packages`), so a built wheel would omit
+  `climt._components`, `climt._core`, `climt._data`, etc. This works today only
+  because the environment install is editable. **Must switch to
+  `find_packages()`** (and confirm `_data` subpackages carry `__init__.py`, which
+  they do) before any wheel — pure or platform — is reliable. Verify with an
+  actual `pip wheel` + fresh-venv install, not just an editable checkout.
+
+- **scipy: one usage the original spec missed.** Beyond §4a (IceSheet TDMA) and
+  §4b (`initialization.py` `CubicSpline`→`np.interp`), CORK reads k-tables via
+  `scipy.io.netcdf_file` (`cork/optics/correlated_k.py`). Options: (i) keep
+  scipy — it *is* available in Pyodide, least work, but heavy and against the
+  scipy-removal goal; or (ii) add a small numpy/`.npz` table reader and prefer
+  shipping `.npz` tables (the loader already supports `.npz`), so the pure wheel
+  drops scipy entirely. Recommend (ii) for the pure wheel.
+
+- **`initialization.py` scipy import is top-level**, so it loads on `import climt`
+  — §4b is therefore required for a clean scipy-free import, not just optional.
+
+- **CORK not re-exported at top level.** `CorkLongwaveRadiation` /
+  `CorkShortwaveRadiation` are only reachable via `climt._components`; the API
+  reference lists them as public. Add them to `climt/__init__.py` `__all__`.
+
+### Updated component availability (adds CORK)
+
+| Component | Pure Python Wheel | Full Wheel |
+|-----------|------------------|------------|
+| CorkLongwaveRadiation | **Yes** | Yes |
+| CorkShortwaveRadiation | **Yes** | Yes |
+| EmanuelConvectionPython (v3) | **Yes** | Yes |
+| GrayLongwaveRadiation / Frierson06 | Yes | Yes |
+| SlabSurface / IceSheet / BucketHydrology | Yes | Yes |
+| HeldSuarez / DryConvectiveAdjustment / Instellation | Yes | Yes |
+| BergerSolarInsolation | Yes | Yes |
+| EmanuelConvection (Fortran) | Error on init | Yes |
+| RRTMGLongwave / RRTMGShortwave | Error on init | Yes |
+| SimplePhysics / DcmipInitialConditions | Error on init | Yes |
+
+### Suggested Phase 2 task order
+
+1. `find_packages()` + `package_data` (done) — verify with a real wheel build/install.
+2. Silent Fortran degradation (§2) + `has_fortran_extensions()` (§5).
+3. scipy removal: §4b (`np.interp`, unblocks clean import) → §4a (TDMA) →
+   CORK `.npz`/numpy netcdf reader → drop `scipy` from `install_requires` (§4c).
+4. `CLIMT_PURE_PYTHON=1` build path + `py3-none-any` wheel + CI job (§1).
+5. Ship CORK at top-level `__all__`.
+6. Prove RCE end-to-end in JupyterLite; wire the deferred website live-cells.

@@ -4,6 +4,8 @@ import sympl
 from ._components import (
     BergerSolarInsolation,
     BucketHydrology,
+    CorkLongwaveRadiation,
+    CorkShortwaveRadiation,
     DataOcean,
     DcmipInitialConditions,
     DryConvectiveAdjustment,
@@ -77,6 +79,8 @@ __all__ = (
     SimplePhysics,
     RRTMGLongwave,
     RRTMGShortwave,
+    CorkLongwaveRadiation,
+    CorkShortwaveRadiation,
     EmanuelConvection,
     EmanuelConvectionPython,
     SlabSurface,
@@ -92,5 +96,15 @@ __all__ = (
     DataOcean,
     SimpleBoundaryLayer,
 )
+
+
+def has_fortran_extensions():
+    """Return True if compiled Fortran extensions are available."""
+    try:
+        from climt._components.simple_physics import _simple_physics  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
 
 __version__ = "0.20.0"

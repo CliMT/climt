@@ -1,8 +1,10 @@
 import os
 import numpy as np
 import xarray as xr
-from scipy.interpolate import RegularGridInterpolator
 from sympl import DiagnosticComponent
+# scipy is imported lazily inside the method that needs it so that
+# ``import climt`` stays scipy-free for the Pyodide/pure-wheel target
+# (see tests/test_no_scipy_import.py).
 
 _DATA = os.path.join(os.path.dirname(__file__), "..", "..", "_data")
 _DEFAULT_MASK = os.path.join(_DATA, "land_mask", "earth_landmask_2deg.nc")
@@ -76,6 +78,7 @@ class LandMask(DiagnosticComponent):
         self._weights = (lat_idx, lon_idx)
 
     def _interp_topo(self, field, lat_flat, lon_wrapped):
+        from scipy.interpolate import RegularGridInterpolator
         interp = RegularGridInterpolator(
             (self._topo_lat, self._topo_lon), field,
             bounds_error=False, fill_value=None)   # finite edge extrapolation

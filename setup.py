@@ -7,20 +7,23 @@ import platform
 import re
 import subprocess
 
-from setuptools import Extension, setup
+from setuptools import Extension, find_packages, setup
 from wheel.bdist_wheel import bdist_wheel as native_bdist_wheel
+
+PURE_PYTHON = os.environ.get("CLIMT_PURE_PYTHON") == "1"
 
 try:
     from pip import main as pip_main
 except Exception:
     from pip._internal import main as pip_main
 
-try:
-    from Cython.Build.Distutils import build_ext as native_build_ext
-except ImportError:
-    print("Suitable Cython unavailable, installing...")
-    pip_main(["install", "cython"])
-    from Cython.Build.Distutils import build_ext as native_build_ext
+if not PURE_PYTHON:
+    try:
+        from Cython.Build.Distutils import build_ext as native_build_ext
+    except ImportError:
+        print("Suitable Cython unavailable, installing...")
+        pip_main(["install", "cython"])
+        from Cython.Build.Distutils import build_ext as native_build_ext
 
 try:
     import numpy as np
@@ -45,7 +48,6 @@ requirements = [
     "xarray>=0.8.0",
     "sympl>=0.5.0",
     "cython>=0.25",
-    "scipy>=0.18.1",
     "importlib_resources",
 ]
 
@@ -97,134 +99,134 @@ def guess_compiler_name(env_name):
                     return  # Stop after finding one
 
 
-operating_system = platform.system()
+if not PURE_PYTHON:
+    operating_system = platform.system()
 
-libraries = ["m", "gfortran"]
-default_link_args = []
-default_compile_args = []
-
-compiled_base_dir = "climt/_lib"
-
-if operating_system == "Linux":
-    libraries = ["m", "gfortran", "rt"]
-    default_link_args = ["-lgfortran", "-lm"]
-
-if operating_system == "Windows":
-    compiled_base_dir = "climt\\_lib"
-
-dir_path = os.getcwd()
-compiled_path = os.path.join(dir_path, compiled_base_dir)
-lib_path_list = [os.path.join(compiled_path, operating_system + "/")]
-inc_path = os.path.join(compiled_path, "include")
-include_dirs.append(inc_path)
-
-
-# Compile libraries
-
-# Attempt to guess compilers on Darwin if not set
-if operating_system == "Darwin":
-    if "FC" not in os.environ:
-        guess_compiler_name("FC")
-    if "CC" not in os.environ:
-        guess_compiler_name("CC")
-
-if "FC" not in os.environ:
-    if operating_system == "Darwin":
-        os.environ["FC"] = "gfortran"
-        os.environ["F77"] = "gfortran"
-    else:
-        os.environ["FC"] = "gfortran"
-        os.environ["F77"] = "gfortran"
-
-if "CC" not in os.environ:
-    if operating_system == "Darwin":
-        os.environ["CC"] = "gcc"
-    else:
-        os.environ["CC"] = "gcc"
-
-if "CLIMT_OPT_FLAGS" not in os.environ:
-    os.environ["CLIMT_OPT_FLAGS"] = "-O3"
-
-if operating_system == "Windows":
-    os.environ["CC"] = "gcc.exe"
-    os.environ["FC"] = "gfortran.exe"
-    os.environ["AR"] = "gcc-ar.exe"
-    libraries = []
-    default_link_args = ["-l:libgfortran.a", "-l:libquadmath.a", "-l:libm.a"]
-    default_compile_args = ["-DMS_WIN64"]
-
-os.environ["FFLAGS"] = "-fPIC -fno-range-check " + os.environ["CLIMT_OPT_FLAGS"]
-os.environ["CFLAGS"] = "-fPIC " + os.environ["CLIMT_OPT_FLAGS"]
-
-if operating_system == "Darwin":
-    gcc_dir = find_homebrew_gcc()
-    if gcc_dir:
-        # Also need to find libgfortran.a to link against it?
-        # The original code did this.
-        for root, dirs, files in os.walk(gcc_dir):
-            if "lib" not in root:
-                continue  # Optimization
-            for line in files:
-                if re.match(r"libgfortran\.a", line):
-                    # Avoid i386 libs on 64bit systems
-                    if "i386" not in root:
-                        if root not in lib_path_list:
-                            lib_path_list.append(root)
-
-    if "MACOSX_DEPLOYMENT_TARGET" not in os.environ:
-        os.environ["FFLAGS"] += " -mmacosx-version-min=10.9"
-        os.environ["CFLAGS"] += " -mmacosx-version-min=10.9"
+    libraries = ["m", "gfortran"]
     default_link_args = []
-    os.environ["LDSHARED"] = os.environ["CC"] + " -bundle -undefined dynamic_lookup"
+    default_compile_args = []
 
-print("Compilers: ", os.environ.get("CC"), os.environ.get("FC"))
-print("LDSHARED: ", os.environ.get("LDSHARED"))
-print("FFLAGS: ", os.environ.get("FFLAGS"))
-print("Lib Paths: ", lib_path_list)
+    compiled_base_dir = "climt/_lib"
 
+    if operating_system == "Linux":
+        libraries = ["m", "gfortran", "rt"]
+        default_link_args = ["-lgfortran", "-lm"]
 
-# Create a custom build class to build libraries, and patch cython extensions
-def build_libraries():
+    if operating_system == "Windows":
+        compiled_base_dir = "climt\\_lib"
 
-    if os.environ.get("READTHEDOCS") == "True":
-        return
+    dir_path = os.getcwd()
+    compiled_path = os.path.join(dir_path, compiled_base_dir)
+    lib_path_list = [os.path.join(compiled_path, operating_system + "/")]
+    inc_path = os.path.join(compiled_path, "include")
+    include_dirs.append(inc_path)
 
-    curr_dir = os.getcwd()
-    os.chdir(compiled_path)
-    os.environ["PWD"] = compiled_path
+    # Compile libraries
 
-    cmd = ["make", "CLIMT_ARCH=" + operating_system]
-    print(f"Building libraries in {compiled_path}")
-    print(f"Command: {cmd}")
+    # Attempt to guess compilers on Darwin if not set
+    if operating_system == "Darwin":
+        if "FC" not in os.environ:
+            guess_compiler_name("FC")
+        if "CC" not in os.environ:
+            guess_compiler_name("CC")
 
-    # Use subprocess.run to capture output if needed, or just let it stream to stdout/stderr
-    # call() streams to stdout/stderr by default.
-    ret = subprocess.call(cmd)
+    if "FC" not in os.environ:
+        if operating_system == "Darwin":
+            os.environ["FC"] = "gfortran"
+            os.environ["F77"] = "gfortran"
+        else:
+            os.environ["FC"] = "gfortran"
+            os.environ["F77"] = "gfortran"
 
-    os.chdir(curr_dir)
-    os.environ["PWD"] = curr_dir
+    if "CC" not in os.environ:
+        if operating_system == "Darwin":
+            os.environ["CC"] = "gcc"
+        else:
+            os.environ["CC"] = "gcc"
 
-    if ret != 0:
-        raise RuntimeError(f"Library build failed with exit code {ret}")
+    if "CLIMT_OPT_FLAGS" not in os.environ:
+        os.environ["CLIMT_OPT_FLAGS"] = "-O3"
 
+    if operating_system == "Windows":
+        os.environ["CC"] = "gcc.exe"
+        os.environ["FC"] = "gfortran.exe"
+        os.environ["AR"] = "gcc-ar.exe"
+        libraries = []
+        default_link_args = ["-l:libgfortran.a", "-l:libquadmath.a", "-l:libm.a"]
+        default_compile_args = ["-DMS_WIN64"]
 
-# Custom build class
-class climt_build_ext(native_build_ext):
-    def run(self):
-        build_libraries()
-        native_build_ext.run(self)
+    os.environ["FFLAGS"] = "-fPIC -fno-range-check " + os.environ["CLIMT_OPT_FLAGS"]
+    os.environ["CFLAGS"] = "-fPIC " + os.environ["CLIMT_OPT_FLAGS"]
 
+    if operating_system == "Darwin":
+        gcc_dir = find_homebrew_gcc()
+        if gcc_dir:
+            # Also need to find libgfortran.a to link against it?
+            # The original code did this.
+            for root, dirs, files in os.walk(gcc_dir):
+                if "lib" not in root:
+                    continue  # Optimization
+                for line in files:
+                    if re.match(r"libgfortran\.a", line):
+                        # Avoid i386 libs on 64bit systems
+                        if "i386" not in root:
+                            if root not in lib_path_list:
+                                lib_path_list.append(root)
 
-# Custom bdist_wheel class
-class climt_bdist_wheel(native_bdist_wheel):
-    def run(self):
-        self.run_command("build")
-        native_bdist_wheel.run(self)
+        if "MACOSX_DEPLOYMENT_TARGET" not in os.environ:
+            os.environ["FFLAGS"] += " -mmacosx-version-min=10.9"
+            os.environ["CFLAGS"] += " -mmacosx-version-min=10.9"
+        default_link_args = []
+        os.environ["LDSHARED"] = (
+            os.environ["CC"] + " -bundle -undefined dynamic_lookup"
+        )
+
+    print("Compilers: ", os.environ.get("CC"), os.environ.get("FC"))
+    print("LDSHARED: ", os.environ.get("LDSHARED"))
+    print("FFLAGS: ", os.environ.get("FFLAGS"))
+    print("Lib Paths: ", lib_path_list)
+
+    # Create a custom build class to build libraries, and patch cython extensions
+    def build_libraries():
+
+        if os.environ.get("READTHEDOCS") == "True":
+            return
+
+        curr_dir = os.getcwd()
+        os.chdir(compiled_path)
+        os.environ["PWD"] = compiled_path
+
+        cmd = ["make", "CLIMT_ARCH=" + operating_system]
+        print(f"Building libraries in {compiled_path}")
+        print(f"Command: {cmd}")
+
+        # Use subprocess.run to capture output if needed, or just let it stream to stdout/stderr
+        # call() streams to stdout/stderr by default.
+        ret = subprocess.call(cmd)
+
+        os.chdir(curr_dir)
+        os.environ["PWD"] = curr_dir
+
+        if ret != 0:
+            raise RuntimeError(f"Library build failed with exit code {ret}")
+
+    # Custom build class
+    class climt_build_ext(native_build_ext):
+        def run(self):
+            build_libraries()
+            native_build_ext.run(self)
+
+    # Custom bdist_wheel class
+    class climt_bdist_wheel(native_bdist_wheel):
+        def run(self):
+            self.run_command("build")
+            native_bdist_wheel.run(self)
 
 
 # Define extensions to be built
-if os.environ.get("READTHEDOCS") == "True":
+if PURE_PYTHON or os.environ.get("READTHEDOCS") == "True":
     ext_modules = []
+    cmdclass = {}
 else:
     # Use the lib_path_list populated earlier
 
@@ -290,6 +292,10 @@ else:
             + default_link_args,
         ),
     ]
+    cmdclass = {
+        "build_ext": climt_build_ext,
+        "bdist_wheel": climt_bdist_wheel,
+    }
 
 setup(
     name="climt",
@@ -299,26 +305,21 @@ setup(
     author="Rodrigo Caballero",
     author_email="rodrigo.caballero@misu.su.se",
     url="https://github.com/CliMT/climt",
-    packages=[
-        "climt",
-    ],
+    packages=find_packages(include=["climt", "climt.*"]),
     package_dir={"climt": "climt"},
     package_data={
         "climt": [
             "_data/ozone_profile.npy",
             "_data/atmospheric_properties/*.toml",
-            "_data/picket_fence/correlated_k/*.nc",
-            "_data/picket_fence/correlated_k/*.npz",
+            "_data/cork/correlated_k/*.nc",
+            "_data/cork/correlated_k/*.npz",
             "_data/land_mask/*.nc",
             "_data/data_ocean/*.nc",
             "_data/topography/*.nc",
         ]
     },
     install_requires=requirements,
-    cmdclass={
-        "build_ext": climt_build_ext,
-        "bdist_wheel": climt_bdist_wheel,
-    },
+    cmdclass=cmdclass,
     ext_modules=ext_modules,
     include_dirs=include_dirs,
     license="BSD license",
