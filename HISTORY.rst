@@ -2,6 +2,66 @@
 History
 =======
 
+Unreleased
+----------
+
+* New land-surface physics: ``BucketHydrology`` gains an optional
+  two-layer (deep + shallow) mode via ``num_layers=2``, adding
+  ``deep_soil_moisture_content`` / ``deep_soil_temperature`` stores and
+  ``runoff_rate`` diagnostics. The ``num_layers=1`` default is
+  unchanged (bit-for-bit). A stray hardcoded soil-moisture clamp that
+  ignored the configured ``soil_moisture_max`` was also fixed.
+* New component ``SecondBEST``: a modular, intermediate-complexity BEST
+  land-surface model built as a thin ``Stepper`` orchestrator over five
+  swappable process objects (``SoilProperties``, ``SurfaceAlbedo``,
+  ``SurfaceLayer``, ``SurfaceFluxes``, ``SubsurfaceTransport``), each
+  with a ``Best*`` default. Adds a ``soil`` vertical grid, soil-profile
+  state quantities, and registers the ``von_karman_constant``.
+  ``SecondBEST`` also emits stability-consistent screen-level
+  diagnostics on land columns (``air_temperature_at_2m``,
+  ``specific_humidity_at_2m``, ``eastward_wind_at_10m``,
+  ``northward_wind_at_10m``), interpolated between the surface and the
+  lowest model level using the surface layer's own stability profile.
+* New components for ocean/ice surface physics: ``LandMask``,
+  ``SeaIce``, ``LandIce`` and ``DataOcean``, plus a slab-ocean q-flux
+  (prescribed ``ocean_heat_transport_convergence``) and optional Ekman
+  heat-transport convergence in ``SlabSurface`` (``include_ekman``).
+* ``SlabSurface``: when ``include_ekman=True``, the
+  ``ocean_heat_transport_convergence`` diagnostic now reports the TOTAL
+  ocean heat-transport convergence actually applied to sea cells
+  (prescribed q-flux + Ekman), not just the prescribed input. The
+  Ekman-only breakdown is still available separately as
+  ``ekman_heat_transport_convergence``. With the default
+  ``include_ekman=False``, Ekman is zero and this diagnostic is
+  unchanged from prior releases.
+* **Deprecated:** ``IceSheet`` is deprecated in favor of the new
+  ``SeaIce`` (owns ``area_type == "sea_ice"``) and ``LandIce`` (owns
+  ``area_type in ("land", "land_ice")``) components. ``IceSheet`` is
+  now a thin dispatching shim over ``SeaIce``/``LandIce`` kept only for
+  backward compatibility, and emits a ``DeprecationWarning`` on
+  construction. Its numerical output is **not** bit-for-bit identical
+  to the old monolith, even with default arguments, because
+  ``SeaIce``/``LandIce`` carry deliberate defect fixes:
+
+  * The basal boundary condition changed from a hardcoded freezing
+    Dirichlet condition to a prescribed ocean-heat-flux Flux (Neumann)
+    condition (``heat_flux_into_sea_water_due_to_sea_ice``).
+  * Sea-ice thickness is now clamped to be non-negative.
+  * Surface albedo is now configurable rather than hardcoded.
+  * The ``surface_downward_heat_flux_in_sea_ice`` diagnostic is now
+    produced only by the internal ``SeaIce`` instance, so it reads as
+    the registered default of ``0.0`` on ``land``/``land_ice`` columns
+    (previously computed uniformly across ``sea_ice``, ``land_ice``
+    *and* ``land`` columns by the old monolith).
+  * Columns with ``area_type == "sea"`` (owned by neither ``SeaIce``
+    nor ``LandIce``) now pass ``surface_temperature`` straight through
+    from the input instead of taking either sub-component's internally
+    derived proxy value.
+
+  Existing users of ``IceSheet`` should migrate to ``SeaIce`` and
+  ``LandIce`` directly; see their docstrings for further detail on each
+  fix.
+
 v.0.17.0
 --------
 

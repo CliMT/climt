@@ -1,0 +1,236 @@
+---
+title: "Slab ocean and heat transport"
+---
+
+## Introduction
+
+`SlabSurface` is a [`TendencyComponent`](component_types.qmd) that computes the
+surface energy balance and returns a tendency of `surface_temperature`. It
+treats the surface as a slab of finite heat capacity — an ocean mixed layer over
+sea cells, a soil layer over land — and warms or cools it in response to the net
+energy flux into that slab.
+
+This page documents the base energy balance and the two ways `SlabSurface` can
+represent **ocean heat transport**, the horizontal redistribution of energy that
+a slab ocean does not model on its own:
+
+1. A **prescribed q-flux** (`ocean_heat_transport_convergence`), a user-supplied
+   or externally computed convergence of ocean heat transport.
+2. An **Ekman transport** computed internally from the wind-stress curl, enabled
+   with `include_ekman=True`.
+
+Both are off by default, so the default `SlabSurface` reproduces the classic
+mixed-layer slab ocean bit-for-bit.
+
+## The surface energy balance
+
+For each column, `SlabSurface` forms the net downward heat flux at the surface
+
+$$
+Q_{\text{net}} = SW^{\downarrow} + LW^{\downarrow} - SW^{\uparrow} - LW^{\uparrow} - H_s - H_l ,
+$$
+
+and converts it to a temperature tendency by dividing by the slab's heat
+capacity per unit area,
+
+$$
+\frac{\partial T_s}{\partial t} = \frac{Q_{\text{net}}}{\rho\, d\, c},
+$$
+
+where the density $\rho$, depth $d$ and specific heat $c$ depend on the column's
+`area_type`:
+
+| `area_type` | Density | Depth $d$ | Specific heat |
+|-------------|---------|-----------|---------------|
+| `sea` | `sea_water_density` | `ocean_mixed_layer_thickness` | `surface_thermal_capacity` |
+| `land` | `surface_material_density` | `soil_layer_thickness` | `heat_capacity_of_soil` |
+| `land_ice` | — | — | tendency forced to **0** |
+| `sea_ice` | — | — | tendency forced to **0** |
+
+Over `land_ice` and `sea_ice` columns the slab temperature tendency is set to
+zero: those surfaces are owned by [`LandIce` and `SeaIce`](sea_land_ice.qmd),
+whose conducted basal fluxes (`upward_heat_flux_at_ground_level_in_soil` and
+`heat_flux_into_sea_water_due_to_sea_ice`) are fed *into* `SlabSurface` as the
+`net_heat_flux` on those cells but do not move the slab temperature directly.
+The `depth_of_slab_surface` diagnostic reports the depth $d$ used per column.
+
+## Prescribed ocean heat transport (q-flux)
+
+Over open-ocean (`sea`, not `sea_ice`) columns, `SlabSurface` adds
+`ocean_heat_transport_convergence` to the net flux before forming the tendency:
+
+$$
+Q_{\text{net}} \;\longrightarrow\; Q_{\text{net}} + Q_{\text{transport}} .
+$$
+
+This is the standard **q-flux** (or "flux-correction") term used to make a slab
+ocean reproduce a realistic SST climatology: a positive convergence warms the
+mixed layer, representing heat imported by ocean currents. The field has a
+registered default of `0.0 W m⁻²`, so leaving it untouched recovers the plain
+slab ocean. You can prescribe it from a diagnosed climatology, or let
+`SlabSurface` compute an Ekman contribution for you (below).
+
+The applied value is echoed back as the `ocean_heat_transport_convergence`
+diagnostic. When `include_ekman=True`, this diagnostic reports the **total**
+(prescribed + Ekman) actually applied, so a user closing the surface energy
+budget from that single diagnostic gets the right number.
+
+## Ekman energy transport
+
+With `include_ekman=True`, `SlabSurface` computes an Ekman heat-transport
+convergence from the surface wind stress and adds it to the q-flux. This
+captures the leading-order wind-driven ocean heat transport without an ocean
+dynamical core.
+
+### Formulation
+
+The wind stress $\boldsymbol{\tau} = (\tau_x, \tau_y)$ drives an Ekman **mass
+transport** per unit width, perpendicular to the stress and set by the Coriolis
+parameter $f$:
+
+$$
+M_x = \frac{\tau_y}{f}, \qquad M_y = -\frac{\tau_x}{f}.
+$$
+
+The convergence of the associated heat transport gives the q-flux contribution,
+using the sea-water heat capacity $c_{sw}$ and the surface temperature
+$\theta$ as the transported quantity:
+
+$$
+Q_{\text{Ekman}} = -\, c_{sw}\, \nabla \cdot (\theta \, \mathbf{M}) .
+$$
+
+The horizontal divergence and curl are evaluated on the 2-D (lat, lon) grid by
+`climt._core.horizontal_operators`, which uses spherical centred differences
+and returns zeros where a dimension has fewer than three points (so a
+single-column run collapses the Ekman terms to zero gracefully).
+
+The Ekman **pumping** diagnostic (vertical velocity at the base of the Ekman
+layer) is reported as
+
+$$
+w_{\text{ek}} = \frac{\nabla \times \boldsymbol{\tau}}{\rho\, f} .
+$$
+
+### Numerical care
+
+Several subtleties matter for a physically sensible result, and are handled
+explicitly:
+
+- **Equatorial singularity.** $f \to 0$ at the equator makes $1/f$ blow up. The
+  Coriolis parameter is capped in magnitude below
+  `equatorial_ekman_cap_latitude` (default 5°), preserving its sign (so it never
+  vanishes exactly at the equator).
+- **Coastal contamination.** The wind stress is zeroed over non-sea cells
+  **before** differentiating, not just on the output. Otherwise a coastal sea
+  cell's centred-difference stencil would reach into neighbouring land/sea-ice
+  cells and pick up their stress (and, through $\theta$, their surface
+  temperature) as if it were open-ocean transport. Zeroing the stress first
+  gives a clean no-flux-at-coast boundary.
+- **Curl before dividing by $f$.** $w_{\text{ek}}$ takes the curl of the raw
+  stress and *then* divides by $\rho f$. Dividing first (i.e.
+  $\nabla \times (\boldsymbol{\tau}/f)$) would spuriously pick up the meridional
+  variation of $f$ even for a spatially uniform stress, which has no physical
+  curl.
+
+::: {.callout-warning}
+## Local-$f$ approximation for `ekman_pumping`
+
+The `ekman_pumping` diagnostic treats $f$ (and $\rho$) as locally constant when
+forming the curl, dropping the $\beta$ term ($\partial f/\partial y$). This is
+standard for an Ekman-pumping *diagnostic* but is intentionally inconsistent
+with $M_x, M_y$ above, which retain the full spatial $1/f$ variation because
+they feed the actual transport tendency. Treat `ekman_pumping` as a diagnostic
+proxy, not a textbook-exact vertical velocity.
+:::
+
+Only open-ocean (`sea`, not `sea_ice`) cells receive the Ekman convergence,
+matching the q-flux masking. The Ekman-only value is reported separately as the
+`ekman_heat_transport_convergence` diagnostic, while
+`ocean_heat_transport_convergence` reports prescribed + Ekman combined.
+
+## Constructor
+
+``` python
+climt.SlabSurface(include_ekman=False, equatorial_ekman_cap_latitude=5.0)
+```
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `include_ekman` | `False` | Compute an Ekman heat-transport convergence from wind-stress curl and fold it into the ocean q-flux. Requires the stress and 2-D coordinate inputs below. |
+| `equatorial_ekman_cap_latitude` | `5.0` | Latitude (degrees) below which $|f|$ is capped, to avoid the equatorial $1/f$ singularity. |
+
+With `include_ekman=False` the component's declared inputs and diagnostics are
+exactly those of the classic slab ocean — the Ekman inputs/diagnostics are added
+to instance-level copies of the property dictionaries only when the flag is on,
+so the default configuration is byte-for-byte backward compatible.
+
+## State
+
+### Inputs (always)
+
+| Quantity | Dims | Units |
+|----------|------|-------|
+| `downwelling_/upwelling_ shortwave_/longwave_flux_in_air` | `[*, interface_levels]` | `W m^-2` |
+| `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux` | `[*]` | `W m^-2` |
+| `surface_temperature` | `[*]` | `degK` |
+| `surface_thermal_capacity`, `heat_capacity_of_soil` | `[*]` | `J kg^-1 degK^-1` |
+| `surface_material_density`, `sea_water_density` | `[*]` | `kg m^-3` |
+| `soil_layer_thickness`, `ocean_mixed_layer_thickness` | `[*]` | `m` |
+| `upward_heat_flux_at_ground_level_in_soil` | `[*]` | `W m^-2` |
+| `heat_flux_into_sea_water_due_to_sea_ice` | `[*]` | `W m^-2` |
+| `ocean_heat_transport_convergence` | `[*]` | `W m^-2` |
+| `area_type` | `[*]` | `dimensionless` |
+
+### Additional inputs when `include_ekman=True`
+
+| Quantity | Dims | Units |
+|----------|------|-------|
+| `surface_downward_eastward_stress`, `surface_downward_northward_stress` | `[lat, lon]` | `N m^-2` |
+| `latitude`, `longitude` | `[lat, lon]` | `degrees_north` / `degrees_east` |
+
+### Tendencies and diagnostics
+
+| Role | Quantity | Dims | Units |
+|------|----------|------|-------|
+| tendency | `surface_temperature` | `[*]` | `degK s^-1` |
+| diag | `depth_of_slab_surface` | `[*]` | `m` |
+| diag | `ocean_heat_transport_convergence` | `[*]` | `W m^-2` (total q-flux applied) |
+| diag (Ekman) | `ekman_heat_transport_convergence` | `[*]` | `W m^-2` |
+| diag (Ekman) | `ekman_pumping` | `[*]` | `m s^-1` |
+
+The sea-water heat capacity used in the Ekman term is the registered constant
+`heat_capacity_of_sea_water` (3985 J kg⁻¹ K⁻¹).
+
+## Examples
+
+Prescribed q-flux warming the mixed layer:
+
+``` python
+import climt
+from climt import get_default_state, get_grid
+
+slab = climt.SlabSurface()
+state = get_default_state([slab], grid_state=get_grid(nx=4, ny=1, nz=10))
+state["area_type"].values[:] = "sea"
+state["ocean_heat_transport_convergence"].values[:] = 50.0   # W/m^2
+
+tendencies, diagnostics = slab(state)
+```
+
+Wind-driven Ekman transport:
+
+``` python
+slab = climt.SlabSurface(include_ekman=True)
+state = get_default_state([slab], grid_state=get_grid(nx=64, ny=32, nz=10))
+state["area_type"].values[:] = "sea"
+state["surface_downward_eastward_stress"].values[:] = 0.1     # N/m^2
+
+tendencies, diagnostics = slab(state)
+print(diagnostics["ekman_heat_transport_convergence"])
+```
+
+## Source
+
+- Component and Ekman kernel: [`climt/_components/slab_surface.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/slab_surface.py)
+- Spherical operators: [`climt/_core/horizontal_operators.py`](https://github.com/CliMT/climt/blob/develop/climt/_core/horizontal_operators.py)

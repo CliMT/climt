@@ -4,6 +4,7 @@ import sympl
 from ._components import (
     BergerSolarInsolation,
     BucketHydrology,
+    DataOcean,
     DcmipInitialConditions,
     DryConvectiveAdjustment,
     EmanuelConvection,
@@ -14,8 +15,13 @@ from ._components import (
     HeldSuarez,
     IceSheet,
     Instellation,
+    LandIce,
+    LandMask,
     RRTMGLongwave,
     RRTMGShortwave,
+    SeaIce,
+    SecondBEST,
+    SimpleBoundaryLayer,
     SimplePhysics,
     SlabSurface,
 )
@@ -41,6 +47,8 @@ from ._core import (
 
 
 sympl.set_constant("top_of_model_pressure", 20.0, "Pa")
+sympl.set_constant("von_karman_constant", 0.4, "dimensionless")
+sympl.set_constant("heat_capacity_of_sea_water", 3985.0, "J/kg/degK")
 
 __all__ = (
     get_default_state,
@@ -75,8 +83,14 @@ __all__ = (
     DcmipInitialConditions,
     IceSheet,
     Instellation,
+    LandMask,
     DryConvectiveAdjustment,
     BucketHydrology,
+    SecondBEST,
+    SeaIce,
+    LandIce,
+    DataOcean,
+    SimpleBoundaryLayer,
 )
 
 __version__ = "0.20.0"

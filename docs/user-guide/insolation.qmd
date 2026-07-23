@@ -1,0 +1,105 @@
+---
+title: "Solar insolation and zenith angle"
+---
+
+## Introduction
+
+Two diagnostic components supply the solar geometry that drives shortwave
+radiation:
+
+- **`BergerSolarInsolation`** — computes the top-of-atmosphere solar insolation,
+  the solar zenith angle, and the Earth's orbital constants (obliquity,
+  eccentricity, Earth–Sun distance) from the spectral orbital solution of
+  **Berger (1978)** — the same approach used by CAM 3.
+- **`Instellation`** — computes just the solar zenith angle for the present-day
+  Earth–Sun system.
+
+Both are [`DiagnosticComponent`](component_types.qmd)s: they read the grid
+geometry (and the model time) and return solar-geometry diagnostics that a
+shortwave scheme such as [RRTMG](rrtmg_clouds.qmd) or
+[Cork](../radiative-transfer/index.qmd) consumes to set the incoming solar flux.
+
+Use `BergerSolarInsolation` when you want time-varying orbital forcing
+(seasonal cycle, and — because the orbital elements are computed from Berger's
+series — paleoclimate/Milankovitch configurations). Use `Instellation` when you
+only need the zenith angle for a present-day run.
+
+## BergerSolarInsolation
+
+### Physics
+
+Berger (1978) expresses the slowly varying orbital elements — obliquity
+$\varepsilon$, eccentricity $e$, and longitude of perihelion — as truncated
+trigonometric series in time, with tabulated amplitudes and frequencies. From
+these, and the model date, the component computes:
+
+- the **normalized Earth–Sun distance** and the associated inverse-square
+  scaling of the solar constant,
+- the **solar declination**, and from it the **solar zenith angle**
+  $\theta_z$ at each grid point given its latitude, longitude and the time of
+  day, and
+- the **top-of-atmosphere insolation** $S = S_0\,(\bar d/d)^2 \cos\theta_z$
+  (zero on the night side).
+
+Because the orbital elements come from Berger's series rather than being fixed,
+setting the model time far in the past or future yields the corresponding
+Milankovitch orbital configuration.
+
+### State
+
+| Role | Quantity | Dims | Units |
+|------|----------|------|-------|
+| in | `latitude`, `longitude` | `[*]` | `degrees_north` / `degrees_east` |
+| diag | `solar_insolation` | `[*]` | `W m^-2` |
+| diag | `solar_zenith_angle` | `[*]` | `radians` |
+| diag | `obliquity` | `[]` | `radians` |
+| diag | `eccentricity` | `[]` | `radians` |
+| diag | `normalized_earth_sun_distance` | `[]` | `dimensionless` |
+
+The component reads `state["time"]` to evaluate the orbital series and the
+diurnal cycle. It takes no constructor arguments.
+
+## Instellation
+
+`Instellation` computes the solar `zenith_angle` for the Earth–Sun system from
+latitude, longitude and the model time. It is the lightweight option when a
+shortwave scheme needs only the zenith angle and you are not varying the orbit.
+
+| Role | Quantity | Dims | Units |
+|------|----------|------|-------|
+| in | `latitude`, `longitude` | `[*]` | `degrees_north` / `degrees_east` |
+| diag | `zenith_angle` | `[*]` | `radians` |
+
+It takes no constructor arguments and reads `state["time"]`.
+
+## Example
+
+``` python
+import climt
+from climt import get_default_state, get_grid
+
+insolation = climt.BergerSolarInsolation()
+state = get_default_state([insolation], grid_state=get_grid(nx=128, ny=62, nz=30))
+
+diagnostics = insolation(state)
+print(diagnostics["solar_insolation"].values.max())   # W/m^2 at the substellar point
+print(float(diagnostics["obliquity"].values))          # radians
+```
+
+Swap in `Instellation` when only the zenith angle is needed:
+
+``` python
+zen = climt.Instellation()
+diagnostics = zen(state)
+print(diagnostics["zenith_angle"].values)
+```
+
+## Source
+
+- `BergerSolarInsolation`: [`climt/_components/berger_solar_insolation.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/berger_solar_insolation.py)
+- `Instellation`: [`climt/_components/instellation/component.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/instellation/component.py)
+
+### Reference
+
+Berger, A. (1978). *Long-term variations of daily insolation and Quaternary
+climatic changes.* J. Atmos. Sci. **35**, 2362–2367.

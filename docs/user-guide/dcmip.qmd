@@ -1,0 +1,93 @@
+---
+title: "DCMIP initial conditions"
+---
+
+## Introduction
+
+`DcmipInitialConditions` provides `climt`'s interface to the **DCMIP** (Dynamical
+Core Model Intercomparison Project) analytic initial conditions. Unlike the
+other components documented here, it is not a physics parameterisation — it is a
+[`DiagnosticComponent`](component_types.qmd) that *generates* a balanced initial
+atmospheric state (winds, temperature, humidity, surface fields) from the grid
+geometry, for spinning up and testing dynamical cores.
+
+It currently exposes two of the standard DCMIP test cases:
+
+- **Baroclinic wave** (`condition_type="baroclinic_wave"`) — a balanced
+  mid-latitude jet, optionally seeded with a localised perturbation that grows
+  into a baroclinic wave. The canonical test of a dynamical core's ability to
+  represent developing extratropical cyclones.
+- **Tropical cyclone** (`condition_type="tropical_cyclone"`) — an axisymmetric
+  warm-core vortex in a moist tropical environment.
+
+::: {.callout-note}
+`DcmipInitialConditions` wraps a compiled extension providing the DCMIP
+reference routines, and must be built (as part of the normal `climt`
+installation) before it can be constructed.
+:::
+
+## Usage pattern
+
+Because it produces a *diagnostic* state from the grid, `DcmipInitialConditions`
+is run once at setup: build a default state to get the grid and hybrid
+coordinate, call the component, and merge its output back into the state before
+starting the integration.
+
+The component reads the hybrid sigma-pressure `a`/`b` coordinate arrays and the
+grid coordinates, and returns the full prognostic set (`eastward_wind`,
+`northward_wind`, `air_temperature`, `specific_humidity`, the pressure fields,
+`surface_air_pressure` and `surface_geopotential`).
+
+## Constructor
+
+``` python
+climt.DcmipInitialConditions(condition_type="baroclinic_wave",
+                             add_perturbation=True,
+                             moist=False)
+```
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `condition_type` | `"baroclinic_wave"` | `"baroclinic_wave"` or `"tropical_cyclone"`. |
+| `add_perturbation` | `True` | Add the localised perturbation that seeds the wave. Applies to the baroclinic-wave case. |
+| `moist` | `False` | Generate a moist (rather than dry) initial state. |
+
+## State
+
+| Role | Quantity | Dims | Units | Alias |
+|------|----------|------|-------|-------|
+| in | `latitude`, `longitude` | `[*]` | `degrees_north` / `degrees_east` | |
+| in | `air_pressure` | `[mid_levels, *]` | `Pa` | |
+| in | `atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels` | `[interface_levels, *]` | `dimensionless` | `ak` |
+| in | `atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels` | `[interface_levels, *]` | `dimensionless` | `bk` |
+| diag | `eastward_wind`, `northward_wind` | `[mid_levels, *]` | `m s^-1` | |
+| diag | `air_temperature` | `[mid_levels, *]` | `degK` | |
+| diag | `specific_humidity` | `[mid_levels, *]` | `g/g` | |
+| diag | `air_pressure`, `air_pressure_on_interface_levels` | `[mid_levels/interface_levels, *]` | `Pa` | |
+| diag | `surface_air_pressure` | `[*]` | `Pa` | |
+| diag | `surface_geopotential` | `[*]` | `m^2 s^-2` | |
+
+## Example
+
+``` python
+import climt
+from climt import get_default_state, get_grid
+
+ic = climt.DcmipInitialConditions(condition_type="baroclinic_wave",
+                                  add_perturbation=True)
+state = get_default_state([ic], grid_state=get_grid(nx=128, ny=62, nz=30))
+
+# Generate the balanced initial state and merge it in.
+state.update(ic(state))
+# `state` now holds a DCMIP baroclinic-wave initial condition, ready to
+# hand to a dynamical core.
+```
+
+## Source
+
+- Component wrapper: [`climt/_components/dcmip/component.py`](https://github.com/CliMT/climt/tree/develop/climt/_components/dcmip)
+
+### Reference
+
+Ullrich, P. A. et al. (2012). *Dynamical Core Model Intercomparison Project
+(DCMIP) test case document.*

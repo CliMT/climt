@@ -1,0 +1,266 @@
+---
+title: "SecondBEST"
+---
+
+## Introduction
+
+`SecondBEST` is a modular, intermediate-complexity land surface model — a
+simplified implementation of the **Bare Essentials for Surface Transfer (BEST)**
+scheme of [Pitman et al.
+(1991)](http://www.geo.utexas.edu/climate/Research/Reprints/Pitman.BMRC.1991.pdf).
+It sits between the single-bucket [`BucketHydrology`](bucket_hydrology.qmd) and a
+full tiled land model: it resolves a soil column with coupled heat, liquid water
+and ice, a stability-dependent surface layer, and physically based albedo and
+evaporation — but omits vegetation and sub-grid land-type tiling (each cell is
+treated as bare soil or snow/ice).
+
+The distinguishing feature of `SecondBEST` is its **architecture**. The
+component itself is a thin [`Stepper`](component_types.qmd) orchestrator; every
+physical calculation is delegated to a swappable **process object**. This makes
+each piece of physics independently testable and replaceable — you can swap the
+drag law or the subsurface solver without touching the rest.
+
+::: {.callout-tip}
+This page is the component manual: what `SecondBEST` computes, how to configure
+it, and its state. The full **equation reference** — every BEST equation with
+its Pitman et al. section number — lives in the companion notebook
+[`Description_of_SecondBEST.ipynb`](../Description_of_SecondBEST.ipynb), which
+also documents how to extend the model with a brand-new process.
+:::
+
+`SecondBEST` owns columns with `area_type in ("land", "land_ice")`; all other
+columns (e.g. `sea`) pass through unchanged, so it composes with the ocean and
+ice components by area type.
+
+## The pluggable process architecture
+
+`SecondBEST.array_call` loops over land columns and, for each, calls five
+process objects in sequence. Each process is a plain class with a documented
+`__call__`; the `Best*` classes are the default BEST implementations. Pass an
+instance to the constructor to override one; `None` (the default) selects the
+`Best*` default.
+
+| Order | Process (kwarg) | Base class / default | Role |
+|-------|-----------------|----------------------|------|
+| 1 | `soil_properties` | `SoilProperties` / `BestSoilProperties` | Soil parameters (porosity, field capacity, wilting point, texture, colour, hydraulic constants) from soil + area type. |
+| 2 | `surface_layer` | `SurfaceLayer` / `BestSurfaceLayer` | Stability-dependent drag coefficients from a Richardson number. |
+| 3 | `albedo` | `SurfaceAlbedo` / `BestSurfaceAlbedo` | Shortwave/longwave albedo from soil colour and wetness. |
+| 4 | `fluxes` | `SurfaceFluxes` / `BestSurfaceFluxes` | Bulk sensible/latent/momentum fluxes with an exfiltration-limited wetness factor. |
+| 5 | `subsurface` | `SubsurfaceTransport` / `BestSubsurfaceTransport` | Coupled soil heat + liquid + ice transport with freeze/melt. |
+
+They are all importable from `climt._components.second_best.processes`.
+
+### 1. Soil properties (`BestSoilProperties`)
+
+Given a soil type (`"clay"` or `"sand"`) and `area_type`, returns a dictionary
+of soil parameters (BEST Eqs 4.10–4.12): `colour`, `texture`, `porosity`,
+`field_capacity`, `wilting_point`, the retention exponent `B`, saturated
+hydraulic conductivity `K_H0`, and saturation suction `psi_0`. Clay and sand sit
+at opposite ends (texture 0 vs 9); `land_ice` overrides texture to 0.07 and the
+wilting point to 0.01.
+
+### 2. Surface layer (`BestSurfaceLayer`)
+
+Computes drag coefficients for momentum (`C_Dm`) and heat/scalars (`C_Dh`) from
+a bulk Richardson number (BEST Section 6):
+
+$$
+C_{DN} = \left(\frac{\kappa}{\ln z_m - \ln z_0}ight)^2, \qquad
+Ri = -\frac{g\, z_m}{T_s\, U_m^2}\,(T_s - T_a).
+$$
+
+$Ri < 0$ is unstable (enhanced exchange), $Ri \ge 0$ is stable (suppressed).
+Distinct unstable/stable branches for $C_{Dm}$ and $C_{Dh}$ follow Pitman et
+al., with $\epsilon = 0.01$ over land and $1.0$ over sea/sea-ice. Reduces to the
+neutral $C_{DN}$ at $Ri = 0$.
+
+The reference height $z_m$ is the **geometric height of the lowest model level**
+above the surface, from the hypsometric equation
+$z_m = (R_d T / g)\,\ln(p_{\text{surf}} / p_{\text{lowest}})$ (tens of metres for
+a typical column), floored at 2 m. This is a deliberate fix: an earlier version
+used the atmospheric scale height ($R_d T / g$, ~8–9 km), which produced
+implausibly small drag coefficients.
+
+`SurfaceLayer` also provides `interpolate_to_height`, used for the
+[screen-level diagnostics](#screen-level-diagnostics).
+
+### 3. Albedo (`BestSurfaceAlbedo`)
+
+Separate shortwave and longwave albedos (BEST Eqs 5.5–5.8), darkening with soil
+colour and wetness:
+
+$$
+\alpha_{SW} = 0.10 + 0.1\,\mathrm{clr} + 0.06\,(1 - W_{L,u}), \qquad
+\alpha_{LW} = 2\,\alpha_{SW} \quad(\text{bare soil}),
+$$
+
+with a brighter land-ice branch ($\alpha_{SW} = 0.60 + 0.06(1 - W_{L,u})$,
+$\alpha_{LW} = \alpha_{SW}/3$). $W_{L,u}$ is the upper-soil wetness (liquid
+content ÷ porosity). The same value serves the direct and diffuse shortwave
+diagnostics.
+
+### 4. Surface fluxes (`BestSurfaceFluxes`)
+
+Bulk aerodynamic sensible and latent heat fluxes (BEST Section 8):
+
+$$
+H_s = \rho\, C_{pd}\, U_m\, C_{Dh}\,(T_s - T_a), \qquad
+H_l = L_v\, \rho\, \beta_u\, c_u\, (q^*_s - q_a),
+$$
+
+where $c_u = C_{Dh} U_m$ is the soil conductance and $\beta_u \in [0,1]$ is a
+wetness factor. For soil, $\beta_u$ combines a frozen-sublimation term with the
+ratio of the **exfiltration limit** $E_{\text{us,max}}$ to the potential
+evaporation — so evaporation is throttled by how fast water can be drawn up
+through the soil, not just by how wet the surface is. The process also returns
+`beta` itself (used for the humidity screen diagnostic) and the momentum flux.
+
+### 5. Subsurface transport (`BestSubsurfaceTransport`)
+
+Steps the coupled soil profiles forward: temperature `T`, liquid water fraction
+`X_w`, and ice fraction `X_i`. Heat diffusion is solved **implicitly**
+(tridiagonal, unconditionally stable); the freeze/melt phase change is applied
+as an explicit Euler source $\Gamma$ that drives the temperature toward freezing
+while converting between liquid and ice:
+
+$$
+\Gamma = \frac{c_v}{L_f}\,\frac{T_f - T}{\Delta t},
+$$
+
+limited by the available water (freezing) or ice (melting). Phase change
+conserves total water mass ($X_w + X_i$) while releasing or absorbing latent
+heat. The bottom boundary is Neumann (a heat/moisture sink into the deep soil);
+the surface boundary is the net surface heat flux from step 4. This solver is
+deliberately **self-contained** (its own sparse tridiagonal), so `SecondBEST`
+does not depend on the sea-ice column solver.
+
+### Extending
+
+To swap a process, subclass its base class with the same `__call__` signature
+and pass it under the matching keyword. To add an entirely new process (e.g.
+vegetation/transpiration), follow the three-step recipe in the
+[notebook](../Description_of_SecondBEST.ipynb) — define the contract + `Best*`
+default, wire it into `__init__` and the `array_call` loop, and instantiate.
+
+``` python
+from climt._components.second_best.processes import SurfaceLayer
+
+class ConstantDrag(SurfaceLayer):
+    def __call__(self, z_mid, z0, wind_speed, T_surf, T_air, area_type):
+        return {"C_Dm": 0.002, "C_Dh": 0.002, "C_DN": 0.002, "Ri": 0.0}
+
+comp = climt.SecondBEST(surface_layer=ConstantDrag())
+```
+
+## Screen-level diagnostics
+
+`SecondBEST` emits stability-consistent **2 m temperature / humidity** and
+**10 m wind** diagnostics. Rather than assuming a neutral log-law, it recovers
+the Monin–Obukhov stability functions ($\psi_m$, $\psi_h$) from the surface
+layer's *own* bulk drag coefficients and scales them across the surface layer,
+so the diagnosed profile is consistent with the computed fluxes. The 2 m
+humidity uses the *effective* surface humidity implied by the evaporative
+$\beta$ (dry soil is not saturated). The 10 m wind is clamped to the
+lowest-level speed to prevent a light-wind instability overshoot.
+
+::: {.callout-note}
+The linear-$\psi$ scaling is a first-order MO assumption. It reduces exactly to
+the neutral log-law when $C_{Dm} = C_{Dh} = C_{DN}$; a full Obukhov-length
+treatment is a possible future refinement.
+:::
+
+## Soil grid
+
+`SecondBEST`'s soil profiles live on a dedicated `soil` vertical grid, mirroring
+the ice grid. Request it from `get_grid` (or `get_default_state`) with
+`n_soil_interface_levels`:
+
+``` python
+grid = get_grid(nx=4, ny=2, nz=10, n_soil_interface_levels=4)
+```
+
+This adds `height_on_soil_interface_levels` to the grid, and the soil-profile
+quantities (`soil_temperature`, `soil_liquid_water_content`, `soil_ice_content`)
+are defined on the `soil_interface` domain.
+
+## Constructor
+
+``` python
+climt.SecondBEST(soil_type="clay", num_soil_layers=3, minimum_wind_speed=1.0,
+                 soil_properties=None, albedo=None, surface_layer=None,
+                 fluxes=None, subsurface=None)
+```
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `soil_type` | `"clay"` | `"clay"` or `"sand"`; selects the soil-property set. |
+| `num_soil_layers` | `3` | Number of soil layers. |
+| `minimum_wind_speed` | `1.0` | Floor on the surface-layer wind speed (m s⁻¹), preventing zero drag in calm conditions. |
+| `soil_properties` | `None` | Override `SoilProperties` process; `None` → `BestSoilProperties`. |
+| `albedo` | `None` | Override `SurfaceAlbedo`; `None` → `BestSurfaceAlbedo`. |
+| `surface_layer` | `None` | Override `SurfaceLayer`; `None` → `BestSurfaceLayer`. |
+| `fluxes` | `None` | Override `SurfaceFluxes`; `None` → `BestSurfaceFluxes`. |
+| `subsurface` | `None` | Override `SubsurfaceTransport`; `None` → `BestSubsurfaceTransport`. |
+
+`SecondBEST` uses the registered constant `von_karman_constant` (0.4).
+
+## State
+
+### Inputs
+
+| Quantity | Dims | Units |
+|----------|------|-------|
+| `air_temperature`, `specific_humidity`, `northward_wind`, `eastward_wind`, `air_pressure` | `[mid_levels, *]` | `degK`, `kg/kg`, `m s^-1`, `Pa` |
+| `downwelling_/upwelling_ shortwave_/longwave_flux_in_air` | `[*, interface_levels]` | `W m^-2` |
+| `area_type` | `[*]` | `dimensionless` |
+| `surface_temperature`, `surface_air_pressure` | `[*]` | `degK`, `Pa` |
+| `soil_temperature`, `soil_liquid_water_content`, `soil_ice_content` | `[soil_interface_levels, *]` | `degK`, `m^3/m^3` |
+| `surface_snow_thickness` | `[*]` | `m` |
+| `height_on_soil_interface_levels` | `[soil_interface_levels, *]` | `m` |
+
+### Outputs
+
+| Quantity | Dims | Units |
+|----------|------|-------|
+| `surface_temperature` | `[*]` | `degK` |
+| `soil_temperature`, `soil_liquid_water_content`, `soil_ice_content` | `[soil_interface_levels, *]` | `degK`, `m^3/m^3` |
+| `surface_snow_thickness` | `[*]` | `m` |
+
+### Diagnostics
+
+| Quantity | Dims | Units |
+|----------|------|-------|
+| `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux` | `[*]` | `W m^-2` |
+| `evaporation_rate` | `[*]` | `m s^-1` |
+| `surface_albedo_for_direct_shortwave`, `surface_albedo_for_diffuse_shortwave` | `[*]` | `dimensionless` |
+| `surface_drag_coefficient_for_heat`, `surface_drag_coefficient_for_momentum` | `[*]` | `dimensionless` |
+| `air_temperature_at_2m` | `[*]` | `degK` |
+| `specific_humidity_at_2m` | `[*]` | `kg/kg` |
+| `eastward_wind_at_10m`, `northward_wind_at_10m` | `[*]` | `m s^-1` |
+
+## Example
+
+``` python
+from datetime import timedelta
+import climt
+from climt import get_default_state, get_grid
+
+land = climt.SecondBEST(soil_type="clay")
+state = get_default_state(
+    [land], grid_state=get_grid(nx=1, ny=1, nz=10, n_soil_interface_levels=4))
+state["area_type"].values[:] = "land"
+
+diagnostics, new_state = land(state, timedelta(seconds=600))
+print(diagnostics["surface_upward_sensible_heat_flux"].values)
+print(diagnostics["air_temperature_at_2m"].values)
+```
+
+## Source
+
+- Orchestrator: [`climt/_components/second_best/component.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/second_best/component.py)
+- Process objects: [`climt/_components/second_best/processes/`](https://github.com/CliMT/climt/tree/develop/climt/_components/second_best/processes)
+- Equation reference & extension guide: [`docs/Description_of_SecondBEST.ipynb`](../Description_of_SecondBEST.ipynb)
+
+### Reference
+
+Pitman, A. J. et al. (1991). *BEST: Bare Essentials of Surface Transfer.* BMRC.

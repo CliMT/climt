@@ -1,0 +1,66 @@
+---
+title: "Topography & land-ice thickness (boundary data)"
+---
+
+## Introduction
+
+For a realistic Earth circulation the dynamical core needs **orography** and the
+ice components need the present-day **ice-sheet thickness**. `climt` bundles both
+in a single boundary file,
+`climt/_data/topography/earth_topography_2deg.nc`, derived from one ETOPO 2022
+ice-surface / bedrock DEM pair:
+
+- **`surface_geopotential`** (`m^2 s^-2`) = *g* × surface elevation, zeroed over
+  ocean. This is the field the [GFS dynamical
+  core](https://github.com/CliMT/gfs_dynamical_core) reads (`set_topography`) to
+  produce orographically-forced flow — mountain waves, blocking, monsoon
+  circulations, storm tracks.
+- **`land_ice_thickness`** (`m`) = ice-surface minus bedrock elevation, clamped
+  ≥ 0 and zeroed over ocean. Read by [`SeaIce`/`LandIce`](sea_land_ice.qmd) as
+  the land ice-sheet state (Greenland ≈ 3 km, Antarctica ≈ 4 km).
+
+Both fields live on the **same 2° grid as the [land mask](land_mask.qmd)**, so
+sea/land/ice geography is mutually consistent across all three boundary files.
+
+## Bundled data source
+
+| | |
+|---|---|
+| **Dataset** | NOAA NCEI **ETOPO 2022** Global Relief Model — *Ice Surface* and *Bedrock* versions |
+| **Provider** | NOAA National Centers for Environmental Information (NCEI) |
+| **Product page** | <https://www.ncei.noaa.gov/products/etopo-global-relief-model> |
+| **Native resolution** | 60 arc-second (~2 km) global; the full grids are ~900 MB each |
+| **How it is bundled** | the 60″ tiles are read at ~0.25° over OPeNDAP (NCEI THREDDS) and area-averaged onto the 2° mask grid; ocean cells are identified from `earth_landmask_2deg.nc` and zeroed so bathymetry never leaks into the orography or ice thickness |
+| **Format** | netCDF-3 classic (read here via xarray's `scipy` engine) |
+| **Generator** | [`scripts/build_topography.py`](https://github.com/CliMT/climt/blob/develop/scripts/build_topography.py) (re-downloads and rebuilds the file) |
+
+`surface_geopotential` uses *g* = 9.80665 m s⁻², matching `climt`'s
+`gravitational_acceleration` constant.
+
+## Usage
+
+[`LandMask`](land_mask.qmd) loads these fields for you by default — it
+bilinearly interpolates the bundled file onto the model grid and re-zeros both
+fields over ocean, alongside setting `area_type`:
+
+``` python
+import climt
+from climt import get_default_state, get_grid
+
+mask = climt.LandMask()   # load_topography=True by default
+state = get_default_state([mask], grid_state=get_grid(nx=128, ny=62, nz=30))
+state.update(mask(state))
+# state now carries area_type, surface_geopotential and land_ice_thickness
+```
+
+To load a different topography (higher resolution, a palaeoclimate DEM, another
+planet) pass `topography_dataset=<path or xarray.Dataset>` to `LandMask`, or
+regenerate the bundled file from a different DEM via the generator. Set
+`load_topography=False` to leave the topographic fields untouched.
+
+## Source
+
+- Generator: [`scripts/build_topography.py`](https://github.com/CliMT/climt/blob/develop/scripts/build_topography.py)
+- `surface_geopotential` consumer: [`gfs_dynamical_core`](https://github.com/CliMT/gfs_dynamical_core) (`set_topography`)
+- `land_ice_thickness` consumers: [`SeaIce`/`LandIce`](sea_land_ice.qmd)
+- Field registrations: `climt/_core/initialization.py`
