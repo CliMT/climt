@@ -96,3 +96,6 @@ docs/**/*_files/
 .claude/
 .gemini/
 GEMINI.md
+
+# build-time data download cache (SST climatology, etc.)
+build_cache/

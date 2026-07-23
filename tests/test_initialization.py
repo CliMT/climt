@@ -75,13 +75,15 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid()
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['lat', 'lon', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['lat', 'lon', 'mid_levels', 'interface_levels', 'ice_interface_levels',
+                   'soil_interface_levels'])
 
     def test_get_1d_vertical_grid(self):
         grid = get_grid(nz=20)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['lat', 'lon', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['lat', 'lon', 'mid_levels', 'interface_levels', 'ice_interface_levels',
+                   'soil_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )
@@ -90,7 +92,8 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nx=4, ny=6, nz=20)
         self.assert_grid_quantities_present(grid, latitude=True, longitude=True)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'lat', 'lon', 'ice_interface_levels'])
+            grid, ['mid_levels', 'interface_levels', 'lat', 'lon', 'ice_interface_levels',
+                   'soil_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21, 'lat': 6, 'lon': 4}
         )
@@ -99,7 +102,8 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nx=3, ny=8, nz=20, x_name='name1', y_name='name2')
         self.assert_grid_quantities_present(grid, latitude=True, longitude=True)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['mid_levels', 'interface_levels', 'name1', 'name2', 'ice_interface_levels'])
+            grid, ['mid_levels', 'interface_levels', 'name1', 'name2', 'ice_interface_levels',
+                   'soil_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21, 'name1': 3, 'name2': 8}
         )
@@ -108,7 +112,8 @@ class GetGridTests(unittest.TestCase):
         grid = get_grid(nz=20, p_surf_in_Pa=0.9e5)
         self.assert_grid_quantities_present(grid)
         self.assert_grid_quantities_have_dimensions(
-            grid, ['lat', 'lon', 'mid_levels', 'interface_levels', 'ice_interface_levels'])
+            grid, ['lat', 'lon', 'mid_levels', 'interface_levels', 'ice_interface_levels',
+                   'soil_interface_levels'])
         self.assert_grid_dimensions_have_lengths(
             grid, {'mid_levels': 20, 'interface_levels': 21}
         )

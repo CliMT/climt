@@ -1,0 +1,10 @@
+# GridScaleCondensation { #climt.GridScaleCondensation }
+
+```python
+GridScaleCondensation(**kwargs)
+```
+
+Calculate condensation due to supersaturation of water.
+
+Condenses supersaturated water at the grid scale, assuming all
+condensed water falls as precipitation.

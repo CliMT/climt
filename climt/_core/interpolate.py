@@ -141,7 +141,9 @@ def _second_derivatives(x, y, h):
     a_upper[size - 1] = 0.0
     rhs[size - 1] -= factor1 * 0.0
 
-    m_interior = solve_tridiagonal(a_lower, a_diag, a_upper, rhs)
+    # ``solve_tridiagonal`` takes length-(size-1) off-diagonals; the boundary
+    # entries ``a_lower[0]``/``a_upper[size-1]`` are unused (and zeroed above).
+    m_interior = solve_tridiagonal(a_lower[1:], a_diag, a_upper[:-1], rhs)
 
     m = np.zeros(n)
     m[1 : n - 1] = m_interior
