@@ -96,7 +96,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-e4afb4e1a0694f2f4998bf6043370f38.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-382fae232fcd923691c8dc19e9836aa1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-c574cdde76eefefc579c236d36b0e9fe.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -349,7 +349,7 @@ window.Quarto = {
 <section id="the-two-stream-approximation" class="level2">
 <h2 class="anchored" data-anchor-id="the-two-stream-approximation">The two-stream approximation</h2>
 <p>The radiative-transfer equation in a plane-parallel layer is reduced to two angular moments: the upward hemispheric flux <span class="math inline">\(F^+\)</span> and the downward <span class="math inline">\(F^-\)</span>. For each layer this yields the <strong>diffuse reflectance</strong> <span class="math inline">\(R_\text{dif}\)</span> and <strong>transmittance</strong> <span class="math inline">\(T_\text{dif}\)</span>. climt’s per-layer SW coefficients are computed in <code>_sw_dif_and_source</code>:</p>
-<div id="13ffb833" class="cell" data-execution_count="1">
+<div id="73f2e54b" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.sw.kernels <span class="im">import</span> _sw_dif_and_source</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_sw_dif_and_source))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -456,7 +456,7 @@ Figure&nbsp;1: <strong>Figure 7.1</strong> — Diffuse reflectance <span class="
 <section id="longwave-transport" class="level2">
 <h2 class="anchored" data-anchor-id="longwave-transport">Longwave transport</h2>
 <p>The LW solver is simpler — no scattering, just absorption and emission. A diffusivity factor <span class="math inline">\(D = 1.66\)</span> converts vertical <span class="math inline">\(\tau\)</span> to effective-diffuse <span class="math inline">\(\tau\)</span>. The compiled kernel loops over all (band, g-point, column) triples:</p>
-<div id="829e3411" class="cell" data-execution_count="2">
+<div id="a762a0ab" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.lw.kernels <span class="im">import</span> _lw_transport_kernel</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_lw_transport_kernel))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
