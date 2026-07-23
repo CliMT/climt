@@ -126,8 +126,8 @@ def test_two_layer_deep_store_is_slower_than_shallow():
         state["stratiform_precipitation_rate"].values[:] = precip
         diag, new = comp(state, dt)
         state.update(new); state.update(diag)
-        shallow.append(float(new["lwe_thickness_of_soil_moisture_content"].values[0]))
-        deep.append(float(new["deep_soil_moisture_content"].values[0]))
+        shallow.append(float(new["lwe_thickness_of_soil_moisture_content"].values.ravel()[0]))
+        deep.append(float(new["deep_soil_moisture_content"].values.ravel()[0]))
 
     # discard the spin-up window; only compare quasi-equilibrium tracking
     shallow = np.array(shallow[spinup:])
