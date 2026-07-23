@@ -1,7 +1,7 @@
 {
   "/Users/joymonteiro/github/other_libs/climt/setup.py": {
-    "mtime": 1784661289.1146593,
-    "ast_hash": "fb594b3e9026d327565c30a43198740f",
+    "mtime": 1784789694.6616392,
+    "ast_hash": "88851ea3d907c162474d801c3078f329",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/generate_test_table.py": {
@@ -35,7 +35,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_components.py": {
-    "mtime": 1784661289.1165485,
+    "mtime": 1784789548.089963,
     "ast_hash": "d3e59f3deeb602353964f80e54708c33",
     "semantic_hash": ""
   },
@@ -50,8 +50,13 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/conftest.py": {
-    "mtime": 1784642381.174903,
+    "mtime": 1784789548.0888329,
     "ast_hash": "86173a89f7c84842af3728f241a83a72",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/tests/test_cork_toplevel_export.py": {
+    "mtime": 1784789543.0844784,
+    "ast_hash": "571d30bfcc6e98a504419b151b273548",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_condensibles.py": {
@@ -70,7 +75,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_land_ice.py": {
-    "mtime": 1784606996.0219812,
+    "mtime": 1784789548.09186,
     "ast_hash": "4c26176b1c2118ddd582c03cd0d13682",
     "semantic_hash": ""
   },
@@ -80,7 +85,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_sst_climatology.py": {
-    "mtime": 1784661289.1172478,
+    "mtime": 1784789548.0937817,
     "ast_hash": "a3ac2eac28fd4e7529fb5e9616aac84b",
     "semantic_hash": ""
   },
@@ -90,17 +95,22 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_best_processes.py": {
-    "mtime": 1784650572.389093,
+    "mtime": 1784789548.0892045,
     "ast_hash": "c393c9cf2d1507a0e755abca57964aa6",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/tests/test_pure_wheel_build.py": {
+    "mtime": 1784789543.0852933,
+    "ast_hash": "f0afac8443e50fe500408abfa86d81e5",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_data_ocean.py": {
-    "mtime": 1784646401.1888947,
+    "mtime": 1784789548.0908334,
     "ast_hash": "7cc4c3fb0cc05379b8a690a49d708384",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_snow_ice_column.py": {
-    "mtime": 1784602733.8654714,
+    "mtime": 1784789548.0935385,
     "ast_hash": "c98318ff8a332f57d9699c83f868c17c",
     "semantic_hash": ""
   },
@@ -119,13 +129,18 @@
     "ast_hash": "468374b05bd90125d80a62019e3e93fa",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/tests/test_correlated_k_npz.py": {
+    "mtime": 1784789543.084557,
+    "ast_hash": "dc723ff01a009ad8f7b839caf5b54960",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_correlated_k_tables.py": {
     "mtime": 1784562497.272642,
     "ast_hash": "394be02e6388c23ecbbad8a328174fe4",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_conservation.py": {
-    "mtime": 1784641387.3944907,
+    "mtime": 1784789548.090339,
     "ast_hash": "983c7a571e220a1c2c0d9a987f835a84",
     "semantic_hash": ""
   },
@@ -135,8 +150,13 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_initialization.py": {
-    "mtime": 1784568792.9792328,
-    "ast_hash": "cd3312a2161b476e2b06fbdae78dd1de",
+    "mtime": 1784789548.0914097,
+    "ast_hash": "a1795bfdcc5dac9067f0ead1df25a469",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/tests/test_fortran_degradation.py": {
+    "mtime": 1784789543.0846343,
+    "ast_hash": "29119f0dac2fbeb00c052a65fb25591a",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/__init__.py": {
@@ -150,12 +170,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_sea_ice.py": {
-    "mtime": 1784605725.3471045,
+    "mtime": 1784789548.092414,
     "ast_hash": "3b298bd9fabf2873c770bd5fc1c761f3",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_second_best.py": {
-    "mtime": 1784650572.3918753,
+    "mtime": 1784789548.0927851,
     "ast_hash": "ebfc8b7998cc6682da9912cd49f87319",
     "semantic_hash": ""
   },
@@ -164,8 +184,13 @@
     "ast_hash": "906d5123cd5c75113bb8145cf31c56bf",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/tests/test_no_scipy_import.py": {
+    "mtime": 1784789543.085219,
+    "ast_hash": "0f58a2ffb3e9efa93e93a2ef28dfe9d9",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_tridiagonal.py": {
-    "mtime": 1784661289.1177573,
+    "mtime": 1784789669.4926825,
     "ast_hash": "f555bf0ea22f6840b234e0182a5c53b2",
     "semantic_hash": ""
   },
@@ -175,12 +200,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_land_mask.py": {
-    "mtime": 1784661289.1169584,
+    "mtime": 1784789548.0921285,
     "ast_hash": "bea9fa4842692047c47a9bc1301b5dd3",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_surface_fluxes.py": {
-    "mtime": 1784644510.1255026,
+    "mtime": 1784789548.0940292,
     "ast_hash": "14d1c25cee6e3c040632b1afde1498ce",
     "semantic_hash": ""
   },
@@ -190,8 +215,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_bucket_two_layer.py": {
-    "mtime": 1784568463.4166415,
-    "ast_hash": "149a97b5ec1f1748ee8bfcec75ec2689",
+    "mtime": 1784789548.0896049,
+    "ast_hash": "e460f89c79e499f6d321ef2083bd8e26",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_bucket_hydrology.py": {
@@ -200,7 +225,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_slab_ocean_transport.py": {
-    "mtime": 1784647916.8244278,
+    "mtime": 1784789548.0931847,
     "ast_hash": "3f0312b3896e1c8c05d52bce2fe24a00",
     "semantic_hash": ""
   },
@@ -235,7 +260,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_horizontal_operators.py": {
-    "mtime": 1784642004.157235,
+    "mtime": 1784789548.091075,
     "ast_hash": "a0603b7c7331759ea186681e34daee75",
     "semantic_hash": ""
   },
@@ -260,7 +285,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_surface_ice_shim.py": {
-    "mtime": 1784607701.2133367,
+    "mtime": 1784789548.094401,
     "ast_hash": "a0a7ee89cc7ae5a081ff4a29f7825654",
     "semantic_hash": ""
   },
@@ -275,7 +300,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_topography.py": {
-    "mtime": 1784661289.1174772,
+    "mtime": 1784789548.0946164,
     "ast_hash": "6480aba9481d8ff28a93dfa7b0ecf4c2",
     "semantic_hash": ""
   },
@@ -292,6 +317,11 @@
   "/Users/joymonteiro/github/other_libs/climt/tests/test_held_suarez_optimization.py": {
     "mtime": 1783011750.5995166,
     "ast_hash": "c3ad2ba345a05f687e32c640ace4a583",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/tests/test_interpolate.py": {
+    "mtime": 1784789543.0851429,
+    "ast_hash": "85ccf451d33f62dfca6fb3a9ed86ba35",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/tests/test_cork_kernels.py": {
@@ -340,13 +370,38 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/objects.json": {
-    "mtime": 1784656844.2971382,
+    "mtime": 1784789547.9066827,
     "ast_hash": "acc27ef0c0926e98c0ffd885e5d6ba45",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/experiments/2026-06-05-cork-co2-bands/_artifacts/.hashes.json": {
-    "mtime": 1784562497.122276,
-    "ast_hash": "4bd8c82ebc8708a8fca82d7a85d03410",
+    "mtime": 1784789543.003336,
+    "ast_hash": "139feacdd649769ce2b72da44e3e3de0",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/_snippets.json": {
+    "mtime": 1784789542.998962,
+    "ast_hash": "d045af8d165b6120d1fa93a0c30811f3",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/live.lua": {
+    "mtime": 1784789542.9990597,
+    "ast_hash": "1626257ffb17fc7d5898ae3c6be5f4a8",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/resources/pyodide-worker.js": {
+    "mtime": 1784789543.0009902,
+    "ast_hash": "b5b7ad7cf646820519bea3f123fc3a7a",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/resources/live-runtime.js": {
+    "mtime": 1784789543.0008135,
+    "ast_hash": "ffc15b3945f8ca96b1264423aa85e6d9",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/resources/tinyyaml.lua": {
+    "mtime": 1784789543.0011008,
+    "ast_hash": "f1a608fbbd606dd3f3bd6e7dc82da344",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/radiative-transfer/_figures.py": {
@@ -800,8 +855,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/__init__.py": {
-    "mtime": 1784661289.0900044,
-    "ast_hash": "036b50290aea96fadf566ebcc3d04195",
+    "mtime": 1784789675.1856487,
+    "ast_hash": "e92222617819bb4d138545845fe03a54",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/atmospheric_properties.py": {
@@ -810,7 +865,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/horizontal_operators.py": {
-    "mtime": 1784642020.3727913,
+    "mtime": 1784789547.8866942,
     "ast_hash": "f623c71c1cd6d1646af3b388e81214be",
     "semantic_hash": ""
   },
@@ -825,7 +880,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/surface_fluxes.py": {
-    "mtime": 1784644226.9914205,
+    "mtime": 1784789547.88759,
     "ast_hash": "f53b590bc0c7e54cc2a37909cb70df32",
     "semantic_hash": ""
   },
@@ -835,13 +890,18 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/__init__.py": {
-    "mtime": 1784661289.0931733,
+    "mtime": 1784789685.9803023,
     "ast_hash": "e258460a0651d4f69c555bbc4d618bfc",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/initialization.py": {
-    "mtime": 1784642381.1745486,
-    "ast_hash": "7740a09c8cf2cd0b39c481b45187d863",
+    "mtime": 1784789547.8869617,
+    "ast_hash": "1a4b2e16ca993ea02fba231c4a1fb80b",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/climt/_core/interpolate.py": {
+    "mtime": 1784789699.6571822,
+    "ast_hash": "71aa4123313968f11c1cf5aba449d212",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/exceptions.py": {
@@ -850,7 +910,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/tridiagonal.py": {
-    "mtime": 1784661289.0937593,
+    "mtime": 1784789669.4918594,
     "ast_hash": "43b72233ae68b2645b0549dcfc220ccc",
     "semantic_hash": ""
   },
@@ -860,7 +920,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_core/snow_ice_column.py": {
-    "mtime": 1784661289.0935013,
+    "mtime": 1784789547.8873308,
     "ast_hash": "1c88d65bf57d9395f1b4b4ed98706d00",
     "semantic_hash": ""
   },
@@ -1305,7 +1365,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/surface_ice.py": {
-    "mtime": 1784639811.9089384,
+    "mtime": 1784789669.4911606,
     "ast_hash": "abaf078f23c823481606ad2f843e4295",
     "semantic_hash": ""
   },
@@ -1315,7 +1375,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/__init__.py": {
-    "mtime": 1784661289.0903494,
+    "mtime": 1784789547.8787596,
     "ast_hash": "242d0ab8d3ac36fdfd80c54fa7bb16d0",
     "semantic_hash": ""
   },
@@ -1334,9 +1394,19 @@
     "ast_hash": "7b99ce2831290ad7018b244b09e88228",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/climt/_components/_berger_solar_insolation.c": {
+    "mtime": 1784706878.7804575,
+    "ast_hash": "3c590b37175218ba562298a27509c374",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/slab_surface.py": {
-    "mtime": 1784647916.823641,
+    "mtime": 1784789547.885874,
     "ast_hash": "7f3b87e9e4d73dea1e55ebed06daffaa",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/climt/_components/simple_physics/_simple_physics.c": {
+    "mtime": 1784706881.0243032,
+    "ast_hash": "0f7ec7541a440548a4306cce6b1f60ea",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/simple_physics/__init__.py": {
@@ -1345,8 +1415,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/simple_physics/component.py": {
-    "mtime": 1783011750.3089561,
-    "ast_hash": "cfd25228b152a799d90d089000774087",
+    "mtime": 1784789542.9894948,
+    "ast_hash": "3f4f1608a4f7b442ca924d69b57f843c",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/instellation/__init__.py": {
@@ -1360,28 +1430,28 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/data_ocean/_sst_interpolation.py": {
-    "mtime": 1784644942.651624,
+    "mtime": 1784789547.8798926,
     "ast_hash": "1fc278a4f51695e8904a672389065131",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/data_ocean/__init__.py": {
-    "mtime": 1784645734.7802706,
+    "mtime": 1784789547.8795354,
     "ast_hash": "9ede65e57dc2ddef9f232dc7e4312e44",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/data_ocean/component.py": {
-    "mtime": 1784646426.2542868,
-    "ast_hash": "26702553c62c81ec83c33803eb7adae0",
+    "mtime": 1784792646.2137818,
+    "ast_hash": "2a3bc11c7d4db347f43fed7c58624432",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/land_mask/__init__.py": {
-    "mtime": 1784601944.3726048,
+    "mtime": 1784789547.8812284,
     "ast_hash": "4a7510ba9aa9a7c9e5f75a15d0f1dc54",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/land_mask/component.py": {
-    "mtime": 1784661289.0913596,
-    "ast_hash": "5880804457c2a51975829223eeb6391e",
+    "mtime": 1784792663.9326115,
+    "ast_hash": "a46a150b62307ec8090156770107bd09",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/cork/__init__.py": {
@@ -1430,8 +1500,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/cork/optics/correlated_k.py": {
-    "mtime": 1784562497.0609975,
-    "ast_hash": "e9d68d4f0d175d3091ce399b9282c408",
+    "mtime": 1784789542.9866996,
+    "ast_hash": "76d2fcac741db0ab95b15ce21a763828",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/cork/optics/__init__.py": {
@@ -1444,14 +1514,19 @@
     "ast_hash": "8e86cbf4bb33740f8f2b24029c803497",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/climt/_components/dcmip/_dcmip.c": {
+    "mtime": 1784706905.177625,
+    "ast_hash": "ed4c1806cdce0b9ef3dba81a1554bd0b",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/dcmip/__init__.py": {
     "mtime": 1783011750.2973008,
     "ast_hash": "82db498fb4173f142367ea22bb6323d9",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/dcmip/component.py": {
-    "mtime": 1783011750.2975936,
-    "ast_hash": "314cb2f38f4cc89a4779cca10933aaa8",
+    "mtime": 1784789542.987117,
+    "ast_hash": "f4eff2d2868dc67d6474f49b42edd7c0",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/bucket_hydrology/__init__.py": {
@@ -1460,7 +1535,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/bucket_hydrology/component.py": {
-    "mtime": 1784567087.3680708,
+    "mtime": 1784789547.8791878,
     "ast_hash": "c9f2f090b9d7aabf7e2d8f9f2b7cd654",
     "semantic_hash": ""
   },
@@ -1472,6 +1547,11 @@
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/emanuel/pure_python_v3.py": {
     "mtime": 1784562497.0621047,
     "ast_hash": "634692c83f18ac5a75e37fafcbcf32b1",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/climt/_components/emanuel/_emanuel_convection.c": {
+    "mtime": 1784706886.7635286,
+    "ast_hash": "525723256cb1bd5593992201bf696f9f",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/emanuel/__init__.py": {
@@ -1490,57 +1570,57 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/emanuel/component.py": {
-    "mtime": 1783011750.298227,
-    "ast_hash": "77122b77d101d6202ff5a23ed460a5f5",
+    "mtime": 1784789542.988119,
+    "ast_hash": "bae129b5b3e00ba1078c15d2bd294ac4",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/sea_ice/__init__.py": {
-    "mtime": 1784656687.3312972,
+    "mtime": 1784789547.8819616,
     "ast_hash": "b1b267941581118de9186c6e4d2b4299",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/sea_ice/component.py": {
-    "mtime": 1784661289.0918667,
+    "mtime": 1784789547.8822663,
     "ast_hash": "3866796cf314e51984e3718954b1cd1b",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/__init__.py": {
-    "mtime": 1784571520.6020937,
+    "mtime": 1784789547.8827362,
     "ast_hash": "762b28bf5a665589c440671c8b364913",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/component.py": {
-    "mtime": 1784650549.6662247,
+    "mtime": 1784789547.883168,
     "ast_hash": "05c80acd098696c8fbd94c2e014ccdbd",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/processes/subsurface.py": {
-    "mtime": 1784661368.5048623,
+    "mtime": 1784789547.8845434,
     "ast_hash": "ba04126f6d0faa7e6f4e8036e1b8bbe8",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/processes/__init__.py": {
-    "mtime": 1784570471.2863135,
+    "mtime": 1784789547.8834,
     "ast_hash": "7c39d8af87dfa7170d880afcceb154d8",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/processes/soil_properties.py": {
-    "mtime": 1784569224.036814,
+    "mtime": 1784789547.8843007,
     "ast_hash": "bbac311197d43325e2c0d37653f3bcb6",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/processes/fluxes.py": {
-    "mtime": 1784649928.750045,
+    "mtime": 1784789547.8840427,
     "ast_hash": "08c4b1b0ca62ab7b63fa980acdef4c8c",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/processes/albedo.py": {
-    "mtime": 1784569492.621442,
+    "mtime": 1784789547.883724,
     "ast_hash": "a5ec1a739ab4617e76a76a99c2fc4488",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/second_best/processes/surface_layer.py": {
-    "mtime": 1784650544.657797,
+    "mtime": 1784789547.884834,
     "ast_hash": "785cfbdde10ed9939235ac4bec3d22ac",
     "semantic_hash": ""
   },
@@ -1560,8 +1640,18 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/rrtmg/sw/component.py": {
-    "mtime": 1783011750.3017988,
-    "ast_hash": "cf15db98c6be369ba1e6f2de551dc306",
+    "mtime": 1784789542.9887054,
+    "ast_hash": "80f56dd81508c39e6ecd669bbf5ae478",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/climt/_components/rrtmg/sw/_rrtmg_sw.c": {
+    "mtime": 1784706898.8900747,
+    "ast_hash": "a97dc861b6b3e67bc024fa914b7b0576",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/climt/_components/rrtmg/lw/_rrtmg_lw.c": {
+    "mtime": 1784706892.5516062,
+    "ast_hash": "a1b10e8b0992f2f209856a93258fd63a",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/rrtmg/lw/__init__.py": {
@@ -1570,17 +1660,17 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/rrtmg/lw/component.py": {
-    "mtime": 1783011750.3013737,
-    "ast_hash": "2c2a0406bd0e56c4996421c281307417",
+    "mtime": 1784789542.9884677,
+    "ast_hash": "111e4cd17985274a363b63aaf9645965",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/simple_boundary_layer/__init__.py": {
-    "mtime": 1784661289.0925024,
+    "mtime": 1784789547.8850977,
     "ast_hash": "95319afaf6a5cb2d98f85997a2c7cd52",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/simple_boundary_layer/component.py": {
-    "mtime": 1784661289.0928285,
+    "mtime": 1784789547.885458,
     "ast_hash": "c44a2dc42bd06c779ee4d7517af52423",
     "semantic_hash": ""
   },
@@ -1595,12 +1685,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/land_ice/__init__.py": {
-    "mtime": 1784606488.4574866,
+    "mtime": 1784789547.8805816,
     "ast_hash": "5aca95a3ec4cd95c86c2de2480e92c46",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/climt/_components/land_ice/component.py": {
-    "mtime": 1784661289.090811,
+    "mtime": 1784789547.8809025,
     "ast_hash": "444ab6ca44012d58f4c825ff4ef1bee8",
     "semantic_hash": ""
   },
@@ -1699,6 +1789,11 @@
     "ast_hash": "1c7418cf449d4e3c528000f125853b14",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/examples/full_gcm_land_ocean_ice.py": {
+    "mtime": 1784661572.6234553,
+    "ast_hash": "b1e94154d678e9f31886c34eea24db46",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/examples/grey_gcm_energy_balanced.py": {
     "mtime": 1783011750.3854532,
     "ast_hash": "34a616ecaa1144b47895935fb54653ea",
@@ -1795,7 +1890,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/benchmarks/benchmark_numba_speedups.py": {
-    "mtime": 1784641387.394116,
+    "mtime": 1784789547.878289,
     "ast_hash": "5325356527d609f2521fc415bdfac569",
     "semantic_hash": ""
   },
@@ -1825,12 +1920,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/scripts/build_sst_climatology.py": {
-    "mtime": 1784661289.1137826,
+    "mtime": 1784789548.0481546,
     "ast_hash": "f2c49f60192c390f3f86ee14c10d9391",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/scripts/build_land_mask.py": {
-    "mtime": 1784601422.839692,
+    "mtime": 1784789548.0477393,
     "ast_hash": "5bd388c1c51a5ed9b669aca70fcf84fd",
     "semantic_hash": ""
   },
@@ -1854,13 +1949,18 @@
     "ast_hash": "1930eccd682bc34a428940bf1b90cf1e",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/scripts/convert_ck_table_to_npz.py": {
+    "mtime": 1784789543.0394828,
+    "ast_hash": "950a634e005b6a40bbd3167fc62f7f0b",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/scripts/generate_single_band_unit_table.py": {
     "mtime": 1784562497.2565815,
     "ast_hash": "25352f33b4ea0ac6bb9e009e13443300",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/scripts/build_topography.py": {
-    "mtime": 1784661289.1141443,
+    "mtime": 1784789548.0486684,
     "ast_hash": "1f247689a2afb2dc92f5999cc143e2cf",
     "semantic_hash": ""
   },
@@ -2095,7 +2195,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/HISTORY.rst": {
-    "mtime": 1784650632.4104006,
+    "mtime": 1784789547.8775203,
     "ast_hash": "0a5b1c3fd482bc7a4791505a4cfae670",
     "semantic_hash": ""
   },
@@ -2120,7 +2220,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/_quarto.yml": {
-    "mtime": 1784661368.5055516,
+    "mtime": 1784789547.903844,
     "ast_hash": "8cb022a733e13d60173ce038a90fdb37",
     "semantic_hash": ""
   },
@@ -2145,12 +2245,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/topography.qmd": {
-    "mtime": 1784661368.5104725,
+    "mtime": 1784789547.919052,
     "ast_hash": "bae801ccde65ba3a78107ac4c084ab51",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/dry_convective_adjustment.qmd": {
-    "mtime": 1784653309.601567,
+    "mtime": 1784789547.9130614,
     "ast_hash": "4a38c87efb8756f00aaf94eea1aaad99",
     "semantic_hash": ""
   },
@@ -2165,7 +2265,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/held_suarez.qmd": {
-    "mtime": 1784653290.0517032,
+    "mtime": 1784789547.913939,
     "ast_hash": "8a20c176974c7d416e8ff3d59de5120f",
     "semantic_hash": ""
   },
@@ -2175,12 +2275,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/simple_physics.qmd": {
-    "mtime": 1784653355.2187395,
+    "mtime": 1784789547.9183967,
     "ast_hash": "9acd460473435f4735de2bcb29315321",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/bucket_hydrology.qmd": {
-    "mtime": 1784652955.2933595,
+    "mtime": 1784789547.9104044,
     "ast_hash": "a9a579e44ec2ec4fc01808836d27f1b3",
     "semantic_hash": ""
   },
@@ -2190,7 +2290,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/land_mask.qmd": {
-    "mtime": 1784661368.5078025,
+    "mtime": 1784789547.9154737,
     "ast_hash": "5d48e67bc2c0e561db0ca3e1de8e879d",
     "semantic_hash": ""
   },
@@ -2200,7 +2300,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/slab_ocean.qmd": {
-    "mtime": 1784652865.3036556,
+    "mtime": 1784789547.918789,
     "ast_hash": "149c636aba13b57da10345353c3cc24a",
     "semantic_hash": ""
   },
@@ -2215,7 +2315,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/data_ocean.qmd": {
-    "mtime": 1784661368.5062735,
+    "mtime": 1784789547.9113052,
     "ast_hash": "c4deb0878f049d16932ccde6c6fc0740",
     "semantic_hash": ""
   },
@@ -2225,7 +2325,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/dcmip.qmd": {
-    "mtime": 1784653378.245364,
+    "mtime": 1784789547.912749,
     "ast_hash": "15b79ec35ad5ef33dd06f696f198aef4",
     "semantic_hash": ""
   },
@@ -2235,7 +2335,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/grid_scale_condensation.qmd": {
-    "mtime": 1784653326.2946594,
+    "mtime": 1784789547.9136693,
     "ast_hash": "fc7a1f6058636e955643205a46fb28c0",
     "semantic_hash": ""
   },
@@ -2250,7 +2350,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/sea_land_ice.qmd": {
-    "mtime": 1784661368.5097919,
+    "mtime": 1784789547.9173768,
     "ast_hash": "0255b6ba3983b375a8dda0657024f748",
     "semantic_hash": ""
   },
@@ -2270,7 +2370,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/gray_radiation.qmd": {
-    "mtime": 1784653262.5492554,
+    "mtime": 1784789547.913501,
     "ast_hash": "522ce0e183341530aad1c6d904c69636",
     "semantic_hash": ""
   },
@@ -2280,12 +2380,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/second_best.qmd": {
-    "mtime": 1784653036.4008243,
+    "mtime": 1784789547.9177508,
     "ast_hash": "5ef79c5906a74aedd5e5d77a708038a7",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/component_manual.qmd": {
-    "mtime": 1784653401.975397,
+    "mtime": 1784789547.9108574,
     "ast_hash": "d4ddd745a141932b96250da37ad5894a",
     "semantic_hash": ""
   },
@@ -2295,12 +2395,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/simple_boundary_layer.qmd": {
-    "mtime": 1784661368.5101938,
+    "mtime": 1784789547.9181342,
     "ast_hash": "54d91b6fa1904c0e6da1c53bcf0adf98",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/insolation.qmd": {
-    "mtime": 1784653233.2300987,
+    "mtime": 1784789547.9141972,
     "ast_hash": "237228b750bf0b1e1864120a41c435f1",
     "semantic_hash": ""
   },
@@ -2322,6 +2422,26 @@
   "/Users/joymonteiro/github/other_libs/climt/docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.txt": {
     "mtime": 1784562497.1298919,
     "ast_hash": "8d7d733010525cc612c8274f08dcef0b",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/_knitr.qmd": {
+    "mtime": 1784789542.9988143,
+    "ast_hash": "c752d1977cc2aa877f6101ee34d98b8b",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/_schema.yml": {
+    "mtime": 1784789542.9988906,
+    "ast_hash": "4768e800a6fb0f3587b39d23ccf09e19",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/_gradethis.qmd": {
+    "mtime": 1784789542.9987464,
+    "ast_hash": "38b0feff958432c6705f56c75f23e09a",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_extensions/r-wasm/live/_extension.yml": {
+    "mtime": 1784789542.998669,
+    "ast_hash": "993e6f3150b4154d8532c8c3cfc403a4",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/notes/corr-k-explainer-seed.md": {
@@ -2489,6 +2609,11 @@
     "ast_hash": "95befb94d25695b161d2250f7c35c97d",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/docs/_spikes/quarto-live-smoke.qmd": {
+    "mtime": 1784789543.0024912,
+    "ast_hash": "aec4886ef2fabff22e42b40f7e3141ff",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/docs/api/get_grid.qmd": {
     "mtime": 1784562497.1137931,
     "ast_hash": "e4b231fb21fd3845cc0d0a4f090e3f0a",
@@ -2555,7 +2680,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/api/index.qmd": {
-    "mtime": 1784656844.1945925,
+    "mtime": 1784789547.9062152,
     "ast_hash": "7b8d674474203de84f404c556b96fb1b",
     "semantic_hash": ""
   },
@@ -2595,12 +2720,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/api/DcmipInitialConditions.qmd": {
-    "mtime": 1784656844.2735212,
+    "mtime": 1784789547.9041874,
     "ast_hash": "f60358a4c235de3156692d37ecae290c",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/api/SimplePhysics.qmd": {
-    "mtime": 1784656844.2706594,
+    "mtime": 1784789547.9052987,
     "ast_hash": "0c6eec09f63e325a575e47e425507dfa",
     "semantic_hash": ""
   },
@@ -2610,12 +2735,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/api/GridScaleCondensation.qmd": {
-    "mtime": 1784656844.2437987,
+    "mtime": 1784789547.904709,
     "ast_hash": "301a2ada10013d1ca91c76a59b1e5a13",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/api/_metadata.yml": {
-    "mtime": 1784656873.1174543,
+    "mtime": 1784789547.9058235,
     "ast_hash": "39b7a0f83c42ef5c4e410639c8ca0fd0",
     "semantic_hash": ""
   },
@@ -2625,7 +2750,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/FOLLOWUPS-land-ocean-ice.md": {
-    "mtime": 1784650642.9174387,
+    "mtime": 1784789547.9071956,
     "ast_hash": "cce8cb9f48a76085db207e0f301d2e3c",
     "semantic_hash": ""
   },
@@ -2669,6 +2794,11 @@
     "ast_hash": "086ed89d08e61a4cb9d194bf40e80649",
     "semantic_hash": ""
   },
+  "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/plans/2026-07-19-in-browser-nongrey-rce-demo.md": {
+    "mtime": 1784789543.0038273,
+    "ast_hash": "b54be885f86568c6934f9d734b188022",
+    "semantic_hash": ""
+  },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/plans/2026-04-14-picket-fence-radiation-phase3.md": {
     "mtime": 1783011764.4971442,
     "ast_hash": "e7311ef6ce4efcca01f96f921958b617",
@@ -2695,12 +2825,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/plans/2026-07-22-boundary-layer-and-jit-tridiagonal.md": {
-    "mtime": 1784661289.108686,
+    "mtime": 1784789547.908773,
     "ast_hash": "ac38f632a2657ff80bf69b7ed848d232",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/plans/2026-07-20-land-surface-components.md": {
-    "mtime": 1784565701.3412983,
+    "mtime": 1784789547.9076912,
     "ast_hash": "3ed916e3f31edf0d9918d82fca3c56b4",
     "semantic_hash": ""
   },
@@ -2735,13 +2865,18 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/plans/2026-07-20-ocean-ice-components.md": {
-    "mtime": 1784565035.1462312,
+    "mtime": 1784789547.9082637,
     "ast_hash": "93c17d075a8f32fe2aa215d92864ec97",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/specs/2026-07-22-boundary-layer-and-jit-tridiagonal-design.md": {
-    "mtime": 1784661289.1090932,
+    "mtime": 1784789547.9100266,
     "ast_hash": "f0c7cd564b6e81e91f58bfdbedce5ce7",
+    "semantic_hash": ""
+  },
+  "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/specs/2026-07-19-in-browser-nongrey-rce-demo-design.md": {
+    "mtime": 1784789543.0045261,
+    "ast_hash": "924527d03e973c674971dab72a739b6d",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/specs/2026-06-16-cork-table-optimizer-design.md": {
@@ -2770,8 +2905,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/specs/2026-03-29-pyodide-pure-python-support-design.md": {
-    "mtime": 1784562497.1433485,
-    "ast_hash": "01f61a432810c1e8cf0d48df6029f850",
+    "mtime": 1784789543.0043561,
+    "ast_hash": "5205795b561833917607222fdeee6889",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/specs/2026-06-01-cork-ozone-lw-design.md": {
@@ -2785,7 +2920,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/specs/2026-07-20-land-surface-design.md": {
-    "mtime": 1784562592.3127415,
+    "mtime": 1784789547.9091637,
     "ast_hash": "a9a9975a8de1ef9348826cc1b8c906eb",
     "semantic_hash": ""
   },
@@ -2800,7 +2935,7 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/superpowers/specs/2026-07-20-ocean-ice-design.md": {
-    "mtime": 1784564310.2607381,
+    "mtime": 1784789547.909494,
     "ast_hash": "3df2bcc4b54b1e8ce2cd7318ae2356b8",
     "semantic_hash": ""
   },
@@ -2860,8 +2995,8 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/.github/workflows/release_climt.yml": {
-    "mtime": 1784562497.0596852,
-    "ast_hash": "fb20448de4cd45ec6fa904f4ffbfe025",
+    "mtime": 1784789547.876685,
+    "ast_hash": "d823dcf445727e4eb3f8eb52792e756c",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/.github/workflows/docs.yml": {
@@ -3060,12 +3195,12 @@
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/land_mask_boundary.png": {
-    "mtime": 1784661368.5092654,
+    "mtime": 1784789547.9170024,
     "ast_hash": "36c1fd7dcb7079034dfbf5bfbff2b428",
     "semantic_hash": ""
   },
   "/Users/joymonteiro/github/other_libs/climt/docs/user-guide/data_ocean_sst.png": {
-    "mtime": 1784661368.5071893,
+    "mtime": 1784789547.9123902,
     "ast_hash": "ecad9b3fd9fabf3008d1d02e98bcf2bc",
     "semantic_hash": ""
   },
