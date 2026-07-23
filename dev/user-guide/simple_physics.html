@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>A realistic model – climt</title>
+<title>SimplePhysics – climt</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -168,7 +168,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../user-guide/realistic.html">A realistic model</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../user-guide/rrtmg_clouds.html">Components</a></li><li class="breadcrumb-item"><a href="../user-guide/simple_physics.html">SimplePhysics</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -194,7 +194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../user-guide/realistic.html" class="sidebar-item-text sidebar-link active">
+  <a href="../user-guide/realistic.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">A realistic model</span></a>
   </div>
 </li>
@@ -299,7 +299,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../user-guide/simple_physics.html" class="sidebar-item-text sidebar-link">
+  <a href="../user-guide/simple_physics.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">SimplePhysics</span></a>
   </div>
 </li>
@@ -387,15 +387,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#configuration" id="toc-configuration" class="nav-link" data-scroll-target="#configuration">Configuration</a></li>
+  <li><a href="#constructor" id="toc-constructor" class="nav-link" data-scroll-target="#constructor">Constructor</a></li>
+  <li><a href="#state" id="toc-state" class="nav-link" data-scroll-target="#state">State</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  <li><a href="#source" id="toc-source" class="nav-link" data-scroll-target="#source">Source</a>
+  <ul class="collapse">
+  <li><a href="#reference" id="toc-reference" class="nav-link" data-scroll-target="#reference">Reference</a></li>
+  </ul></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../user-guide/rrtmg_clouds.html">Components</a></li><li class="breadcrumb-item"><a href="../user-guide/simple_physics.html">SimplePhysics</a></li></ol></nav>
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">A realistic model</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">SimplePhysics</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -412,40 +426,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>As mentioned before, climt includes some components which returns the a new version of the model state, and some which return just tendencies.</p>
-<p>Since tendencies by themselves are not useful for much other than plotting, we need to couple them with numerical integration components to march the model forward in time. Again, we will use the grey radiation scheme as an example.</p>
-<p>The following script is used to obtain the temperature profile of the atmosphere if no physical process other than radiation (specifically, grey gas radiation in this example) are present. The temperature profile obtained is called the <strong>radiative equilibrium</strong> profile.</p>
-<p>As before, we will create the radiation component and the model state:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Two new imports</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympl <span class="im">import</span> AdamsBashforth</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Create some components</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>radiation <span class="op">=</span> climt.GrayLongwaveRadiation()</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Get a state dictionary filled with required quantities</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># for the components to run</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state([radiation])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>We have two new imports, <code>AdamsBashforth</code> and <code>timedelta</code>. The former is a numerical <a href="https://en.wikipedia.org/wiki/Linear_multistep_method">integrator</a> which will step the model forward in time, and the latter is a standard python module which will be used to represent the time step of the model.</p>
-<p>Now, to create the integrator and the timestep:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>model_time_step <span class="op">=</span> timedelta(hours<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> AdamsBashforth([radiation])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>We now have a model ready to run! The integrator will return the new model state and any diagnostics that <code>radiation</code> has generated. We can then update the current model state with the new model state and continue to step the model forward in time:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    diagnostics, new_state <span class="op">=</span> model(state, model_time_step)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">''' Update state with diagnostics.</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">    This updated state can be saved if necessary '''</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    state.update(diagnostics)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">'''Update state quantities'''</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    state.update(new_state)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">'''Update model time'''</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">'time'</span>] <span class="op">+=</span> model_time_step</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">'''See if the maximum temperature is changing'''</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(state[<span class="st">'time'</span>], <span class="st">': '</span>, state[<span class="st">'air_temperature'</span>].<span class="bu">max</span>().values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>And voila, we have a model that actually evolves over time! Many example scripts that illustrate standard model configurations used in climate modelling are available in the github <a href="https://github.com/CliMT/climt/tree/master/examples">repository</a>. These scripts include examples which setup graphics to view the evolution of the model over time.</p>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p><code>SimplePhysics</code> is <code>climt</code>’s interface to the <strong>Reed &amp; Jablonowski (2012)</strong> simple-physics package — a compact, self-contained set of parameterisations originally designed as an intermediate-complexity test case for atmospheric general circulation models (its first application was idealised tropical-cyclone simulation). It bundles three pieces of physics into one component:</p>
+<ol type="1">
+<li><strong>Large-scale condensation</strong> — removes supersaturation and adds the associated moistening/heating tendencies.</li>
+<li><strong>A simple boundary layer</strong> — vertical diffusion of heat, moisture and momentum near the surface.</li>
+<li><strong>Bulk surface fluxes</strong> — sensible heat, latent heat and momentum exchange with the surface.</li>
+</ol>
+<p>Each piece can be toggled independently, so <code>SimplePhysics</code> can act as a complete minimal physics suite or contribute just one process alongside other <code>climt</code> components.</p>
+<p><code>SimplePhysics</code> is an <a href="../user-guide/component_types.html"><code>ImplicitTendencyComponent</code></a>-style <a href="../user-guide/component_types.html"><code>Stepper</code></a>: it applies its parameterisations over a timestep and returns the updated state plus flux diagnostics.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -456,13 +446,214 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>A more user friendly API called <code>Federation</code> will be available in a later version of climt. However, setting up models is easy enough even without <code>Federation</code> once you get used to the workflow.</p>
+<p><code>SimplePhysics</code> wraps a compiled (Fortran) extension. It must be built (as part of the normal <code>climt</code> installation) before it can be constructed; a source checkout without the compiled extensions cannot import it.</p>
 </div>
 </div>
+</section>
+<section id="configuration" class="level2">
+<h2 class="anchored" data-anchor-id="configuration">Configuration</h2>
+<p>The three parameterisations, and several behavioural options, are controlled by boolean flags and tuning constants at construction. The most important decision is which processes <code>SimplePhysics</code> should own versus defer to other components: if you already run a <code>climt</code> boundary layer or surface-flux component, turn the corresponding flag off to avoid double-counting.</p>
+</section>
+<section id="constructor" class="level2">
+<h2 class="anchored" data-anchor-id="constructor">Constructor</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>climt.SimplePhysics(simulate_cyclone<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                    large_scale_condensation<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                    boundary_layer<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>                    surface_fluxes<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_temperature<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_specific_humidity<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>                    top_of_boundary_layer<span class="op">=</span><span class="fl">85000.0</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>                    boundary_layer_influence_height<span class="op">=</span><span class="fl">20000.0</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                    drag_coefficient_heat_fluxes<span class="op">=</span><span class="fl">0.0011</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>                    base_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.0007</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                    wind_dependent_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.000065</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>                    maximum_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.002</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 31%">
+<col style="width: 28%">
+<col style="width: 40%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>simulate_cyclone</code></td>
+<td><code>False</code></td>
+<td>Configure for the original tropical-cyclone test case.</td>
+</tr>
+<tr class="even">
+<td><code>large_scale_condensation</code></td>
+<td><code>True</code></td>
+<td>Add moistening/heating tendencies from large-scale condensation.</td>
+</tr>
+<tr class="odd">
+<td><code>boundary_layer</code></td>
+<td><code>True</code></td>
+<td>Apply the simple boundary-layer diffusion. Keep <code>True</code> unless another boundary-layer component is used.</td>
+</tr>
+<tr class="even">
+<td><code>surface_fluxes</code></td>
+<td><code>True</code></td>
+<td>Compute surface fluxes. Keep <code>True</code> unless the fluxes come from another component.</td>
+</tr>
+<tr class="odd">
+<td><code>use_external_surface_temperature</code></td>
+<td><code>True</code></td>
+<td>Use <code>surface_temperature</code> from the state; if <code>False</code>, an internal SST is generated.</td>
+</tr>
+<tr class="even">
+<td><code>use_external_surface_specific_humidity</code></td>
+<td><code>False</code></td>
+<td>Use <code>surface_specific_humidity</code> from the state rather than assuming saturation.</td>
+</tr>
+<tr class="odd">
+<td><code>top_of_boundary_layer</code></td>
+<td><code>85000.0</code></td>
+<td>Pressure (Pa) of the boundary-layer top.</td>
+</tr>
+<tr class="even">
+<td><code>boundary_layer_influence_height</code></td>
+<td><code>20000.0</code></td>
+<td>Depth scale (Pa) over which boundary-layer mixing tapers.</td>
+</tr>
+<tr class="odd">
+<td><code>drag_coefficient_heat_fluxes</code></td>
+<td><code>0.0011</code></td>
+<td>Bulk transfer coefficient for the heat/moisture fluxes.</td>
+</tr>
+<tr class="even">
+<td><code>base_momentum_drag_coefficient</code></td>
+<td><code>0.0007</code></td>
+<td>Constant term of the momentum drag coefficient.</td>
+</tr>
+<tr class="odd">
+<td><code>wind_dependent_momentum_drag_coefficient</code></td>
+<td><code>0.000065</code></td>
+<td>Wind-speed-dependent term of the momentum drag.</td>
+</tr>
+<tr class="even">
+<td><code>maximum_momentum_drag_coefficient</code></td>
+<td><code>0.002</code></td>
+<td>Cap on the momentum drag coefficient.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="state" class="level2">
+<h2 class="anchored" data-anchor-id="state">State</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 34%">
+<col style="width: 20%">
+<col style="width: 24%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Role</th>
+<th>Quantity</th>
+<th>Dims</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><code>air_temperature</code></td>
+<td><code>[mid_levels, *]</code></td>
+<td><code>degK</code></td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><code>air_pressure</code>, <code>air_pressure_on_interface_levels</code></td>
+<td><code>[mid_levels/interface_levels, *]</code></td>
+<td><code>Pa</code></td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><code>surface_air_pressure</code>, <code>surface_temperature</code></td>
+<td><code>[*]</code></td>
+<td><code>Pa</code>, <code>degK</code></td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><code>specific_humidity</code></td>
+<td><code>[mid_levels, *]</code></td>
+<td><code>kg/kg</code></td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><code>northward_wind</code>, <code>eastward_wind</code></td>
+<td><code>[mid_levels, *]</code></td>
+<td><code>m s^-1</code></td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><code>surface_specific_humidity</code></td>
+<td><code>[*]</code></td>
+<td><code>kg/kg</code></td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><code>latitude</code></td>
+<td><code>[*]</code></td>
+<td><code>degrees_north</code></td>
+</tr>
+<tr class="even">
+<td>out</td>
+<td><code>air_temperature</code>, <code>specific_humidity</code>, <code>northward_wind</code>, <code>eastward_wind</code></td>
+<td><code>[mid_levels, *]</code></td>
+<td>as above</td>
+</tr>
+<tr class="odd">
+<td>diag</td>
+<td><code>stratiform_precipitation_rate</code></td>
+<td><code>[*]</code></td>
+<td><code>m s^-1</code></td>
+</tr>
+<tr class="even">
+<td>diag</td>
+<td><code>surface_upward_latent_heat_flux</code>, <code>surface_upward_sensible_heat_flux</code></td>
+<td><code>[*]</code></td>
+<td><code>W m^-2</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="example" class="level2">
+<h2 class="anchored" data-anchor-id="example">Example</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics()</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([physics], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">16</span>, ny<span class="op">=</span><span class="dv">8</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> physics(state, timedelta(seconds<span class="op">=</span><span class="dv">1800</span>))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"stratiform_precipitation_rate"</span>].values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>To use <code>SimplePhysics</code> only for its boundary layer (fluxes and condensation handled elsewhere):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics(surface_fluxes<span class="op">=</span><span class="va">False</span>, large_scale_condensation<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="source" class="level2">
+<h2 class="anchored" data-anchor-id="source">Source</h2>
+<ul>
+<li>Component wrapper: <a href="https://github.com/CliMT/climt/tree/develop/climt/_components/simple_physics"><code>climt/_components/simple_physics/component.py</code></a></li>
+</ul>
+<section id="reference" class="level3">
+<h3 class="anchored" data-anchor-id="reference">Reference</h3>
+<p>Reed, K. A. &amp; Jablonowski, C. (2012). <em>Idealized tropical cyclone simulations of intermediate complexity: a test case for AGCMs.</em> J. Adv. Model. Earth Syst. <strong>4</strong>, M04001.</p>
 
 
 <!-- -->
 
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -917,85 +1108,123 @@ Note
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "A realistic model"</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "SimplePhysics"</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>As mentioned before, climt includes some components which returns the a</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>new version of the model state, and some which return just tendencies.</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>Since tendencies by themselves are not useful for much other than</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>plotting, we need to couple them with numerical integration components</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>to march the model forward in time. Again, we will use the grey</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>radiation scheme as an example.</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## Introduction</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="in">`SimplePhysics`</span> is <span class="in">`climt`</span>'s interface to the **Reed &amp; Jablonowski (2012)**</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>simple-physics package — a compact, self-contained set of parameterisations</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>originally designed as an intermediate-complexity test case for atmospheric</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>general circulation models (its first application was idealised tropical-cyclone</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>simulation). It bundles three pieces of physics into one component:</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>The following script is used to obtain the temperature profile of the</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>atmosphere if no physical process other than radiation (specifically,</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>grey gas radiation in this example) are present. The temperature profile</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>obtained is called the **radiative equilibrium** profile.</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>As before, we will create the radiation component and the model state:</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Large-scale condensation** — removes supersaturation and adds the</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>   associated moistening/heating tendencies.</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**A simple boundary layer** — vertical diffusion of heat, moisture and</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>   momentum near the surface.</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Bulk surface fluxes** — sensible heat, latent heat and momentum exchange</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>   with the surface.</span>
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Two new imports</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympl <span class="im">import</span> AdamsBashforth</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>Each piece can be toggled independently, so <span class="in">`SimplePhysics`</span> can act as a</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>complete minimal physics suite or contribute just one process alongside other</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="in">`climt`</span> components.</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="in">`SimplePhysics`</span> is an <span class="co">[</span><span class="ot">`ImplicitTendencyComponent`</span><span class="co">](component_types.qmd)</span>-style</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`Stepper`</span><span class="co">](component_types.qmd)</span>: it applies its parameterisations over a</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>timestep and returns the updated state plus flux diagnostics.</span>
 <span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Create some components</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>radiation <span class="op">=</span> climt.GrayLongwaveRadiation()</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Get a state dictionary filled with required quantities</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co"># for the components to run</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state([radiation])</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="in">`SimplePhysics`</span> wraps a compiled (Fortran) extension. It must be built (as part</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>of the normal <span class="in">`climt`</span> installation) before it can be constructed; a source</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>checkout without the compiled extensions cannot import it.</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="fu">## Configuration</span></span>
 <span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>We have two new imports, <span class="in">`AdamsBashforth`</span> and <span class="in">`timedelta`</span>. The former is</span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>a numerical</span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">integrator</span><span class="co">](https://en.wikipedia.org/wiki/Linear_multistep_method)</span></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>which will step the model forward in time, and the latter is a standard</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>python module which will be used to represent the time step of the</span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>model.</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>Now, to create the integrator and the timestep:</span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>model_time_step <span class="op">=</span> timedelta(hours<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> AdamsBashforth([radiation])</span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>We now have a model ready to run! The integrator will return the new</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>model state and any diagnostics that <span class="in">`radiation`</span> has generated. We can</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>then update the current model state with the new model state and</span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>continue to step the model forward in time:</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>    diagnostics, new_state <span class="op">=</span> model(state, model_time_step)</span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>    <span class="co">''' Update state with diagnostics.</span></span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="co">    This updated state can be saved if necessary '''</span></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>    state.update(diagnostics)</span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>    <span class="co">'''Update state quantities'''</span></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>    state.update(new_state)</span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>    <span class="co">'''Update model time'''</span></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">'time'</span>] <span class="op">+=</span> model_time_step</span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>    <span class="co">'''See if the maximum temperature is changing'''</span></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(state[<span class="st">'time'</span>], <span class="st">': '</span>, state[<span class="st">'air_temperature'</span>].<span class="bu">max</span>().values)</span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>And voila, we have a model that actually evolves over time! Many example</span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>scripts that illustrate standard model configurations used in climate</span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>modelling are available in the github</span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">repository</span><span class="co">](https://github.com/CliMT/climt/tree/master/examples)</span>. These</span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>scripts include examples which setup graphics to view the evolution of</span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>the model over time.</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>The three parameterisations, and several behavioural options, are controlled by</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>boolean flags and tuning constants at construction. The most important decision</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>is which processes <span class="in">`SimplePhysics`</span> should own versus defer to other components:</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>if you already run a <span class="in">`climt`</span> boundary layer or surface-flux component, turn the</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>corresponding flag off to avoid double-counting.</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructor</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>climt.SimplePhysics(simulate_cyclone<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>                    large_scale_condensation<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>                    boundary_layer<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>                    surface_fluxes<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_temperature<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_specific_humidity<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>                    top_of_boundary_layer<span class="op">=</span><span class="fl">85000.0</span>,</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>                    boundary_layer_influence_height<span class="op">=</span><span class="fl">20000.0</span>,</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>                    drag_coefficient_heat_fluxes<span class="op">=</span><span class="fl">0.0011</span>,</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>                    base_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.0007</span>,</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>                    wind_dependent_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.000065</span>,</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>                    maximum_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.002</span>)</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Argument <span class="pp">|</span> Default <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|---------|-------------|</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`simulate_cyclone`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Configure for the original tropical-cyclone test case. <span class="pp">|</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`large_scale_condensation`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Add moistening/heating tendencies from large-scale condensation. <span class="pp">|</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`boundary_layer`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Apply the simple boundary-layer diffusion. Keep <span class="in">`True`</span> unless another boundary-layer component is used. <span class="pp">|</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_fluxes`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Compute surface fluxes. Keep <span class="in">`True`</span> unless the fluxes come from another component. <span class="pp">|</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`use_external_surface_temperature`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Use <span class="in">`surface_temperature`</span> from the state; if <span class="in">`False`</span>, an internal SST is generated. <span class="pp">|</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`use_external_surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Use <span class="in">`surface_specific_humidity`</span> from the state rather than assuming saturation. <span class="pp">|</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`top_of_boundary_layer`</span> <span class="pp">|</span> <span class="in">`85000.0`</span> <span class="pp">|</span> Pressure (Pa) of the boundary-layer top. <span class="pp">|</span></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`boundary_layer_influence_height`</span> <span class="pp">|</span> <span class="in">`20000.0`</span> <span class="pp">|</span> Depth scale (Pa) over which boundary-layer mixing tapers. <span class="pp">|</span></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`drag_coefficient_heat_fluxes`</span> <span class="pp">|</span> <span class="in">`0.0011`</span> <span class="pp">|</span> Bulk transfer coefficient for the heat/moisture fluxes. <span class="pp">|</span></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`base_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.0007`</span> <span class="pp">|</span> Constant term of the momentum drag coefficient. <span class="pp">|</span></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`wind_dependent_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.000065`</span> <span class="pp">|</span> Wind-speed-dependent term of the momentum drag. <span class="pp">|</span></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`maximum_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.002`</span> <span class="pp">|</span> Cap on the momentum drag coefficient. <span class="pp">|</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## State</span></span>
 <span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>A more user friendly API called <span class="in">`Federation`</span> will be available in a</span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>later version of climt. However, setting up models is easy enough even</span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>without <span class="in">`Federation`</span> once you get used to the workflow.</span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|</span></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_temperature`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_pressure`</span>, <span class="in">`air_pressure_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[mid_levels/interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`surface_air_pressure`</span>, <span class="in">`surface_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`Pa`</span>, <span class="in">`degK`</span> <span class="pp">|</span></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`specific_humidity`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`latitude`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degrees_north`</span> <span class="pp">|</span></span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> out <span class="pp">|</span> <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> as above <span class="pp">|</span></span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`stratiform_precipitation_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_upward_latent_heat_flux`</span>, <span class="in">`surface_upward_sensible_heat_flux`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`W m^-2`</span> <span class="pp">|</span></span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example</span></span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics()</span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([physics], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">16</span>, ny<span class="op">=</span><span class="dv">8</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> physics(state, timedelta(seconds<span class="op">=</span><span class="dv">1800</span>))</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"stratiform_precipitation_rate"</span>].values)</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>To use <span class="in">`SimplePhysics`</span> only for its boundary layer (fluxes and condensation</span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>handled elsewhere):</span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics(surface_fluxes<span class="op">=</span><span class="va">False</span>, large_scale_condensation<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Component wrapper: <span class="co">[</span><span class="ot">`climt/_components/simple_physics/component.py`</span><span class="co">](https://github.com/CliMT/climt/tree/develop/climt/_components/simple_physics)</span></span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a><span class="fu">### Reference</span></span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>Reed, K. A. &amp; Jablonowski, C. (2012). *Idealized tropical cyclone simulations of</span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a>intermediate complexity: a test case for AGCMs.* J. Adv. Model. Earth Syst.</span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a>**4**, M04001.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

@@ -186,7 +186,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="climt.IceSheet" class="level1">
 <h1>IceSheet</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>IceSheet(maximum_snow_ice_height<span class="op">=</span><span class="dv">10</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>1-d snow-ice energy balance model.</p>
+<p>Deprecated monolithic 1-d snow-ice energy balance model.</p>
+<p>.. deprecated:: <code>IceSheet</code> used to handle <code>sea_ice</code>, <code>land_ice</code> and <code>land</code> columns in a single component with a hand-rolled tridiagonal solve. It has been split into :class:<code>~climt._components.sea_ice.SeaIce</code> (owns <code>area_type == "sea_ice"</code>) and :class:<code>~climt._components.land_ice.LandIce</code> (owns <code>area_type in ("land", "land_ice")</code>), each built on the shared implicit column solver in :mod:<code>climt._core.snow_ice_column</code>, with defect fixes relative to this monolith documented in their docstrings (basal boundary condition, thickness clamping, albedo configuration, melt-energy handling).</p>
+<pre><code>``IceSheet`` is now a thin dispatching shim that constructs a
+``SeaIce`` and a ``LandIce`` instance and merges their per-column
+results, kept only so that existing callers keep working. New code
+should use ``SeaIce``/``LandIce`` directly.
+
+**Known behavior change:** the ``surface_downward_heat_flux_in_sea_ice``
+diagnostic is now produced only by the internal ``SeaIce`` instance,
+so it is meaningful only on ``sea_ice`` columns. Unlike the old
+monolith -- which computed a conducted surface flux uniformly for
+``sea_ice``, ``land_ice`` *and* ``land`` columns -- this shim reports
+the registered default of ``0.0`` on ``land``/``land_ice`` columns
+for this diagnostic. Callers needing an equivalent conducted-flux
+diagnostic on land/land-ice columns should use ``LandIce``'s
+``upward_heat_flux_at_ground_level_in_soil`` instead.</code></pre>
 
 
 <!-- -->
@@ -645,13 +660,40 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># IceSheet { #climt.IceSheet }</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>IceSheet(maximum_snow_ice_height<span class="op">=</span><span class="dv">10</span>, <span class="op">**</span>kwargs)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>1-d snow-ice energy balance model.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># IceSheet { #climt.IceSheet }</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>IceSheet(maximum_snow_ice_height<span class="op">=</span><span class="dv">10</span>, <span class="op">**</span>kwargs)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>Deprecated monolithic 1-d snow-ice energy balance model.</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>.. deprecated::</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    ``IceSheet`` used to handle ``sea_ice<span class="in">``, ``</span>land_ice`` and ``land``</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    columns in a single component with a hand-rolled tridiagonal solve.</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    It has been split into <span class="sc">:class:</span><span class="in">`~climt._components.sea_ice.SeaIce`</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    (owns ``area_type == "sea_ice"``) and</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="sc">:class:</span><span class="in">`~climt._components.land_ice.LandIce`</span> (owns</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    ``area_type in ("land", "land_ice")``), each built on the shared</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    implicit column solver in <span class="sc">:mod:</span><span class="in">`climt._core.snow_ice_column`</span>, with</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    defect fixes relative to this monolith documented in their</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    docstrings (basal boundary condition, thickness clamping, albedo</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    configuration, melt-energy handling).</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="in">    ``IceSheet`` is now a thin dispatching shim that constructs a</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="in">    ``SeaIce`` and a ``LandIce`` instance and merges their per-column</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="in">    results, kept only so that existing callers keep working. New code</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="in">    should use ``SeaIce``/``LandIce`` directly.</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="in">    **Known behavior change:** the ``surface_downward_heat_flux_in_sea_ice``</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="in">    diagnostic is now produced only by the internal ``SeaIce`` instance,</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="in">    so it is meaningful only on ``sea_ice`` columns. Unlike the old</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="in">    monolith -- which computed a conducted surface flux uniformly for</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="in">    ``sea_ice``, ``land_ice`` *and* ``land`` columns -- this shim reports</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="in">    the registered default of ``0.0`` on ``land``/``land_ice`` columns</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="in">    for this diagnostic. Callers needing an equivalent conducted-flux</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="in">    diagnostic on land/land-ice columns should use ``LandIce``'s</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="in">    ``upward_heat_flux_at_ground_level_in_soil`` instead.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

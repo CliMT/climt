@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Emanuel convection – climt</title>
+<title>Topography &amp; land-ice thickness (boundary data) – climt</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -58,26 +58,7 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-}
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
-}
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
-}
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -125,35 +106,6 @@ div.csl-indent {
   }
 }</script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -216,7 +168,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../user-guide/rrtmg_clouds.html">Components</a></li><li class="breadcrumb-item"><a href="../user-guide/emanuel_convection.html">Emanuel convection</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../user-guide/rrtmg_clouds.html">Components</a></li><li class="breadcrumb-item"><a href="../user-guide/topography.html">Topography &amp; land-ice thickness (boundary data)</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -311,7 +263,7 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../user-guide/emanuel_convection.html" class="sidebar-item-text sidebar-link active">
+  <a href="../user-guide/emanuel_convection.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Emanuel convection</span></a>
   </div>
 </li>
@@ -365,7 +317,7 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../user-guide/topography.html" class="sidebar-item-text sidebar-link">
+  <a href="../user-guide/topography.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Topography &amp; land-ice thickness (boundary data)</span></a>
   </div>
 </li>
@@ -441,22 +393,18 @@ window.Quarto = {
    
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
-  <li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts">Key Concepts</a>
-  <ul class="collapse">
-  <li><a href="#subcloud-layer-quasi-equilibrium" id="toc-subcloud-layer-quasi-equilibrium" class="nav-link" data-scroll-target="#subcloud-layer-quasi-equilibrium">Subcloud-Layer Quasi-Equilibrium</a></li>
-  <li><a href="#episodic-mixing-and-buoyancy-sorting" id="toc-episodic-mixing-and-buoyancy-sorting" class="nav-link" data-scroll-target="#episodic-mixing-and-buoyancy-sorting">Episodic Mixing and Buoyancy Sorting</a></li>
-  <li><a href="#microphysics-and-precipitation" id="toc-microphysics-and-precipitation" class="nav-link" data-scroll-target="#microphysics-and-precipitation">Microphysics and Precipitation</a></li>
-  <li><a href="#unsaturated-downdrafts" id="toc-unsaturated-downdrafts" class="nav-link" data-scroll-target="#unsaturated-downdrafts">Unsaturated Downdrafts</a></li>
-  </ul></li>
+  <li><a href="#bundled-data-source" id="toc-bundled-data-source" class="nav-link" data-scroll-target="#bundled-data-source">Bundled data source</a></li>
+  <li><a href="#usage" id="toc-usage" class="nav-link" data-scroll-target="#usage">Usage</a></li>
+  <li><a href="#source" id="toc-source" class="nav-link" data-scroll-target="#source">Source</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../user-guide/rrtmg_clouds.html">Components</a></li><li class="breadcrumb-item"><a href="../user-guide/emanuel_convection.html">Emanuel convection</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../user-guide/rrtmg_clouds.html">Components</a></li><li class="breadcrumb-item"><a href="../user-guide/topography.html">Topography &amp; land-ice thickness (boundary data)</a></li></ol></nav>
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Emanuel convection</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Topography &amp; land-ice thickness (boundary data)</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -475,67 +423,76 @@ window.Quarto = {
 
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>The Emanuel convection scheme <span class="citation" data-cites="emanuel1999">(<a href="#ref-emanuel1999" role="doc-biblioref">Emanuel and Živković-Rothman 1999</a>)</span> is a mass-flux parameterization designed for use in climate models. It emphasizes the accurate representation of convective water fluxes and microphysical processes, which are critical for controlling atmospheric water vapor and its associated feedback on climate.</p>
-<p>Unlike many other schemes, it avoids the “entraining plume” model in favor of a <strong>buoyancy-sorting hypothesis</strong>. This approach assumes that mixing between clouds and their environment is episodic and inhomogeneous, leading to a spectrum of mixtures that ascend or descend to their respective levels of neutral buoyancy.</p>
-<figure class="align-center figure">
-<img src="./emanuel_convection_schematic.png" width="600" alt="Schematic representation of the Emanuel Convection Scheme logic." class="figure-img">
-<figcaption aria-hidden="true">
-<em>Schematic representation of the Emanuel Convection Scheme logic.</em>
-</figcaption>
-</figure>
+<p>For a realistic Earth circulation the dynamical core needs <strong>orography</strong> and the ice components need the present-day <strong>ice-sheet thickness</strong>. <code>climt</code> bundles both in a single boundary file, <code>climt/_data/topography/earth_topography_2deg.nc</code>, derived from one ETOPO 2022 ice-surface / bedrock DEM pair:</p>
+<ul>
+<li><strong><code>surface_geopotential</code></strong> (<code>m^2 s^-2</code>) = <em>g</em> × surface elevation, zeroed over ocean. This is the field the <a href="https://github.com/CliMT/gfs_dynamical_core">GFS dynamical core</a> reads (<code>set_topography</code>) to produce orographically-forced flow — mountain waves, blocking, monsoon circulations, storm tracks.</li>
+<li><strong><code>land_ice_thickness</code></strong> (<code>m</code>) = ice-surface minus bedrock elevation, clamped ≥ 0 and zeroed over ocean. Read by <a href="../user-guide/sea_land_ice.html"><code>SeaIce</code>/<code>LandIce</code></a> as the land ice-sheet state (Greenland ≈ 3 km, Antarctica ≈ 4 km).</li>
+</ul>
+<p>Both fields live on the <strong>same 2° grid as the <a href="../user-guide/land_mask.html">land mask</a></strong>, so sea/land/ice geography is mutually consistent across all three boundary files.</p>
 </section>
-<section id="key-concepts" class="level2">
-<h2 class="anchored" data-anchor-id="key-concepts">Key Concepts</h2>
-<section id="subcloud-layer-quasi-equilibrium" class="level3">
-<h3 class="anchored" data-anchor-id="subcloud-layer-quasi-equilibrium">Subcloud-Layer Quasi-Equilibrium</h3>
-<p>The scheme assumes that convective mass fluxes adjust to keep the subcloud layer neutrally buoyant when air is displaced upward. The <strong>Cloud-Base Mass Flux (CBMF)</strong>, denoted as <span class="math inline">\(M_b\)</span>, is relaxed toward this equilibrium state:</p>
-<p><span class="math display">\[\frac{\partial M_b}{\partial t} = \frac{\alpha}{\Delta t} (T_{v,p} - T_v + \Delta T_b)_{LCL} - \frac{D}{\Delta t} M_b\]</span></p>
-<p>where <span class="math inline">\(\alpha\)</span> is a relaxation rate, <span class="math inline">\(D\)</span> is a damping coefficient, and the terms in parentheses represent the buoyancy excess at the Lifted Condensation Level (LCL).</p>
-</section>
-<section id="episodic-mixing-and-buoyancy-sorting" class="level3">
-<h3 class="anchored" data-anchor-id="episodic-mixing-and-buoyancy-sorting">Episodic Mixing and Buoyancy Sorting</h3>
-<p>The rate of mixing <span class="math inline">\(\delta M\)</span> at any level is proportional to the vertical gradient of buoyancy <span class="math inline">\(B\)</span> of the undilute cloud air:</p>
-<p><span class="math display">\[\frac{\delta M}{M_b} = \frac{|\delta B| + \Lambda \delta p}{\sum_{i=1}^N [|\delta B| + \Lambda \delta p]}\]</span></p>
-<p>Air mixed into the cloud forms a spectrum of mixtures. Each mixture’s fate is determined by its own buoyancy: * <strong>Positively buoyant</strong> mixtures continue to ascend (entrainment). * <strong>Negatively buoyant</strong> mixtures descend and eventually leave the cloud (detrainment).</p>
-</section>
-<section id="microphysics-and-precipitation" class="level3">
-<h3 class="anchored" data-anchor-id="microphysics-and-precipitation">Microphysics and Precipitation</h3>
-<p>The scheme converts cloud water to precipitation using a temperature-dependent threshold <span class="math inline">\(l_c\)</span>:</p>
-<p><span class="math display">\[l_c = l_0 \left(1 - \frac{T}{T_{crit}}ight)\]</span></p>
-<p>where <span class="math inline">\(l_0\)</span> is the warm-cloud autoconversion threshold and <span class="math inline">\(T_{crit}\)</span> is a critical temperature (typically -55°C) below which all cloud water is converted to precipitation.</p>
-</section>
-<section id="unsaturated-downdrafts" class="level3">
-<h3 class="anchored" data-anchor-id="unsaturated-downdrafts">Unsaturated Downdrafts</h3>
-<p>Precipitation falling through unsaturated air evaporates, driving a hydrostatic downdraft. This downdraft transports heat and moisture into the subcloud layer and enhances surface fluxes by increasing the effective surface wind speed.</p>
+<section id="bundled-data-source" class="level2">
+<h2 class="anchored" data-anchor-id="bundled-data-source">Bundled data source</h2>
 <table class="caption-top table">
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Implementation Details</td>
+<td><strong>Dataset</strong></td>
+<td>NOAA NCEI <strong>ETOPO 2022</strong> Global Relief Model — <em>Ice Surface</em> and <em>Bedrock</em> versions</td>
+</tr>
+<tr class="even">
+<td><strong>Provider</strong></td>
+<td>NOAA National Centers for Environmental Information (NCEI)</td>
+</tr>
+<tr class="odd">
+<td><strong>Product page</strong></td>
+<td><a href="https://www.ncei.noaa.gov/products/etopo-global-relief-model" class="uri">https://www.ncei.noaa.gov/products/etopo-global-relief-model</a></td>
+</tr>
+<tr class="even">
+<td><strong>Native resolution</strong></td>
+<td>60 arc-second (~2 km) global; the full grids are ~900 MB each</td>
+</tr>
+<tr class="odd">
+<td><strong>How it is bundled</strong></td>
+<td>the 60″ tiles are read at ~0.25° over OPeNDAP (NCEI THREDDS) and area-averaged onto the 2° mask grid; ocean cells are identified from <code>earth_landmask_2deg.nc</code> and zeroed so bathymetry never leaks into the orography or ice thickness</td>
+</tr>
+<tr class="even">
+<td><strong>Format</strong></td>
+<td>netCDF-3 classic (read here via xarray’s <code>scipy</code> engine)</td>
+</tr>
+<tr class="odd">
+<td><strong>Generator</strong></td>
+<td><a href="https://github.com/CliMT/climt/blob/develop/scripts/build_topography.py"><code>scripts/build_topography.py</code></a> (re-downloads and rebuilds the file)</td>
 </tr>
 </tbody>
 </table>
-<p>The implementation in <code>climt</code> (both the Fortran-wrapped and the pure Python versions) follows these logical steps:</p>
-<ol type="1">
-<li><strong>Thermodynamics</strong>: Calculate profiles of Enthalpy (<span class="math inline">\(h\)</span>), Moist Static Energy (<span class="math inline">\(h_m\)</span>), and Virtual Temperature (<span class="math inline">\(T_v\)</span>).</li>
-<li><strong>Parcel Lifting (TLIFT)</strong>: Iteratively solve for the temperature and moisture of an undilute parcel lifted from the level of maximum MSE.</li>
-<li><strong>Mixing Matrices</strong>: Compute the <span class="math inline">\(SIJ\)</span> (mixing fraction) and <span class="math inline">\(MENT\)</span> (entrainment flux) matrices to determine mass exchange at every level.</li>
-<li><strong>Downdraft Loop</strong>: Integrate downward from the highest level of positive CAPE to find the properties of the precipitating downdraft.</li>
-<li><strong>Tendencies</strong>: Calculate the net impact on grid-scale Temperature, Moisture, and Momentum.</li>
-<li><strong>Conservation</strong>: Apply a final adjustment to ensure exact column enthalpy and momentum conservation.</li>
-</ol>
+<p><code>surface_geopotential</code> uses <em>g</em> = 9.80665 m s⁻², matching <code>climt</code>’s <code>gravitational_acceleration</code> constant.</p>
+</section>
+<section id="usage" class="level2">
+<h2 class="anchored" data-anchor-id="usage">Usage</h2>
+<p><a href="../user-guide/land_mask.html"><code>LandMask</code></a> loads these fields for you by default — it bilinearly interpolates the bundled file onto the model grid and re-zeros both fields over ocean, alongside setting <code>area_type</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>mask <span class="op">=</span> climt.LandMask()   <span class="co"># load_topography=True by default</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([mask], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">128</span>, ny<span class="op">=</span><span class="dv">62</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>state.update(mask(state))</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># state now carries area_type, surface_geopotential and land_ice_thickness</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>To load a different topography (higher resolution, a palaeoclimate DEM, another planet) pass <code>topography_dataset=&lt;path or xarray.Dataset&gt;</code> to <code>LandMask</code>, or regenerate the bundled file from a different DEM via the generator. Set <code>load_topography=False</code> to leave the topographic fields untouched.</p>
+</section>
+<section id="source" class="level2">
+<h2 class="anchored" data-anchor-id="source">Source</h2>
+<ul>
+<li>Generator: <a href="https://github.com/CliMT/climt/blob/develop/scripts/build_topography.py"><code>scripts/build_topography.py</code></a></li>
+<li><code>surface_geopotential</code> consumer: <a href="https://github.com/CliMT/gfs_dynamical_core"><code>gfs_dynamical_core</code></a> (<code>set_topography</code>)</li>
+<li><code>land_ice_thickness</code> consumers: <a href="../user-guide/sea_land_ice.html"><code>SeaIce</code>/<code>LandIce</code></a></li>
+<li>Field registrations: <code>climt/_core/initialization.py</code></li>
+</ul>
 
 
 <!-- -->
 
-
-</section>
 </section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
-<div id="ref-emanuel1999" class="csl-entry" role="listitem">
-Emanuel, K. A., and M. Živković-Rothman. 1999. <span>“Development and Evaluation of a Convection Scheme for Use in Climate Models.”</span> <em>Journal of the Atmospheric Sciences</em> 56 (11): 1766–82. <a href="https://doi.org/10.1175/1520-0469(1999)056<1766:DAEOAC>2.0.CO;2">https://doi.org/10.1175/1520-0469(1999)056&lt;1766:DAEOAC&gt;2.0.CO;2</a>.
-</div>
-</div></section></div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -987,98 +944,72 @@ Emanuel, K. A., and M. Živković-Rothman. 1999. <span>“Development and Evalua
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Emanuel convection"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">## Introduction</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>The Emanuel convection scheme <span class="co">[</span><span class="ot">@emanuel1999</span><span class="co">]</span> is a</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>mass-flux parameterization designed for use in climate models. It</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>emphasizes the accurate representation of convective water fluxes and</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>microphysical processes, which are critical for controlling atmospheric</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>water vapor and its associated feedback on climate.</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>Unlike many other schemes, it avoids the "entraining plume" model in</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>favor of a **buoyancy-sorting hypothesis**. This approach assumes that</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>mixing between clouds and their environment is episodic and</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>inhomogeneous, leading to a spectrum of mixtures that ascend or descend</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>to their respective levels of neutral buoyancy.</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">figure</span><span class="ot"> class</span><span class="op">=</span><span class="st">"align-center"</span><span class="dt">&gt;</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">img</span><span class="ot"> src</span><span class="op">=</span><span class="st">"./emanuel_convection_schematic.png"</span><span class="ot"> width</span><span class="op">=</span><span class="st">"600"</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ot">alt</span><span class="op">=</span><span class="st">"Schematic representation of the Emanuel Convection Scheme logic."</span><span class="ot"> </span><span class="dt">/&gt;</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">figcaption</span><span class="ot"> aria-hidden</span><span class="op">=</span><span class="st">"true"</span><span class="dt">&gt;&lt;</span><span class="kw">em</span><span class="dt">&gt;</span>Schematic representation of the</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>Emanuel Convection Scheme logic.<span class="dt">&lt;/</span><span class="kw">em</span><span class="dt">&gt;&lt;/</span><span class="kw">figcaption</span><span class="dt">&gt;</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">figure</span><span class="dt">&gt;</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Concepts</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">### Subcloud-Layer Quasi-Equilibrium</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>The scheme assumes that convective mass fluxes adjust to keep the</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>subcloud layer neutrally buoyant when air is displaced upward. The</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>**Cloud-Base Mass Flux (CBMF)**, denoted as $M_b$, is relaxed toward</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>this equilibrium state:</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>$$\frac{\partial M_b}{\partial t} = \frac{\alpha}{\Delta t} (T_{v,p} - T_v + \Delta T_b)_{LCL} - \frac{D}{\Delta t} M_b$$</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>where $\alpha$ is a relaxation rate, $D$ is a damping coefficient, and</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>the terms in parentheses represent the buoyancy excess at the Lifted</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>Condensation Level (LCL).</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">### Episodic Mixing and Buoyancy Sorting</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>The rate of mixing $\delta M$ at any level is proportional to the</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>vertical gradient of buoyancy $B$ of the undilute cloud air:</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>$$\frac{\delta M}{M_b} = \frac{|\delta B| + \Lambda \delta p}{\sum_{i=1}^N <span class="co">[</span><span class="ot">|\delta B| + \Lambda \delta p</span><span class="co">]</span>}$$</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>Air mixed into the cloud forms a spectrum of mixtures. Each mixture's</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>fate is determined by its own buoyancy: <span class="sc">\*</span> **Positively buoyant**</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>mixtures continue to ascend (entrainment). <span class="sc">\*</span> **Negatively buoyant**</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>mixtures descend and eventually leave the cloud (detrainment).</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="fu">### Microphysics and Precipitation</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>The scheme converts cloud water to precipitation using a</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>temperature-dependent threshold $l_c$:</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>$$l_c = l_0 \left(1 - \frac{T}{T_{crit}}ight)$$</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>where $l_0$ is the warm-cloud autoconversion threshold and $T_{crit}$ is</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>a critical temperature (typically -55°C) below which all cloud water is</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>converted to precipitation.</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="fu">### Unsaturated Downdrafts</span></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>Precipitation falling through unsaturated air evaporates, driving a</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>hydrostatic downdraft. This downdraft transports heat and moisture into</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>the subcloud layer and enhances surface fluxes by increasing the</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>effective surface wind speed.</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>  ------------------------</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>  Implementation Details</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>  ------------------------</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>The implementation in <span class="in">`climt`</span> (both the Fortran-wrapped and the pure</span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>Python versions) follows these logical steps:</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**Thermodynamics**: Calculate profiles of Enthalpy ($h$), Moist</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>    Static Energy ($h_m$), and Virtual Temperature ($T_v$).</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**Parcel Lifting (TLIFT)**: Iteratively solve for the temperature</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>    and moisture of an undilute parcel lifted from the level of maximum</span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>    MSE.</span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>**Mixing Matrices**: Compute the $SIJ$ (mixing fraction) and $MENT$</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>    (entrainment flux) matrices to determine mass exchange at every</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>    level.</span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="ss">4.  </span>**Downdraft Loop**: Integrate downward from the highest level of</span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>    positive CAPE to find the properties of the precipitating downdraft.</span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="ss">5.  </span>**Tendencies**: Calculate the net impact on grid-scale Temperature,</span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>    Moisture, and Momentum.</span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a><span class="ss">6.  </span>**Conservation**: Apply a final adjustment to ensure exact column</span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>    enthalpy and momentum conservation.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Topography &amp; land-ice thickness (boundary data)"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## Introduction</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>For a realistic Earth circulation the dynamical core needs **orography** and the</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>ice components need the present-day **ice-sheet thickness**. <span class="in">`climt`</span> bundles both</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>in a single boundary file,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="in">`climt/_data/topography/earth_topography_2deg.nc`</span>, derived from one ETOPO 2022</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>ice-surface / bedrock DEM pair:</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`surface_geopotential`** (<span class="in">`m^2 s^-2`</span>) = *g* × surface elevation, zeroed over</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  ocean. This is the field the [GFS dynamical</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  core](https://github.com/CliMT/gfs_dynamical_core) reads (<span class="in">`set_topography`</span>) to</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  produce orographically-forced flow — mountain waves, blocking, monsoon</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  circulations, storm tracks.</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`land_ice_thickness`** (<span class="in">`m`</span>) = ice-surface minus bedrock elevation, clamped</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  ≥ 0 and zeroed over ocean. Read by <span class="co">[</span><span class="ot">`SeaIce`/`LandIce`</span><span class="co">](sea_land_ice.qmd)</span> as</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  the land ice-sheet state (Greenland ≈ 3 km, Antarctica ≈ 4 km).</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>Both fields live on the **same 2° grid as the [land mask](land_mask.qmd)**, so</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>sea/land/ice geography is mutually consistent across all three boundary files.</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bundled data source</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Dataset** | NOAA NCEI **ETOPO 2022** Global Relief Model — *Ice Surface* and *Bedrock* versions <span class="pp">|</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Provider** <span class="pp">|</span> NOAA National Centers for Environmental Information (NCEI) <span class="pp">|</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Product page** <span class="pp">|</span> <span class="ot">&lt;https://www.ncei.noaa.gov/products/etopo-global-relief-model&gt;</span> <span class="pp">|</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Native resolution** <span class="pp">|</span> 60 arc-second (~2 km) global; the full grids are ~900 MB each <span class="pp">|</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **How it is bundled** <span class="pp">|</span> the 60″ tiles are read at ~0.25° over OPeNDAP (NCEI THREDDS) and area-averaged onto the 2° mask grid; ocean cells are identified from <span class="in">`earth_landmask_2deg.nc`</span> and zeroed so bathymetry never leaks into the orography or ice thickness <span class="pp">|</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Format** <span class="pp">|</span> netCDF-3 classic (read here via xarray's <span class="in">`scipy`</span> engine) <span class="pp">|</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Generator** <span class="pp">|</span> <span class="co">[</span><span class="ot">`scripts/build_topography.py`</span><span class="co">](https://github.com/CliMT/climt/blob/develop/scripts/build_topography.py)</span> (re-downloads and rebuilds the file) <span class="pp">|</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="in">`surface_geopotential`</span> uses *g* = 9.80665 m s⁻², matching <span class="in">`climt`</span>'s</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="in">`gravitational_acceleration`</span> constant.</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="fu">## Usage</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`LandMask`</span><span class="co">](land_mask.qmd)</span> loads these fields for you by default — it</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>bilinearly interpolates the bundled file onto the model grid and re-zeros both</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>fields over ocean, alongside setting <span class="in">`area_type`</span>:</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>mask <span class="op">=</span> climt.LandMask()   <span class="co"># load_topography=True by default</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([mask], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">128</span>, ny<span class="op">=</span><span class="dv">62</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>state.update(mask(state))</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># state now carries area_type, surface_geopotential and land_ice_thickness</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>To load a different topography (higher resolution, a palaeoclimate DEM, another</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>planet) pass <span class="in">`topography_dataset=&lt;path or xarray.Dataset&gt;`</span> to <span class="in">`LandMask`</span>, or</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>regenerate the bundled file from a different DEM via the generator. Set</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="in">`load_topography=False`</span> to leave the topographic fields untouched.</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Generator: <span class="co">[</span><span class="ot">`scripts/build_topography.py`</span><span class="co">](https://github.com/CliMT/climt/blob/develop/scripts/build_topography.py)</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`surface_geopotential`</span> consumer: <span class="co">[</span><span class="ot">`gfs_dynamical_core`</span><span class="co">](https://github.com/CliMT/gfs_dynamical_core)</span> (<span class="in">`set_topography`</span>)</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`land_ice_thickness`</span> consumers: <span class="co">[</span><span class="ot">`SeaIce`/`LandIce`</span><span class="co">](sea_land_ice.qmd)</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Field registrations: <span class="in">`climt/_core/initialization.py`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

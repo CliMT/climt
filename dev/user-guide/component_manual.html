@@ -194,9 +194,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>Detailed documentation for specific climt components.</p>
+<p><strong>Radiation &amp; convection</strong></p>
 <ul>
 <li><a href="../user-guide/rrtmg_clouds.html">RRTMG clouds</a> — Using RRTMG radiation with cloud properties</li>
+<li><a href="../user-guide/gray_radiation.html">Gray longwave radiation</a> — Idealised gray LW and the Frierson (2006) optical depth</li>
 <li><a href="../user-guide/emanuel_convection.html">Emanuel convection</a> — The Emanuel (1991) convection scheme</li>
+<li><a href="../user-guide/dry_convective_adjustment.html">Dry convective adjustment</a> — Conservative adjustment to the dry adiabat</li>
+<li><a href="../user-guide/grid_scale_condensation.html">Grid-scale condensation</a> — Large-scale (stratiform) condensation and precipitation</li>
+</ul>
+<p><strong>Solar &amp; idealised forcing</strong></p>
+<ul>
+<li><a href="../user-guide/insolation.html">Solar insolation and zenith angle</a> — <code>BergerSolarInsolation</code> and <code>Instellation</code></li>
+<li><a href="../user-guide/held_suarez.html">Held–Suarez forcing</a> — The Held &amp; Suarez (1994) dynamical-core benchmark</li>
+<li><a href="../user-guide/dcmip.html">DCMIP initial conditions</a> — Analytic initial states for dynamical-core tests</li>
+</ul>
+<p><strong>Surface, ocean &amp; land</strong></p>
+<ul>
+<li><a href="../user-guide/land_mask.html">LandMask</a> — Setting land/sea/land-ice geography (<code>area_type</code>)</li>
+<li><a href="../user-guide/sea_land_ice.html">Sea ice and land ice</a> — <code>SeaIce</code>, <code>LandIce</code>, the shared column solver, and the deprecated <code>IceSheet</code></li>
+<li><a href="../user-guide/slab_ocean.html">Slab ocean and heat transport</a> — <code>SlabSurface</code> energy balance, prescribed q-flux, and Ekman transport</li>
+<li><a href="../user-guide/data_ocean.html">DataOcean</a> — Prescribed (AMIP-style) sea-surface temperatures</li>
+<li><a href="../user-guide/bucket_hydrology.html">BucketHydrology</a> — One- and two-layer bucket land hydrology</li>
+<li><a href="../user-guide/second_best.html">SecondBEST</a> — Modular intermediate-complexity BEST land surface model</li>
+</ul>
+<p><strong>Idealised / intermediate physics</strong></p>
+<ul>
+<li><a href="../user-guide/simple_physics.html">SimplePhysics</a> — Reed &amp; Jablonowski (2012) simple-physics package</li>
 </ul>
 
 
@@ -661,8 +684,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>Detailed documentation for specific climt components.</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">RRTMG clouds</span><span class="co">](rrtmg_clouds.qmd)</span> — Using RRTMG radiation with cloud properties</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Emanuel convection</span><span class="co">](emanuel_convection.qmd)</span> — The Emanuel (1991) convection scheme</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>**Radiation &amp; convection**</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">RRTMG clouds</span><span class="co">](rrtmg_clouds.qmd)</span> — Using RRTMG radiation with cloud properties</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Gray longwave radiation</span><span class="co">](gray_radiation.qmd)</span> — Idealised gray LW and the Frierson (2006) optical depth</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Emanuel convection</span><span class="co">](emanuel_convection.qmd)</span> — The Emanuel (1991) convection scheme</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Dry convective adjustment</span><span class="co">](dry_convective_adjustment.qmd)</span> — Conservative adjustment to the dry adiabat</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Grid-scale condensation</span><span class="co">](grid_scale_condensation.qmd)</span> — Large-scale (stratiform) condensation and precipitation</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>**Solar &amp; idealised forcing**</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Solar insolation and zenith angle</span><span class="co">](insolation.qmd)</span> — <span class="in">`BergerSolarInsolation`</span> and <span class="in">`Instellation`</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Held–Suarez forcing</span><span class="co">](held_suarez.qmd)</span> — The Held &amp; Suarez (1994) dynamical-core benchmark</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">DCMIP initial conditions</span><span class="co">](dcmip.qmd)</span> — Analytic initial states for dynamical-core tests</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>**Surface, ocean &amp; land**</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">LandMask</span><span class="co">](land_mask.qmd)</span> — Setting land/sea/land-ice geography (<span class="in">`area_type`</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Sea ice and land ice</span><span class="co">](sea_land_ice.qmd)</span> — <span class="in">`SeaIce`</span>, <span class="in">`LandIce`</span>, the shared column solver, and the deprecated <span class="in">`IceSheet`</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Slab ocean and heat transport</span><span class="co">](slab_ocean.qmd)</span> — <span class="in">`SlabSurface`</span> energy balance, prescribed q-flux, and Ekman transport</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">DataOcean</span><span class="co">](data_ocean.qmd)</span> — Prescribed (AMIP-style) sea-surface temperatures</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">BucketHydrology</span><span class="co">](bucket_hydrology.qmd)</span> — One- and two-layer bucket land hydrology</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">SecondBEST</span><span class="co">](second_best.qmd)</span> — Modular intermediate-complexity BEST land surface model</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>**Idealised / intermediate physics**</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">SimplePhysics</span><span class="co">](simple_physics.qmd)</span> — Reed &amp; Jablonowski (2012) simple-physics package</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
