@@ -50,8 +50,12 @@ toward radiative equilibrium with `sympl.AdamsBashforth`.
 
 ## Gray column
 
-Watch the profiles evolve live — temperature, longwave heating rate, and the
-up/downwelling longwave fluxes — as the column steps toward equilibrium.
+Running this cell steps the column toward radiative equilibrium and then draws
+its **evolution** — temperature, longwave heating rate and up/downwelling
+longwave flux profiles at several times, plus the top-of-atmosphere longwave
+flux (OLR) and surface temperature as time series. The integration runs to
+completion before the figure appears (a spinner shows while it computes); the
+gray column is quick.
 
 ```{pyodide}
 #| autorun: true
@@ -79,20 +83,25 @@ def make_column(table):
 
 
 components, state = make_column("single_band_gray_lw")
-await animate_to_equilibrium(
-    components, state, timedelta(hours=DT_HOURS), N_STEPS,
+integrate_with_snapshots(
+    components, state, timedelta(hours=DT_HOURS), N_STEPS, SOLAR,
     title="Gray radiative equilibrium")
-# End on a plain statement (not the awaited state): quarto-live hashes each
+# End on a plain statement (not the returned state): quarto-live hashes each
 # cell's final value, and a sympl state marshals to an unhashable JsProxy.
 print(f"surface temperature: {float(state['surface_temperature'].values.ravel()[0]):.1f} K")
 ```
 
 ## Non-grey column — change one string
 
+The only change is the absorption **table**: 14 bands of real H₂O/CO₂ line
+absorption instead of one gray band. That integration is heavier — expect it to
+take **~2 minutes** in the browser (the spinner will spin the whole time), then
+the same evolution figure appears.
+
 ```{pyodide}
 components, state = make_column("earth_low_res_lw")   # <- the only change: the table
-await animate_to_equilibrium(
-    components, state, timedelta(hours=DT_HOURS), N_STEPS,
+integrate_with_snapshots(
+    components, state, timedelta(hours=DT_HOURS), N_STEPS, SOLAR,
     title="Non-grey radiative equilibrium (14 bands)")
 print(f"surface temperature: {float(state['surface_temperature'].values.ravel()[0]):.1f} K")
 ```

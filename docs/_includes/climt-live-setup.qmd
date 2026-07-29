@@ -28,8 +28,6 @@ bodies IDENTICAL (only `tests/test_live_rce_demo.py` guards the twin).
 # micropip.install(...)` instead would race: quarto-live does not await one
 # autorun cell's async work before starting the next, so a downstream cell can
 # run before the wheel finishes installing. So this cell is synchronous.
-import asyncio
-
 import numpy as np
 import matplotlib.pyplot as plt
 import climt
@@ -37,57 +35,138 @@ from sympl import AdamsBashforth
 from datetime import timedelta
 
 
-async def animate_to_equilibrium(tendency_components, state, timestep, n_steps,
-                                 redraw_every=20, title=""):
-    """Step forward toward radiative equilibrium, live-updating three panels:
-    temperature, longwave heating rate, and up/downwelling longwave flux.
+def integrate_with_snapshots(tendency_components, state, timestep, n_steps,
+                             solar, n_snapshots=8, title=""):
+    """Step toward radiative equilibrium, recording the evolution, then draw it.
 
-    Browser-only (async + matplotlib). The stepping is the same loop, with the
-    same update order, as ``integrate_to_equilibrium`` (which the native test
-    guards); ``await asyncio.sleep(0)`` yields to the browser so it repaints the
-    canvas between redraws — the Pyodide equivalent of ``%matplotlib`` live
-    updating. Only tendency components are supported (the RCE demo uses none of
-    the stepper kind).
+    quarto-live runs each Pyodide cell to completion in a Web Worker and only
+    paints the cell's *final* captured figure — so a genuinely live, frame-by-
+    frame matplotlib animation is impossible here (an earlier version tried and
+    only ever showed the last frame). Instead we run the whole integration
+    quietly (the reader sees quarto-live's spinner while it computes; the non-
+    grey column takes ~2 min) and, at the end, render one annotated figure that
+    shows the *evolution*: temperature / heating / flux profiles at several
+    times, plus the top-of-atmosphere longwave flux (OLR) and surface
+    temperature as time series approaching energy balance.
+
+    The stepping loop and update order match ``integrate_to_equilibrium`` (the
+    native test guards that twin). Only tendency components are used (the RCE
+    demo has no stepper-kind components); ``solar`` is the prescribed absorbed
+    shortwave (W m^-2), drawn as the equilibrium target on the OLR panel.
     """
     model = AdamsBashforth(list(tendency_components))
     p = state["air_pressure"].values[:, 0, 0] / 100.0
     p_int = state["air_pressure_on_interface_levels"].values[:, 0, 0] / 100.0
+    day = timestep.total_seconds() / 86400.0
 
-    fig, (ax_t, ax_h, ax_f) = plt.subplots(1, 3, figsize=(11, 4.2), sharey=True)
-    (line_t,) = ax_t.plot(state["air_temperature"].values[:, 0, 0], p)
-    (line_h,) = ax_h.plot(np.zeros_like(p), p)
-    (line_u,) = ax_f.plot(np.zeros_like(p_int), p_int, label="up")
-    (line_d,) = ax_f.plot(np.zeros_like(p_int), p_int, label="down")
-    ax_t.set_ylabel("pressure (hPa)")
-    ax_t.set_xlabel("temperature (K)"); ax_t.set_title("Temperature")
-    ax_h.set_xlabel("LW heating (K day$^{-1}$)"); ax_h.set_title("Heating rate")
-    ax_f.set_xlabel("LW flux (W m$^{-2}$)"); ax_f.set_title("Up / down flux")
-    ax_f.legend(loc="upper right")
-    ax_t.invert_yaxis()  # shared y: inverts all three
-    for ax in (ax_t, ax_h, ax_f):
-        ax.grid(alpha=0.3)
-    if title:
-        fig.suptitle(title)
-    fig.tight_layout()
-    plt.show()
+    # Snapshot the full profiles at ~n_snapshots evenly spaced steps (from the
+    # first step, once the radiation diagnostics are populated, to the last).
+    snap_at = set(np.unique(
+        np.linspace(1, n_steps, n_snapshots).round().astype(int)).tolist())
+    snaps = []              # profile snapshots (a handful)
+    days, olr, tsurf = [], [], []   # cheap scalars recorded every step
 
-    for i in range(n_steps):
+    for i in range(1, n_steps + 1):
         diagnostics, new_state = model(state, timestep)
         state.update(new_state)
         state.update(diagnostics)
         state["time"] += timestep
-        if i % redraw_every == 0 or i == n_steps - 1:
-            line_t.set_xdata(state["air_temperature"].values[:, 0, 0])
-            line_h.set_xdata(
-                state["air_temperature_tendency_from_longwave"].values[:, 0, 0])
-            line_u.set_xdata(state["upwelling_longwave_flux_in_air"].values[:, 0, 0])
-            line_d.set_xdata(state["downwelling_longwave_flux_in_air"].values[:, 0, 0])
-            for ax in (ax_t, ax_h, ax_f):
-                ax.relim()
-                ax.autoscale_view(scalex=True, scaley=False)
-            fig.canvas.draw()
-            await asyncio.sleep(0)
+        days.append(i * day)
+        # OLR = upwelling longwave flux at the top interface (index -1 = TOA).
+        olr.append(float(state["upwelling_longwave_flux_in_air"].values[-1, 0, 0]))
+        tsurf.append(float(state["surface_temperature"].values.ravel()[0]))
+        if i in snap_at:
+            snaps.append(dict(
+                day=i * day,
+                T=state["air_temperature"].values[:, 0, 0].copy(),
+                H=state["air_temperature_tendency_from_longwave"].values[:, 0, 0].copy(),
+                U=state["upwelling_longwave_flux_in_air"].values[:, 0, 0].copy(),
+                D=state["downwelling_longwave_flux_in_air"].values[:, 0, 0].copy(),
+            ))
+
+    _draw_evolution(snaps, np.array(days), np.array(olr), np.array(tsurf),
+                    solar, p, p_int, title)
     return state
+
+
+def _draw_evolution(snaps, days, olr, tsurf, solar, p, p_int, title):
+    """Render the RCE evolution as one annotated 2x2 figure (browser-only)."""
+    cmap = plt.get_cmap("viridis")
+    norm = plt.Normalize(vmin=snaps[0]["day"], vmax=snaps[-1]["day"])
+
+    fig = plt.figure(figsize=(11.5, 8.4))
+    gs = fig.add_gridspec(2, 2, hspace=0.34, wspace=0.30)
+    ax_T = fig.add_subplot(gs[0, 0])
+    ax_H = fig.add_subplot(gs[0, 1], sharey=ax_T)
+    ax_F = fig.add_subplot(gs[1, 0], sharey=ax_T)
+    ax_O = fig.add_subplot(gs[1, 1])
+
+    n = len(snaps)
+    for k, s in enumerate(snaps):
+        c = cmap(norm(s["day"]))
+        final = (k == n - 1)
+        w = 2.6 if final else 1.3
+        z = 5 if final else 2
+        ax_T.plot(s["T"], p, color=c, lw=w, zorder=z)
+        ax_H.plot(s["H"], p, color=c, lw=w, zorder=z)
+        ax_F.plot(s["U"], p_int, color=c, lw=w, zorder=z)
+        ax_F.plot(s["D"], p_int, color=c, lw=w, ls="--", zorder=z)
+
+    ax_T.set_ylabel("pressure (hPa)"); ax_F.set_ylabel("pressure (hPa)")
+    ax_T.set_xlabel("temperature (K)"); ax_T.set_title("Temperature profile")
+    ax_H.set_xlabel("LW heating rate (K day$^{-1}$)")
+    ax_H.set_title("Longwave heating rate")
+    ax_F.set_xlabel("LW flux (W m$^{-2}$)")
+    ax_F.set_title("LW flux: up (solid) / down (dashed)")
+    ax_T.invert_yaxis()                     # shared y inverts all three profiles
+    for ax in (ax_T, ax_H, ax_F):
+        ax.grid(alpha=0.3)
+    ax_H.axvline(0.0, color="0.4", lw=0.8)
+
+    # Annotations that explain what the reader is looking at.
+    T_final = snaps[-1]["T"]
+    ax_T.annotate("warm surface", xy=(T_final[0], p[0]),
+                  xytext=(0.42, 0.14), textcoords="axes fraction", fontsize=8,
+                  arrowprops=dict(arrowstyle="->", color="0.3"))
+    ax_T.annotate("isothermal top\n(skin temperature)", xy=(T_final[-1], p[-1]),
+                  xytext=(0.30, 0.72), textcoords="axes fraction", fontsize=8,
+                  arrowprops=dict(arrowstyle="->", color="0.3"))
+    ax_H.text(0.04, 0.06, "cooling (< 0) aloft\nrelaxes toward 0\nat equilibrium",
+              transform=ax_H.transAxes, fontsize=8, va="bottom")
+    ax_F.text(0.55, 0.9, "surface emits up;\nspace sends nothing down",
+              transform=ax_F.transAxes, fontsize=8, va="top")
+
+    sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap); sm.set_array([])
+    cbar = fig.colorbar(sm, ax=[ax_T, ax_H, ax_F], location="right",
+                        fraction=0.02, pad=0.02)
+    cbar.set_label("time (days)  —  early (dark) → late (yellow)")
+
+    # OLR / surface-temperature time series: the march toward energy balance.
+    ax_O.plot(days, olr, color="#c92a2a", lw=1.9, label="OLR (top of atmosphere)")
+    ax_O.axhline(solar, color="0.35", ls="--", lw=1.2,
+                 label=f"absorbed solar = {solar:.0f} W m$^{{-2}}$")
+    ax_O.set_xlabel("time (days)")
+    ax_O.set_ylabel("longwave flux (W m$^{-2}$)", color="#c92a2a")
+    ax_O.tick_params(axis="y", labelcolor="#c92a2a")
+    ax_O.set_title("Approach to energy balance")
+    ax_O.grid(alpha=0.3)
+
+    ax_Ts = ax_O.twinx()
+    ax_Ts.plot(days, tsurf, color="#1c7ed6", lw=1.6)
+    ax_Ts.set_ylabel("surface temperature (K)", color="#1c7ed6")
+    ax_Ts.tick_params(axis="y", labelcolor="#1c7ed6")
+
+    gap = solar - olr[-1]
+    msg = (f"still {gap:+.0f} W m$^{{-2}}$ from balance\n(raise N_STEPS to close it)"
+           if abs(gap) > 2 else "OLR ≈ absorbed solar:\nnear equilibrium")
+    ax_O.annotate(msg, xy=(days[-1], olr[-1]), xytext=(0.12, 0.30),
+                  textcoords="axes fraction", fontsize=8,
+                  arrowprops=dict(arrowstyle="->", color="0.3"))
+    ax_O.legend(loc="lower right", fontsize=7)
+
+    if title:
+        fig.suptitle(title, fontsize=13, y=0.98)
+    plt.show()
 
 
 def integrate_to_equilibrium(tendency_components, stepper_components, state,
