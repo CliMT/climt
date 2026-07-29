@@ -1,0 +1,339 @@
+---
+title: "Sea ice and land ice"
+---
+
+## Introduction
+
+`climt` models the thermodynamics of snow and ice with two
+[`Stepper`](component_types.qmd) components that share a single implicit
+heat-diffusion solver:
+
+- **`SeaIce`** — a 1-D thermodynamic sea-ice model, owning columns with
+  `area_type == "sea_ice"`. Its base exchanges heat with the ocean.
+- **`LandIce`** — a 1-D snow/ice model over `area_type in ("land", "land_ice")`
+  columns (snow-on-land and glaciers/ice sheets). Its base is tied to the soil.
+
+Both are mechanical re-expressions of the older monolithic **`IceSheet`**
+component, refactored onto the shared column solver in
+[`climt._core.snow_ice_column`](#the-shared-column-solver) with several physics
+defects fixed. `IceSheet` still exists as a **deprecated dispatching shim**
+(see [below](#the-icesheet-deprecation-shim)) so existing scripts keep working.
+
+The two components divide the surface by `area_type`, so they compose without
+conflict: `SeaIce` touches only `sea_ice` columns, `LandIce` only
+`land`/`land_ice` columns, and every other column passes through unchanged.
+`area_type` itself is set by [`LandMask`](land_mask.qmd) (static geography) and,
+for sea ice, by `SeaIce` as ice forms and melts.
+
+## Physics
+
+Both components treat a column of snow over ice as a stack of conducting layers
+and step its temperature profile forward implicitly, then convert any surface or
+basal energy imbalance into melt or growth.
+
+### The conducting column
+
+A column of total height $H$ (ice thickness + snow thickness) is divided into
+`num_layers` nodes. Node 0 is the **bottom** (the ice base / soil interface) and
+node $n-1$ is the **top** (the atmosphere-facing surface) — this index
+convention is shared with the solver. The layer spacing is $\Delta z = H/n$.
+
+Each layer between nodes is assigned material properties depending on whether it
+is snow or ice. The snow fraction of the column determines the `snow_level`
+index; layers above it use snow density, heat capacity and conductivity, layers
+below it use ice values:
+
+$$
+\rho_i,\; c_i,\; \kappa_i =
+\begin{cases}
+\rho_{\text{snow}},\, c_{\text{snow}},\, \kappa_{\text{snow}} & \text{layer is snow} \\
+\rho_{\text{ice}},\, c_{\text{ice}},\, \kappa_{\text{ice}} & \text{layer is ice}
+\end{cases}
+$$
+
+These come from `climt`'s registered constants
+(`density_of_solid_phase_as_ice`, `thermal_conductivity_of_solid_phase_as_snow`,
+etc.), read via `get_constant`.
+
+### Heat diffusion
+
+Within the column, temperature obeys the 1-D heat-diffusion equation
+
+$$
+\rho c \, \frac{\partial T}{\partial t} = \frac{\partial}{\partial z}\left( \kappa \, \frac{\partial T}{\partial z} ight),
+$$
+
+discretised implicitly (Crank–Nicolson-style) and solved with the shared column
+solver. The implicit scheme is unconditionally stable, so the model timestep is
+not restricted by the thin, highly conductive layers near the surface.
+
+### Boundary conditions
+
+The **top** boundary switches between two conditions depending on whether the
+surface is melting:
+
+- If the surface node is below freezing, the top receives a **flux** boundary —
+  the net surface energy flux $Q_{\text{net}}$ (downwelling minus upwelling
+  radiation, minus the sensible and latent heat fluxes):
+
+  $$
+  Q_{\text{net}} = SW^{\downarrow} + LW^{\downarrow} - SW^{\uparrow} - LW^{\uparrow} - H_s - H_l .
+  $$
+
+- If the surface is at or above the freezing point, the top is held at the
+  freezing temperature with a **Dirichlet** condition, and the excess energy
+  goes into melting (see [Melt and growth](#melt-and-growth)).
+
+The **bottom** boundary is where the two components differ:
+
+- **`SeaIce`**: a prescribed ocean **flux** at the ice base. Heat can flow either
+  way, so both basal *growth* (ocean colder than the base) and basal *melt*
+  (ocean warmer than the base) are representable.
+- **`LandIce`**: a **Dirichlet** condition holding the base at the prescribed
+  `soil_surface_temperature`. There is no ocean at the base of a land column.
+
+### Melt and growth
+
+After the temperature solve, each component closes the energy budget at the two
+surfaces.
+
+At the **base**, the conducted flux is compared with the boundary forcing. For
+`SeaIce`, the net basal heat exchange with the ocean drives ice growth or basal
+melt through the latent heat of fusion $L_f$:
+
+$$
+\Delta H_{\text{basal}} = -\frac{Q_{\text{base}} \, \Delta t}{\rho\, L_f}.
+$$
+
+At the **top**, when the surface is melting, the energy left over after
+conduction into the column is used to melt snow first, then ice:
+
+$$
+\Delta H_{\text{melt}} = \frac{(Q_{\text{net}} - Q_{\text{cond}})\,\Delta t}{\rho\, L_f}.
+$$
+
+For `LandIce` this is a glacier **mass balance**: accumulation (implicit in the
+`surface_snow_thickness` input) minus surface melt. For `SeaIce` the basal term
+adds sea-ice growth from below.
+
+### Albedo
+
+Each component reports a surface albedo per column, chosen from three
+configurable values:
+
+| Surface state | Albedo used |
+|---------------|-------------|
+| Snow present | `albedo_snow` |
+| Bare (snow-free) ice | `albedo_ice` |
+| Actively melting | `albedo_melt` |
+
+Melting takes precedence: a melting surface uses `albedo_melt` regardless of
+snow cover. The same value is reported for both the direct and diffuse
+shortwave albedo diagnostics.
+
+## Defect fixes relative to the old `IceSheet`
+
+`SeaIce` and `LandIce` are behaviourally faithful re-expressions of the
+`IceSheet` physics, with these deliberate corrections (documented in the
+component docstrings):
+
+1. **Basal boundary condition (`SeaIce`).** The base uses the prescribed ocean
+   heat flux instead of a hardcoded freezing Dirichlet condition, so basal melt
+   is possible.
+2. **Thickness clamp.** `sea_ice_thickness` / `land_ice_thickness` are clamped
+   to be non-negative after melt. For `SeaIce`, melt energy with no ice left to
+   consume is routed into `heat_flux_into_sea_water_due_to_sea_ice` (it warms the
+   ocean directly) rather than producing negative thickness.
+3. **Land melt reservoir (`LandIce`).** The original code decremented
+   `sea_ice_thickness` even on land columns (a copy/paste artifact); `LandIce`
+   correctly decrements `land_ice_thickness`.
+4. **Configurable albedo.** The three albedos are constructor arguments rather
+   than hardcoded, and a duplicated albedo branch was removed.
+5. **No crash on negative melt energy.** A `print`/`assert False` guard was
+   replaced with an `np.clip` to zero and a debug log message — a slightly
+   negative value is a benign consequence of the melting-temperature
+   bookkeeping, not a reason to abort a run.
+
+### Basal-flux sign convention (`SeaIce`)
+
+`heat_flux_into_sea_water_due_to_sea_ice` follows the CF/CMIP convention:
+**positive when heat leaves the ice and enters the sea water**. The solver's
+`Flux` boundary uses the opposite convention (positive means heat *enters* the
+column). `SeaIce` therefore negates the stored value when using it as the
+column's bottom boundary — `bottom_bc = Flux(-Q_into_sea_water)`. This sign was
+inverted in the original implementation plan and corrected during
+implementation; a warm ocean now correctly thins the ice.
+
+## The shared column solver
+
+Both components delegate the temperature update to
+`climt._core.snow_ice_column.solve_column`, a reusable 1-D implicit solver. It
+is exposed separately so other 1-D column models can reuse it.
+
+``` python
+from climt._core.snow_ice_column import solve_column, Dirichlet, Flux
+
+new_T = solve_column(rho, c, kappa, temperature, dt, dz, top_bc, bottom_bc)
+```
+
+- `rho`, `c`, `kappa` are length-$(n-1)$ arrays of density, heat capacity and
+  conductivity defined on the layers *between* the $n$ nodes.
+- `temperature` is the length-$n$ node temperature profile (node 0 = bottom).
+- `top_bc` and `bottom_bc` are boundary-condition value objects:
+  - `Dirichlet(value)` — fixes the node temperature to `value`.
+  - `Flux(value)` — a Neumann condition; `value` is in W m⁻², **positive
+    downward into the column** at that boundary.
+
+The solver assembles the implicit tridiagonal system, folds the boundary rows
+into the diagonal bands *before* building the sparse matrix (so the matrix is
+assembled once with its final sparsity structure, avoiding
+`SparseEfficiencyWarning`), and returns the new length-$n$ profile.
+
+::: {.callout-warning}
+## The `Flux` boundary is a quasi-steady constraint
+
+The `Flux` (Neumann) boundary is implemented as an *algebraic* constraint on the
+end node rather than a time-integrated flux — behaviour inherited unchanged from
+the original `IceSheet`. This produces a $\Delta t$-independent,
+forcing-proportional energy-conservation artifact. In practice it means
+`SeaIce` and `LandIce` cannot pass a strict `atol`-based *forced* energy-closure
+test; the test suite instead verifies zero-forcing no-op behaviour and the
+correct *direction* of the energy response. True energy closure across the flux
+boundary is a tracked follow-up, not a property the current solver guarantees.
+:::
+
+## The `IceSheet` deprecation shim
+
+`IceSheet` is retained as a thin dispatching shim. Constructing it emits a
+`DeprecationWarning`; internally it builds a `SeaIce` and a `LandIce`, runs both
+on the full state, and merges their per-column results by `area_type`. New code
+should use `SeaIce` and `LandIce` directly.
+
+``` python
+import warnings
+ice = climt.IceSheet()          # DeprecationWarning: use SeaIce and LandIce
+```
+
+The merge is mostly a straightforward area-type mask, with one subtlety:
+`surface_temperature` is reconstructed with an explicit three-way merge (real
+input on un-owned `sea` cells, then `LandIce`'s value on land cells, then
+`SeaIce`'s value on sea-ice cells), because neither sub-component *takes*
+`surface_temperature` as an input — both derive it from the top of the
+temperature profile for every column, which is only meaningful on their own
+owned cells.
+
+::: {.callout-note}
+## Known behaviour change
+
+The old monolith computed `surface_downward_heat_flux_in_sea_ice` for
+`sea_ice`, `land_ice` *and* `land` columns. The shim produces it only from the
+internal `SeaIce` instance, so it is meaningful only on `sea_ice` columns and
+reports the registered default (`0.0`) on land/land-ice columns. Use `LandIce`'s
+`upward_heat_flux_at_ground_level_in_soil` for the land-column equivalent.
+:::
+
+## Constructors
+
+``` python
+climt.SeaIce(maximum_snow_ice_height=10, albedo_snow=0.8,
+             albedo_ice=0.5, albedo_melt=0.2)
+
+climt.LandIce(maximum_snow_ice_height=10, albedo_snow=0.8,
+              albedo_ice=0.6, albedo_melt=0.2)
+
+climt.IceSheet(maximum_snow_ice_height=10)   # deprecated
+```
+
+| Argument | `SeaIce` default | `LandIce` default | Description |
+|----------|------------------|-------------------|-------------|
+| `maximum_snow_ice_height` | `10` | `10` | Maximum combined snow+ice height (m). Exceeding it raises `ValueError`. |
+| `albedo_snow` | `0.8` | `0.8` | Albedo when snow is present. |
+| `albedo_ice` | `0.5` | `0.6` | Albedo for bare ice (higher for land ice). |
+| `albedo_melt` | `0.2` | `0.2` | Albedo when the surface is melting. |
+
+`IceSheet` forwards `maximum_snow_ice_height` to both internal components.
+
+## State
+
+### `SeaIce`
+
+| Role | Quantity | Dims | Units |
+|------|----------|------|-------|
+| in | `downwelling_/upwelling_ shortwave_/longwave_flux_in_air` | `[*, interface_levels]` | `W m^-2` |
+| in | `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux` | `[*]` | `W m^-2` |
+| in | `sea_ice_thickness`, `surface_snow_thickness` | `[*]` | `m` |
+| in | `area_type` | `[*]` | `dimensionless` |
+| in | `snow_and_ice_temperature` | `[ice_interface_levels, *]` | `degK` |
+| in | `sea_surface_temperature` | `[*]` | `degK` |
+| in | `heat_flux_into_sea_water_due_to_sea_ice` | `[*]` | `W m^-2` |
+| in | `height_on_ice_interface_levels` | `[ice_interface_levels, *]` | `m` |
+| out | `sea_ice_thickness`, `surface_snow_thickness`, `surface_temperature` | `[*]` | `m`, `m`, `degK` |
+| out | `snow_and_ice_temperature`, `height_on_ice_interface_levels` | `[ice_interface_levels, *]` | `degK`, `m` |
+| diag | `heat_flux_into_sea_water_due_to_sea_ice`, `surface_downward_heat_flux_in_sea_ice` | `[*]` | `W m^-2` |
+| diag | `surface_albedo_for_direct_shortwave`, `surface_albedo_for_diffuse_shortwave` | `[*]` | `dimensionless` |
+
+### `LandIce`
+
+Same radiative and profile inputs as `SeaIce`, but:
+
+| Role | Quantity | Dims | Units | Notes |
+|------|----------|------|-------|-------|
+| in | `land_ice_thickness` | `[*]` | `m` | replaces `sea_ice_thickness` |
+| in | `soil_surface_temperature` | `[*]` | `degK` | basal Dirichlet value |
+| out | `land_ice_thickness` | `[*]` | `m` | |
+| diag | `upward_heat_flux_at_ground_level_in_soil` | `[*]` | `W m^-2` | base-node conduction into the soil |
+| diag | `surface_albedo_for_direct_/diffuse_shortwave` | `[*]` | `dimensionless` | |
+
+All of these quantities have registered defaults in `get_default_state`, so
+`get_default_state([SeaIce()])` (or `LandIce`, or `IceSheet`) constructs a
+runnable state with no manual field creation.
+
+## Example
+
+``` python
+from datetime import timedelta
+import numpy as np
+import climt
+from climt import get_default_state, get_grid
+
+ice = climt.SeaIce()
+state = get_default_state([ice], grid_state=get_grid(nx=1, ny=1, nz=10))
+
+# Set up a sea-ice column and cool it strongly from above.
+state["area_type"].values[:] = "sea_ice"
+state["sea_ice_thickness"].values[:] = 1.0
+state["snow_and_ice_temperature"].values[:] = 260.0
+state["upwelling_longwave_flux_in_air"].values[:] = 320.0
+state["downwelling_longwave_flux_in_air"].values[:] = 100.0
+
+diagnostics, new_state = ice(state, timedelta(seconds=3600))
+print(new_state["sea_ice_thickness"].values)   # ice has grown
+```
+
+## Bundled data source (initial ice thickness)
+
+`land_ice_thickness` defaults to zero in `get_default_state`, so the ice sheets
+start bare. The easiest way to initialise `LandIce` (or `IceSheet`) with the
+present-day Greenland and Antarctic ice sheets is to run
+[`LandMask`](land_mask.qmd) at setup — it emits `land_ice_thickness` (from the
+bundled ETOPO-derived [topography file](topography.qmd)) alongside `area_type`:
+
+``` python
+import climt
+mask = climt.LandMask()          # load_topography=True by default
+state.update(mask(state))        # sets area_type AND land_ice_thickness
+```
+
+The underlying data (ice-surface minus bedrock, ETOPO 2022) and how to swap in
+your own is documented under [Topography](topography.qmd).
+
+`sea_ice_thickness` is prognostic and evolves from zero; a sea-ice-concentration
+climatology (e.g. NOAA PSL `icec.ltm.1991-2020.nc`, alongside the bundled SST)
+can be used to warm-start it if desired.
+
+## Source
+
+- `SeaIce`: [`climt/_components/sea_ice/component.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/sea_ice/component.py)
+- `LandIce`: [`climt/_components/land_ice/component.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/land_ice/component.py)
+- `IceSheet` shim: [`climt/_components/surface_ice.py`](https://github.com/CliMT/climt/blob/develop/climt/_components/surface_ice.py)
+- Column solver: [`climt/_core/snow_ice_column.py`](https://github.com/CliMT/climt/blob/develop/climt/_core/snow_ice_column.py)

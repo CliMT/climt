@@ -14,7 +14,7 @@ from .exceptions import ConstantNotFoundError
 from .constants import list_available_constants, set_constants_from_dict
 
 from .initialization import get_default_state, get_grid
-from .tridiagonal import solve_tridiagonal
+from .tridiagonal import solve_tridiagonal, tridiagonal_matvec
 from .unyt_backend import UnytBackend, UnytStateContainer, UnytTimeDelta
 from .util import (
     bolton_dqsat_dT,
@@ -49,6 +49,7 @@ __all__ = (
     "set_constants_from_dict",
     "ensure_contiguous_state",
     "solve_tridiagonal",
+    "tridiagonal_matvec",
     "UnytBackend",
     "UnytStateContainer",
     "UnytTimeDelta",

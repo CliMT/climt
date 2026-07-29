@@ -1,0 +1,84 @@
+---
+title: "Dry convective adjustment"
+---
+
+## Introduction
+
+`DryConvectiveAdjustment` is a [`Stepper`](component_types.qmd) that keeps the
+temperature profile from becoming statically unstable to *dry* convection.
+Wherever the atmosphere is super-adiabatic — the temperature falls off with
+height faster than the dry adiabatic lapse rate — the scheme mixes the unstable
+layers back to a neutral (dry-adiabatic) profile, conserving energy.
+
+It is the dry-convection counterpart to a moist convection scheme like
+[Emanuel](emanuel_convection.qmd): cheap, robust, and appropriate for dry
+atmospheres, idealised experiments, or as a stabilising adjustment alongside
+other physics.
+
+## Physics
+
+A column is statically unstable to dry convection where the potential
+temperature $\theta$ decreases with height, equivalently where the actual lapse
+rate exceeds the dry adiabatic lapse rate $\Gamma_d = g/c_p$. `DryConvectiveAdjustment`
+detects such super-adiabatic layers and **adjusts** them to neutral
+stratification.
+
+The adjustment is **conservative**: the mixed layers are relaxed toward a
+constant-$\theta$ profile such that the mass-weighted enthalpy of the column is
+preserved. In pressure coordinates, the adjusted temperatures satisfy
+
+$$
+\sum_k T_k\, \Delta p_k = \sum_k T_k^{\text{(adj)}}\, \Delta p_k,
+$$
+
+with $\theta$ constant across the adjusted block. Specific humidity is carried
+along with the mixing so that the redistribution is consistent, but no phase
+change or latent heating occurs — this is *dry* adjustment.
+
+The scheme identifies the unstable layers, forms neutral blocks, and iterates
+until the whole column is stable to dry convection.
+
+## Constructor
+
+``` python
+climt.DryConvectiveAdjustment()
+```
+
+The component takes no physical parameters — the dry adiabat is set by the
+registered constants (`gravitational_acceleration`,
+`heat_capacity_of_dry_air_at_constant_pressure`, `gas_constant_of_dry_air`).
+
+## State
+
+| Role | Quantity | Dims | Units | Alias |
+|------|----------|------|-------|-------|
+| in | `air_temperature` | `[mid_levels, *]` | `degK` | |
+| in | `air_pressure` | `[mid_levels, *]` | `Pa` | |
+| in | `air_pressure_on_interface_levels` | `[interface_levels, *]` | `Pa` | `P_int` |
+| in | `specific_humidity` | `[mid_levels, *]` | `kg/kg` | |
+| out | `air_temperature` | `[mid_levels, *]` | `degK` | |
+| out | `specific_humidity` | `[mid_levels, *]` | `kg/kg` | |
+
+`DryConvectiveAdjustment` has no diagnostics.
+
+## Example
+
+``` python
+from datetime import timedelta
+import numpy as np
+import climt
+from climt import get_default_state, get_grid
+
+adjust = climt.DryConvectiveAdjustment()
+state = get_default_state([adjust], grid_state=get_grid(nx=1, ny=1, nz=30))
+
+# Impose a super-adiabatic (unstable) near-surface layer.
+state["air_temperature"].values[:3] += np.array([6.0, 3.0, 0.0])[:, None]
+
+diagnostics, new_state = adjust(state, timedelta(seconds=600))
+# The unstable layers have been mixed toward the dry adiabat.
+```
+
+## Source
+
+- Component: [`climt/_components/dry_convection/component.py`](https://github.com/CliMT/climt/tree/develop/climt/_components/dry_convection)

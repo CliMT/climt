@@ -313,6 +313,9 @@ setup(
             "_data/atmospheric_properties/*.toml",
             "_data/cork/correlated_k/*.nc",
             "_data/cork/correlated_k/*.npz",
+            "_data/land_mask/*.nc",
+            "_data/data_ocean/*.nc",
+            "_data/topography/*.nc",
         ]
     },
     install_requires=requirements,

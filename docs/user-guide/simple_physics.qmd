@@ -1,0 +1,118 @@
+---
+title: "SimplePhysics"
+---
+
+## Introduction
+
+`SimplePhysics` is `climt`'s interface to the **Reed & Jablonowski (2012)**
+simple-physics package — a compact, self-contained set of parameterisations
+originally designed as an intermediate-complexity test case for atmospheric
+general circulation models (its first application was idealised tropical-cyclone
+simulation). It bundles three pieces of physics into one component:
+
+1. **Large-scale condensation** — removes supersaturation and adds the
+   associated moistening/heating tendencies.
+2. **A simple boundary layer** — vertical diffusion of heat, moisture and
+   momentum near the surface.
+3. **Bulk surface fluxes** — sensible heat, latent heat and momentum exchange
+   with the surface.
+
+Each piece can be toggled independently, so `SimplePhysics` can act as a
+complete minimal physics suite or contribute just one process alongside other
+`climt` components.
+
+`SimplePhysics` is an [`ImplicitTendencyComponent`](component_types.qmd)-style
+[`Stepper`](component_types.qmd): it applies its parameterisations over a
+timestep and returns the updated state plus flux diagnostics.
+
+::: {.callout-note}
+`SimplePhysics` wraps a compiled (Fortran) extension. It must be built (as part
+of the normal `climt` installation) before it can be constructed; a source
+checkout without the compiled extensions cannot import it.
+:::
+
+## Configuration
+
+The three parameterisations, and several behavioural options, are controlled by
+boolean flags and tuning constants at construction. The most important decision
+is which processes `SimplePhysics` should own versus defer to other components:
+if you already run a `climt` boundary layer or surface-flux component, turn the
+corresponding flag off to avoid double-counting.
+
+## Constructor
+
+``` python
+climt.SimplePhysics(simulate_cyclone=False,
+                    large_scale_condensation=True,
+                    boundary_layer=True,
+                    surface_fluxes=True,
+                    use_external_surface_temperature=True,
+                    use_external_surface_specific_humidity=False,
+                    top_of_boundary_layer=85000.0,
+                    boundary_layer_influence_height=20000.0,
+                    drag_coefficient_heat_fluxes=0.0011,
+                    base_momentum_drag_coefficient=0.0007,
+                    wind_dependent_momentum_drag_coefficient=0.000065,
+                    maximum_momentum_drag_coefficient=0.002)
+```
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `simulate_cyclone` | `False` | Configure for the original tropical-cyclone test case. |
+| `large_scale_condensation` | `True` | Add moistening/heating tendencies from large-scale condensation. |
+| `boundary_layer` | `True` | Apply the simple boundary-layer diffusion. Keep `True` unless another boundary-layer component is used. |
+| `surface_fluxes` | `True` | Compute surface fluxes. Keep `True` unless the fluxes come from another component. |
+| `use_external_surface_temperature` | `True` | Use `surface_temperature` from the state; if `False`, an internal SST is generated. |
+| `use_external_surface_specific_humidity` | `False` | Use `surface_specific_humidity` from the state rather than assuming saturation. |
+| `top_of_boundary_layer` | `85000.0` | Pressure (Pa) of the boundary-layer top. |
+| `boundary_layer_influence_height` | `20000.0` | Depth scale (Pa) over which boundary-layer mixing tapers. |
+| `drag_coefficient_heat_fluxes` | `0.0011` | Bulk transfer coefficient for the heat/moisture fluxes. |
+| `base_momentum_drag_coefficient` | `0.0007` | Constant term of the momentum drag coefficient. |
+| `wind_dependent_momentum_drag_coefficient` | `0.000065` | Wind-speed-dependent term of the momentum drag. |
+| `maximum_momentum_drag_coefficient` | `0.002` | Cap on the momentum drag coefficient. |
+
+## State
+
+| Role | Quantity | Dims | Units |
+|------|----------|------|-------|
+| in | `air_temperature` | `[mid_levels, *]` | `degK` |
+| in | `air_pressure`, `air_pressure_on_interface_levels` | `[mid_levels/interface_levels, *]` | `Pa` |
+| in | `surface_air_pressure`, `surface_temperature` | `[*]` | `Pa`, `degK` |
+| in | `specific_humidity` | `[mid_levels, *]` | `kg/kg` |
+| in | `northward_wind`, `eastward_wind` | `[mid_levels, *]` | `m s^-1` |
+| in | `surface_specific_humidity` | `[*]` | `kg/kg` |
+| in | `latitude` | `[*]` | `degrees_north` |
+| out | `air_temperature`, `specific_humidity`, `northward_wind`, `eastward_wind` | `[mid_levels, *]` | as above |
+| diag | `stratiform_precipitation_rate` | `[*]` | `m s^-1` |
+| diag | `surface_upward_latent_heat_flux`, `surface_upward_sensible_heat_flux` | `[*]` | `W m^-2` |
+
+## Example
+
+``` python
+from datetime import timedelta
+import climt
+from climt import get_default_state, get_grid
+
+physics = climt.SimplePhysics()
+state = get_default_state([physics], grid_state=get_grid(nx=16, ny=8, nz=30))
+
+diagnostics, new_state = physics(state, timedelta(seconds=1800))
+print(diagnostics["stratiform_precipitation_rate"].values)
+```
+
+To use `SimplePhysics` only for its boundary layer (fluxes and condensation
+handled elsewhere):
+
+``` python
+physics = climt.SimplePhysics(surface_fluxes=False, large_scale_condensation=False)
+```
+
+## Source
+
+- Component wrapper: [`climt/_components/simple_physics/component.py`](https://github.com/CliMT/climt/tree/develop/climt/_components/simple_physics)
+
+### Reference
+
+Reed, K. A. & Jablonowski, C. (2012). *Idealized tropical cyclone simulations of
+intermediate complexity: a test case for AGCMs.* J. Adv. Model. Earth Syst.
+**4**, M04001.

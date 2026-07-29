@@ -35,8 +35,11 @@ from climt import (
     HeldSuarez,
     IceSheet,
     Instellation,
+    LandIce,
+    LandMask,
     RRTMGLongwave,
     RRTMGShortwave,
+    SeaIce,
     SimplePhysics,
     SlabSurface,
     UnytTimeDelta,
@@ -569,6 +572,12 @@ class TestBucketHydrology(ComponentBaseColumn, ComponentBase3D):
         return BucketHydrology()
 
 
+class TestBucketHydrologyTwoLayer(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.BucketHydrology(num_layers=2,
+                                     moisture_diffusion_timescale=86400.0)
+
+
 class TestEmanuel(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
         emanuel = EmanuelConvection()
@@ -636,6 +645,76 @@ class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
         return state
 
 
+class TestSeaIce(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.SeaIce()
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestSeaIce, self).get_3d_input_state(component)
+        state["area_type"].values[:] = "sea_ice"
+        state["sea_ice_thickness"].values[:] = 1.0
+        return state
+
+
+class TestLandIce(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.LandIce()
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestLandIce, self).get_3d_input_state(component)
+        state["area_type"].values[:] = "land_ice"
+        state["land_ice_thickness"].values[:] = 3.0
+        return state
+
+
+class TestDataOcean(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        import os
+        import tempfile
+
+        # write a tiny fixed dataset once to a temp path stored on the class
+        if not hasattr(self.__class__, "_sst_path"):
+            lat = np.arange(-88.0, 90.0, 8.0)
+            lon = np.arange(4.0, 360.0, 8.0)
+            data = np.repeat(
+                (290.0 + 0 * lat[:, None] + 0 * lon[None, :])[None], 12, 0
+            )
+            ds = xr.Dataset(
+                {"tos": (("time", "lat", "lon"), data)},
+                coords={"time": np.arange(12), "lat": lat, "lon": lon},
+            )
+            ds["tos"].attrs["units"] = "K"
+            p = os.path.join(tempfile.gettempdir(), "climt_test_sst.nc")
+            ds.to_netcdf(p, engine="scipy")
+            self.__class__._sst_path = p
+        return climt.DataOcean(self.__class__._sst_path, sst_variable="tos")
+
+    def get_1d_input_state(self, component=None):
+        state = super(TestDataOcean, self).get_1d_input_state(component)
+        state["time"] = datetime(2000, 1, 15, 12)
+        return state
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestDataOcean, self).get_3d_input_state(component)
+        state["time"] = datetime(2000, 1, 15, 12)
+        return state
+
+
+class TestSecondBEST(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.SecondBEST()
+
+    def get_1d_input_state(self, component=None):
+        state = super(TestSecondBEST, self).get_1d_input_state(component)
+        state["area_type"].values[:] = "land"
+        return state
+
+    def get_3d_input_state(self, component=None):
+        state = super(TestSecondBEST, self).get_3d_input_state(component)
+        state["area_type"].values[:] = "land"
+        return state
+
+
 #
 #
 # def test_ice_sheet_too_high():
@@ -687,6 +766,72 @@ class TestDryConvection(ComponentBaseColumn, ComponentBase3D):
             current_tendency["air_temperature"].values
             != new_tendency["air_temperature"].values
         )
+
+
+class TestLandMask(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.LandMask()
+
+
+class TestSimpleBoundaryLayer(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return climt.SimpleBoundaryLayer()
+
+
+def test_simple_boundary_layer_properties():
+    c = climt.SimpleBoundaryLayer()
+    assert set(c.input_properties) == {
+        "air_temperature",
+        "specific_humidity",
+        "air_pressure",
+        "air_pressure_on_interface_levels",
+        "northward_wind",
+        "eastward_wind",
+        "surface_air_pressure",
+        "surface_temperature",
+        "surface_specific_humidity",
+    }
+    assert set(c.output_properties) == {
+        "air_temperature",
+        "specific_humidity",
+        "northward_wind",
+        "eastward_wind",
+    }
+    assert set(c.diagnostic_properties) == {
+        "northward_wind_stress",
+        "eastward_wind_stress",
+        "boundary_layer_height",
+    }
+    assert c.diagnostic_properties["boundary_layer_height"]["units"] == "m"
+    assert c.output_properties["air_temperature"]["units"] == "degK"
+
+
+def test_simple_boundary_layer_conserves_column_integrals():
+    component = climt.SimpleBoundaryLayer()
+    state = climt.get_default_state(
+        [component], grid_state=get_grid(nx=None, ny=None, nz=30)
+    )
+    # perturb winds/humidity so there is something to diffuse
+    np.asarray(state["northward_wind"])[:] = 5.0
+    np.asarray(state["eastward_wind"])[:] = -3.0
+    np.asarray(state["specific_humidity"])[:] = 0.005
+
+    diagnostics, new_state = component(
+        state, timestep=timedelta(seconds=600)
+    )
+
+    p_int = np.asarray(state["air_pressure_on_interface_levels"])
+    # mid-levels axis is axis 0 for a single column here
+    dp = p_int[:-1] - p_int[1:]
+    for name in (
+        "air_temperature",
+        "specific_humidity",
+        "northward_wind",
+        "eastward_wind",
+    ):
+        before = np.sum(np.asarray(state[name]) * dp)
+        after = np.sum(np.asarray(new_state[name]) * dp)
+        assert np.isclose(before, after, rtol=1e-8, atol=1e-6), name
 
 
 if __name__ == "__main__":
