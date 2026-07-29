@@ -99,3 +99,11 @@ GEMINI.md
 
 # build-time data download cache (SST climatology, etc.)
 build_cache/
+
+# Agent scaffolding (task briefs, reports, review diffs). Matches the
+# pre-existing .superpowers/sdd/.gitignore, which already ignores everything.
+.superpowers/
+
+# YSU Fortran build products. *.o/*.mod already cover most of them, but the
+# linked driver executable has no extension so it slips through.
+climt/_components/ysu/_capi/ysu_driver
