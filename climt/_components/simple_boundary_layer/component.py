@@ -246,18 +246,39 @@ _FLUX_MODES = {None: 0, 'bulk': 1, 'external': 2}
 
 
 class SimpleBoundaryLayer(Stepper):
-    """A simple boundary-layer scheme that diffuses heat, moisture and
-    momentum upward from the lowest model level.
+    """A simple boundary-layer scheme that exchanges heat, moisture and
+    momentum with the surface and diffuses them through the boundary layer.
 
     This is the surface-flux / boundary-layer formulation of
     Frierson, Held & Zurita-Gotor (2006), with the surface-layer diffusion
     coefficient modified (thesis Eqn 2.8) to use the surface-layer Richardson
     number in its multiplier, making it continuous at ``Ri_a == 0``.
 
-    The component assumes a surface-flux component has already applied the
-    surface fluxes at the lowest model level; it then diffuses the resulting
-    profiles using diffusion coefficients from a simplified Monin-Obukhov
-    theory with a K-profile capped by a critical Richardson number.
+    Diffusivities come from a simplified Monin-Obukhov theory with a K-profile
+    capped by a critical Richardson number. How the surface enters the lowest
+    model level is set by ``surface_fluxes``:
+
+    * ``'bulk'`` (default) -- the component computes the bulk fluxes itself
+      from its own exchange coefficient ``C``, the interface wind speed and the
+      surface density, and applies them implicitly. It reports the applied heat
+      and moisture fluxes as ``surface_upward_sensible_heat_flux`` and
+      ``surface_upward_latent_heat_flux`` diagnostics. Momentum uses a no-slip
+      surface value, which turns the wind-stress calculation into real drag.
+    * ``'external'`` -- the two flux quantities become required *inputs* and are
+      applied as prescribed fluxes, so a surface component's fluxes reach the
+      atmosphere. Momentum still uses the internal bulk drag.
+    * ``None`` -- no surface exchange; no-flux boundaries, and every column
+      integral is conserved exactly. This requires a separate component to have
+      already applied the surface fluxes.
+
+    Every surface-flux diagnostic -- the two above plus
+    ``northward_wind_stress`` and ``eastward_wind_stress`` -- reports the flux
+    the solve actually delivered, evaluated with the post-solve layer-0 value,
+    so the column budgets close to round-off. In ``None`` mode the stresses are
+    advisory: they are diagnosed but nothing applies them.
+
+    Do not pair ``'bulk'`` with another component that also applies surface
+    fluxes -- they will be applied twice.
     """
 
     input_properties = {
