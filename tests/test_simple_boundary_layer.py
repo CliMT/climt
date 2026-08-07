@@ -69,3 +69,253 @@ def test_diffuse_profile_neumann_source_adds_exact_column_amount():
     dp = p_int[:-1] - p_int[1:]
     change = np.sum(result * dp) - np.sum(profile * dp)
     assert np.isclose(change, dp[0] * source, rtol=1e-10)
+
+
+# ------------------------------------------------------------------ helpers
+
+def _constants():
+    return (
+        get_constant('gravitational_acceleration', 'm s^-2'),
+        get_constant(
+            'heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1'
+        ),
+        get_constant('latent_heat_of_condensation', 'J kg^-1'),
+    )
+
+
+def _column_state(component, nz=30):
+    return climt.get_default_state(
+        [component], grid_state=climt.get_grid(nx=None, ny=None, nz=nz)
+    )
+
+
+def _layer_mass(state):
+    """dp for each mid-level of a single column (Pa)."""
+    p_int = np.asarray(state['air_pressure_on_interface_levels'])
+    return p_int[:-1] - p_int[1:]
+
+
+def _column_budgets(state, dp):
+    """(column enthalpy J/m2, column water kg/m2) for a single column."""
+    g, cp, _ = _constants()
+    enthalpy = cp * np.sum(np.asarray(state['air_temperature']) * dp) / g
+    water = np.sum(np.asarray(state['specific_humidity']) * dp) / g
+    return enthalpy, water
+
+
+def _column_momentum(state, dp, name):
+    """Column-integrated momentum of one wind component, kg m^-1 s^-1."""
+    g, _, _ = _constants()
+    return np.sum(np.asarray(state[name]) * dp) / g
+
+
+def _scalar(field):
+    return float(np.asarray(field).ravel()[0])
+
+
+def _warm_wet_surface_state(component, nz=30):
+    """320 K saturated-ish surface under a 250 K, bone-dry, windy atmosphere.
+
+    This is the empirical case from the design doc that demonstrated the bug.
+    """
+    state = _column_state(component, nz=nz)
+    np.asarray(state['air_temperature'])[:] = 250.0
+    np.asarray(state['specific_humidity'])[:] = 0.0
+    np.asarray(state['eastward_wind'])[:] = 10.0
+    np.asarray(state['northward_wind'])[:] = 0.0
+    np.asarray(state['surface_temperature'])[:] = 320.0
+    np.asarray(state['surface_specific_humidity'])[:] = 0.02
+    return state
+
+
+# --------------------------------------------------------------------- API
+
+def test_invalid_surface_fluxes_mode_raises():
+    with pytest.raises(ValueError, match='surface_fluxes'):
+        climt.SimpleBoundaryLayer(surface_fluxes='bogus')
+
+
+def test_bulk_is_the_default_mode():
+    assert climt.SimpleBoundaryLayer()._surface_fluxes == 'bulk'
+
+
+def test_bulk_mode_diagnoses_surface_fluxes():
+    c = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    assert set(c.diagnostic_properties) == {
+        'northward_wind_stress',
+        'eastward_wind_stress',
+        'boundary_layer_height',
+        'surface_upward_sensible_heat_flux',
+        'surface_upward_latent_heat_flux',
+    }
+    assert (
+        c.diagnostic_properties['surface_upward_sensible_heat_flux']['units']
+        == 'W m^-2'
+    )
+    # bulk mode must NOT require the fluxes as inputs
+    assert 'surface_upward_sensible_heat_flux' not in c.input_properties
+
+
+def test_none_mode_has_no_flux_diagnostics():
+    c = climt.SimpleBoundaryLayer(surface_fluxes=None)
+    assert set(c.diagnostic_properties) == {
+        'northward_wind_stress',
+        'eastward_wind_stress',
+        'boundary_layer_height',
+    }
+    assert 'surface_upward_sensible_heat_flux' not in c.input_properties
+
+
+# ------------------------------------------------------------ bulk physics
+
+def test_bulk_column_budget_closes_against_diagnosed_fluxes():
+    """Column enthalpy/water change == diagnosed surface flux x dt, exactly."""
+    _, _, lv = _constants()
+    component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    state = _warm_wet_surface_state(component)
+    dp = _layer_mass(state)
+
+    enthalpy_before, water_before = _column_budgets(state, dp)
+    timestep = timedelta(seconds=1200)
+    diagnostics, new_state = component(state, timestep=timestep)
+    enthalpy_after, water_after = _column_budgets(new_state, dp)
+
+    sh = _scalar(diagnostics['surface_upward_sensible_heat_flux'])
+    lh = _scalar(diagnostics['surface_upward_latent_heat_flux'])
+    dt = timestep.total_seconds()
+
+    assert np.isclose(enthalpy_after - enthalpy_before, sh * dt, rtol=1e-10)
+    assert np.isclose(water_after - water_before, lh * dt / lv, rtol=1e-10)
+
+
+def test_bulk_momentum_budget_closes_against_the_stress_diagnostic():
+    """Column momentum change == -wind stress x dt, exactly.
+
+    The pre-reconciliation diagnostic (built from the pre-step *interface*
+    wind) could not have passed this.
+    """
+    component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    state = _warm_wet_surface_state(component)
+    np.asarray(state['northward_wind'])[:] = -4.0
+    dp = _layer_mass(state)
+
+    timestep = timedelta(seconds=1200)
+    dt = timestep.total_seconds()
+    before = {
+        name: _column_momentum(state, dp, name)
+        for name in ('eastward_wind', 'northward_wind')
+    }
+    diagnostics, new_state = component(state, timestep=timestep)
+
+    for name, stress in (('eastward_wind', 'eastward_wind_stress'),
+                         ('northward_wind', 'northward_wind_stress')):
+        change = _column_momentum(new_state, dp, name) - before[name]
+        assert np.isclose(
+            change, -_scalar(diagnostics[stress]) * dt, rtol=1e-10
+        ), name
+
+
+def test_bulk_wind_stress_uses_the_post_solve_layer_zero_wind():
+    """Guard the reconciliation against a revert to the old formula.
+
+    kappa is recovered from the momentum budget, which the solver satisfies
+    regardless of how the diagnostic is written -- so this is not circular.
+    The old formula used the pre-step interface wind
+    ``0.5 * (u0_old + u1_old)``; under shear that is a different number.
+    """
+    g, _, _ = _constants()
+    component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    state = _warm_wet_surface_state(component)
+    # sheared profile: mid-level 0 is the surface, so this is weak wind at the
+    # bottom and strong aloft, making u0 and the 0/1 interface clearly differ
+    u = np.asarray(state['eastward_wind'])
+    u[:] = np.linspace(2.0, 30.0, u.shape[0]).reshape(
+        (-1,) + (1,) * (u.ndim - 1)
+    )
+    u_old_0, u_old_1 = _scalar(u[0]), _scalar(u[1])
+    u_interface_old = 0.5 * (u_old_0 + u_old_1)
+
+    dp = _layer_mass(state)
+    before = _column_momentum(state, dp, 'eastward_wind')
+    timestep = timedelta(seconds=1200)
+    dt = timestep.total_seconds()
+    diagnostics, new_state = component(state, timestep=timestep)
+
+    tau = _scalar(diagnostics['eastward_wind_stress'])
+    u_new_0 = np.asarray(new_state['eastward_wind'])[0]
+    momentum_lost = before - _column_momentum(new_state, dp, 'eastward_wind')
+    kappa = momentum_lost / (u_new_0 * dt)
+
+    assert tau > 0.0
+    assert np.isclose(tau, kappa * u_new_0, rtol=1e-10)
+    # the two candidate winds must be distinguishable, so that the assertion
+    # below actually discriminates (which one is larger depends on how drag
+    # and shear-driven diffusion compete -- do not assume an ordering)
+    assert not np.isclose(u_interface_old, u_new_0, rtol=1e-2)
+    # the old form would have reported a visibly different number
+    assert not np.isclose(tau, kappa * u_interface_old, rtol=1e-3)
+
+
+def test_none_mode_stress_is_diagnosed_but_not_applied():
+    component = climt.SimpleBoundaryLayer(surface_fluxes=None)
+    state = _warm_wet_surface_state(component)
+    dp = _layer_mass(state)
+    before = _column_momentum(state, dp, 'eastward_wind')
+
+    diagnostics, new_state = component(state, timestep=timedelta(seconds=1200))
+
+    # advisory: a real stress is reported ...
+    assert _scalar(diagnostics['eastward_wind_stress']) > 0.0
+    # ... but no momentum left the column
+    after = _column_momentum(new_state, dp, 'eastward_wind')
+    assert np.isclose(after, before, rtol=1e-12)
+
+
+def test_bulk_mode_warms_moistens_and_decelerates():
+    """The design doc's empirical case, with the assertions inverted."""
+    component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    state = _warm_wet_surface_state(component)
+    dp = _layer_mass(state)
+    enthalpy_before, water_before = _column_budgets(state, dp)
+    u_before = np.asarray(state['eastward_wind'])[0]
+
+    for _ in range(20):
+        _, new_state = component(state, timestep=timedelta(seconds=1200))
+        state.update(new_state)
+
+    enthalpy_after, water_after = _column_budgets(state, dp)
+    assert enthalpy_after > enthalpy_before
+    assert water_after > water_before
+    assert np.asarray(state['air_temperature'])[0] > 250.0
+    assert np.asarray(state['air_temperature'])[0] < 320.0
+    assert abs(np.asarray(state['eastward_wind'])[0]) < abs(u_before)
+    assert np.all(np.isfinite(np.asarray(state['air_temperature'])))
+
+
+def test_bulk_mode_cools_column_over_a_cold_surface():
+    component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    state = _column_state(component)
+    np.asarray(state['air_temperature'])[:] = 290.0
+    np.asarray(state['surface_temperature'])[:] = 250.0
+    np.asarray(state['eastward_wind'])[:] = 10.0
+    dp = _layer_mass(state)
+    enthalpy_before, _ = _column_budgets(state, dp)
+
+    _, new_state = component(state, timestep=timedelta(seconds=1200))
+    enthalpy_after, _ = _column_budgets(new_state, dp)
+    assert enthalpy_after < enthalpy_before
+
+
+def test_none_mode_conserves_over_a_warm_wet_surface():
+    """The regression guard: opting out must restore exact conservation."""
+    component = climt.SimpleBoundaryLayer(surface_fluxes=None)
+    state = _warm_wet_surface_state(component)
+    dp = _layer_mass(state)
+    enthalpy_before, water_before = _column_budgets(state, dp)
+
+    _, new_state = component(state, timestep=timedelta(seconds=1200))
+    enthalpy_after, water_after = _column_budgets(new_state, dp)
+
+    assert np.isclose(enthalpy_after, enthalpy_before, rtol=1e-12)
+    assert np.isclose(water_after, water_before, rtol=1e-12)
+    assert np.asarray(new_state['air_temperature'])[0] == pytest.approx(250.0)

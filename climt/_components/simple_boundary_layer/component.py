@@ -20,6 +20,7 @@ class BoundaryLayerParams(NamedTuple):
     fb: float
     P0: float
     Ric: float
+    Lv: float
 
 
 @jit_compile
@@ -88,9 +89,11 @@ def _diffuse_profile(
 def _boundary_layer_kernel(
     air_temperature, surface_temperature, air_pressure, air_pressure_int,
     surface_pressure, specific_humidity, surface_humidity, northward_wind,
-    eastward_wind, new_air_temperature, new_specific_humidity,
-    new_northward_wind, new_eastward_wind, north_wind_stress, east_wind_stress,
-    boundary_height, params, num_cols, timestep,
+    eastward_wind, sensible_heat_flux, latent_heat_flux,
+    new_air_temperature, new_specific_humidity, new_northward_wind,
+    new_eastward_wind, north_wind_stress, east_wind_stress, boundary_height,
+    applied_sensible_flux, applied_latent_flux,
+    params, num_cols, timestep, flux_mode,
 ):
     Rd = params.Rd
     Cp = params.Cp
@@ -100,6 +103,7 @@ def _boundary_layer_kernel(
     fb = params.fb
     P0 = params.P0
     Ri_c = params.Ric
+    Lv = params.Lv
 
     for col in prange(num_cols):
         col_T = air_temperature[:, col]
@@ -171,10 +175,29 @@ def _boundary_layer_kernel(
         h = z[count - 1]
         boundary_height[col] = h
 
-        north_wind_stress[col] = col_rho[0] * C * wind_int[0] * col_v_int[0]
-        east_wind_stress[col] = col_rho[0] * C * wind_int[0] * col_u_int[0]
-
         u_fric = wind_int[0]
+
+        dp0 = col_p_int[0] - col_p_int[1]
+        bulk_conductance = col_rho[0] * C * wind_int[0]
+        beta = g * bulk_conductance * timestep / dp0
+
+        if flux_mode == 1:
+            scalar_exchange = beta
+            source_T = beta * col_Ts
+            source_q = beta * col_qs
+        elif flux_mode == 2:
+            scalar_exchange = 0.0
+            source_T = g * timestep * sensible_heat_flux[col] / (Cp * dp0)
+            source_q = g * timestep * latent_heat_flux[col] / (Lv * dp0)
+        else:
+            scalar_exchange = 0.0
+            source_T = 0.0
+            source_q = 0.0
+
+        if flux_mode == 0:
+            wind_exchange = 0.0
+        else:
+            wind_exchange = beta
 
         diff = np.zeros(n)
         for i in range(count):
@@ -188,17 +211,38 @@ def _boundary_layer_kernel(
                 )
 
         new_air_temperature[:, col] = _diffuse_profile(
-            col_T, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
+            col_T, col_p, col_p_int, col_rho, diff, timestep, g,
+            scalar_exchange, source_T,
         )
         new_specific_humidity[:, col] = _diffuse_profile(
-            col_q, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
+            col_q, col_p, col_p_int, col_rho, diff, timestep, g,
+            scalar_exchange, source_q,
         )
         new_northward_wind[:, col] = _diffuse_profile(
-            col_v, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
+            col_v, col_p, col_p_int, col_rho, diff, timestep, g,
+            wind_exchange, 0.0,
         )
         new_eastward_wind[:, col] = _diffuse_profile(
-            col_u, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
+            col_u, col_p, col_p_int, col_rho, diff, timestep, g,
+            wind_exchange, 0.0,
         )
+
+        applied_sensible_flux[col] = Cp * bulk_conductance * (
+            col_Ts - new_air_temperature[0, col]
+        )
+        applied_latent_flux[col] = Lv * bulk_conductance * (
+            col_qs - new_specific_humidity[0, col]
+        )
+        # Post-solve layer-0 winds, so the stress equals the momentum the
+        # column actually lost. The surface value for momentum is no-slip
+        # (X_s == 0), hence no (0 - u) difference here -- just the drag.
+        north_wind_stress[col] = (
+            bulk_conductance * new_northward_wind[0, col]
+        )
+        east_wind_stress[col] = bulk_conductance * new_eastward_wind[0, col]
+
+
+_FLUX_MODES = {None: 0, 'bulk': 1, 'external': 2}
 
 
 class SimpleBoundaryLayer(Stepper):
@@ -243,11 +287,29 @@ class SimpleBoundaryLayer(Stepper):
         'boundary_layer_height': {'dims': ['*'], 'units': 'm'},
     }
 
-    def __init__(self, von_karman_constant=0.4, roughness_length=0.0000321,
-                 specific_fraction=0.1, reference_pressure=100000,
-                 critical_richardson_number=1, **kwargs):
+    def __init__(self, surface_fluxes='bulk', von_karman_constant=0.4,
+                 roughness_length=0.0000321, specific_fraction=0.1,
+                 reference_pressure=100000, critical_richardson_number=1,
+                 **kwargs):
         """
         Args:
+            surface_fluxes: how surface fluxes enter the lowest model level.
+
+                * ``'bulk'`` (default): the component computes Frierson (2006)
+                  bulk fluxes of heat, moisture and momentum from its own
+                  exchange coefficient and applies them implicitly. It then
+                  reports the applied heat and moisture fluxes as diagnostics.
+                * ``'external'``: ``surface_upward_sensible_heat_flux`` and
+                  ``surface_upward_latent_heat_flux`` become required inputs and
+                  are applied as prescribed fluxes. Momentum still uses the
+                  internal bulk drag.
+                * ``None``: no surface exchange at all. The diffusion has
+                  no-flux boundaries and conserves every column integral. A
+                  separate surface-flux component must supply the fluxes.
+
+                Pairing ``'bulk'`` with a component that already applies
+                surface fluxes -- ``SimplePhysics(surface_fluxes=True)``, which
+                is its default -- applies them twice.
             von_karman_constant: von Karman constant k.
             roughness_length: surface roughness length z0 (m).
             specific_fraction: surface-layer fraction fb of the boundary
@@ -257,11 +319,31 @@ class SimpleBoundaryLayer(Stepper):
             critical_richardson_number: critical Richardson number Ric that
                 caps the diffusion and sets the boundary-layer top.
         """
+        if surface_fluxes not in _FLUX_MODES:
+            raise ValueError(
+                "surface_fluxes must be 'bulk', 'external' or None, got %r"
+                % (surface_fluxes,)
+            )
+        self._surface_fluxes = surface_fluxes
+        self._flux_mode = _FLUX_MODES[surface_fluxes]
         self._k = von_karman_constant
         self._z0 = roughness_length
         self._fb = specific_fraction
         self._P0 = reference_pressure
         self._Ric = critical_richardson_number
+
+        if surface_fluxes == 'bulk':
+            # Instance-level override: only bulk mode reports the fluxes it
+            # applied. In 'external' mode these names are inputs, so they must
+            # not also be diagnostics.
+            self.diagnostic_properties = dict(self.diagnostic_properties)
+            self.diagnostic_properties['surface_upward_sensible_heat_flux'] = {
+                'dims': ['*'], 'units': 'W m^-2',
+            }
+            self.diagnostic_properties['surface_upward_latent_heat_flux'] = {
+                'dims': ['*'], 'units': 'W m^-2',
+            }
+
         self._update_constants()
         super(SimpleBoundaryLayer, self).__init__(**kwargs)
 
@@ -271,6 +353,7 @@ class SimpleBoundaryLayer(Stepper):
             'heat_capacity_of_dry_air_at_constant_pressure', 'J kg^-1 K^-1'
         )
         self._g = get_constant('gravitational_acceleration', 'm s^-2')
+        self._Lv = get_constant('latent_heat_of_condensation', 'J kg^-1')
 
     def array_call(self, state, timestep):
         """Diffuse temperature, humidity and wind profiles for each column."""
@@ -285,8 +368,24 @@ class SimpleBoundaryLayer(Stepper):
 
         params = BoundaryLayerParams(
             Rd=self._Rd, Cp=self._Cp, g=self._g, k=self._k, z0=self._z0,
-            fb=self._fb, P0=self._P0, Ric=self._Ric,
+            fb=self._fb, P0=self._P0, Ric=self._Ric, Lv=self._Lv,
         )
+
+        # numba needs real arrays for every branch, so unused slots are zeros.
+        zeros = np.zeros(num_cols)
+        if self._flux_mode == 2:
+            sensible_flux = state['surface_upward_sensible_heat_flux']
+            latent_flux = state['surface_upward_latent_heat_flux']
+        else:
+            sensible_flux = zeros
+            latent_flux = zeros
+
+        if self._flux_mode == 1:
+            applied_sensible = diagnostics['surface_upward_sensible_heat_flux']
+            applied_latent = diagnostics['surface_upward_latent_heat_flux']
+        else:
+            applied_sensible = np.zeros(num_cols)
+            applied_latent = np.zeros(num_cols)
 
         _boundary_layer_kernel(
             state['air_temperature'],
@@ -298,6 +397,8 @@ class SimpleBoundaryLayer(Stepper):
             state['surface_specific_humidity'],
             state['northward_wind'],
             state['eastward_wind'],
+            sensible_flux,
+            latent_flux,
             new_state['air_temperature'],
             new_state['specific_humidity'],
             new_state['northward_wind'],
@@ -305,9 +406,12 @@ class SimpleBoundaryLayer(Stepper):
             diagnostics['northward_wind_stress'],
             diagnostics['eastward_wind_stress'],
             diagnostics['boundary_layer_height'],
+            applied_sensible,
+            applied_latent,
             params,
             num_cols,
             timestep.total_seconds(),
+            self._flux_mode,
         )
 
         return diagnostics, new_state
