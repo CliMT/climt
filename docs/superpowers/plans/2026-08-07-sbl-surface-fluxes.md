@@ -1452,18 +1452,14 @@ conda run -n climt env NUMBA_DISABLE_JIT=1 python -m pytest tests/test_simple_bo
 
 Expected: pass.
 
-- [ ] **Step 4: Regenerate the knowledge graph**
+- [x] **Step 4: Regenerate the knowledge graph** — ~~superseded~~
 
-```bash
-conda run -n climt graphify update . && conda run -n climt python scripts/augment_graph.py
-```
+Dropped. graphify was removed from the repo during this task (`graphify-out/`
+and `CLAUDE.md` deleted, `graphify-out/` added to `.gitignore`,
+`scripts/augment_graph.py` kept for a possible revival). There is no graph left
+to regenerate.
 
-- [ ] **Step 5: Commit**
-
-```bash
-git add graphify-out/
-git commit -m "chore(graphify): regenerate graph after the SBL surface-flux work"
-```
+- [x] **Step 5: Commit** — done as the graphify-removal commit instead.
 
 ---
 
