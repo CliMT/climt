@@ -343,6 +343,20 @@ class SimpleBoundaryLayer(Stepper):
             self.diagnostic_properties['surface_upward_latent_heat_flux'] = {
                 'dims': ['*'], 'units': 'W m^-2',
             }
+        elif surface_fluxes == 'external':
+            # Instance-level override: only external mode consumes fluxes
+            # computed by a separate surface component. The fluxes were
+            # computed with that component's own drag coefficient (e.g.
+            # BucketHydrology's bulk_coefficient=0.0011), which differs from
+            # this component's Monin-Obukhov C. That inconsistency is inherent
+            # to the modular split and is not reconciled here.
+            self.input_properties = dict(self.input_properties)
+            self.input_properties['surface_upward_sensible_heat_flux'] = {
+                'dims': ['*'], 'units': 'W m^-2',
+            }
+            self.input_properties['surface_upward_latent_heat_flux'] = {
+                'dims': ['*'], 'units': 'W m^-2',
+            }
 
         self._update_constants()
         super(SimpleBoundaryLayer, self).__init__(**kwargs)

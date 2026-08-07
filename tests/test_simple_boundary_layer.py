@@ -242,7 +242,7 @@ def test_bulk_wind_stress_uses_the_post_solve_layer_zero_wind():
     diagnostics, new_state = component(state, timestep=timestep)
 
     tau = _scalar(diagnostics['eastward_wind_stress'])
-    u_new_0 = np.asarray(new_state['eastward_wind'])[0]
+    u_new_0 = _scalar(np.asarray(new_state['eastward_wind'])[0])
     momentum_lost = before - _column_momentum(new_state, dp, 'eastward_wind')
     kappa = momentum_lost / (u_new_0 * dt)
 
@@ -319,3 +319,119 @@ def test_none_mode_conserves_over_a_warm_wet_surface():
     assert np.isclose(enthalpy_after, enthalpy_before, rtol=1e-12)
     assert np.isclose(water_after, water_before, rtol=1e-12)
     assert np.asarray(new_state['air_temperature'])[0] == pytest.approx(250.0)
+
+
+# -------------------------------------------------------- external physics
+
+def test_external_mode_requires_the_flux_inputs():
+    c = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    assert 'surface_upward_sensible_heat_flux' in c.input_properties
+    assert 'surface_upward_latent_heat_flux' in c.input_properties
+    assert (
+        c.input_properties['surface_upward_latent_heat_flux']['units']
+        == 'W m^-2'
+    )
+    # they are inputs, not diagnostics -- the two must not collide
+    assert 'surface_upward_sensible_heat_flux' not in c.diagnostic_properties
+
+
+def test_external_mode_applies_prescribed_fluxes_exactly():
+    _, _, lv = _constants()
+    component = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    state = _column_state(component)
+    np.asarray(state['surface_upward_sensible_heat_flux'])[:] = 50.0
+    np.asarray(state['surface_upward_latent_heat_flux'])[:] = 100.0
+
+    dp = _layer_mass(state)
+    enthalpy_before, water_before = _column_budgets(state, dp)
+    timestep = timedelta(seconds=1200)
+    _, new_state = component(state, timestep=timestep)
+    enthalpy_after, water_after = _column_budgets(new_state, dp)
+    dt = timestep.total_seconds()
+
+    assert np.isclose(enthalpy_after - enthalpy_before, 50.0 * dt, rtol=1e-10)
+    assert np.isclose(
+        water_after - water_before, 100.0 * dt / lv, rtol=1e-10
+    )
+
+
+def test_external_mode_zero_fluxes_conserve():
+    component = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    state = _column_state(component)
+    np.asarray(state['specific_humidity'])[:] = 0.005
+    dp = _layer_mass(state)
+    enthalpy_before, water_before = _column_budgets(state, dp)
+
+    _, new_state = component(state, timestep=timedelta(seconds=1200))
+    enthalpy_after, water_after = _column_budgets(new_state, dp)
+
+    assert np.isclose(enthalpy_after, enthalpy_before, rtol=1e-12)
+    assert np.isclose(water_after, water_before, rtol=1e-12)
+
+
+def test_external_mode_still_applies_bulk_momentum_drag():
+    component = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    state = _warm_wet_surface_state(component)
+    # fluxes stay zero; only drag should act
+    u_before = np.asarray(state['eastward_wind'])[0]
+    _, new_state = component(state, timestep=timedelta(seconds=1200))
+    assert abs(np.asarray(new_state['eastward_wind'])[0]) < abs(u_before)
+
+
+def test_external_momentum_budget_closes_against_the_stress_diagnostic():
+    """Momentum is bulk-internal in external mode, so its budget closes too."""
+    component = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    state = _warm_wet_surface_state(component)
+    np.asarray(state['northward_wind'])[:] = -4.0
+    np.asarray(state['surface_upward_sensible_heat_flux'])[:] = 50.0
+    np.asarray(state['surface_upward_latent_heat_flux'])[:] = 100.0
+    dp = _layer_mass(state)
+
+    timestep = timedelta(seconds=1200)
+    dt = timestep.total_seconds()
+    before = {
+        name: _column_momentum(state, dp, name)
+        for name in ('eastward_wind', 'northward_wind')
+    }
+    diagnostics, new_state = component(state, timestep=timestep)
+
+    for name, stress in (('eastward_wind', 'eastward_wind_stress'),
+                         ('northward_wind', 'northward_wind_stress')):
+        change = _column_momentum(new_state, dp, name) - before[name]
+        assert np.isclose(
+            change, -_scalar(diagnostics[stress]) * dt, rtol=1e-10
+        ), name
+
+
+def test_bulk_and_external_agree_when_fed_the_bulk_fluxes():
+    bulk = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    external = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    # build the state from the external component so it carries the flux
+    # fields; bulk simply ignores the extras.
+    state = _warm_wet_surface_state(external)
+
+    diagnostics, bulk_new = bulk(state, timestep=timedelta(seconds=1200))
+
+    np.asarray(state['surface_upward_sensible_heat_flux'])[:] = _scalar(
+        diagnostics['surface_upward_sensible_heat_flux']
+    )
+    np.asarray(state['surface_upward_latent_heat_flux'])[:] = _scalar(
+        diagnostics['surface_upward_latent_heat_flux']
+    )
+    external_diagnostics, external_new = external(
+        state, timestep=timedelta(seconds=1200)
+    )
+
+    for name in ('air_temperature', 'specific_humidity',
+                 'eastward_wind', 'northward_wind'):
+        assert np.allclose(
+            np.asarray(bulk_new[name]), np.asarray(external_new[name]),
+            rtol=1e-10, atol=1e-12,
+        ), name
+    # momentum is bulk-internal in both modes, so the stresses match too
+    for name in ('eastward_wind_stress', 'northward_wind_stress'):
+        assert np.isclose(
+            _scalar(diagnostics[name]),
+            _scalar(external_diagnostics[name]),
+            rtol=1e-10,
+        ), name
