@@ -1312,7 +1312,7 @@ This task must both fix that and move the boundary layer to `surface_fluxes='ext
 
 **This task is a real integration check, not a mechanical edit.** The verification step runs the example. If it fails, do not paper over it — see Step 4.
 
-- [ ] **Step 1: Wrap both `Stepper`s and switch to external fluxes**
+- [x] **Step 1: Wrap both `Stepper`s and switch to external fluxes**
 
 In `examples/full_gcm_land_ocean_ice.py`, change the sympl import (line 37) to:
 
@@ -1350,7 +1350,7 @@ Replace lines 50–63 of `build_model` with:
     )
 ```
 
-- [ ] **Step 2: Update the module docstring**
+- [x] **Step 2: Update the module docstring**
 
 Replace lines 14–16 of the docstring with:
 
@@ -1361,7 +1361,7 @@ Replace lines 14–16 of the docstring with:
                        adds its own bulk momentum drag.
 ```
 
-- [ ] **Step 3: Run the example's smoke test**
+- [x] **Step 3: Run the example's smoke test**
 
 ```bash
 conda run -n climt python examples/full_gcm_land_ocean_ice.py --steps 6 --nx 32 --ny 16
@@ -1369,7 +1369,19 @@ conda run -n climt python examples/full_gcm_land_ocean_ice.py --steps 6 --nx 32 
 
 Expected: it runs to "Done. Everything ran and stayed finite." A reduced grid keeps the check quick; the point is that `build_model()` no longer raises and the coupled step is finite.
 
-- [ ] **Step 4: If Step 3 fails, take the documented fallback**
+- [ ] **Step 4: If Step 3 fails, take the documented fallback** — ~~not needed~~
+
+Step 3 passed on the primary path: `TimeDifferencingWrapper(BucketHydrology())`
+inside the dycore was accepted and the run stayed finite. The fallback below was
+**not** taken. Two extra fixes were needed that this task did not anticipate:
+
+1. `GridScaleCondensation` is a `Stepper` too, so it also needed
+   `TimeDifferencingWrapper`.
+2. `get_default_state([dycore, mask, ocean, insolation], ...)` raised
+   `InvalidPropertyDictError` on `latitude` — `GFSDynamicalCore` declares it
+   `['lat', 'lon']` while `LandMask`/`Instellation` declare `['*']`. The state is
+   now seeded from `[dycore]` alone, matching
+   `examples/full_radiation_with_insolation_gcm.py`.
 
 `TimeDifferencingWrapper(BucketHydrology())` turns the bucket's `surface_temperature` and `lwe_thickness_of_soil_moisture_content` outputs into tendencies that `GFSDynamicalCore` must be willing to integrate. If it rejects them, or the run goes non-finite because of them, move the bucket out of the dycore and into the time loop instead of forcing it — the bucket is a surface component and belongs there anyway. Note this does **not** remove the boundary layer's flux lag: the boundary layer stays inside the dycore, so it still reads the previous step's fluxes.
 
@@ -1409,7 +1421,7 @@ Update the two `build_model(...)` / `step(...)` call sites in `main()` (lines 15
 
 **Report which path you took and paste the failure output if you took the fallback.** Do not silently change the physics.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add examples/full_gcm_land_ocean_ice.py
@@ -1426,15 +1438,23 @@ git commit -m "fix(example): wrap the Stepper physics and drive the atmosphere w
 **Interfaces:**
 - Consumes: the complete implementation from Tasks 1–5.
 
-- [ ] **Step 1: Run the full test suite**
+- [x] **Step 1: Run the full test suite**
 
 ```bash
 conda run -n climt python -m pytest tests/ -q
 ```
 
+Result: **606 passed, 2 skipped, 1 failed** in 17m29s. The one failure is
+`tests/test_hd209458b_reproduction.py::test_hd209458b_equilibrium_profile`
+("FPI did not converge after 20 iterations in q & T"), which exercises
+`SimplePhysics` + CORK and never imports `SimpleBoundaryLayer`. No commit in
+this plan touches either. **The baseline comparison below was not run** — the
+human partner asked for that test to be left alone — so it is untouched by this
+work by inspection, not by measurement.
+
 Expected: no failures. Compare against the pre-change baseline if anything looks pre-broken — `git stash` and re-run to confirm a failure is not yours before investigating.
 
-- [ ] **Step 2: Confirm no `scipy` import crept in**
+- [x] **Step 2: Confirm no `scipy` import crept in**
 
 ```bash
 conda run -n climt python -m pytest tests/test_no_scipy_import.py tests/test_pure_wheel_build.py -q
@@ -1442,7 +1462,7 @@ conda run -n climt python -m pytest tests/test_no_scipy_import.py tests/test_pur
 
 Expected: pass. The Pyodide two-wheel strategy depends on this.
 
-- [ ] **Step 3: Check the numba-disabled path still works**
+- [x] **Step 3: Check the numba-disabled path still works**
 
 The `jit_compile` decorator falls through to plain Python when numba is absent. Confirm the new kernel branch is not numba-only:
 
