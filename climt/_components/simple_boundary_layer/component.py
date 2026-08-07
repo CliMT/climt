@@ -40,11 +40,25 @@ def _richardson_diffusivity(Ri_a, u_fric, C, z, params):
 
 
 @jit_compile
-def _diffuse_profile(profile, p, p_int, rho, diff, dt, g):
-    """Implicit vertical diffusion of ``profile`` with no-flux boundaries.
+def _diffuse_profile(
+    profile, p, p_int, rho, diff, dt, g, surface_exchange, surface_source
+):
+    """Implicit vertical diffusion of ``profile`` with a surface boundary term.
 
     Assembles the tridiagonal system and solves it with the shared Thomas
     solver. ``rho``/``diff`` have length ``num_layers - 1``.
+
+    The lowest layer carries the surface boundary condition. With
+    ``dp0 = p_int[0] - p_int[1]`` the layer-0 mass:
+
+    * ``surface_exchange`` is the implicit bulk-exchange coefficient
+      ``beta = g * rho_s * C * |v| * dt / dp0``, added to ``diag[0]``. It makes
+      an unknown-dependent flux ``rho_s C |v| (X_s - X_0)`` backward-Euler.
+    * ``surface_source`` is the explicit right-hand-side addition: ``beta * X_s``
+      for that bulk flux, or ``g * dt * F / dp0`` for a prescribed flux ``F``
+      (positive upward into the atmosphere).
+
+    Both zero reproduces the no-flux solve.
     """
     num_layers = profile.shape[0]
     diag_m = np.zeros(num_layers)
@@ -64,7 +78,10 @@ def _diffuse_profile(profile, p, p_int, rho, diff, dt, g):
                 / (p_int[i] - p_int[i + 1])
             )
         diag[i] = 1.0 + diag_m[i] + diag_p[i]
-    return solve_tridiagonal(-diag_m[1:], diag, -diag_p[:-1], profile)
+    diag[0] = diag[0] + surface_exchange
+    rhs = profile.copy()
+    rhs[0] = rhs[0] + surface_source
+    return solve_tridiagonal(-diag_m[1:], diag, -diag_p[:-1], rhs)
 
 
 @jit_compile(parallel=True)
@@ -171,16 +188,16 @@ def _boundary_layer_kernel(
                 )
 
         new_air_temperature[:, col] = _diffuse_profile(
-            col_T, col_p, col_p_int, col_rho, diff, timestep, g
+            col_T, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
         )
         new_specific_humidity[:, col] = _diffuse_profile(
-            col_q, col_p, col_p_int, col_rho, diff, timestep, g
+            col_q, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
         )
         new_northward_wind[:, col] = _diffuse_profile(
-            col_v, col_p, col_p_int, col_rho, diff, timestep, g
+            col_v, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
         )
         new_eastward_wind[:, col] = _diffuse_profile(
-            col_u, col_p, col_p_int, col_rho, diff, timestep, g
+            col_u, col_p, col_p_int, col_rho, diff, timestep, g, 0.0, 0.0
         )
 
 
