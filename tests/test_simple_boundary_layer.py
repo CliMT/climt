@@ -435,3 +435,141 @@ def test_bulk_and_external_agree_when_fed_the_bulk_fluxes():
             _scalar(external_diagnostics[name]),
             rtol=1e-10,
         ), name
+
+
+def test_external_mode_applies_downward_fluxes_exactly():
+    """Negative (downward) prescribed fluxes must be applied with equal exactness."""
+    _, _, lv = _constants()
+    component = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    state = _column_state(component)
+    # start moist enough that a downward latent flux cannot drive q negative
+    np.asarray(state['specific_humidity'])[:] = 0.005
+    np.asarray(state['surface_upward_sensible_heat_flux'])[:] = -30.0
+    np.asarray(state['surface_upward_latent_heat_flux'])[:] = -20.0
+
+    dp = _layer_mass(state)
+    enthalpy_before, water_before = _column_budgets(state, dp)
+    timestep = timedelta(seconds=1200)
+    _, new_state = component(state, timestep=timestep)
+    enthalpy_after, water_after = _column_budgets(new_state, dp)
+    dt = timestep.total_seconds()
+
+    assert np.isclose(enthalpy_after - enthalpy_before, -30.0 * dt, rtol=1e-10)
+    assert np.isclose(water_after - water_before, -20.0 * dt / lv, rtol=1e-10)
+    # the budget above is only meaningful while the humidity stays physical
+    assert np.all(np.asarray(new_state['specific_humidity']) > 0.0)
+
+
+def test_bulk_flux_diagnostics_are_negative_over_a_cold_dry_surface():
+    """Both diagnosed bulk fluxes point downward when the surface is cold and dry."""
+    _, _, lv = _constants()
+    component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+    state = _column_state(component)
+    np.asarray(state['air_temperature'])[:] = 290.0
+    np.asarray(state['specific_humidity'])[:] = 0.010
+    np.asarray(state['eastward_wind'])[:] = 10.0
+    np.asarray(state['northward_wind'])[:] = 0.0
+    np.asarray(state['surface_temperature'])[:] = 250.0
+    np.asarray(state['surface_specific_humidity'])[:] = 0.001
+
+    dp = _layer_mass(state)
+    enthalpy_before, water_before = _column_budgets(state, dp)
+    timestep = timedelta(seconds=1200)
+    diagnostics, new_state = component(state, timestep=timestep)
+    enthalpy_after, water_after = _column_budgets(new_state, dp)
+
+    sh = _scalar(diagnostics['surface_upward_sensible_heat_flux'])
+    lh = _scalar(diagnostics['surface_upward_latent_heat_flux'])
+    dt = timestep.total_seconds()
+
+    assert sh < 0.0
+    assert lh < 0.0
+    # a self-consistent but inverted sign convention must not survive this
+    assert np.isclose(enthalpy_after - enthalpy_before, sh * dt, rtol=1e-10)
+    assert np.isclose(water_after - water_before, lh * dt / lv, rtol=1e-10)
+
+
+# ---------------------------------------------------------- multi-column
+
+def _grid_state(component, nx=4, ny=3, nz=20):
+    return climt.get_default_state(
+        [component], grid_state=climt.get_grid(nx=nx, ny=ny, nz=nz)
+    )
+
+
+def _per_column_layer_mass(state):
+    """dp with shape (nz, ncol); columns flattened as the component flattens them."""
+    p_int = np.asarray(state['air_pressure_on_interface_levels'])
+    p_int = p_int.reshape(p_int.shape[0], -1)
+    return p_int[:-1] - p_int[1:]
+
+
+def _per_column_budgets(state, dp, name):
+    """Mass-weighted column integral of ``state[name]``, one entry per column."""
+    g, _, _ = _constants()
+    field = np.asarray(state[name])
+    field = field.reshape(field.shape[0], -1)
+    return np.sum(field * dp, axis=0) / g
+
+
+def test_external_mode_multi_column_applies_per_column_fluxes():
+    """Each column gets exactly its own prescribed flux, not column zero's."""
+    _, cp, lv = _constants()
+    component = climt.SimpleBoundaryLayer(surface_fluxes='external')
+    state = _grid_state(component)
+    np.asarray(state['specific_humidity'])[:] = 0.005
+
+    sh_field = np.asarray(state['surface_upward_sensible_heat_flux'])
+    lh_field = np.asarray(state['surface_upward_latent_heat_flux'])
+    ncol = sh_field.size
+    sh_col = np.linspace(-40.0, 80.0, ncol)
+    lh_col = np.linspace(120.0, -30.0, ncol)
+    sh_field[:] = sh_col.reshape(sh_field.shape)
+    lh_field[:] = lh_col.reshape(lh_field.shape)
+    # make the columns differ in kappa as well as in prescribed flux
+    ts = np.asarray(state['surface_temperature'])
+    ts[:] = np.linspace(275.0, 305.0, ncol).reshape(ts.shape)
+    u = np.asarray(state['eastward_wind'])
+    u[:] = np.linspace(2.0, 15.0, ncol).reshape((1,) + u.shape[1:])
+
+    dp = _per_column_layer_mass(state)
+    enthalpy_before = cp * _per_column_budgets(state, dp, 'air_temperature')
+    water_before = _per_column_budgets(state, dp, 'specific_humidity')
+    timestep = timedelta(seconds=1200)
+    _, new_state = component(state, timestep=timestep)
+    enthalpy_after = cp * _per_column_budgets(new_state, dp, 'air_temperature')
+    water_after = _per_column_budgets(new_state, dp, 'specific_humidity')
+    dt = timestep.total_seconds()
+
+    assert np.allclose(enthalpy_after - enthalpy_before, sh_col * dt,
+                       rtol=1e-10)
+    assert np.allclose(water_after - water_before, lh_col * dt / lv, rtol=1e-10)
+    assert np.all(np.asarray(new_state['specific_humidity']) > 0.0)
+
+
+def test_none_mode_multi_column_conserves_every_column():
+    """With surface exchange off, every column of a grid conserves exactly."""
+    component = climt.SimpleBoundaryLayer(surface_fluxes=None)
+    state = _grid_state(component)
+    ts = np.asarray(state['surface_temperature'])
+    ncol = ts.size
+    ts[:] = np.linspace(260.0, 310.0, ncol).reshape(ts.shape)
+    u = np.asarray(state['eastward_wind'])
+    u[:] = np.linspace(2.0, 15.0, ncol).reshape((1,) + u.shape[1:])
+    v = np.asarray(state['northward_wind'])
+    v[:] = np.linspace(-8.0, 4.0, ncol).reshape((1,) + v.shape[1:])
+    q = np.asarray(state['specific_humidity'])
+    q[:] = np.linspace(0.002, 0.012, ncol).reshape((1,) + q.shape[1:])
+
+    dp = _per_column_layer_mass(state)
+    before = {
+        name: _per_column_budgets(state, dp, name)
+        for name in ('air_temperature', 'specific_humidity',
+                     'northward_wind', 'eastward_wind')
+    }
+    _, new_state = component(state, timestep=timedelta(seconds=1200))
+
+    for name, expected in before.items():
+        after = _per_column_budgets(new_state, dp, name)
+        assert np.allclose(after, expected, rtol=1e-12), name
+        assert np.all(np.isfinite(np.asarray(new_state[name]))), name
