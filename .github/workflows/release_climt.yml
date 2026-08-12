@@ -59,6 +59,7 @@ jobs:
         if: ${{ !github.event.release.prerelease }}
         needs:
             - build_wheels
+            - build-pure-wheel
         runs-on: ubuntu-latest
         environment:
             name: pypi
@@ -100,3 +101,14 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                   files: dist/*-py3-none-any.whl
+
+            # Hand the pure wheel to publish-to-pypi. The name must match that
+            # job's `python-package-distributions-*` download pattern, so the
+            # py3-none-any wheel is uploaded to PyPI alongside the platform
+            # wheels. Without this the pure wheel only ever reached the GitHub
+            # release, whose assets are CORS-blocked and so unusable by micropip.
+            - name: Store the pure wheel for PyPI
+              uses: actions/upload-artifact@v4
+              with:
+                  name: python-package-distributions-pure
+                  path: dist/*-py3-none-any.whl

@@ -91,8 +91,10 @@ debug_data/
 
 # Quarto notebook render intermediates
 docs/**/*_files/
+docs/experiments/**/index.html
+docs/experiments/**/*.out.ipynb
 
-# Local AI-assistant configs (CLAUDE.md is intentionally tracked)
+# Local AI-assistant configs (CLAUDE.md was dropped with graphify)
 .claude/
 .gemini/
 GEMINI.md

@@ -11,8 +11,9 @@ would make this file include itself.
 It imports numpy/matplotlib/climt/sympl and defines
 `integrate_to_equilibrium(...)` for the RCE pages. The climt wheel itself is
 installed by micropip at document setup via the including page's
-`pyodide: packages:` front-matter block (a CORS-served localhost wheel locally;
-the GitHub release asset for the published site).
+`pyodide: packages:` front-matter block — resolved from PyPI, pinned to a
+released version. (GitHub release assets cannot be used: they send no CORS
+headers. A CORS-served localhost wheel is the way to preview unreleased work.)
 
 The `integrate_to_equilibrium` body below is duplicated in the natively
 testable twin `docs/radiative-transfer/_live/rce_helpers.py`; keep the two
