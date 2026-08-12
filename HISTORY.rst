@@ -5,6 +5,16 @@ History
 Unreleased
 ----------
 
+v.0.30.0
+--------
+
+* climt now publishes a **pure-Python wheel** (``py3-none-any``) to PyPI
+  alongside the compiled platform wheels. It carries no Fortran/Cython
+  extensions, so the components that need them raise a clear error on use
+  (``climt.has_fortran_extensions()`` reports availability), but the rest of
+  the package — including the CORK correlated-k radiation scheme — works
+  anywhere Python runs, including in the browser under Pyodide. pip continues
+  to prefer the compiled wheel wherever one is published for your platform.
 * New land-surface physics: ``BucketHydrology`` gains an optional
   two-layer (deep + shallow) mode via ``num_layers=2``, adding
   ``deep_soil_moisture_content`` / ``deep_soil_temperature`` stores and

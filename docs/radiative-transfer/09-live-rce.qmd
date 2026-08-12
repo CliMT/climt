@@ -4,12 +4,13 @@ format: live-html
 engine: jupyter
 pyodide:
   packages:
-    # Installed by micropip at document setup, before any cell runs.
-    # NOTE: GitHub *release assets* do not send CORS headers, so micropip cannot
-    # fetch them from the browser. Until the wheel is hosted somewhere
-    # CORS-enabled (PyPI, or bundled same-origin with the site), use a local
-    # CORS server for previewing (see the collapsed note below).
-    - "http://127.0.0.1:8912/climt-0.20.0-py3-none-any.whl"
+    # Installed by micropip at document setup, before any cell runs. micropip
+    # resolves this from PyPI, which is CORS-enabled — unlike GitHub release
+    # assets, which are not and so cannot be fetched from the browser.
+    # Pinned so the page always runs against the climt it was written for; bump
+    # on release. To preview unreleased local changes instead, swap in a
+    # CORS-served localhost wheel (see the collapsed note below).
+    - "climt==0.30.0"
 ---
 
 ::: {.callout-note}
@@ -19,19 +20,19 @@ This page runs **climt itself** in your browser via Pyodide — no install, no
 server-side compute. The first cell downloads a ~6 MB pure-Python wheel and
 boots the numpy/matplotlib stack, so give it a few seconds.
 
-**Local preview:** the wheel is installed at document setup from the
-`pyodide: packages:` URL in this page's front matter. The Pyodide worker fetches
-it cross-origin, so it must be served with CORS headers (plain
-`python -m http.server` will *not* work, and GitHub release assets don't send
-CORS either). Build the pure wheel and serve it before `quarto preview`:
+The wheel is installed at document setup from the `pyodide: packages:` entry in
+this page's front matter, which micropip resolves from PyPI — pinned to the
+released version this page was written against.
+
+**Previewing unreleased changes:** to run the page against your working copy
+rather than the released wheel, build the pure wheel and serve it *with CORS
+headers* (plain `python -m http.server` will **not** work, and GitHub release
+assets don't send CORS either), then point the front matter at it:
 
 ```sh
 CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
 python docs/radiative-transfer/_live/serve_wheel.py /tmp/climt_wh 8912
 ```
-
-The published site will host the wheel from a CORS-enabled location (PyPI, or
-bundled with the site) once the next climt release is out.
 :::
 
 {{< include ../_includes/climt-live-setup.qmd >}}
