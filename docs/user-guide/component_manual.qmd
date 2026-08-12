@@ -1,0 +1,32 @@
+---
+title: "Component Manual"
+---
+
+Detailed documentation for specific climt components.
+
+**Radiation & convection**
+
+- [RRTMG clouds](rrtmg_clouds.qmd) — Using RRTMG radiation with cloud properties
+- [Gray longwave radiation](gray_radiation.qmd) — Idealised gray LW and the Frierson (2006) optical depth
+- [Emanuel convection](emanuel_convection.qmd) — The Emanuel (1991) convection scheme
+- [Dry convective adjustment](dry_convective_adjustment.qmd) — Conservative adjustment to the dry adiabat
+- [Grid-scale condensation](grid_scale_condensation.qmd) — Large-scale (stratiform) condensation and precipitation
+
+**Solar & idealised forcing**
+
+- [Solar insolation and zenith angle](insolation.qmd) — `BergerSolarInsolation` and `Instellation`
+- [Held–Suarez forcing](held_suarez.qmd) — The Held & Suarez (1994) dynamical-core benchmark
+- [DCMIP initial conditions](dcmip.qmd) — Analytic initial states for dynamical-core tests
+
+**Surface, ocean & land**
+
+- [LandMask](land_mask.qmd) — Setting land/sea/land-ice geography (`area_type`)
+- [Sea ice and land ice](sea_land_ice.qmd) — `SeaIce`, `LandIce`, the shared column solver, and the deprecated `IceSheet`
+- [Slab ocean and heat transport](slab_ocean.qmd) — `SlabSurface` energy balance, prescribed q-flux, and Ekman transport
+- [DataOcean](data_ocean.qmd) — Prescribed (AMIP-style) sea-surface temperatures
+- [BucketHydrology](bucket_hydrology.qmd) — One- and two-layer bucket land hydrology
+- [SecondBEST](second_best.qmd) — Modular intermediate-complexity BEST land surface model
+
+**Idealised / intermediate physics**
+
+- [SimplePhysics](simple_physics.qmd) — Reed & Jablonowski (2012) simple-physics package

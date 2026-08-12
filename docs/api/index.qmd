@@ -1,0 +1,70 @@
+# API Reference {.doc .doc-index}
+
+## Radiation
+
+Longwave and shortwave radiation components.
+
+| | |
+| --- | --- |
+| [RRTMGLongwave](RRTMGLongwave.qmd#climt.RRTMGLongwave) | The Rapid Radiative Transfer Model (RRTMG). |
+| [RRTMGShortwave](RRTMGShortwave.qmd#climt.RRTMGShortwave) | The Rapid Radiative Transfer Model (RRTMG). |
+| [GrayLongwaveRadiation](GrayLongwaveRadiation.qmd#climt.GrayLongwaveRadiation) |  |
+| [Frierson06LongwaveOpticalDepth](Frierson06LongwaveOpticalDepth.qmd#climt.Frierson06LongwaveOpticalDepth) |  |
+
+## Cork radiation
+
+Non-grey correlated-k (CORK) scheme.
+
+| | |
+| --- | --- |
+| [CorkLongwaveRadiation](CorkLongwaveRadiation.qmd#climt._components.cork.lw.component.CorkLongwaveRadiation) |  |
+| [CorkShortwaveRadiation](CorkShortwaveRadiation.qmd#climt._components.cork.sw.component.CorkShortwaveRadiation) |  |
+
+## Convection & condensation
+
+| | |
+| --- | --- |
+| [EmanuelConvection](EmanuelConvection.qmd#climt.EmanuelConvection) | The Emanuel convection scheme from `[Emanuel and Zivkovic-Rothman]`_ |
+| [DryConvectiveAdjustment](DryConvectiveAdjustment.qmd#climt.DryConvectiveAdjustment) | A conservative scheme to keep the temperature profile close to the |
+| [GridScaleCondensation](GridScaleCondensation.qmd#climt.GridScaleCondensation) | Calculate condensation due to supersaturation of water. |
+
+## Surface & ice
+
+| | |
+| --- | --- |
+| [SlabSurface](SlabSurface.qmd#climt.SlabSurface) | Calculate the surface energy balance. |
+| [IceSheet](IceSheet.qmd#climt.IceSheet) | 1-d snow-ice energy balance model. |
+| [BucketHydrology](BucketHydrology.qmd#climt.BucketHydrology) | Manages surface energy and moisture balance |
+
+## Solar & insolation
+
+| | |
+| --- | --- |
+| [BergerSolarInsolation](BergerSolarInsolation.qmd#climt.BergerSolarInsolation) | Determines solar insolation using spectral solutions for orbital |
+| [Instellation](Instellation.qmd#climt.Instellation) | Calculates the zenith angle and star-planet correction |
+| [HeldSuarez](HeldSuarez.qmd#climt.HeldSuarez) |  |
+
+## Idealised & test physics
+
+| | |
+| --- | --- |
+| [SimplePhysics](SimplePhysics.qmd#climt.SimplePhysics) | Interface to the simple physics package. |
+| [DcmipInitialConditions](DcmipInitialConditions.qmd#climt.DcmipInitialConditions) | Climt interface to the DCMIP initial conditions. |
+
+## State & grid utilities
+
+| | |
+| --- | --- |
+| [get_default_state](get_default_state.qmd#climt.get_default_state) | Retrieves a reasonable initial state for the set of components given. |
+| [get_grid](get_grid.qmd#climt.get_grid) | Args: |
+| [mass_to_volume_mixing_ratio](mass_to_volume_mixing_ratio.qmd#climt.mass_to_volume_mixing_ratio) | g/g or g/kg to mole/mole |
+| [get_interface_values](get_interface_values.qmd#climt.get_interface_values) | Calculate interface values given mid-level values. |
+
+## Constants
+
+| | |
+| --- | --- |
+| [list_available_constants](list_available_constants.qmd#climt.list_available_constants) | Prints all the constants currently registered with sympl. |
+| [set_constants_from_dict](set_constants_from_dict.qmd#climt.set_constants_from_dict) | Modify/Add constants in the library. |
+| [load_atmospheric_properties](load_atmospheric_properties.qmd#climt.load_atmospheric_properties) | Load an atmospheric profile and set sympl constants accordingly. |
+| [reset_atmospheric_properties](reset_atmospheric_properties.qmd#climt.reset_atmospheric_properties) | Restore constants to the state before the last load_atmospheric_properties call. |

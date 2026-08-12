@@ -2,6 +2,108 @@
 History
 =======
 
+Unreleased
+----------
+
+v.0.30.0
+--------
+
+* **Behaviour change** — ``BucketHydrology`` surface fluxes were missing
+  their air-density factors and are now dimensionally correct. The bulk
+  formulae are built from one evaporative mass flux
+  ``E = beta * rho * c_D * U * (q_s - q_a)``, with ``rho`` the density at
+  the lowest model level from the ideal gas law. Consequences:
+
+  - ``surface_upward_sensible_heat_flux`` gains ``rho * c_p`` and is
+    about 1200x larger (it was ~0.05 W m^-2 where tens of W m^-2 are
+    physical).
+  - ``surface_upward_latent_heat_flux`` gains ``rho`` and is about 1.2x
+    larger.
+  - ``evaporation_rate``, declared ``m s^-1``, is now the
+    liquid-water-equivalent depth rate ``E / rho_water`` and is about
+    830x smaller. Previously it returned metres per day rather than
+    millimetres per day, draining the default 0.15 m bucket in roughly
+    90 minutes.
+
+  Soil-moisture and surface-temperature evolution therefore change for
+  any run with non-zero wind. ``air_pressure`` (``[mid_levels, *]``,
+  ``Pa``) is a new required input. The cached regression outputs are
+  unaffected because their default state has zero wind, which zeroed
+  both fluxes regardless; ``tests/test_bucket_fluxes.py`` now covers the
+  flux magnitudes directly.
+* climt now publishes a **pure-Python wheel** (``py3-none-any``) to PyPI
+  alongside the compiled platform wheels. It carries no Fortran/Cython
+  extensions, so the components that need them raise a clear error on use
+  (``climt.has_fortran_extensions()`` reports availability), but the rest of
+  the package — including the CORK correlated-k radiation scheme — works
+  anywhere Python runs, including in the browser under Pyodide. pip continues
+  to prefer the compiled wheel wherever one is published for your platform.
+* **Windows binaries are no longer built, tested or published.** The
+  Windows CI job and the Windows release job (which uploaded a separate
+  mingw-built wheel to PyPI) have both been removed. Windows users now
+  install the pure-Python wheel described above: it needs no compiler,
+  but the Fortran-backed components raise on use — check with
+  ``climt.has_fortran_extensions()``. Building from source on Windows
+  may still work but is unsupported; WSL is the recommended route for
+  the compiled components. Linux (x86_64) and macOS (Apple silicon)
+  compiled wheels are unaffected.
+* New land-surface physics: ``BucketHydrology`` gains an optional
+  two-layer (deep + shallow) mode via ``num_layers=2``, adding
+  ``deep_soil_moisture_content`` / ``deep_soil_temperature`` stores and
+  ``runoff_rate`` diagnostics. The ``num_layers=1`` default is
+  unchanged (bit-for-bit). A stray hardcoded soil-moisture clamp that
+  ignored the configured ``soil_moisture_max`` was also fixed.
+* New component ``SecondBEST``: a modular, intermediate-complexity BEST
+  land-surface model built as a thin ``Stepper`` orchestrator over five
+  swappable process objects (``SoilProperties``, ``SurfaceAlbedo``,
+  ``SurfaceLayer``, ``SurfaceFluxes``, ``SubsurfaceTransport``), each
+  with a ``Best*`` default. Adds a ``soil`` vertical grid, soil-profile
+  state quantities, and registers the ``von_karman_constant``.
+  ``SecondBEST`` also emits stability-consistent screen-level
+  diagnostics on land columns (``air_temperature_at_2m``,
+  ``specific_humidity_at_2m``, ``eastward_wind_at_10m``,
+  ``northward_wind_at_10m``), interpolated between the surface and the
+  lowest model level using the surface layer's own stability profile.
+* New components for ocean/ice surface physics: ``LandMask``,
+  ``SeaIce``, ``LandIce`` and ``DataOcean``, plus a slab-ocean q-flux
+  (prescribed ``ocean_heat_transport_convergence``) and optional Ekman
+  heat-transport convergence in ``SlabSurface`` (``include_ekman``).
+* ``SlabSurface``: when ``include_ekman=True``, the
+  ``ocean_heat_transport_convergence`` diagnostic now reports the TOTAL
+  ocean heat-transport convergence actually applied to sea cells
+  (prescribed q-flux + Ekman), not just the prescribed input. The
+  Ekman-only breakdown is still available separately as
+  ``ekman_heat_transport_convergence``. With the default
+  ``include_ekman=False``, Ekman is zero and this diagnostic is
+  unchanged from prior releases.
+* **Deprecated:** ``IceSheet`` is deprecated in favor of the new
+  ``SeaIce`` (owns ``area_type == "sea_ice"``) and ``LandIce`` (owns
+  ``area_type in ("land", "land_ice")``) components. ``IceSheet`` is
+  now a thin dispatching shim over ``SeaIce``/``LandIce`` kept only for
+  backward compatibility, and emits a ``DeprecationWarning`` on
+  construction. Its numerical output is **not** bit-for-bit identical
+  to the old monolith, even with default arguments, because
+  ``SeaIce``/``LandIce`` carry deliberate defect fixes:
+
+  * The basal boundary condition changed from a hardcoded freezing
+    Dirichlet condition to a prescribed ocean-heat-flux Flux (Neumann)
+    condition (``heat_flux_into_sea_water_due_to_sea_ice``).
+  * Sea-ice thickness is now clamped to be non-negative.
+  * Surface albedo is now configurable rather than hardcoded.
+  * The ``surface_downward_heat_flux_in_sea_ice`` diagnostic is now
+    produced only by the internal ``SeaIce`` instance, so it reads as
+    the registered default of ``0.0`` on ``land``/``land_ice`` columns
+    (previously computed uniformly across ``sea_ice``, ``land_ice``
+    *and* ``land`` columns by the old monolith).
+  * Columns with ``area_type == "sea"`` (owned by neither ``SeaIce``
+    nor ``LandIce``) now pass ``surface_temperature`` straight through
+    from the input instead of taking either sub-component's internally
+    derived proxy value.
+
+  Existing users of ``IceSheet`` should migrate to ``SeaIce`` and
+  ``LandIce`` directly; see their docstrings for further detail on each
+  fix.
+
 v.0.17.0
 --------
 

@@ -2,7 +2,6 @@ import sys
 from datetime import datetime
 
 import numpy as np
-from scipy.interpolate import CubicSpline
 from sympl import (
     DiagnosticComponent,
     combine_component_properties,
@@ -15,6 +14,8 @@ if sys.version_info < (3, 9):
     import importlib_resources
 else:
     import importlib.resources as importlib_resources
+
+from .interpolate import cubic_spline_interpolate
 
 
 def get_atmosphere_grid(grid_state, interface=False, horizontal=False):
@@ -69,6 +70,19 @@ def get_ice_grid(grid_state, interface=False, horizontal=False):
         return (z - 1, y, x), ("ice_mid_levels", y_dim, x_dim)
 
 
+def get_soil_grid(grid_state, interface=False, horizontal=False):
+    y, x = grid_state["latitude"].shape
+    y_dim, x_dim = grid_state["latitude"].dims
+    z = grid_state["height_on_soil_interface_levels"].shape[0]
+
+    if horizontal:
+        return (y, x), (y_dim, x_dim)
+    if interface:
+        return (z, y, x), ("soil_interface_levels", y_dim, x_dim)
+    else:
+        return (z - 1, y, x), ("soil_mid_levels", y_dim, x_dim)
+
+
 def get_scalar_grid(grid_state, interface=False, horizontal=False):
     return (), ()
 
@@ -79,8 +93,47 @@ domain_shape_descriptor = {
     "land": get_land_grid,
     "ocean": get_ocean_grid,
     "ice": get_ice_grid,
+    "soil": get_soil_grid,
     "scalar": get_scalar_grid,
 }
+
+
+# Configurable band counts for default-state generation.  Radiation schemes set
+# these at initialization so that get_default_state() creates arrays with the
+# right band dimension regardless of which scheme is active.
+_num_longwave_bands = None   # None → use RRTMGLongwave.num_longwave_bands (16)
+_num_shortwave_bands = None  # None → use RRTMGShortwave.num_shortwave_bands (14)
+
+
+def set_num_longwave_bands(n):
+    """Configure the longwave band count used by get_default_state().
+
+    Call this at scheme initialization so that default arrays (e.g.
+    ``longwave_optical_thickness_due_to_cloud``) are created with the
+    correct number of bands for the active scheme.
+    """
+    global _num_longwave_bands
+    _num_longwave_bands = int(n)
+
+
+def set_num_shortwave_bands(n):
+    """Configure the shortwave band count used by get_default_state()."""
+    global _num_shortwave_bands
+    _num_shortwave_bands = int(n)
+
+
+def _get_num_longwave_bands():
+    if _num_longwave_bands is not None:
+        return _num_longwave_bands
+    from .._components import RRTMGLongwave
+    return RRTMGLongwave.num_longwave_bands
+
+
+def _get_num_shortwave_bands():
+    if _num_shortwave_bands is not None:
+        return _num_shortwave_bands
+    from .._components import RRTMGShortwave
+    return RRTMGShortwave.num_shortwave_bands
 
 
 class RRTMGLongwaveDefaultValues(DiagnosticComponent):
@@ -107,19 +160,12 @@ class RRTMGLongwaveDefaultValues(DiagnosticComponent):
     }
 
     def array_call(self, state):
-        from .._components import RRTMGLongwave
-
+        nband = _get_num_longwave_bands()
         ncol, nz = state["air_pressure"].shape
         diagnostics = {
-            "surface_longwave_emissivity": np.ones(
-                [RRTMGLongwave.num_longwave_bands, ncol]
-            ),
-            "longwave_optical_thickness_due_to_cloud": np.zeros(
-                [nz, ncol, RRTMGLongwave.num_longwave_bands]
-            ),
-            "longwave_optical_thickness_due_to_aerosol": np.zeros(
-                [RRTMGLongwave.num_longwave_bands, nz, ncol]
-            ),
+            "surface_longwave_emissivity": np.ones([nband, ncol]),
+            "longwave_optical_thickness_due_to_cloud": np.zeros([nz, ncol, nband]),
+            "longwave_optical_thickness_due_to_aerosol": np.zeros([nband, nz, ncol]),
         }
         return diagnostics
 
@@ -170,25 +216,16 @@ class RRTMGShortwaveDefaultValues(DiagnosticComponent):
     def array_call(self, state):
         from .._components import RRTMGShortwave
 
+        nband = _get_num_shortwave_bands()
         nz, ncol = state["air_pressure"].shape
         diagnostics = {
-            "shortwave_optical_thickness_due_to_cloud": np.zeros(
-                [nz, ncol, RRTMGShortwave.num_shortwave_bands]
-            ),
-            "cloud_asymmetry_parameter": 0.85
-            * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
-            "cloud_forward_scattering_fraction": 0.8
-            * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
-            "single_scattering_albedo_due_to_cloud": 0.9
-            * np.ones([nz, ncol, RRTMGShortwave.num_shortwave_bands]),
-            "shortwave_optical_thickness_due_to_aerosol": np.zeros(
-                [RRTMGShortwave.num_shortwave_bands, nz, ncol]
-            ),
-            "aerosol_asymmetry_parameter": np.zeros(
-                [RRTMGShortwave.num_shortwave_bands, nz, ncol]
-            ),
-            "single_scattering_albedo_due_to_aerosol": 0.5
-            * np.ones([RRTMGShortwave.num_shortwave_bands, nz, ncol]),
+            "shortwave_optical_thickness_due_to_cloud": np.zeros([nz, ncol, nband]),
+            "cloud_asymmetry_parameter": 0.85 * np.ones([nz, ncol, nband]),
+            "cloud_forward_scattering_fraction": 0.8 * np.ones([nz, ncol, nband]),
+            "single_scattering_albedo_due_to_cloud": 0.9 * np.ones([nz, ncol, nband]),
+            "shortwave_optical_thickness_due_to_aerosol": np.zeros([nband, nz, ncol]),
+            "aerosol_asymmetry_parameter": np.zeros([nband, nz, ncol]),
+            "single_scattering_albedo_due_to_aerosol": 0.5 * np.ones([nband, nz, ncol]),
             "aerosol_optical_depth_at_55_micron": np.zeros(
                 [RRTMGShortwave.num_ecmwf_aerosols, nz, ncol]
             ),
@@ -416,6 +453,7 @@ def get_grid(
     ny=None,
     nz=28,
     n_ice_interface_levels=10,
+    n_soil_interface_levels=4,
     p_surf_in_Pa=None,
     p_toa_in_Pa=None,
     proportion_sigma_levels=0.1,
@@ -434,6 +472,9 @@ def get_grid(
             Number of vertical mid levels.
         n_ice_interface_levels (int, optional): Number of vertical
             interface levels to use for ice. Use None to disable the ice
+            vertical grid.
+        n_soil_interface_levels (int, optional): Number of vertical
+            interface levels to use for soil. Use None to disable the soil
             vertical grid.
         p_surf_in_Pa : float, optional
             Surface pressure in Pa.
@@ -519,6 +560,13 @@ def get_grid(
             "height_on_ice_interface_levels",
             "m",
             ("ice_interface_levels",),
+        )
+    if n_soil_interface_levels is not None:
+        return_state["height_on_soil_interface_levels"] = get_backend().create_quantity(
+            np.linspace(0.0, 2.0, n_soil_interface_levels),
+            "height_on_soil_interface_levels",
+            "m",
+            ("soil_interface_levels",),
         )
     return return_state
 
@@ -876,13 +924,28 @@ default_values = {
         "units": "W m^-2",
         "domain": "surface",
     },
+    "surface_downward_eastward_stress": {
+        "value": 0.0,
+        "units": "N m^-2",
+        "domain": "surface",
+    },
+    "surface_downward_northward_stress": {
+        "value": 0.0,
+        "units": "N m^-2",
+        "domain": "surface",
+    },
     "soil_type": {
         "value": "clay",
         "units": "dimensionless",
         "dtype": "S100",
         "domain": "land_horizontal",
     },
-    "soil_temperature": {"value": 274.0, "units": "degK", "domain": "land_horizontal"},
+    "soil_temperature": {
+        "value": 285.0, "units": "degK", "domain": "soil_interface"},
+    "soil_liquid_water_content": {
+        "value": 0.2, "units": "m^3/m^3", "domain": "soil_interface"},
+    "soil_ice_content": {
+        "value": 0.0, "units": "m^3/m^3", "domain": "soil_interface"},
     "soil_layer_thickness": {"value": 50.0, "units": "m", "domain": "land_horizontal"},
     "upward_heat_flux_at_ground_level_in_soil": {
         "value": 0.0,
@@ -894,6 +957,12 @@ default_values = {
         "units": "J kg^-1 degK^-1",
         "domain": "land_horizontal",
     },
+    "deep_soil_moisture_content": {
+        "value": 0.25, "units": "m", "domain": "land_horizontal"},
+    "deep_soil_temperature": {
+        "value": 285.0, "units": "degK", "domain": "land_horizontal"},
+    "runoff_rate": {
+        "value": 0.0, "units": "m s^-1", "domain": "land_horizontal"},
     "sea_water_density": {
         "value": 1.029e3,
         "units": "kg m^-3",
@@ -907,6 +976,11 @@ default_values = {
     "ocean_mixed_layer_thickness": {
         "value": 50.0,
         "units": "m",
+        "domain": "ocean_horizontal",
+    },
+    "ocean_heat_transport_convergence": {
+        "value": 0.0,
+        "units": "W m^-2",
         "domain": "ocean_horizontal",
     },
     "snow_and_ice_temperature": {
@@ -942,6 +1016,16 @@ default_values = {
         "value": 0.0,
         "units": "m s^-1",
         "domain": "surface",
+    },
+    "irradiation_temperature": {
+        "value": 0.0,
+        "units": "degK",
+        "domain": "atmosphere_horizontal",
+    },
+    "internal_temperature": {
+        "value": 0.0,
+        "units": "degK",
+        "domain": "atmosphere_horizontal",
     },
 }
 for d in default_values.values():
@@ -1009,7 +1093,9 @@ def compute_all_diagnostics(state, diagnostic_list):
     return return_dict
 
 
-def get_default_state(component_list, grid_state=None, n_ice_interface_levels=30):
+def get_default_state(
+    component_list, grid_state=None, n_ice_interface_levels=30, n_soil_interface_levels=4
+):
     """
     Retrieves a reasonable initial state for the set of components given.
 
@@ -1021,11 +1107,17 @@ def get_default_state(component_list, grid_state=None, n_ice_interface_levels=30
         n_ice_interface_levels (int, optional): Number of vertical
             interface levels to use for ice. Use None to disable the ice
             vertical grid.
+        n_soil_interface_levels (int, optional): Number of vertical
+            interface levels to use for soil. Use None to disable the soil
+            vertical grid.
 
     Returns:
         default_state (dict): A reasonable initial state.
     """
-    grid_state = grid_state or get_grid(n_ice_interface_levels=n_ice_interface_levels)
+    grid_state = grid_state or get_grid(
+        n_ice_interface_levels=n_ice_interface_levels,
+        n_soil_interface_levels=n_soil_interface_levels,
+    )
     input_properties = aggregate_input_properties(component_list)
     diagnostic_list = get_diagnostics_for(input_properties, grid_state)
     return_state = {}
@@ -1040,8 +1132,13 @@ def init_ozone(p, ps):
     data_path = importlib_resources.files("climt._data").joinpath("ozone_profile.npy")
     with importlib_resources.as_file(data_path) as f:
         ozone_ref = np.load(f)
-    spline = CubicSpline(p_ref[::-1], ozone_ref[::-1])  # x must be increasing
-    return spline(p)
+    # cubic_spline_interpolate requires the reference x-array to be
+    # increasing; p_ref is descending (surface->TOA), so pass reversed
+    # views. A not-a-knot cubic spline (rather than np.interp's linear
+    # interpolation) is used to reproduce scipy.interpolate.CubicSpline's
+    # default behavior bit-closely, since RRTMG's cached-output tests were
+    # generated against that scipy-based ozone profile.
+    return cubic_spline_interpolate(p, p_ref[::-1], ozone_ref[::-1])
 
 
 init_diagnostics = [

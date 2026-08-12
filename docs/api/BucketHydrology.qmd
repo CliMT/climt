@@ -1,0 +1,30 @@
+# BucketHydrology { #climt.BucketHydrology }
+
+```python
+BucketHydrology(
+    soil_moisture_max=0.15,
+    beta_parameter=0.75,
+    specific_latent_heat_of_water=2260000,
+    bulk_coefficient=0.0011,
+    **kwargs,
+)
+```
+
+Manages surface energy and moisture balance
+This component assumes that the surface is a slab with some heat capacity and moisture holding capacity.
+Calculates the sensible and latent heat flux, takes precipitation values as input.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [array_call](#climt.BucketHydrology.array_call) | Calculates sensible and latent heat flux and returns |
+
+### array_call { #climt.BucketHydrology.array_call }
+
+```python
+BucketHydrology.array_call(state, timestep)
+```
+
+Calculates sensible and latent heat flux and returns
+surface temperature and soil moisture after timestep.

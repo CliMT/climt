@@ -1,0 +1,10 @@
+# SlabSurface { #climt.SlabSurface }
+
+```python
+SlabSurface()
+```
+
+Calculate the surface energy balance.
+
+This component assumes the surface is a slab of possibly
+varying heat capacity, and calculates the surface temperature.

@@ -1,0 +1,52 @@
+# SimplePhysics { #climt.SimplePhysics }
+
+```python
+SimplePhysics(
+    simulate_cyclone=False,
+    large_scale_condensation=True,
+    boundary_layer=True,
+    surface_fluxes=True,
+    use_external_surface_temperature=True,
+    use_external_surface_specific_humidity=False,
+    top_of_boundary_layer=85000.0,
+    boundary_layer_influence_height=20000.0,
+    drag_coefficient_heat_fluxes=0.0011,
+    base_momentum_drag_coefficient=0.0007,
+    wind_dependent_momentum_drag_coefficient=6.5e-05,
+    maximum_momentum_drag_coefficient=0.002,
+    **kwargs,
+)
+```
+
+Interface to the simple physics package.
+
+Reed and Jablonowski 2012:
+title = {Idealized tropical cyclone simulations of intermediate complexity: a test case for {AGCMs}}
+journal = {Journal of Advances in Modeling Earth Systems}
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [array_call](#climt.SimplePhysics.array_call) | Calculate surface and boundary layer tendencies. |
+
+### array_call { #climt.SimplePhysics.array_call }
+
+```python
+SimplePhysics.array_call(state, timestep)
+```
+
+Calculate surface and boundary layer tendencies.
+
+Args:
+    state (dict):
+        The model state dictionary
+
+    timestep (timedelta):
+        The model timestep
+
+Returns:
+    state (dict), diagnostics(dict) :
+
+    * The updated model state.
+    * diagnostics for Simple Physics

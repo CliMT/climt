@@ -1,0 +1,71 @@
+---
+title: "Chapter 7: The two-stream solver"
+bibliography: ../../references.bib
+---
+
+Once gas optics has produced optical depth $\tau$, single-scattering albedo
+$\omega_0$, and asymmetry parameter $g$ for every (band, g-point, layer), a
+radiative-transfer solver converts them to fluxes. climt uses the Meador &
+Weaver (1980) two-stream formulation with $\delta$-Eddington scaling — the same
+physics as RRTMGP [@pincus2019].
+
+## The two-stream approximation
+
+The radiative-transfer equation in a plane-parallel layer is reduced to two
+angular moments: the upward hemispheric flux $F^+$ and the downward $F^-$. For
+each layer this yields the **diffuse reflectance** $R_\text{dif}$ and
+**transmittance** $T_\text{dif}$. climt's per-layer SW coefficients are
+computed in `_sw_dif_and_source`:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.sw.kernels import _sw_dif_and_source
+print(inspect.getsource(_sw_dif_and_source))
+```
+
+![**Figure 7.1** — Diffuse reflectance $R$ and transmittance $T$ vs. layer
+optical depth for conservative scattering ($\omega_0 = 1$, $g = 0.5$). A thin
+layer mostly transmits; a thick layer mostly reflects.](_artifacts/07_two_stream_phases.png){#fig-two-stream}
+
+## δ-Eddington scaling
+
+Real cloud and aerosol phase functions have a strong forward peak that the
+two-stream cannot resolve. The $\delta$-Eddington transformation absorbs the
+forward peak into an effective reduction of optical depth:
+
+$$\tau' = \tau(1 - \omega_0 g^2), \quad
+  \omega'_0 = \frac{\omega_0(1-g^2)}{1-\omega_0 g^2}, \quad
+  g' = \frac{g}{1+g}.$$
+
+climt applies this inside `_delta_scale` before every two-stream solve.
+
+## The adding method
+
+With per-layer $(R, T)$ known, the **adding method** combines layers bottom-up
+into a column albedo and flux profile. The `_adding` function in
+`climt/_components/cork/sw/kernels.py` propagates both diffuse and
+direct-beam components in one downward-then-upward sweep.
+
+## Longwave transport
+
+The LW solver is simpler — no scattering, just absorption and emission. A
+diffusivity factor $D = 1.66$ converts vertical $\tau$ to effective-diffuse
+$\tau$. The compiled kernel loops over all (band, g-point, column) triples:
+
+```{python}
+#| echo: true
+import inspect
+from climt._components.cork.lw.kernels import _lw_transport_kernel
+print(inspect.getsource(_lw_transport_kernel))
+```
+
+The diffusivity factor $D = 1.66$ is the Elsasser approximation; it converts
+the exact hemispheric integral $\int_0^1 e^{-\tau/\mu}\,d\mu$ to
+$e^{-D\tau}$.
+
+## Further reading
+
+- @meador1980 — the two-stream coefficients and their derivation.
+- @pincus2019 — RRTMGP, the modern successor; discusses the adding method and
+  $\delta$-Eddington in production use.

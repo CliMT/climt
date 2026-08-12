@@ -1,0 +1,54 @@
+name: docs
+on:
+  # This repo's release branch is `master`; there is no `main`. Both lists said
+  # `main`, so pushes to master never triggered this workflow and the stable
+  # docs at the site root were never published.
+  push:
+    branches: [develop, master]
+  pull_request:
+    branches: [develop, master]
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: quarto-dev/quarto-actions/setup@v2
+      - name: Install climt + docs deps
+        run: |
+          pip install "griffe<2.0" quartodoc pyyaml jupyter matplotlib numpy \
+            pint unyt xarray "sympl>=0.5.0" scipy cython importlib_resources
+          pip install -e . --no-deps
+      - name: Verify experiment artifacts are not stale
+        run: python scripts/build_experiments.py --check
+      - name: Build API reference
+        run: cd docs && quartodoc build
+      - name: Render site
+        run: quarto render docs/
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: docs/_site/
+      - name: Deploy to gh-pages
+        if: github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_site
+          # master -> site root (stable release docs); develop -> /dev/ preview.
+          destination_dir: ${{ github.ref_name == 'master' && '.' || 'dev' }}
+          # The action removes existing files in destination_dir before copying.
+          # For the develop preview that is what we want: /dev/ is rebuilt clean
+          # each time, so deleted pages disappear. But the root deploy's
+          # destination is the whole branch, which would take the sibling /dev/
+          # tree with it — so keep files when publishing from master. Trade-off:
+          # pages removed between releases linger at the root until gh-pages is
+          # pruned by hand.
+          keep_files: ${{ github.ref_name == 'master' }}

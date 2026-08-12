@@ -1,0 +1,11 @@
+# Frierson06LongwaveOpticalDepth { #climt.Frierson06LongwaveOpticalDepth }
+
+```python
+Frierson06LongwaveOpticalDepth(
+    linear_optical_depth_parameter=0.1,
+    longwave_optical_depth_at_equator=6,
+    longwave_optical_depth_at_poles=1.5,
+    **kwargs,
+)
+```
+

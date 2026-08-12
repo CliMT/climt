@@ -1,0 +1,28 @@
+# Instellation { #climt.Instellation }
+
+```python
+Instellation(**kwargs)
+```
+
+Calculates the zenith angle and star-planet correction
+factor given orbital parameters. Currently useful only
+for Earth-sun system.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [array_call](#climt.Instellation.array_call) | Calculate zenith angle. |
+
+### array_call { #climt.Instellation.array_call }
+
+```python
+Instellation.array_call(state)
+```
+
+Calculate zenith angle.
+
+Args:
+
+    state (dict):
+        state dictionary

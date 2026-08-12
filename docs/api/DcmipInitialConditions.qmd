@@ -1,0 +1,13 @@
+# DcmipInitialConditions { #climt.DcmipInitialConditions }
+
+```python
+DcmipInitialConditions(
+    condition_type='baroclinic_wave',
+    add_perturbation=True,
+    moist=False,
+    **kwargs,
+)
+```
+
+Climt interface to the DCMIP initial conditions.
+Currently only provides interfaces to tests 4 and 5.

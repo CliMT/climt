@@ -224,10 +224,11 @@ def bench_slab_surface():
     stc      = _flat('surface_thermal_capacity')
     omt      = _flat('ocean_mixed_layer_thickness')
     slt      = _flat('soil_layer_thickness')
+    oht      = np.zeros_like(omt)
 
     print(f"\nSlabSurface  ({NCOL} cols, {ITERS} iters)")
-    t_py = wall(lambda: _slab_surface_kernel_np.py_func(sw_down, lw_down, sw_up, lw_up, lh, sh, area_code, up_soil, hf_ice, sw_dens, sf_dens, hc_soil, stc, omt, slt), ITERS)
-    t_nb = wall(lambda: _slab_surface_kernel_np(sw_down, lw_down, sw_up, lw_up, lh, sh, area_code, up_soil, hf_ice, sw_dens, sf_dens, hc_soil, stc, omt, slt), ITERS)
+    t_py = wall(lambda: _slab_surface_kernel_np.py_func(sw_down, lw_down, sw_up, lw_up, lh, sh, area_code, up_soil, hf_ice, sw_dens, sf_dens, hc_soil, stc, omt, slt, oht), ITERS)
+    t_nb = wall(lambda: _slab_surface_kernel_np(sw_down, lw_down, sw_up, lw_up, lh, sh, area_code, up_soil, hf_ice, sw_dens, sf_dens, hc_soil, stc, omt, slt, oht), ITERS)
     report("SlabSurface", t_py, t_nb, ITERS, NCOL)
 
 

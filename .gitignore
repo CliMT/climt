@@ -79,4 +79,37 @@ target/
 .DS_Store
 
 # Jupyter Notebook checkpoints
+.ipynb_checkpoints/.worktrees/
+
+# Quarto site build output
+docs/_site/
+.quarto/
+
+# Scratch experiments & outputs (preserved on disk, never tracked)
+debug_data/
 .ipynb_checkpoints/
+
+# Quarto notebook render intermediates
+docs/**/*_files/
+docs/experiments/**/index.html
+docs/experiments/**/*.out.ipynb
+
+# Local AI-assistant configs (CLAUDE.md was dropped with graphify)
+.claude/
+.gemini/
+GEMINI.md
+
+# build-time data download cache (SST climatology, etc.)
+build_cache/
+
+# Agent scaffolding (task briefs, reports, review diffs). Matches the
+# pre-existing .superpowers/sdd/.gitignore, which already ignores everything.
+.superpowers/
+
+# YSU Fortran build products. *.o/*.mod already cover most of them, but the
+# linked driver executable has no extension so it slips through.
+climt/_components/ysu/_capi/ysu_driver
+
+# graphify knowledge-graph output. No longer carried in the repo; ignored so a
+# stray `graphify update .` cannot re-commit ~120 MB of generated artifacts.
+graphify-out/

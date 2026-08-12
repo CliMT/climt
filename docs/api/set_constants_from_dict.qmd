@@ -1,0 +1,20 @@
+# set_constants_from_dict { #climt.set_constants_from_dict }
+
+```python
+set_constants_from_dict(constant_descriptions)
+```
+
+Modify/Add constants in the library.
+
+Args:
+
+   constant_descriptions (dict):
+       Dictionary containing the description of the constants.
+       The key should be the name of the constant, and the value
+       should be a dictionary containing the following keys:
+
+       * value (float):
+           The value assigned.
+
+       * units (string):
+               The units of the value, e.g, m/s, J/kg.

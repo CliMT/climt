@@ -1,0 +1,18 @@
+---
+title: "Radiative Transfer Walkthrough"
+---
+
+A graduate-level tour of non-grey radiative transfer — from line-by-line physics to the picket-fence correlated-k scheme — with live climt source excerpts and runnable notebooks.
+
+## Chapters
+
+1. [Why non-grey?](01-why-nongrey.qmd)
+2. [Line-by-line physics](02-line-by-line.qmd)
+3. [The k-distribution](03-k-distribution.qmd)
+4. [Correlated-k](04-correlated-k.qmd)
+5. [Gas overlap: additive vs ESFT](05-gas-overlap.qmd)
+6. [The picket-fence model](06-picket-fence.qmd)
+7. [The two-stream solver](07-two-stream.qmd)
+8. [Switching planets](08-multiplanet.qmd)
+
+**Appendices:** [Table generation](table-generation.qmd) · [Performance](performance.qmd)

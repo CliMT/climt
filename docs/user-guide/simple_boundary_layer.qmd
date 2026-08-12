@@ -1,0 +1,235 @@
+---
+title: "Simple boundary layer"
+---
+
+## Introduction
+
+`SimpleBoundaryLayer` is a [`Stepper`](component_types.qmd) that mixes heat,
+moisture and momentum upward from the lowest model level through the planetary
+boundary layer. It implements the surface-flux / boundary-layer formulation of
+@frierson2006gray — the companion scheme to climt's
+[gray radiation](gray_radiation.qmd) `Frierson06LongwaveOpticalDepth` — with
+one modification to the surface-layer diffusion coefficient described under
+[Physics](#physics) below.
+
+By default the component computes the **bulk surface fluxes itself** and applies
+them at the lowest model level, then diffuses the result vertically using eddy
+diffusivities from a simplified Monin–Obukhov theory, capped by a critical
+Richardson number. It can alternatively apply surface fluxes supplied by another
+component, or skip surface exchange entirely — see
+[Surface fluxes](#surface-fluxes) below.
+
+## Physics
+
+### Boundary-layer height and stability
+
+The scheme diagnoses a virtual potential temperature $\theta_v$ on the model
+mid-levels and a bulk Richardson number relative to the surface,
+
+$$
+Ri(z) = \frac{g\,z\,[\theta_v(z) - \theta_v(z_a)]/\theta_v(z_a)}{|\mathbf{v}(z)|^2},
+$$
+
+where $z$ is the geometric height above the surface (from the hypsometric
+relation) and $z_a$ the lowest level. The boundary-layer top $h$ is the lowest
+height at which $Ri$ exceeds the critical value $Ri_c$.
+
+### Eddy diffusivity
+
+Inside the boundary layer the eddy diffusivity follows a K-profile. In the
+surface layer ($z < f_b\,h$, with surface-layer fraction $f_b$) it is the
+surface-layer coefficient $K_b$; above it, $K_b$ is scaled by the cubic profile
+of @frierson2006gray so the diffusivity smoothly returns to zero at $z = h$:
+
+$$
+K(z) =
+\begin{cases}
+K_b(z), & z < f_b h,\\[4pt]
+K_b(f_b h)\,\dfrac{z}{f_b h}\left[1 - \dfrac{z - f_b h}{(1 - f_b)h}\right]^2, & f_b h < z < h.
+\end{cases}
+$$
+
+### Modification to the surface-layer coefficient
+
+Canonical @frierson2006gray writes the surface-layer coefficient $K_b$ using the
+*local* Richardson number in its stability multiplier, which is **discontinuous
+at $Ri_a = 0$** (where $Ri_a$ is the surface-layer Richardson number anchoring
+the surface exchange). Following the modification adopted for this
+implementation, `SimpleBoundaryLayer` instead uses the *surface-layer*
+Richardson number $Ri_a$ in the multiplier:
+
+$$
+K_b(z) =
+\begin{cases}
+k\,u_\star \sqrt{C}\,z, & Ri_a \le 0,\\[6pt]
+k\,u_\star \sqrt{C}\,z\left[1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/Ri_c}\right]^{-1}, & Ri_a > 0,
+\end{cases}
+$$
+
+with von Kármán constant $k$, roughness length $z_0$, surface exchange
+coefficient $C$, and friction velocity scale $u_\star$. The modified multiplier
+is **continuous at $Ri_a = 0$** and decreases monotonically from 1 to 0 as
+$Ri_a \to Ri_c$: the near-surface mixing shuts off smoothly as the surface layer
+becomes statically stable, which is the physically desirable behaviour.
+
+### Surface fluxes {#surface-fluxes}
+
+The `surface_fluxes` argument selects how the surface enters the lowest model
+level. With $\Delta p_0 = p_{\text{int},0} - p_{\text{int},1}$ the mass of the
+lowest layer, and $F_{\text{surf}}$ the upward flux of $X$ into it,
+
+$$
+\frac{\Delta p_0}{g}\,\frac{\mathrm{d}X_0}{\mathrm{d}t} = F_{\text{surf}} - F_{\text{top}}.
+$$
+
+**`'bulk'` (default).** $F_{\text{surf}} = \rho_s\,C\,|\mathbf{v}|\,(X_s - X_0)$
+depends on the unknown, so it is taken implicitly: with
+$\beta = g\,\rho_s\,C\,|\mathbf{v}|\,\Delta t / \Delta p_0$ the tridiagonal
+system gains $\beta$ on its first diagonal entry and $\beta X_s$ on its first
+right-hand-side entry. $X_s$ is $T_s$ for temperature, $q_s$ for humidity, and
+$0$ for both wind components (no-slip) — which is what turns the wind-stress
+calculation into actual drag on the flow. $\rho_s$ is the density at the first
+interface and $|\mathbf{v}|$ the interface wind speed, subject to the same
+1 m s$^{-1}$ gustiness floor used elsewhere in the scheme.
+
+**All four surface-flux diagnostics follow one rule:** each reports the flux the
+solve actually delivered, evaluated with the *post-solve* layer-0 value. With
+$\kappa = \rho_s\,C\,|\mathbf{v}|$,
+
+$$
+\mathrm{SH} = c_p\,\kappa\,(T_s - T_0^{\text{new}}),
+\quad
+\mathrm{LH} = L_v\,\kappa\,(q_s - q_0^{\text{new}}),
+\quad
+\tau_u = \kappa\,u_0^{\text{new}},
+\quad
+\tau_v = \kappa\,v_0^{\text{new}}.
+$$
+
+This is what makes every column budget close to round-off rather than
+approximately.
+
+::: {.callout-important}
+## Changed: the wind-stress diagnostics
+`northward_wind_stress` and `eastward_wind_stress` previously used the
+*pre-step interface* wind, $\kappa\,\cdot\,\tfrac{1}{2}(u_0 + u_1)$, which did
+not match the momentum the column actually lost. They now use the post-solve
+layer-0 wind, so the momentum budget closes like the heat and moisture ones.
+**Their values change in every mode**, including `surface_fluxes=None` — where
+no drag is applied, so the stress is advisory only: the bulk stress a separate
+surface component could apply.
+:::
+
+**`'external'`.** The two flux quantities become required **inputs**, in
+W m$^{-2}$ positive upward, and enter as a pure Neumann source:
+
+$$
+\text{rhs}_T[0] \mathrel{+}= \frac{g\,\Delta t\,\mathrm{SH}}{c_p\,\Delta p_0},
+\qquad
+\text{rhs}_q[0] \mathrel{+}= \frac{g\,\Delta t\,\mathrm{LH}}{L_v\,\Delta p_0},
+$$
+
+with $L_v = 2.5\times10^6$ J kg$^{-1}$. Momentum stays bulk-internal: surface
+components do not compute wind stress, and `northward_wind_stress` /
+`eastward_wind_stress` are already diagnostics of this component.
+
+**`None`.** No surface exchange at all — the historical behaviour, requiring a
+separate component to have already applied the surface fluxes.
+
+::: {.callout-warning}
+## Do not apply surface fluxes twice
+`surface_fluxes='bulk'` alongside a component that already applies surface
+fluxes (for example `SimplePhysics` with its surface fluxes enabled) applies
+them twice. Use `surface_fluxes=None` in that case.
+:::
+
+::: {.callout-note}
+## Two caveats in `'external'` mode
+**Inconsistent exchange coefficients.** The surface component computed its
+fluxes with its own drag coefficient — `BucketHydrology` uses
+`bulk_coefficient=0.0011` — which differs from this component's Monin–Obukhov
+$C$. That inconsistency is inherent to the modular split and is not reconciled.
+
+**A one-step lag inside a dynamical core.** `sympl`'s component composite calls
+every component with the *same* input state and merges diagnostics only into its
+return value, never back into the state. So when `SimpleBoundaryLayer` is
+wrapped in a `TimeDifferencingWrapper` and handed to `GFSDynamicalCore` next to
+the surface component, it reads the surface component's *previous*-step fluxes
+(and zero on the first step), provided the time loop does
+`state.update(diagnostics)`. Calling `SimpleBoundaryLayer` directly in the time
+loop, after the surface component and with a `state.update(...)` in between,
+has no lag. Both patterns are legitimate — pick one knowingly.
+:::
+
+### Implicit diffusion and conservation
+
+The four profiles are advanced with a backward-Euler implicit diffusion, solved
+as a tridiagonal system with the shared
+[`solve_tridiagonal`](https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm)
+Thomas solver. The interior discretisation is flux-form, so interior exchanges
+telescope exactly and the only change to a column integral is what crosses the
+surface:
+
+$$
+\sum_k \phi_k^{\text{(new)}}\,\Delta p_k - \sum_k \phi_k\,\Delta p_k
+= g\,\Delta t\,F_{\text{surf}}(\phi),
+\qquad \phi \in \{T,\ q,\ u,\ v\}.
+$$
+
+With `surface_fluxes=None` the right-hand side is zero and the scheme
+**conserves the interface-pressure-weighted column integral** of every diffused
+field. In the other two modes it closes the budget against the surface flux to
+round-off.
+
+## Inputs, outputs and diagnostics
+
+| Kind | Quantities |
+|------|------------|
+| Inputs | `air_temperature`, `specific_humidity`, `air_pressure`, `air_pressure_on_interface_levels`, `northward_wind`, `eastward_wind`, `surface_air_pressure`, `surface_temperature`, `surface_specific_humidity` |
+| Inputs (`'external'` only) | `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux` |
+| Outputs | `air_temperature`, `specific_humidity`, `northward_wind`, `eastward_wind` |
+| Diagnostics | `northward_wind_stress`, `eastward_wind_stress`, `boundary_layer_height` |
+| Diagnostics (`'bulk'` only) | `surface_upward_sensible_heat_flux`, `surface_upward_latent_heat_flux` |
+
+## Parameters
+
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| `surface_fluxes` | `'bulk'` | `'bulk'`, `'external'` or `None` — see [Surface fluxes](#surface-fluxes) |
+| `von_karman_constant` | `0.4` | von Kármán constant $k$ |
+| `roughness_length` | `3.21e-5` m | surface roughness length $z_0$ |
+| `specific_fraction` | `0.1` | surface-layer fraction $f_b$ of the boundary-layer depth |
+| `reference_pressure` | `100000` Pa | reference pressure $P_0$ for potential temperature |
+| `critical_richardson_number` | `1` | critical Richardson number $Ri_c$ |
+
+## Usage
+
+```python
+import climt
+from datetime import timedelta
+
+# default: compute and apply bulk surface fluxes
+boundary_layer = climt.SimpleBoundaryLayer()
+state = climt.get_default_state(
+    [boundary_layer],
+    grid_state=climt.get_grid(nx=None, ny=None, nz=30),
+)
+diagnostics, new_state = boundary_layer(state, timestep=timedelta(minutes=10))
+print(diagnostics["surface_upward_sensible_heat_flux"])
+
+# or apply fluxes computed by a surface component
+boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="external")
+
+# or diffuse only, leaving surface exchange to someone else
+boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes=None)
+```
+
+`SimpleBoundaryLayer` is a `Stepper`, so it returns the updated
+temperature, humidity and wind profiles directly (not tendencies), alongside
+the surface wind-stress and boundary-layer-height diagnostics — and, in the
+default `'bulk'` mode, the surface heat and moisture fluxes it applied.
+
+## References
+
+::: {#refs}
+:::

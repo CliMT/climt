@@ -10,6 +10,7 @@ from sympl import (
 
 from ..._core import ensure_contiguous_state
 from ..._core.backend import jit_compile, prange
+from ..._core.condensibles import get_condensible_params, _lcl_pressure, _sat_vap_pressure, compute_qs
 
 try:
     from numba import njit
@@ -40,17 +41,12 @@ class EmanuelParams(NamedTuple):
     ALPHA: float
     DAMP: float
     CPD: float
-    CPV: float
-    CL: float
-    RV: float
     RD: float
-    LV0: float
     G: float
-    ROWL: float
     DELT0: float
 
 
-class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
+class EmanuelConvectionPython(ImplicitTendencyComponent):
     input_properties = {
         "air_temperature": {"dims": ["*", "mid_levels"], "units": "degK"},
         "specific_humidity": {"dims": ["*", "mid_levels"], "units": "kg/kg"},
@@ -113,13 +109,8 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
         self.ALPHA = 0.1
         self.DAMP = 0.1
         self.CPD = 1005.7
-        self.CPV = 1870.0
-        self.CL = 2500.0
-        self.RV = 461.5
         self.RD = 287.04
-        self.LV0 = 2.501e6
         self.G = 9.8
-        self.ROWL = 1000.0
         self.DELT0 = 300.0
         for key, value in kwargs.items():
             if hasattr(self, key):
@@ -142,16 +133,12 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
             ALPHA=float(self.ALPHA),
             DAMP=float(self.DAMP),
             CPD=float(self.CPD),
-            CPV=float(self.CPV),
-            CL=float(self.CL),
-            RV=float(self.RV),
             RD=float(self.RD),
-            LV0=float(self.LV0),
             G=float(self.G),
-            ROWL=float(self.ROWL),
             DELT0=float(self.DELT0),
         )
-        super(EmanuelConvectionPythonV3, self).__init__(**kwargs)
+        self._cond = get_condensible_params()
+        super(EmanuelConvectionPython, self).__init__(**kwargs)
 
     @ensure_contiguous_state
     def array_call(self, state, timestep):
@@ -171,9 +158,7 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
             ph = ph.T
             transposed = True
         nlev, ncol = t.shape
-        from climt._core import bolton_q_sat
-
-        qs = bolton_q_sat(t, p * 100, self.RD, self.RV)
+        qs = compute_qs(t, p, self._cond, self._params.RD)
         cbmf = state.get("cloud_base_mass_flux", np.zeros(ncol)).copy()
         ntra = 0
         tra = np.zeros((nlev, 1))
@@ -194,6 +179,7 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
             cbmf,
             tra_vector,
             self._params,
+            self._cond,
         )
         ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results
         if transposed:
@@ -221,16 +207,16 @@ class EmanuelConvectionPythonV3(ImplicitTendencyComponent):
 
 
 @njit
-def _tlift_functional_np(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, params):
-    CPVMCL = params.CL - params.CPV
-    EPS = params.RD / params.RV
+def _tlift_functional_np(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, params, cond):
+    CPVMCL = cond.CL - cond.CPV
+    EPS = params.RD / cond.RV
     EPSI = 1.0 / EPS
     AH0 = (
-        (params.CPD * (1.0 - Q[NK]) + params.CL * Q[NK]) * T[NK]
-        + Q[NK] * (params.LV0 - CPVMCL * (T[NK] - 273.15))
+        (params.CPD * (1.0 - Q[NK]) + cond.CL * Q[NK]) * T[NK]
+        + Q[NK] * (cond.LV0 - CPVMCL * (T[NK] - cond.T_freeze))
         + GZ[NK]
     )
-    CPP = params.CPD * (1.0 - Q[NK]) + Q[NK] * params.CPV
+    CPP = params.CPD * (1.0 - Q[NK]) + Q[NK] * cond.CPV
     CPINV = 1.0 / CPP
     if KK == 1:
         for i in range(ICB):
@@ -243,26 +229,20 @@ def _tlift_functional_np(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, pa
     for i in range(NSB, NST + 1):
         TG = T[i]
         QG = QS[i]
-        ALV = params.LV0 - CPVMCL * (T[i] - 273.15)
+        ALV = cond.LV0 - CPVMCL * (T[i] - cond.T_freeze)
         for j in range(2):
-            S = 1.0 / (params.CPD + ALV * ALV * QG / (params.RV * T[i] * T[i]))
+            S = 1.0 / (params.CPD + ALV * ALV * QG / (cond.RV * T[i] * T[i]))
             AHG = (
                 params.CPD * TG
-                + (params.CL - params.CPD) * Q[NK] * T[i]
+                + (cond.CL - params.CPD) * Q[NK] * T[i]
                 + ALV * QG
                 + GZ[i]
             )
-            TG = max(TG + S * (AH0 - AHG), 35.0)
-            TC = TG - 273.15
-            DENOM = 243.5 + TC
-            ES = (
-                6.112 * np.exp(17.67 * TC / DENOM)
-                if TC >= 0.0
-                else np.exp(23.33086 - 6111.72784 / TG + 0.15215 * np.log(TG))
-            )
+            TG = max(TG + S * (AH0 - AHG), 35.0)  # TODO(condensibles): replace 35.0 with species-relative floor
+            ES = _sat_vap_pressure(TG, cond.species_id)
             QG = EPS * ES / (P[i] - ES * (1.0 - EPS))
         TPK[i] = (
-            AH0 - (params.CL - params.CPD) * Q[NK] * T[i] - GZ[i] - ALV * QG
+            AH0 - (cond.CL - params.CPD) * Q[NK] * T[i] - GZ[i] - ALV * QG
         ) / params.CPD
         CLW[i] = max(0.0, Q[NK] - QG)
         TVP[i] = TPK[i] * (1.0 + (QG / (1.0 - Q[NK])) * EPSI)
@@ -285,6 +265,7 @@ def _convect_functional_np(
     CBMF_in,
     TRA_in,
     params,
+    cond,
 ):
     T = T_in.copy()
     Q = Q_in.copy()
@@ -300,8 +281,8 @@ def _convect_functional_np(
     FU = np.zeros(ND)
     FV = np.zeros(ND)
     FTRA = np.zeros((ND, max(1, NTRA)))
-    CPVMCL = params.CL - params.CPV
-    EPS = params.RD / params.RV
+    CPVMCL = cond.CL - cond.CPV
+    EPS = params.RD / cond.RV
     EPSI = 1.0 / EPS
     GINV = 1.0 / params.G
     DELTI = 1.0 / DELT
@@ -311,12 +292,16 @@ def _convect_functional_np(
     QPRIME = 0.0
     IFLAG = 0
     OUTCAPE = 0.0
-    TH = np.zeros(NL + 1)
-    for i in range(NL + 1):
-        RDCP = (params.RD * (1.0 - Q[i]) + Q[i] * params.RV) / (
-            params.CPD * (1.0 - Q[i]) + Q[i] * params.CPV
-        )
-        TH[i] = T[i] * (1000.0 / P[i]) ** RDCP
+    # TH (potential temperature) is computed but never used in this function.
+    # It is a carry-over from the original Fortran code. Commented out rather
+    # than deleted to preserve the original structure. The 1000 hPa reference
+    # pressure is Earth-specific; generalisation deferred to a future pass.
+    # TH = np.zeros(NL + 1)
+    # for i in range(NL + 1):
+    #     RDCP = (params.RD * (1.0 - Q[i]) + Q[i] * params.RV) / (
+    #         params.CPD * (1.0 - Q[i]) + Q[i] * params.CPV
+    #     )
+    #     TH[i] = T[i] * (1000.0 / P[i]) ** RDCP
     GZ = np.zeros(ND + 1)
     CPN = np.zeros(ND + 1)
     H = np.zeros(ND + 1)
@@ -324,9 +309,9 @@ def _convect_functional_np(
     HM = np.zeros(ND + 1)
     TV = np.zeros(ND + 1)
     GZ[0] = 0.0
-    CPN[0] = params.CPD * (1.0 - Q[0]) + Q[0] * params.CPV
+    CPN[0] = params.CPD * (1.0 - Q[0]) + Q[0] * cond.CPV
     H[0] = T[0] * CPN[0]
-    LV[0] = params.LV0 - CPVMCL * (T[0] - 273.15)
+    LV[0] = cond.LV0 - CPVMCL * (T[0] - cond.T_freeze)
     HM[0] = LV[0] * Q[0]
     TV[0] = T[0] * (1.0 + Q[0] * EPSI - Q[0])
     AHMIN = 1.0e12
@@ -335,11 +320,11 @@ def _convect_functional_np(
         TVX = T[i] * (1.0 + Q[i] * EPSI - Q[i])
         TVY = T[i - 1] * (1.0 + Q[i - 1] * EPSI - Q[i - 1])
         GZ[i] = GZ[i - 1] + 0.5 * params.RD * (TVX + TVY) * (P[i - 1] - P[i]) / PH[i]
-        CPN[i] = params.CPD * (1.0 - Q[i]) + params.CPV * Q[i]
+        CPN[i] = params.CPD * (1.0 - Q[i]) + cond.CPV * Q[i]
         H[i] = T[i] * CPN[i] + GZ[i]
-        LV[i] = params.LV0 - CPVMCL * (T[i] - 273.15)
+        LV[i] = cond.LV0 - CPVMCL * (T[i] - cond.T_freeze)
         HM[i] = (
-            (params.CPD * (1.0 - Q[i]) + params.CL * Q[i]) * (T[i] - T[0])
+            (params.CPD * (1.0 - Q[i]) + cond.CL * Q[i]) * (T[i] - T[0])
             + LV[i] * Q[i]
             + GZ[i]
         )
@@ -358,8 +343,7 @@ def _convect_functional_np(
         CBMF = 0.0
         return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
     RH = Q[NK] / QS[NK]
-    CHI = T[NK] / (1669.0 - 122.0 * RH - T[NK])
-    PLCL = P[NK] * (RH**CHI)
+    PLCL = _lcl_pressure(P[NK], RH, T[NK], cond)
     if PLCL < 200.0 or PLCL >= 2000.0:
         IFLAG = 2
         CBMF = 0.0
@@ -376,7 +360,7 @@ def _convect_functional_np(
     TP = np.zeros(ND)
     CLW = np.zeros(ND)
     TVP, TP, CLW = _tlift_functional_np(
-        P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params
+        P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params, cond
     )
     for i in range(NK, ICB + 1):
         TVP[i] -= TP[i] * Q[NK]
@@ -385,7 +369,7 @@ def _convect_functional_np(
     if IFLAG != 4:
         IFLAG = 1
     TVP, TP, CLW = _tlift_functional_np(
-        P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params
+        P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params, cond
     )
     EP = np.zeros(ND)
     SIGP = np.zeros(ND)
@@ -393,7 +377,7 @@ def _convect_functional_np(
         EP[i] = 0.0
         SIGP[i] = params.SIGS
     for i in range(NK + 1, NL + 1):
-        TCA = TP[i] - 273.15
+        TCA = TP[i] - cond.T_freeze
         ELACRIT = (
             params.ELCRIT if TCA >= 0.0 else params.ELCRIT * (1.0 - TCA / params.TLCRIT)
         )
@@ -463,7 +447,7 @@ def _convect_functional_np(
     FRAC = min(max(-CAPE / DEFRAC, 0.0), 1.0)
     OUTCAPE = CAPE
     for i in range(ICB, INB + 1):
-        HP[i] = H[NK] + (LV[i] + (params.CPD - params.CPV) * T[i]) * EP[i] * CLW[i]
+        HP[i] = H[NK] + (LV[i] + (params.CPD - cond.CPV) * T[i]) * EP[i] * CLW[i]
     TVPPLCL = TVP[ICB - 1] - params.RD * TVP[ICB - 1] * (P[ICB - 1] - PLCL) / (
         CPN[ICB - 1] * P[ICB - 1]
     )
@@ -494,9 +478,9 @@ def _convect_functional_np(
     for i in range(ICB + 1, INB + 1):
         QTI = Q[NK] - EP[i] * CLW[i]
         for j in range(ICB, INB + 1):
-            BF2 = 1.0 + LV[j] * LV[j] * QS[j] / (params.RV * T[j] * T[j] * params.CPD)
-            ANUM = H[j] - HP[i] + (params.CPV - params.CPD) * T[j] * (QTI - Q[j])
-            DENOM = H[i] - HP[i] + (params.CPD - params.CPV) * (Q[i] - QTI) * T[j]
+            BF2 = 1.0 + LV[j] * LV[j] * QS[j] / (cond.RV * T[j] * T[j] * params.CPD)
+            ANUM = H[j] - HP[i] + (cond.CPV - params.CPD) * T[j] * (QTI - Q[j])
+            DENOM = H[i] - HP[i] + (params.CPD - cond.CPV) * (Q[i] - QTI) * T[j]
             DEI = DENOM
             if abs(DEI) < 0.01:
                 DEI = 0.01
@@ -599,8 +583,8 @@ def _convect_functional_np(
                         * max(0.0, ELIJ[j, i] - (1.0 - EP[i]) * CLW[i])
                         * MENT[j, i]
                     )
-            COEFF = params.COEFFR if T[i] > 273.0 else params.COEFFS
-            WT[i] = params.OMTRAIN if T[i] > 273.0 else params.OMTSNOW
+            COEFF = params.COEFFR if T[i] > cond.T_freeze else params.COEFFS
+            WT[i] = params.OMTRAIN if T[i] > cond.T_freeze else params.OMTSNOW
             AFAC = max(
                 COEFF
                 * PH[i]
@@ -643,20 +627,20 @@ def _convect_functional_np(
                     QP[i] = (
                         GZ[i + 1]
                         - GZ[i]
-                        + QP[i + 1] * (LV[i + 1] + T[i + 1] * (params.CL - params.CPD))
+                        + QP[i + 1] * (LV[i + 1] + T[i + 1] * (cond.CL - params.CPD))
                         + params.CPD * (T[i + 1] - T[i])
-                    ) / (LV[i] + T[i] * (params.CL - params.CPD))
+                    ) / (LV[i] + T[i] * (cond.CL - params.CPD))
                     UP[i] = UP[i + 1]
                     VP[i] = VP[i + 1]
                     for k in range(NTRA):
                         TRAP[i, k] = TRAP[i + 1, k]
                 QP[i] = max(min(QP[i], QSTM), 0.0)
         PRECIP += (
-            WT[0] * params.SIGD * WATER[0] * 3600.0 * 24000.0 / (params.ROWL * params.G)
+            WT[0] * params.SIGD * WATER[0] * 3600.0 * 24000.0 / (cond.ROWL * params.G)
         )
     WD = params.BETA * abs(MP[ICB]) * 0.01 * params.RD * T[ICB] / (params.SIGD * P[ICB])
     QPRIME = 0.5 * (QP[0] - Q[0])
-    TPRIME = params.LV0 * QPRIME / params.CPD
+    TPRIME = cond.LV0 * QPRIME / params.CPD
     DPINV = 0.01 / (PH[0] - PH[1])
     AM = 0.0
     if NK == 0:
@@ -669,7 +653,7 @@ def _convect_functional_np(
         - LVCP[0] * params.SIGD * EVAP[0]
         + params.SIGD
         * WT[1]
-        * (params.CL - params.CPD)
+        * (cond.CL - params.CPD)
         * WATER[1]
         * (T[1] - T[0])
         * DPINV
@@ -723,13 +707,13 @@ def _convect_functional_np(
             params.G
             * DPINV
             * MENT[i, i]
-            * (HP[i] - H[i] + T[i] * (params.CPV - params.CPD) * (Q[i] - QENT[i, i]))
+            * (HP[i] - H[i] + T[i] * (cond.CPV - params.CPD) * (Q[i] - QENT[i, i]))
             * CPINV
         )
         FT[i] += (
             params.SIGD
             * WT[i + 1]
-            * (params.CL - params.CPD)
+            * (cond.CL - params.CPD)
             * WATER[i + 1]
             * (T[i + 1] - T[i])
             * DPINV
@@ -847,7 +831,7 @@ def _convect_functional_np(
 
 @jit_compile(backend=np, parallel=True)
 def _numpy_vectorized_convect(
-    t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params
+    t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params, cond
 ):
     nlev, ncol = t.shape
     ft = np.zeros(t.shape)
@@ -877,6 +861,7 @@ def _numpy_vectorized_convect(
             cbmf[i],
             tra[:, :, i],
             params,
+            cond,
         )
         (
             ft[:, i],
@@ -892,3 +877,6 @@ def _numpy_vectorized_convect(
             iflag[i],
         ) = res
     return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag
+
+
+EmanuelConvectionPythonV3 = EmanuelConvectionPython

@@ -1,0 +1,11 @@
+---
+title: "Experiments"
+listing:
+  contents: "*/index.qmd"
+  type: default
+  sort: "date desc"
+  fields: [date, title, description]
+---
+
+Long-form research case studies from the climt project — each a worked
+investigation, reproducible end to end.

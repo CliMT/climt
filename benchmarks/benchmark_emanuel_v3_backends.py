@@ -8,7 +8,7 @@ from sympl._core.backend import DataArrayBackend
 import climt
 from climt import (
     EmanuelConvection,
-    EmanuelConvectionPythonV3,
+    EmanuelConvectionPython,
     RRTMGLongwave,
     RRTMGShortwave,
     SimplePhysics,
@@ -110,8 +110,8 @@ if __name__ == "__main__":
     configs = [
         ("Fortran + DataArray", EmanuelConvection, DataArrayBackend()),
         ("Fortran + Unyt", EmanuelConvection, UnytBackend()),
-        ("V3 Python + DataArray", EmanuelConvectionPythonV3, DataArrayBackend()),
-        ("V3 Python + Unyt", EmanuelConvectionPythonV3, UnytBackend()),
+        ("V3 Python + DataArray", EmanuelConvectionPython, DataArrayBackend()),
+        ("V3 Python + Unyt", EmanuelConvectionPython, UnytBackend()),
     ]
 
     for label, conv_cls, backend in configs:

@@ -1,0 +1,17 @@
+=== LW benchmark: NCOL=100, NZ=30, NUMBA_NUM_THREADS=(default = all cores) ===
+
+RRTMG-LW          :    6.33 ±  0.02 ms/call  (min   6.30)  ->   63.3 µs/col
+CORK-LW (14b x 8g)  :    5.29 ±  0.14 ms/call  (min   5.06)  ->   52.9 µs/col
+
+PF / RRTMG ratio  :  0.84x
+saved throughput -> docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.npz
+
+--- CORK call profile (cumulative top functions) ---
+         10718 function calls (10582 primitive calls) in 0.007 seconds
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001    0.005    0.005 /Users/joymonteiro/github/climt/climt/_components/cork/lw/component.py:200(array_call)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/cork/lw/component.py:415(_correlated_k_optics)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/cork/optics/correlated_k.py:347(compute_ck_optical_depth)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/cork/optics/correlated_k.py:447(_compute_ck_optical_depth_additive)
+        1    0.000    0.000    0.002    0.002 /Users/joymonteiro/github/climt/climt/_components/cork/optics/correlated_k.py:498(_additive_co2_fast)
+        1    0.001    0.001    0.001    0.001 /Users/joymonteiro/github/climt/climt/_components/cork/optics/correlated_k.py:81(_ck_tau_additive_co2_kernel)

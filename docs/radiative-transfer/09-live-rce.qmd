@@ -1,0 +1,126 @@
+---
+title: "Radiative equilibrium: gray vs non-grey — live"
+format: live-html
+engine: jupyter
+pyodide:
+  packages:
+    # Installed by micropip at document setup, before any cell runs. micropip
+    # resolves this from PyPI, which is CORS-enabled — unlike GitHub release
+    # assets, which are not and so cannot be fetched from the browser.
+    # Pinned so the page always runs against the climt it was written for; bump
+    # on release. To preview unreleased local changes instead, swap in a
+    # CORS-served localhost wheel (see the collapsed note below).
+    - "climt==0.30.0"
+---
+
+::: {.callout-note}
+## Runs in your browser
+
+This page runs **climt itself** in your browser via Pyodide — no install, no
+server-side compute. The first cell downloads an ~8 MB pure-Python wheel and
+boots the numpy/matplotlib stack, so give it a few seconds.
+
+The wheel is installed at document setup from the `pyodide: packages:` entry in
+this page's front matter, which micropip resolves from PyPI — pinned to the
+released version this page was written against.
+
+**Previewing unreleased changes:** to run the page against your working copy
+rather than the released wheel, build the pure wheel and serve it *with CORS
+headers* (plain `python -m http.server` will **not** work, and GitHub release
+assets don't send CORS either), then point the front matter at it:
+
+```sh
+CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
+python docs/radiative-transfer/_live/serve_wheel.py /tmp/climt_wh 8912
+```
+:::
+
+{{< include ../_includes/climt-live-setup.qmd >}}
+
+Gray and non-grey longwave radiation are the **same component** here — one
+`CorkLongwaveRadiation` — differing only in the absorption *table* passed to it.
+The gray table (`single_band_gray_lw`) is a single band whose optical depth
+reproduces climt's default gray scheme (`GrayLongwaveRadiation`); the non-grey
+table (`earth_low_res_lw`) resolves 14 bands of real H₂O/CO₂ line absorption.
+**Change one string and re-run** to see how spectral structure reshapes the
+equilibrium.
+
+Each column is a single air parcel over a 5 m slab ocean, heated by a fixed
+absorbed shortwave flux at the surface and cooled by longwave radiation, stepped
+toward radiative equilibrium with `sympl.AdamsBashforth`.
+
+## Gray column
+
+Running this cell steps the column toward radiative equilibrium and then draws
+its **evolution** — temperature, longwave heating rate and up/downwelling
+longwave flux profiles at several times, plus the top-of-atmosphere longwave
+flux (OLR) and surface temperature as time series. The integration runs to
+completion before the figure appears (a spinner shows while it computes); the
+gray column is quick.
+
+```{pyodide}
+#| autorun: true
+from datetime import timedelta
+import sympl
+from climt import (get_default_state, get_grid, SlabSurface,
+                   CorkLongwaveRadiation)
+sympl.set_backend(sympl.DataArrayBackend())
+
+SOLAR = 240.0                     # prescribed absorbed shortwave at surface, W/m^2
+NZ, DT_HOURS, N_STEPS = 18, 2, 400   # raise N_STEPS (e.g. 3000) to near equilibrium
+
+
+def make_column(table):
+    """Build a single air column over a 5 m slab with prescribed surface SW."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
+    surface = SlabSurface()
+    state = get_default_state([lw, surface], grid_state=get_grid(nx=1, ny=1, nz=NZ))
+    state["ocean_mixed_layer_thickness"].values[:] = 5.0
+    # Fixed shortwave heating of the slab surface (no shortwave component).
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+    return [lw, surface], state
+
+
+components, state = make_column("single_band_gray_lw")
+integrate_with_snapshots(
+    components, state, timedelta(hours=DT_HOURS), N_STEPS, SOLAR,
+    title="Gray radiative equilibrium")
+# End on a plain statement (not the returned state): quarto-live hashes each
+# cell's final value, and a sympl state marshals to an unhashable JsProxy.
+print(f"surface temperature: {float(state['surface_temperature'].values.ravel()[0]):.1f} K")
+```
+
+## Non-grey column — change one string
+
+The only change is the absorption **table**: 14 bands of real H₂O/CO₂ line
+absorption instead of one gray band. That integration is heavier — expect it to
+take **~2 minutes** in the browser (the spinner will spin the whole time), then
+the same evolution figure appears.
+
+```{pyodide}
+components, state = make_column("earth_low_res_lw")   # <- the only change: the table
+integrate_with_snapshots(
+    components, state, timedelta(hours=DT_HOURS), N_STEPS, SOLAR,
+    title="Non-grey radiative equilibrium (14 bands)")
+print(f"surface temperature: {float(state['surface_temperature'].values.ravel()[0]):.1f} K")
+```
+
+The non-grey column's spectral **windows** let surface radiation escape directly
+to space, so it radiates more efficiently and settles to a different profile than
+the single-band gray column — cooler where the windows are transparent, with a
+steeper drop-off aloft. (At the default `N_STEPS = 400` neither column is fully
+equilibrated; increase it to watch each profile settle.)
+
+### Why the stratosphere here is isothermal
+
+This setup has **no shortwave absorption in the atmosphere** — sunlight is
+absorbed only at the surface (there is no ozone, and the longwave-only radiation
+does not heat the air with sunlight). In pure radiative equilibrium without a
+solar absorber aloft, the upper atmosphere relaxes to a constant *skin
+temperature*: an **isothermal stratosphere**. This is different from Earth's real
+stratosphere, where ozone absorbs ultraviolet sunlight and drives a temperature
+*inversion* (temperature rising with height). Add a shortwave component with
+ozone and the isothermal top would tilt into that inversion — a natural next
+experiment.

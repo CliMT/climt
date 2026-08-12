@@ -1,0 +1,13 @@
+# CorkShortwaveRadiation { #climt._components.cork.sw.component.CorkShortwaveRadiation }
+
+```python
+_components.cork.sw.component.CorkShortwaveRadiation(
+    optics='parmentier',
+    table=None,
+    coefficients='solar_composition',
+    stellar_spectrum='sun',
+    rosseland_mean_fit='freedman2014',
+    **kwargs,
+)
+```
+
