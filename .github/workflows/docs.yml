@@ -1,9 +1,12 @@
 name: docs
 on:
+  # This repo's release branch is `master`; there is no `main`. Both lists said
+  # `main`, so pushes to master never triggered this workflow and the stable
+  # docs at the site root were never published.
   push:
-    branches: [develop, main]
+    branches: [develop, master]
   pull_request:
-    branches: [develop, main]
+    branches: [develop, master]
   workflow_dispatch:
 
 jobs:
@@ -39,4 +42,13 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/_site
-          destination_dir: ${{ github.ref_name == 'main' && '.' || 'dev' }}
+          # master -> site root (stable release docs); develop -> /dev/ preview.
+          destination_dir: ${{ github.ref_name == 'master' && '.' || 'dev' }}
+          # The action removes existing files in destination_dir before copying.
+          # For the develop preview that is what we want: /dev/ is rebuilt clean
+          # each time, so deleted pages disappear. But the root deploy's
+          # destination is the whole branch, which would take the sibling /dev/
+          # tree with it — so keep files when publishing from master. Trade-off:
+          # pages removed between releases linger at the root until gh-pages is
+          # pruned by hand.
+          keep_files: ${{ github.ref_name == 'master' }}
