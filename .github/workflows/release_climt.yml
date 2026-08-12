@@ -12,10 +12,23 @@ jobs:
         if: ${{ !github.event.release.prerelease }}
         runs-on: ${{ matrix.os }}
         strategy:
+            # Build every platform even if one fails, so a single toolchain
+            # breakage does not hide the state of the others.
+            fail-fast: false
             matrix:
-                os: [ubuntu-latest, macOS-latest]
-                #[ubuntu-20.04,macOS-11]
-                #, windows-2019, macOS-10.15]
+                # macos-15 is pinned deliberately, NOT macos-latest. The runner
+                # image's Homebrew gcc is built for the runner's own macOS
+                # version, and delocate vendors libgfortran/libgomp/libquadmath
+                # into the wheel — so the wheel cannot declare a deployment
+                # target older than the runner. On macos-latest (now macOS 26)
+                # that failed the 0.30.0 release:
+                #   DelocationError: Library dependencies do not satisfy target
+                #   MacOS version 15.0: libgfortran.5.dylib has a minimum
+                #   target of 26.0
+                # Raising MACOSX_DEPLOYMENT_TARGET to match would drop every
+                # user below that macOS version, so pin the runner instead.
+                # Bumping this pin raises climt's minimum supported macOS.
+                os: [ubuntu-latest, macos-15]
 
         steps:
             - uses: actions/checkout@v4
