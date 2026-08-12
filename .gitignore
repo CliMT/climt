@@ -107,3 +107,7 @@ build_cache/
 # YSU Fortran build products. *.o/*.mod already cover most of them, but the
 # linked driver executable has no extension so it slips through.
 climt/_components/ysu/_capi/ysu_driver
+
+# graphify knowledge-graph output. No longer carried in the repo; ignored so a
+# stray `graphify update .` cannot re-commit ~120 MB of generated artifacts.
+graphify-out/
