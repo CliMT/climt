@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Chapter 3: The k-distribution – climt</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo light-content">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">climt</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../get-started/installation.html"> 
+<span class="menu-text">Get Started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../user-guide/introduction.html"> 
+<span class="menu-text">User Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../radiative-transfer/index.html" aria-current="page"> 
+<span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../experiments/index.html"> 
+<span class="menu-text">Experiments</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/CliMT/climt"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../radiative-transfer/03-k-distribution.html">Chapter 3: The k-distribution</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Radiative Transfer Walkthrough</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/01-why-nongrey.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 1: Why non-grey?</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/02-line-by-line.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 2: Line-by-line physics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/03-k-distribution.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Chapter 3: The k-distribution</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/04-correlated-k.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 4: Correlated-k</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/05-gas-overlap.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 5: Gas overlap: additive vs ESFT</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/06-picket-fence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 6: The picket-fence model</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/07-two-stream.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 7: The two-stream solver</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/08-multiplanet.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 8: Switching planets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/09-live-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Radiative equilibrium: gray vs non-grey — live</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/table-generation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Table generation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/performance.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Appendix A: Performance</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#band-averaging-re-ordered" id="toc-band-averaging-re-ordered" class="nav-link active" data-scroll-target="#band-averaging-re-ordered">Band-averaging, re-ordered</a></li>
+  <li><a href="#constructing-kg-in-practice" id="toc-constructing-kg-in-practice" class="nav-link" data-scroll-target="#constructing-kg-in-practice">Constructing k(g) in practice</a></li>
+  <li><a href="#the-code-in-climt" id="toc-the-code-in-climt" class="nav-link" data-scroll-target="#the-code-in-climt">The code in climt</a></li>
+  <li><a href="#hands-on-k-distribution-from-scratch" id="toc-hands-on-k-distribution-from-scratch" class="nav-link" data-scroll-target="#hands-on-k-distribution-from-scratch">Hands-on: k-distribution from scratch</a></li>
+  <li><a href="#k-distribution-from-scratch" id="toc-k-distribution-from-scratch" class="nav-link" data-scroll-target="#k-distribution-from-scratch">k-Distribution from Scratch</a>
+  <ul class="collapse">
+  <li><a href="#why-band-averaging-is-hard-jensens-inequality" id="toc-why-band-averaging-is-hard-jensens-inequality" class="nav-link" data-scroll-target="#why-band-averaging-is-hard-jensens-inequality">Why band-averaging is hard: Jensen’s inequality</a></li>
+  <li><a href="#the-k-distribution-sort-and-integrate" id="toc-the-k-distribution-sort-and-integrate" class="nav-link" data-scroll-target="#the-k-distribution-sort-and-integrate">The k-distribution: sort and integrate</a></li>
+  <li><a href="#gpoint-quadrature-the-concept" id="toc-gpoint-quadrature-the-concept" class="nav-link" data-scroll-target="#gpoint-quadrature-the-concept">2-gpoint quadrature: the concept</a></li>
+  <li><a href="#gauss-legendre-quadrature-8-gpoints" id="toc-gauss-legendre-quadrature-8-gpoints" class="nav-link" data-scroll-target="#gauss-legendre-quadrature-8-gpoints">Gauss-Legendre quadrature: 8 gpoints</a></li>
+  <li><a href="#connection-to-the-shipped-cork-k-table" id="toc-connection-to-the-shipped-cork-k-table" class="nav-link" data-scroll-target="#connection-to-the-shipped-cork-k-table">Connection to the shipped CORK k-table</a></li>
+  </ul></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further reading</a></li>
+  </ul>
+<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="k_distribution_demo-preview.html"><i class="bi bi-journal-code"></i>k-Distribution from Scratch</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Chapter 3: The k-distribution</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The trick behind the k-distribution is that we do not care <em>where</em> in a band an absorption coefficient takes some value — only <em>how often</em>.</p>
+<section id="band-averaging-re-ordered" class="level2">
+<h2 class="anchored" data-anchor-id="band-averaging-re-ordered">Band-averaging, re-ordered</h2>
+<p>Return to the band-averaged transmission:</p>
+<p><span class="math display">\[\langle T(L)\rangle = \frac{1}{\Delta\nu}\int_{\Delta\nu} e^{-\sigma(\nu)L}\,d\nu.\]</span></p>
+<p>Change variables from <span class="math inline">\(\nu\)</span> to the cumulative distribution of <span class="math inline">\(\sigma\)</span> values inside the band. Define <span class="math inline">\(g(k)\)</span> as the fraction of the band over which <span class="math inline">\(\sigma \le k\)</span>:</p>
+<p><span class="math display">\[g(k) = \frac{1}{\Delta\nu}\int_{\Delta\nu} \Theta(k - \sigma(\nu))\,d\nu,\]</span></p>
+<p>where <span class="math inline">\(\Theta\)</span> is the step function. <span class="math inline">\(g\)</span> runs from 0 to 1, and its inverse <span class="math inline">\(k(g)\)</span> is monotonically increasing by construction.</p>
+<p>Because the integrand depends only on the value of <span class="math inline">\(\sigma\)</span> (not where in the band it sits), the band average becomes a <strong>one-dimensional integral over</strong> <span class="math inline">\(g\)</span>:</p>
+<p><span class="math display">\[\langle T(L)\rangle = \int_0^1 e^{-k(g)\,L}\,dg.\]</span></p>
+<p>One integral, one smooth monotonic function <span class="math inline">\(k(g)\)</span> — a few Gaussian quadrature points suffice.</p>
+</section>
+<section id="constructing-kg-in-practice" class="level2">
+<h2 class="anchored" data-anchor-id="constructing-kg-in-practice">Constructing k(g) in practice</h2>
+<p>Given an LBL spectrum <span class="math inline">\(\sigma(\nu)\)</span> over a band:</p>
+<ol type="1">
+<li>Sort <span class="math inline">\(\sigma\)</span> values in ascending order.</li>
+<li>Evaluate the sorted array at quadrature points <span class="math inline">\(g_i\)</span> (Gauss-Legendre on <span class="math inline">\([0,1]\)</span>).</li>
+<li>Store <span class="math inline">\(k_i = \sigma_\text{sorted}(g_i)\)</span> and weights <span class="math inline">\(w_i\)</span> summing to 1.</li>
+</ol>
+<div id="fig-k-dist" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-k-dist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="_artifacts/03_k_distribution_construction.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-k-dist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: <strong>Figure 3.1</strong> — Sorted absorption coefficients (empirical CDF) and two Gauss-Legendre quadrature points showing that a few points capture broadband transmission accurately.
+</figcaption>
+</figure>
+</div>
+<p>The band-averaged transmission is then approximated as</p>
+<p><span class="math display">\[\langle T(L)\rangle \approx \sum_i w_i\,e^{-k_i\,L}.\]</span></p>
+</section>
+<section id="the-code-in-climt" class="level2">
+<h2 class="anchored" data-anchor-id="the-code-in-climt">The code in climt</h2>
+<p>climt does not build k-distributions at runtime — they arrive in pre-computed netCDF files. The read path makes the data layout explicit:</p>
+<div id="f8d0913b" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> load_k_table</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(load_k_table))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>def load_k_table(name_or_path):
+    """Load a correlated-k table.
+
+    Args:
+        name_or_path: table name (e.g., ``"test_2band_lw"``) or path to a
+            ``.npz`` / ``.nc`` file. Shipped tables under
+            ``climt/_data/cork/correlated_k/`` are resolved by name,
+            preferring ``.npz`` (numpy-native, scipy-free) then falling back
+            to ``.nc`` (design-spec format, requires scipy).
+
+    Returns:
+        dict-like object exposing ``k_coefficients``, ``gpoint_weights``,
+        ``temperature_grid``, ``pressure_grid_log`` and (LW/SW-specific)
+        auxiliary arrays.
+    """
+    if os.path.isfile(name_or_path):
+        if name_or_path.endswith(".nc"):
+            return _load_netcdf_table(name_or_path)
+        return np.load(name_or_path, allow_pickle=True)
+
+    pkg = importlib_resources.files("climt._data.cork.correlated_k")
+    npz_path = pkg.joinpath(f"{name_or_path}.npz")
+    with importlib_resources.as_file(npz_path) as f:
+        if os.path.isfile(f):
+            return np.load(f, allow_pickle=True)
+
+    nc_path = pkg.joinpath(f"{name_or_path}.nc")
+    with importlib_resources.as_file(nc_path) as f:
+        if os.path.isfile(f):
+            return _load_netcdf_table(str(f))
+
+    raise FileNotFoundError(f"No k-table named {name_or_path!r} (.npz or .nc)")
+</code></pre>
+</div>
+</div>
+<p>The key fields are <code>k_coefficients</code> (shape <code>(gas, band, gpoint, temperature, pressure)</code>) and <code>gpoint_weights</code> (summing to 1 per band). These are exactly the <span class="math inline">\(k_i\)</span> and <span class="math inline">\(w_i\)</span> above, tabulated on a T-p grid.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Try it yourself
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>examples/k_distribution_demo.ipynb</code> (embedded below): build <span class="math inline">\(k(g)\)</span> from a synthetic LBL spectrum, see why 2-gpoint quadrature falls short (~10 % error), then scale to 8-point Gauss-Legendre — matching what CORK uses — and verify the reconstruction error drops below 2 %.</p>
+</div>
+</div>
+</section>
+<section id="hands-on-k-distribution-from-scratch" class="level2">
+<h2 class="anchored" data-anchor-id="hands-on-k-distribution-from-scratch">Hands-on: k-distribution from scratch</h2>
+</section>
+<section id="k-distribution-from-scratch" class="level1 quarto-embed-nb-cell">
+<h1>k-Distribution from Scratch</h1>
+<p>This notebook builds a k-distribution from scratch so you can see exactly what <code>climt</code>’s correlated-k tables contain.</p>
+<p>We start from a line-by-line (LBL) absorption spectrum over a 200 cm⁻¹ band, sort it into the <em>g</em>-space representation, apply Gaussian quadrature, and verify that the resulting band-averaged transmission matches the full LBL integral to better than <strong>2 % relative error</strong>.</p>
+<p>The scheme that uses these pre-computed tables in <code>climt</code> is <strong>CORK</strong> (<code>CorkLongwaveRadiation</code> / <code>CorkShortwaveRadiation</code>).</p>
+<div id="cell-02" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T17:10:15.085824Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T17:10:15.085538Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T17:10:15.570590Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T17:10:15.569899Z&quot;}}" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> numpy.polynomial.legendre <span class="im">import</span> leggauss</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os, pathlib</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- linepyline guard -------------------------------------------</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># linepyline is an optional line-by-line solver.  When absent (e.g. in the</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># climt conda environment), every downstream cell falls back to a pre-baked</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># synthetic spectrum stored in k_dist_fallback.npz so the notebook runs</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># end-to-end without modification.</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> linepyline</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    LINEPYLINE_AVAILABLE <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">ImportError</span>:</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    LINEPYLINE_AVAILABLE <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'LINEPYLINE_AVAILABLE ='</span>, LINEPYLINE_AVAILABLE)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>LINEPYLINE_AVAILABLE = False</code></pre>
+</div>
+</div>
+<div id="cell-03" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T17:10:15.572553Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T17:10:15.572351Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T17:10:15.872179Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T17:10:15.871612Z&quot;}}" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- Step 1 : absorption cross-section σ(ν) over 1000–1200 cm⁻¹ -------</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># With linepyline: query HITRAN for H₂O at T=296 K, p=1 bar and return</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># σ(ν) in cm² molecule⁻¹ on a fine wavenumber grid.</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Without linepyline: load the pre-baked synthetic spectrum from k_dist_fallback.npz.</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>T_K   <span class="op">=</span> <span class="fl">296.0</span>   <span class="co"># temperature (K)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>p_Pa  <span class="op">=</span> <span class="dv">101325</span>  <span class="co"># pressure (Pa) — 1 atm</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>nu_lo, nu_hi <span class="op">=</span> <span class="fl">1000.0</span>, <span class="fl">1200.0</span>  <span class="co"># band limits (cm⁻¹)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> LINEPYLINE_AVAILABLE:</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> linepyline.cross_section(</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        molecule<span class="op">=</span><span class="st">'H2O'</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        nu_min<span class="op">=</span>nu_lo, nu_max<span class="op">=</span>nu_hi, nu_step<span class="op">=</span><span class="fl">0.04</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        T<span class="op">=</span>T_K, p<span class="op">=</span>p_Pa,</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    nu    <span class="op">=</span> result[<span class="st">'nu'</span>]        <span class="co"># wavenumber grid (cm⁻¹)</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> result[<span class="st">'sigma'</span>]     <span class="co"># cross-section  (cm² molecule⁻¹)</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Fallback: synthetic spectrum that reproduces the key LBL features</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># (smooth continuum background + a set of moderate pressure-broadened lines).</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    _here <span class="op">=</span> pathlib.Path(os.path.abspath(<span class="st">''</span>))  <span class="co"># examples/ when executed via nbconvert</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    _fallback <span class="op">=</span> _here <span class="op">/</span> <span class="st">'k_dist_fallback.npz'</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    _data  <span class="op">=</span> np.load(<span class="bu">str</span>(_fallback))</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    nu     <span class="op">=</span> _data[<span class="st">'nu'</span>]    <span class="co"># 5 000 wavenumber points, 1000–1200 cm⁻¹</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    sigma  <span class="op">=</span> _data[<span class="st">'sigma'</span>] <span class="co"># synthetic H₂O-like cross-sections (cm² molecule⁻¹)</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">'linepyline absent — using pre-baked fallback spectrum'</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Band: </span><span class="sc">{</span>nu_lo<span class="sc">:.0f}</span><span class="ss">–</span><span class="sc">{</span>nu_hi<span class="sc">:.0f}</span><span class="ss"> cm⁻¹   N_ν = </span><span class="sc">{</span><span class="bu">len</span>(nu)<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'σ(ν): min=</span><span class="sc">{</span>sigma<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2e}</span><span class="ss">  max=</span><span class="sc">{</span>sigma<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2e}</span><span class="ss">  '</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'dynamic range = </span><span class="sc">{</span>sigma<span class="sc">.</span><span class="bu">max</span>()<span class="op">/</span>sigma<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.0f}</span><span class="ss">×  (cm² molecule⁻¹)'</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">3</span>))</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>ax.semilogy(nu, sigma, lw<span class="op">=</span><span class="fl">0.4</span>, color<span class="op">=</span><span class="st">'steelblue'</span>)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r'Wavenumber </span><span class="dv">$</span><span class="ch">\n</span><span class="vs">u</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">cm</span><span class="dv">$^</span><span class="vs">{-1}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r'</span><span class="dv">$\s</span><span class="vs">igma</span><span class="kw">(</span><span class="ch">\n</span><span class="vs">u</span><span class="kw">)</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">cm</span><span class="dv">$^</span><span class="vs">2</span><span class="dv">$</span><span class="vs"> molecule</span><span class="dv">$^</span><span class="vs">{-1}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="vs">r'LBL absorption cross-section — 1000–1200 cm</span><span class="dv">$^</span><span class="vs">{-1}</span><span class="dv">$</span><span class="vs">'</span>)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>linepyline absent — using pre-baked fallback spectrum
+Band: 1000–1200 cm⁻¹   N_ν = 5000
+σ(ν): min=1.03e-22  max=2.92e-20  dynamic range = 283×  (cm² molecule⁻¹)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03-k-distribution_files/figure-html/k_distribution_demo-cell-3-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="why-band-averaging-is-hard-jensens-inequality" class="level2">
+<h2 class="anchored" data-anchor-id="why-band-averaging-is-hard-jensens-inequality">Why band-averaging is hard: Jensen’s inequality</h2>
+<p>The <em>naïve</em> approximation replaces the full integral</p>
+<p><span class="math display">\[\langle T(L)\rangle = \langle e^{-\sigma L}\rangle\]</span></p>
+<p>with <span class="math inline">\(e^{-\langle\sigma\rangle L}\)</span> — the exponential of the <em>mean</em> cross-section. Because <span class="math inline">\(e^{-x}\)</span> is convex, Jensen’s inequality guarantees <span class="math inline">\(\langle e^{-\sigma L}\rangle \ge e^{-\langle\sigma\rangle L}\)</span>: the naïve estimate always <em>under-predicts</em> transmission (over-predicts absorption). The error grows with path length <span class="math inline">\(L\)</span> and with the spread of <span class="math inline">\(\sigma\)</span>.</p>
+<div id="cell-04" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T17:10:15.874014Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T17:10:15.873867Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T17:10:16.281983Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T17:10:16.281410Z&quot;}}" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- Step 2 : mean-of-exp vs exp-of-mean --------------------------</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Column density u (molecules cm⁻²) = number density × path length.</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Typical atmospheric column: 10²⁰ – 10²⁵ molecules cm⁻².</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>u_vals <span class="op">=</span> np.logspace(<span class="dv">20</span>, <span class="dv">26</span>, <span class="dv">80</span>)   <span class="co"># column density (molecules cm⁻²)</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>T_true  <span class="op">=</span> np.array([np.mean(np.exp(<span class="op">-</span>sigma <span class="op">*</span> u)) <span class="cf">for</span> u <span class="kw">in</span> u_vals])   <span class="co"># ⟨exp(−σu)⟩</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>T_naive <span class="op">=</span> np.exp(<span class="op">-</span>sigma.mean() <span class="op">*</span> u_vals)                             <span class="co"># exp(−⟨σ⟩u)</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">4</span>))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">0</span>]</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals, T_true,  lw<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="vs">r'</span><span class="dv">$</span><span class="er">\</span><span class="vs">langle e</span><span class="dv">^</span><span class="vs">{-</span><span class="dv">\s</span><span class="vs">igma u}</span><span class="ch">\r</span><span class="vs">angle</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">exact</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals, T_naive, lw<span class="op">=</span><span class="dv">2</span>, ls<span class="op">=</span><span class="st">'--'</span>, label<span class="op">=</span><span class="vs">r'</span><span class="dv">$</span><span class="vs">e</span><span class="dv">^</span><span class="vs">{-</span><span class="er">\</span><span class="vs">langle</span><span class="dv">\s</span><span class="vs">igma</span><span class="ch">\r</span><span class="vs">angle u}</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">naïve</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r'Column density </span><span class="dv">$</span><span class="vs">u</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">molecules cm</span><span class="dv">$^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Transmission'</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Band-averaged transmission'</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">1</span>]</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>err <span class="op">=</span> (T_true <span class="op">-</span> T_naive) <span class="op">/</span> (T_true <span class="op">+</span> <span class="fl">1e-10</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals, err <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span><span class="st">'crimson'</span>)</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r'Column density </span><span class="dv">$</span><span class="vs">u</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">molecules cm</span><span class="dv">$^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Relative error (%)'</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="vs">r'Error of exp</span><span class="kw">(</span><span class="vs">−⟨σ⟩u</span><span class="kw">)</span><span class="vs"> vs ⟨exp</span><span class="kw">(</span><span class="vs">−σu</span><span class="kw">)</span><span class="vs">⟩'</span>)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'k'</span>, lw<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Maximum error of naïve approximation: '</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'</span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(err)<span class="sc">.</span><span class="bu">max</span>()<span class="op">*</span><span class="dv">100</span><span class="sc">:.1f}</span><span class="ss"> %'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03-k-distribution_files/figure-html/k_distribution_demo-cell-4-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Maximum error of naïve approximation: 100.0 %</code></pre>
+</div>
+</div>
+</section>
+<section id="the-k-distribution-sort-and-integrate" class="level2">
+<h2 class="anchored" data-anchor-id="the-k-distribution-sort-and-integrate">The k-distribution: sort and integrate</h2>
+<p>The k-distribution changes the integration variable from wavenumber <span class="math inline">\(\nu\)</span> to the <em>cumulative fraction</em> of the band over which <span class="math inline">\(\sigma \le k\)</span>:</p>
+<p><span class="math display">\[g(k) = \frac{1}{\Delta\nu}\int_{\Delta\nu}\Theta(k-\sigma(\nu))\,d\nu.\]</span></p>
+<p>Its inverse <span class="math inline">\(k(g)\)</span> is simply the <strong>sorted</strong> cross-section array evaluated at fractional positions <span class="math inline">\(g\in[0,1]\)</span>. The band-averaged transmission becomes</p>
+<p><span class="math display">\[\langle T(u)\rangle = \int_0^1 e^{-k(g)\,u}\,dg,\]</span></p>
+<p>a one-dimensional integral over a <em>smooth, monotonically increasing</em> function — ideal for Gaussian quadrature.</p>
+<div id="cell-05" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T17:10:16.284004Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T17:10:16.283854Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T17:10:16.436233Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T17:10:16.435593Z&quot;}}" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- Step 3 : sort σ → k(g) empirical CDF -----------------------</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>sigma_sorted <span class="op">=</span> np.sort(sigma)                 <span class="co"># ascending order</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>g_fine       <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="bu">len</span>(sigma))  <span class="co"># fractional position</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>ax.semilogy(g_fine, sigma_sorted, lw<span class="op">=</span><span class="fl">1.5</span>, color<span class="op">=</span><span class="st">'teal'</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r'</span><span class="dv">$</span><span class="vs">g</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">cumulative fraction of band</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r'</span><span class="dv">$</span><span class="vs">k</span><span class="kw">(</span><span class="vs">g</span><span class="kw">)</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">cm</span><span class="dv">$^</span><span class="vs">2</span><span class="dv">$</span><span class="vs"> molecule</span><span class="dv">$^</span><span class="vs">{-1}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Empirical k-distribution: sorted cross-sections'</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'k(g=0): </span><span class="sc">{</span>sigma_sorted[<span class="dv">0</span>]<span class="sc">:.2e}</span><span class="ss">   k(g=1): </span><span class="sc">{</span>sigma_sorted[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.2e}</span><span class="ss"> cm² molecule⁻¹'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03-k-distribution_files/figure-html/k_distribution_demo-cell-5-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>k(g=0): 1.03e-22   k(g=1): 2.92e-20 cm² molecule⁻¹</code></pre>
+</div>
+</div>
+</section>
+<section id="gpoint-quadrature-the-concept" class="level2">
+<h2 class="anchored" data-anchor-id="gpoint-quadrature-the-concept">2-gpoint quadrature: the concept</h2>
+<p>The simplest approximation to <span class="math inline">\(\int_0^1 e^{-k(g)u}\,dg\)</span> is the <strong>composite midpoint rule</strong> with two equal panels:</p>
+<p><span class="math display">\[\langle T(u)\rangle \approx \frac{1}{2}e^{-k(0.25)\,u} + \frac{1}{2}e^{-k(0.75)\,u}.\]</span></p>
+<p>This captures the rough shape of <span class="math inline">\(k(g)\)</span> — a representative <em>weak-gas</em> value (<span class="math inline">\(g=0.25\)</span>) and a representative <em>strong-gas</em> value (<span class="math inline">\(g=0.75\)</span>) — and already beats the naïve <span class="math inline">\(e^{-\langle\sigma\rangle u}\)</span> approximation. Its error is determined by how non-linear <span class="math inline">\(k(g)\)</span> is.</p>
+<div id="cell-06" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T17:10:16.438204Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T17:10:16.438062Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T17:10:16.653729Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T17:10:16.653192Z&quot;}}" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- Step 4 : 2-gpoint composite midpoint rule -------------------</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>g_2pt <span class="op">=</span> np.array([<span class="fl">0.25</span>, <span class="fl">0.75</span>])   <span class="co"># g-points</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>w_2pt <span class="op">=</span> np.array([<span class="fl">0.5</span>,  <span class="fl">0.5</span> ])   <span class="co"># weights (summing to 1)</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>k_2pt <span class="op">=</span> np.interp(g_2pt, g_fine, sigma_sorted)   <span class="co"># k values at the two gpoints</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'2-gpoint quadrature:'</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> gi, wi, ki <span class="kw">in</span> <span class="bu">zip</span>(g_2pt, w_2pt, k_2pt):</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  g=</span><span class="sc">{</span>gi<span class="sc">:.2f}</span><span class="ss">  w=</span><span class="sc">{</span>wi<span class="sc">:.2f}</span><span class="ss">  k=</span><span class="sc">{</span>ki<span class="sc">:.3e}</span><span class="ss"> cm² molecule⁻¹'</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualise the 2 gpoints on k(g)</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>ax.semilogy(g_fine, sigma_sorted, lw<span class="op">=</span><span class="fl">1.5</span>, color<span class="op">=</span><span class="st">'teal'</span>, label<span class="op">=</span><span class="st">'k(g)'</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>ax.scatter(g_2pt, k_2pt, s<span class="op">=</span><span class="dv">100</span>, zorder<span class="op">=</span><span class="dv">5</span>, color<span class="op">=</span><span class="st">'crimson'</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>           label<span class="op">=</span><span class="st">'2-point quadrature (g=0.25, 0.75)'</span>)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r'</span><span class="dv">$</span><span class="vs">g</span><span class="dv">$</span><span class="vs">'</span>)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r'</span><span class="dv">$</span><span class="vs">k</span><span class="kw">(</span><span class="vs">g</span><span class="kw">)</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">cm</span><span class="dv">$^</span><span class="vs">2</span><span class="dv">$</span><span class="vs"> molecule</span><span class="dv">$^</span><span class="vs">{-1}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'2-gpoint quadrature on k(g)'</span>)</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare 2-pt transmission with full LBL</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>T_2pt <span class="op">=</span> np.array([np.<span class="bu">sum</span>(w_2pt <span class="op">*</span> np.exp(<span class="op">-</span>k_2pt <span class="op">*</span> u)) <span class="cf">for</span> u <span class="kw">in</span> u_vals])</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>mask  <span class="op">=</span> T_true <span class="op">&gt;</span> <span class="fl">0.01</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>err_2pt <span class="op">=</span> np.<span class="bu">abs</span>(T_2pt[mask] <span class="op">-</span> T_true[mask]) <span class="op">/</span> T_true[mask]</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="ch">\n</span><span class="ss">2-gpoint max relative error: </span><span class="sc">{</span>err_2pt<span class="sc">.</span><span class="bu">max</span>()<span class="op">*</span><span class="dv">100</span><span class="sc">:.1f}</span><span class="ss"> %  '</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'(over T_LBL &gt; 0.01 range)'</span>)</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'→ Better than naïve, but still too large for climate modelling.'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>2-gpoint quadrature:
+  g=0.25  w=0.50  k=1.097e-22 cm² molecule⁻¹
+  g=0.75  w=0.50  k=2.261e-22 cm² molecule⁻¹</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03-k-distribution_files/figure-html/k_distribution_demo-cell-6-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+2-gpoint max relative error: 10.4 %  (over T_LBL &gt; 0.01 range)
+→ Better than naïve, but still too large for climate modelling.</code></pre>
+</div>
+</div>
+</section>
+<section id="gauss-legendre-quadrature-8-gpoints" class="level2">
+<h2 class="anchored" data-anchor-id="gauss-legendre-quadrature-8-gpoints">Gauss-Legendre quadrature: 8 gpoints</h2>
+<p>Replacing the midpoint rule with <strong>8-point Gauss-Legendre</strong> quadrature on <span class="math inline">\([0,1]\)</span> captures the curvature of <span class="math inline">\(k(g)\)</span> far more accurately. These are exactly the 8 gpoints that <code>climt</code>’s CORK tables use per band.</p>
+<div id="cell-07" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T17:10:16.655642Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T17:10:16.655518Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T17:10:16.991241Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T17:10:16.990620Z&quot;}}" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- Step 5 : 8-gpoint GL quadrature + assertion ------------------</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 8-point Gauss-Legendre nodes on [0,1] and their weights</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>_pts, _wts <span class="op">=</span> leggauss(<span class="dv">8</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>g_8pt <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (_pts <span class="op">+</span> <span class="dv">1</span>)   <span class="co"># map [-1, 1] -&gt; [0, 1]</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>w_8pt <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> _wts</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>k_8pt <span class="op">=</span> np.interp(g_8pt, g_fine, sigma_sorted)  <span class="co"># k values at 8 gpoints</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'8-point GL quadrature (g, weight, k):'</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> gi, wi, ki <span class="kw">in</span> <span class="bu">zip</span>(g_8pt, w_8pt, k_8pt):</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  g=</span><span class="sc">{</span>gi<span class="sc">:.4f}</span><span class="ss">  w=</span><span class="sc">{</span>wi<span class="sc">:.5f}</span><span class="ss">  k=</span><span class="sc">{</span>ki<span class="sc">:.3e}</span><span class="ss"> cm² molecule⁻¹'</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  sum(w) = </span><span class="sc">{</span>w_8pt<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.6f}</span><span class="ss">'</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstruct band-averaged transmission: T(u) = Σ_i w_i exp(-k_i u)</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>T_8pt <span class="op">=</span> np.array([np.<span class="bu">sum</span>(w_8pt <span class="op">*</span> np.exp(<span class="op">-</span>k_8pt <span class="op">*</span> u)) <span class="cf">for</span> u <span class="kw">in</span> u_vals])</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot all three approximations</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">4</span>))</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">0</span>]</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals, T_true, lw<span class="op">=</span><span class="dv">2</span>, color<span class="op">=</span><span class="st">'k'</span>, label<span class="op">=</span><span class="st">'LBL (exact)'</span>)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals, T_2pt,  lw<span class="op">=</span><span class="fl">1.5</span>, ls<span class="op">=</span><span class="st">'--'</span>, color<span class="op">=</span><span class="st">'orange'</span>,  label<span class="op">=</span><span class="st">'2-gpt (g=0.25/0.75)'</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals, T_8pt,  lw<span class="op">=</span><span class="fl">1.5</span>, ls<span class="op">=</span><span class="st">'-.'</span>,  color<span class="op">=</span><span class="st">'teal'</span>,    label<span class="op">=</span><span class="st">'8-gpt GL'</span>)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r'Column density </span><span class="dv">$</span><span class="vs">u</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">molecules cm</span><span class="dv">$^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Transmission'</span>)</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Transmission: LBL vs k-distribution'</span>)</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axes[<span class="dv">1</span>]</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>err_8pt <span class="op">=</span> np.<span class="bu">abs</span>(T_8pt[mask] <span class="op">-</span> T_true[mask]) <span class="op">/</span> T_true[mask]</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals[mask], err_2pt <span class="op">*</span> <span class="dv">100</span>, ls<span class="op">=</span><span class="st">'--'</span>, color<span class="op">=</span><span class="st">'orange'</span>, label<span class="op">=</span><span class="st">'2-gpt'</span>)</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>ax.semilogx(u_vals[mask], err_8pt <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span><span class="st">'teal'</span>,            label<span class="op">=</span><span class="st">'8-gpt GL'</span>)</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="fl">2.0</span>, color<span class="op">=</span><span class="st">'crimson'</span>, ls<span class="op">=</span><span class="st">':'</span>, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">'2% threshold'</span>)</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r'Column density </span><span class="dv">$</span><span class="vs">u</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">molecules cm</span><span class="dv">$^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">'</span>)</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Relative error (%)'</span>)</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Quadrature error vs LBL truth'</span>)</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>max_rel_err_8pt <span class="op">=</span> err_8pt.<span class="bu">max</span>()</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'8-gpt max relative error = </span><span class="sc">{</span>max_rel_err_8pt<span class="op">*</span><span class="dv">100</span><span class="sc">:.3f}</span><span class="ss"> %'</span>)</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Non-tautological assertion: the reconstructed T(u) must agree with the</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a><span class="co"># LBL mean(exp(-sigma u)) to within 2% over the range where T_LBL &gt; 0.01.</span></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a><span class="co"># This WOULD fail if the quadrature gpoints or weights were wrong, or if</span></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="co"># k(g) were read incorrectly.</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> max_rel_err_8pt <span class="op">&lt;</span> <span class="fl">0.02</span>, (</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f'8-gpoint reconstruction error </span><span class="sc">{</span>max_rel_err_8pt<span class="op">*</span><span class="dv">100</span><span class="sc">:.2f}</span><span class="ss">% exceeds 2% threshold'</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>8-point GL quadrature (g, weight, k):
+  g=0.0199  w=0.05061  k=1.033e-22 cm² molecule⁻¹
+  g=0.1017  w=0.11119  k=1.053e-22 cm² molecule⁻¹
+  g=0.2372  w=0.15685  k=1.092e-22 cm² molecule⁻¹
+  g=0.4083  w=0.18134  k=1.228e-22 cm² molecule⁻¹
+  g=0.5917  w=0.18134  k=1.474e-22 cm² molecule⁻¹
+  g=0.7628  w=0.15685  k=2.412e-22 cm² molecule⁻¹
+  g=0.8983  w=0.11119  k=8.485e-22 cm² molecule⁻¹
+  g=0.9801  w=0.05061  k=4.381e-21 cm² molecule⁻¹
+  sum(w) = 1.000000</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03-k-distribution_files/figure-html/k_distribution_demo-cell-7-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>8-gpt max relative error = 0.337 %</code></pre>
+</div>
+</div>
+</section>
+<section id="connection-to-the-shipped-cork-k-table" class="level2">
+<h2 class="anchored" data-anchor-id="connection-to-the-shipped-cork-k-table">Connection to the shipped CORK k-table</h2>
+<p>The procedure above — compute <span class="math inline">\(\sigma(\nu)\)</span> at each <span class="math inline">\((T, p)\)</span> node, sort into <span class="math inline">\(k(g)\)</span>, evaluate at 8-point GL nodes — is applied offline for every band and every grid point, and the results are stored in <code>climt/_data/cork/correlated_k/earth_low_res_lw.nc</code>.</p>
+<p>At runtime, CORK reads <code>k_coefficients</code> (shape <code>(gas, band, gpoint, temperature, pressure, h2o_vmr, co2_vmr)</code>) and <code>gpoint_weights</code> (shape <code>(band, gpoint)</code>) — exactly the <span class="math inline">\(k_i\)</span> and <span class="math inline">\(w_i\)</span> we derived above, tabulated on a <span class="math inline">\(T\)</span>-<span class="math inline">\(p\)</span>-VMR grid.</p>
+<div id="cell-08" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-07-10T17:10:16.993284Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-07-10T17:10:16.993164Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-07-10T17:10:17.566579Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-07-10T17:10:17.565904Z&quot;}}" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------- Step 6 : inspect the shipped CORK k-table --------------------</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os, pathlib</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Locate the table relative to the notebook (examples/) -&gt; repo root -&gt; data</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>_repo <span class="op">=</span> pathlib.Path(os.path.abspath(<span class="st">''</span>)).parent   <span class="co"># climt/ repo root</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>_nc   <span class="op">=</span> _repo <span class="op">/</span> <span class="st">'climt'</span> <span class="op">/</span> <span class="st">'_data'</span> <span class="op">/</span> <span class="st">'cork'</span> <span class="op">/</span> <span class="st">'correlated_k'</span> <span class="op">/</span> <span class="st">'earth_low_res_lw.nc'</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>ds <span class="op">=</span> xr.open_dataset(<span class="bu">str</span>(_nc))</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Key variables in earth_low_res_lw.nc:'</span>)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> v <span class="kw">in</span> [<span class="st">'k_coefficients'</span>, <span class="st">'gpoint_weights'</span>, <span class="st">'temperature_grid'</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>          <span class="st">'pressure_grid_log'</span>, <span class="st">'band_wavenumber_limits'</span>]:</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'  </span><span class="sc">{</span>v<span class="sc">:&lt;28s}</span><span class="ss"> </span><span class="sc">{</span><span class="bu">str</span>(ds[v].shape)<span class="sc">:&lt;30s}</span><span class="ss"> dims=</span><span class="sc">{</span>ds[v]<span class="sc">.</span>dims<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Show k_coefficients and weights for one slice: band 8 (1080–1180 cm⁻¹),</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="co"># T≈290 K, p=1 bar, H₂O=0, CO₂=0</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>T_grid <span class="op">=</span> ds[<span class="st">'temperature_grid'</span>].values</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>p_grid <span class="op">=</span> ds[<span class="st">'pressure_grid_log'</span>].values</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>T_idx <span class="op">=</span> <span class="bu">int</span>(np.argmin(np.<span class="bu">abs</span>(T_grid <span class="op">-</span> <span class="fl">290.0</span>)))</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>p_idx <span class="op">=</span> <span class="bu">int</span>(np.argmin(np.<span class="bu">abs</span>(p_grid <span class="op">-</span> np.log(<span class="fl">101325.0</span>))))</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>band  <span class="op">=</span> <span class="dv">8</span>   <span class="co"># 1080–1180 cm⁻¹</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>k_nc <span class="op">=</span> ds[<span class="st">'k_coefficients'</span>].values[<span class="dv">0</span>, band, :, T_idx, p_idx, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>w_nc <span class="op">=</span> ds[<span class="st">'gpoint_weights'</span>].values[band, :]</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>lims <span class="op">=</span> ds[<span class="st">'band_wavenumber_limits'</span>].values[band]</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="ch">\n</span><span class="ss">Band </span><span class="sc">{</span>band<span class="sc">}</span><span class="ss">  (</span><span class="sc">{</span>lims[<span class="dv">0</span>]<span class="sc">:.0f}</span><span class="ss">–</span><span class="sc">{</span>lims[<span class="dv">1</span>]<span class="sc">:.0f}</span><span class="ss"> cm⁻¹)  '</span></span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'T=</span><span class="sc">{</span>T_grid[T_idx]<span class="sc">:.0f}</span><span class="ss"> K  p=</span><span class="sc">{</span>np<span class="sc">.</span>exp(p_grid[p_idx])<span class="op">/</span><span class="dv">100</span><span class="sc">:.0f}</span><span class="ss"> hPa'</span>)</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span><span class="st">"g-point"</span><span class="sc">:&gt;8s}</span><span class="ss">  </span><span class="sc">{</span><span class="st">"weight"</span><span class="sc">:&gt;10s}</span><span class="ss">  </span><span class="sc">{</span><span class="st">"k (m² kg⁻¹)"</span><span class="sc">:&gt;18s}</span><span class="ss">'</span>)</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, (gi, wi, ki) <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">zip</span>(</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>        np.cumsum(w_nc) <span class="op">-</span> w_nc<span class="op">/</span><span class="dv">2</span>, w_nc, k_nc)):</span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>i<span class="sc">:&gt;8d}</span><span class="ss">  </span><span class="sc">{</span>wi<span class="sc">:&gt;10.5f}</span><span class="ss">  </span><span class="sc">{</span>ki<span class="sc">:&gt;18.4e}</span><span class="ss">'</span>)</span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'  sum(w) = </span><span class="sc">{</span>w_nc<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.6f}</span><span class="ss">'</span>)</span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'</span><span class="ch">\n</span><span class="st">These k_i and w_i are what CORK uses at runtime — the same quadrature</span><span class="ch">\n</span><span class="st">'</span></span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>      <span class="st">'you just built by hand, pre-computed for every (T, p) grid node.'</span>)</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a>ds.close()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Key variables in earth_low_res_lw.nc:
+  k_coefficients               (1, 14, 8, 12, 8, 7, 10)       dims=('gas', 'band', 'gpoint', 'temperature', 'pressure', 'h2o_vmr', 'co2_vmr')
+  gpoint_weights               (14, 8)                        dims=('band', 'gpoint')
+  temperature_grid             (12,)                          dims=('temperature',)
+  pressure_grid_log            (8,)                           dims=('pressure',)
+  band_wavenumber_limits       (14, 2)                        dims=('band', 'bounds')
+
+Band 8  (1080–1180 cm⁻¹)  T=290 K  p=1000 hPa
+ g-point      weight         k (m² kg⁻¹)
+       0     0.05061          2.7111e-10
+       1     0.11119          3.7810e-10
+       2     0.15685          7.0915e-10
+       3     0.18134          1.6816e-09
+       4     0.18134          5.4807e-09
+       5     0.15685          3.0603e-08
+       6     0.11119          1.3266e-07
+       7     0.05061          5.9644e-07
+  sum(w) = 1.000000
+
+These k_i and w_i are what CORK uses at runtime — the same quadrature
+you just built by hand, pre-computed for every (T, p) grid node.</code></pre>
+</div>
+</div>
+</section>
+<a class="quarto-notebook-link" id="nblink-1" href="k_distribution_demo-preview.html#cell-01">Source: k-Distribution from Scratch</a></section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further reading</h2>
+<ul>
+<li><span class="citation" data-cites="lacis1991">Lacis and Oinas (<a href="#ref-lacis1991" role="doc-biblioref">1991</a>)</span> — the foundational paper introducing k-distributions for non-homogeneous atmospheres.</li>
+<li><span class="citation" data-cites="fu1992">Fu and Liou (<a href="#ref-fu1992" role="doc-biblioref">1992</a>)</span> — application to non-homogeneous atmospheres with the correlated-k assumption (Chapter 4).</li>
+</ul>
+
+
+<!-- -->
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-fu1992" class="csl-entry" role="listitem">
+Fu, Q., and K. N. Liou. 1992. <span>“On the Correlated k-Distribution Method for Radiative Transfer in Nonhomogeneous Atmospheres.”</span> <em>Journal of the Atmospheric Sciences</em> 49 (22): 2139–56. <a href="https://doi.org/10.1175/1520-0469(1992)049<2139:OTCKDM>2.0.CO;2">https://doi.org/10.1175/1520-0469(1992)049&lt;2139:OTCKDM&gt;2.0.CO;2</a>.
+</div>
+<div id="ref-lacis1991" class="csl-entry" role="listitem">
+Lacis, A. A., and V. Oinas. 1991. <span>“A Description of the Correlated-k Distribution Method for Modeling Nongray Gaseous Absorption, Thermal Emission, and Multiple Scattering in Vertically Inhomogeneous Atmospheres.”</span> <em>Journal of Geophysical Research</em> 96 (D5): 9027–63. <a href="https://doi.org/10.1029/90JD01945">https://doi.org/10.1029/90JD01945</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 3: The k-distribution"</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>The trick behind the k-distribution is that we do not care *where* in a band</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>an absorption coefficient takes some value — only *how often*.</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Band-averaging, re-ordered</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>Return to the band-averaged transmission:</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>$$\langle T(L)\rangle = \frac{1}{\Delta\nu}\int_{\Delta\nu} e^{-\sigma(\nu)L}\,d\nu.$$</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>Change variables from $\nu$ to the cumulative distribution of $\sigma$ values</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>inside the band. Define $g(k)$ as the fraction of the band over which</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>$\sigma \le k$:</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>$$g(k) = \frac{1}{\Delta\nu}\int_{\Delta\nu} \Theta(k - \sigma(\nu))\,d\nu,$$</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>where $\Theta$ is the step function. $g$ runs from 0 to 1, and its inverse</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>$k(g)$ is monotonically increasing by construction.</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>Because the integrand depends only on the value of $\sigma$ (not where in the</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>band it sits), the band average becomes a **one-dimensional integral over** $g$:</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>$$\langle T(L)\rangle = \int_0^1 e^{-k(g)\,L}\,dg.$$</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>One integral, one smooth monotonic function $k(g)$ — a few Gaussian quadrature</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>points suffice.</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructing k(g) in practice</span></span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>Given an LBL spectrum $\sigma(\nu)$ over a band:</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Sort $\sigma$ values in ascending order.</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Evaluate the sorted array at quadrature points $g_i$ (Gauss-Legendre on</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>   $<span class="co">[</span><span class="ot">0,1</span><span class="co">]</span>$).</span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Store $k_i = \sigma_\text{sorted}(g_i)$ and weights $w_i$ summing to 1.</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>![**Figure 3.1** — Sorted absorption coefficients (empirical CDF) and two</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>Gauss-Legendre quadrature points showing that a few points capture broadband</span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>transmission accurately.](_artifacts/03_k_distribution_construction.png){#fig-k-dist}</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a>The band-averaged transmission is then approximated as</span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>$$\langle T(L)\rangle \approx \sum_i w_i\,e^{-k_i\,L}.$$</span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a><span class="fu">## The code in climt</span></span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>climt does not build k-distributions at runtime — they arrive in pre-computed</span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>netCDF files. The read path makes the data layout explicit:</span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> load_k_table</span>
+<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(load_k_table))</span>
+<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a>The key fields are <span class="in">`k_coefficients`</span> (shape `(gas, band, gpoint, temperature,</span>
+<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a>pressure)<span class="in">`) and `</span>gpoint_weights` (summing to 1 per band). These are exactly the</span>
+<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a>$k_i$ and $w_i$ above, tabulated on a T-p grid.</span>
+<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
+<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a><span class="in">`examples/k_distribution_demo.ipynb`</span> (embedded below): build $k(g)$ from a</span>
+<span id="cb19-71"><a href="#cb19-71" aria-hidden="true" tabindex="-1"></a>synthetic LBL spectrum, see why 2-gpoint quadrature falls short (~10 % error),</span>
+<span id="cb19-72"><a href="#cb19-72" aria-hidden="true" tabindex="-1"></a>then scale to 8-point Gauss-Legendre — matching what CORK uses — and verify</span>
+<span id="cb19-73"><a href="#cb19-73" aria-hidden="true" tabindex="-1"></a>the reconstruction error drops below 2 %.</span>
+<span id="cb19-74"><a href="#cb19-74" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb19-75"><a href="#cb19-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-76"><a href="#cb19-76" aria-hidden="true" tabindex="-1"></a><span class="fu">## Hands-on: k-distribution from scratch</span></span>
+<span id="cb19-77"><a href="#cb19-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-78"><a href="#cb19-78" aria-hidden="true" tabindex="-1"></a>{{&lt; embed k_distribution_demo.ipynb echo=true &gt;}}</span>
+<span id="cb19-79"><a href="#cb19-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-80"><a href="#cb19-80" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further reading</span></span>
+<span id="cb19-81"><a href="#cb19-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-82"><a href="#cb19-82" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@lacis1991 — the foundational paper introducing k-distributions for</span>
+<span id="cb19-83"><a href="#cb19-83" aria-hidden="true" tabindex="-1"></a>  non-homogeneous atmospheres.</span>
+<span id="cb19-84"><a href="#cb19-84" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@fu1992 — application to non-homogeneous atmospheres with the correlated-k</span>
+<span id="cb19-85"><a href="#cb19-85" aria-hidden="true" tabindex="-1"></a>  assumption (Chapter 4).</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

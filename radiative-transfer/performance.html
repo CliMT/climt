@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Appendix A: Performance – climt</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo light-content">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">climt</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../get-started/installation.html"> 
+<span class="menu-text">Get Started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../user-guide/introduction.html"> 
+<span class="menu-text">User Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../radiative-transfer/index.html" aria-current="page"> 
+<span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../experiments/index.html"> 
+<span class="menu-text">Experiments</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/CliMT/climt"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../radiative-transfer/table-generation.html">Appendices</a></li><li class="breadcrumb-item"><a href="../radiative-transfer/performance.html">Appendix A: Performance</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Radiative Transfer Walkthrough</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/01-why-nongrey.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 1: Why non-grey?</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/02-line-by-line.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 2: Line-by-line physics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/03-k-distribution.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 3: The k-distribution</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/04-correlated-k.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 4: Correlated-k</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/05-gas-overlap.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 5: Gas overlap: additive vs ESFT</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/06-picket-fence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 6: The picket-fence model</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/07-two-stream.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 7: The two-stream solver</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/08-multiplanet.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Chapter 8: Switching planets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/09-live-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Radiative equilibrium: gray vs non-grey — live</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/table-generation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Table generation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../radiative-transfer/performance.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Appendix A: Performance</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#benchmark-result" id="toc-benchmark-result" class="nav-link active" data-scroll-target="#benchmark-result">Benchmark result</a></li>
+  <li><a href="#what-makes-it-fast" id="toc-what-makes-it-fast" class="nav-link" data-scroll-target="#what-makes-it-fast">What makes it fast</a>
+  <ul class="collapse">
+  <li><a href="#numba-njitparalleltrue-with-prange" id="toc-numba-njitparalleltrue-with-prange" class="nav-link" data-scroll-target="#numba-njitparalleltrue-with-prange">Numba <code>@njit(parallel=True)</code> with <code>prange</code></a></li>
+  <li><a href="#pure-numpy-k-table-interpolation-no-python-in-the-hot-path" id="toc-pure-numpy-k-table-interpolation-no-python-in-the-hot-path" class="nav-link" data-scroll-target="#pure-numpy-k-table-interpolation-no-python-in-the-hot-path">Pure-NumPy k-table interpolation; no Python in the hot path</a></li>
+  <li><a href="#one-time-unit-conversion-in-array_call" id="toc-one-time-unit-conversion-in-array_call" class="nav-link" data-scroll-target="#one-time-unit-conversion-in-array_call">One-time unit conversion in <code>array_call</code></a></li>
+  <li><a href="#graceful-no-numba-fallback" id="toc-graceful-no-numba-fallback" class="nav-link" data-scroll-target="#graceful-no-numba-fallback">Graceful no-Numba fallback</a></li>
+  </ul></li>
+  <li><a href="#profiling-the-hot-path" id="toc-profiling-the-hot-path" class="nav-link" data-scroll-target="#profiling-the-hot-path">Profiling the hot path</a></li>
+  <li><a href="#heating-rate-kernel" id="toc-heating-rate-kernel" class="nav-link" data-scroll-target="#heating-rate-kernel">Heating-rate kernel</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further reading</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../radiative-transfer/table-generation.html">Appendices</a></li><li class="breadcrumb-item"><a href="../radiative-transfer/performance.html">Appendix A: Performance</a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Appendix A: Performance</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>climt’s CORK radiation scheme is fast enough for interactive use and real-time column-model experiments. The design target is ≥ 400 column-calls per second for correlated-k mode (single column on a laptop). On a reference machine the CORK longwave scheme <strong>outperforms RRTMG-LW</strong> at equal spectral resolution.</p>
+<section id="benchmark-result" class="level2">
+<h2 class="anchored" data-anchor-id="benchmark-result">Benchmark result</h2>
+<p>The following figure shows throughput (columns per second) and per-call timing measured with 100 columns × 30 levels in a single process.</p>
+<div id="fig-throughput" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-throughput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-throughput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: <strong>Figure A.1</strong> — CORK-LW vs.&nbsp;RRTMG-LW throughput at 100 columns × 30 levels. CORK-LW (14 bands, 8 g-points) achieves 52.9 µs/col against RRTMG-LW’s 63.3 µs/col (0.84× relative wall-clock time — see table below). The profile breakdown shows that the Numba-compiled <code>_ck_tau_additive_co2_kernel</code> dominates the hot path.
+</figcaption>
+</figure>
+</div>
+<p>Key numbers from that run:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Scheme</th>
+<th style="text-align: right;">ms / call (100 col)</th>
+<th style="text-align: right;">µs / col</th>
+<th style="text-align: right;">vs.&nbsp;RRTMG</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>RRTMG-LW</td>
+<td style="text-align: right;">6.33 ± 0.02</td>
+<td style="text-align: right;">63.3</td>
+<td style="text-align: right;">1.00×</td>
+</tr>
+<tr class="even">
+<td>CORK-LW (14b × 8g)</td>
+<td style="text-align: right;">5.29 ± 0.14</td>
+<td style="text-align: right;">52.9</td>
+<td style="text-align: right;"><strong>0.84×</strong></td>
+</tr>
+</tbody>
+</table>
+<p>“0.84×” means CORK uses 84% of RRTMG’s wall-clock time — it is faster.</p>
+</section>
+<section id="what-makes-it-fast" class="level2">
+<h2 class="anchored" data-anchor-id="what-makes-it-fast">What makes it fast</h2>
+<section id="numba-njitparalleltrue-with-prange" class="level3">
+<h3 class="anchored" data-anchor-id="numba-njitparalleltrue-with-prange">Numba <code>@njit(parallel=True)</code> with <code>prange</code></h3>
+<p>The outermost loop of every hot kernel iterates over <em>columns</em>, which are fully independent. CORK marks those loops with <code>prange</code> and compiles the whole function with <code>@njit(parallel=True)</code>. Numba dispatches the column loop to a thread pool (one thread per core) at zero Python overhead.</p>
+<p>The optical-depth kernel — the single most expensive function — is <code>_ck_tau_additive_co2_kernel</code>:</p>
+<div id="d396a8fb" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> _ck_tau_additive_co2_kernel</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_ck_tau_additive_co2_kernel))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>@njit(parallel=True)
+def _ck_tau_additive_co2_kernel(
+    k, T_grid, p_grid_log, log_x_grid, log_c_grid,
+    Tarr, log_p, log_x, log_c, gas_amounts,
+    has_cont, log_cont, co2_logk, tau,
+):
+    ngas, nband, ngpt = k.shape[0], k.shape[1], k.shape[2]
+    nlev = Tarr.shape[0]
+    ncol = Tarr.shape[1]
+    FLOOR = 1e-40
+    for i in prange(ncol):
+        for kk in range(nlev):
+            iT, fT = _ck_bracket(T_grid, Tarr[kk, i])
+            iP, fP = _ck_bracket(p_grid_log, log_p[kk, i])
+            iX, fX = _ck_bracket(log_x_grid, log_x[kk, i])
+            iC, fC = _ck_bracket(log_c_grid, log_c[kk, i])
+            for ib in range(nband):
+                if has_cont:
+                    lc = _ck_txx_cont(log_cont, ib, iT, fT, iP, fP, iX, fX)
+                    cont_val = np.exp(lc)
+                else:
+                    cont_val = 0.0
+                for igp in range(ngpt):
+                    acc = 0.0
+                    for ig in range(ngas):
+                        c0 = _ck_txx7(k, ig, ib, igp, iT, fT, iP, fP, iX, fX, iC)
+                        c1 = _ck_txx7(k, ig, ib, igp, iT, fT, iP, fP, iX, fX, iC + 1)
+                        if co2_logk:
+                            l0 = np.log(c0 if c0 &gt; FLOOR else FLOOR)
+                            l1 = np.log(c1 if c1 &gt; FLOOR else FLOOR)
+                            kv = np.exp(l0 * (1.0 - fC) + l1 * fC)
+                        else:
+                            kv = c0 * (1.0 - fC) + c1 * fC
+                        acc += kv * gas_amounts[ig, kk, i]
+                    if has_cont:
+                        acc += cont_val * gas_amounts[0, kk, i]
+                    tau[ib, igp, kk, i] = acc
+</code></pre>
+</div>
+</div>
+<p>Notice <code>@njit(parallel=True)</code> at the top and <code>for i in prange(ncol)</code> as the outer loop: every column is dispatched to a separate thread.</p>
+<p>The same pattern appears in the LW transport kernel:</p>
+<div id="9c8f4401" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.lw.kernels <span class="im">import</span> _lw_transport_kernel</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_lw_transport_kernel))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>@njit(parallel=True)
+def _lw_transport_kernel(
+    tau, planck_source, surface_source, emissivity, weights,
+    up_band, down_band, up_broad, down_broad,
+    diag_trans, diag_up_gpt, diag_dn_gpt, want_diag,
+):
+    """Consolidated multi-band, multi-g-point LW transport.
+
+    Loops over columns in parallel; for each (band, g-point) runs the up/down
+    diffusivity sweeps and accumulates weighted fluxes into up_band/down_band
+    inside the compiled kernel. Accumulation order (g ascending, then b
+    ascending for broadband) matches the original python loops bit-for-bit.
+    """
+    nband, ngpt, nlev, ncol = tau.shape
+    for i in prange(ncol):
+        for k in range(nlev + 1):
+            up_broad[k, i] = 0.0
+            down_broad[k, i] = 0.0
+        for b in range(nband):
+            for k in range(nlev + 1):
+                up_band[b, k, i] = 0.0
+                down_band[b, k, i] = 0.0
+            for g in range(ngpt):
+                w = weights[b, g]
+                # Upward sweep: surface -&gt; TOA
+                up_prev = emissivity[b, i] * surface_source[b, g, i]
+                up_band[b, 0, i] += w * up_prev
+                if want_diag != 0:
+                    diag_up_gpt[b, g, 0, i] = w * up_prev
+                for k in range(nlev):
+                    trans = np.exp(-DIFFUSIVITY_FACTOR * tau[b, g, k, i])
+                    up_cur = up_prev * trans + planck_source[b, g, k, i] * (1.0 - trans)
+                    up_band[b, k + 1, i] += w * up_cur
+                    if want_diag != 0:
+                        diag_trans[b, g, k, i] = trans
+                        diag_up_gpt[b, g, k + 1, i] = w * up_cur
+                    up_prev = up_cur
+                # Downward sweep: TOA -&gt; surface (dn_prev starts at 0 = TOA BC)
+                dn_prev = 0.0
+                if want_diag != 0:
+                    diag_dn_gpt[b, g, nlev, i] = 0.0
+                for k in range(nlev - 1, -1, -1):
+                    trans = np.exp(-DIFFUSIVITY_FACTOR * tau[b, g, k, i])
+                    dn_cur = dn_prev * trans + planck_source[b, g, k, i] * (1.0 - trans)
+                    down_band[b, k, i] += w * dn_cur
+                    if want_diag != 0:
+                        diag_dn_gpt[b, g, k, i] = w * dn_cur
+                    dn_prev = dn_cur
+            for k in range(nlev + 1):
+                up_broad[k, i] += up_band[b, k, i]
+                down_broad[k, i] += down_band[b, k, i]
+</code></pre>
+</div>
+</div>
+</section>
+<section id="pure-numpy-k-table-interpolation-no-python-in-the-hot-path" class="level3">
+<h3 class="anchored" data-anchor-id="pure-numpy-k-table-interpolation-no-python-in-the-hot-path">Pure-NumPy k-table interpolation; no Python in the hot path</h3>
+<p>k-table lookup involves a 4-D bilinear interpolation in <span class="math inline">\((T, p, x_\text{H_2O},
+x_\text{CO_2})\)</span> space. The bracket-finding helpers (<code>_ck_bracket</code>) and interpolation helpers (<code>_ck_txx7</code>, <code>_ck_txx_cont</code>) are all <code>@njit</code>-compiled scalar functions. Once Numba has compiled the outer kernel on first call, <em>no Python bytecode executes</em> inside the column/level/band/g-point quadruple loop.</p>
+</section>
+<section id="one-time-unit-conversion-in-array_call" class="level3">
+<h3 class="anchored" data-anchor-id="one-time-unit-conversion-in-array_call">One-time unit conversion in <code>array_call</code></h3>
+<p>Reshaping, unit conversion (mole fraction → kg m⁻²), and output unpacking are performed <strong>once per component call</strong> inside <code>CorkLongwaveRadiation.array_call</code>, before any kernel is invoked. The compiled kernels receive raw NumPy arrays of the correct shape and units and never touch Python objects.</p>
+</section>
+<section id="graceful-no-numba-fallback" class="level3">
+<h3 class="anchored" data-anchor-id="graceful-no-numba-fallback">Graceful no-Numba fallback</h3>
+<p>When Numba is unavailable (e.g.&nbsp;in a Pyodide/WebAssembly context), <code>common.py</code> replaces <code>@njit</code> with a no-op decorator and <code>prange</code> with the built-in <code>range</code>. The scheme still runs correctly in pure Python — just without the multi-threaded speed-up. Interactive notebooks in JupyterLite use this path.</p>
+<div id="5a7b9dc3" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.common <span class="im">import</span> njit</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(njit))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    def njit(*args, **kwargs):
+        # No-numba fallback. Support both bare ``@njit`` and parametrized
+        # ``@njit(parallel=True, ...)`` usage so the pure-Python path imports.
+        if len(args) == 1 and callable(args[0]) and not kwargs:
+            return args[0]
+
+        def _decorator(func):
+            return func
+
+        return _decorator
+</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="profiling-the-hot-path" class="level2">
+<h2 class="anchored" data-anchor-id="profiling-the-hot-path">Profiling the hot path</h2>
+<p>The profiler output recorded alongside the benchmark confirms that <code>array_call</code> accounts for essentially the entire call budget, with <code>_correlated_k_optics</code> (k-table lookup) taking the bulk of that:</p>
+<pre><code>ncalls  tottime  cumtime  filename:lineno(function)
+     1    0.001    0.005   cork/lw/component.py:200(array_call)
+     1    0.000    0.002   cork/lw/component.py:415(_correlated_k_optics)
+     1    0.000    0.002   cork/optics/correlated_k.py:347(compute_ck_optical_depth)
+     1    0.000    0.002   cork/optics/correlated_k.py:447(_compute_ck_optical_depth_additive)
+     1    0.000    0.002   cork/optics/correlated_k.py:498(_additive_co2_fast)
+     1    0.001    0.001   cork/optics/correlated_k.py:81(_ck_tau_additive_co2_kernel)</code></pre>
+<p>The outermost Python frame (<code>array_call</code>) costs 1 ms; the compiled <code>_ck_tau_additive_co2_kernel</code> costs another 1 ms on the reference machine. Everything else is sub-millisecond bookkeeping.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>First-call JIT latency
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Numba compiles each kernel the first time it is called. Expect a 5–30 second pause on the very first <code>CorkLongwaveRadiation.__call__</code> in a fresh Python process. Subsequent calls are fast. If you are timing CORK in a benchmark, always make a warm-up call before recording.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Reproduce the benchmark
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Run the benchmark script from the repo root (climt environment):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> run <span class="at">--no-capture-output</span> <span class="at">-n</span> climt python scripts/experiments/bench_cork_vs_rrtmg.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pass <code>--save &lt;path&gt;.npz</code> to persist raw timing arrays. This prints the per-call timing and throughput breakdown and saves <code>docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png</code>.</p>
+</div>
+</div>
+</section>
+<section id="heating-rate-kernel" class="level2">
+<h2 class="anchored" data-anchor-id="heating-rate-kernel">Heating-rate kernel</h2>
+<p>The heating-rate calculation uses the same <code>@njit</code> / <code>prange</code> pattern. <code>compute_heating_rate</code> in <code>climt/_components/cork/common.py</code> iterates over columns in parallel:</p>
+<div id="b59c052b" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.common <span class="im">import</span> compute_heating_rate</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(compute_heating_rate))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>@njit
+def compute_heating_rate(net_flux, p_interface, g, cpd):
+    """Compute heating rate (K/s) from net flux divergence.
+
+    Args:
+        net_flux: (nlev+1, ncol) upward minus downward flux, W/m^2
+        p_interface: (nlev+1, ncol) pressure at interfaces, Pa
+        g: gravitational acceleration, m/s^2
+        cpd: heat capacity of dry air at constant pressure, J/kg/K
+
+    Returns:
+        heating_rate: (nlev, ncol) in K/s
+    """
+    nlev = net_flux.shape[0] - 1
+    ncol = net_flux.shape[1]
+    heating_rate = np.zeros((nlev, ncol))
+    for i in prange(ncol):
+        for k in range(nlev):
+            dp = p_interface[k + 1, i] - p_interface[k, i]
+            dflux = net_flux[k + 1, i] - net_flux[k, i]
+            heating_rate[k, i] = g / cpd * dflux / dp
+    return heating_rate
+</code></pre>
+</div>
+</div>
+<p>Because heating rates are derived from flux divergence — a simple subtraction per layer — this kernel is negligibly cheap compared with the optical-depth computation.</p>
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further reading</h2>
+<ul>
+<li><span class="citation" data-cites="pincus2019">Pincus et al. (<a href="#ref-pincus2019" role="doc-biblioref">2019</a>)</span> — RRTMGP design paper; discusses the accuracy–efficiency trade-off in production correlated-k codes and the rationale for the g-point ordering used by CORK.</li>
+<li><span class="citation" data-cites="lacis1991">Lacis and Oinas (<a href="#ref-lacis1991" role="doc-biblioref">1991</a>)</span> — the original correlated-k distribution paper; the mathematical framework CORK implements.</li>
+<li><span class="citation" data-cites="lam2015">Lam et al. (<a href="#ref-lam2015" role="doc-biblioref">2015</a>)</span> — Numba: a JIT compiler for numerical Python. Describes the <code>@njit</code>/<code>prange</code> model used throughout CORK’s hot path.</li>
+</ul>
+
+
+<!-- -->
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-lacis1991" class="csl-entry" role="listitem">
+Lacis, A. A., and V. Oinas. 1991. <span>“A Description of the Correlated-k Distribution Method for Modeling Nongray Gaseous Absorption, Thermal Emission, and Multiple Scattering in Vertically Inhomogeneous Atmospheres.”</span> <em>Journal of Geophysical Research</em> 96 (D5): 9027–63. <a href="https://doi.org/10.1029/90JD01945">https://doi.org/10.1029/90JD01945</a>.
+</div>
+<div id="ref-lam2015" class="csl-entry" role="listitem">
+Lam, Siu Kwan, Antoine Pitrou, and Stanley Seibert. 2015. <span>“Numba: A <span>LLVM</span>-Based <span>Python</span> <span>JIT</span> Compiler.”</span> <em>Proceedings of the Second Workshop on the LLVM Compiler Infrastructure in HPC</em>, LLVM ’15, 1–6. <a href="https://doi.org/10.1145/2833157.2833162">https://doi.org/10.1145/2833157.2833162</a>.
+</div>
+<div id="ref-pincus2019" class="csl-entry" role="listitem">
+Pincus, R., E. J. Mlawer, and J. S. Delamere. 2019. <span>“Balancing Accuracy, Efficiency, and Flexibility in Radiation Calculations for Dynamical Models.”</span> <em>Journal of Advances in Modeling Earth Systems</em> 11: 3074–89. <a href="https://doi.org/10.1029/2019MS001621">https://doi.org/10.1029/2019MS001621</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Appendix A: Performance"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> ../../references.bib</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>climt's CORK radiation scheme is fast enough for interactive use and real-time</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>column-model experiments. The design target is ≥ 400 column-calls per second</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>for correlated-k mode (single column on a laptop). On a reference machine</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>the CORK longwave scheme **outperforms RRTMG-LW** at equal spectral resolution.</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="fu">## Benchmark result</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>The following figure shows throughput (columns per second) and per-call timing</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>measured with 100 columns × 30 levels in a single process.</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>![**Figure A.1** — CORK-LW vs. RRTMG-LW throughput at 100 columns × 30 levels.</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>CORK-LW (14 bands, 8 g-points) achieves 52.9 µs/col against RRTMG-LW's 63.3 µs/col</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>(0.84× relative wall-clock time — see table below). The profile breakdown shows that the Numba-compiled</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="in">`_ck_tau_additive_co2_kernel`</span> dominates the hot path.</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>](../experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png){#fig-throughput}</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>Key numbers from that run:</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Scheme <span class="pp">|</span> ms / call (100 col) <span class="pp">|</span> µs / col <span class="pp">|</span> vs. RRTMG <span class="pp">|</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------------:|----------:|----------:|</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> RRTMG-LW <span class="pp">|</span> 6.33 ± 0.02 <span class="pp">|</span> 63.3 <span class="pp">|</span> 1.00× <span class="pp">|</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> CORK-LW (14b × 8g) <span class="pp">|</span> 5.29 ± 0.14 <span class="pp">|</span> 52.9 <span class="pp">|</span> **0.84×** <span class="pp">|</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>"0.84×" means CORK uses 84% of RRTMG's wall-clock time — it is faster.</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="fu">## What makes it fast</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a><span class="fu">### Numba `@njit(parallel=True)` with `prange`</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>The outermost loop of every hot kernel iterates over *columns*, which are</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>fully independent. CORK marks those loops with <span class="in">`prange`</span> and compiles the</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>whole function with <span class="in">`@njit(parallel=True)`</span>. Numba dispatches the column loop</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>to a thread pool (one thread per core) at zero Python overhead.</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>The optical-depth kernel — the single most expensive function — is</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a><span class="in">`_ck_tau_additive_co2_kernel`</span>:</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> _ck_tau_additive_co2_kernel</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_ck_tau_additive_co2_kernel))</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>Notice <span class="in">`@njit(parallel=True)`</span> at the top and <span class="in">`for i in prange(ncol)`</span> as the</span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>outer loop: every column is dispatched to a separate thread.</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>The same pattern appears in the LW transport kernel:</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.lw.kernels <span class="im">import</span> _lw_transport_kernel</span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_lw_transport_kernel))</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a><span class="fu">### Pure-NumPy k-table interpolation; no Python in the hot path</span></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>k-table lookup involves a 4-D bilinear interpolation in $(T, p, x_\text{H_2O},</span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>x_\text{CO_2})$ space. The bracket-finding helpers (<span class="in">`_ck_bracket`</span>) and</span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a>interpolation helpers (<span class="in">`_ck_txx7`</span>, <span class="in">`_ck_txx_cont`</span>) are all <span class="in">`@njit`</span>-compiled</span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a>scalar functions. Once Numba has compiled the outer kernel on first call,</span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a>*no Python bytecode executes* inside the column/level/band/g-point quadruple</span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a>loop.</span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### One-time unit conversion in `array_call`</span></span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>Reshaping, unit conversion (mole fraction → kg m⁻²), and output unpacking</span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>are performed **once per component call** inside <span class="in">`CorkLongwaveRadiation.array_call`</span>,</span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a>before any kernel is invoked. The compiled kernels receive raw NumPy arrays of</span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>the correct shape and units and never touch Python objects.</span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a><span class="fu">### Graceful no-Numba fallback</span></span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a>When Numba is unavailable (e.g. in a Pyodide/WebAssembly context), <span class="in">`common.py`</span></span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a>replaces <span class="in">`@njit`</span> with a no-op decorator and <span class="in">`prange`</span> with the built-in <span class="in">`range`</span>.</span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a>The scheme still runs correctly in pure Python — just without the multi-threaded</span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a>speed-up. Interactive notebooks in JupyterLite use this path.</span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.common <span class="im">import</span> njit</span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(njit))</span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a><span class="fu">## Profiling the hot path</span></span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a>The profiler output recorded alongside the benchmark confirms that <span class="in">`array_call`</span></span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a>accounts for essentially the entire call budget, with <span class="in">`_correlated_k_optics`</span></span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a>(k-table lookup) taking the bulk of that:</span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a><span class="in">ncalls  tottime  cumtime  filename:lineno(function)</span></span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a><span class="in">     1    0.001    0.005   cork/lw/component.py:200(array_call)</span></span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a><span class="in">     1    0.000    0.002   cork/lw/component.py:415(_correlated_k_optics)</span></span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a><span class="in">     1    0.000    0.002   cork/optics/correlated_k.py:347(compute_ck_optical_depth)</span></span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a><span class="in">     1    0.000    0.002   cork/optics/correlated_k.py:447(_compute_ck_optical_depth_additive)</span></span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a><span class="in">     1    0.000    0.002   cork/optics/correlated_k.py:498(_additive_co2_fast)</span></span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a><span class="in">     1    0.001    0.001   cork/optics/correlated_k.py:81(_ck_tau_additive_co2_kernel)</span></span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>The outermost Python frame (<span class="in">`array_call`</span>) costs 1 ms; the compiled</span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a><span class="in">`_ck_tau_additive_co2_kernel`</span> costs another 1 ms on the reference machine.</span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a>Everything else is sub-millisecond bookkeeping.</span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a><span class="fu">## First-call JIT latency</span></span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a>Numba compiles each kernel the first time it is called. Expect a 5–30 second</span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>pause on the very first <span class="in">`CorkLongwaveRadiation.__call__`</span> in a fresh Python</span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a>process. Subsequent calls are fast. If you are timing CORK in a benchmark,</span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a>always make a warm-up call before recording.</span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproduce the benchmark</span></span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-130"><a href="#cb11-130" aria-hidden="true" tabindex="-1"></a>Run the benchmark script from the repo root (climt environment):</span>
+<span id="cb11-131"><a href="#cb11-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-132"><a href="#cb11-132" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb11-133"><a href="#cb11-133" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> run <span class="at">--no-capture-output</span> <span class="at">-n</span> climt python scripts/experiments/bench_cork_vs_rrtmg.py</span>
+<span id="cb11-134"><a href="#cb11-134" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-135"><a href="#cb11-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-136"><a href="#cb11-136" aria-hidden="true" tabindex="-1"></a>Pass <span class="in">`--save &lt;path&gt;.npz`</span> to persist raw timing arrays. This prints the</span>
+<span id="cb11-137"><a href="#cb11-137" aria-hidden="true" tabindex="-1"></a>per-call timing and throughput breakdown and saves</span>
+<span id="cb11-138"><a href="#cb11-138" aria-hidden="true" tabindex="-1"></a><span class="in">`docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png`</span>.</span>
+<span id="cb11-139"><a href="#cb11-139" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb11-140"><a href="#cb11-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-141"><a href="#cb11-141" aria-hidden="true" tabindex="-1"></a><span class="fu">## Heating-rate kernel</span></span>
+<span id="cb11-142"><a href="#cb11-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-143"><a href="#cb11-143" aria-hidden="true" tabindex="-1"></a>The heating-rate calculation uses the same <span class="in">`@njit`</span> / <span class="in">`prange`</span> pattern.</span>
+<span id="cb11-144"><a href="#cb11-144" aria-hidden="true" tabindex="-1"></a><span class="in">`compute_heating_rate`</span> in <span class="in">`climt/_components/cork/common.py`</span> iterates over</span>
+<span id="cb11-145"><a href="#cb11-145" aria-hidden="true" tabindex="-1"></a>columns in parallel:</span>
+<span id="cb11-146"><a href="#cb11-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-149"><a href="#cb11-149" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb11-150"><a href="#cb11-150" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb11-151"><a href="#cb11-151" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
+<span id="cb11-152"><a href="#cb11-152" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.common <span class="im">import</span> compute_heating_rate</span>
+<span id="cb11-153"><a href="#cb11-153" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(compute_heating_rate))</span>
+<span id="cb11-154"><a href="#cb11-154" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-155"><a href="#cb11-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-156"><a href="#cb11-156" aria-hidden="true" tabindex="-1"></a>Because heating rates are derived from flux divergence — a simple subtraction</span>
+<span id="cb11-157"><a href="#cb11-157" aria-hidden="true" tabindex="-1"></a>per layer — this kernel is negligibly cheap compared with the optical-depth</span>
+<span id="cb11-158"><a href="#cb11-158" aria-hidden="true" tabindex="-1"></a>computation.</span>
+<span id="cb11-159"><a href="#cb11-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-160"><a href="#cb11-160" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further reading</span></span>
+<span id="cb11-161"><a href="#cb11-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-162"><a href="#cb11-162" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@pincus2019 — RRTMGP design paper; discusses the accuracy–efficiency</span>
+<span id="cb11-163"><a href="#cb11-163" aria-hidden="true" tabindex="-1"></a>  trade-off in production correlated-k codes and the rationale for the</span>
+<span id="cb11-164"><a href="#cb11-164" aria-hidden="true" tabindex="-1"></a>  g-point ordering used by CORK.</span>
+<span id="cb11-165"><a href="#cb11-165" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@lacis1991 — the original correlated-k distribution paper; the</span>
+<span id="cb11-166"><a href="#cb11-166" aria-hidden="true" tabindex="-1"></a>  mathematical framework CORK implements.</span>
+<span id="cb11-167"><a href="#cb11-167" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@lam2015 — Numba: a JIT compiler for numerical Python. Describes the</span>
+<span id="cb11-168"><a href="#cb11-168" aria-hidden="true" tabindex="-1"></a>  <span class="in">`@njit`</span>/<span class="in">`prange`</span> model used throughout CORK's hot path.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
