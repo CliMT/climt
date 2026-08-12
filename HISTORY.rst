@@ -38,6 +38,15 @@ v.0.30.0
   the package — including the CORK correlated-k radiation scheme — works
   anywhere Python runs, including in the browser under Pyodide. pip continues
   to prefer the compiled wheel wherever one is published for your platform.
+* **Windows binaries are no longer built, tested or published.** The
+  Windows CI job and the Windows release job (which uploaded a separate
+  mingw-built wheel to PyPI) have both been removed. Windows users now
+  install the pure-Python wheel described above: it needs no compiler,
+  but the Fortran-backed components raise on use — check with
+  ``climt.has_fortran_extensions()``. Building from source on Windows
+  may still work but is unsupported; WSL is the recommended route for
+  the compiled components. Linux (x86_64) and macOS (Apple silicon)
+  compiled wheels are unaffected.
 * New land-surface physics: ``BucketHydrology`` gains an optional
   two-layer (deep + shallow) mode via ``num_layers=2``, adding
   ``deep_soil_moisture_content`` / ``deep_soil_temperature`` stores and

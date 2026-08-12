@@ -26,10 +26,42 @@ $ pip install climt
 
 This is the preferred method to install climt, as it will always install
 the most recent stable release. On Ubuntu Linux, you might need to
-prefix the above command with `sudo`. This command should work on Linux,
-Mac and Windows. For Mac and Windows, it is recommended to use the
-[anaconda](https://www.continuum.io/downloads) python distribution to
+prefix the above command with `sudo`. On Mac, it is recommended to use
+the [anaconda](https://www.continuum.io/downloads) python distribution to
 make installation simpler.
+
+### Which wheel you get
+
+climt ships two kinds of wheel, and pip picks the more specific one that
+fits your platform:
+
+- **Compiled wheels** — Linux (x86_64) and macOS (Apple silicon), for
+  CPython 3.10–3.12. These include the Fortran-backed components
+  (RRTMG, Emanuel convection, the GFS-derived dynamics helpers and so
+  on), so everything works.
+- **A pure-Python wheel** (`py3-none-any`) — everywhere else, including
+  **Windows**, Intel Macs, Linux on ARM, and newer Python versions. It
+  carries no compiled extensions, so components that need Fortran raise
+  a clear error when you try to use them. Everything else works,
+  including the CORK correlated-k radiation scheme.
+
+To check at runtime:
+
+``` python
+import climt
+climt.has_fortran_extensions()   # False on the pure-Python wheel
+```
+
+::: {.callout-note}
+## Windows is not tested
+
+climt no longer builds or tests Windows binaries. Windows users get the
+pure-Python wheel above, which installs without a compiler but has no
+Fortran components. Building from source on Windows may still work but
+is unsupported — if you need the compiled components there, the
+[Windows Subsystem for Linux](https://learn.microsoft.com/windows/wsl/)
+is the recommended route.
+:::
 
 ::: {.callout-note}
 If you are not using Anaconda, please ensure you have the libpython
