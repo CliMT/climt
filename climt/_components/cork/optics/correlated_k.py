@@ -157,6 +157,22 @@ def _load_netcdf_table(path):
         return out
 
 
+def _load_npz_table(path):
+    """Load an ``.npz`` k-table into a plain dict of arrays.
+
+    ``np.load`` hands back a lazy ``NpzFile``, which re-inflates the requested
+    array out of the zip archive on *every* ``__getitem__``. The radiation
+    components index the table several times per ``array_call`` (and
+    ``k_coefficients`` alone is ~3 MB for ``earth_low_res_lw``), so the lazy
+    object turns each radiation step into tens of milliseconds of repeated
+    decompression. Read every array once here and return a dict — the same
+    return type as ``_load_netcdf_table``. Reading inside the ``with`` also
+    closes the archive rather than leaving it open for the process lifetime.
+    """
+    with np.load(path, allow_pickle=True) as npz:
+        return {name: npz[name] for name in npz.files}
+
+
 def _decode(x):
     if isinstance(x, bytes):
         return x.decode("utf-8")
@@ -176,20 +192,23 @@ def load_k_table(name_or_path):
             to ``.nc`` (design-spec format, requires scipy).
 
     Returns:
-        dict-like object exposing ``k_coefficients``, ``gpoint_weights``,
+        dict of numpy arrays exposing ``k_coefficients``, ``gpoint_weights``,
         ``temperature_grid``, ``pressure_grid_log`` and (LW/SW-specific)
-        auxiliary arrays.
+        auxiliary arrays. Both backends return a fully materialised dict, so
+        callers can index the table in a hot loop without re-reading the file.
     """
     if os.path.isfile(name_or_path):
         if name_or_path.endswith(".nc"):
             return _load_netcdf_table(name_or_path)
-        return np.load(name_or_path, allow_pickle=True)
+        return _load_npz_table(name_or_path)
 
     pkg = importlib_resources.files("climt._data.cork.correlated_k")
     npz_path = pkg.joinpath(f"{name_or_path}.npz")
     with importlib_resources.as_file(npz_path) as f:
         if os.path.isfile(f):
-            return np.load(f, allow_pickle=True)
+            # Must read inside the as_file() block: for a zipped install the
+            # path is a temporary extraction that is removed on block exit.
+            return _load_npz_table(f)
 
     nc_path = pkg.joinpath(f"{name_or_path}.nc")
     with importlib_resources.as_file(nc_path) as f:

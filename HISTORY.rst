@@ -5,6 +5,23 @@ History
 Unreleased
 ----------
 
+* **Performance** — ``load_k_table`` now materialises ``.npz`` correlated-k
+  tables into a plain dict instead of returning numpy's lazy ``NpzFile``.
+  An ``NpzFile`` re-inflates the requested array out of the zip archive on
+  every ``__getitem__``, and the CORK components index the table several
+  times per call, so table decompression dominated every radiation step
+  (~15 ms per ``k_coefficients`` read for ``earth_low_res_lw``). Measured on
+  one reference machine at nz=18, single column:
+  ``CorkLongwaveRadiation`` 57.4 -> 3.6 ms/call with numba and 89.5 -> 36.8
+  ms/call with ``NUMBA_DISABLE_JIT=1`` (the Pyodide/browser path);
+  ``CorkShortwaveRadiation`` 12.2 -> 5.0 ms/call. Outputs are bitwise
+  unchanged. The cost moves to a one-time ~18 ms at load, and the loaded
+  table now holds every array in memory (~3 MB for ``earth_low_res_lw``).
+  ``.nc`` tables already returned a dict, so both backends are now
+  consistent; the reads also happen inside the ``importlib_resources``
+  ``as_file`` block, which fixes a latent failure for zipped installs where
+  the extracted temp file is removed on block exit.
+
 v.0.30.0
 --------
 
