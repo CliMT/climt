@@ -205,7 +205,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#stable-release" id="toc-stable-release" class="nav-link active" data-scroll-target="#stable-release">Stable release</a></li>
+  <li><a href="#stable-release" id="toc-stable-release" class="nav-link active" data-scroll-target="#stable-release">Stable release</a>
+  <ul class="collapse">
+  <li><a href="#which-wheel-you-get" id="toc-which-wheel-you-get" class="nav-link" data-scroll-target="#which-wheel-you-get">Which wheel you get</a></li>
+  </ul></li>
   <li><a href="#installing-from-source" id="toc-installing-from-source" class="nav-link" data-scroll-target="#installing-from-source">Installing from source</a>
   <ul class="collapse">
   <li><a href="#dependencies-for-source-installations" id="toc-dependencies-for-source-installations" class="nav-link" data-scroll-target="#dependencies-for-source-installations">Dependencies for source installations</a></li>
@@ -254,7 +257,30 @@ Note
 <pre class="console"><code>$ pip install gfs_dynamical_core</code></pre>
 <p>You can install climt by simply typing</p>
 <pre class="console"><code>$ pip install climt</code></pre>
-<p>This is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with <code>sudo</code>. This command should work on Linux, Mac and Windows. For Mac and Windows, it is recommended to use the <a href="https://www.continuum.io/downloads">anaconda</a> python distribution to make installation simpler.</p>
+<p>This is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with <code>sudo</code>. On Mac, it is recommended to use the <a href="https://www.continuum.io/downloads">anaconda</a> python distribution to make installation simpler.</p>
+<section id="which-wheel-you-get" class="level3">
+<h3 class="anchored" data-anchor-id="which-wheel-you-get">Which wheel you get</h3>
+<p>climt ships two kinds of wheel, and pip picks the more specific one that fits your platform:</p>
+<ul>
+<li><strong>Compiled wheels</strong> — Linux (x86_64) and macOS (Apple silicon), for CPython 3.10–3.12. These include the Fortran-backed components (RRTMG, Emanuel convection, the GFS-derived dynamics helpers and so on), so everything works.</li>
+<li><strong>A pure-Python wheel</strong> (<code>py3-none-any</code>) — everywhere else, including <strong>Windows</strong>, Intel Macs, Linux on ARM, and newer Python versions. It carries no compiled extensions, so components that need Fortran raise a clear error when you try to use them. Everything else works, including the CORK correlated-k radiation scheme.</li>
+</ul>
+<p>To check at runtime:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>climt.has_fortran_extensions()   <span class="co"># False on the pure-Python wheel</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Windows is not tested
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>climt no longer builds or tests Windows binaries. Windows users get the pure-Python wheel above, which installs without a compiler but has no Fortran components. Building from source on Windows may still work but is unsupported — if you need the compiled components there, the <a href="https://learn.microsoft.com/windows/wsl/">Windows Subsystem for Linux</a> is the recommended route.</p>
+</div>
+</div>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -270,6 +296,7 @@ Note
 </div>
 <p>Since by default pip attempts to install a binary wheel, you won’t need a compiler on your system.</p>
 <p>If you don’t have <a href="https://pip.pypa.io">pip</a> installed, this <a href="http://docs.python-guide.org/en/latest/starting/installation/">Python installation guide</a> can guide you through the process.</p>
+</section>
 </section>
 <section id="installing-from-source" class="level2">
 <h2 class="anchored" data-anchor-id="installing-from-source">Installing from source</h2>
@@ -756,114 +783,146 @@ $ export FC=gfortran-x</code></pre>
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Installation"</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## Stable release</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>The GFS dynamical core has been made into a seperate package called</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">gfs_dynamical_core</span><span class="co">](https://github.com/Ai33L/gfs_dynamical_core)</span> for</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>ease of maintenance.</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>If you need the dynamical core, please install this package from source</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>or directly using pip. Doing this will automatically install climt as</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>well.</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>$ pip install gfs_dynamical_core</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>You can install climt by simply typing</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>$ pip install climt</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>This is the preferred method to install climt, as it will always install</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>the most recent stable release. On Ubuntu Linux, you might need to</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>prefix the above command with <span class="in">`sudo`</span>. This command should work on Linux,</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>Mac and Windows. For Mac and Windows, it is recommended to use the</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">anaconda</span><span class="co">](https://www.continuum.io/downloads)</span> python distribution to</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>make installation simpler.</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>If you are not using Anaconda, please ensure you have the libpython</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>library installed. See the next section for instructions to install</span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>libpython.</span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>Since by default pip attempts to install a binary wheel, you won't need</span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>a compiler on your system.</span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>If you don't have <span class="co">[</span><span class="ot">pip</span><span class="co">](https://pip.pypa.io)</span> installed, this [Python</span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>installation</span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>guide](http://docs.python-guide.org/en/latest/starting/installation/)</span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>can guide you through the process.</span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a><span class="fu">## Installing from source</span></span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>The sources for climt can be downloaded from the [Github</span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>repo](https://github.com/climt/climt).</span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>You can either clone the public repository:</span>
-<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
-<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>$ git clone git<span class="op">:</span><span class="co">//github.com/CliMT/climt</span></span>
-<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>Or download the</span>
-<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">tarball</span><span class="co">](https://github.com/CliMT/climt/tarball/master)</span>:</span>
-<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
-<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>$ curl  <span class="op">-</span>OL https<span class="op">:</span><span class="co">//github.com/CliMT/climt/tarball/master</span></span>
-<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>Once you have a copy of the source, you can install it with:</span>
-<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
-<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>$ pip install <span class="op">-</span>r requirements_dev<span class="op">.</span>txt</span>
-<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>$ python setup<span class="op">.</span>py install</span>
-<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>Both commands may require the use of <span class="in">`sudo`</span>.</span>
-<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### Dependencies for source installations</span></span>
-<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>climt depends on some easily installable libraries. For an installation</span>
-<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>from source, it also requires that C and fortran compilers be installed.</span>
-<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>On Ubuntu Linux, for example, these dependencies can be installed by:</span>
-<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
-<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a>$ sudo apt<span class="op">-</span>get install gcc</span>
-<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>$ sudo apt<span class="op">-</span>get install gfortran</span>
-<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>$ sudo apt<span class="op">-</span>get install python<span class="op">-</span>dev</span>
-<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a>$ sudo pip install <span class="op">-</span>U cython</span>
-<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a>$ sudo pip install <span class="op">-</span>U numpy</span>
-<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a>use <span class="in">`pip3`</span> and <span class="in">`python3-dev`</span> if you use Python 3.</span>
-<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a>On Mac OSX, it is recommended that you use</span>
-<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">anaconda</span><span class="co">](https://www.continuum.io/downloads)</span> as your python</span>
-<span id="cb8-94"><a href="#cb8-94" aria-hidden="true" tabindex="-1"></a>distribution. This will eliminate the need to install cython, numpy and</span>
-<span id="cb8-95"><a href="#cb8-95" aria-hidden="true" tabindex="-1"></a>python-dev. Once you have anaconda installed, you will need to do the</span>
-<span id="cb8-96"><a href="#cb8-96" aria-hidden="true" tabindex="-1"></a>following:</span>
-<span id="cb8-97"><a href="#cb8-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-98"><a href="#cb8-98" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
-<span id="cb8-99"><a href="#cb8-99" aria-hidden="true" tabindex="-1"></a>$ brew install gcc</span>
-<span id="cb8-100"><a href="#cb8-100" aria-hidden="true" tabindex="-1"></a>$ export CC<span class="op">=</span>gcc<span class="op">-</span>x</span>
-<span id="cb8-101"><a href="#cb8-101" aria-hidden="true" tabindex="-1"></a>$ export FC<span class="op">=</span>gfortran<span class="op">-</span>x</span>
-<span id="cb8-102"><a href="#cb8-102" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-103"><a href="#cb8-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-104"><a href="#cb8-104" aria-hidden="true" tabindex="-1"></a>Where <span class="in">`gcc-x,gfortran-x`</span> are the names of the C,Fortran compilers that</span>
-<span id="cb8-105"><a href="#cb8-105" aria-hidden="true" tabindex="-1"></a>Homebrew installs. Exporting the name of the compiler is essential on</span>
-<span id="cb8-106"><a href="#cb8-106" aria-hidden="true" tabindex="-1"></a>Mac since the default compiler that ships with Mac (called <span class="in">`gcc`</span>, but is</span>
-<span id="cb8-107"><a href="#cb8-107" aria-hidden="true" tabindex="-1"></a>actually a different compiler) cannot compile OpenMP programs, like the</span>
-<span id="cb8-108"><a href="#cb8-108" aria-hidden="true" tabindex="-1"></a>dynamical core in climt.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Installation"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## Stable release</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>The GFS dynamical core has been made into a seperate package called</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">gfs_dynamical_core</span><span class="co">](https://github.com/Ai33L/gfs_dynamical_core)</span> for</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>ease of maintenance.</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>If you need the dynamical core, please install this package from source</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>or directly using pip. Doing this will automatically install climt as</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>well.</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>$ pip install gfs_dynamical_core</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>You can install climt by simply typing</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>$ pip install climt</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>This is the preferred method to install climt, as it will always install</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>the most recent stable release. On Ubuntu Linux, you might need to</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>prefix the above command with <span class="in">`sudo`</span>. On Mac, it is recommended to use</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>the <span class="co">[</span><span class="ot">anaconda</span><span class="co">](https://www.continuum.io/downloads)</span> python distribution to</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>make installation simpler.</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="fu">### Which wheel you get</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>climt ships two kinds of wheel, and pip picks the more specific one that</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>fits your platform:</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Compiled wheels** — Linux (x86_64) and macOS (Apple silicon), for</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  CPython 3.10–3.12. These include the Fortran-backed components</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  (RRTMG, Emanuel convection, the GFS-derived dynamics helpers and so</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  on), so everything works.</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**A pure-Python wheel** (<span class="in">`py3-none-any`</span>) — everywhere else, including</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  **Windows**, Intel Macs, Linux on ARM, and newer Python versions. It</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  carries no compiled extensions, so components that need Fortran raise</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  a clear error when you try to use them. Everything else works,</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  including the CORK correlated-k radiation scheme.</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>To check at runtime:</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>climt.has_fortran_extensions()   <span class="co"># False on the pure-Python wheel</span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## Windows is not tested</span></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>climt no longer builds or tests Windows binaries. Windows users get the</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>pure-Python wheel above, which installs without a compiler but has no</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>Fortran components. Building from source on Windows may still work but</span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>is unsupported — if you need the compiled components there, the</span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Windows Subsystem for Linux</span><span class="co">](https://learn.microsoft.com/windows/wsl/)</span></span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>is the recommended route.</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>If you are not using Anaconda, please ensure you have the libpython</span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>library installed. See the next section for instructions to install</span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>libpython.</span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>Since by default pip attempts to install a binary wheel, you won't need</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>a compiler on your system.</span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>If you don't have <span class="co">[</span><span class="ot">pip</span><span class="co">](https://pip.pypa.io)</span> installed, this [Python</span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>installation</span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>guide](http://docs.python-guide.org/en/latest/starting/installation/)</span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>can guide you through the process.</span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a><span class="fu">## Installing from source</span></span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>The sources for climt can be downloaded from the [Github</span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>repo](https://github.com/climt/climt).</span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a>You can either clone the public repository:</span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>$ git clone git<span class="op">:</span><span class="co">//github.com/CliMT/climt</span></span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a>Or download the</span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">tarball</span><span class="co">](https://github.com/CliMT/climt/tarball/master)</span>:</span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a>$ curl  <span class="op">-</span>OL https<span class="op">:</span><span class="co">//github.com/CliMT/climt/tarball/master</span></span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>Once you have a copy of the source, you can install it with:</span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
+<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>$ pip install <span class="op">-</span>r requirements_dev<span class="op">.</span>txt</span>
+<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>$ python setup<span class="op">.</span>py install</span>
+<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a>Both commands may require the use of <span class="in">`sudo`</span>.</span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a><span class="fu">### Dependencies for source installations</span></span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>climt depends on some easily installable libraries. For an installation</span>
+<span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a>from source, it also requires that C and fortran compilers be installed.</span>
+<span id="cb9-111"><a href="#cb9-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-112"><a href="#cb9-112" aria-hidden="true" tabindex="-1"></a>On Ubuntu Linux, for example, these dependencies can be installed by:</span>
+<span id="cb9-113"><a href="#cb9-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-114"><a href="#cb9-114" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
+<span id="cb9-115"><a href="#cb9-115" aria-hidden="true" tabindex="-1"></a>$ sudo apt<span class="op">-</span>get install gcc</span>
+<span id="cb9-116"><a href="#cb9-116" aria-hidden="true" tabindex="-1"></a>$ sudo apt<span class="op">-</span>get install gfortran</span>
+<span id="cb9-117"><a href="#cb9-117" aria-hidden="true" tabindex="-1"></a>$ sudo apt<span class="op">-</span>get install python<span class="op">-</span>dev</span>
+<span id="cb9-118"><a href="#cb9-118" aria-hidden="true" tabindex="-1"></a>$ sudo pip install <span class="op">-</span>U cython</span>
+<span id="cb9-119"><a href="#cb9-119" aria-hidden="true" tabindex="-1"></a>$ sudo pip install <span class="op">-</span>U numpy</span>
+<span id="cb9-120"><a href="#cb9-120" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-121"><a href="#cb9-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-122"><a href="#cb9-122" aria-hidden="true" tabindex="-1"></a>use <span class="in">`pip3`</span> and <span class="in">`python3-dev`</span> if you use Python 3.</span>
+<span id="cb9-123"><a href="#cb9-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-124"><a href="#cb9-124" aria-hidden="true" tabindex="-1"></a>On Mac OSX, it is recommended that you use</span>
+<span id="cb9-125"><a href="#cb9-125" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">anaconda</span><span class="co">](https://www.continuum.io/downloads)</span> as your python</span>
+<span id="cb9-126"><a href="#cb9-126" aria-hidden="true" tabindex="-1"></a>distribution. This will eliminate the need to install cython, numpy and</span>
+<span id="cb9-127"><a href="#cb9-127" aria-hidden="true" tabindex="-1"></a>python-dev. Once you have anaconda installed, you will need to do the</span>
+<span id="cb9-128"><a href="#cb9-128" aria-hidden="true" tabindex="-1"></a>following:</span>
+<span id="cb9-129"><a href="#cb9-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-130"><a href="#cb9-130" aria-hidden="true" tabindex="-1"></a><span class="in">``` console</span></span>
+<span id="cb9-131"><a href="#cb9-131" aria-hidden="true" tabindex="-1"></a>$ brew install gcc</span>
+<span id="cb9-132"><a href="#cb9-132" aria-hidden="true" tabindex="-1"></a>$ export CC<span class="op">=</span>gcc<span class="op">-</span>x</span>
+<span id="cb9-133"><a href="#cb9-133" aria-hidden="true" tabindex="-1"></a>$ export FC<span class="op">=</span>gfortran<span class="op">-</span>x</span>
+<span id="cb9-134"><a href="#cb9-134" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-135"><a href="#cb9-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-136"><a href="#cb9-136" aria-hidden="true" tabindex="-1"></a>Where <span class="in">`gcc-x,gfortran-x`</span> are the names of the C,Fortran compilers that</span>
+<span id="cb9-137"><a href="#cb9-137" aria-hidden="true" tabindex="-1"></a>Homebrew installs. Exporting the name of the compiler is essential on</span>
+<span id="cb9-138"><a href="#cb9-138" aria-hidden="true" tabindex="-1"></a>Mac since the default compiler that ships with Mac (called <span class="in">`gcc`</span>, but is</span>
+<span id="cb9-139"><a href="#cb9-139" aria-hidden="true" tabindex="-1"></a>actually a different compiler) cannot compile OpenMP programs, like the</span>
+<span id="cb9-140"><a href="#cb9-140" aria-hidden="true" tabindex="-1"></a>dynamical core in climt.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
