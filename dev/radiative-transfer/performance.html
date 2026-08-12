@@ -407,7 +407,7 @@ Figure&nbsp;1: <strong>Figure A.1</strong> — CORK-LW vs.&nbsp;RRTMG-LW through
 <h3 class="anchored" data-anchor-id="numba-njitparalleltrue-with-prange">Numba <code>@njit(parallel=True)</code> with <code>prange</code></h3>
 <p>The outermost loop of every hot kernel iterates over <em>columns</em>, which are fully independent. CORK marks those loops with <code>prange</code> and compiles the whole function with <code>@njit(parallel=True)</code>. Numba dispatches the column loop to a thread pool (one thread per core) at zero Python overhead.</p>
 <p>The optical-depth kernel — the single most expensive function — is <code>_ck_tau_additive_co2_kernel</code>:</p>
-<div id="cc5adccb" class="cell" data-execution_count="1">
+<div id="524f517f" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> _ck_tau_additive_co2_kernel</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_ck_tau_additive_co2_kernel))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -454,7 +454,7 @@ def _ck_tau_additive_co2_kernel(
 </div>
 <p>Notice <code>@njit(parallel=True)</code> at the top and <code>for i in prange(ncol)</code> as the outer loop: every column is dispatched to a separate thread.</p>
 <p>The same pattern appears in the LW transport kernel:</p>
-<div id="685adadf" class="cell" data-execution_count="2">
+<div id="479f1225" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.lw.kernels <span class="im">import</span> _lw_transport_kernel</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_lw_transport_kernel))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -526,7 +526,7 @@ x_\text{CO_2})\)</span> space. The bracket-finding helpers (<code>_ck_bracket</c
 <section id="graceful-no-numba-fallback" class="level3">
 <h3 class="anchored" data-anchor-id="graceful-no-numba-fallback">Graceful no-Numba fallback</h3>
 <p>When Numba is unavailable (e.g.&nbsp;in a Pyodide/WebAssembly context), <code>common.py</code> replaces <code>@njit</code> with a no-op decorator and <code>prange</code> with the built-in <code>range</code>. The scheme still runs correctly in pure Python — just without the multi-threaded speed-up. Interactive notebooks in JupyterLite use this path.</p>
-<div id="a3c3624c" class="cell" data-execution_count="3">
+<div id="9c47afe7" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.common <span class="im">import</span> njit</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(njit))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -589,7 +589,7 @@ x_\text{CO_2})\)</span> space. The bracket-finding helpers (<code>_ck_bracket</c
 <section id="heating-rate-kernel" class="level2">
 <h2 class="anchored" data-anchor-id="heating-rate-kernel">Heating-rate kernel</h2>
 <p>The heating-rate calculation uses the same <code>@njit</code> / <code>prange</code> pattern. <code>compute_heating_rate</code> in <code>climt/_components/cork/common.py</code> iterates over columns in parallel:</p>
-<div id="348e681a" class="cell" data-execution_count="4">
+<div id="6c45fa04" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.common <span class="im">import</span> compute_heating_rate</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(compute_heating_rate))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

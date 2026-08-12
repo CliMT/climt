@@ -371,7 +371,7 @@ window.Quarto = {
 <p>Every radiation scheme makes hidden assumptions about planetary constants: gravitational acceleration <span class="math inline">\(g\)</span>, the molar mass of dry air, heat capacity, rotation rate. Hard-coded Earth values make reuse on other planets painful. climt routes all of these through sympl’s constants dictionary and exposes a <strong>profile-swap API</strong> that lets a single codebase run Earth, Mars, Titan, or a hot Jupiter without touching any component code.</p>
 <section id="the-api" class="level2">
 <h2 class="anchored" data-anchor-id="the-api">The API</h2>
-<div id="28767de0" class="cell" data-execution_count="1">
+<div id="9ee0b49e" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._core.atmospheric_properties <span class="im">import</span> load_atmospheric_properties</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(load_atmospheric_properties))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -405,7 +405,7 @@ window.Quarto = {
 </code></pre>
 </div>
 </div>
-<div id="646dc0ab" class="cell" data-execution_count="2">
+<div id="d8167e9d" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._core.atmospheric_properties <span class="im">import</span> reset_atmospheric_properties</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(reset_atmospheric_properties))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
