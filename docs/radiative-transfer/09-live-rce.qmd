@@ -17,7 +17,7 @@ pyodide:
 ## Runs in your browser
 
 This page runs **climt itself** in your browser via Pyodide — no install, no
-server-side compute. The first cell downloads a ~6 MB pure-Python wheel and
+server-side compute. The first cell downloads an ~8 MB pure-Python wheel and
 boots the numpy/matplotlib stack, so give it a few seconds.
 
 The wheel is installed at document setup from the `pyodide: packages:` entry in
