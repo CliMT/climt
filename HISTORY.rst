@@ -8,6 +8,29 @@ Unreleased
 v.0.30.0
 --------
 
+* **Behaviour change** — ``BucketHydrology`` surface fluxes were missing
+  their air-density factors and are now dimensionally correct. The bulk
+  formulae are built from one evaporative mass flux
+  ``E = beta * rho * c_D * U * (q_s - q_a)``, with ``rho`` the density at
+  the lowest model level from the ideal gas law. Consequences:
+
+  - ``surface_upward_sensible_heat_flux`` gains ``rho * c_p`` and is
+    about 1200x larger (it was ~0.05 W m^-2 where tens of W m^-2 are
+    physical).
+  - ``surface_upward_latent_heat_flux`` gains ``rho`` and is about 1.2x
+    larger.
+  - ``evaporation_rate``, declared ``m s^-1``, is now the
+    liquid-water-equivalent depth rate ``E / rho_water`` and is about
+    830x smaller. Previously it returned metres per day rather than
+    millimetres per day, draining the default 0.15 m bucket in roughly
+    90 minutes.
+
+  Soil-moisture and surface-temperature evolution therefore change for
+  any run with non-zero wind. ``air_pressure`` (``[mid_levels, *]``,
+  ``Pa``) is a new required input. The cached regression outputs are
+  unaffected because their default state has zero wind, which zeroed
+  both fluxes regardless; ``tests/test_bucket_fluxes.py`` now covers the
+  flux magnitudes directly.
 * climt now publishes a **pure-Python wheel** (``py3-none-any``) to PyPI
   alongside the compiled platform wheels. It carries no Fortran/Cython
   extensions, so the components that need them raise a clear error on use

@@ -778,9 +778,10 @@ class TestSimpleBoundaryLayer(ComponentBaseColumn, ComponentBase3D):
         return climt.SimpleBoundaryLayer()
 
 
-def test_simple_boundary_layer_properties():
-    c = climt.SimpleBoundaryLayer()
-    assert set(c.input_properties) == {
+@pytest.mark.parametrize("mode", ["bulk", "external", None])
+def test_simple_boundary_layer_properties(mode):
+    c = climt.SimpleBoundaryLayer(surface_fluxes=mode)
+    expected_inputs = {
         "air_temperature",
         "specific_humidity",
         "air_pressure",
@@ -791,23 +792,38 @@ def test_simple_boundary_layer_properties():
         "surface_temperature",
         "surface_specific_humidity",
     }
+    expected_diagnostics = {
+        "northward_wind_stress",
+        "eastward_wind_stress",
+        "boundary_layer_height",
+    }
+    if mode == "external":
+        expected_inputs |= {
+            "surface_upward_sensible_heat_flux",
+            "surface_upward_latent_heat_flux",
+        }
+    if mode == "bulk":
+        expected_diagnostics |= {
+            "surface_upward_sensible_heat_flux",
+            "surface_upward_latent_heat_flux",
+        }
+    assert set(c.input_properties) == expected_inputs
     assert set(c.output_properties) == {
         "air_temperature",
         "specific_humidity",
         "northward_wind",
         "eastward_wind",
     }
-    assert set(c.diagnostic_properties) == {
-        "northward_wind_stress",
-        "eastward_wind_stress",
-        "boundary_layer_height",
-    }
+    assert set(c.diagnostic_properties) == expected_diagnostics
     assert c.diagnostic_properties["boundary_layer_height"]["units"] == "m"
     assert c.output_properties["air_temperature"]["units"] == "degK"
 
 
 def test_simple_boundary_layer_conserves_column_integrals():
-    component = climt.SimpleBoundaryLayer()
+    # Conservation is a property of the no-flux mode only. The 'bulk' and
+    # 'external' modes deliberately add mass and energy at the surface; their
+    # budgets are checked in tests/test_simple_boundary_layer.py.
+    component = climt.SimpleBoundaryLayer(surface_fluxes=None)
     state = climt.get_default_state(
         [component], grid_state=get_grid(nx=None, ny=None, nz=30)
     )

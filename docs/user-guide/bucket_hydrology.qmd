@@ -29,14 +29,16 @@ Both configurations first compute the same near-surface quantities.
 **Wind speed** from the lowest model level:
 $U = \sqrt{u_0^2 + v_0^2}$.
 
-**Potential evaporation** from a bulk aerodynamic formula:
+**Potential evaporation** from a bulk aerodynamic formula, as a mass flux
+(kg m⁻² s⁻¹):
 
 $$
-E_{\text{pot}} = c_D\, U\, (q_s - q_{a,0}),
+E_{\text{pot}} = \rho_a\, c_D\, U\, (q_s - q_{a,0}),
 $$
 
 using the surface and lowest-level specific humidities and the bulk transfer
-coefficient `bulk_coefficient`.
+coefficient `bulk_coefficient`. The air density at the lowest model level comes
+from the ideal gas law, $\rho_a = p_0 / (R_d\, T_{a,0})$.
 
 **Evaporation** is potential evaporation limited by a wetness factor $\beta$
 that throttles evaporation as the shallow soil dries out:
@@ -56,10 +58,15 @@ where $w_s$ is the shallow soil moisture, $S_s$ = `soil_moisture_max`, and $g$
 
 $$
 H_l = L\, E, \qquad
-H_s = c_D\, U\, (T_s - T_{a,0}),
+H_s = \rho_a\, c_p\, c_D\, U\, (T_s - T_{a,0}),
 $$
 
-and the net surface heat flux is
+both in W m⁻², with $c_p$ the heat capacity of dry air at constant pressure.
+The `evaporation_rate` diagnostic reports $E$ as a liquid-water-equivalent
+depth rate, $E / \rho_w$ (m s⁻¹), so it is commensurate with the precipitation
+rates in the soil-moisture budget below.
+
+The net surface heat flux is
 
 $$
 Q_{\text{net}} = SW^{\downarrow} + LW^{\downarrow} - SW^{\uparrow} - LW^{\uparrow} - H_s - H_l .
@@ -192,6 +199,7 @@ copies of the property dictionaries only when `num_layers=2`, so a
 | `lwe_thickness_of_soil_moisture_content` | `[*]` | `m` |
 | `convective_precipitation_rate`, `stratiform_precipitation_rate` | `[*]` | `m s^-1` |
 | `specific_humidity`, `air_temperature`, `northward_wind`, `eastward_wind` | `[mid_levels, *]` | `kg/kg`, `degK`, `m s^-1` |
+| `air_pressure` | `[mid_levels, *]` | `Pa` |
 | `surface_specific_humidity` | `[*]` | `kg/kg` |
 | `area_type` | `[*]` | `dimensionless` |
 

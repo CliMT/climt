@@ -11,9 +11,10 @@ climt's bundled boundary data:
 * Static ice        -> land_ice cells are *not* evolved; they only raise the
                        surface albedo and (through surface_geopotential) the
                        orography. Their surface temperature is held fixed.
-* ``SimpleBoundaryLayer`` -> combined surface-flux + boundary-layer diffusion
-                       (Frierson 2006). It reads surface_temperature/humidity and
-                       diffuses heat, moisture and momentum up from the surface.
+* ``SimpleBoundaryLayer`` -> boundary-layer diffusion (Frierson 2006), run with
+                       ``surface_fluxes='external'`` so it applies the surface
+                       heat and moisture fluxes ``BucketHydrology`` computes and
+                       adds its own bulk momentum drag.
 * ``RRTMGLongwave`` / ``RRTMGShortwave`` -> radiation.
 * ``EmanuelConvection`` + ``GridScaleCondensation`` -> moist processes.
 * ``Instellation``  -> zenith angle / insolation.
@@ -34,7 +35,7 @@ import numpy as np
 
 import climt
 from gfs_dynamical_core import GFSDynamicalCore
-from sympl import UpdateFrequencyWrapper
+from sympl import TimeDifferencingWrapper, UpdateFrequencyWrapper
 
 
 # Per-area-type surface shortwave albedo for the static surface.
@@ -47,10 +48,22 @@ def build_model(nx, ny, timestep, radiation_interval):
     ocean = climt.DataOcean(_bundled_sst())      # prescribed SST (each step)
     insolation = climt.Instellation()            # zenith angle (each step)
 
-    land = climt.BucketHydrology()
-    boundary_layer = climt.SimpleBoundaryLayer()
+    # BucketHydrology, SimpleBoundaryLayer and GridScaleCondensation are
+    # Steppers; GFSDynamicalCore's component list accepts only
+    # TendencyComponent / ImplicitTendencyComponent, so each needs
+    # TimeDifferencingWrapper (UpdateFrequencyWrapper, used on the radiation
+    # components below, preserves component type and would not do).
+    land = TimeDifferencingWrapper(climt.BucketHydrology())
+    # 'external' so the bucket's own surface fluxes drive the atmosphere rather
+    # than the boundary layer computing a second, inconsistent set. Inside the
+    # dycore this costs a one-step lag: sympl's composite hands every component
+    # the same input state, so the boundary layer reads the previous step's
+    # fluxes (zero on step 0).
+    boundary_layer = TimeDifferencingWrapper(
+        climt.SimpleBoundaryLayer(surface_fluxes="external")
+    )
     convection = climt.EmanuelConvection()
-    condensation = climt.GridScaleCondensation()
+    condensation = TimeDifferencingWrapper(climt.GridScaleCondensation())
     radiation_lw = UpdateFrequencyWrapper(
         climt.RRTMGLongwave(), radiation_interval)
     radiation_sw = UpdateFrequencyWrapper(
@@ -62,8 +75,12 @@ def build_model(nx, ny, timestep, radiation_interval):
         number_of_damped_levels=5,
     )
     grid = climt.get_grid(nx=nx, ny=ny)
-    state = climt.get_default_state(
-        [dycore, mask, ocean, insolation], grid_state=grid)
+    # Only the dycore seeds the state. LandMask/DataOcean/Instellation declare
+    # latitude with dims ['*'] while GFSDynamicalCore declares it ['lat', 'lon'],
+    # and get_default_state cannot combine the two. They are diagnostic-only and
+    # their own inputs (latitude, longitude, time, area_type) are either already
+    # in the dycore's state or stamped in by set_boundary_conditions.
+    state = climt.get_default_state([dycore], grid_state=grid)
     return state, dycore, mask, ocean, insolation
 
 
