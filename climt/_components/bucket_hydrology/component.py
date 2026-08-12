@@ -1,5 +1,5 @@
 import numpy as np
-from sympl import Stepper, initialize_numpy_arrays_with_properties
+from sympl import Stepper, get_constant, initialize_numpy_arrays_with_properties
 
 
 class BucketHydrology(Stepper):
@@ -65,6 +65,10 @@ class BucketHydrology(Stepper):
         "air_temperature": {
             "dims": ["mid_levels", "*"],
             "units": "degK",
+        },
+        "air_pressure": {
+            "dims": ["mid_levels", "*"],
+            "units": "Pa",
         },
         "northward_wind": {
             "dims": ["mid_levels", "*"],
@@ -217,8 +221,17 @@ class BucketHydrology(Stepper):
             np.power(north_wind_speed, 2) + np.power(east_wind_speed, 2)
         )
 
+        # Air density at the lowest model level from the ideal gas law, as in
+        # SecondBEST. The bulk aerodynamic formulae are mass fluxes, so every
+        # flux below carries this factor; without it the sensible heat flux is
+        # ~1200x too small and the evaporation ~830x too large.
+        rd = get_constant("gas_constant_of_dry_air", "J kg^-1 K^-1")
+        air_density = state["air_pressure"][0] / (rd * state["air_temperature"][0])
+
+        # Potential evaporation as a mass flux, kg m^-2 s^-1.
         potential_evaporation = (
-            self._c
+            air_density
+            * self._c
             * wind_speed
             * (state["surface_specific_humidity"] - state["specific_humidity"][0])
         )
@@ -236,12 +249,22 @@ class BucketHydrology(Stepper):
         mask = soil_moisture <= self._g * self._smax
         beta_factor[mask] = soil_moisture[mask] / (self._g * self._smax)
 
-        evaporation_rate = beta_factor * potential_evaporation
+        # Evaporative mass flux, kg m^-2 s^-1 ...
+        evaporative_mass_flux = beta_factor * potential_evaporation
+        # ... reported and budgeted as a liquid-water-equivalent depth rate,
+        # m s^-1, so it is commensurate with the precipitation rates below.
+        rho_water = get_constant("density_of_liquid_water", "kg m^-3")
+        evaporation_rate = evaporative_mass_flux / rho_water
         diagnostics["evaporation_rate"] = evaporation_rate
 
-        surface_upward_latent_heat_flux = self._l * evaporation_rate
+        surface_upward_latent_heat_flux = self._l * evaporative_mass_flux
+        cp = get_constant(
+            "heat_capacity_of_dry_air_at_constant_pressure", "J kg^-1 K^-1"
+        )
         surface_upward_sensible_heat_flux = (
-            self._c
+            air_density
+            * cp
+            * self._c
             * wind_speed
             * (state["surface_temperature"] - state["air_temperature"][0])
         )
