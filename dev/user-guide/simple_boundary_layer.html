@@ -449,6 +449,7 @@ window.Quarto = {
   <li><a href="#boundary-layer-height-and-stability" id="toc-boundary-layer-height-and-stability" class="nav-link" data-scroll-target="#boundary-layer-height-and-stability">Boundary-layer height and stability</a></li>
   <li><a href="#eddy-diffusivity" id="toc-eddy-diffusivity" class="nav-link" data-scroll-target="#eddy-diffusivity">Eddy diffusivity</a></li>
   <li><a href="#modification-to-the-surface-layer-coefficient" id="toc-modification-to-the-surface-layer-coefficient" class="nav-link" data-scroll-target="#modification-to-the-surface-layer-coefficient">Modification to the surface-layer coefficient</a></li>
+  <li><a href="#surface-fluxes" id="toc-surface-fluxes" class="nav-link" data-scroll-target="#surface-fluxes">Surface fluxes</a></li>
   <li><a href="#implicit-diffusion-and-conservation" id="toc-implicit-diffusion-and-conservation" class="nav-link" data-scroll-target="#implicit-diffusion-and-conservation">Implicit diffusion and conservation</a></li>
   </ul></li>
   <li><a href="#inputs-outputs-and-diagnostics" id="toc-inputs-outputs-and-diagnostics" class="nav-link" data-scroll-target="#inputs-outputs-and-diagnostics">Inputs, outputs and diagnostics</a></li>
@@ -483,7 +484,7 @@ window.Quarto = {
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
 <p><code>SimpleBoundaryLayer</code> is a <a href="../user-guide/component_types.html"><code>Stepper</code></a> that mixes heat, moisture and momentum upward from the lowest model level through the planetary boundary layer. It implements the surface-flux / boundary-layer formulation of <span class="citation" data-cites="frierson2006gray">Frierson et al. (<a href="#ref-frierson2006gray" role="doc-biblioref">2006</a>)</span> — the companion scheme to climt’s <a href="../user-guide/gray_radiation.html">gray radiation</a> <code>Frierson06LongwaveOpticalDepth</code> — with one modification to the surface-layer diffusion coefficient described under <a href="#physics">Physics</a> below.</p>
-<p>The component assumes that a <strong>surface-flux component has already run</strong> and applied the surface fluxes at the lowest model level. <code>SimpleBoundaryLayer</code> then diffuses the resulting profiles vertically using eddy diffusivities from a simplified Monin–Obukhov theory, capped by a critical Richardson number.</p>
+<p>By default the component computes the <strong>bulk surface fluxes itself</strong> and applies them at the lowest model level, then diffuses the result vertically using eddy diffusivities from a simplified Monin–Obukhov theory, capped by a critical Richardson number. It can alternatively apply surface fluxes supplied by another component, or skip surface exchange entirely — see <a href="#surface-fluxes">Surface fluxes</a> below.</p>
 </section>
 <section id="physics" class="level2">
 <h2 class="anchored" data-anchor-id="physics">Physics</h2>
@@ -518,13 +519,82 @@ k\,u_\star \sqrt{C}\,z\left[1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/
 \]</span></p>
 <p>with von Kármán constant <span class="math inline">\(k\)</span>, roughness length <span class="math inline">\(z_0\)</span>, surface exchange coefficient <span class="math inline">\(C\)</span>, and friction velocity scale <span class="math inline">\(u_\star\)</span>. The modified multiplier is <strong>continuous at <span class="math inline">\(Ri_a = 0\)</span></strong> and decreases monotonically from 1 to 0 as <span class="math inline">\(Ri_a \to Ri_c\)</span>: the near-surface mixing shuts off smoothly as the surface layer becomes statically stable, which is the physically desirable behaviour.</p>
 </section>
+<section id="surface-fluxes" class="level3">
+<h3 class="anchored" data-anchor-id="surface-fluxes">Surface fluxes</h3>
+<p>The <code>surface_fluxes</code> argument selects how the surface enters the lowest model level. With <span class="math inline">\(\Delta p_0 = p_{\text{int},0} - p_{\text{int},1}\)</span> the mass of the lowest layer, and <span class="math inline">\(F_{\text{surf}}\)</span> the upward flux of <span class="math inline">\(X\)</span> into it,</p>
+<p><span class="math display">\[
+\frac{\Delta p_0}{g}\,\frac{\mathrm{d}X_0}{\mathrm{d}t} = F_{\text{surf}} - F_{\text{top}}.
+\]</span></p>
+<p><strong><code>'bulk'</code> (default).</strong> <span class="math inline">\(F_{\text{surf}} = \rho_s\,C\,|\mathbf{v}|\,(X_s - X_0)\)</span> depends on the unknown, so it is taken implicitly: with <span class="math inline">\(\beta = g\,\rho_s\,C\,|\mathbf{v}|\,\Delta t / \Delta p_0\)</span> the tridiagonal system gains <span class="math inline">\(\beta\)</span> on its first diagonal entry and <span class="math inline">\(\beta X_s\)</span> on its first right-hand-side entry. <span class="math inline">\(X_s\)</span> is <span class="math inline">\(T_s\)</span> for temperature, <span class="math inline">\(q_s\)</span> for humidity, and <span class="math inline">\(0\)</span> for both wind components (no-slip) — which is what turns the wind-stress calculation into actual drag on the flow. <span class="math inline">\(\rho_s\)</span> is the density at the first interface and <span class="math inline">\(|\mathbf{v}|\)</span> the interface wind speed, subject to the same 1 m s<span class="math inline">\(^{-1}\)</span> gustiness floor used elsewhere in the scheme.</p>
+<p><strong>All four surface-flux diagnostics follow one rule:</strong> each reports the flux the solve actually delivered, evaluated with the <em>post-solve</em> layer-0 value. With <span class="math inline">\(\kappa = \rho_s\,C\,|\mathbf{v}|\)</span>,</p>
+<p><span class="math display">\[
+\mathrm{SH} = c_p\,\kappa\,(T_s - T_0^{\text{new}}),
+\quad
+\mathrm{LH} = L_v\,\kappa\,(q_s - q_0^{\text{new}}),
+\quad
+\tau_u = \kappa\,u_0^{\text{new}},
+\quad
+\tau_v = \kappa\,v_0^{\text{new}}.
+\]</span></p>
+<p>This is what makes every column budget close to round-off rather than approximately.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Changed: the wind-stress diagnostics
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>northward_wind_stress</code> and <code>eastward_wind_stress</code> previously used the <em>pre-step interface</em> wind, <span class="math inline">\(\kappa\,\cdot\,\tfrac{1}{2}(u_0 + u_1)\)</span>, which did not match the momentum the column actually lost. They now use the post-solve layer-0 wind, so the momentum budget closes like the heat and moisture ones. <strong>Their values change in every mode</strong>, including <code>surface_fluxes=None</code> — where no drag is applied, so the stress is advisory only: the bulk stress a separate surface component could apply.</p>
+</div>
+</div>
+<p><strong><code>'external'</code>.</strong> The two flux quantities become required <strong>inputs</strong>, in W m<span class="math inline">\(^{-2}\)</span> positive upward, and enter as a pure Neumann source:</p>
+<p><span class="math display">\[
+\text{rhs}_T[0] \mathrel{+}= \frac{g\,\Delta t\,\mathrm{SH}}{c_p\,\Delta p_0},
+\qquad
+\text{rhs}_q[0] \mathrel{+}= \frac{g\,\Delta t\,\mathrm{LH}}{L_v\,\Delta p_0},
+\]</span></p>
+<p>with <span class="math inline">\(L_v = 2.5\times10^6\)</span> J kg<span class="math inline">\(^{-1}\)</span>. Momentum stays bulk-internal: surface components do not compute wind stress, and <code>northward_wind_stress</code> / <code>eastward_wind_stress</code> are already diagnostics of this component.</p>
+<p><strong><code>None</code>.</strong> No surface exchange at all — the historical behaviour, requiring a separate component to have already applied the surface fluxes.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Do not apply surface fluxes twice
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>surface_fluxes='bulk'</code> alongside a component that already applies surface fluxes (for example <code>SimplePhysics</code> with its surface fluxes enabled) applies them twice. Use <code>surface_fluxes=None</code> in that case.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Two caveats in <code>'external'</code> mode
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Inconsistent exchange coefficients.</strong> The surface component computed its fluxes with its own drag coefficient — <code>BucketHydrology</code> uses <code>bulk_coefficient=0.0011</code> — which differs from this component’s Monin–Obukhov <span class="math inline">\(C\)</span>. That inconsistency is inherent to the modular split and is not reconciled.</p>
+<p><strong>A one-step lag inside a dynamical core.</strong> <code>sympl</code>’s component composite calls every component with the <em>same</em> input state and merges diagnostics only into its return value, never back into the state. So when <code>SimpleBoundaryLayer</code> is wrapped in a <code>TimeDifferencingWrapper</code> and handed to <code>GFSDynamicalCore</code> next to the surface component, it reads the surface component’s <em>previous</em>-step fluxes (and zero on the first step), provided the time loop does <code>state.update(diagnostics)</code>. Calling <code>SimpleBoundaryLayer</code> directly in the time loop, after the surface component and with a <code>state.update(...)</code> in between, has no lag. Both patterns are legitimate — pick one knowingly.</p>
+</div>
+</div>
+</section>
 <section id="implicit-diffusion-and-conservation" class="level3">
 <h3 class="anchored" data-anchor-id="implicit-diffusion-and-conservation">Implicit diffusion and conservation</h3>
-<p>The four profiles are advanced with a backward-Euler implicit diffusion, solved as a tridiagonal system with the shared <a href="https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm"><code>solve_tridiagonal</code></a> Thomas solver. Because the boundary conditions are no-flux (surface exchange is handled by the separate surface-flux component), the scheme <strong>conserves the interface-pressure-weighted column integral</strong> of each diffused field:</p>
+<p>The four profiles are advanced with a backward-Euler implicit diffusion, solved as a tridiagonal system with the shared <a href="https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm"><code>solve_tridiagonal</code></a> Thomas solver. The interior discretisation is flux-form, so interior exchanges telescope exactly and the only change to a column integral is what crosses the surface:</p>
 <p><span class="math display">\[
-\sum_k \phi_k\,\Delta p_k = \sum_k \phi_k^{\text{(new)}}\,\Delta p_k,
+\sum_k \phi_k^{\text{(new)}}\,\Delta p_k - \sum_k \phi_k\,\Delta p_k
+= g\,\Delta t\,F_{\text{surf}}(\phi),
 \qquad \phi \in \{T,\ q,\ u,\ v\}.
 \]</span></p>
+<p>With <code>surface_fluxes=None</code> the right-hand side is zero and the scheme <strong>conserves the interface-pressure-weighted column integral</strong> of every diffused field. In the other two modes it closes the budget against the surface flux to round-off.</p>
 </section>
 </section>
 <section id="inputs-outputs-and-diagnostics" class="level2">
@@ -546,12 +616,20 @@ k\,u_\star \sqrt{C}\,z\left[1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/
 <td><code>air_temperature</code>, <code>specific_humidity</code>, <code>air_pressure</code>, <code>air_pressure_on_interface_levels</code>, <code>northward_wind</code>, <code>eastward_wind</code>, <code>surface_air_pressure</code>, <code>surface_temperature</code>, <code>surface_specific_humidity</code></td>
 </tr>
 <tr class="even">
+<td>Inputs (<code>'external'</code> only)</td>
+<td><code>surface_upward_sensible_heat_flux</code>, <code>surface_upward_latent_heat_flux</code></td>
+</tr>
+<tr class="odd">
 <td>Outputs</td>
 <td><code>air_temperature</code>, <code>specific_humidity</code>, <code>northward_wind</code>, <code>eastward_wind</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Diagnostics</td>
 <td><code>northward_wind_stress</code>, <code>eastward_wind_stress</code>, <code>boundary_layer_height</code></td>
+</tr>
+<tr class="odd">
+<td>Diagnostics (<code>'bulk'</code> only)</td>
+<td><code>surface_upward_sensible_heat_flux</code>, <code>surface_upward_latent_heat_flux</code></td>
 </tr>
 </tbody>
 </table>
@@ -559,11 +637,6 @@ k\,u_\star \sqrt{C}\,z\left[1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/
 <section id="parameters" class="level2">
 <h2 class="anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 37%">
-<col style="width: 31%">
-<col style="width: 31%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Parameter</th>
@@ -573,26 +646,31 @@ k\,u_\star \sqrt{C}\,z\left[1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/
 </thead>
 <tbody>
 <tr class="odd">
+<td><code>surface_fluxes</code></td>
+<td><code>'bulk'</code></td>
+<td><code>'bulk'</code>, <code>'external'</code> or <code>None</code> — see <a href="#surface-fluxes">Surface fluxes</a></td>
+</tr>
+<tr class="even">
 <td><code>von_karman_constant</code></td>
 <td><code>0.4</code></td>
 <td>von Kármán constant <span class="math inline">\(k\)</span></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>roughness_length</code></td>
 <td><code>3.21e-5</code> m</td>
 <td>surface roughness length <span class="math inline">\(z_0\)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>specific_fraction</code></td>
 <td><code>0.1</code></td>
 <td>surface-layer fraction <span class="math inline">\(f_b\)</span> of the boundary-layer depth</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>reference_pressure</code></td>
 <td><code>100000</code> Pa</td>
 <td>reference pressure <span class="math inline">\(P_0\)</span> for potential temperature</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>critical_richardson_number</code></td>
 <td><code>1</code></td>
 <td>critical Richardson number <span class="math inline">\(Ri_c\)</span></td>
@@ -605,13 +683,21 @@ k\,u_\star \sqrt{C}\,z\left[1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer()</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state(</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    [boundary_layer],</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    grid_state<span class="op">=</span>climt.get_grid(nx<span class="op">=</span><span class="va">None</span>, ny<span class="op">=</span><span class="va">None</span>, nz<span class="op">=</span><span class="dv">30</span>),</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> boundary_layer(state, timestep<span class="op">=</span>timedelta(minutes<span class="op">=</span><span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><code>SimpleBoundaryLayer</code> is a <code>Stepper</code>, so it returns the updated temperature, humidity and wind profiles directly (not tendencies), alongside the surface wind-stress and boundary-layer-height diagnostics.</p>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># default: compute and apply bulk surface fluxes</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer()</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state(</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    [boundary_layer],</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    grid_state<span class="op">=</span>climt.get_grid(nx<span class="op">=</span><span class="va">None</span>, ny<span class="op">=</span><span class="va">None</span>, nz<span class="op">=</span><span class="dv">30</span>),</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> boundary_layer(state, timestep<span class="op">=</span>timedelta(minutes<span class="op">=</span><span class="dv">10</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"surface_upward_sensible_heat_flux"</span>])</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># or apply fluxes computed by a surface component</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer(surface_fluxes<span class="op">=</span><span class="st">"external"</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># or diffuse only, leaving surface exchange to someone else</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer(surface_fluxes<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>SimpleBoundaryLayer</code> is a <code>Stepper</code>, so it returns the updated temperature, humidity and wind profiles directly (not tendencies), alongside the surface wind-stress and boundary-layer-height diagnostics — and, in the default <code>'bulk'</code> mode, the surface heat and moisture fluxes it applied.</p>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
@@ -1092,118 +1178,227 @@ Frierson, Dargan M. W., Isaac M. Held, and Pablo Zurita-Gotor. 2006. <span>“A 
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>one modification to the surface-layer diffusion coefficient described under</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Physics</span><span class="co">](#physics)</span> below.</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>The component assumes that a **surface-flux component has already run** and</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>applied the surface fluxes at the lowest model level. <span class="in">`SimpleBoundaryLayer`</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>then diffuses the resulting profiles vertically using eddy diffusivities from a</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>simplified Monin–Obukhov theory, capped by a critical Richardson number.</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## Physics</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>By default the component computes the **bulk surface fluxes itself** and applies</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>them at the lowest model level, then diffuses the result vertically using eddy</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>diffusivities from a simplified Monin–Obukhov theory, capped by a critical</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>Richardson number. It can alternatively apply surface fluxes supplied by another</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>component, or skip surface exchange entirely — see</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Surface fluxes</span><span class="co">](#surface-fluxes)</span> below.</span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="fu">### Boundary-layer height and stability</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="fu">## Physics</span></span>
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>The scheme diagnoses a virtual potential temperature $\theta_v$ on the model</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>mid-levels and a bulk Richardson number relative to the surface,</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>Ri(z) = \frac{g\,z\,<span class="co">[</span><span class="ot">\theta_v(z) - \theta_v(z_a)</span><span class="co">]</span>/\theta_v(z_a)}{|\mathbf{v}(z)|^2},</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="fu">### Boundary-layer height and stability</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>The scheme diagnoses a virtual potential temperature $\theta_v$ on the model</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>mid-levels and a bulk Richardson number relative to the surface,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>where $z$ is the geometric height above the surface (from the hypsometric</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>relation) and $z_a$ the lowest level. The boundary-layer top $h$ is the lowest</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>height at which $Ri$ exceeds the critical value $Ri_c$.</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="fu">### Eddy diffusivity</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>Ri(z) = \frac{g\,z\,<span class="co">[</span><span class="ot">\theta_v(z) - \theta_v(z_a)</span><span class="co">]</span>/\theta_v(z_a)}{|\mathbf{v}(z)|^2},</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>where $z$ is the geometric height above the surface (from the hypsometric</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>relation) and $z_a$ the lowest level. The boundary-layer top $h$ is the lowest</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>height at which $Ri$ exceeds the critical value $Ri_c$.</span>
 <span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>Inside the boundary layer the eddy diffusivity follows a K-profile. In the</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>surface layer ($z &lt; f_b\,h$, with surface-layer fraction $f_b$) it is the</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>surface-layer coefficient $K_b$; above it, $K_b$ is scaled by the cubic profile</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>of @frierson2006gray so the diffusivity smoothly returns to zero at $z = h$:</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>K(z) =</span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>K_b(z), &amp; z &lt; f_b h,<span class="sc">\\</span><span class="co">[</span><span class="ot">4pt</span><span class="co">]</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>K_b(f_b h)\,\dfrac{z}{f_b h}\left<span class="co">[</span><span class="ot">1 - \dfrac{z - f_b h}{(1 - f_b)h}\right</span><span class="co">]</span>^2, &amp; f_b h &lt; z &lt; h.</span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="fu">### Modification to the surface-layer coefficient</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="fu">### Eddy diffusivity</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>Inside the boundary layer the eddy diffusivity follows a K-profile. In the</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>surface layer ($z &lt; f_b\,h$, with surface-layer fraction $f_b$) it is the</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>surface-layer coefficient $K_b$; above it, $K_b$ is scaled by the cubic profile</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>of @frierson2006gray so the diffusivity smoothly returns to zero at $z = h$:</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>K(z) =</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>K_b(z), &amp; z &lt; f_b h,<span class="sc">\\</span><span class="co">[</span><span class="ot">4pt</span><span class="co">]</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>K_b(f_b h)\,\dfrac{z}{f_b h}\left<span class="co">[</span><span class="ot">1 - \dfrac{z - f_b h}{(1 - f_b)h}\right</span><span class="co">]</span>^2, &amp; f_b h &lt; z &lt; h.</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>Canonical @frierson2006gray writes the surface-layer coefficient $K_b$ using the</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>*local* Richardson number in its stability multiplier, which is **discontinuous</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>at $Ri_a = 0$** (where $Ri_a$ is the surface-layer Richardson number anchoring</span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>the surface exchange). Following the modification adopted for this</span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>implementation, <span class="in">`SimpleBoundaryLayer`</span> instead uses the *surface-layer*</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>Richardson number $Ri_a$ in the multiplier:</span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>K_b(z) =</span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>k\,u_\star \sqrt{C}\,z, &amp; Ri_a \le 0,<span class="sc">\\</span><span class="co">[</span><span class="ot">6pt</span><span class="co">]</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>k\,u_\star \sqrt{C}\,z\left<span class="co">[</span><span class="ot">1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/Ri_c}\right</span><span class="co">]</span>^{-1}, &amp; Ri_a &gt; 0,</span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>with von Kármán constant $k$, roughness length $z_0$, surface exchange</span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>coefficient $C$, and friction velocity scale $u_\star$. The modified multiplier</span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>is **continuous at $Ri_a = 0$** and decreases monotonically from 1 to 0 as</span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>$Ri_a \to Ri_c$: the near-surface mixing shuts off smoothly as the surface layer</span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>becomes statically stable, which is the physically desirable behaviour.</span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="fu">### Implicit diffusion and conservation</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="fu">### Modification to the surface-layer coefficient</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>Canonical @frierson2006gray writes the surface-layer coefficient $K_b$ using the</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>*local* Richardson number in its stability multiplier, which is **discontinuous</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>at $Ri_a = 0$** (where $Ri_a$ is the surface-layer Richardson number anchoring</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>the surface exchange). Following the modification adopted for this</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>implementation, <span class="in">`SimpleBoundaryLayer`</span> instead uses the *surface-layer*</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>Richardson number $Ri_a$ in the multiplier:</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>K_b(z) =</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>k\,u_\star \sqrt{C}\,z, &amp; Ri_a \le 0,<span class="sc">\\</span><span class="co">[</span><span class="ot">6pt</span><span class="co">]</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>k\,u_\star \sqrt{C}\,z\left<span class="co">[</span><span class="ot">1 + \dfrac{Ri_a}{Ri_c}\,\dfrac{\ln(z/z_0)}{1 - Ri_a/Ri_c}\right</span><span class="co">]</span>^{-1}, &amp; Ri_a &gt; 0,</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>with von Kármán constant $k$, roughness length $z_0$, surface exchange</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>coefficient $C$, and friction velocity scale $u_\star$. The modified multiplier</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>is **continuous at $Ri_a = 0$** and decreases monotonically from 1 to 0 as</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>$Ri_a \to Ri_c$: the near-surface mixing shuts off smoothly as the surface layer</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>becomes statically stable, which is the physically desirable behaviour.</span>
 <span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>The four profiles are advanced with a backward-Euler implicit diffusion, solved</span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>as a tridiagonal system with the shared</span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`solve_tridiagonal`</span><span class="co">](https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm)</span></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>Thomas solver. Because the boundary conditions are no-flux (surface exchange is</span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>handled by the separate surface-flux component), the scheme **conserves the</span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>interface-pressure-weighted column integral** of each diffused field:</span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>\sum_k \phi_k\,\Delta p_k = \sum_k \phi_k^{\text{(new)}}\,\Delta p_k,</span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>\qquad \phi \in <span class="sc">\{</span>T,\ q,\ u,\ v<span class="sc">\}</span>.</span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inputs, outputs and diagnostics</span></span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Kind <span class="pp">|</span> Quantities <span class="pp">|</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|------------|</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Inputs <span class="pp">|</span> <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, <span class="in">`air_pressure`</span>, <span class="in">`air_pressure_on_interface_levels`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span>, <span class="in">`surface_air_pressure`</span>, <span class="in">`surface_temperature`</span>, <span class="in">`surface_specific_humidity`</span> <span class="pp">|</span></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Outputs <span class="pp">|</span> <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Diagnostics <span class="pp">|</span> <span class="in">`northward_wind_stress`</span>, <span class="in">`eastward_wind_stress`</span>, <span class="in">`boundary_layer_height`</span> <span class="pp">|</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### Surface fluxes {#surface-fluxes}</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>The <span class="in">`surface_fluxes`</span> argument selects how the surface enters the lowest model</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>level. With $\Delta p_0 = p_{\text{int},0} - p_{\text{int},1}$ the mass of the</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>lowest layer, and $F_{\text{surf}}$ the upward flux of $X$ into it,</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>\frac{\Delta p_0}{g}\,\frac{\mathrm{d}X_0}{\mathrm{d}t} = F_{\text{surf}} - F_{\text{top}}.</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>**`'bulk'` (default).** $F_{\text{surf}} = \rho_s\,C\,|\mathbf{v}|\,(X_s - X_0)$</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>depends on the unknown, so it is taken implicitly: with</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>$\beta = g\,\rho_s\,C\,|\mathbf{v}|\,\Delta t / \Delta p_0$ the tridiagonal</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>system gains $\beta$ on its first diagonal entry and $\beta X_s$ on its first</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>right-hand-side entry. $X_s$ is $T_s$ for temperature, $q_s$ for humidity, and</span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>$0$ for both wind components (no-slip) — which is what turns the wind-stress</span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>calculation into actual drag on the flow. $\rho_s$ is the density at the first</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>interface and $|\mathbf{v}|$ the interface wind speed, subject to the same</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>1 m s$^{-1}$ gustiness floor used elsewhere in the scheme.</span>
 <span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameters</span></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Parameter <span class="pp">|</span> Default <span class="pp">|</span> Meaning <span class="pp">|</span></span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------|---------|---------|</span></span>
-<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`von_karman_constant`</span> <span class="pp">|</span> <span class="in">`0.4`</span> <span class="pp">|</span> von Kármán constant $k$ <span class="pp">|</span></span>
-<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`roughness_length`</span> <span class="pp">|</span> <span class="in">`3.21e-5`</span> m <span class="pp">|</span> surface roughness length $z_0$ <span class="pp">|</span></span>
-<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`specific_fraction`</span> <span class="pp">|</span> <span class="in">`0.1`</span> <span class="pp">|</span> surface-layer fraction $f_b$ of the boundary-layer depth <span class="pp">|</span></span>
-<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`reference_pressure`</span> <span class="pp">|</span> <span class="in">`100000`</span> Pa <span class="pp">|</span> reference pressure $P_0$ for potential temperature <span class="pp">|</span></span>
-<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`critical_richardson_number`</span> <span class="pp">|</span> <span class="in">`1`</span> <span class="pp">|</span> critical Richardson number $Ri_c$ <span class="pp">|</span></span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="fu">## Usage</span></span>
-<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
-<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
-<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer()</span>
-<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state(</span>
-<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>    [boundary_layer],</span>
-<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>    grid_state<span class="op">=</span>climt.get_grid(nx<span class="op">=</span><span class="va">None</span>, ny<span class="op">=</span><span class="va">None</span>, nz<span class="op">=</span><span class="dv">30</span>),</span>
-<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> boundary_layer(state, timestep<span class="op">=</span>timedelta(minutes<span class="op">=</span><span class="dv">10</span>))</span>
-<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="in">`SimpleBoundaryLayer`</span> is a <span class="in">`Stepper`</span>, so it returns the updated</span>
-<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>temperature, humidity and wind profiles directly (not tendencies), alongside</span>
-<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>the surface wind-stress and boundary-layer-height diagnostics.</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>**All four surface-flux diagnostics follow one rule:** each reports the flux the</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>solve actually delivered, evaluated with the *post-solve* layer-0 value. With</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>$\kappa = \rho_s\,C\,|\mathbf{v}|$,</span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>\mathrm{SH} = c_p\,\kappa\,(T_s - T_0^{\text{new}}),</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>\quad</span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>\mathrm{LH} = L_v\,\kappa\,(q_s - q_0^{\text{new}}),</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>\quad</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>\tau_u = \kappa\,u_0^{\text{new}},</span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>\quad</span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>\tau_v = \kappa\,v_0^{\text{new}}.</span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>This is what makes every column budget close to round-off rather than</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>approximately.</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="fu">## Changed: the wind-stress diagnostics</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a><span class="in">`northward_wind_stress`</span> and <span class="in">`eastward_wind_stress`</span> previously used the</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>*pre-step interface* wind, $\kappa\,\cdot\,\tfrac{1}{2}(u_0 + u_1)$, which did</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>not match the momentum the column actually lost. They now use the post-solve</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>layer-0 wind, so the momentum budget closes like the heat and moisture ones.</span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>**Their values change in every mode**, including <span class="in">`surface_fluxes=None`</span> — where</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>no drag is applied, so the stress is advisory only: the bulk stress a separate</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>surface component could apply.</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a><span class="fu">## References</span></span>
-<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>::: {#refs}</span>
-<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>**`'external'`.** The two flux quantities become required **inputs**, in</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>W m$^{-2}$ positive upward, and enter as a pure Neumann source:</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>\text{rhs}_T<span class="co">[</span><span class="ot">0</span><span class="co">]</span> \mathrel{+}= \frac{g\,\Delta t\,\mathrm{SH}}{c_p\,\Delta p_0},</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>\text{rhs}_q<span class="co">[</span><span class="ot">0</span><span class="co">]</span> \mathrel{+}= \frac{g\,\Delta t\,\mathrm{LH}}{L_v\,\Delta p_0},</span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>with $L_v = 2.5\times10^6$ J kg$^{-1}$. Momentum stays bulk-internal: surface</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>components do not compute wind stress, and <span class="in">`northward_wind_stress`</span> /</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a><span class="in">`eastward_wind_stress`</span> are already diagnostics of this component.</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>**`None`.** No surface exchange at all — the historical behaviour, requiring a</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>separate component to have already applied the surface fluxes.</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a><span class="fu">## Do not apply surface fluxes twice</span></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a><span class="in">`surface_fluxes='bulk'`</span> alongside a component that already applies surface</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a>fluxes (for example <span class="in">`SimplePhysics`</span> with its surface fluxes enabled) applies</span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a>them twice. Use <span class="in">`surface_fluxes=None`</span> in that case.</span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a><span class="fu">## Two caveats in `'external'` mode</span></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>**Inconsistent exchange coefficients.** The surface component computed its</span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>fluxes with its own drag coefficient — <span class="in">`BucketHydrology`</span> uses</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a><span class="in">`bulk_coefficient=0.0011`</span> — which differs from this component's Monin–Obukhov</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>$C$. That inconsistency is inherent to the modular split and is not reconciled.</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>**A one-step lag inside a dynamical core.** <span class="in">`sympl`</span>'s component composite calls</span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>every component with the *same* input state and merges diagnostics only into its</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a>return value, never back into the state. So when <span class="in">`SimpleBoundaryLayer`</span> is</span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>wrapped in a <span class="in">`TimeDifferencingWrapper`</span> and handed to <span class="in">`GFSDynamicalCore`</span> next to</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>the surface component, it reads the surface component's *previous*-step fluxes</span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a>(and zero on the first step), provided the time loop does</span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a><span class="in">`state.update(diagnostics)`</span>. Calling <span class="in">`SimpleBoundaryLayer`</span> directly in the time</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>loop, after the surface component and with a <span class="in">`state.update(...)`</span> in between,</span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>has no lag. Both patterns are legitimate — pick one knowingly.</span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a><span class="fu">### Implicit diffusion and conservation</span></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>The four profiles are advanced with a backward-Euler implicit diffusion, solved</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>as a tridiagonal system with the shared</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`solve_tridiagonal`</span><span class="co">](https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm)</span></span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>Thomas solver. The interior discretisation is flux-form, so interior exchanges</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a>telescope exactly and the only change to a column integral is what crosses the</span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>surface:</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>\sum_k \phi_k^{\text{(new)}}\,\Delta p_k - \sum_k \phi_k\,\Delta p_k</span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a>= g\,\Delta t\,F_{\text{surf}}(\phi),</span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a>\qquad \phi \in <span class="sc">\{</span>T,\ q,\ u,\ v<span class="sc">\}</span>.</span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a>With <span class="in">`surface_fluxes=None`</span> the right-hand side is zero and the scheme</span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>**conserves the interface-pressure-weighted column integral** of every diffused</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>field. In the other two modes it closes the budget against the surface flux to</span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>round-off.</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inputs, outputs and diagnostics</span></span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Kind <span class="pp">|</span> Quantities <span class="pp">|</span></span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|------------|</span></span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Inputs <span class="pp">|</span> <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, <span class="in">`air_pressure`</span>, <span class="in">`air_pressure_on_interface_levels`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span>, <span class="in">`surface_air_pressure`</span>, <span class="in">`surface_temperature`</span>, <span class="in">`surface_specific_humidity`</span> <span class="pp">|</span></span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Inputs (<span class="in">`'external'`</span> only) <span class="pp">|</span> <span class="in">`surface_upward_sensible_heat_flux`</span>, <span class="in">`surface_upward_latent_heat_flux`</span> <span class="pp">|</span></span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Outputs <span class="pp">|</span> <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span></span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Diagnostics <span class="pp">|</span> <span class="in">`northward_wind_stress`</span>, <span class="in">`eastward_wind_stress`</span>, <span class="in">`boundary_layer_height`</span> <span class="pp">|</span></span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Diagnostics (<span class="in">`'bulk'`</span> only) <span class="pp">|</span> <span class="in">`surface_upward_sensible_heat_flux`</span>, <span class="in">`surface_upward_latent_heat_flux`</span> <span class="pp">|</span></span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameters</span></span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Parameter <span class="pp">|</span> Default <span class="pp">|</span> Meaning <span class="pp">|</span></span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------|---------|---------|</span></span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_fluxes`</span> <span class="pp">|</span> <span class="in">`'bulk'`</span> <span class="pp">|</span> <span class="in">`'bulk'`</span>, <span class="in">`'external'`</span> or <span class="in">`None`</span> — see <span class="co">[</span><span class="ot">Surface fluxes</span><span class="co">](#surface-fluxes)</span> <span class="pp">|</span></span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`von_karman_constant`</span> <span class="pp">|</span> <span class="in">`0.4`</span> <span class="pp">|</span> von Kármán constant $k$ <span class="pp">|</span></span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`roughness_length`</span> <span class="pp">|</span> <span class="in">`3.21e-5`</span> m <span class="pp">|</span> surface roughness length $z_0$ <span class="pp">|</span></span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`specific_fraction`</span> <span class="pp">|</span> <span class="in">`0.1`</span> <span class="pp">|</span> surface-layer fraction $f_b$ of the boundary-layer depth <span class="pp">|</span></span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`reference_pressure`</span> <span class="pp">|</span> <span class="in">`100000`</span> Pa <span class="pp">|</span> reference pressure $P_0$ for potential temperature <span class="pp">|</span></span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`critical_richardson_number`</span> <span class="pp">|</span> <span class="in">`1`</span> <span class="pp">|</span> critical Richardson number $Ri_c$ <span class="pp">|</span></span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a><span class="fu">## Usage</span></span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a><span class="co"># default: compute and apply bulk surface fluxes</span></span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer()</span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> climt.get_default_state(</span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a>    [boundary_layer],</span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>    grid_state<span class="op">=</span>climt.get_grid(nx<span class="op">=</span><span class="va">None</span>, ny<span class="op">=</span><span class="va">None</span>, nz<span class="op">=</span><span class="dv">30</span>),</span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> boundary_layer(state, timestep<span class="op">=</span>timedelta(minutes<span class="op">=</span><span class="dv">10</span>))</span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"surface_upward_sensible_heat_flux"</span>])</span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a><span class="co"># or apply fluxes computed by a surface component</span></span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer(surface_fluxes<span class="op">=</span><span class="st">"external"</span>)</span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a><span class="co"># or diffuse only, leaving surface exchange to someone else</span></span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a>boundary_layer <span class="op">=</span> climt.SimpleBoundaryLayer(surface_fluxes<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a><span class="in">`SimpleBoundaryLayer`</span> is a <span class="in">`Stepper`</span>, so it returns the updated</span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a>temperature, humidity and wind profiles directly (not tendencies), alongside</span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>the surface wind-stress and boundary-layer-height diagnostics — and, in the</span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>default <span class="in">`'bulk'`</span> mode, the surface heat and moisture fluxes it applied.</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a><span class="fu">## References</span></span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a>::: {#refs}</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

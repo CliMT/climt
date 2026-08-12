@@ -480,11 +480,11 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="shared-surface-physics">Shared surface physics</h2>
 <p>Both configurations first compute the same near-surface quantities.</p>
 <p><strong>Wind speed</strong> from the lowest model level: <span class="math inline">\(U = \sqrt{u_0^2 + v_0^2}\)</span>.</p>
-<p><strong>Potential evaporation</strong> from a bulk aerodynamic formula:</p>
+<p><strong>Potential evaporation</strong> from a bulk aerodynamic formula, as a mass flux (kg m⁻² s⁻¹):</p>
 <p><span class="math display">\[
-E_{\text{pot}} = c_D\, U\, (q_s - q_{a,0}),
+E_{\text{pot}} = \rho_a\, c_D\, U\, (q_s - q_{a,0}),
 \]</span></p>
-<p>using the surface and lowest-level specific humidities and the bulk transfer coefficient <code>bulk_coefficient</code>.</p>
+<p>using the surface and lowest-level specific humidities and the bulk transfer coefficient <code>bulk_coefficient</code>. The air density at the lowest model level comes from the ideal gas law, <span class="math inline">\(\rho_a = p_0 / (R_d\, T_{a,0})\)</span>.</p>
 <p><strong>Evaporation</strong> is potential evaporation limited by a wetness factor <span class="math inline">\(\beta\)</span> that throttles evaporation as the shallow soil dries out:</p>
 <p><span class="math display">\[
 E = \beta\, E_{\text{pot}}, \qquad
@@ -497,9 +497,10 @@ E = \beta\, E_{\text{pot}}, \qquad
 <p><strong>Fluxes.</strong> The latent and sensible heat fluxes follow as</p>
 <p><span class="math display">\[
 H_l = L\, E, \qquad
-H_s = c_D\, U\, (T_s - T_{a,0}),
+H_s = \rho_a\, c_p\, c_D\, U\, (T_s - T_{a,0}),
 \]</span></p>
-<p>and the net surface heat flux is</p>
+<p>both in W m⁻², with <span class="math inline">\(c_p\)</span> the heat capacity of dry air at constant pressure. The <code>evaporation_rate</code> diagnostic reports <span class="math inline">\(E\)</span> as a liquid-water-equivalent depth rate, <span class="math inline">\(E / \rho_w\)</span> (m s⁻¹), so it is commensurate with the precipitation rates in the soil-moisture budget below.</p>
+<p>The net surface heat flux is</p>
 <p><span class="math display">\[
 Q_{\text{net}} = SW^{\downarrow} + LW^{\downarrow} - SW^{\uparrow} - LW^{\uparrow} - H_s - H_l .
 \]</span></p>
@@ -705,11 +706,16 @@ T_d^{\,n+1} = T_d + \frac{G_{sd}}{C_d}\,\Delta t .
 <td><code>kg/kg</code>, <code>degK</code>, <code>m s^-1</code></td>
 </tr>
 <tr class="odd">
+<td><code>air_pressure</code></td>
+<td><code>[mid_levels, *]</code></td>
+<td><code>Pa</code></td>
+</tr>
+<tr class="even">
 <td><code>surface_specific_humidity</code></td>
 <td><code>[*]</code></td>
 <td><code>kg/kg</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>area_type</code></td>
 <td><code>[*]</code></td>
 <td><code>dimensionless</code></td>
@@ -1317,223 +1323,231 @@ T_d^{\,n+1} = T_d + \frac{G_{sd}}{C_d}\,\Delta t .
 <span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>**Wind speed** from the lowest model level:</span>
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>$U = \sqrt{u_0^2 + v_0^2}$.</span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>**Potential evaporation** from a bulk aerodynamic formula:</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>E_{\text{pot}} = c_D\, U\, (q_s - q_{a,0}),</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>using the surface and lowest-level specific humidities and the bulk transfer</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>coefficient <span class="in">`bulk_coefficient`</span>.</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>**Evaporation** is potential evaporation limited by a wetness factor $\beta$</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>that throttles evaporation as the shallow soil dries out:</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>E = \beta\, E_{\text{pot}}, \qquad</span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>\beta = \begin{cases}</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>\dfrac{w_s}{g\, S_s} &amp; w_s \le g\, S_s <span class="sc">\\</span><span class="co">[</span><span class="ot">2ex</span><span class="co">]</span></span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>1 &amp; \text{otherwise}</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>where $w_s$ is the shallow soil moisture, $S_s$ = <span class="in">`soil_moisture_max`</span>, and $g$</span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>= <span class="in">`beta_parameter`</span>.</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>**Fluxes.** The latent and sensible heat fluxes follow as</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>**Potential evaporation** from a bulk aerodynamic formula, as a mass flux</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>(kg m⁻² s⁻¹):</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>E_{\text{pot}} = \rho_a\, c_D\, U\, (q_s - q_{a,0}),</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>using the surface and lowest-level specific humidities and the bulk transfer</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>coefficient <span class="in">`bulk_coefficient`</span>. The air density at the lowest model level comes</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>from the ideal gas law, $\rho_a = p_0 / (R_d\, T_{a,0})$.</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>**Evaporation** is potential evaporation limited by a wetness factor $\beta$</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>that throttles evaporation as the shallow soil dries out:</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>E = \beta\, E_{\text{pot}}, \qquad</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>\beta = \begin{cases}</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>\dfrac{w_s}{g\, S_s} &amp; w_s \le g\, S_s <span class="sc">\\</span><span class="co">[</span><span class="ot">2ex</span><span class="co">]</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>1 &amp; \text{otherwise}</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>where $w_s$ is the shallow soil moisture, $S_s$ = <span class="in">`soil_moisture_max`</span>, and $g$</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>= <span class="in">`beta_parameter`</span>.</span>
 <span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>H_l = L\, E, \qquad</span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>H_s = c_D\, U\, (T_s - T_{a,0}),</span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>and the net surface heat flux is</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>**Fluxes.** The latent and sensible heat fluxes follow as</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>H_l = L\, E, \qquad</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>H_s = \rho_a\, c_p\, c_D\, U\, (T_s - T_{a,0}),</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>Q_{\text{net}} = SW^{\downarrow} + LW^{\downarrow} - SW^{\uparrow} - LW^{\uparrow} - H_s - H_l .</span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>All of <span class="in">`precipitation_rate`</span> (convective + stratiform), <span class="in">`evaporation_rate`</span>, and</span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>the two flux components are emitted as diagnostics in both configurations.</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>both in W m⁻², with $c_p$ the heat capacity of dry air at constant pressure.</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>The <span class="in">`evaporation_rate`</span> diagnostic reports $E$ as a liquid-water-equivalent</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>depth rate, $E / \rho_w$ (m s⁻¹), so it is commensurate with the precipitation</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>rates in the soil-moisture budget below.</span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>The net surface heat flux is</span>
 <span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="fu">## Single-layer model (`num_layers=1`)</span></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>The surface temperature integrates the net flux against the slab heat capacity</span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>$C = \rho\, \Delta z\, c$:</span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>T_s^{\,n+1} = T_s^{\,n} + \frac{Q_{\text{net}}}{C}\,\Delta t .</span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>Q_{\text{net}} = SW^{\downarrow} + LW^{\downarrow} - SW^{\uparrow} - LW^{\uparrow} - H_s - H_l .</span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>All of <span class="in">`precipitation_rate`</span> (convective + stratiform), <span class="in">`evaporation_rate`</span>, and</span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>the two flux components are emitted as diagnostics in both configurations.</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="fu">## Single-layer model (`num_layers=1`)</span></span>
 <span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>Soil moisture accumulates precipitation minus evaporation, capped at the bucket</span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>capacity:</span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>The surface temperature integrates the net flux against the slab heat capacity</span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>$C = \rho\, \Delta z\, c$:</span>
 <span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>w_s^{\,n+1} = \min<span class="sc">\!</span>\big(w_s^{\,n} + (P - E)\,\Delta t,\; S_s\big).</span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>T_s^{\,n+1} = T_s^{\,n} + \frac{Q_{\text{net}}}{C}\,\Delta t .</span>
 <span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a><span class="fu">## Clamp bug fix</span></span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>Soil moisture accumulates precipitation minus evaporation, capped at the bucket</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>capacity:</span>
 <span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>The moisture cap previously used a hardcoded literal <span class="in">`0.15`</span> regardless of the</span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>configured <span class="in">`soil_moisture_max`</span>. It now clamps to <span class="in">`self._smax`</span></span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>(= <span class="in">`soil_moisture_max`</span>). Since the default <span class="in">`soil_moisture_max`</span> *is* <span class="in">`0.15`</span>, the</span>
-<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>default single-layer run is numerically identical to before; only non-default</span>
-<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="in">`soil_moisture_max`</span> values are affected.</span>
-<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>w_s^{\,n+1} = \min<span class="sc">\!</span>\big(w_s^{\,n} + (P - E)\,\Delta t,\; S_s\big).</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a><span class="fu">## Clamp bug fix</span></span>
 <span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a><span class="fu">## Two-layer model (`num_layers=2`)</span></span>
-<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>Enabling the deep layer adds a second moisture store $w_d$ (capacity $S_d$ =</span>
-<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="in">`deep_soil_moisture_max`</span>) and a deep temperature $T_d$, together with runoff and</span>
-<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>optional drainage. It reads and writes two extra state fields</span>
-<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>(<span class="in">`deep_soil_moisture_content`</span>, <span class="in">`deep_soil_temperature`</span>) and emits two extra</span>
-<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>diagnostics (<span class="in">`runoff_rate`</span>, <span class="in">`deep_soil_moisture_fraction`</span>).</span>
-<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a><span class="fu">### Moisture</span></span>
-<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>Water moves between the shallow and deep stores toward **equal relative</span>
-<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a>saturation**, on a timescale $\tau_m$ = <span class="in">`moisture_diffusion_timescale`</span> (default</span>
-<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>5 days):</span>
-<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a>F_{sd} = \left(\frac{w_s}{S_s} - \frac{w_d}{S_d}ight)\frac{S_s + S_d}{2\,\tau_m}.</span>
-<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a>An optional deep **drainage** term $D = w_d / \tau_{\text{drain}}$ (only when</span>
-<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a><span class="in">`deep_drainage_timescale`</span> is set) removes water from the deep store entirely.</span>
-<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a>The two stores update as</span>
-<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a>w_s^{\,n+1} = w_s + (P - E - F_{sd})\,\Delta t, \qquad</span>
-<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a>w_d^{\,n+1} = w_d + (F_{sd} - D)\,\Delta t,</span>
-<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a>and any excess above either capacity becomes **runoff**:</span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>The moisture cap previously used a hardcoded literal <span class="in">`0.15`</span> regardless of the</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>configured <span class="in">`soil_moisture_max`</span>. It now clamps to <span class="in">`self._smax`</span></span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>(= <span class="in">`soil_moisture_max`</span>). Since the default <span class="in">`soil_moisture_max`</span> *is* <span class="in">`0.15`</span>, the</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>default single-layer run is numerically identical to before; only non-default</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a><span class="in">`soil_moisture_max`</span> values are affected.</span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a><span class="fu">## Two-layer model (`num_layers=2`)</span></span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>Enabling the deep layer adds a second moisture store $w_d$ (capacity $S_d$ =</span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a><span class="in">`deep_soil_moisture_max`</span>) and a deep temperature $T_d$, together with runoff and</span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a>optional drainage. It reads and writes two extra state fields</span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>(<span class="in">`deep_soil_moisture_content`</span>, <span class="in">`deep_soil_temperature`</span>) and emits two extra</span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a>diagnostics (<span class="in">`runoff_rate`</span>, <span class="in">`deep_soil_moisture_fraction`</span>).</span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a><span class="fu">### Moisture</span></span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a>Water moves between the shallow and deep stores toward **equal relative</span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a>saturation**, on a timescale $\tau_m$ = <span class="in">`moisture_diffusion_timescale`</span> (default</span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>5 days):</span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a>F_{sd} = \left(\frac{w_s}{S_s} - \frac{w_d}{S_d}ight)\frac{S_s + S_d}{2\,\tau_m}.</span>
+<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a>An optional deep **drainage** term $D = w_d / \tau_{\text{drain}}$ (only when</span>
+<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a><span class="in">`deep_drainage_timescale`</span> is set) removes water from the deep store entirely.</span>
+<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a>The two stores update as</span>
 <span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a>R = \frac{\max(w_s^{n+1} - S_s, 0) + \max(w_d^{n+1} - S_d, 0)}{\Delta t},</span>
-<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a>with the stores then clipped into $<span class="co">[</span><span class="ot">0, S</span><span class="co">]</span>$. In the absence of drainage, total</span>
-<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a>column water is conserved: $\Delta(w_s + w_d) = (P - E - R)\,\Delta t$.</span>
+<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a>w_s^{\,n+1} = w_s + (P - E - F_{sd})\,\Delta t, \qquad</span>
+<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a>w_d^{\,n+1} = w_d + (F_{sd} - D)\,\Delta t,</span>
+<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a>and any excess above either capacity becomes **runoff**:</span>
 <span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a><span class="fu">### Heat</span></span>
-<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a>The shallow (skin) and deep stores are coupled by conduction. With a soil</span>
-<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a>conductivity $k_{\text{soil}} = 2\ \mathrm{W\,m^{-1}\,K^{-1}}$ and heat</span>
-<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a>capacities $C_s, C_d$ built from the layer thicknesses (the deep layer is</span>
-<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a><span class="in">`deep_layer_thickness_ratio`</span> times thicker than the shallow one):</span>
+<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a>R = \frac{\max(w_s^{n+1} - S_s, 0) + \max(w_d^{n+1} - S_d, 0)}{\Delta t},</span>
+<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a>with the stores then clipped into $<span class="co">[</span><span class="ot">0, S</span><span class="co">]</span>$. In the absence of drainage, total</span>
+<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a>column water is conserved: $\Delta(w_s + w_d) = (P - E - R)\,\Delta t$.</span>
 <span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a>G_{sd} = k_{\text{soil}}\,\frac{T_s - T_d}{\tfrac{1}{2}(\Delta z_s + \Delta z_d)},</span>
-<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a>T_s^{\,n+1} = T_s + \frac{Q_{\text{net}} - G_{sd}}{C_s}\,\Delta t, \qquad</span>
-<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a>T_d^{\,n+1} = T_d + \frac{G_{sd}}{C_d}\,\Delta t .</span>
+<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a><span class="fu">### Heat</span></span>
+<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a>The shallow (skin) and deep stores are coupled by conduction. With a soil</span>
+<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a>conductivity $k_{\text{soil}} = 2\ \mathrm{W\,m^{-1}\,K^{-1}}$ and heat</span>
+<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a>capacities $C_s, C_d$ built from the layer thicknesses (the deep layer is</span>
+<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a><span class="in">`deep_layer_thickness_ratio`</span> times thicker than the shallow one):</span>
+<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a>The larger deep heat capacity gives the deep store a longer memory, so it damps</span>
-<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a>and lags the shallow store's response to fast forcing.</span>
-<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructor</span></span>
-<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a>climt.BucketHydrology(num_layers<span class="op">=</span><span class="dv">1</span>, soil_moisture_max<span class="op">=</span><span class="fl">0.15</span>,</span>
-<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a>                      beta_parameter<span class="op">=</span><span class="fl">0.75</span>,</span>
-<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a>                      specific_latent_heat_of_water<span class="op">=</span><span class="dv">2260000</span>,</span>
-<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a>                      bulk_coefficient<span class="op">=</span><span class="fl">0.0011</span>,</span>
-<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a>                      deep_soil_moisture_max<span class="op">=</span><span class="fl">0.50</span>,</span>
-<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a>                      moisture_diffusion_timescale<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a>                      deep_layer_thickness_ratio<span class="op">=</span><span class="fl">10.0</span>,</span>
-<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a>                      deep_drainage_timescale<span class="op">=</span><span class="va">None</span>)</span>
-<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Argument <span class="pp">|</span> Default <span class="pp">|</span> Applies to <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|---------|-----------|-------------|</span></span>
-<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`num_layers`</span> <span class="pp">|</span> <span class="in">`1`</span> <span class="pp">|</span> — <span class="pp">|</span> <span class="in">`1`</span> or <span class="in">`2`</span>; anything else raises <span class="in">`ValueError`</span>. <span class="pp">|</span></span>
-<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`soil_moisture_max`</span> <span class="pp">|</span> <span class="in">`0.15`</span> <span class="pp">|</span> both <span class="pp">|</span> Shallow bucket capacity $S_s$ (m). <span class="pp">|</span></span>
-<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`beta_parameter`</span> <span class="pp">|</span> <span class="in">`0.75`</span> <span class="pp">|</span> both <span class="pp">|</span> $g$ in the evaporation $\beta$ limiter. <span class="pp">|</span></span>
-<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`specific_latent_heat_of_water`</span> <span class="pp">|</span> <span class="in">`2260000`</span> <span class="pp">|</span> both <span class="pp">|</span> Latent heat $L$ (J kg⁻¹). <span class="pp">|</span></span>
-<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`bulk_coefficient`</span> <span class="pp">|</span> <span class="in">`0.0011`</span> <span class="pp">|</span> both <span class="pp">|</span> Bulk transfer coefficient $c_D$. <span class="pp">|</span></span>
-<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`deep_soil_moisture_max`</span> <span class="pp">|</span> <span class="in">`0.50`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> Deep bucket capacity $S_d$ (m). <span class="pp">|</span></span>
-<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`moisture_diffusion_timescale`</span> <span class="pp">|</span> <span class="in">`None`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> $\tau_m$ for shallow⇄deep exchange (defaults to 5 days when <span class="in">`None`</span>). <span class="pp">|</span></span>
-<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`deep_layer_thickness_ratio`</span> <span class="pp">|</span> <span class="in">`10.0`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> Deep-to-shallow thickness ratio. <span class="pp">|</span></span>
-<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`deep_drainage_timescale`</span> <span class="pp">|</span> <span class="in">`None`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> $\tau_{\text{drain}}$; <span class="in">`None`</span> disables drainage. <span class="pp">|</span></span>
-<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a>The deep-layer inputs, outputs and diagnostics are added to instance-level</span>
-<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a>copies of the property dictionaries only when <span class="in">`num_layers=2`</span>, so a</span>
-<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a><span class="in">`num_layers=1`</span> instance exposes exactly the original interface.</span>
-<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a><span class="fu">## State</span></span>
-<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a><span class="fu">### Inputs (both configurations)</span></span>
-<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
-<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|------|-------|</span></span>
-<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`downwelling_/upwelling_ shortwave_/longwave_flux_in_air`</span> <span class="pp">|</span> <span class="in">`[*, interface_levels]`</span> <span class="pp">|</span> <span class="in">`W m^-2`</span> <span class="pp">|</span></span>
-<span id="cb4-188"><a href="#cb4-188" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
-<span id="cb4-189"><a href="#cb4-189" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_material_density`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`kg m^-3`</span> <span class="pp">|</span></span>
-<span id="cb4-190"><a href="#cb4-190" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`soil_layer_thickness`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
-<span id="cb4-191"><a href="#cb4-191" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`heat_capacity_of_soil`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`J kg^-1 degK^-1`</span> <span class="pp">|</span></span>
-<span id="cb4-192"><a href="#cb4-192" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`lwe_thickness_of_soil_moisture_content`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
-<span id="cb4-193"><a href="#cb4-193" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`convective_precipitation_rate`</span>, <span class="in">`stratiform_precipitation_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
-<span id="cb4-194"><a href="#cb4-194" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`specific_humidity`</span>, <span class="in">`air_temperature`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span>, <span class="in">`degK`</span>, <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
-<span id="cb4-195"><a href="#cb4-195" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
-<span id="cb4-196"><a href="#cb4-196" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`area_type`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span></span>
-<span id="cb4-197"><a href="#cb4-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-198"><a href="#cb4-198" aria-hidden="true" tabindex="-1"></a><span class="fu">### Additional state when `num_layers=2`</span></span>
-<span id="cb4-199"><a href="#cb4-199" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
-<span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|</span></span>
-<span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in/out <span class="pp">|</span> <span class="in">`deep_soil_moisture_content`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
-<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in/out <span class="pp">|</span> <span class="in">`deep_soil_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
-<span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`runoff_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
-<span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`deep_soil_moisture_fraction`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span></span>
-<span id="cb4-206"><a href="#cb4-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-207"><a href="#cb4-207" aria-hidden="true" tabindex="-1"></a><span class="fu">### Outputs and diagnostics (both)</span></span>
-<span id="cb4-208"><a href="#cb4-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-209"><a href="#cb4-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
-<span id="cb4-210"><a href="#cb4-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|</span></span>
-<span id="cb4-211"><a href="#cb4-211" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> out <span class="pp">|</span> <span class="in">`surface_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
-<span id="cb4-212"><a href="#cb4-212" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> out <span class="pp">|</span> <span class="in">`lwe_thickness_of_soil_moisture_content`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
-<span id="cb4-213"><a href="#cb4-213" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`precipitation_rate`</span>, <span class="in">`evaporation_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
-<span id="cb4-214"><a href="#cb4-214" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_upward_sensible_heat_flux`</span>, <span class="in">`surface_upward_latent_heat_flux`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`W m^-2`</span> <span class="pp">|</span></span>
-<span id="cb4-215"><a href="#cb4-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-216"><a href="#cb4-216" aria-hidden="true" tabindex="-1"></a><span class="fu">## Examples</span></span>
-<span id="cb4-217"><a href="#cb4-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-218"><a href="#cb4-218" aria-hidden="true" tabindex="-1"></a>Single-layer (default):</span>
-<span id="cb4-219"><a href="#cb4-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-220"><a href="#cb4-220" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-221"><a href="#cb4-221" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
-<span id="cb4-222"><a href="#cb4-222" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
-<span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
-<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a>bucket <span class="op">=</span> climt.BucketHydrology()</span>
-<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([bucket], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">10</span>))</span>
-<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> bucket(state, timedelta(seconds<span class="op">=</span><span class="dv">600</span>))</span>
-<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a>Two-layer with shallow⇄deep exchange:</span>
-<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a>bucket <span class="op">=</span> climt.BucketHydrology(num_layers<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a>                               moisture_diffusion_timescale<span class="op">=</span><span class="fl">86400.0</span>)</span>
-<span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([bucket], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">10</span>))</span>
-<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a>state[<span class="st">"stratiform_precipitation_rate"</span>].values[:] <span class="op">=</span> <span class="fl">0.001</span></span>
-<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> bucket(state, timedelta(seconds<span class="op">=</span><span class="dv">600</span>))</span>
-<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"runoff_rate"</span>].values,</span>
-<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a>      new_state[<span class="st">"deep_soil_moisture_content"</span>].values)</span>
-<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
-<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Component: <span class="co">[</span><span class="ot">`climt/_components/bucket_hydrology/component.py`</span><span class="co">](https://github.com/CliMT/climt/blob/develop/climt/_components/bucket_hydrology/component.py)</span></span>
-<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Deep-layer state defaults: <span class="in">`climt/_core/initialization.py`</span></span>
-<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a>For a richer, process-based land surface model, see</span>
-<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`SecondBEST`</span><span class="co">](second_best.qmd)</span>.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a>G_{sd} = k_{\text{soil}}\,\frac{T_s - T_d}{\tfrac{1}{2}(\Delta z_s + \Delta z_d)},</span>
+<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a>T_s^{\,n+1} = T_s + \frac{Q_{\text{net}} - G_{sd}}{C_s}\,\Delta t, \qquad</span>
+<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a>T_d^{\,n+1} = T_d + \frac{G_{sd}}{C_d}\,\Delta t .</span>
+<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a>The larger deep heat capacity gives the deep store a longer memory, so it damps</span>
+<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a>and lags the shallow store's response to fast forcing.</span>
+<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructor</span></span>
+<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a>climt.BucketHydrology(num_layers<span class="op">=</span><span class="dv">1</span>, soil_moisture_max<span class="op">=</span><span class="fl">0.15</span>,</span>
+<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a>                      beta_parameter<span class="op">=</span><span class="fl">0.75</span>,</span>
+<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a>                      specific_latent_heat_of_water<span class="op">=</span><span class="dv">2260000</span>,</span>
+<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a>                      bulk_coefficient<span class="op">=</span><span class="fl">0.0011</span>,</span>
+<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a>                      deep_soil_moisture_max<span class="op">=</span><span class="fl">0.50</span>,</span>
+<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a>                      moisture_diffusion_timescale<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a>                      deep_layer_thickness_ratio<span class="op">=</span><span class="fl">10.0</span>,</span>
+<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a>                      deep_drainage_timescale<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Argument <span class="pp">|</span> Default <span class="pp">|</span> Applies to <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|---------|-----------|-------------|</span></span>
+<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`num_layers`</span> <span class="pp">|</span> <span class="in">`1`</span> <span class="pp">|</span> — <span class="pp">|</span> <span class="in">`1`</span> or <span class="in">`2`</span>; anything else raises <span class="in">`ValueError`</span>. <span class="pp">|</span></span>
+<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`soil_moisture_max`</span> <span class="pp">|</span> <span class="in">`0.15`</span> <span class="pp">|</span> both <span class="pp">|</span> Shallow bucket capacity $S_s$ (m). <span class="pp">|</span></span>
+<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`beta_parameter`</span> <span class="pp">|</span> <span class="in">`0.75`</span> <span class="pp">|</span> both <span class="pp">|</span> $g$ in the evaporation $\beta$ limiter. <span class="pp">|</span></span>
+<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`specific_latent_heat_of_water`</span> <span class="pp">|</span> <span class="in">`2260000`</span> <span class="pp">|</span> both <span class="pp">|</span> Latent heat $L$ (J kg⁻¹). <span class="pp">|</span></span>
+<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`bulk_coefficient`</span> <span class="pp">|</span> <span class="in">`0.0011`</span> <span class="pp">|</span> both <span class="pp">|</span> Bulk transfer coefficient $c_D$. <span class="pp">|</span></span>
+<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`deep_soil_moisture_max`</span> <span class="pp">|</span> <span class="in">`0.50`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> Deep bucket capacity $S_d$ (m). <span class="pp">|</span></span>
+<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`moisture_diffusion_timescale`</span> <span class="pp">|</span> <span class="in">`None`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> $\tau_m$ for shallow⇄deep exchange (defaults to 5 days when <span class="in">`None`</span>). <span class="pp">|</span></span>
+<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`deep_layer_thickness_ratio`</span> <span class="pp">|</span> <span class="in">`10.0`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> Deep-to-shallow thickness ratio. <span class="pp">|</span></span>
+<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`deep_drainage_timescale`</span> <span class="pp">|</span> <span class="in">`None`</span> <span class="pp">|</span> 2-layer <span class="pp">|</span> $\tau_{\text{drain}}$; <span class="in">`None`</span> disables drainage. <span class="pp">|</span></span>
+<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a>The deep-layer inputs, outputs and diagnostics are added to instance-level</span>
+<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a>copies of the property dictionaries only when <span class="in">`num_layers=2`</span>, so a</span>
+<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a><span class="in">`num_layers=1`</span> instance exposes exactly the original interface.</span>
+<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-188"><a href="#cb4-188" aria-hidden="true" tabindex="-1"></a><span class="fu">## State</span></span>
+<span id="cb4-189"><a href="#cb4-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-190"><a href="#cb4-190" aria-hidden="true" tabindex="-1"></a><span class="fu">### Inputs (both configurations)</span></span>
+<span id="cb4-191"><a href="#cb4-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-192"><a href="#cb4-192" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
+<span id="cb4-193"><a href="#cb4-193" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|------|-------|</span></span>
+<span id="cb4-194"><a href="#cb4-194" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`downwelling_/upwelling_ shortwave_/longwave_flux_in_air`</span> <span class="pp">|</span> <span class="in">`[*, interface_levels]`</span> <span class="pp">|</span> <span class="in">`W m^-2`</span> <span class="pp">|</span></span>
+<span id="cb4-195"><a href="#cb4-195" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
+<span id="cb4-196"><a href="#cb4-196" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_material_density`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`kg m^-3`</span> <span class="pp">|</span></span>
+<span id="cb4-197"><a href="#cb4-197" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`soil_layer_thickness`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
+<span id="cb4-198"><a href="#cb4-198" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`heat_capacity_of_soil`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`J kg^-1 degK^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-199"><a href="#cb4-199" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`lwe_thickness_of_soil_moisture_content`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
+<span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`convective_precipitation_rate`</span>, <span class="in">`stratiform_precipitation_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`specific_humidity`</span>, <span class="in">`air_temperature`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span>, <span class="in">`degK`</span>, <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`air_pressure`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span></span>
+<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
+<span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`area_type`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span></span>
+<span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-206"><a href="#cb4-206" aria-hidden="true" tabindex="-1"></a><span class="fu">### Additional state when `num_layers=2`</span></span>
+<span id="cb4-207"><a href="#cb4-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-208"><a href="#cb4-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
+<span id="cb4-209"><a href="#cb4-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|</span></span>
+<span id="cb4-210"><a href="#cb4-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in/out <span class="pp">|</span> <span class="in">`deep_soil_moisture_content`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
+<span id="cb4-211"><a href="#cb4-211" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in/out <span class="pp">|</span> <span class="in">`deep_soil_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
+<span id="cb4-212"><a href="#cb4-212" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`runoff_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-213"><a href="#cb4-213" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`deep_soil_moisture_fraction`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span></span>
+<span id="cb4-214"><a href="#cb4-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-215"><a href="#cb4-215" aria-hidden="true" tabindex="-1"></a><span class="fu">### Outputs and diagnostics (both)</span></span>
+<span id="cb4-216"><a href="#cb4-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-217"><a href="#cb4-217" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
+<span id="cb4-218"><a href="#cb4-218" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|</span></span>
+<span id="cb4-219"><a href="#cb4-219" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> out <span class="pp">|</span> <span class="in">`surface_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
+<span id="cb4-220"><a href="#cb4-220" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> out <span class="pp">|</span> <span class="in">`lwe_thickness_of_soil_moisture_content`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m`</span> <span class="pp">|</span></span>
+<span id="cb4-221"><a href="#cb4-221" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`precipitation_rate`</span>, <span class="in">`evaporation_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-222"><a href="#cb4-222" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_upward_sensible_heat_flux`</span>, <span class="in">`surface_upward_latent_heat_flux`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`W m^-2`</span> <span class="pp">|</span></span>
+<span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a><span class="fu">## Examples</span></span>
+<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a>Single-layer (default):</span>
+<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
+<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a>bucket <span class="op">=</span> climt.BucketHydrology()</span>
+<span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([bucket], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">10</span>))</span>
+<span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> bucket(state, timedelta(seconds<span class="op">=</span><span class="dv">600</span>))</span>
+<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a>Two-layer with shallow⇄deep exchange:</span>
+<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a>bucket <span class="op">=</span> climt.BucketHydrology(num_layers<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a>                               moisture_diffusion_timescale<span class="op">=</span><span class="fl">86400.0</span>)</span>
+<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([bucket], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">10</span>))</span>
+<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a>state[<span class="st">"stratiform_precipitation_rate"</span>].values[:] <span class="op">=</span> <span class="fl">0.001</span></span>
+<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> bucket(state, timedelta(seconds<span class="op">=</span><span class="dv">600</span>))</span>
+<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"runoff_rate"</span>].values,</span>
+<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a>      new_state[<span class="st">"deep_soil_moisture_content"</span>].values)</span>
+<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-249"><a href="#cb4-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-250"><a href="#cb4-250" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
+<span id="cb4-251"><a href="#cb4-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-252"><a href="#cb4-252" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Component: <span class="co">[</span><span class="ot">`climt/_components/bucket_hydrology/component.py`</span><span class="co">](https://github.com/CliMT/climt/blob/develop/climt/_components/bucket_hydrology/component.py)</span></span>
+<span id="cb4-253"><a href="#cb4-253" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Deep-layer state defaults: <span class="in">`climt/_core/initialization.py`</span></span>
+<span id="cb4-254"><a href="#cb4-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-255"><a href="#cb4-255" aria-hidden="true" tabindex="-1"></a>For a richer, process-based land surface model, see</span>
+<span id="cb4-256"><a href="#cb4-256" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`SecondBEST`</span><span class="co">](second_best.qmd)</span>.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
