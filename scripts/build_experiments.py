@@ -22,6 +22,16 @@ invalidates one manifest's worth of artifacts, so regenerate just those:
 ``--only`` selects; it does not follow dependencies. An artifact that consumes
 another artifact's output (a figure reading an .npz) is only rebuilt if it is
 itself selected, so include the consumers when you narrow to a producer.
+
+An artifact carrying ``manual: true`` is skipped everywhere — never reported by
+``--check``, never rebuilt — unless ``--manual`` is passed. That is for outputs
+whose content depends on the machine rather than on the code, wall-clock
+benchmarks above all: hash-gating a timing means any edit to a dep forces the
+numbers to be re-recorded on whoever's laptop runs the sweep, so hardware noise
+lands in the repo as a real diff and a stale-artifact CI failure. Regenerate one
+deliberately, on a machine whose numbers you would stand behind:
+
+    python scripts/build_experiments.py --manual --only '**/throughput.*'
 """
 import argparse
 import fnmatch
@@ -82,7 +92,7 @@ def _selected(repo_root, manifest_dir, artifact, patterns):
     return any(fnmatch.fnmatch(rel, p) for p in patterns)
 
 
-def _regenerate_manifest(repo_root, manifest_path, check_only, only):
+def _regenerate_manifest(repo_root, manifest_path, check_only, only, manual):
     manifest_dir = os.path.dirname(manifest_path)
     with open(manifest_path) as f:
         manifest = yaml.safe_load(f)
@@ -97,6 +107,12 @@ def _regenerate_manifest(repo_root, manifest_path, check_only, only):
         if not _selected(repo_root, manifest_dir, art, only):
             continue
         n_selected += 1
+        if art.get("manual", False) and not manual:
+            # Counted as selected above, so an --only naming just this artifact
+            # reports why nothing happened instead of "matched no artifacts".
+            if only:
+                print(f"skipping {art['out']} (manual; pass --manual to run it)")
+            continue
         stale, current = _stale(repo_root, manifest_dir, art, stored)
         if not stale:
             continue
@@ -135,13 +151,17 @@ def main():
                     help="restrict to artifacts whose repo-relative output path "
                          "matches GLOB; repeatable. Selects only — consumers of a "
                          "selected artifact are not pulled in automatically.")
+    ap.add_argument("--manual", action="store_true",
+                    help="also process artifacts marked `manual: true` in their "
+                         "manifest, which are otherwise never checked or rebuilt.")
     args = ap.parse_args()
     manifests = sorted(glob.glob(
         os.path.join(args.root, "docs", "**", "sources.yml"), recursive=True))
     any_stale = False
     total_selected = 0
     for m in manifests:
-        stale, n = _regenerate_manifest(args.root, m, args.check, args.only)
+        stale, n = _regenerate_manifest(
+            args.root, m, args.check, args.only, args.manual)
         any_stale |= stale
         total_selected += n
     if args.only and not total_selected:
