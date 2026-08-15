@@ -10,8 +10,21 @@ so branch switches and network filesystems don't trigger spurious rebuilds.
 
     python scripts/build_experiments.py            # regenerate stale artifacts
     python scripts/build_experiments.py --check    # CI: report + exit 1 if stale
+
+``--only`` narrows the run to artifacts whose repo-relative output path matches a
+glob, which matters because a full sweep re-runs multi-hundred-day RCE
+integrations and takes over an hour. A change confined to one component usually
+invalidates one manifest's worth of artifacts, so regenerate just those:
+
+    python scripts/build_experiments.py --only 'docs/experiments/*cork-co2-bands/**'
+    python scripts/build_experiments.py --only '**/throughput.npz' --only '**/throughput.png'
+
+``--only`` selects; it does not follow dependencies. An artifact that consumes
+another artifact's output (a figure reading an .npz) is only rebuilt if it is
+itself selected, so include the consumers when you narrow to a producer.
 """
 import argparse
+import fnmatch
 import glob
 import hashlib
 import json
@@ -60,7 +73,16 @@ def _stale(repo_root, manifest_dir, artifact, stored):
     return (stored.get(artifact["out"]) != current), current
 
 
-def _regenerate_manifest(repo_root, manifest_path, check_only):
+def _selected(repo_root, manifest_dir, artifact, patterns):
+    """Match --only globs against the artifact's repo-relative output path."""
+    if not patterns:
+        return True
+    rel = os.path.relpath(
+        os.path.join(manifest_dir, artifact["out"]), repo_root)
+    return any(fnmatch.fnmatch(rel, p) for p in patterns)
+
+
+def _regenerate_manifest(repo_root, manifest_path, check_only, only):
     manifest_dir = os.path.dirname(manifest_path)
     with open(manifest_path) as f:
         manifest = yaml.safe_load(f)
@@ -68,9 +90,13 @@ def _regenerate_manifest(repo_root, manifest_path, check_only):
     os.makedirs(os.path.dirname(hashes_path), exist_ok=True)
     stored = _load_hashes(hashes_path)
     any_stale = False
+    n_selected = 0
     # Artifacts run in declaration order: producers must precede consumers within
     # a manifest (a figure that reads another artifact's output lists it later).
     for art in manifest["artifacts"]:
+        if not _selected(repo_root, manifest_dir, art, only):
+            continue
+        n_selected += 1
         stale, current = _stale(repo_root, manifest_dir, art, stored)
         if not stale:
             continue
@@ -92,10 +118,12 @@ def _regenerate_manifest(repo_root, manifest_path, check_only):
             raise RuntimeError(
                 f"cmd for {art['out']} did not write the output file")
         stored[art["out"]] = current
-    if not check_only:
+    # `stored` is only ever added to, so a narrowed run preserves the recorded
+    # hashes of the artifacts it skipped.
+    if not check_only and n_selected:
         with open(hashes_path, "w") as f:
             json.dump(stored, f, indent=2, sort_keys=True)
-    return any_stale
+    return any_stale, n_selected
 
 
 def main():
@@ -103,12 +131,25 @@ def main():
     ap.add_argument("--check", action="store_true",
                     help="report staleness and exit 1 if any; no execution")
     ap.add_argument("--root", default=os.getcwd(), help="repo root (default cwd)")
+    ap.add_argument("--only", action="append", metavar="GLOB",
+                    help="restrict to artifacts whose repo-relative output path "
+                         "matches GLOB; repeatable. Selects only — consumers of a "
+                         "selected artifact are not pulled in automatically.")
     args = ap.parse_args()
     manifests = sorted(glob.glob(
         os.path.join(args.root, "docs", "**", "sources.yml"), recursive=True))
     any_stale = False
+    total_selected = 0
     for m in manifests:
-        any_stale |= _regenerate_manifest(args.root, m, args.check)
+        stale, n = _regenerate_manifest(args.root, m, args.check, args.only)
+        any_stale |= stale
+        total_selected += n
+    if args.only and not total_selected:
+        sys.stderr.write(
+            f"--only matched no artifacts: {args.only}\n"
+            "Patterns match the repo-relative output path, e.g. "
+            "'docs/experiments/*cork-co2-bands/**'.\n")
+        sys.exit(2)
     if args.check and any_stale:
         sys.stderr.write("Stale artifacts. Run `make experiments` and commit.\n")
         sys.exit(1)
