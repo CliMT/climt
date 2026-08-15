@@ -23,13 +23,21 @@
 - **Units:** `specific_humidity` in kg/kg; all other gases as mole fractions (mol/mol), e.g. `mole_fraction_of_carbon_dioxide_in_air`.
 - **Experiment-artifact gate:** editing any file under `climt/_components/cork/` invalidates content-hashed docs artifacts and turns the docs workflow red. Only Task 1 does this. Regenerate with `make experiments ONLY='<glob>'` before committing — see Task 1 Step 9, which covers which artifacts are affected and what must not change. Verify with `conda run -n climt python scripts/build_experiments.py --check`.
 
-## External prerequisite (NOT a task here)
+## External prerequisite — LANDED (NOT a task here)
 
-`load_k_table` in `climt/_components/cork/optics/correlated_k.py` returns numpy's lazy
-`NpzFile`, which re-decompresses the array from its zip on every `__getitem__`. A fix is
-**being implemented in a separate session**; do not duplicate it here.
+`load_k_table` in `climt/_components/cork/optics/correlated_k.py` used to return numpy's
+lazy `NpzFile`, which re-decompresses the array from its zip on every `__getitem__`.
+It now materialises every array into a plain dict at load time (`_load_npz_table`),
+so both the `.npz` and `.nc` backends return the same type and the table can be indexed
+in a hot loop for free.
 
-Every performance figure in this plan assumes it has landed. Before starting, check:
+Merged in PR #224 as `85ac334` on `develop`, and merged into this branch. **Do not
+re-implement it**, and do not treat the performance figures in this plan as provisional:
+they assumed this fix, and it is in place. Measured on the reference machine at nz=18,
+single column: `CorkLongwaveRadiation` 57.4 → 3.6 ms/call with numba, and 89.5 → 36.8
+with `NUMBA_DISABLE_JIT=1`, which is the Pyodide path the browser cost model is built on.
+
+Sanity-check before starting, in case you are working from a stale base:
 
 ```bash
 conda run -n climt python -c "
@@ -38,7 +46,9 @@ t = load_k_table('earth_low_res_lw')
 print('materialised' if isinstance(t, dict) else f'NOT YET: {type(t).__name__}')"
 ```
 
-If it says `NOT YET`, proceed anyway — pages work, at ~2.5× the quoted browser cost.
+Expected: `materialised`. If it says `NOT YET`, your branch predates the merge — run
+`git merge origin/develop` rather than proceeding, because the quoted browser costs will
+be ~2.5× off.
 
 ## File structure
 

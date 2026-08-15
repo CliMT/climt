@@ -257,7 +257,7 @@ All figures single-column, `nz = 18`, native with `NUMBA_DISABLE_JIT=1` — the 
 proxy for Pyodide, which has no numba. The browser factor of **≈3.5×** is calibrated
 from the existing live-RCE page's measured "~2 min for 400 steps".
 
-**All of these assume the `NpzFile` prerequisite below has landed.**
+**All of these assume the `NpzFile` prerequisite below has landed — it has (PR #224).**
 
 | call | native (no numba) | ≈ browser |
 |---|---|---|
@@ -301,12 +301,13 @@ a bare float and does not cancel the `/s`.
 
 Two library changes land before the pages, both outside the tour proper.
 
-1. **Materialise `NpzFile` in `load_k_table`.** It currently returns numpy's lazy
-   `NpzFile`, which re-decompresses the requested array from its zip on *every*
-   `__getitem__` — 16.5 ms for the 3 MB `k_coefficients`, several times per call.
-   Returning `{k: npz[k] for k in npz.files}` gives 54.6 → 2.9 ms/call with numba
-   (**19×**) and 85.1 → 35.1 ms without (2.5×). Tracked separately; this spec's cost
-   model assumes it.
+1. **Materialise `NpzFile` in `load_k_table`** — **DONE**, PR #224, merged as `85ac334`.
+   It returned numpy's lazy `NpzFile`, which re-decompresses the requested array from its
+   zip on *every* `__getitem__` — 16.5 ms for the 3 MB `k_coefficients`, several times per
+   call. It now reads every array once at load time and returns a plain dict, matching the
+   `.nc` backend. Measured 54.6 → 2.9 ms/call with numba (**19×**) and 85.1 → 35.1 ms
+   without (2.5×). This spec's cost model assumed the fix and is therefore live, not
+   provisional.
 
 2. **`D` (diffusivity factor) as a constructor argument** on
    `CorkLongwaveRadiation`. Currently a module constant `DIFFUSIVITY_FACTOR = 1.66`
@@ -369,7 +370,7 @@ by `docs/radiative-transfer/_live/rce_helpers.py` and `tests/test_live_rce_demo.
 | Thinning the CO₂ axis 10 → 5 nodes distorts the forcing | Validate the 5-node table's CO₂ forcing against the 10-node table across 280–1120 ppm before adopting. |
 | linepyline environment drift — its real API has previously differed from what plans assumed | Generation is a single offline task with a checked-in output and a recorded sha256, as in `MANIFEST.md`. It is not on the critical path: pages 1–3 fall back to the shipped 14×8 table, which Appendix A shows already reproduces the IRIS figure recognisably. The hi-res table improves those three pages; it does not enable them. |
 | 5.4 MB extra download on pages 1–3 | Browser-cached after first load; pages 4–6 never fetch it; state the cost in the page callout as the existing live pages do. |
-| `NpzFile` prerequisite slips | Pages still work, at 2.5× the quoted cost — 0.3 s and ~1 s per call. Unpleasant, not blocking. |
+| ~~`NpzFile` prerequisite slips~~ | **Retired** — landed in PR #224 before any page work began. The 2.5×-cost fallback is no longer in play. |
 
 ## Appendix A — design-time verification
 
