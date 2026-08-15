@@ -96,8 +96,11 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
-experiments: ## regenerate stale docs experiment artifacts (hash-gated)
-	conda run --no-capture-output -n climt python scripts/build_experiments.py
+# ONLY='<glob>' narrows both targets to matching artifacts; a full sweep re-runs
+# the 200-day RCE integrations and takes over an hour. e.g.
+#   make experiments ONLY='docs/experiments/*cork-co2-bands/**'
+experiments: ## regenerate stale docs experiment artifacts (hash-gated; ONLY='<glob>' to narrow)
+	conda run --no-capture-output -n climt python scripts/build_experiments.py $(if $(ONLY),--only '$(ONLY)')
 
 experiments-check: ## fail if any experiment artifact is stale (CI bookkeeping)
-	conda run --no-capture-output -n climt python scripts/build_experiments.py --check
+	conda run --no-capture-output -n climt python scripts/build_experiments.py --check $(if $(ONLY),--only '$(ONLY)')
