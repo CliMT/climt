@@ -237,9 +237,9 @@ Expected: all pass. The default is unchanged, so `tests/test_grey_limit.py` and
 
 Editing anything under `climt/_components/cork/` trips the docs workflow's staleness
 gate (`.github/workflows/docs.yml`, "Verify experiment artifacts are not stale"), because
-three artifacts in `docs/experiments/2026-06-05-cork-co2-bands/sources.yml` content-hash
-the glob `climt/_components/cork/**/*.py`. Skipping this turns the docs job red on the PR
-with `STALE: _artifacts/rce_moist_before.npz` and two siblings. Confirm first:
+the two RCE artifacts in `docs/experiments/2026-06-05-cork-co2-bands/sources.yml`
+content-hash the glob `climt/_components/cork/**/*.py`. Skipping this turns the docs job
+red on the PR with `STALE: _artifacts/rce_moist_before.npz` and `_after`. Confirm first:
 
 ```bash
 conda run -n climt python scripts/build_experiments.py --check
@@ -258,9 +258,12 @@ change results at the default `D = 1.66`; if those files show as modified, the
 default leaked and Step 8's suite is not catching it. Stop and fix rather than
 committing the diff.
 
-`throughput.npz`/`.txt`/`.png` will move: it is a wall-clock benchmark, so it
-re-records on whatever machine runs it. Sanity-check the *ratio* (CORK/RRTMG < 1),
-not the absolute milliseconds.
+The run also prints `skipping _artifacts/throughput.npz (manual; pass --manual to
+run it)` and the same for `throughput.png`. That is correct, not a failure. Those
+are wall-clock benchmarks carrying `manual: true`, so they are outside the gate —
+their numbers track the machine as much as the code, and re-recording them on a
+dev laptop would commit hardware noise as a diff. Leave them alone; do not pass
+`--manual` to make the message go away.
 
 Two artifacts in `docs/radiative-transfer/sources.yml` also depend on cork sources —
 `06_picket_fence_opacity.png` on `optics/parmentier.py` and `07_two_stream_phases.png`
