@@ -21,6 +21,7 @@
 - **Commit after every task.** End commit messages with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
 - **Diffusivity convention:** the course notes' `τ_∞` is the **diffusivity-scaled** column optical depth, i.e. `τ_notes = D · τ_normal`. Any gray table calibration must use the same `D` the component runs with. Getting this wrong silently produces a wrong OLR and a non-zero heating rate.
 - **Units:** `specific_humidity` in kg/kg; all other gases as mole fractions (mol/mol), e.g. `mole_fraction_of_carbon_dioxide_in_air`.
+- **Experiment-artifact gate:** editing any file under `climt/_components/cork/` invalidates content-hashed docs artifacts and turns the docs workflow red. Only Task 1 does this. Regenerate with `make experiments ONLY='<glob>'` before committing — see Task 1 Step 9, which covers which artifacts are affected and what must not change. Verify with `conda run -n climt python scripts/build_experiments.py --check`.
 
 ## External prerequisite (NOT a task here)
 
@@ -232,14 +233,52 @@ Run: `conda run -n climt python -m pytest tests/ -k "cork or grey or gray" -v -m
 Expected: all pass. The default is unchanged, so `tests/test_grey_limit.py` and
 `tests/test_gray_default_table.py` must be unaffected.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 9: Regenerate the experiment artifacts this task invalidates**
+
+Editing anything under `climt/_components/cork/` trips the docs workflow's staleness
+gate (`.github/workflows/docs.yml`, "Verify experiment artifacts are not stale"), because
+three artifacts in `docs/experiments/2026-06-05-cork-co2-bands/sources.yml` content-hash
+the glob `climt/_components/cork/**/*.py`. Skipping this turns the docs job red on the PR
+with `STALE: _artifacts/rce_moist_before.npz` and two siblings. Confirm first:
+
+```bash
+conda run -n climt python scripts/build_experiments.py --check
+```
+
+Regenerate **only** that manifest — a full sweep also re-runs the radiative-transfer
+figures for nothing, and the two RCE integrations alone take over an hour:
+
+```bash
+make experiments ONLY='docs/experiments/*cork-co2-bands/**'
+```
+
+Expected: `rce_moist_before.npz` and `rce_moist_after.npz` come back **bitwise
+identical** — `git status` should not list them. Changing `D`'s *plumbing* must not
+change results at the default `D = 1.66`; if those files show as modified, the
+default leaked and Step 8's suite is not catching it. Stop and fix rather than
+committing the diff.
+
+`throughput.npz`/`.txt`/`.png` will move: it is a wall-clock benchmark, so it
+re-records on whatever machine runs it. Sanity-check the *ratio* (CORK/RRTMG < 1),
+not the absolute milliseconds.
+
+Two artifacts in `docs/radiative-transfer/sources.yml` also depend on cork sources —
+`06_picket_fence_opacity.png` on `optics/parmentier.py` and `07_two_stream_phases.png`
+on `sw/kernels.py`. This task touches neither, so they stay green. Widen the `--only`
+glob if a later task edits those files.
+
+- [ ] **Step 10: Commit**
 
 ```bash
 git add climt/_components/cork/lw/kernels.py climt/_components/cork/lw/component.py tests/test_cork_diffusivity.py
+git add docs/experiments/2026-06-05-cork-co2-bands/_artifacts/
 git commit -m "feat(cork): diffusivity_factor as a constructor argument
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+Then confirm the gate is clean before moving on: `conda run -n climt python
+scripts/build_experiments.py --check` must exit 0.
 
 ---
 
@@ -2095,6 +2134,17 @@ Expected: `link check done` with no `BROKEN:` lines.
 Run: `conda run -n climt python -m pytest tests/ -v -m "not slow"`
 Then: `conda run -n climt python -m pytest tests/test_modelling_tour.py tests/test_spectrum_table.py tests/test_cork_diffusivity.py -v -m slow`
 Expected: all pass.
+
+Also run the artifact staleness gate, which pytest does not cover and which the docs
+workflow fails the branch on:
+
+```bash
+conda run -n climt python scripts/build_experiments.py --check
+```
+
+Expected: exit 0, no output. If it reports anything stale, a cork source edit somewhere
+in Tasks 1–13 skipped its regeneration step — go back and run `make experiments` for the
+manifest concerned rather than fixing it up here.
 
 - [ ] **Step 7: Commit**
 
