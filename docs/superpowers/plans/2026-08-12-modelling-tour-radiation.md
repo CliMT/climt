@@ -1487,7 +1487,7 @@ transparent bands 350–1400 cm⁻¹ spanning 980 cm⁻¹, and the CO₂ core st
 - Consumes: `spectra.emission_weight`, `spectra.tau_star_cumulative`,
   `spectra.brightness_temperature`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_modelling_tour.py`:
 
@@ -1519,13 +1519,13 @@ def test_page3_brightness_temperature_matches_the_emission_level(soundings, spec
         assert abs(t_weighted - tb[band]) < 25.0
 ```
 
-- [ ] **Step 2: Run to verify**
+- [x] **Step 2: Run to verify**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v -m slow -k page3`
 Expected: PASS. If the tolerance is too tight for some band, widen it to 30 K and note
 which band — do not weaken the test below 30 K without reconciling with the spec.
 
-- [ ] **Step 3: Write the page**
+- [x] **Step 3: Write the page**
 
 Create `docs/modelling-tour/03-radiating-level.qmd`, title `Where photons come from`.
 
@@ -1568,13 +1568,13 @@ print("upwelling_longwave_flux_in_air      ",
    interpolating `tau_star_cumulative`; apply it to all 14 bands and print a table.
 8. `## Going deeper` → `../radiative-transfer/07-two-stream.qmd`.
 
-- [ ] **Step 4: Render**
+- [x] **Step 4: Render**
 
 ```bash
 cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render modelling-tour/03-radiating-level.qmd
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/modelling-tour/03-radiating-level.qmd tests/test_modelling_tour.py
@@ -1582,6 +1582,81 @@ git commit -m "docs(tour): page 3, the weighting function and per-band radiating
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — Step 1's test was wrong, and being wrong is the page's best material
+
+`test_page3_brightness_temperature_matches_the_emission_level` asserted
+`|T_weighted − T_b| < 25 K` for every optically thick band. It fails, by 42 K at
+700–800 cm⁻¹ and by 100 K at 1800–3250. Step 2 permits widening to 30 K; neither
+failure fits under 30 K, so this is the reconciliation the step asks for.
+
+**The error is real, one-signed, and explicable.** For every band, `T_b` comes out
+*warmer* than the band-mean weighting function predicts — 0.7 K in the CO₂ core,
+20 K in the rotational band, 36 K at 700–800. The cause is that
+`longwave_optical_depth_per_band` is the **g-weighted mean** τ
+(`component.py:313-316`), and within one band the eight g-points' k values span
+2.7 × 10³ to 2.6 × 10⁹ (measured at 230 K, 100 hPa). The mean is dominated by the
+strong lines, so it describes a band that is opaque throughout, while the OLR
+actually escapes through the weak g-points from much lower, warmer air. The bands
+with the smallest error are the genuinely saturated ones — the CO₂ core, where
+every g-point is opaque at the same stratospheric temperature.
+
+The 1800–3250 failure is a different bug and also worth keeping: `T_b = 300 K`
+exceeds the 288 K surface, because `brightness_temperature` inverts a band-mean
+flux density at the band *centre*, and Planck is nowhere near linear over 1450
+cm⁻¹ of the shortwave tail.
+
+Neither is a defect in the helpers, so the fix was to guard what is true. Four
+tests replace the one:
+
+- `test_page3_radiating_levels_are_a_distribution_not_a_height` — the spec's
+  actual claim, and it lands harder than planned: the CO₂ core's τ* = 1 level is
+  at 8 hPa, the twelve bands that have one span 2.8 → 993 hPa (a factor of 350),
+  and **800–980 and 980–1080 never reach τ* = 1 at all**, so for them no
+  radiating level exists in any sense.
+- `test_page3_brightness_temperature_tracks_the_emission_level` — correlation
+  > 0.9 over an 85 K spread, bias strictly one-signed against `T_weighted`
+  (0.7 … 40.7 K) and one-signed with a single documented exception against
+  `T(τ* = 1)` (−3.3 … 35.8 K).
+- `test_page3_band_centre_brightness_temperature_fails_on_the_widest_band` —
+  pins the artifact to exactly the last band.
+- `test_page3_moistening_raises_the_emission_levels` — the knob.
+
+**The one negative gap.** 1080–1180 gives `T_b` 3.3 K *colder* than `T(τ* = 1)`.
+Its column τ is 0.68, so τ* crosses 1 inside the bottom model layer, at 993 hPa;
+the "level" has degenerated into the ground, and what space sees is the surface
+plus a veil of colder air. The construction fails at both ends — for saturated
+bands because a band is not a wavelength, for transparent ones because there is
+nothing to find. The page says this; the test allows exactly one negative.
+
+### Log — deviations from Step 3's literal content
+
+- **Step 3.3 asks for the τ* = 1 levels and the brightness temperatures to
+  "visibly coincide".** They do not, per the above, so the right panel plots
+  *both* markers per band joined by a segment, and the gap is the section that
+  follows. Hiding it would have made the figure a lie.
+- **A fifth cell was added**, printing the k spread per band straight from
+  `lw._table["k_coefficients"]`. Without it the 36 K gap is an assertion; with it
+  the reader can see the three-to-nine orders of magnitude that cause it. It
+  follows page 2's precedent of reading `lw._table` in the open.
+- **Code exercise 1 was rewritten.** The step asks the student to write the
+  τ* = 1 interpolator, but the page needs it for its own figure, so it is given.
+  The exercise now asks them to rank the bands by the gap and check that ranking
+  against the k-spread column.
+- **Physics exercises 1 and 3 were rewritten** after checking their answers.
+  Exercise 1 as specified steered towards "it is not the window", which is false
+  — the window bands move most, from no level at all to 730 hPa. Exercise 3 as
+  specified said the OLR falls "through a couple of bands"; measured, a 200 → 180 K
+  stratosphere moves the OLR by only 1.7 W m⁻², of which −1.9 is the CO₂ core
+  alone and several water bands go slightly *positive* (a colder stratosphere is
+  a drier one). Both now pose the measured behaviour as the question.
+
+Numbers as built, nz = 60, 288 K, RH 80%, 280 ppm, D = 1.66: OLR 246.7 W m⁻²;
+τ* = 1 at 2.8 hPa (10–250), 8.1 hPa (630–700), 30.2 hPa (1400–1600), 993 hPa
+(1080–1180), none for 800–980 or 980–1080. At humidity × 4: OLR 204.1; the
+rotational band rises to 1.3 hPa, 6.3 µm to 6.3 hPa, and the two window bands
+acquire levels at 731.8 and 819.8 hPa — the window closing, which is page 6's
+subject.
 
 ---
 

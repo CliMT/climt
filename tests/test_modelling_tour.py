@@ -201,3 +201,146 @@ def test_page2_removing_absorbers_opens_the_window(soundings):
     sigma_T4 = 5.670374419e-8 * 288.0 ** 4
     assert olr_thin > olr_earth + 100.0        # the window opened
     assert olr_thin > 0.85 * sigma_T4          # approaching a bare surface
+
+
+PAGE3_D = 1.66
+
+
+def _emission_pressure(spectra, tau_layer, p, D):
+    """Pressure where tau* = 1, or nan if the column never reaches it.
+
+    Interpolated in log tau* against log p, which is what page 3 does inline.
+    """
+    tau_star = spectra.tau_star_cumulative(tau_layer, D)
+    if tau_star[0] < 1.0:
+        return np.nan
+    return float(np.exp(np.interp(0.0, np.log(tau_star[::-1]), np.log(p[::-1]))))
+
+
+def _page3_column(soundings, spectra, humidity_scale=1.0, nz=60):
+    """Page 3's column: the standard sounding, with a humidity knob."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=nz))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+    T, q = soundings.lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8)
+    soundings.apply_sounding(state, T, np.maximum(q * humidity_scale, 1e-7),
+                             T_surf=288.0)
+    state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = 280e-6
+    _, diag = lw(state)
+
+    limits = spectra.band_limits_of(lw)
+    tau = diag["longwave_optical_depth_per_band"].values[:, 0, 0, :]
+    p_emit = np.array([_emission_pressure(spectra, tau[:, b], p, PAGE3_D)
+                       for b in range(tau.shape[1])])
+    return dict(lw=lw, p=p, T=T, diag=diag, limits=limits, tau=tau, p_emit=p_emit)
+
+
+@pytest.mark.slow
+def test_page3_radiating_levels_are_a_distribution_not_a_height(soundings, spectra):
+    """The page's central claim: there is no single radiating level."""
+    col = _page3_column(soundings, spectra)
+    limits, p_emit = col["limits"], col["p_emit"]
+    centres = spectra.band_centres(limits)
+
+    # The CO2 core emits from the stratosphere.
+    core = p_emit[(centres > 630) & (centres < 700)]
+    assert np.all(core < 2000.0)                    # Pa, i.e. above ~20 hPa
+
+    # The clearest window bands never reach tau* = 1 at all: no radiating level
+    # exists for them, the surface is simply visible.
+    window = p_emit[(centres > 800) & (centres < 1080)]
+    assert np.all(np.isnan(window))
+
+    # Across the bands that do have one, the levels span the whole atmosphere.
+    have = p_emit[np.isfinite(p_emit)]
+    assert have.max() / have.min() > 100.0
+
+
+@pytest.mark.slow
+def test_page3_brightness_temperature_tracks_the_emission_level(soundings, spectra):
+    """T_b(band) follows the emission-weighted temperature -- with a cold bias.
+
+    The band-mean optical depth cork reports is the g-weighted mean over eight
+    g-points whose k values span three to eight orders of magnitude. It is
+    therefore dominated by the band's *strongest* absorption, while the OLR
+    escapes preferentially through the band's weakest. So the band-mean
+    weighting function always places the emission too high, and T_b comes out
+    warmer than the weighted temperature -- never colder. That one-sidedness is
+    the page's punchline, so it is what gets asserted.
+    """
+    col = _page3_column(soundings, spectra)
+    T, tau, limits = col["T"], col["tau"], col["limits"]
+    _, flux_density = spectra.spectral_olr(col["diag"], limits)
+    tb = spectra.brightness_temperature(flux_density, spectra.band_centres(limits))
+
+    t_weighted = np.array([
+        float((spectra.emission_weight(tau[:, b], PAGE3_D) * T).sum()
+              / spectra.emission_weight(tau[:, b], PAGE3_D).sum())
+        for b in range(tau.shape[1])])
+
+    sane = tb <= 288.0            # see the band-centre test below
+    bias = (tb - t_weighted)[sane]
+    assert np.all(bias > 0.0)     # always warmer, never colder
+    assert bias.max() < 45.0
+    assert np.corrcoef(t_weighted[sane], tb[sane])[0, 1] > 0.9
+
+    # The page plots T at the tau* = 1 level rather than the weighted mean, so
+    # guard that comparison too. Same story, with one documented exception:
+    # 1080-1180 cm^-1 has column tau = 0.68, so its level lands inside the
+    # bottom model layer and the construction degenerates into "the ground".
+    p_emit = col["p_emit"]
+    has_level = np.isfinite(p_emit) & sane
+    t_level = np.exp(np.interp(np.log(p_emit[has_level]),
+                               np.log(col["p"][::-1]), np.log(T[::-1])))
+    level_bias = tb[has_level] - t_level
+    assert (level_bias > 0.0).sum() == level_bias.size - 1
+    assert level_bias.min() > -5.0
+    assert level_bias.max() < 45.0
+    assert np.corrcoef(t_level, tb[has_level])[0, 1] > 0.9
+
+
+@pytest.mark.slow
+def test_page3_band_centre_brightness_temperature_fails_on_the_widest_band(
+        soundings, spectra):
+    """1800-3250 cm^-1 returns T_b above the surface -- an inversion artifact.
+
+    Inverting a band-mean flux density at the band *centre* only works if the
+    Planck function is near-linear across the band. Over 1450 cm^-1 of shortwave
+    tail it is not, and the answer comes back hotter than the ground, which is
+    impossible. The page says so rather than plotting it silently.
+    """
+    col = _page3_column(soundings, spectra)
+    limits = col["limits"]
+    _, flux_density = spectra.spectral_olr(col["diag"], limits)
+    tb = spectra.brightness_temperature(flux_density, spectra.band_centres(limits))
+
+    bogus = np.flatnonzero(tb > 288.0)
+    assert bogus.tolist() == [len(tb) - 1]
+    np.testing.assert_allclose(limits[-1], [1800.0, 3250.0])
+
+
+@pytest.mark.slow
+def test_page3_moistening_raises_the_emission_levels(soundings, spectra):
+    """The knob: a wetter atmosphere emits from higher, colder air."""
+    dry = _page3_column(soundings, spectra, humidity_scale=1.0)
+    wet = _page3_column(soundings, spectra, humidity_scale=4.0)
+    centres = spectra.band_centres(dry["limits"])
+
+    # Every band that had a radiating level keeps it, and moves up.
+    had = np.isfinite(dry["p_emit"])
+    assert np.all(np.isfinite(wet["p_emit"][had]))
+    assert np.all(wet["p_emit"][had] <= dry["p_emit"][had] + 1.0)
+
+    # The water vapour bands move a long way; the CO2 core barely moves.
+    rotational = (centres > 10) & (centres < 250)
+    assert (dry["p_emit"][rotational] / wet["p_emit"][rotational]).min() > 1.5
+    core = (centres > 630) & (centres < 700)
+    assert (dry["p_emit"][core] / wet["p_emit"][core]).max() < 1.2
+
+    # And the window closes: bands with no radiating level acquire one.
+    assert np.any(np.isfinite(wet["p_emit"][~had]))
+
+    olr_dry = float(dry["diag"]["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+    olr_wet = float(wet["diag"]["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+    assert olr_wet < olr_dry - 20.0
