@@ -1847,6 +1847,22 @@ Content:
 5. Prose on band saturation: the 15 µm core is already opaque, so adding CO₂ there changes
    nothing; the forcing comes from the wings, where τ is near 1 and more absorber still
    moves the emission level. This is *why* forcing is logarithmic rather than linear.
+
+   **Open this section on the contrast page 2 set up, using page 2's own numbers.** Column
+   optical depth in the core is very nearly *linear* in CO₂ — measured there as
+   τ ≈ 2.02 × ppm^0.999 in a dry column, so 10 → 10 000 ppm multiplies τ by roughly a
+   thousand, from 20 to 20 000. The forcing over that same range is a handful of W m⁻² per
+   doubling, near-constant. A thousand-fold change in the absorber buys a *logarithmic*
+   change in the energy budget, and the gap between those two statements is the whole
+   physical content of the page. Resolve it with page 3's weighting function: the OLR
+   depends on the *temperature at which* τ\* = 1 sits, and τ\* = 1 moves logarithmically
+   in height when τ scales linearly with concentration. Forcing tracks where the emission
+   level is, not how opaque the column is.
+
+   Add a guard test for the linear half of that claim, so the page cannot assert it
+   loosely — fit `log(tau_core)` against `log(co2_ppm)` over 30–10 000 ppm and assert the
+   exponent is within a few percent of 1, alongside the existing constant-per-doubling
+   assertion in `test_page5_forcing_is_logarithmic`. The two together are the beat.
 6. `.callout-note` "climt craft": sweeping a parameter. Emphasise that the state is
    mutated in place and re-passed, that diagnostics must be collected inside the loop
    because the next call overwrites them, and that the sounding is re-applied each

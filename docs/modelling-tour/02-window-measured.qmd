@@ -303,10 +303,18 @@ these before indexing, as the transmittance trap above showed.
 
 1. **Where is CO₂'s leverage?** Step `CO2_PPM` over 10, 100, 1000, 10 000 with
    humidity at 1.0, and print the column optical depth in the 15 µm core
-   (630–700) and in the window (800–1180) each time. The core's τ rises by more
-   than a factor of a hundred; the window's barely moves. Why does adding CO₂ to
-   the atmosphere do almost nothing to the window — and what does that imply
-   about where the next doubling of CO₂ will act?
+   (630–700) and in the window (800–1180) each time. The core's τ goes from 33 to
+   about 20 000 — a factor of 600 — while the window's moves by around 10%. Why
+   does adding CO₂ do almost nothing to the window, and what does that imply
+   about where the next doubling will act?
+
+   Then look harder at the core's numbers. Above the 10 ppm floor they are very
+   nearly **proportional** to concentration: ten times the CO₂, ten times the
+   optical depth. Hold onto that, because the forcing from doubling CO₂ is famously
+   *logarithmic* — roughly the same few W m⁻² for every doubling, all the way up.
+   A quantity that grows a thousand-fold is driving one that grows by a fixed step.
+   Those two facts have to be reconciled, and [page 5](05-co2-knob.qmd) reconciles
+   them; the machinery you need is on [page 3](03-radiating-level.qmd).
 
 2. **Which absorber owns the window?** With `CO2_PPM = 280`, lower
    `HUMIDITY_SCALE` alone and watch the three window bands' τ. Water vapour is
