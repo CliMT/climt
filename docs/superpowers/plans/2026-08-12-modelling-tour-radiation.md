@@ -1245,6 +1245,16 @@ a local run of the rendered page never finished booting Pyodide in the available
 real in-browser check of this mechanism is still outstanding. Native execution of the
 page's cells is guarded by `test_page1_window_is_warmer_than_the_co2_core`.
 
+### Log — `plt.show()` is required in the browser (applies to Tasks 8–12)
+
+A figure cell that ends without `plt.show()` prints its text output and draws **nothing**
+in quarto-live: the runtime paints the figure a cell explicitly shows, not whatever
+matplotlib has open when the cell finishes. Native checking cannot catch this — a script
+that ends in `fig.savefig(...)` is perfectly happy — so every page cell that produces a
+figure must end on `plt.show()`, and the only way to confirm it is to load the rendered
+page. (This is why the RCE include's `_draw_evolution` ends that way.) Caught on page 1
+by a human loading the page, after the cell shipped printing its numbers and no figure.
+
 ### Log — figure and prose deviations from the step's literal code
 
 - `ax.step(limits[:, 1], ..., where="pre")` as written drops the first band entirely
@@ -1255,10 +1265,17 @@ page's cells is guarded by `test_page1_window_is_warmer_than_the_co2_core`.
   all six labels collapse into each other inside the bottom 10% of the axis.
 - The last band (1800–3250 cm⁻¹) returns a brightness temperature of **300 K**, above the
   288 K surface — the band is 1450 cm⁻¹ wide and Planck is nowhere near linear across it,
-  so the band-mean flux density is not the flux density at the band centre. The printed
-  range is therefore restricted to `nu < 1800`, and the artifact is explained in a
-  collapsed callout on the page and used as the sting in Physics exercise 2 (the same
-  band is the one with a negative per-band greenhouse contribution, −1.9 W m⁻²).
+  so the band-mean flux density is not the flux density at the band centre (πB at 288 K
+  is ~240× larger at 1800 than at 3250 cm⁻¹, so the band mean is set by its low-wavenumber
+  edge while the inversion is asked about the centre, 2525 cm⁻¹). The printed range is
+  restricted to `nu < 1800`, and the same for the figure's x-axis.
+
+  This is **promoted to a teaching beat, not hidden**: the cell prints the last band's
+  T_b explicitly, a short section poses the "nothing here is 300 K — what could do that?"
+  question, and the explanation sits in a collapsed callout to open after the class has
+  had a go. It closes by noting the band carries 4.8 of the 246 W m⁻², i.e. the diagnostic
+  is nonsense exactly where the energy is negligible. Physics exercise 2 reuses it (the
+  same band is the one with a negative per-band greenhouse contribution, −1.9 W m⁻²).
 
 Numbers as built, at `T_SURF = 288 K`, `RH = 0.8`, nz = 40: OLR 245.9 W m⁻², σT⁴ 390.1,
 greenhouse effect 144.2; brightness temperature 200.3 K in the CO₂ core (630–700) and

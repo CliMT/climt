@@ -99,6 +99,16 @@ olr_band, flux_density = spectral_olr(diagnostics, limits)
 tb = brightness_temperature(flux_density, nu)
 edges = np.append(limits[0, 0], limits[:, 1])     # (nband+1,) band edges
 
+sigma_T4 = 5.670374419e-8 * T_SURF ** 4
+shown = nu < 1800.0
+print(f"surface emission  sigma T^4 = {sigma_T4:.1f} W/m2")
+print(f"OLR                         = {olr_band.sum():.1f} W/m2")
+print(f"greenhouse effect           = {sigma_T4 - olr_band.sum():.1f} W/m2")
+print(f"brightness temperature ranges {tb[shown].min():.0f} K to "
+      f"{tb[shown].max():.0f} K across the bands plotted")
+print(f"...and in the last band, {limits[-1, 0]:.0f}-{limits[-1, 1]:.0f} cm^-1, "
+      f"T_b = {tb[-1]:.0f} K, against a {T_SURF:.0f} K surface")
+
 fig, (ax, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
 nu_fine = np.linspace(20, 1800, 400)
 for T_ref in (300, 280, 260, 240, 220, 200):
@@ -123,13 +133,10 @@ ax2.set(xlabel="wavenumber (cm$^{-1}$)", ylabel="brightness temperature (K)",
 ax2.set_title("Where each band radiates from")
 fig.tight_layout()
 
-sigma_T4 = 5.670374419e-8 * T_SURF ** 4
-shown = nu < 1800.0
-print(f"surface emission  sigma T^4 = {sigma_T4:.1f} W/m2")
-print(f"OLR                         = {olr_band.sum():.1f} W/m2")
-print(f"greenhouse effect           = {sigma_T4 - olr_band.sum():.1f} W/m2")
-print(f"brightness temperature ranges {tb[shown].min():.0f} K to "
-      f"{tb[shown].max():.0f} K across the bands plotted")
+# End the cell on plt.show(). quarto-live paints the figure a cell explicitly
+# shows, not whatever matplotlib happens to have open when the cell ends: leave
+# it out and this cell prints its four lines and draws nothing.
+plt.show()
 ```
 
 ## Reading the figure
@@ -162,16 +169,39 @@ an average, and everything interesting about the climate response to CO₂ lives
 the shape it averaged away — because doubling CO₂ moves one part of this curve and
 not the rest.
 
-::: {.callout-caution collapse="true"}
-## Why the printed range stops at 1800 cm⁻¹
+## The last band is 300 K. Nothing is that hot.
 
-The component's last band spans 1800–3250 cm⁻¹, and evaluating the brightness
-temperature at its *centre* returns a nonsense 300 K — hotter than the surface. The
-band is 1450 cm⁻¹ wide and the Planck function falls by orders of magnitude across
-it, so the band-mean flux density is not the flux density at the band centre. A
-brightness temperature only means something when the band is narrow enough that
-Planck is roughly linear across it. That is a real limitation of a 14-band table,
-not a bug, and it is one reason the later pages reach for a finer one.
+Look again at the last line the cell printed. The band from 1800 to 3250 cm⁻¹
+comes back at a brightness temperature of 300 K — twelve degrees *hotter* than
+the ground. Nothing in the column is at 300 K. Nothing is above 288 K.
+
+Before reading on: what could produce a brightness temperature no object in the
+problem possesses?
+
+::: {.callout-caution collapse="true"}
+## What went wrong (open after you have had a go)
+
+Nothing went wrong in the radiation. The 300 K is manufactured in the last step,
+where we divided the band's flux by its width and inverted Planck **at the band
+centre**.
+
+That band is 1450 cm⁻¹ wide, and across it the Planck function falls by orders of
+magnitude: at 288 K, πB at 1800 cm⁻¹ is more than two hundred times what it is at
+3250. So the band's mean flux density is dominated entirely by its low-wavenumber
+edge, while we asked what temperature would produce that flux density *at 2525
+cm⁻¹*, far out on the exponential tail where a blackbody emits very little. The
+only way to emit that much out there is to be very hot. Hence 300 K.
+
+A brightness temperature means something only when the band is narrow enough that
+Planck is roughly linear across it. The 13 bands we plotted satisfy that well
+enough to read; the fourteenth does not, which is why the printed range stops at
+1800 cm⁻¹ and the figure's x-axis does too. This is a real limitation of a 14-band
+table, not a bug in the code — and it is one reason the later pages reach for a
+finer one.
+
+Worth noticing what this band is *not*: it is not important. It carries 4.8 W m⁻²
+of the 246, because at terrestrial temperatures there is almost nothing to emit up
+there. The diagnostic is nonsense precisely where the energy is negligible.
 :::
 
 ::: {.callout-note}
