@@ -84,7 +84,7 @@ The course notes derive the two-stream equations with a diffusivity factor of **
 - Consumes: nothing.
 - Produces: `CorkLongwaveRadiation(optics=..., table=..., diffusivity_factor=1.66)`; the diagnostic `longwave_transmittance_per_band` equals `exp(-diffusivity_factor * longwave_optical_depth_per_band)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/test_cork_diffusivity.py`:
 
@@ -140,12 +140,12 @@ def test_larger_diffusivity_lowers_olr():
     assert olr_2 < olr_166
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `conda run -n climt python -m pytest tests/test_cork_diffusivity.py -v`
 Expected: `test_default_is_elsasser_166` PASSES (current behaviour); the other two FAIL with `TypeError: __init__() got an unexpected keyword argument 'diffusivity_factor'`.
 
-- [ ] **Step 3: Thread the factor through the transport kernel**
+- [x] **Step 3: Thread the factor through the transport kernel**
 
 In `climt/_components/cork/lw/kernels.py`, add the parameter to the jitted kernel signature:
 
@@ -167,7 +167,7 @@ upward sweep and the downward sweep) with:
 
 Leave `DIFFUSIVITY_FACTOR = 1.66` defined at module level — it stays the default.
 
-- [ ] **Step 4: Thread it through the `lw_transport` wrapper**
+- [x] **Step 4: Thread it through the `lw_transport` wrapper**
 
 Still in `kernels.py`, change the wrapper signature:
 
@@ -195,7 +195,7 @@ and pass it at the call site:
     )
 ```
 
-- [ ] **Step 5: Add the constructor argument**
+- [x] **Step 5: Add the constructor argument**
 
 In `climt/_components/cork/lw/component.py`, import the default and accept the argument.
 Change the import on line 17 to:
@@ -217,7 +217,7 @@ and store it as the first line of the body, before `self._optics_mode` is set:
         self._diffusivity_factor = diffusivity_factor
 ```
 
-- [ ] **Step 6: Use it at both call sites in `array_call`**
+- [x] **Step 6: Use it at both call sites in `array_call`**
 
 In the `lw_transport(...)` call, add the argument after `diagnostics_level`:
 
@@ -232,18 +232,18 @@ and replace the hardcoded constant (currently `D = 1.66  # diffusivity factor`):
         D = self._diffusivity_factor
 ```
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 Run: `conda run -n climt python -m pytest tests/test_cork_diffusivity.py -v`
 Expected: 3 passed.
 
-- [ ] **Step 8: Verify no regression in the existing cork suite**
+- [x] **Step 8: Verify no regression in the existing cork suite**
 
 Run: `conda run -n climt python -m pytest tests/ -k "cork or grey or gray" -v -m "not slow"`
 Expected: all pass. The default is unchanged, so `tests/test_grey_limit.py` and
 `tests/test_gray_default_table.py` must be unaffected.
 
-- [ ] **Step 9: Regenerate the experiment artifacts this task invalidates**
+- [x] **Step 9: Regenerate the experiment artifacts this task invalidates**
 
 Editing anything under `climt/_components/cork/` trips the docs workflow's staleness
 gate (`.github/workflows/docs.yml`, "Verify experiment artifacts are not stale"), because
@@ -280,7 +280,7 @@ Two artifacts in `docs/radiative-transfer/sources.yml` also depend on cork sourc
 on `sw/kernels.py`. This task touches neither, so they stay green. Widen the `--only`
 glob if a later task edits those files.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add climt/_components/cork/lw/kernels.py climt/_components/cork/lw/component.py tests/test_cork_diffusivity.py
@@ -307,7 +307,7 @@ Two defects block the tour's gray table. The generator resolves its own output *
 - Consumes: `CorkLongwaveRadiation(diffusivity_factor=...)` from Task 1.
 - Produces: `python scripts/generate_gray_default_table.py --output PATH --total-optical-depth TAU --diffusivity D`, writing a table for which `D * sum_layers(k * m_layer) == TAU`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_gray_default_table.py`:
 
@@ -345,12 +345,12 @@ def test_generator_honours_diffusivity_and_absolute_paths(tmp_path):
     np.testing.assert_allclose(D * tau_col, tau_inf, rtol=1e-3)
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `conda run -n climt python -m pytest tests/test_gray_default_table.py::test_generator_honours_diffusivity_and_absolute_paths -v`
 Expected: FAIL — `generate_gray_default_table.py: error: unrecognized arguments: --diffusivity`.
 
-- [ ] **Step 3: Resolve the output by full path**
+- [x] **Step 3: Resolve the output by full path**
 
 In `scripts/generate_gray_default_table.py`, `_column_mass_path` currently passes
 `os.path.splitext(os.path.basename(nc_path))[0]`. `load_k_table` accepts filesystem
@@ -363,7 +363,7 @@ paths, so pass the path itself:
     )
 ```
 
-- [ ] **Step 4: Add the `--diffusivity` flag**
+- [x] **Step 4: Add the `--diffusivity` flag**
 
 Add the argument in `main()`:
 
@@ -389,13 +389,13 @@ and use it in the calibration and the report:
           f"{args.diffusivity*k_value*sum_m:.6f})")
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `conda run -n climt python -m pytest tests/test_gray_default_table.py -v`
 Expected: all pass, including the pre-existing tests (the default `--diffusivity` is
 1.66, so the shipped table's calibration is unchanged).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/generate_gray_default_table.py tests/test_gray_default_table.py
@@ -418,7 +418,7 @@ Page 4 needs a gray table whose D-scaled column optical depth is a known `τ_∞
 **Interfaces:**
 - Produces: table name `"tour_gray_lw"`, resolvable by `load_k_table("tour_gray_lw")`, for which `2.0 * sum_layers(k * m_layer) == 4.0`.
 
-- [ ] **Step 1: Generate the `.nc` and convert to `.npz`**
+- [x] **Step 1: Generate the `.nc` and convert to `.npz`**
 
 ```bash
 conda run -n climt python scripts/generate_gray_default_table.py \
@@ -430,13 +430,13 @@ conda run -n climt python scripts/convert_ck_table_to_npz.py \
 
 Expected: the script reports `D-scaled at D=2.0 = 4.000000`.
 
-- [ ] **Step 2: Record the checksum**
+- [x] **Step 2: Record the checksum**
 
 ```bash
 shasum -a 256 climt/_data/cork/correlated_k/tour_gray_lw.nc
 ```
 
-- [ ] **Step 3: Document it in the manifest**
+- [x] **Step 3: Document it in the manifest**
 
 Add a row to the "File listing" table in `climt/_data/cork/correlated_k/MANIFEST.md`
 (paste the real sha256 from Step 2), and a paragraph after the `single_band_gray_lw`
@@ -459,7 +459,7 @@ python scripts/convert_ck_table_to_npz.py \
 ```
 ```
 
-- [ ] **Step 4: Verify it loads by name and has the right depth**
+- [x] **Step 4: Verify it loads by name and has the right depth**
 
 ```bash
 conda run -n climt python -c "
@@ -474,7 +474,7 @@ print('D-scaled column tau =', 2.0 * d['longwave_optical_depth_per_band'].values
 
 Expected: `D-scaled column tau = 4.000...`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/_data/cork/correlated_k/tour_gray_lw.nc climt/_data/cork/correlated_k/tour_gray_lw.npz climt/_data/cork/correlated_k/MANIFEST.md
@@ -2196,3 +2196,65 @@ local variable and in prose.
 per-page imports proves cleaner under Pyodide. Task 14 Step 1 describes the artifact
 generator's outputs and constraints rather than its full source, since it is mechanical
 reuse of figure code written in Tasks 7–12.
+
+---
+
+## Experiment log — 2026-08-15: the live-RCE stratosphere
+
+Triggered by the live-RCE page (`docs/radiative-transfer/09-live-rce.qmd`), not by a
+task here, but the findings constrain how the tour's pages may talk about skin
+temperature, so they are recorded with the rest of the CORK work.
+
+**Symptom.** The isothermal stratosphere was never visible on the live-RCE figure, and
+the non-grey column showed no isothermal layer at all — cooling monotonically to 120 K
+at 3.9 hPa and still falling after 2000 simulated days.
+
+**Two distinct causes, one real and one not.**
+
+1. *The axis.* `_draw_evolution` in `docs/_includes/climt-live-setup.qmd` used
+   `invert_yaxis()` on a linear pressure scale. The gray column's isothermal layer
+   spans 19.9 → 3.9 hPa: **1.6% of a linear axis, ~19–29% of a log axis.** Fixed by
+   switching to log-p over the interface range (0.2 hPa top, so no flux point clips).
+
+2. *The non-grey profile is not a bug.* Verified three ways:
+   - `CorkLongwaveRadiation` with the **gray** table settles at **214.71 K**, against
+     the analytic skin temperature `(OLR/2σ)^(1/4) = 214.48 K`, isothermal to 0.85 K
+     across the top two levels. The transport honours the skin-temperature limit.
+   - **RRTMG-LW in the identical dry configuration** also cools monotonically to a very
+     cold lid (147 K) with a *steeper* top gradient than CORK (15.6 K vs 7.5 K across
+     the top two levels). Surface temperature and OLR agree to 0.3 K / 0.4 W m⁻².
+   - The committed moist-RCE artifact (`docs/experiments/2026-06-05-cork-co2-bands`,
+     "after: 14-band" panel) shows the same structure in both codes.
+
+**Mechanism.** The skin-temperature cancellation (`eps_b = k_b * m` cancels between
+absorption and emission, so T is independent of layer mass) is correct, but T is
+independent of *height* only if `F_up,b` is. That needs the atmosphere thin **in the
+absorbing bands**. Band 5 (630–700 cm⁻¹, CO₂ 15 µm core) carries **96% of the topmost
+layer's opacity at τ = 1.29 in that layer alone**, so `F_up,5` is emitted locally by
+ever-colder layers, falls with height, and drags the skin temperature down with it.
+Optically thin in the windows, optically thick where it counts. Dropping CO₂ to
+1e-5 mol/mol (the table's `co2_vmr` floor) makes the top thin and restores a finite
+equilibrium temperature for the top two layers, which at default CO₂ have **none** at
+any temperature down to 100 K.
+
+**Consequence for the tour.** Do not assert an isothermal stratosphere on any non-grey
+page. It is a property of the *gray* pages only. The live-RCE annotation is now
+conditional on `|T[-1] - T[-2]| < 2 K`, which separates the two cases cleanly at both
+33 days and equilibrium.
+
+**Open follow-up (not chased).** CORK runs **27–36 K colder than RRTMG through the
+stratosphere** while matching it in the troposphere. Both show the same qualitative
+structure, so this does not affect the conclusion above, but the gap is real. Most
+likely stratospheric **ozone** longwave absorption, which RRTMG takes from the default
+state and `earth_low_res_lw` has no term for — see
+`docs/superpowers/plans/2026-06-01-cork-ozone-lw.md` — plus coarser band structure.
+
+**Probes** (kept, all under `scripts/experiments/`): `live_rce_axis_check.py`,
+`render_live_rce_figure.py` (execs the shipped `{pyodide}` cell so the native render is
+the page's own code), `skin_temperature_probe.py` (`--budget`, `--sweep`, `--co2`),
+`live_rce_cork_vs_rrtmg.py`.
+
+**Rejected approach.** A block sweep that holds levels `k_lo..top` at one temperature is
+confounded when the block is optically thick: the flux arriving at its top is then
+emitted by the block itself and tracks `B(T_top)`, so no zero crossing can exist and the
+result says nothing about the physics. Only meaningful once the block is genuinely thin.
