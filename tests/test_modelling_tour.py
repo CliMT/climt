@@ -157,3 +157,47 @@ def test_page1_window_is_warmer_than_the_co2_core(soundings, spectra):
     assert window.min() > 270.0            # radiating from near the surface
     assert window.min() < 288.0            # but not from the surface itself
     assert window.mean() - co2_core.mean() > 60.0
+
+
+@pytest.mark.slow
+def test_page2_window_is_transparent_and_co2_core_is_opaque(soundings, spectra):
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+    T, q = soundings.lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8)
+    soundings.apply_sounding(state, T, q, T_surf=288.0)
+    _, diag = lw(state)
+
+    tau = diag["longwave_optical_depth_per_band"].values[:, 0, 0, :]  # (nz, nband)
+    column_tau = tau.sum(axis=0)
+    centres = spectra.band_centres(spectra.band_limits_of(lw))
+
+    co2_core = column_tau[(centres > 630) & (centres < 700)]
+    window = column_tau[(centres > 800) & (centres < 1180)]
+    assert co2_core.min() > 1.0                 # opaque
+    assert window.max() < co2_core.min()        # window is the transparent part
+
+
+@pytest.mark.slow
+def test_page2_removing_absorbers_opens_the_window(soundings):
+    """A near-N2 atmosphere: OLR should approach the surface blackbody flux."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+    T, q = soundings.lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8)
+
+    soundings.apply_sounding(state, T, q, T_surf=288.0)
+    state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = 280e-6
+    _, diag_earth = lw(state)
+    olr_earth = float(diag_earth["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+    soundings.apply_sounding(state, T, np.full_like(q, 1e-6), T_surf=288.0)
+    state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = 10e-6
+    _, diag_thin = lw(state)
+    olr_thin = float(diag_thin["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+    sigma_T4 = 5.670374419e-8 * 288.0 ** 4
+    assert olr_thin > olr_earth + 100.0        # the window opened
+    assert olr_thin > 0.85 * sigma_T4          # approaching a bare surface

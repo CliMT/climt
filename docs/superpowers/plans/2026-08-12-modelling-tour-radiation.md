@@ -1299,7 +1299,7 @@ greenhouse effect 144.2; brightness temperature 200.3 K in the CO₂ core (630�
 **Interfaces:**
 - Consumes: Task 4 and Task 5 helpers.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_modelling_tour.py`:
 
@@ -1348,13 +1348,13 @@ def test_page2_removing_absorbers_opens_the_window(soundings):
     assert olr_thin > 0.85 * sigma_T4          # approaching a bare surface
 ```
 
-- [ ] **Step 2: Run to verify**
+- [x] **Step 2: Run to verify**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v -m slow -k page2`
 Expected: PASS (helpers already exist). If either fails, the claim is wrong — reconcile
-with the spec before writing the page.
+with the spec before writing the page. **As run: 2 passed.**
 
-- [ ] **Step 3: Write the page**
+- [x] **Step 3: Write the page**
 
 Create `docs/modelling-tour/02-window-measured.qmd` with the standard front matter
 (title: `The window, measured`) and the setup include.
@@ -1400,13 +1400,13 @@ print(f"OLR = {olr_band.sum():.1f} W/m2   "
    discover the correct name for the CO₂ field rather than guessing.
 9. `## Going deeper` → `../radiative-transfer/05-gas-overlap.qmd`.
 
-- [ ] **Step 4: Render**
+- [x] **Step 4: Render**
 
 ```bash
 cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render modelling-tour/02-window-measured.qmd
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/modelling-tour/02-window-measured.qmd tests/test_modelling_tour.py
@@ -1414,6 +1414,63 @@ git commit -m "docs(tour): page 2, the window measured
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — the `resources:` mechanism is now verified in a real browser
+
+Page 1's log left this open: the `pyodide: resources:` fetch of `_tour/*.py` had only
+been checked at the level of the served files and the base64 vfs manifest, never by
+actually booting the page. It has now been checked end to end, on this page, serving
+`docs/_site` over `python3 -m http.server` and driving Chrome:
+
+- the wheel installs (`climt 0.30.0 ready — has_fortran: False`);
+- the autorun setup cell's `from soundings import ...` / `from spectra import ...`
+  succeed after `sys.path.insert(0, "_tour")`, and it prints its line;
+- both figure cells draw, so the `plt.show()` rule from page 1 holds in practice;
+- editing the knob cell in place (`CO2_PPM = 10`, `HUMIDITY_SCALE = 0.001`) and
+  pressing *Run Code* reproduces the native numbers to the last digit — OLR 354.4
+  W m⁻² (91% of σT⁴), greenhouse 35.7, 980 cm⁻¹ of transparent bands.
+
+Pages 3–6 can use the mechanism without re-verifying it.
+
+### Log — the shared setup include renders ~200 lines of RCE code on every tour page
+
+`{{< include ../_includes/climt-live-setup.qmd >}}` carries its cell with
+`#| edit: false`, which makes quarto-live render it **read-only, not hidden**. So every
+tour page opens with the full `integrate_with_snapshots` / `_draw_evolution` body —
+roughly four screens of scrolling before the reader reaches "Where this fits". None of
+the six tour pages calls any of it; they only want the imports and the wheel.
+
+Not fixed here, because the include is shared with the radiative-transfer pages where the
+code *is* the point. Options for **Task 14**: add `#| output: false`-style hiding to the
+include's cell, or split a minimal `climt-live-boot.qmd` (imports only) for the tour and
+leave the RCE helpers in the existing include. Page 1 has the same problem.
+
+### Log — deviations from the step's literal content
+
+- **Physics exercise 1 as specified is unanswerable.** The step asks students to "find the
+  CO₂ concentration at which the 15 µm core's column τ first exceeds 1". There is none: on
+  the standard sounding the 630–700 band has τ = 33 at the *bottom* of the table's CO₂
+  axis, because water vapour absorbs there too. Rewritten as a sweep over 10 / 100 / 1000 /
+  10 000 ppm contrasting the core's hundred-fold response with the window's ~10% one, and
+  a third exercise now poses the real puzzle the original was reaching for — *if the band
+  is already opaque, how can more CO₂ change the OLR at all?* — pointing at page 3.
+- **The 10 ppm floor is promoted to a teaching beat.** `co2_vmr_grid` runs 1e-5 … 1e-2, and
+  cork silently clamps below it, so `CO2_PPM = 1` and `CO2_PPM = 10` give identical answers.
+  The page says so explicitly rather than letting a student discover a "bug".
+- **The transmittance panel plots two curves, not one.** The step asks for
+  `longwave_transmittance_per_band` at the surface layer; on its own it reads as if the
+  atmosphere were transparent everywhere, because it is a *single layer* on a 40-level
+  grid. Plotted against the column transmittance `exp(−D τ_col)` it becomes a callout on
+  reading `dims` before using a diagnostic — which feeds the craft note's third point.
+- **The diffusivity factor is introduced here**, not left to Task 10. Converting τ to a
+  transmittance needs it, chapter 7's `1 / cos θ` is the natural hook, and it forward-refs
+  page 4 where the notes' `D = 2` starts to matter.
+
+Numbers as built, `T_SURF = 288 K`, RH 80%, 280 ppm, nz = 40: OLR 246.7 W m⁻² (63% of
+σT⁴ = 390.1); column τ = 0.43 / 0.22 / 0.68 in the three window bands (transmittance
+49 / 70 / 32%), 580 in the CO₂ core, 1.6 × 10⁴ in the rotational band; window 800–1180
+cm⁻¹, 380 cm⁻¹ wide. At 10 ppm and humidity × 0.001: OLR 354.4 (91%), greenhouse 35.7,
+transparent bands 350–1400 cm⁻¹ spanning 980 cm⁻¹, and the CO₂ core still at τ = 20.
 
 ---
 
