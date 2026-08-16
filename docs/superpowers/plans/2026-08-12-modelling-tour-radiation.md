@@ -1913,6 +1913,22 @@ front matter.
   diagnostics list holding the same numbers as the tendency. A reader who sees
   both and sums them double-counts the radiation, so the page says why both
   exist.
+- **A second craft callout was added, "which state backend, and when."** Pages
+  1–3 all open with `sympl.set_backend(climt.UnytBackend())` and none of them
+  says what a backend is; page 4 is where the choice acquires a reason, since
+  the `unyt` package pin above is justified by it. Verified for the callout:
+  `UnytBackend` yields `UnytStateContainer`, `DataArrayBackend` yields xarray
+  `DataArray`, and **both expose `.values` (plain ndarray), `.dims` and
+  `.attrs["units"]` identically** — so every `values[:, 0, 0]` idiom in the tour
+  is backend-agnostic. `unyt_array` does real dimensional analysis
+  (`T + p` → `UnitOperationError`) where xarray returns 100784.86 labelled
+  `degK`; conversely climt's default states carry **no coordinate values**, so
+  `.sel()` on a DataArray state is positional indexing wearing a label — the
+  callout says so rather than overselling xarray's labelled selection. The trap
+  it documents: the backend is read when a state is *built*, and switching after
+  the fact raises nothing — the component consumes the old container and returns
+  the new one. Both demo cells restore `UnytBackend` on their last line so
+  re-running the cells above still works.
 
 ---
 

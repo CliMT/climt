@@ -229,7 +229,7 @@ slightly wrong; it produced a profile that a real spectrum does not recognise as
 an equilibrium at all, and would move away from immediately in every layer.
 
 This is worth being precise about, because it is easy to over-read. Chapter 8 is
-not wrong. Everything on this page above the horizontal rule stands: the algebra
+not wrong. Everything above this section stands: the algebra
 is exact, the solver confirms it, the skin temperature and the discontinuity are
 real features of gray radiative equilibrium. The problem is the word "gray". One
 absorption coefficient for all wavelengths is an assumption about the *atmosphere*,
@@ -290,6 +290,96 @@ statement and a much cheaper one: the equilibrium test is a single call, while
 integrating a non-grey column to equilibrium takes a couple of thousand steps.
 [The live RCE demo](../radiative-transfer/09-live-rce.qmd) does it the other way,
 if you want to watch.
+:::
+
+::: {.callout-note}
+## climt craft: which state backend, and when
+
+Every page in this tour opens with the same line, and it has been unexplained
+since page 1:
+
+```python
+sympl.set_backend(climt.UnytBackend())
+```
+
+A **state backend** decides what container the values in a state dictionary are
+wrapped in. It is a global setting — `sympl.set_backend()` writes it,
+`sympl.get_backend()` reads it — and it takes effect when a state is *built*, so
+set it before `get_default_state`, not after. There are two to choose from:
+sympl's default `DataArrayBackend`, which wraps arrays in xarray `DataArray`s,
+and climt's `UnytBackend`, which wraps them in a thin container around a
+`unyt_array`.
+
+```{pyodide}
+import sympl
+
+print("current backend:", type(sympl.get_backend()).__name__, "\n")
+
+for backend in (climt.UnytBackend(), sympl.DataArrayBackend()):
+    sympl.set_backend(backend)
+    demo = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=10))
+    Tq = demo["air_temperature"]
+    print(f"{type(backend).__name__:18s} -> {type(Tq).__name__:19s} "
+          f"dims {Tq.dims}  units {Tq.attrs['units']}  .values {type(Tq.values).__name__}")
+
+sympl.set_backend(climt.UnytBackend())   # put it back before re-running cells above
+```
+
+Notice what is *not* different. Both containers answer `.values`, `.dims` and
+`.attrs["units"]` the same way, and `.values` is a plain numpy array under either.
+That is deliberate, and it is why nothing else on this page had to care: every
+`values[:, 0, 0]` and every `values[-1, 0, 0]` in this tour is backend-agnostic.
+Write your analysis against those three and you can switch freely.
+
+**When unyt is the right choice.** It is faster, because the wrapper does less —
+measured on this page's single-band table at 60 levels, 2.3 ms per call against
+2.8 ms, which is real when a cell sweeps a parameter and negligible when the
+radiative transfer itself dominates (both backends sit at 99 ms on the fourteen-band
+table). It is pure Python, so micropip installs it in the browser with no wheel to
+build — which is why this section runs in Pyodide at all. And `unyt_array` does
+genuine dimensional analysis, which the xarray container does not:
+
+```{pyodide}
+sympl.set_backend(sympl.DataArrayBackend())
+d = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=10))
+s = d["air_temperature"] + d["air_pressure"]
+print(f"xarray:  T + p = {float(s.values[0, 0, 0]):.2f} {s.attrs['units']}")
+
+sympl.set_backend(climt.UnytBackend())
+u = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=10))
+try:
+    u["air_temperature"].data + u["air_pressure"].data
+except Exception as err:
+    print(f"unyt:    T + p -> {type(err).__name__}")
+```
+
+Adding a temperature to a pressure is meaningless. xarray returns 100784.86 and
+labels it `degK`; unyt refuses. The `units` in a DataArray's `attrs` is a *string
+someone wrote down*, carried along and never checked, whereas unyt's units are
+part of the arithmetic.
+
+**When the DataArray backend is the right choice.** When you want the rest of
+xarray. States built on it go straight to `xarray.Dataset` and out to netCDF, plot
+themselves, align and broadcast against other xarray data, and drop into whatever
+analysis stack you already have. That is worth far more than half a millisecond a
+call the moment your work involves saving output, reading someone else's, or
+comparing a run against observations. It is also sympl's default, so it is what
+other people's sympl code assumes. (One caveat: climt's default states carry no
+coordinate *values*, so `.sel(mid_levels=3)` here is just positional indexing
+wearing a label — you get xarray's I/O and broadcasting, not physical-coordinate
+selection, until you attach coordinates yourself.)
+
+The rule of thumb: **unyt while computing, DataArray while analysing.** Long
+integrations, parameter sweeps, anything in the browser, anything where you want
+unit errors to be loud — unyt. Post-processing, saving, sharing — DataArray.
+
+**One trap.** The backend is read when a state is built, not when a component is
+called, and switching mid-session raises nothing at all. Set the backend, build a
+state, switch the backend, call the component, and it will happily consume the old
+container and hand you the new one — leaving `state.update(...)` to merge two
+container types into one dictionary. Nothing complains until something much later
+does. If you change backends, rebuild the state; the cells above restore the
+backend on their last line for exactly this reason.
 :::
 
 ## Exercises
