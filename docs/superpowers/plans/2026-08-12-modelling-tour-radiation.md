@@ -1672,7 +1672,7 @@ The strongest page: the notes' closed-form solution validated by a radiation cod
 - Consumes: `soundings.analytic_gray_equilibrium`; the `tour_gray_lw` table (Task 3); the
   `diffusivity_factor` argument (Task 1).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_modelling_tour.py`:
 
@@ -1719,7 +1719,7 @@ def test_page4_same_profile_is_not_an_equilibrium_for_a_real_spectrum(soundings)
     assert np.abs(H_real).max() > 5.0
 ```
 
-- [ ] **Step 2: Run to verify it fails, then passes**
+- [x] **Step 2: Run to verify it fails, then passes**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v -m slow -k page4`
 Expected: PASS once Tasks 1–4 are in. If `test_page4_analytic_profile_is_an_equilibrium`
@@ -1727,7 +1727,7 @@ fails with a non-zero heating rate, the table's diffusivity calibration and the
 component's `diffusivity_factor` disagree — re-read the Global Constraints note about
 `τ_notes = D · τ_normal`.
 
-- [ ] **Step 3: Write the page**
+- [x] **Step 3: Write the page**
 
 Create `docs/modelling-tour/04-gray-equilibrium-tested.qmd`, title
 `Gray equilibrium, tested`.
@@ -1815,13 +1815,13 @@ print(f"rms heating: gray {np.sqrt((H**2).mean()):.4f}, "
     table and explain the resulting non-zero heating rate.
 11. `## Going deeper` → `../radiative-transfer/01-why-nongrey.qmd`.
 
-- [ ] **Step 4: Render**
+- [x] **Step 4: Render**
 
 ```bash
 cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render modelling-tour/04-gray-equilibrium-tested.qmd
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/modelling-tour/04-gray-equilibrium-tested.qmd tests/test_modelling_tour.py
@@ -1829,6 +1829,90 @@ git commit -m "docs(tour): page 4, the analytic gray equilibrium validated then 
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — both tests passed first time; the numbers as built
+
+Unlike Tasks 5 and 9, Step 1's tests needed no revision. nz = 60, `tour_gray_lw`,
+`D = 2`, `τ_∞ = 4`, `T_e = 255 K`:
+
+| quantity | value |
+|---|---|
+| D-scaled column τ | 4.0000 (target 4) |
+| analytic skin / top model level | 214.43 / 214.70 K (top level is at 1.31 hPa, τ* = 0.005) |
+| ground / bottom air / jump | 335.60 / 320.57 / 15.03 K |
+| OLR vs σT_e⁴ | 239.854 vs 239.758 W m⁻² (+0.04%) |
+| max \|H\| / rms H | 0.00193 / 0.00116 K/day |
+| net flux constancy | 239.797 … 239.881 W m⁻² (spread 0.08) |
+| downwelling at TOA | exactly 0 |
+
+Same profile, `earth_low_res_lw`, `q = 10⁻⁶`: OLR **600.07** W m⁻², rms H
+**2.327** K/day (a factor of 2006 on the gray rms), max \|H\| 16.74 K/day in the
+bottom layer (heating — a 335.6 K ground radiating into near-transparent cold
+air), 55 of 60 layers cooling, 0.4–0.5 K/day through the troposphere rising to
+1.76 K/day at the lid.
+
+`diffusivity_factor=1.66` on the `D = 2` table (Code exercise 1): OLR 263.5,
+max \|H\| 0.653, cooling at the bottom and heating at the top. The τ_∞ the
+profile *would* be an equilibrium for is 1.66 × 2 = 3.32.
+
+### Log — Physics exercise 2 as specified reaches a false conclusion
+
+Step 3.10 asks the student to "check the notes' claim that the radiative lapse
+rate approaches `g/4R` for large τ_∞ and explain why `c_p ≈ 3.5R < 4R` means
+Earth's atmosphere must convect." The premise is right and the conclusion is
+backwards.
+
+With τ linear in pressure — which is what `analytic_gray_equilibrium` assumes and
+what `tour_gray_lw` delivers — `dT/dz = −(g/4R)·τ*/(1 + τ*)`, so the steepest
+point is the surface and the limit is `g/4R = 8.545 K km⁻¹`. The dry adiabat is
+`g/c_p = 9.771 K km⁻¹`. Because `c_p ≈ 3.5R` is *less* than `4R`, `g/4R` is
+*less* than `g/c_p`, so the interior is statically **stable** — measured at
+τ_∞ = 1, 4 and 20, the unstable fraction of the column is 0.00 in every case.
+The instability is real but lives elsewhere: in the 15 K surface–air
+discontinuity, and in pressure broadening.
+
+Rewritten as two exercises. Exercise 2 now asks the student to derive `g/4R`,
+compare it with `g/c_p`, discover that the standard argument does not go through
+in this form, and find where the instability actually is. Exercise 3 is new and
+supplies the resolution: with `τ* ∝ p²` the exponent doubles, the limit becomes
+`g/2R = 17.09 K km⁻¹`, and at τ_∞ = 4 the surface rate is 13.67 K km⁻¹ with the
+bottom 42% of the column unstable. Verified numerically at τ_∞ = 1, 4, 20 for
+both exponents.
+
+### Log — `unyt` named explicitly in the pyodide package list
+
+Added `- "unyt"` to the `pyodide: packages:` block of this page **and of pages
+1–3**, keeping the section's front matter uniform. unyt is already a hard
+dependency of climt (`setup.py`), so micropip resolved it transitively before;
+naming it makes the fast state backend a stated requirement rather than a
+transitive accident, and it is pure Python so there is no wheel to build.
+
+Measured natively with `NUMBA_DISABLE_JIT=1` (the Pyodide code path), 60 levels,
+single column: `tour_gray_lw` 2.26 ms/call on `UnytBackend` against 2.80 ms/call
+on `DataArrayBackend`; `earth_low_res_lw` 99.3 vs 99.8 ms/call. The saving is
+state-wrapping overhead, so it is ~20% where the radiative transfer is cheap
+(this page's single-band table, re-run by every exercise sweep) and in the noise
+where it is not. Later tasks should keep the `- "unyt"` line when they copy the
+front matter.
+
+### Log — deviations from Step 3's literal content
+
+- **Step 3.6 asks for prose saying the heating rate is "zero to within a
+  thousandth of a K/day".** It is 0.0019, so the page says 0.002 and converts it
+  to a timescale (one kelvin in eighteen months) that the demolition section then
+  contrasts against the real spectrum's one kelvin in ninety minutes.
+- **A `τ_column` print was added to the verification cell**, echoing the D-scaled
+  column optical depth against `TAU_INF`. Without it the "Which τ?" callout is a
+  warning the reader cannot check; with it, the calibration is visible in the
+  output of the cell that depends on it.
+- **A third Code exercise was added** on the flux profiles, because chapter 8's
+  third analytic result — net flux constant with height — is the one the page
+  never uses, and it is checkable in four lines (verified: 239.797 … 239.881).
+- **The craft callout gained a paragraph on
+  `air_temperature_tendency_from_longwave`**, which appears in the printed
+  diagnostics list holding the same numbers as the tendency. A reader who sees
+  both and sums them double-counts the radiation, so the page says why both
+  exist.
 
 ---
 

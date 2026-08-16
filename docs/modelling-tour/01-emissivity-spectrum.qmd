@@ -8,6 +8,12 @@ pyodide:
     # the released version this page was written against. See
     # radiative-transfer/09-live-rce.qmd for how to preview an unreleased wheel.
     - "climt==0.30.0"
+    # A transitive dependency of climt, named explicitly because these pages
+    # rely on it: unyt is pure Python, so micropip installs it from PyPI with
+    # no wheel-building, and it backs `sympl.set_backend(climt.UnytBackend())`
+    # below -- a thinner state wrapper than xarray DataArrays, which shows up
+    # in the per-call cost of every cell that re-runs the radiation.
+    - "unyt"
   resources:
     # Fetched into the Pyodide filesystem at document setup, alongside the
     # wheel. These are the *same* files tests/test_modelling_tour.py imports

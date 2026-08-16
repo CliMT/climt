@@ -344,3 +344,45 @@ def test_page3_moistening_raises_the_emission_levels(soundings, spectra):
     olr_dry = float(dry["diag"]["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
     olr_wet = float(wet["diag"]["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
     assert olr_wet < olr_dry - 20.0
+
+
+TAU_INF, D_NOTES, T_E = 4.0, 2.0, 255.0
+
+
+def _gray_equilibrium_state(soundings, nz=60):
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="tour_gray_lw",
+                               diffusivity_factor=D_NOTES)
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=nz))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+    T, T_surf, _ = soundings.analytic_gray_equilibrium(p, ps, TAU_INF, T_E)
+    soundings.apply_sounding(state, T, T_surf=T_surf)
+    return lw, state, T, T_surf
+
+
+@pytest.mark.slow
+def test_page4_analytic_profile_is_an_equilibrium(soundings):
+    """The notes' closed form must give ~zero heating and OLR = sigma T_e^4."""
+    lw, state, _, _ = _gray_equilibrium_state(soundings)
+    tendencies, diag = lw(state)
+    H = tendencies["air_temperature"].values[:, 0, 0] * 86400.0    # K/day
+    olr = float(diag["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+    assert np.abs(H).max() < 0.05
+    assert olr == pytest.approx(5.670374419e-8 * T_E ** 4, rel=2e-3)
+
+
+@pytest.mark.slow
+def test_page4_same_profile_is_not_an_equilibrium_for_a_real_spectrum(soundings):
+    """The whole motivation for non-grey radiation, in one comparison."""
+    lw_gray, state_gray, T, T_surf = _gray_equilibrium_state(soundings)
+    H_gray = lw_gray(state_gray)[0]["air_temperature"].values[:, 0, 0] * 86400.0
+
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=60))
+    soundings.apply_sounding(state, T, np.full(T.shape, 1e-6), T_surf=T_surf)
+    H_real = lw(state)[0]["air_temperature"].values[:, 0, 0] * 86400.0
+
+    rms = lambda x: float(np.sqrt((x ** 2).mean()))
+    assert rms(H_real) > 100 * rms(H_gray)
+    assert np.abs(H_real).max() > 5.0

@@ -7,6 +7,12 @@ pyodide:
     # Installed by micropip at document setup, before any cell runs; pinned to
     # the released version this page was written against.
     - "climt==0.30.0"
+    # A transitive dependency of climt, named explicitly because these pages
+    # rely on it: unyt is pure Python, so micropip installs it from PyPI with
+    # no wheel-building, and it backs `sympl.set_backend(climt.UnytBackend())`
+    # below -- a thinner state wrapper than xarray DataArrays, which shows up
+    # in the per-call cost of every cell that re-runs the radiation.
+    - "unyt"
   resources:
     # Fetched into the Pyodide filesystem at document setup. The same files
     # tests/test_modelling_tour.py imports natively — see page 1 for the
