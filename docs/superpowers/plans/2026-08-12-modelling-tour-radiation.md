@@ -499,7 +499,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   - `analytic_gray_equilibrium(p, ps, tau_inf=4.0, T_e=255.0) -> (T, T_surf, tau_star)`
   - `apply_sounding(state, T, q=None, T_surf=None) -> None` (mutates in place)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/test_modelling_tour.py`:
 
@@ -571,13 +571,13 @@ def test_analytic_gray_equilibrium_reproduces_the_notes(soundings):
     assert tau_star[-1] == pytest.approx(0.0, abs=1e-3)  # zero at TOA
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v`
 Expected: FAIL — `FileNotFoundError` / `spec_from_file_location` returns None, because
 `docs/modelling-tour/_tour/soundings.py` does not exist.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `docs/modelling-tour/_tour/__init__.py` as an empty file, and
 `docs/modelling-tour/_tour/soundings.py`:
@@ -684,12 +684,12 @@ def apply_sounding(state, T, q=None, T_surf=None):
         state["specific_humidity"].values[:, 0, 0] = q
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/modelling-tour/_tour/__init__.py docs/modelling-tour/_tour/soundings.py tests/test_modelling_tour.py
