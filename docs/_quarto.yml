@@ -16,6 +16,12 @@ project:
     # fetches them over HTTP into the Pyodide filesystem so the browser imports
     # the same code tests/test_modelling_tour.py exercises natively.
     - "modelling-tour/_tour/*.py"
+    # Same mechanism, for the high-resolution spectrum table. It is ~5 MB, too
+    # large to ship inside the climt wheel, so pages that want a finely
+    # resolved spectrum fetch it from the site instead — which works only
+    # because the site is same-origin with the page (a GitHub release asset
+    # sends no CORS headers). See docs/modelling-tour/_tour/tables.py.
+    - "modelling-tour/_data/*.npz"
 
 website:
   title: "climt"

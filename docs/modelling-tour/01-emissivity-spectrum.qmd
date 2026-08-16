@@ -23,6 +23,12 @@ pyodide:
     # inline, so nothing on this page is unguarded by a test.
     - _tour/soundings.py
     - _tour/spectra.py
+    - _tour/tables.py
+    # The 56-band spectrum table, ~5 MB. Too large for the wheel, so it ships as
+    # a site asset and arrives by exactly the same mechanism as the helpers
+    # above -- which works only because the docs site is same-origin with this
+    # page. tests/test_spectrum_table.py is the gate that says it may be used.
+    - _data/earth_spectrum_lw.npz
 ---
 
 {{< include ../_includes/climt-live-setup.qmd >}}
@@ -36,6 +42,18 @@ its energy balance and a surface temperature drops out — the greenhouse effect
 three lines of algebra.
 
 This page asks what that single number is standing in for.
+:::
+
+::: {.callout-note}
+## A bigger download
+
+This page draws a spectrum, so it fetches a **~5 MB spectral table** once, on top
+of the climt wheel — 56 bands instead of the 14 that ship inside the package.
+Your browser caches it, so pages 2 and 3, which use the same table, load it for
+free. Pages 4–6 do not need it at all.
+
+If the fetch fails the page still runs: it falls back to the shipped 14-band
+table, and the only thing you lose is resolution.
 :::
 
 The shell model gets a great deal right with very little. Give the shell an
@@ -69,12 +87,16 @@ from climt import CorkLongwaveRadiation, get_default_state, get_grid
 from soundings import lapse_rate_sounding, apply_sounding
 from spectra import (band_centres, band_limits_of, band_widths,
                      brightness_temperature, planck_flux, spectral_olr)
+from tables import spectrum_table
 
 sympl.set_backend(climt.UnytBackend())
 
 T_SURF, RH = 288.0, 0.8          # <- change these and re-run
 
-lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+# The 56-band table if it downloaded, the shipped 14-band one if not. Which one
+# you got changes the resolution of every figure below, so the page prints it.
+TABLE = spectrum_table()
+lw = CorkLongwaveRadiation(optics="correlated_k", table=TABLE)
 state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
 p = state["air_pressure"].values[:, 0, 0]
 ps = float(state["surface_air_pressure"].values.ravel()[0])
@@ -82,6 +104,7 @@ ps = float(state["surface_air_pressure"].values.ravel()[0])
 T, q = lapse_rate_sounding(p, ps, T_surf=T_SURF, rh=RH)
 apply_sounding(state, T, q, T_surf=T_SURF)
 print(f"prescribed a {T_SURF:.0f} K surface, RH = {RH:.0%}, {len(p)} levels")
+print(f"using {lw.num_longwave_bands} spectral bands")
 ```
 
 `lw` is a component: an object you construct once and then *call*. Calling it
@@ -89,7 +112,7 @@ returns two dictionaries — tendencies (how fast radiation is changing the
 temperature) and diagnostics (everything else it computed on the way). We want a
 diagnostic, and specifically one with a band axis:
 `upwelling_longwave_flux_in_air_per_band` is the upward flux at every interface
-level **and** in each of the component's 14 spectral bands. Take its top row and
+level **and** in each of the component's 56 spectral bands. Take its top row and
 you have the outgoing longwave radiation, split by wavenumber.
 
 Dividing each band's flux by the band's width gives a spectral flux density in
@@ -113,13 +136,14 @@ print(f"OLR                         = {olr_band.sum():.1f} W/m2")
 print(f"greenhouse effect           = {sigma_T4 - olr_band.sum():.1f} W/m2")
 print(f"CO2 core  T_b = {tb[core].mean():.0f} K")
 print(f"window    T_b = {tb[window].mean():.0f} K")
-print(f"last band {limits[-1, 0]:.0f}-{limits[-1, 1]:.0f} cm^-1: "
-      f"T_b = {tb[-1]:.0f} K, against a {T_SURF:.0f} K surface")
+hottest = int(np.argmax(tb))
+print(f"hottest band {limits[hottest, 0]:.0f}-{limits[hottest, 1]:.0f} cm^-1: "
+      f"T_b = {tb[hottest]:.0f} K, against a {T_SURF:.0f} K surface")
 
-# The axes run the full width of the table, out to 3250 cm^-1, so that the last
-# band is on the figure and not quietly cropped out of it. Both panels share the
-# range: the point of the last band only lands if you can see the OLR panel go
-# flat exactly where the temperature panel goes hot.
+# The axes run the full width of the table, out to 3250 cm^-1, so that the far
+# tail is on the figure and not quietly cropped out of it. Both panels share the
+# range: the point made below only lands if you can see the OLR panel go flat
+# exactly where the temperature panel goes hot.
 NU_MAX = limits[-1, 1]
 
 fig, (ax, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
@@ -169,11 +193,14 @@ stratosphere, and their brightness temperature is the temperature *there* — ab
 200 K, some 88 K colder than the ground.
 
 **The window, 800–1180 cm⁻¹ (8.5–12.5 µm).** The spectrum rides just under the 285
-K curve, averaging 284 K across the three bands — within a few degrees of the
-surface. Here the atmosphere is nearly transparent: what leaves the top of the atmosphere was emitted by the ground and
-the lowest kilometre or so, and barely intercepted on the way out. Not quite the
-surface, though — the 3 K deficit is water vapour's weak continuum absorption, and
-[page 2](02-window-measured.qmd) measures it.
+K curve, averaging 284 K across the twelve bands that span it — within a few
+degrees of the surface. Here the atmosphere is nearly transparent: what leaves the
+top of the atmosphere was emitted by the ground and the lowest kilometre or so,
+and barely intercepted on the way out. Not quite the surface, though — the 4 K
+deficit is water vapour's weak continuum absorption, and
+[page 2](02-window-measured.qmd) measures it. Notice that the window is not flat:
+it peaks at 285.5 K around 990 cm⁻¹ and sags towards 281 K at its 800 cm⁻¹ edge.
+At 14 bands that structure was three flat steps.
 
 So the payoff. Your ε is a single number averaged over a curve whose brightness
 temperature swings roughly 85 K — 200 K in the CO₂ core, 284 K in the window. The
@@ -184,12 +211,12 @@ an average, and everything interesting about the climate response to CO₂ lives
 the shape it averaged away — because doubling CO₂ moves one part of this curve and
 not the rest.
 
-## The last band is 300 K. Nothing is that hot.
+## One band comes back hotter than the ground
 
-Look at the right-hand panel past 1800 cm⁻¹, where one enormous step sits well
-above the dotted surface line. The last band, 1800–3250 cm⁻¹, comes back at a
-brightness temperature of 300 K — twelve degrees *hotter* than the ground. Nothing
-in the column is at 300 K. Nothing is above 288 K.
+Look at the right-hand panel past 2500 cm⁻¹, where a step sits above the dotted
+surface line. The 2525–2888 cm⁻¹ band comes back at a brightness temperature of
+290 K — two degrees *hotter* than the ground. Nothing in the column is above
+288 K.
 
 Now put a finger on the same stretch of the left-hand panel. The OLR out there is
 flat on the floor: this band radiates almost nothing at all.
@@ -200,30 +227,57 @@ problem possesses — in the very region where almost no energy is leaving?
 ::: {.callout-caution collapse="true"}
 ## What went wrong (open after you have had a go)
 
-Nothing went wrong in the radiation. The 300 K is manufactured in the last step,
+Nothing went wrong in the radiation. The 290 K is manufactured in the last step,
 where we divided the band's flux by its width and inverted Planck **at the band
 centre**.
 
-That band is 1450 cm⁻¹ wide, and across it the Planck function falls by orders of
-magnitude: at 288 K, πB at 1800 cm⁻¹ is more than two hundred times what it is at
-3250. So the band's mean flux density is dominated entirely by its low-wavenumber
-edge, while we asked what temperature would produce that flux density *at 2525
-cm⁻¹*, far out on the exponential tail where a blackbody emits very little. The
-only way to emit that much out there is to be very hot. Hence 300 K.
+That band is 362 cm⁻¹ wide, and across it the Planck function falls steeply: at
+288 K, πB at 2525 cm⁻¹ is about four times what it is at 2888. So the band's mean
+flux density is weighted towards its low-wavenumber edge, while we asked what
+temperature would produce that flux density *at 2706 cm⁻¹*, further out on the
+exponential tail where a blackbody emits less. The only way to emit that much out
+there is to be a little hotter. Hence 290 K.
 
 A brightness temperature means something only when the band is narrow enough that
-Planck is roughly linear across it. The first thirteen bands satisfy that well
-enough to read; the fourteenth does not. This is a real limitation of a 14-band
-table, not a bug in the code — and it is one reason the later pages reach for a
-finer one.
+Planck is roughly linear across it. This is a statement about band width, not
+about the code — and it is exactly what the 56 bands are buying. The shipped
+14-band table covers this whole region with a **single** band, 1800–3250 cm⁻¹,
+1450 cm⁻¹ wide. Both tables are available here, so run them side by side:
 
-Which is also why the left-hand panel matters here. This band carries 4.8 W m⁻² of
-the 246, because at terrestrial temperatures there is almost nothing to emit that
-far out. The diagnostic goes nonsensical exactly where the energy is negligible —
-so the OLR, the number the climate actually cares about, is unharmed. Read the two
-panels together and you get the working rule: a brightness temperature is a
-statement about *where* radiation came from, and it is only worth trusting in
-bands that carry enough radiation to be worth asking about.
+```{pyodide}
+coarse = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+# The coarse component needs its own state: `emissivity` is shaped (nband, ncol),
+# so a 14-band component cannot be handed a state built for a 56-band one. Same
+# grid, same prescribed sounding, different spectral resolution — nothing else.
+state_c = get_default_state([coarse], grid_state=get_grid(nx=1, ny=1, nz=40))
+apply_sounding(state_c, T, q, T_surf=T_SURF)
+_, d_coarse = coarse(state_c)
+l_coarse = band_limits_of(coarse)
+olr_coarse, fd_coarse = spectral_olr(d_coarse, l_coarse)
+tb_coarse = brightness_temperature(fd_coarse, band_centres(l_coarse))
+
+for name, lim_, olr_, tb_ in [("14-band (shipped)", l_coarse, olr_coarse, tb_coarse),
+                              (f"{len(limits)}-band (downloaded)", limits, olr_band, tb)]:
+    print(f"\n{name}, above 1800 cm^-1:")
+    for b in np.flatnonzero(lim_[:, 0] >= 1800):
+        print(f"  {lim_[b,0]:7.0f}-{lim_[b,1]:<7.0f} "
+              f"width {lim_[b,1]-lim_[b,0]:6.0f}   "
+              f"OLR {olr_[b]:6.2f} W/m2   T_b {tb_[b]:6.1f} K")
+```
+
+The one wide band reports 300 K. Split it in four and the pieces come back at 266,
+280, 290 and 279 K — none of them 300, and only one of them still above the
+surface. The artifact shrinks as the bands narrow, exactly as it should, because
+it was never a fact about the atmosphere: it was a band-mean quantity pushed
+through a nonlinear inversion.
+
+Which is also why the left-hand panel matters here. Everything above 1800 cm⁻¹
+carries 3.8 W m⁻² of the 246, because at terrestrial temperatures there is almost
+nothing to emit that far out. The diagnostic goes nonsensical exactly where the
+energy is negligible — so the OLR, the number the climate actually cares about, is
+unharmed. Read the two panels together and you get the working rule: a brightness
+temperature is a statement about *where* radiation came from, and it is only worth
+trusting in bands that carry enough radiation to be worth asking about.
 :::
 
 ::: {.callout-note}
@@ -232,8 +286,11 @@ bands that carry enough radiation to be worth asking about.
 Four things this page relied on, which every later page assumes:
 
 **Components are objects.** `CorkLongwaveRadiation(...)` constructs one and fixes
-its configuration — here, correlated-k optics with the 14-band `earth_low_res_lw`
-table. Configuration happens at construction; the call takes only state.
+its configuration — here, correlated-k optics with whichever spectral table
+`spectrum_table()` found. Configuration happens at construction; the call takes
+only state. That is why comparing two tables meant constructing a *second*
+component rather than reconfiguring the first, and why both could then be called
+on the same unmodified `state`.
 
 **`get_grid` and `get_default_state` build a state that satisfies the component.**
 You pass the list of components you intend to run, and climt returns a state
@@ -274,7 +331,14 @@ mid-levels.
    supply most of the 144 W m⁻²? One band comes out slightly negative — which, and
    why? (The collapsed note above is the clue.)
 
-3. **Set `RH = 0.1`** — a very dry atmosphere. Which part of the spectrum changes
+3. **Rerun the whole page at 14 bands.** `spectrum_table(prefer_hires=False)`
+   returns the shipped table, so changing one line in the first cell redraws
+   every figure at the coarse resolution. The OLR moves by 0.2 W m⁻² and the
+   window brightness temperature by 0.1 K. Which claims on this page survive that
+   change untouched, and which were statements about the table rather than about
+   the atmosphere?
+
+4. **Set `RH = 0.1`** — a very dry atmosphere. Which part of the spectrum changes
    most, and which barely moves? Predict before you run it, then check.
 
 ### Code
@@ -293,4 +357,4 @@ mid-levels.
 The [Radiative Transfer walkthrough](../radiative-transfer/01-why-nongrey.qmd)
 takes the same observation — that absorption is a function of wavelength — and
 follows it all the way down to line-by-line absorption coefficients and the
-k-distribution that made the 14 bands above computable.
+k-distribution that made the 56 bands above computable.

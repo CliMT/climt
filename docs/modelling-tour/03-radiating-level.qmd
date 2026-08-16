@@ -19,6 +19,9 @@ pyodide:
     # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
     - _tour/soundings.py
     - _tour/spectra.py
+    - _tour/tables.py
+    # The 56-band spectrum table page 1 downloaded; your browser has it cached.
+    - _data/earth_spectrum_lw.npz
 ---
 
 {{< include ../_includes/climt-live-setup.qmd >}}
@@ -76,12 +79,14 @@ from soundings import lapse_rate_sounding, apply_sounding
 from spectra import (band_centres, band_limits_of, band_widths,
                      brightness_temperature, emission_weight, spectral_olr,
                      tau_star_cumulative)
+from tables import spectrum_table
 
 sympl.set_backend(climt.UnytBackend())
 
 T_SURF, RH, D = 288.0, 0.8, 1.66
 
-lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+TABLE = spectrum_table()   # the 56-band table from page 1, or 14 as a fallback
+lw = CorkLongwaveRadiation(optics="correlated_k", table=TABLE)
 state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=60))
 p = state["air_pressure"].values[:, 0, 0]
 ps = float(state["surface_air_pressure"].values.ravel()[0])
@@ -118,22 +123,35 @@ print(f"OLR = {diagnostics['upwelling_longwave_flux_in_air'].values[-1, 0, 0]:.1
 ```
 
 Note what `emission_pressure` does when the column is transparent: it returns
-`nan` rather than a number. Two of the window bands never reach τ* = 1 anywhere,
-top to bottom. For those bands there is no radiating level, not even a badly
-defined one — space sees the ground.
+`nan` rather than a number. Nine of the eleven window bands never reach τ* = 1
+anywhere, top to bottom, and neither does the empty 2525–2888 cm⁻¹ stretch page 2
+turned up. For those bands there is no radiating level, not even a badly defined
+one — space sees the ground.
 
-## Fourteen bands, fourteen answers
+## Fifty-six bands, fifty-six answers
 
 ```{pyodide}
-SHOW = [(10, 250,    "H$_2$O rotational",  "tab:blue"),
-        (630, 700,   "CO$_2$ 15 µm core",  "tab:red"),
-        (800, 980,   "window",             "tab:green"),
-        (1400, 1600, "H$_2$O 6.3 µm",      "tab:purple")]
+SHOW = [(130, 190,   "H$_2$O rotational",  "tab:blue"),
+        (665, 682.5, "CO$_2$ 15 µm core",  "tab:red"),
+        (890, 935,   "window",             "tab:green"),
+        (1400, 1450, "H$_2$O 6.3 µm",      "tab:purple")]
+
+
+def band_index(lo, hi):
+    """The band containing the midpoint of [lo, hi].
+
+    Matching band edges exactly would break the moment the page falls back to
+    the shipped 14-band table, whose edges are a coarsening of these. Asking
+    which band a region falls *in* works on either table.
+    """
+    mid = 0.5 * (lo + hi)
+    return int(np.flatnonzero((limits[:, 0] <= mid) & (limits[:, 1] > mid))[0])
+
 
 fig, (ax, ax2) = plt.subplots(1, 2, figsize=(12, 5.5), sharey=True)
 
 for lo, hi, label, colour in SHOW:
-    b = int(np.flatnonzero((limits[:, 0] == lo) & (limits[:, 1] == hi))[0])
+    b = band_index(lo, hi)
     w = emission_weight(tau[:, b], D)
     ax.plot(w / w.max(), p / 100, color=colour, lw=2, label=label)
     if np.isfinite(p_emit[b]):
@@ -183,15 +201,21 @@ for b in range(len(nu)):
 
 Read the left panel first. Four bands, four completely different places.
 
-The CO₂ core peaks at **8 hPa** — some 36 km up, in the stratosphere. The water
-vapour rotational band is higher still, at 3 hPa. The 6.3 µm water band comes in
-at 30 hPa. And the window band has no peak at all: its weight rises monotonically
-towards the ground, because the atmosphere never gets in the way, so the
-"emission" you see is really the surface shining straight through.
+The CO₂ core, taken at 665–682 cm⁻¹, peaks at **1.3 hPa** — some 50 km up, well
+into the stratosphere. The water vapour rotational band at 130–190 cm⁻¹ is close
+behind at 2.2 hPa. The 6.3 µm water band at 1400–1450 cm⁻¹ comes in at 217 hPa,
+in the upper troposphere, 40 km lower. And the window band has no peak at all: its
+weight rises monotonically towards the ground, because the atmosphere never gets
+in the way, so the "emission" you see is really the surface shining straight
+through.
 
-Across the twelve bands that do have a τ* = 1 level, those levels run from 3 hPa
-to 993 hPa — a factor of 350 in pressure, essentially the whole atmosphere. Chapter
-5's shell model puts *one* radiating level somewhere in this range and reports the
+Those four are a sample, and a mild one. Across the forty-six bands that do have a
+τ* = 1 level, those levels run from 1.3 hPa to 1005 hPa — a factor of 770 in
+pressure, which is the whole atmosphere and then the ground. Even *within* the
+CO₂ core the four bands 630–700 cm⁻¹ disagree by a factor of 35, from 1.3 to
+46 hPa: the phrase "the 15 µm band's radiating level" is doing the same averaging,
+one level down, that chapter 5 does across the whole spectrum. Chapter 5's shell
+model puts *one* radiating level somewhere in this range and reports the
 average. The notes' phrase, "somewhere in between", is exactly right; it is just
 that the thing it is in between is this.
 
@@ -209,12 +233,14 @@ an open one at the air temperature there, and a filled one at the band's actual
 brightness temperature. If chapter 7's picture were the whole story they would sit
 on top of each other.
 
-They do track: over a spread of 85 K they move together, correlating at 0.93. But
-with one exception, every filled marker sits to the **right** of its open one —
-the real brightness temperature is *warmer* than the air at τ* = 1, by 0.7 K in
-the CO₂ core, by 20 K in the rotational band, by 36 K at 700–800 cm⁻¹. A gap that
-large is one thing; a gap that never changes sign is telling you something else,
-so it is worth chasing.
+They do track: over a spread of 92 K they move together, correlating at 0.87. But
+forty of the forty-six sit to the **right** of their open one — the real
+brightness temperature is *warmer* than the air at τ* = 1, by 13 K in the
+rotational band at 130–190 cm⁻¹, by 25 K at 700–725, by 80 K at 2162–2525. The six
+that go the other way are all small, between 0.3 and 6.6 K, and they turn out to
+be a separate story; we come back to them. A gap that large is one thing; a gap
+that is almost never negative is telling you something else, so it is worth
+chasing.
 
 The τ in `longwave_optical_depth_per_band` is a **band average**, and inside one
 band the absorption is nothing like uniform:
@@ -234,7 +260,7 @@ for b in range(len(nu)):
     print(f"{limits[b,0]:6.0f}-{limits[b,1]:<7.0f} {kb.max()/kb.min():22.1e}")
 ```
 
-Within a single band the absorption coefficient spans three to nine orders of
+Within a single band the absorption coefficient spans three to ten orders of
 magnitude. That is not a defect of the table — it is what a real absorption band
 looks like, a picket fence of strong lines with near-transparent gaps between
 them, and the whole point of the correlated-k method is to keep that structure
@@ -244,37 +270,46 @@ for each of eight `g`-points and adds up the answers.
 The **band-mean** τ throws it away again. Being an average, it is dominated by the
 strong lines, so it describes an atmosphere that is opaque everywhere in the band.
 But the radiation that actually escapes leaves through the gaps, from far lower
-and far warmer air. At 700–800 cm⁻¹ the weakest g-point absorbs about 60 000 times
-less than the strongest; it carries an eighth of the band and it sees almost to
-the ground, which is where that 36 K comes from. The bands with the smallest gaps
-are the ones genuinely saturated across every g-point — the CO₂ core is off by
-0.7 K because for it the average really is the whole story.
+and far warmer air. Rank the bands by that spread and the 80 K outlier is exactly
+the band at the top of the list: at 2162–2525 cm⁻¹ the weakest g-point absorbs
+3 × 10¹⁰ times less than the strongest, it carries 5% of the band (the outermost
+Gauss-Legendre weight of eight), and it sees straight to the ground. Run down the
+other end and you find the CO₂ core, whose four bands are among the narrowest
+spreads in the table — a few hundred to a few thousand — with gaps within a couple
+of degrees of zero. They are genuinely
+saturated at every g-point, so for them the average really is the whole story.
 
 So chapter 7's radiating level is a **monochromatic** idea. Apply it to a band and
 it stops being exact, in a direction you can predict: it places the emission too
 high, and the wider the band's spread of absorption, the higher.
 
-The one band that breaks the pattern is 1080–1180 cm⁻¹, where T_b comes out 3 K
-*colder* than the level. Look at where its level is: 993 hPa, inside the bottom
-model layer. Its column τ is 0.68, so τ* only just scrapes past 1 at the very
-bottom, and "the radiating level" has degenerated into "the ground". What space
-actually sees there is the surface at 288 K plus a thin veil of colder air above
-it, which averages a little below the near-surface air temperature. The
-construction fails at both ends: for saturated bands because a band is not a
-wavelength, and for transparent ones because there is no level to find.
+Which leaves the six bands that go the other way, and they fall into two groups.
+Three of them — 750–775, 800–845 and 1130–1155 cm⁻¹ — have levels at 804, 1005 and
+931 hPa, at or below the bottom model layer. Take 800–845: its column τ is 0.63,
+so τ* only just scrapes past 1 right at the ground, and "the radiating level" has
+degenerated into "the ground". What space sees there is the surface at 288 K plus
+a thin veil of colder air above it, which averages 6.6 K below the near-surface
+air temperature. The other three are the saturated CO₂ core bands, off by 0.3 to
+2.2 K in a band whose emission comes from an isothermal 200 K stratosphere, where
+"the temperature at τ* = 1" is barely a constraint at all.
+
+So the construction fails at both ends: for bands wide in κ because a band is not
+a wavelength, and for transparent ones because there is no level to find.
 
 ::: {.callout-note collapse="true"}
 ## One band's brightness temperature comes out hotter than the ground
 
-In the table above, 1800–3250 cm⁻¹ reports T_b ≈ 300 K, above the 288 K surface.
+In the table above, 2525–2888 cm⁻¹ reports T_b ≈ 290 K, above the 288 K surface.
 Nothing in the column is that warm; the number is an artifact.
 
 `brightness_temperature` inverts the Planck function at the band *centre*, which
 is only valid if `B(ν, T)` is nearly linear across the band. Over the other
-thirteen bands it is close enough. Over 1450 cm⁻¹ of the shortwave tail it is not:
-the band's flux comes almost entirely from its low-wavenumber end, but we divide
-it by a width of 1450 cm⁻¹ and invert at 2525 cm⁻¹, where a blackbody emits far
-less — so the inversion has to return an impossible temperature to balance.
+fifty-five bands it is close enough. Over 362 cm⁻¹ of the shortwave tail it is
+not: the band's flux comes overwhelmingly from its low-wavenumber end, but we
+divide it by the full width and invert at 2706 cm⁻¹, where a blackbody emits
+several times less — so the inversion has to return an impossible temperature to
+balance. Page 1 shows the same band on the shipped 14-band table, where it is part
+of a single 1450 cm⁻¹ band and the artifact reaches 300 K.
 
 Worth knowing because it is the general shape of the problem: a band-mean
 quantity inverted through a nonlinear function is not the same as the mean of the
@@ -295,7 +330,7 @@ p_wet = np.array([emission_pressure(tau_wet[:, b], p, D) for b in range(len(nu))
 olr_wet = float(diag["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
 
 print(f"humidity x {HUMIDITY_SCALE:g}:  OLR = {olr_wet:.1f} W/m2  "
-      f"(was 246.7 at x1)\n")
+      f"(was 246.5 at x1)\n")
 print(f"{'band (cm^-1)':>14} {'p(tau*=1) x1':>13} {'now':>10}")
 for b in range(len(nu)):
     was = f"{p_emit[b]/100:8.1f} hPa" if np.isfinite(p_emit[b]) else f"{'none':>12}"
@@ -304,7 +339,7 @@ for b in range(len(nu)):
 
 fig, ax = plt.subplots(figsize=(6.5, 5.5))
 for lo, hi, label, colour in SHOW:
-    b = int(np.flatnonzero((limits[:, 0] == lo) & (limits[:, 1] == hi))[0])
+    b = band_index(lo, hi)
     for tt, ls, lbl in [(tau[:, b], "-", label), (tau_wet[:, b], "--", None)]:
         w = emission_weight(tt, D)
         ax.plot(w / w.max(), p / 100, color=colour, lw=2, ls=ls, label=lbl)
@@ -320,16 +355,19 @@ fig.tight_layout()
 plt.show()
 ```
 
-At four times the humidity the OLR falls from 247 to 204 W m⁻², and the table
-shows where the 43 W m⁻² went. The rotational band's radiating level climbs from
-2.8 to 1.3 hPa; the 6.3 µm band from 30 to 6 hPa. Every water band now emits from
-higher, colder air, and colder air emits less.
+At four times the humidity the OLR falls from 247 to 205 W m⁻², and the table
+shows where the 42 W m⁻² went. The rotational bands' levels, which spanned
+1.3–7.4 hPa, now span 1.3–2.2; the 6.3 µm bands climb from 11–217 hPa to
+3–53 hPa. Every water band now emits from higher, colder air, and colder air
+emits less. The CO₂ core barely moves, from 1.3–46 hPa to 1.3–43: it was never
+water's to control.
 
-Then look at the two window bands. At ×1 they had no radiating level at all. At
-×4 they have one, at 730 and 820 hPa. The window is closing — not because the
-lines got stronger but because the water vapour *continuum*, which grows with the
-square of the vapour amount, has finally made the clear part of the spectrum
-optically thick.
+Then look at the window. At ×1, nine of its bands had no radiating level at all.
+At ×4 every one of them has acquired one, between 712 and 842 hPa — the count of
+bands with a level goes from 46 to 55, and all nine new entries are window bands.
+The window is closing — not because the lines got stronger but because the water
+vapour *continuum*, which grows with the square of the vapour amount, has finally
+made the clear part of the spectrum optically thick.
 
 That is the water vapour feedback in mechanical form: warm the surface, the air
 holds more vapour, the emission levels rise into colder air, and the planet emits
@@ -377,7 +415,7 @@ shape.
 ### Physics
 
 1. **Which band moves most?** Set `HUMIDITY_SCALE = 2.0` and rank the bands by
-   how far their radiating level moves, measured in log pressure. Two of them
+   how far their radiating level moves, measured in log pressure. Ten of them
    cannot be ranked at all, because at ×1 they had no level to move from. Decide
    how you would report that — and notice that the choice you make is the
    difference between "the window barely responds" and "the window responds most
@@ -398,7 +436,7 @@ shape.
 
 ### Code
 
-1. Extend the table above into a proper diagnostic: for all fourteen bands, print
+1. Extend the table above into a proper diagnostic: for every band, print
    the radiating pressure, the air temperature there, the brightness temperature,
    and the gap between them, sorted by gap. Then put the k-spread column next to
    it. The two should rank together — and where they do not, work out why.

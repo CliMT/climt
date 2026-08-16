@@ -19,6 +19,9 @@ pyodide:
     # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
     - _tour/soundings.py
     - _tour/spectra.py
+    - _tour/tables.py
+    # The 56-band spectrum table page 1 downloaded; your browser has it cached.
+    - _data/earth_spectrum_lw.npz
 ---
 
 {{< include ../_includes/climt-live-setup.qmd >}}
@@ -63,13 +66,15 @@ from climt import CorkLongwaveRadiation, get_default_state, get_grid
 from soundings import lapse_rate_sounding, apply_sounding
 from spectra import (band_centres, band_limits_of, band_widths,
                      planck_flux, spectral_olr)
+from tables import spectrum_table
 
 sympl.set_backend(climt.UnytBackend())
 
 T_SURF, RH = 288.0, 0.8
 D = 1.66          # cork's two-stream diffusivity factor; more on this below
 
-lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+TABLE = spectrum_table()   # the 56-band table from page 1, or 14 as a fallback
+lw = CorkLongwaveRadiation(optics="correlated_k", table=TABLE)
 state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
 p = state["air_pressure"].values[:, 0, 0]
 ps = float(state["surface_air_pressure"].values.ravel()[0])
@@ -82,7 +87,8 @@ limits = band_limits_of(lw)
 nu, width = band_centres(limits), band_widths(limits)
 edges = np.append(limits[0, 0], limits[:, 1])
 sigma_T4 = 5.670374419e-8 * T_SURF ** 4
-print(f"288 K surface, RH = {RH:.0%}, 280 ppm CO2, {len(p)} levels")
+print(f"288 K surface, RH = {RH:.0%}, 280 ppm CO2, {len(p)} levels, "
+      f"{lw.num_longwave_bands} bands")
 ```
 
 Nothing above has changed from page 1 except that CO₂ is now set explicitly
@@ -152,26 +158,42 @@ plt.show()
 ## Reading it
 
 The left panel needs a log axis, which is the entire point. In the water vapour
-rotational band below 250 cm⁻¹ the column optical depth is around 1.6 × 10⁴. In
-the window at 980–1080 cm⁻¹ it is 0.22 — **five orders of magnitude** apart.
-These are the same atmosphere, the same column of air, seen at two wavelengths;
-and calling both of them "the atmosphere's emissivity" is the compression page 1
-complained about.
+rotational band below 250 cm⁻¹ the column optical depth runs from 4 × 10³ to
+2 × 10⁴. At the clearest point of the window, 980–1005 cm⁻¹, it is 0.16 — **five
+orders of magnitude** apart. These are the same atmosphere, the same column of
+air, seen at two wavelengths; and calling both of them "the atmosphere's
+emissivity" is the compression page 1 complained about.
 
-Three bands, and only three, come in under τ = 1:
+Eleven adjacent bands come in under τ = 1, and they are contiguous:
 
 | band | column τ | transmittance |
 |---|---|---|
-| 800–980 cm⁻¹ | 0.43 | 49% |
-| 980–1080 cm⁻¹ | 0.22 | 70% |
-| 1080–1180 cm⁻¹ | 0.68 | 32% |
+| 800–845 cm⁻¹ | 0.63 | 35% |
+| 845–890 cm⁻¹ | 0.53 | 41% |
+| 890–935 cm⁻¹ | 0.30 | 61% |
+| 935–980 cm⁻¹ | 0.25 | 66% |
+| 980–1005 cm⁻¹ | 0.16 | 77% |
+| 1005–1030 cm⁻¹ | 0.25 | 66% |
+| 1030–1055 cm⁻¹ | 0.19 | 73% |
+| 1055–1080 cm⁻¹ | 0.34 | 57% |
+| 1080–1105 cm⁻¹ | 0.29 | 61% |
+| 1105–1130 cm⁻¹ | 0.54 | 41% |
+| 1130–1155 cm⁻¹ | 0.95 | 21% |
 
-So the atmospheric window, measured rather than asserted, is **800–1180 cm⁻¹ —
-380 cm⁻¹ wide**, or 8.5 to 12.5 µm. That is not a definition anyone imposed; it
-is where the gas ran out. And "window" flatters it: even at its clearest, in the
-980–1080 band, nearly a third of the surface's emission is absorbed on the way
-out. This is why page 1's window brightness temperature came back at 284 K rather
-than 288 K — the window is a screen door, not an open one.
+So the atmospheric window, measured rather than asserted, is **800–1155 cm⁻¹ —
+355 cm⁻¹ wide**, or 8.7 to 12.5 µm. That is not a definition anyone imposed; it
+is where the gas ran out — and note that it does not end at a round number, or at
+a band edge someone chose. The printed list finds one more transparent band,
+2525–2888 cm⁻¹, out on the shortwave tail where τ is 0.014. It is transparent and
+irrelevant in the same breath: page 1 measured the entire region above 1800 cm⁻¹
+carrying 3.8 W m⁻² of the 246. A window only counts where there is something to
+come through it.
+
+And "window" flatters even the real one: at its clearest, 980–1005 cm⁻¹, almost a
+quarter of the surface's emission is still absorbed on the way out, and at its
+800 cm⁻¹ edge nearly two thirds is. This is why page 1's window brightness
+temperature came back at 284 K rather than 288 K, and why the window sagged at its
+edges rather than sitting flat — the window is a screen door, not an open one.
 
 ::: {.callout-note}
 ## A trap in the right panel
@@ -184,9 +206,9 @@ It does not. Read the dims:
 `lw.diagnostic_properties["longwave_transmittance_per_band"]["dims"]` says
 `mid_levels`, so this is the transmittance of a **single model layer**, not of the
 column. On a 40-level grid the bottom layer is a couple of dozen hPa thick and
-transmits 98% in the window, but in the rotational band it still stops everything
-(3 × 10⁻²⁰²). Its value depends on how many levels you asked for; the red curve
-does not.
+transmits 97–99% in the window, but in the rotational band it still stops
+everything (10⁻²⁴⁵ at 130–190 cm⁻¹). Its value depends on how many levels you
+asked for; the red curve does not.
 
 The habit worth taking away: before using a diagnostic, check what axis it lives
 on. Almost every wrong-by-a-factor bug in this business is a dims mistake.
@@ -244,10 +266,17 @@ plt.show()
 ## The answer to the lecture's question
 
 Set `CO2_PPM = 10` and `HUMIDITY_SCALE = 0.001` and re-run. The window does not
-so much widen as **burst**: the transparent bands run from 350 to 1400 cm⁻¹, some
-980 cm⁻¹ of open spectrum against Earth's 380, and the OLR rises from 247 to
-354 W m⁻² — 91% of what the bare surface emits. The greenhouse effect has fallen
-from 144 W m⁻² to 36.
+so much widen as **burst**: 2055 cm⁻¹ of open spectrum against Earth's 718, and
+the OLR rises from 247 to 354 W m⁻² — 91% of what the bare surface emits. The
+greenhouse effect has fallen from 144 W m⁻² to 36.
+
+At this resolution you can see what "burst" means in detail. The transparent
+region is no longer one block: it is four stretches — 388–630, 725–1450,
+1800–2162 and 2525–3250 cm⁻¹ — separated by what is *left* of the absorbers.
+Those gaps are the survivors, and they name themselves: 630–725 cm⁻¹ is the CO₂
+15 µm core, still opaque at 10 ppm, and 1450–1800 cm⁻¹ is what remains of the
+water vapour ν₂ bending band at a thousandth of Earth's humidity. Everything else
+has gone.
 
 That is the shape of the answer: a pure nitrogen atmosphere has *no window*,
 because a window is a hole in something, and there would be nothing left to have
@@ -257,8 +286,8 @@ directly and the ground sits at its bare-rock temperature.
 Two details in that run are worth more than the headline.
 
 **The 15 µm bite survives.** Look at the OLR panel at 630–700 cm⁻¹: even at
-10 ppm, the CO₂ core still has a column optical depth of 20 and still carves a
-notch out of the spectrum. Carbon dioxide is a ferociously effective absorber
+10 ppm, the four bands of the CO₂ core still have column optical depths of 20 to
+90, and still carve a notch out of the spectrum. Carbon dioxide is a ferociously effective absorber
 where it absorbs at all — which is exactly the property that makes it a climate
 control knob, and [page 5](05-co2-knob.qmd) puts a number on it.
 
@@ -309,10 +338,11 @@ these before indexing, as the transmittance trap above showed.
 
 1. **Where is CO₂'s leverage?** Step `CO2_PPM` over 10, 100, 1000, 10 000 with
    humidity at 1.0, and print the column optical depth in the 15 µm core
-   (630–700) and in the window (800–1180) each time. The core's τ goes from 33 to
-   about 20 000 — a factor of 600 — while the window's moves by around 10%. Why
-   does adding CO₂ do almost nothing to the window, and what does that imply
-   about where the next doubling will act?
+   (630–700) and in the window (800–1180) each time. The deepest core band,
+   665–682 cm⁻¹, goes from 93 to 88 000 — a factor of 950 — while the window's
+   mean τ moves about 10% over the first hundredfold increase and only doubles
+   across the whole range. Why does adding CO₂ do so little to the window, and
+   what does that imply about where the next doubling will act?
 
    Then look harder at the core's numbers. Above the 10 ppm floor they are very
    nearly **proportional** to concentration: ten times the CO₂, ten times the
@@ -323,7 +353,7 @@ these before indexing, as the transmittance trap above showed.
    them; the machinery you need is on [page 3](03-radiating-level.qmd).
 
 2. **Which absorber owns the window?** With `CO2_PPM = 280`, lower
-   `HUMIDITY_SCALE` alone and watch the three window bands' τ. Water vapour is
+   `HUMIDITY_SCALE` alone and watch the eleven window bands' τ. Water vapour is
    supposed to be weak here — so why does the window's optical depth respond to
    humidity at all? (Search for "water vapour continuum".)
 
@@ -348,7 +378,7 @@ these before indexing, as the transmittance trap above showed.
 
 ## Going deeper
 
-Column optical depths spanning nine orders of magnitude are not something you can
+Column optical depths spanning six orders of magnitude are not something you can
 compute band by band from a formula; they come from a k-distribution fitted to
 line-by-line spectra, and the bands overlap. [Gas
 overlap](../radiative-transfer/05-gas-overlap.qmd) covers how cork combines two
