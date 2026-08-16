@@ -1448,9 +1448,12 @@ leave the RCE helpers in the existing include. Page 1 has the same problem.
 ### Log — deviations from the step's literal content
 
 - **Physics exercise 1 as specified is unanswerable.** The step asks students to "find the
-  CO₂ concentration at which the 15 µm core's column τ first exceeds 1". There is none: on
-  the standard sounding the 630–700 band has τ = 33 at the *bottom* of the table's CO₂
-  axis, because water vapour absorbs there too. Rewritten as a sweep over 10 / 100 / 1000 /
+  CO₂ concentration at which the 15 µm core's column τ first exceeds 1". There is none: at
+  the *bottom* of the table's CO₂ axis the 630–700 band is already at τ = 33 on the
+  standard sounding, and at τ = 20 with water driven to its own floor — so it is CO₂ at
+  10 ppm doing this, not water vapour. Above the floor τ is very nearly linear in
+  concentration (τ ≈ 2.02 × ppm^0.999, dry), which extrapolates to τ = 1 near **0.5 ppm**,
+  a factor of 20 below anything the table resolves. Rewritten as a sweep over 10 / 100 / 1000 /
   10 000 ppm contrasting the core's hundred-fold response with the window's ~10% one, and
   a third exercise now poses the real puzzle the original was reaching for — *if the band
   is already opaque, how can more CO₂ change the OLR at all?* — pointing at page 3.
