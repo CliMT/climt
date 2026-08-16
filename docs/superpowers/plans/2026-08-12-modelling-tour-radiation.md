@@ -1035,7 +1035,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   `spectra.planck_flux`, `spectra.brightness_temperature`, `spectra.band_limits_of`,
   `spectra.spectral_olr`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_modelling_tour.py`:
 
@@ -1065,7 +1065,7 @@ def test_page1_window_is_warmer_than_the_co2_core(soundings, spectra):
     assert window.mean() - co2_core.mean() > 60.0
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v -m slow`
 Expected: FAIL — the fixtures exist, so this should actually PASS on the physics. If it
@@ -1073,7 +1073,7 @@ fails, the sounding or the spectral helpers are wrong; fix them before writing t
 (This test guards the page's claim; it is written first so the page cannot assert
 something untrue.)
 
-- [ ] **Step 3: Write the page**
+- [x] **Step 3: Write the page**
 
 Create `docs/modelling-tour/01-emissivity-spectrum.qmd`.
 
@@ -1186,7 +1186,7 @@ for name, spec in sorted(lw.diagnostic_properties.items()):
      its units.
 10. `## Going deeper` linking to `../radiative-transfer/01-why-nongrey.qmd`.
 
-- [ ] **Step 4: Render the page**
+- [x] **Step 4: Render the page**
 
 ```bash
 cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render modelling-tour/01-emissivity-spectrum.qmd
@@ -1194,12 +1194,12 @@ cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python qua
 
 Expected: renders with no error.
 
-- [ ] **Step 5: Run the guard test**
+- [x] **Step 5: Run the guard test**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py::test_page1_window_is_warmer_than_the_co2_core -v -m slow`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/modelling-tour/01-emissivity-spectrum.qmd tests/test_modelling_tour.py
@@ -1207,6 +1207,63 @@ git commit -m "docs(tour): page 1, the spectrum behind a single emissivity
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — how the `_tour` helpers reach the browser (applies to Tasks 8–12)
+
+The plan's page cells call `lapse_rate_sounding(...)`, `band_limits_of(...)` and friends
+by bare name, but `docs/_includes/climt-live-setup.qmd` defines none of them and
+`docs/modelling-tour/_tour/` is not importable under Pyodide. Rather than duplicate the
+helper bodies into an include (the `integrate_to_equilibrium` precedent), page 1 hands
+the modules to quarto-live's **`pyodide: resources:`**, which fetches each listed path
+relative to the page URL at document setup and writes it into the Pyodide filesystem
+under the cwd. So the browser imports the *same* files `tests/test_modelling_tour.py`
+imports natively — no second copy to keep in sync.
+
+Two pieces make that work, and **pages 2–6 need both**:
+
+1. Front matter gains, alongside `packages:`:
+
+```yaml
+  resources:
+    - _tour/soundings.py
+    - _tour/spectra.py
+```
+
+2. `docs/_quarto.yml` gained a `project: resources:` entry for
+   `modelling-tour/_tour/*.py`. Quarto omits underscore-prefixed paths from `_site` by
+   default, so without it the fetch 404s. Already landed with this task — do not add it
+   again; extend the glob if a later task adds a helper module (Task 13's `tables.py`
+   is covered by the existing `*.py` glob).
+
+The page's setup cell then does `sys.path.insert(0, "_tour")` before importing.
+
+Verified: `_site/modelling-tour/_tour/{soundings,spectra}.py` are served (HTTP 200), and
+the rendered page's base64 `<script type="vfs-file">` manifest lists exactly
+`["_tour/soundings.py", "_tour/spectra.py"]`. **Not** verified end-to-end in a browser —
+a local run of the rendered page never finished booting Pyodide in the available session
+(the tab stopped responding to the automation extension while downloading), so the first
+real in-browser check of this mechanism is still outstanding. Native execution of the
+page's cells is guarded by `test_page1_window_is_warmer_than_the_co2_core`.
+
+### Log — figure and prose deviations from the step's literal code
+
+- `ax.step(limits[:, 1], ..., where="pre")` as written drops the first band entirely
+  (the line starts at the first upper edge, so band 10–250 cm⁻¹ never gets a segment).
+  Replaced with `ax.stairs(values, edges)` on `edges = np.append(limits[0, 0],
+  limits[:, 1])`, which draws all 14.
+- The Planck reference curves are labelled at their own peaks, not at `nu = 1800`, where
+  all six labels collapse into each other inside the bottom 10% of the axis.
+- The last band (1800–3250 cm⁻¹) returns a brightness temperature of **300 K**, above the
+  288 K surface — the band is 1450 cm⁻¹ wide and Planck is nowhere near linear across it,
+  so the band-mean flux density is not the flux density at the band centre. The printed
+  range is therefore restricted to `nu < 1800`, and the artifact is explained in a
+  collapsed callout on the page and used as the sting in Physics exercise 2 (the same
+  band is the one with a negative per-band greenhouse contribution, −1.9 W m⁻²).
+
+Numbers as built, at `T_SURF = 288 K`, `RH = 0.8`, nz = 40: OLR 245.9 W m⁻², σT⁴ 390.1,
+greenhouse effect 144.2; brightness temperature 200.3 K in the CO₂ core (630–700) and
+282.7 / 284.7 / 283.5 K across the three window bands.
+
 
 ---
 

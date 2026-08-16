@@ -9,6 +9,13 @@ project:
     - "modelling-tour/**/*.qmd"
     - "experiments/**/*.qmd"
     - "api/**/*.qmd"
+  resources:
+    # Quarto omits underscore-prefixed paths from the site by default. The
+    # Modelling Tour's helper modules must be *served*, not just rendered: the
+    # live pages hand these paths to quarto-live's `pyodide: resources:`, which
+    # fetches them over HTTP into the Pyodide filesystem so the browser imports
+    # the same code tests/test_modelling_tour.py exercises natively.
+    - "modelling-tour/_tour/*.py"
 
 website:
   title: "climt"

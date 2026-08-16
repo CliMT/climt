@@ -132,3 +132,28 @@ def test_emission_weight_is_monotone_for_equal_optical_depth_layers(spectra):
     w = spectra.emission_weight(np.full(200, 0.05), diffusivity_factor=1.0)
     assert np.all(np.diff(w) > 0)
     assert np.argmax(w) == len(w) - 1
+
+
+@pytest.mark.slow
+def test_page1_window_is_warmer_than_the_co2_core(soundings, spectra):
+    """The page's central claim: brightness temperature swings ~200 K to ~285 K."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+    T, q = soundings.lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8)
+    soundings.apply_sounding(state, T, q, T_surf=288.0)
+
+    _, diag = lw(state)
+    limits = spectra.band_limits_of(lw)
+    _, flux_density = spectra.spectral_olr(diag, limits)
+    tb = spectra.brightness_temperature(flux_density, spectra.band_centres(limits))
+
+    centres = spectra.band_centres(limits)
+    co2_core = tb[(centres > 630) & (centres < 700)]
+    window = tb[(centres > 800) & (centres < 1180)]
+
+    assert co2_core.max() < 230.0          # radiating from the stratosphere
+    assert window.min() > 270.0            # radiating from near the surface
+    assert window.min() < 288.0            # but not from the surface itself
+    assert window.mean() - co2_core.mean() > 60.0
