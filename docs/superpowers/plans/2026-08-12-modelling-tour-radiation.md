@@ -716,7 +716,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   - `emission_weight(tau_layer, diffusivity_factor) -> ndarray` — per-layer contribution
   - `tau_star_cumulative(tau_layer, diffusivity_factor) -> ndarray`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_modelling_tour.py`:
 
@@ -764,12 +764,12 @@ def test_emission_weight_peaks_where_tau_star_is_one(spectra):
     np.testing.assert_allclose(tau_star[np.argmax(w)], 1.0, atol=0.1)
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v -k spectra or "planck or olr or band or emission"`
 Expected: FAIL — `spectra.py` does not exist.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `docs/modelling-tour/_tour/spectra.py`:
 
@@ -894,12 +894,13 @@ def emission_weight(tau_layer, diffusivity_factor):
     return emitted * transmitted
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v`
-Expected: 7 passed.
+Expected: 7 passed. **As built: 10 passed** — see the log below; the weighting-function
+test was rewritten and parametrised over D.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/modelling-tour/_tour/spectra.py tests/test_modelling_tour.py
@@ -907,6 +908,31 @@ git commit -m "feat(tour): spectral diagnostic helpers
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — the weighting-function test as written in Step 1 was wrong
+
+`test_emission_weight_peaks_where_tau_star_is_one` fed `emission_weight` **200 layers of
+equal optical depth** (`np.full(200, 0.05)`) and expected the peak at `tau* = 1`. It came
+out at `tau* = 0.025` — the topmost layer — and that is the correct answer for that input,
+not a bug in the helper. With every layer emitting the same `1 - exp(-D tau_k)`, the only
+term that varies is the attenuation `exp(-D tau*_above)`, which is largest at the top, so
+the weight is monotone by construction and has no interior peak.
+
+The notes' `W ∝ tau* exp(-tau*)` assumes layers of equal **thickness** over an
+exponentially stratified absorber, where `dtau/dz ∝ exp(-z/H)` makes the per-layer optical
+depth grow towards the surface — and that is what the pages will actually feed it, since
+cork's per-layer `tau` on a real column behaves that way.
+
+Fixed by replacing the fixture, not the physics: a `_exponential_absorber()` helper in the
+test builds `tau_layer` from `tau_inf * exp(-z/H)` on a uniform-z edge grid. The peak then
+lands at `tau* = 0.999` (D=1), `0.984` (D=1.66), `0.980` (D=2), so the test is now
+parametrised over all three. `tau_star[0]` is `9.80`, not `10.0`, for `tau_inf = 10` —
+the half-layer offset at the optically thick bottom layer — hence `rel=0.03`.
+
+The equal-tau case is kept as its own test
+(`test_emission_weight_is_monotone_for_equal_optical_depth_layers`) so the trap stays
+documented: **a radiating level needs a grid that resolves height, not optical depth.**
+Task 9's page cannot demonstrate the peak on an equal-tau grid.
 
 ---
 
