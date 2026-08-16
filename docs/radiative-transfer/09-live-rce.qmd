@@ -113,14 +113,25 @@ the single-band gray column — cooler where the windows are transparent, with a
 steeper drop-off aloft. (At the default `N_STEPS = 400` neither column is fully
 equilibrated; increase it to watch each profile settle.)
 
-### Why the stratosphere here is isothermal
+### Why the gray column's stratosphere is isothermal — and the non-grey one's is not
 
-This setup has **no shortwave absorption in the atmosphere** — sunlight is
+Both setups have **no shortwave absorption in the atmosphere** — sunlight is
 absorbed only at the surface (there is no ozone, and the longwave-only radiation
-does not heat the air with sunlight). In pure radiative equilibrium without a
-solar absorber aloft, the upper atmosphere relaxes to a constant *skin
-temperature*: an **isothermal stratosphere**. This is different from Earth's real
-stratosphere, where ozone absorbs ultraviolet sunlight and drives a temperature
-*inversion* (temperature rising with height). Add a shortwave component with
-ozone and the isothermal top would tilt into that inversion — a natural next
-experiment.
+does not heat the air with sunlight). In the **gray** column the upper
+atmosphere therefore relaxes to a constant *skin temperature*: the *isothermal
+top* the first figure labels, spanning roughly 20 → 4 hPa. Note the
+**log-pressure** vertical axis — on a linear one that layer is under 2% of the
+panel and effectively invisible.
+
+The **non-grey** column has no isothermal layer at all: it keeps cooling right
+up to the model lid, which is why its figure is labelled differently. A single
+gray opacity gives every layer the same skin temperature, but with 14 bands the
+topmost layers are optically thin in the windows and absorb only in the strong
+H₂O/CO₂ bands — where the upwelling flux was emitted by the cold levels just
+below. Each thinner layer aloft therefore settles colder than the one beneath
+it, and the profile never flattens.
+
+Both differ from Earth's real stratosphere, where ozone absorbs ultraviolet
+sunlight and drives a temperature *inversion* (temperature rising with height).
+Add a shortwave component with ozone and these tops would tilt into that
+inversion — a natural next experiment.
