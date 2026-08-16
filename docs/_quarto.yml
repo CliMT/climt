@@ -6,6 +6,7 @@ project:
     - "get-started/**/*.qmd"
     - "user-guide/**/*.qmd"
     - "radiative-transfer/**/*.qmd"
+    - "modelling-tour/**/*.qmd"
     - "experiments/**/*.qmd"
     - "api/**/*.qmd"
 
@@ -23,6 +24,8 @@ website:
         href: user-guide/introduction.qmd
       - text: "Radiative Transfer"
         href: radiative-transfer/index.qmd
+      - text: "Modelling Tour"
+        href: modelling-tour/index.qmd
       - text: "Experiments"
         href: experiments/index.qmd
       - text: "API"
@@ -90,6 +93,16 @@ website:
           contents:
             - radiative-transfer/table-generation.qmd
             - radiative-transfer/performance.qmd
+    - title: "Modelling Tour"
+      style: "docked"
+      contents:
+        - modelling-tour/index.qmd
+        - modelling-tour/01-emissivity-spectrum.qmd
+        - modelling-tour/02-window-measured.qmd
+        - modelling-tour/03-radiating-level.qmd
+        - modelling-tour/04-gray-equilibrium-tested.qmd
+        - modelling-tour/05-co2-knob.qmd
+        - modelling-tour/06-water-vapour-limit.qmd
 
 format:
   html:

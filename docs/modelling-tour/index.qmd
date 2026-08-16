@@ -1,0 +1,55 @@
+---
+title: "A Modelling Tour of the Climate System"
+---
+
+This is the computational half of *Principles of Planetary Climate* (EC2213). The
+[course notes](https://joymonteiro.github.io/principles_planetary_climate/) derive
+everything analytically — the shell model, the Schwarzschild equation, the weighting
+function, gray radiative equilibrium — and they carry no figures and no numbers. The
+tour supplies exactly those. Every page states a profile outright, hands it to a real
+radiation code, and plots what comes back.
+
+::: {.callout-note}
+## Runs in your browser
+
+There is nothing to install. Every page runs climt itself, in your browser, via
+Pyodide — the same library a research group would run on a cluster, compiled to
+WebAssembly. The first cell on each page downloads the climt wheel and takes a few
+seconds; after that, edit any cell and re-run it.
+:::
+
+Two threads run through every page, and they carry equal weight. The first is the
+science: what the atmosphere actually does, as opposed to what the shell model says
+it does. The second is *using climt* — building a state, reading a component's input
+and diagnostic contracts, getting units and dimensions right, telling `mid_levels`
+from `interface_levels`, sweeping a parameter. That craft thread is **cumulative**:
+page *N* assumes you have read page *N−1* and does not re-explain what it introduced.
+The science on each page stands alone; the code does not.
+
+## The chapter map
+
+| Page | Course chapter | What you compute |
+|---|---|---|
+| [ε is not a number](01-emissivity-spectrum.qmd) | 5 — The Shell Model | the OLR spectrum your single ε averages over |
+| [The window, measured](02-window-measured.qmd) | 6, 7 | per-band optical depth; the window's real width |
+| [Where photons come from](03-radiating-level.qmd) | 7 — Basics of Radiative Transfer | the weighting function, and a radiating level per band |
+| [Gray equilibrium, tested](04-gray-equilibrium-tested.qmd) | 8 — Gray Gas radiative equilibrium | your analytic profile, checked by a radiation code |
+| [The CO₂ knob](05-co2-knob.qmd) | 4 — A deeper look at the zero-dimensional model | the forcing per doubling, and which bands supply it |
+| [Water vapour, and the limit](06-water-vapour-limit.qmd) | 4 and beyond | the feedback, drawn; and the runaway limit |
+
+## What this tranche does not cover
+
+Nothing here integrates in time. There are no time-stepping loops, no convection, and
+no surface fluxes: each page makes a single radiation call, or a sweep of them, on a
+profile you prescribe. That is deliberate — it keeps the causal chain short enough to
+see, so that when a number changes you know precisely which line changed it.
+
+Radiative-convective equilibrium, moist convection and surface energy balance build on
+chapters 10–12 of the notes, and belong to a later tranche.
+
+## Going deeper
+
+The [Radiative Transfer walkthrough](../radiative-transfer/index.qmd) treats the same
+physics at research grade — line-by-line absorption, the k-distribution, correlated-k,
+gas overlap and the two-stream solver — and shows how the code you are calling here is
+built.
