@@ -945,7 +945,7 @@ Task 9's page cannot demonstrate the peak on an equal-tau grid.
 **Interfaces:**
 - Produces: the `Modelling Tour` navbar entry and sidebar; `docs/modelling-tour/**/*.qmd` in the render list.
 
-- [ ] **Step 1: Add the section to the Quarto config**
+- [x] **Step 1: Add the section to the Quarto config**
 
 In `docs/_quarto.yml`, add to `project: render:` after the `radiative-transfer` line:
 
@@ -975,7 +975,7 @@ Add a sidebar block after the `Radiative Transfer` sidebar block:
         - modelling-tour/06-water-vapour-limit.qmd
 ```
 
-- [ ] **Step 2: Write the landing page**
+- [x] **Step 2: Write the landing page**
 
 Create `docs/modelling-tour/index.qmd`. It must contain, in order:
 
@@ -1004,7 +1004,7 @@ Create `docs/modelling-tour/index.qmd`. It must contain, in order:
 7. A "Going deeper" line linking to `../radiative-transfer/index.qmd` for the
    research-grade treatment.
 
-- [ ] **Step 3: Render and check**
+- [x] **Step 3: Render and check**
 
 ```bash
 cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render modelling-tour/index.qmd
@@ -1013,7 +1013,7 @@ cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python qua
 Expected: renders with no error; the sidebar shows the six page entries (they 404 until
 Tasks 7–12 land, which is expected at this point).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/_quarto.yml docs/modelling-tour/index.qmd
