@@ -1273,7 +1273,13 @@ by a human loading the page, after the cell shipped printing its numbers and no 
   This is **promoted to a teaching beat, not hidden**: the cell prints the last band's
   T_b explicitly, a short section poses the "nothing here is 300 K — what could do that?"
   question, and the explanation sits in a collapsed callout to open after the class has
-  had a go. It closes by noting the band carries 4.8 of the 246 W m⁻², i.e. the diagnostic
+  had a go. Both panels' `xlim` therefore run the full width of the table, to 3250 cm⁻¹,
+  rather than stopping at 1800 — an artifact you tell the class to look at must be *on*
+  the figure. Sharing the range across the two panels is what makes the point land: the
+  OLR panel is flat on the floor exactly where the temperature panel goes hot. Cost is
+  ~45% horizontal compression of the 0–1800 detail, which the CO₂ core and window
+  survive; the alternative (different ranges per panel) invites reading the same
+  wavenumber at two different x positions and was rejected. It closes by noting the band carries 4.8 of the 246 W m⁻², i.e. the diagnostic
   is nonsense exactly where the energy is negligible. Physics exercise 2 reuses it (the
   same band is the one with a negative per-band greenhouse contribution, −1.9 W m⁻²).
 

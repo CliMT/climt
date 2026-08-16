@@ -100,42 +100,51 @@ tb = brightness_temperature(flux_density, nu)
 edges = np.append(limits[0, 0], limits[:, 1])     # (nband+1,) band edges
 
 sigma_T4 = 5.670374419e-8 * T_SURF ** 4
-shown = nu < 1800.0
+core = (nu > 630) & (nu < 700)
+window = (nu > 800) & (nu < 1180)
 print(f"surface emission  sigma T^4 = {sigma_T4:.1f} W/m2")
 print(f"OLR                         = {olr_band.sum():.1f} W/m2")
 print(f"greenhouse effect           = {sigma_T4 - olr_band.sum():.1f} W/m2")
-print(f"brightness temperature ranges {tb[shown].min():.0f} K to "
-      f"{tb[shown].max():.0f} K across the bands plotted")
-print(f"...and in the last band, {limits[-1, 0]:.0f}-{limits[-1, 1]:.0f} cm^-1, "
+print(f"CO2 core  T_b = {tb[core].mean():.0f} K")
+print(f"window    T_b = {tb[window].mean():.0f} K")
+print(f"last band {limits[-1, 0]:.0f}-{limits[-1, 1]:.0f} cm^-1: "
       f"T_b = {tb[-1]:.0f} K, against a {T_SURF:.0f} K surface")
 
+# The axes run the full width of the table, out to 3250 cm^-1, so that the last
+# band is on the figure and not quietly cropped out of it. Both panels share the
+# range: the point of the last band only lands if you can see the OLR panel go
+# flat exactly where the temperature panel goes hot.
+NU_MAX = limits[-1, 1]
+
 fig, (ax, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
-nu_fine = np.linspace(20, 1800, 400)
+nu_fine = np.linspace(20, NU_MAX, 600)
+label_box = dict(fc="white", ec="none", alpha=0.75, pad=0.5)
 for T_ref in (300, 280, 260, 240, 220, 200):
     b = planck_flux(nu_fine, T_ref)
     ax.plot(nu_fine, b, color="0.8", lw=0.8)
     k = int(np.argmax(b))
     ax.annotate(f"{T_ref} K", (nu_fine[k], b[k]), fontsize=7, color="0.55",
-                ha="center", va="bottom")
+                ha="center", va="bottom", bbox=label_box)
 ax.stairs(flux_density, edges, color="tab:blue", lw=2)
 ax.set(xlabel="wavenumber (cm$^{-1}$)",
-       ylabel="spectral OLR (W m$^{-2}$ / cm$^{-1}$)", xlim=(0, 1800))
+       ylabel="spectral OLR (W m$^{-2}$ / cm$^{-1}$)", xlim=(0, NU_MAX))
 ax.set_title(f"OLR spectrum — total {olr_band.sum():.1f} W m$^{{-2}}$")
 
 ax2.stairs(tb, edges, color="tab:blue", lw=2)
 ax2.axhline(T_SURF, color="k", ls=":", lw=0.8)
-ax2.annotate(f"surface, {T_SURF:.0f} K", (1430, T_SURF + 2), fontsize=8)
+ax2.annotate(f"surface, {T_SURF:.0f} K", (0.99 * NU_MAX, T_SURF + 2),
+             fontsize=8, ha="right", bbox=label_box)
 for lo, hi, label in [(630, 700, "CO$_2$"), (800, 1180, "window")]:
     ax2.axvspan(lo, hi, color="0.92", zorder=0)
-    ax2.annotate(label, (0.5 * (lo + hi), 196), fontsize=8, ha="center")
+    ax2.annotate(label, (0.5 * (lo + hi), 194), fontsize=8, ha="center")
 ax2.set(xlabel="wavenumber (cm$^{-1}$)", ylabel="brightness temperature (K)",
-        xlim=(0, 1800), ylim=(190, 300))
+        xlim=(0, NU_MAX), ylim=(190, 310))
 ax2.set_title("Where each band radiates from")
 fig.tight_layout()
 
 # End the cell on plt.show(). quarto-live paints the figure a cell explicitly
 # shows, not whatever matplotlib happens to have open when the cell ends: leave
-# it out and this cell prints its four lines and draws nothing.
+# it out and this cell prints its numbers and draws nothing.
 plt.show()
 ```
 
@@ -154,14 +163,14 @@ stratosphere, and their brightness temperature is the temperature *there* — ab
 200 K, some 88 K colder than the ground.
 
 **The window, 800–1180 cm⁻¹ (8.5–12.5 µm).** The spectrum rides just under the 285
-K curve, within a few degrees of the surface. Here the atmosphere is nearly
-transparent: what leaves the top of the atmosphere was emitted by the ground and
+K curve, averaging 284 K across the three bands — within a few degrees of the
+surface. Here the atmosphere is nearly transparent: what leaves the top of the atmosphere was emitted by the ground and
 the lowest kilometre or so, and barely intercepted on the way out. Not quite the
 surface, though — the 3 K deficit is water vapour's weak continuum absorption, and
 [page 2](02-window-measured.qmd) measures it.
 
 So the payoff. Your ε is a single number averaged over a curve whose brightness
-temperature swings roughly 85 K — 200 K in the CO₂ core, 285 K in the window. The
+temperature swings roughly 85 K — 200 K in the CO₂ core, 284 K in the window. The
 shell model's one radiating level is an average of levels that differ by more than
 10 km in height. The average is not *wrong*; a well-chosen ε reproduces the OLR
 your surface actually emits, which is why the shell model works at all. But it is
@@ -171,12 +180,16 @@ not the rest.
 
 ## The last band is 300 K. Nothing is that hot.
 
-Look again at the last line the cell printed. The band from 1800 to 3250 cm⁻¹
-comes back at a brightness temperature of 300 K — twelve degrees *hotter* than
-the ground. Nothing in the column is at 300 K. Nothing is above 288 K.
+Look at the right-hand panel past 1800 cm⁻¹, where one enormous step sits well
+above the dotted surface line. The last band, 1800–3250 cm⁻¹, comes back at a
+brightness temperature of 300 K — twelve degrees *hotter* than the ground. Nothing
+in the column is at 300 K. Nothing is above 288 K.
+
+Now put a finger on the same stretch of the left-hand panel. The OLR out there is
+flat on the floor: this band radiates almost nothing at all.
 
 Before reading on: what could produce a brightness temperature no object in the
-problem possesses?
+problem possesses — in the very region where almost no energy is leaving?
 
 ::: {.callout-caution collapse="true"}
 ## What went wrong (open after you have had a go)
@@ -193,15 +206,18 @@ cm⁻¹*, far out on the exponential tail where a blackbody emits very little. T
 only way to emit that much out there is to be very hot. Hence 300 K.
 
 A brightness temperature means something only when the band is narrow enough that
-Planck is roughly linear across it. The 13 bands we plotted satisfy that well
-enough to read; the fourteenth does not, which is why the printed range stops at
-1800 cm⁻¹ and the figure's x-axis does too. This is a real limitation of a 14-band
+Planck is roughly linear across it. The first thirteen bands satisfy that well
+enough to read; the fourteenth does not. This is a real limitation of a 14-band
 table, not a bug in the code — and it is one reason the later pages reach for a
 finer one.
 
-Worth noticing what this band is *not*: it is not important. It carries 4.8 W m⁻²
-of the 246, because at terrestrial temperatures there is almost nothing to emit up
-there. The diagnostic is nonsense precisely where the energy is negligible.
+Which is also why the left-hand panel matters here. This band carries 4.8 W m⁻² of
+the 246, because at terrestrial temperatures there is almost nothing to emit that
+far out. The diagnostic goes nonsensical exactly where the energy is negligible —
+so the OLR, the number the climate actually cares about, is unharmed. Read the two
+panels together and you get the working rule: a brightness temperature is a
+statement about *where* radiation came from, and it is only worth trusting in
+bands that carry enough radiation to be worth asking about.
 :::
 
 ::: {.callout-note}
