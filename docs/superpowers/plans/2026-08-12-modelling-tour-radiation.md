@@ -2179,7 +2179,7 @@ exercise 3.
 **Interfaces:**
 - Consumes: Task 4 and Task 5 helpers; adds `CorkShortwaveRadiation`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_modelling_tour.py`:
 
@@ -2222,13 +2222,16 @@ def test_page6_olr_saturates_at_high_surface_temperature(soundings):
     assert olr(340.0) < 400.0    # nowhere near sigma T^4 = 757 W/m2
 ```
 
-- [ ] **Step 2: Run to verify**
+- [x] **Step 2: Run to verify**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v -m slow -k page6`
 Expected: PASS. If `test_page6_olr_saturates` fails, check the sounding's `q_floor` and
 that H₂O VMR stays inside the table's axis (max 1.0, i.e. q ≈ 0.38 kg/kg).
 
-- [ ] **Step 3: Write the page**
+**As built: both passed first run** (5.5 s). The helpers from Tasks 4–5 already
+supported everything these two assert, so there was no red phase here.
+
+- [x] **Step 3: Write the page**
 
 Create `docs/modelling-tour/06-water-vapour-limit.qmd`, title
 `Water vapour, and the limit`.
@@ -2267,7 +2270,7 @@ Content:
     time integration finally enters.
 11. `## Going deeper` → `../radiative-transfer/08-multiplanet.qmd`.
 
-- [ ] **Step 4: Render, then commit**
+- [x] **Step 4: Render, then commit**
 
 ```bash
 cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render modelling-tour/06-water-vapour-limit.qmd
@@ -2279,6 +2282,55 @@ git commit -m "docs(tour): page 6, the water vapour feedback and the runaway lim
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — three deviations from Step 3, and the numbers as built
+
+**The "window closing" panel shows optical depth, not flux.** Step 3 item 5 asked for
+"a per-band panel showing the window closing". Drawn as per-band *flux* it shows nothing:
+980–1080 cm⁻¹ emits 24.83 W m⁻² at 300 K and 26.09 at 350 K. That flatness IS the
+phenomenon, but the panel would look like a bug. The page draws column optical depth
+(0.15 → 94.1 from 280 to 350 K, crossing 1 at 300 K) beside brightness temperature
+(277.2 → 292.8 K, of which only 2.8 K comes after 300 K), with the surface temperature
+as a dashed reference. That pair shows the mechanism: the absorber explodes, the
+emission temperature does not follow.
+
+**The saturated sweep runs 280–350 K, not 300–350.** Starting at 280 K puts the
+knee of the curve on screen — dOLR/dTs falls 1.78 → 0.48 over 280–310 and then
+straightens at 0.385 W m⁻² K⁻¹, against 8.15 for a blackbody at 330 K. Starting at
+300 would have shown only the flat part, with nothing to be flat *relative to*.
+Upper end capped at 350 K, not 360: Bolton's `saturation_vapour_pressure` returns
+`q > 1 kg/kg` above ~355 K, so the sounding stops being physical before the table's
+H₂O axis (max VMR 1.0) is exhausted. The page says so in a `.callout-important`,
+along with the fixed 6.5 K km⁻¹ lapse rate and the pinned 1000 hPa surface.
+
+**The shortwave needs two knobs the plan did not name.** `CorkShortwaveRadiation`'s
+TOA insolation is `1361 · cos(zenith) · flux_adjustment_for_earth_sun_distance`.
+Default state gives zenith = 0, i.e. 1361 W m⁻² — nowhere near any OLR curve. The page
+sets zenith = 60° and the flux adjustment to 0.5, giving `S/4 = 340.25 W m⁻²` with a
+realistic slant path. Clear-sky planetary albedo then comes out at **0.124** (Rayleigh
+plus a 6% sea surface), so the bare-ocean ASR is ~299 W m⁻², *above* this column's OLR
+ceiling of 274.67 — the cloud-free planet is already past the limit, which the page uses
+as its no-crossing case. Surface albedo 0.30 stands in for cloud (planetary albedo 0.283)
+and crosses at 294.46 K.
+
+Measured values the prose quotes, all reproduced by the page's own cells:
+
+| quantity | value |
+|---|---|
+| dOLR/dTs, moisture frozen | 3.516 W m⁻² K⁻¹ |
+| dOLR/dTs, moisture responding | 1.299 W m⁻² K⁻¹ |
+| water vapour feedback (fixed lapse rate) | 2.216 W m⁻² K⁻¹ |
+| ΔT per CO₂ doubling, using Task 11's F = 3.58 | 2.76 K |
+| OLR ceiling, saturated column | 274.67 W m⁻² |
+| equilibrium at albedo 0.30 | 294.46 K |
+| solar multiplier that destroys it | ×1.05 (×1.04 → 318.93 K) |
+
+The solar ladder costs no extra radiative-transfer calls: absorbed shortwave is exactly
+linear in incident flux at fixed albedo and profile (verified: `ASR(×1.05) = 1.05 ·
+ASR(×1.00)` to the printed digit), so seven scenarios reuse one `asr_curve` sweep. The
+craft callout makes that a teaching point. Browser cost model, measured with
+`NUMBA_DISABLE_JIT=1` at nz=40: **68 ms per longwave call, 6 ms per shortwave** — the
+page issues ~75 calls, so about 5 s of compute spread over seven cells.
 
 ---
 

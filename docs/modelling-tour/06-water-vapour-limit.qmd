@@ -1,0 +1,586 @@
+---
+title: "Water vapour, and the limit"
+format: live-html
+engine: jupyter
+pyodide:
+  packages:
+    # Installed by micropip at document setup, before any cell runs; pinned to
+    # the released version this page was written against.
+    - "climt==0.30.0"
+    # A transitive dependency of climt, named explicitly because these pages
+    # rely on it — see page 4's craft callout for why unyt and not numpy.
+    - "unyt"
+  resources:
+    # Fetched into the Pyodide filesystem at document setup. The same files
+    # tests/test_modelling_tour.py imports natively — see page 1 for the
+    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
+    - _tour/soundings.py
+    - _tour/spectra.py
+---
+
+{{< include ../_includes/climt-live-setup.qmd >}}
+
+::: {.callout-tip}
+## Where this fits
+
+Chapter 4 lists the feedbacks that turn a forcing into a temperature change, and
+puts water vapour at the top: warm the air and it holds more of the strongest
+greenhouse gas there is, which warms it further. The notes name the mechanism
+and give it a sign. They cannot give it a number, because the number is an
+integral over a spectrum.
+
+Page 5 measured the forcing. This page measures the feedback, by the only method
+available to you: compute the OLR twice, once letting the moisture respond and
+once forbidding it, and look at the gap.
+
+Then it keeps going. Follow the same feedback past the temperatures Earth
+actually reaches and it stops behaving like a feedback at all — the OLR simply
+refuses to rise. That ceiling is the **Simpson–Nakajima limit**, and it is the
+reason Venus has no oceans.
+:::
+
+## Two curves, one column
+
+The column is the one pages 1 to 3 and 5 used: a 6.5 K km⁻¹ troposphere under an
+isothermal 200 K stratosphere. The surface temperature is the knob, and it is
+turned twice.
+
+On the **fixed relative humidity** run, `lapse_rate_sounding` recomputes the
+humidity at each surface temperature, so a warmer column is a moister one — that
+is Clausius–Clapeyron doing its work. On the **fixed specific humidity** run the
+moisture is pinned to the 288 K profile and never allowed to respond. Nothing
+else differs between the two.
+
+```{pyodide}
+#| autorun: true
+import sys
+sys.path.insert(0, "_tour")   # helper modules, served alongside this page
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sympl, climt
+from climt import (CorkLongwaveRadiation, CorkShortwaveRadiation,
+                   get_default_state, get_grid)
+
+from soundings import lapse_rate_sounding, apply_sounding
+from spectra import (band_centres, band_limits_of, brightness_temperature,
+                     spectral_olr)
+
+sympl.set_backend(climt.UnytBackend())
+
+lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+sw = CorkShortwaveRadiation(optics="correlated_k", table="earth_low_res_sw")
+state = get_default_state([lw, sw], grid_state=get_grid(nx=1, ny=1, nz=40))
+
+p = state["air_pressure"].values[:, 0, 0]
+ps = float(state["surface_air_pressure"].values.ravel()[0])
+limits = band_limits_of(lw)
+nu = band_centres(limits)
+
+# The reference moisture the "fixed q" branch is frozen at.
+_, Q_REF = lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8)
+
+
+def olr_at(T_surf, rh=0.8, humidity=None):
+    """OLR in W/m2 for this column at a prescribed surface temperature.
+
+    Pass humidity=Q_REF to hold the moisture fixed while the column warms.
+    """
+    T, q = lapse_rate_sounding(p, ps, T_surf=T_surf, rh=rh)
+    apply_sounding(state, T, q if humidity is None else humidity, T_surf=T_surf)
+    return float(lw(state)[1]["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+
+print(f"{len(p)} levels, {ps/100:.0f} hPa surface")
+print(f"OLR at 288 K, RH = 80%: {olr_at(288.0):.2f} W/m2")
+```
+
+```{pyodide}
+T_s = np.linspace(280.0, 310.0, 8)
+olr_rh = np.array([olr_at(t) for t in T_s])                   # moisture responds
+olr_q = np.array([olr_at(t, humidity=Q_REF) for t in T_s])    # moisture frozen
+
+slope_rh = np.polyfit(T_s, olr_rh, 1)[0]
+slope_q = np.polyfit(T_s, olr_q, 1)[0]
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.fill_between(T_s, olr_rh, olr_q, where=olr_q >= olr_rh,
+                color="#4dabf7", alpha=0.25, label="the water vapour feedback")
+ax.plot(T_s, olr_q, "o-", color="#343a40", lw=2, ms=5,
+        label=f"fixed $q$   {slope_q:.2f} W m$^{{-2}}$ K$^{{-1}}$")
+ax.plot(T_s, olr_rh, "o-", color="#1c7ed6", lw=2, ms=5,
+        label=f"fixed RH  {slope_rh:.2f} W m$^{{-2}}$ K$^{{-1}}$")
+ax.set(xlabel="surface temperature (K)", ylabel="OLR (W m$^{-2}$)")
+ax.set_title("The same warming, with and without a moisture response")
+ax.grid(alpha=0.3)
+ax.legend(fontsize=9)
+fig.tight_layout()
+plt.show()
+
+print(f"dOLR/dTs, moisture frozen    : {slope_q:.3f} W/m2/K")
+print(f"dOLR/dTs, moisture responding: {slope_rh:.3f} W/m2/K")
+print(f"water vapour feedback        : {slope_q - slope_rh:.3f} W/m2/K")
+print(f"gap at 310 K                 : {olr_q[-1] - olr_rh[-1]:.2f} W/m2")
+```
+
+## Reading the gap
+
+The frozen-moisture curve climbs at **3.52 W m⁻² K⁻¹**. That is the Planck
+response — the notes quote it as `λ ≈ −3.3 W m⁻² K⁻¹`, and you have now
+computed it rather than been told it. (It is well below the bare-surface
+`4σT³ = 5.42` because the atmosphere warms along with the surface, so the
+greenhouse effect strengthens even with the moisture held still.)
+
+Let the moisture respond and the same warming yields only **1.30 W m⁻² K⁻¹**.
+The difference, **2.22 W m⁻² K⁻¹**, is the water vapour feedback. It is a
+positive feedback in the precise sense that matters: it *subtracts* from the
+rate at which the planet can shed heat, so a given forcing must be paid for with
+more warming.
+
+Notice where the two curves cross — at 288 K, and by construction, because
+that is the temperature the frozen profile was frozen at. Below it the "fixed
+q" column is the *moister* of the two and radiates less. The feedback is not
+the gap at any one temperature; it is the difference in slope. The shading is a
+picture of an integral, not of a quantity.
+
+Now carry the number into page 5's arithmetic. Chapter 4 divides a forcing by a
+feedback parameter, and page 5 measured the forcing for a CO₂ doubling as
+3.58 W m⁻²:
+
+| | λ (W m⁻² K⁻¹) | ΔT per doubling |
+|---|---|---|
+| Planck response only (page 5's answer) | 3.52 | 1.02 K |
+| Planck + water vapour | 1.30 | **2.76 K** |
+
+Page 5 ended on 1.0 K and the observation that the real answer is nearer 3 K.
+One feedback, computed on one column with no clouds and no ice, closes most of
+that gap. This is the single largest reason climate sensitivity is not a
+textbook exercise in blackbody radiation.
+
+Two honest caveats, both of which matter. The lapse rate is held at 6.5 K km⁻¹
+throughout, so this is a *fixed-lapse-rate* water vapour feedback; letting the
+troposphere warm more aloft than at the surface would claw back roughly a third
+of it. And there are no clouds anywhere on this page.
+
+## Why the curve is so nearly straight — and where it stops being
+
+Over 280–310 K the fixed-RH OLR looks close to linear, and that near-linearity
+is what makes a single feedback parameter a sensible thing to quote at all. It
+survives because of the window. Pages 1 and 2 showed 800–1180 cm⁻¹ radiating
+from within a few kilometres of the ground; while it stays open it tracks the
+surface temperature faithfully, holding the whole curve up even as the rest of
+the spectrum saturates.
+
+So push until the window shuts. Take the column to 100% relative humidity — the
+most feedback-prone case there is — and run it from 280 K to 350 K.
+
+```{pyodide}
+T_hot = np.arange(280.0, 351.0, 5.0)
+olr_hot, band_hot, tau_hot = [], [], []
+
+for t in T_hot:
+    T, q = lapse_rate_sounding(p, ps, T_surf=t, rh=1.0)
+    apply_sounding(state, T, q, T_surf=t)
+    _, d = lw(state)
+    olr_hot.append(float(d["upwelling_longwave_flux_in_air"].values[-1, 0, 0]))
+    ob, fd = spectral_olr(d, limits)
+    # Both of these allocate: brightness_temperature builds a new array, and
+    # .sum(axis=0) does too. Page 5's craft callout explains why that matters --
+    # stashing `d` itself would give you the last iteration's numbers fifteen
+    # times over, because the arrays inside it are the component's own buffers.
+    band_hot.append(brightness_temperature(fd, nu))
+    tau_hot.append(d["longwave_optical_depth_per_band"].values[:, 0, 0, :]
+                   .sum(axis=0))
+
+olr_hot = np.array(olr_hot)
+band_hot = np.array(band_hot)
+tau_hot = np.array(tau_hot)
+sigma = 5.670374419e-8
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.plot(T_hot, sigma * T_hot ** 4, "--", color="0.6", lw=1.5,
+        label="$\\sigma T_s^4$ — no atmosphere")
+ax.plot(T_hot, olr_hot, "o-", color="#c92a2a", lw=2.2, ms=5,
+        label="OLR, saturated column")
+ax.axhline(olr_hot.max(), color="#c92a2a", ls=":", lw=1.2)
+ax.annotate(f"the ceiling: {olr_hot.max():.0f} W m$^{{-2}}$",
+            xy=(0.05, 0.145), xycoords="axes fraction",
+            fontsize=9, color="#c92a2a")
+ax.set(xlabel="surface temperature (K)", ylabel="OLR (W m$^{-2}$)")
+ax.set_title("A planet trying, and failing, to radiate its way out")
+ax.grid(alpha=0.3)
+ax.legend(fontsize=9)
+fig.tight_layout()
+plt.show()
+
+print("      Ts     OLR    dOLR/dTs   sigma*Ts^4")
+for i, t in enumerate(T_hot):
+    d_olr = "" if i == 0 else f"{(olr_hot[i] - olr_hot[i-1]) / 5:8.3f}"
+    print(f"  {t:6.0f}  {olr_hot[i]:7.2f}  {d_olr:>8}    {sigma * t**4:7.1f}")
+
+hot = T_hot >= 310.0
+print(f"\ntotal rise, 280 -> 350 K : {olr_hot[-1] - olr_hot[0]:.2f} W/m2")
+print(f"  a bare surface would gain {sigma * (350**4 - 280**4):.0f} W/m2")
+print(f"mean dOLR/dTs over 310-350 K: "
+      f"{(olr_hot[-1] - olr_hot[hot][0]) / (T_hot[-1] - T_hot[hot][0]):.3f} W/m2/K")
+print(f"  a blackbody at 330 K would manage {4 * sigma * 330**3:.2f}")
+```
+
+Seventy kelvin of surface warming buys **48 W m⁻² of extra outgoing radiation**.
+A bare rock over the same range would have gained 502. Above 310 K the curve
+straightens out at **0.385 W m⁻² K⁻¹** — four tenths of a watt per kelvin,
+against the 8.15 W m⁻² K⁻¹ a blackbody at those temperatures would manage. (The
+point-to-point slopes printed above scatter by about ±0.06 around that figure;
+that is the k-table's interpolation between H₂O nodes showing through, not
+physics.) The atmosphere is roughly twenty times stiffer than the surface
+underneath it, and it stays that way no matter how hot the surface gets.
+
+## The window, closing
+
+Here is where the honest diagnostic matters. Look at the window band's outgoing
+flux alone and you would conclude nothing is happening — 980–1080 cm⁻¹ emits
+24.8 W m⁻² at 300 K and 26.1 W m⁻² at 350 K, essentially unchanged. That
+flatness *is* the phenomenon, but you cannot see why from the flux. Put the
+band's optical depth next to its brightness temperature and the mechanism is
+unmistakable.
+
+```{pyodide}
+window = int(np.flatnonzero((nu > 980) & (nu < 1080))[0])
+co2_core = int(np.flatnonzero((nu > 630) & (nu < 700))[0])
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.4))
+
+ax1.semilogy(T_hot, tau_hot[:, window], "o-", color="#1c7ed6", lw=2, ms=4,
+             label="980–1080 cm$^{-1}$ (window)")
+ax1.semilogy(T_hot, tau_hot[:, co2_core], "o-", color="#c92a2a", lw=2, ms=4,
+             label="630–700 cm$^{-1}$ (CO$_2$ core)")
+ax1.axhline(1.0, color="0.4", lw=0.9)
+ax1.text(281, 1.7, r"$\tau = 1$: the window shuts here", fontsize=8, color="0.3")
+ax1.set(xlabel="surface temperature (K)", ylabel="column optical depth")
+ax1.set_title("What the water vapour does")
+ax1.grid(alpha=0.3, which="both")
+ax1.legend(fontsize=8)
+
+ax2.plot(T_hot, T_hot, "--", color="0.6", lw=1.5, label="surface temperature")
+ax2.plot(T_hot, band_hot[:, window], "o-", color="#1c7ed6", lw=2, ms=4,
+         label="980–1080 cm$^{-1}$ (window)")
+ax2.plot(T_hot, band_hot[:, co2_core], "o-", color="#c92a2a", lw=2, ms=4,
+         label="630–700 cm$^{-1}$ (CO$_2$ core)")
+ax2.set(xlabel="surface temperature (K)", ylabel="brightness temperature (K)")
+ax2.set_title("What space sees")
+ax2.grid(alpha=0.3)
+ax2.legend(fontsize=8)
+
+fig.tight_layout()
+plt.show()
+
+for i, t in enumerate(T_hot[::2]):
+    j = 2 * i
+    print(f"  Ts={t:5.0f}   tau(window) = {tau_hot[j, window]:8.2f}"
+          f"   Tb(window) = {band_hot[j, window]:6.2f} K")
+```
+
+The window's column optical depth goes from **0.15 at 280 K to 94 at 350 K** — a
+factor of six hundred — and crosses 1 at about 300 K. That crossing is the whole
+story. Below it the band really is a window and really does watch the ground.
+Above it the band has an emission level of its own, up in the atmosphere, and
+page 3's argument takes over: what escapes is set by the temperature *there*,
+not at the surface.
+
+And that temperature barely moves. The window's brightness temperature climbs
+from 277 K to 290 K while the surface warms from 280 to 300 — then gains just
+**2.8 K over the next fifty**. The dashed line in the right-hand panel is the
+surface temperature; watch the window peel away from it and flatten.
+
+This is Clausius–Clapeyron closing a loop on itself. The absorber is not an
+independent variable you get to set, the way CO₂ was on page 5 — it is a
+function of temperature, and an exponential one. Warm the column and it
+manufactures more of its own opacity, which lifts the emission level, which is
+colder, which cancels most of the warming you were trying to radiate away. Every
+extra kelvin at the surface pays for its own blanket.
+
+::: {.callout-important}
+## How far to trust this
+
+The model is being run past the range it was built for, and the page would be
+dishonest not to say where.
+
+`saturation_vapour_pressure` is Bolton's 1980 fit, calibrated for terrestrial
+temperatures — a few tens of degrees around freezing. At 350 K it is an
+extrapolation. The specific humidity it returns reaches 0.44 kg/kg there, an H₂O
+mole fraction of 0.56, which is inside `earth_low_res_lw`'s H₂O axis (it tops out
+at 1.0) but at its far end, where the table has one node per decade. Beyond about
+355 K the formula returns `q > 1` and the sounding becomes meaningless.
+
+The lapse rate is held at 6.5 K km⁻¹ throughout. A genuinely saturated column
+follows a moist adiabat, which at these temperatures is far shallower — closer to
+2 K km⁻¹ — and that difference is not a detail: the real Simpson–Nakajima limit
+is a statement about the moist adiabat specifically. Surface pressure is likewise
+pinned at 1000 hPa, though an atmosphere holding this much vapour would weigh
+substantially more.
+
+None of that undoes the mechanism. The ceiling is real, and it is real for the
+reason the figures show. But the number below is this column's ceiling, not
+Earth's, and published estimates (≈ 282 W m⁻², Goldblatt et al. 2013) come from
+calculations that fix all three of these things.
+:::
+
+## Both sides of the budget
+
+Everything so far has been longwave. A ceiling on the OLR only matters if there
+is something on the other side of the ledger for it to fail to balance, so bring
+in the shortwave.
+
+`CorkShortwaveRadiation` needs two things the longwave did not: a solar zenith
+angle and a surface albedo. Setting the zenith to 60° and halving the
+Earth–Sun flux adjustment puts `S/4 = 340 W m⁻²` at the top of the atmosphere
+with a realistic slant path — the standard global-mean single-column
+compromise.
+
+```{pyodide}
+state["zenith_angle"].values[:] = np.deg2rad(60.0)          # cos(z) = 1/2
+state["flux_adjustment_for_earth_sun_distance"].values[...] = 0.5
+
+
+def asr_curve(surface_albedo):
+    """Absorbed shortwave at each T_hot, on the same saturated soundings."""
+    state["surface_albedo_for_direct_shortwave"].values[:] = surface_albedo
+    out = []
+    for t in T_hot:
+        T, q = lapse_rate_sounding(p, ps, T_surf=t, rh=1.0)
+        apply_sounding(state, T, q, T_surf=t)
+        _, d = sw(state)
+        out.append(float(d["downwelling_shortwave_flux_in_air"].values[-1, 0, 0]
+                         - d["upwelling_shortwave_flux_in_air"].values[-1, 0, 0]))
+    return np.array(out)
+
+
+asr_bare = asr_curve(0.06)      # bare ocean, no clouds
+asr_cloudy = asr_curve(0.30)    # albedo raised to stand in for cloud
+
+print(f"TOA insolation: "
+      f"{float(state['flux_adjustment_for_earth_sun_distance'].values) * 1361 * 0.5:.1f}"
+      f" W/m2")
+print(f"at Ts = {T_hot[1]:.0f} K:")
+print(f"  bare ocean   ASR = {asr_bare[1]:6.2f}  planetary albedo "
+      f"{1 - asr_bare[1] / 340.25:.3f}")
+print(f"  albedo 0.30  ASR = {asr_cloudy[1]:6.2f}  planetary albedo "
+      f"{1 - asr_cloudy[1] / 340.25:.3f}")
+```
+
+A cloud-free ocean reflects almost nothing: Rayleigh scattering and a 6%
+sea-surface albedo together return only 12% of the incoming sunlight, so the
+planet absorbs about 299 W m⁻². Earth's actual planetary albedo is 0.29, and
+most of the difference is cloud, which this model has none of. Raising the
+surface albedo to 0.30 is a crude stand-in — it puts the reflected fraction in
+the right place while leaving the physics honest about what it is representing.
+
+Now put the two curves on one axis.
+
+```{pyodide}
+def equilibrium(asr):
+    """Where the OLR curve crosses from below — the stable balance point."""
+    net = asr - olr_hot
+    down = np.flatnonzero(np.diff(np.sign(net)) < 0)
+    if down.size == 0:
+        return None
+    i = down[0]
+    return T_hot[i] + 5.0 * net[i] / (net[i] - net[i + 1])
+
+
+fig, ax = plt.subplots(figsize=(7.5, 5))
+ax.plot(T_hot, olr_hot, "o-", color="#c92a2a", lw=2.4, ms=5,
+        label="OLR (what the planet emits)")
+ax.plot(T_hot, asr_cloudy, "s-", color="#1c7ed6", lw=2, ms=4,
+        label="absorbed solar, albedo 0.30")
+ax.plot(T_hot, asr_bare, "s-", color="#f08c00", lw=2, ms=4,
+        label="absorbed solar, bare ocean")
+
+T_eq = equilibrium(asr_cloudy)
+if T_eq is not None:
+    ax.plot([T_eq], [np.interp(T_eq, T_hot, olr_hot)], "*", color="k", ms=16,
+            zorder=5)
+    ax.annotate(f"equilibrium\n{T_eq:.1f} K", xy=(T_eq, np.interp(T_eq, T_hot, olr_hot)),
+                xytext=(0.30, 0.18), textcoords="axes fraction", fontsize=9,
+                arrowprops=dict(arrowstyle="->", color="0.3"))
+ax.annotate("no crossing anywhere:\nabsorbed sunlight always wins",
+            xy=(T_hot[-5], asr_bare[-5]), xytext=(0.40, 0.60),
+            textcoords="axes fraction", fontsize=9, color="#b35c00",
+            ha="center", arrowprops=dict(arrowstyle="->", color="#b35c00"))
+
+ax.set(xlabel="surface temperature (K)", ylabel="flux (W m$^{-2}$)")
+ax.set_title("Where the two sides of the budget meet — and where they do not")
+ax.grid(alpha=0.3)
+ax.legend(fontsize=9, loc="lower right")
+fig.tight_layout()
+plt.show()
+
+print(f"albedo 0.30 : equilibrium at {equilibrium(asr_cloudy):.2f} K")
+print(f"bare ocean  : {equilibrium(asr_bare)}")
+print(f"OLR ceiling on this branch: {olr_hot.max():.2f} W/m2")
+```
+
+The blue curve crosses the red one at **294.5 K**, from above, and that crossing
+is a stable equilibrium in the ordinary way: below it the planet absorbs more
+than it emits and warms, above it the reverse. It is a few kelvin warmer than the
+real Earth because a saturated column is moister than the real one.
+
+The orange curve never crosses. There is no surface temperature at which this
+planet can get rid of 299 W m⁻². Not at 300 K, not at 350 K, not — since the OLR
+is climbing at four tenths of a watt per kelvin — at any temperature you could
+reach before the oceans were gone. That is the runaway greenhouse, and the only
+thing separating the two curves is a change in albedo.
+
+## How close is close
+
+The margin is easier to feel if you turn the one knob nobody on Earth controls.
+Absorbed sunlight is exactly proportional to the incoming flux, so a brighter sun
+costs no extra radiative-transfer calls at all — the same `asr_cloudy` array,
+scaled.
+
+```{pyodide}
+print(" solar   TOA flux   equilibrium")
+for mult in (1.00, 1.01, 1.02, 1.03, 1.04, 1.05, 1.10):
+    T_eq = equilibrium(mult * asr_cloudy)
+    verdict = "none — runaway" if T_eq is None else f"{T_eq:8.2f} K"
+    print(f"  {mult:4.2f}x  {340.25 * mult:7.1f}    {verdict}")
+```
+
+One per cent more sunlight moves the equilibrium 3.7 K. The fourth per cent moves
+it 10.4 K. The fifth moves it to nowhere at all: the ASR curve lifts clear of the
+OLR ceiling and the crossing does not move — it *ceases to exist*.
+
+That is the shape of the thing worth taking away. The runaway is not a gradual
+steepening you could watch coming. It is two curves losing contact, and the last
+stable state before they part is nowhere near hot enough to look alarming — 319 K
+in the table above, warm but not obviously terminal. Systems with a ceiling on
+their negative feedback fail this way: fine, fine, fine, gone.
+
+Venus receives about 1.9 times Earth's insolation, which is not marginal at all.
+The Sun was 30% fainter when the Earth formed and has been brightening since; it
+will pass this column's threshold in roughly a billion years, whatever anyone
+does about CO₂. And notice that CO₂ *cannot* do this, however much of it you add
+— page 5 showed why. Its optical depth is something you impose from outside, and
+its bands saturate against a fixed lapse rate. Water vapour's optical depth is a
+function of the temperature it is trying to control. Only a feedback that
+supplies its own absorber can run away.
+
+::: {.callout-note}
+## climt craft: two components on one state
+
+Every previous page ran one component. This one runs two, and the pattern is
+worth stating because it is the pattern every model in climt is built from.
+
+```python
+lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+sw = CorkShortwaveRadiation(optics="correlated_k", table="earth_low_res_sw")
+state = get_default_state([lw, sw], grid_state=get_grid(nx=1, ny=1, nz=40))
+```
+
+**Pass the whole list to `get_default_state`.** It reads each component's
+`input_properties` and builds one state satisfying the union of them. Build the
+state from `[lw]` alone and the shortwave call fails on a missing
+`zenith_angle`; build it twice and you have two states that will silently drift
+apart. The list is how components declare what they need, and the state is the
+single place those needs are met.
+
+**Each component owns its own tables.** `lw` and `sw` load different files —
+`earth_low_res_lw` covers 10–3250 cm⁻¹ in 14 bands, `earth_low_res_sw` covers
+3250–30 000 cm⁻¹ in 3. Neither knows the other exists. `sw.num_shortwave_bands`
+is 3 and `lw.num_longwave_bands` is 14, and the `_per_band` diagnostics are
+indexed on each component's own band axis — which is why `band_limits_of(lw)`
+takes the component as its argument rather than being a module constant. Never
+index a shortwave diagnostic with longwave band limits; the shapes happen not to
+match here, which is luck, not protection.
+
+**Two calls, two dictionaries.** `lw(state)` and `sw(state)` each return their
+own `(tendencies, diagnostics)`. Nothing merges them for you. This page never
+needs to, because it only reads fluxes — but if you wanted the column's total
+heating you would add `lw(state)[0]["air_temperature"]` to
+`sw(state)[0]["air_temperature"]` yourself. That addition is the entire content
+of what a time integrator does, repeated: sum the tendencies, take a step, call
+everything again. `sympl.AdamsBashforth` does exactly that, and the next tranche
+begins by handing it this list.
+
+**Know which call you are paying for.** In the browser the longwave costs about
+70 ms and the shortwave about 6 — a factor of eleven, because the longwave table
+has 14 bands × 8 g-points against the shortwave's 3 × 2, and because the longwave
+kernel sweeps up and down while the two-stream shortwave does not. The solar
+ladder above exploits the other half of this: absorbed shortwave is linear in the
+incident flux with everything else fixed, so seven solar scenarios reuse one
+sweep. Before writing a nested loop, ask which axis actually requires a new call.
+:::
+
+## Exercises
+
+### Physics
+
+1. **Find the limit properly.** The runaway threshold is the maximum of the OLR
+   curve, and this page only bounded it from below — the curve was still rising
+   at 350 K, where the sounding stops being trustworthy. Extend `T_hot` to
+   355 K, watch the surface `q` pass 0.65 kg/kg, and decide for yourself where
+   the calculation stops meaning anything. Then look up the Komabayashi–Ingersoll
+   limit and explain why a genuine asymptote requires the *stratospheric*
+   temperature to be pinned, not the tropospheric one.
+
+2. **Why CO₂ cannot do this.** Repeat the crossing plot with the CO₂ raised to
+   10 000 ppm at fixed 80% relative humidity, and confirm the crossing moves but
+   never disappears. State the difference between the two gases in one sentence
+   that mentions Clausius–Clapeyron, and check it against page 5's finding that
+   the core had "run out of lapse rate" rather than out of absorber.
+
+3. **The window sets the ceiling.** The OLR ceiling in this column is
+   275 W m⁻², of which the four window bands (800–1250 cm⁻¹) supply 112 — two
+   fifths of it, from a sixth of the spectral range.
+   Argue from the τ panel what the ceiling would be on a planet whose atmosphere
+   had no window at all, and relate that to why the Simpson–Nakajima limit is
+   sometimes quoted as roughly `σT⁴` evaluated at the tropopause.
+
+### Code
+
+1. **Solve for the equilibrium instead of reading it off.** Write
+   `equilibrium_temperature(asr, lo=270.0, hi=350.0, tol=0.01)` that bisects on
+   `olr_saturated(T_s) − asr`, calling the radiation code inside the loop rather
+   than interpolating a precomputed curve. Check it against the 294.5 K above,
+   count the calls it costs, then hand it `asr = 300.0` and watch it converge
+   confidently on `hi` — a bisection cannot fail, it can only lie. Add the guard
+   that makes it report "no equilibrium in range" honestly.
+
+2. **Separate the two feedbacks.** The 2.22 W m⁻² K⁻¹ measured above mixes the
+   response of the whole moisture profile. Split it: recompute the fixed-RH curve
+   letting the humidity respond only *below* 500 hPa, then only above. Which half
+   of the atmosphere carries the feedback, and does that match what page 3's
+   weighting function would have predicted?
+
+3. **Put the surface budget back in.** This page balanced the *top* of the
+   atmosphere. Plot the surface energy budget instead — downwelling longwave plus
+   downwelling shortwave minus `σT_s⁴` — over the same 280–350 K sweep, and note
+   that it does not vanish at 294.5 K. Explain what is missing, and why every
+   model that runs to equilibrium in time needs the turbulent fluxes the next
+   tranche introduces.
+
+::: {.callout-note}
+## Where next
+
+That is the radiation tranche. Six pages, and not one of them integrated
+anything in time: every figure came from prescribing a state and asking a
+component what it made of it. That was deliberate. Radiative transfer is a
+mapping from a profile to a set of fluxes, and it is far easier to understand
+when nothing is moving.
+
+But exercise 3 above has the last word. The surface budget does not close, and it
+cannot, because radiation alone does not carry heat away from a surface —
+convection and turbulence do. Chapters 10 to 12 of the notes take that up:
+turbulent heat exchange, dry convection, and radiative–convective equilibrium.
+Those need a state that evolves, which means `AdamsBashforth`, a timestep, and a
+loop — and a whole new set of ways to be wrong.
+:::
+
+## Going deeper
+
+The runaway greenhouse is a question about a planet, not about Earth, and the
+same components run on other planets with other tables.
+[Multi-planet radiation](../radiative-transfer/08-multiplanet.qmd) puts Mars,
+Venus and Titan through the machinery this page has been using, with the
+opacity tables each one needs — including a Venus table that has already been
+through the door this page has only opened.

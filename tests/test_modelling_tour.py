@@ -501,3 +501,41 @@ def test_page5_forcing_comes_from_the_wings_not_the_core(soundings, spectra):
     wings = delta[((centres > 500) & (centres < 630))
                   | ((centres > 700) & (centres < 800))].sum()
     assert wings > core          # the saturated core cannot contribute much
+
+
+@pytest.mark.slow
+def test_page6_fixed_rh_suppresses_olr_relative_to_fixed_q(soundings):
+    """The water vapour feedback: OLR rises more slowly when moisture responds."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+    _, q_ref = soundings.lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8)
+
+    def olr(T_surf, fixed_q):
+        T, q = soundings.lapse_rate_sounding(p, ps, T_surf=T_surf, rh=0.8)
+        soundings.apply_sounding(state, T, q_ref if fixed_q else q, T_surf=T_surf)
+        return float(lw(state)[1]["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+    d_fixed_q = olr(298.0, True) - olr(288.0, True)
+    d_fixed_rh = olr(298.0, False) - olr(288.0, False)
+    assert d_fixed_q > d_fixed_rh > 0        # moisture damps the OLR response
+
+
+@pytest.mark.slow
+def test_page6_olr_saturates_at_high_surface_temperature(soundings):
+    """Approach to the Simpson-Nakajima limit on saturated soundings."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+
+    def olr(T_surf):
+        T, q = soundings.lapse_rate_sounding(p, ps, T_surf=T_surf, rh=1.0)
+        soundings.apply_sounding(state, T, q, T_surf=T_surf)
+        return float(lw(state)[1]["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+    warm = olr(310.0) - olr(300.0)
+    hot = olr(340.0) - olr(330.0)
+    assert hot < warm            # the OLR response flattens
+    assert olr(340.0) < 400.0    # nowhere near sigma T^4 = 757 W/m2
