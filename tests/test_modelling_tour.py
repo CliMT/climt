@@ -386,3 +386,118 @@ def test_page4_same_profile_is_not_an_equilibrium_for_a_real_spectrum(soundings)
     rms = lambda x: float(np.sqrt((x ** 2).mean()))
     assert rms(H_real) > 100 * rms(H_gray)
     assert np.abs(H_real).max() > 5.0
+
+
+def _page5_column(soundings, nz=40):
+    """Page 5's column: the standard sounding, ready for a CO2 sweep."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=nz))
+    p = state["air_pressure"].values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].values.ravel()[0])
+    T, q = soundings.lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8)
+    return lw, state, p, T, q
+
+
+def _olr_at_co2(lw, state, soundings, T, q, T_surf, co2_ppm):
+    soundings.apply_sounding(state, T, q, T_surf=T_surf)
+    state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = co2_ppm * 1e-6
+    _, diag = lw(state)
+    return float(diag["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+
+@pytest.mark.slow
+def test_page5_co2_doubling_forcing_is_canonical(soundings):
+    """Students measure ~3.7 W/m2 per doubling themselves."""
+    lw, state, _, T, q = _page5_column(soundings)
+
+    olr = {c: _olr_at_co2(lw, state, soundings, T, q, 288.0, c)
+           for c in (280, 560, 1120)}
+    first, second = olr[280] - olr[560], olr[560] - olr[1120]
+
+    assert 3.0 < first < 4.5           # canonical ~3.7 W/m2
+    assert 3.0 < second < 4.5
+    assert abs(first - second) < 1.0   # logarithmic, not linear
+
+
+@pytest.mark.slow
+def test_page5_core_optical_depth_is_linear_in_co2(soundings, spectra):
+    """The other half of the page's beat: tau_core is *proportional* to CO2.
+
+    Forcing is logarithmic in concentration while the absorber it comes from is
+    linear in it. The page reconciles the two with page 3's weighting function,
+    so both halves are guarded: this one fits log(tau_core) against log(ppm) and
+    demands an exponent of 1. A dry column isolates CO2 from water vapour, which
+    overlaps the wings of the 15 um band.
+    """
+    lw, state, _, T, _ = _page5_column(soundings)
+    dry = np.full(T.shape, 1e-7)
+    centres = spectra.band_centres(spectra.band_limits_of(lw))
+    core = (centres > 630) & (centres < 700)
+
+    co2 = np.array([30.0, 100.0, 300.0, 1000.0, 3000.0, 10000.0])
+    tau_core = []
+    for ppm in co2:
+        soundings.apply_sounding(state, T, dry, T_surf=288.0)
+        state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = ppm * 1e-6
+        _, diag = lw(state)
+        tau = diag["longwave_optical_depth_per_band"].values[:, 0, 0, :]
+        tau_core.append(float(tau.sum(axis=0)[core].sum()))
+
+    exponent, _ = np.polyfit(np.log(co2), np.log(np.array(tau_core)), 1)
+    assert exponent == pytest.approx(1.0, abs=0.03)
+
+
+@pytest.mark.slow
+def test_page5_wing_brightness_temperature_falls_by_a_fixed_step(soundings, spectra):
+    """Why the forcing is logarithmic, in the one quantity that is unbiased.
+
+    Page 3 showed that a band-mean tau* = 1 level is biased high, so the page
+    cannot argue from where the emission level *is*. Brightness temperature has
+    no such bias: it is inverted straight from the band's escaping flux. In the
+    700-800 cm^-1 wing it drops by a near-constant step for every doubling --
+    a fixed temperature step per FACTOR of two in concentration is exactly what
+    "logarithmic" means. The saturated core does the opposite and flattens out.
+    """
+    lw, state, _, T, q = _page5_column(soundings)
+    limits = spectra.band_limits_of(lw)
+    centres = spectra.band_centres(limits)
+    wing = int(np.flatnonzero((centres > 700) & (centres < 800))[0])
+    core = int(np.flatnonzero((centres > 630) & (centres < 700))[0])
+
+    ladder = [140, 280, 560, 1120, 2240, 4480]
+    tb = {}
+    for ppm in ladder:
+        soundings.apply_sounding(state, T, q, T_surf=288.0)
+        state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = ppm * 1e-6
+        _, fd = spectra.spectral_olr(lw(state)[1], limits)
+        tb[ppm] = spectra.brightness_temperature(fd, centres)
+
+    steps = np.array([tb[b][wing] - tb[a][wing] for a, b in zip(ladder, ladder[1:])])
+    assert np.all(steps < 0)                       # every doubling cools it
+    assert steps.std() < 0.25                      # by very nearly the same step
+    assert -5.5 < steps.mean() < -4.0
+
+    core_steps = np.array([tb[b][core] - tb[a][core]
+                           for a, b in zip(ladder, ladder[1:])])
+    # The core saturates instead: each doubling buys less than the last.
+    assert np.all(np.diff(np.abs(core_steps)) < 0)
+    assert abs(core_steps[-1]) < 0.2 * abs(core_steps[0])
+
+
+@pytest.mark.slow
+def test_page5_forcing_comes_from_the_wings_not_the_core(soundings, spectra):
+    lw, state, _, T, q = _page5_column(soundings)
+    limits = spectra.band_limits_of(lw)
+    centres = spectra.band_centres(limits)
+
+    per_band = {}
+    for co2 in (280, 1120):
+        soundings.apply_sounding(state, T, q, T_surf=288.0)
+        state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = co2 * 1e-6
+        per_band[co2], _ = spectra.spectral_olr(lw(state)[1], limits)
+
+    delta = per_band[280] - per_band[1120]
+    core = delta[(centres > 630) & (centres < 700)].sum()
+    wings = delta[((centres > 500) & (centres < 630))
+                  | ((centres > 700) & (centres < 800))].sum()
+    assert wings > core          # the saturated core cannot contribute much

@@ -1942,7 +1942,7 @@ front matter.
 - Consumes: Task 4 and Task 5 helpers. Uses `earth_low_res_lw` (14×8) — **not** the
   hi-res table: this page sweeps, and sweeps must stay cheap.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_modelling_tour.py`:
 
@@ -1995,12 +1995,12 @@ def test_page5_forcing_comes_from_the_wings_not_the_core(soundings, spectra):
     assert wings > core          # the saturated core cannot contribute much
 ```
 
-- [ ] **Step 2: Run to verify**
+- [x] **Step 2: Run to verify**
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -v -m slow -k page5`
 Expected: PASS (design-time values were 3.59 and 3.86 W/m²).
 
-- [ ] **Step 3: Write the page**
+- [x] **Step 3: Write the page**
 
 Create `docs/modelling-tour/05-co2-knob.qmd`, title `The CO₂ knob`.
 
@@ -2048,7 +2048,7 @@ Content:
    *Code:* rewrite the sweep to also record window and core OLR, and plot all three.
 8. `## Going deeper` → `../radiative-transfer/04-correlated-k.qmd`.
 
-- [ ] **Step 4: Render, then commit**
+- [x] **Step 4: Render, then commit**
 
 ```bash
 cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render modelling-tour/05-co2-knob.qmd
@@ -2060,6 +2060,113 @@ git commit -m "docs(tour): page 5, measuring the CO2 forcing band by band
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — the numbers as built
+
+All three of Step 1's tests passed unmodified. nz = 40, `earth_low_res_lw`,
+288 K surface, RH = 0.8, `q` from `lapse_rate_sounding`:
+
+| quantity | value |
+|---|---|
+| OLR at 280 ppm | 246.71 W m⁻² |
+| forcing 280→560 / 560→1120 | 3.583 / 3.861 W m⁻² |
+| full doubling ladder, 140→4480 | 3.334, 3.583, 3.861, 4.082, 4.590 W m⁻² |
+| straight-line fit, 10–10 000 ppm | 3.644 per doubling, worst residual 2.20 W m⁻² |
+| straight-line fit, 100–2000 ppm | 3.635 per doubling, worst residual 0.23 W m⁻² |
+| ΔOLR 280→1120: total / core / wings | +7.44 / +0.37 (5%) / +5.94 (80%) W m⁻² |
+| core column τ, dry | τ = 2.02 × ppm^0.999 over 30–10 000 ppm |
+| per call, JIT on / `NUMBA_DISABLE_JIT=1` | 2.0 / 69.7 ms |
+
+The 12-point sweep therefore costs ~0.84 s on the Pyodide path, not the ~1.4 s the
+plan's 0.12 s/call estimate implied. The page states 70 ms/call and "under a
+second".
+
+### Log — the τ\* = 1 level could not carry the reconciliation; T_b could
+
+Step 3.5 asks the page to resolve "τ linear, forcing logarithmic" with page 3's
+weighting function. The obvious execution — show the band's τ\* = 1 level rising
+by a fixed factor per doubling — **does not survive arithmetic**, and it was
+nearly written before it was checked.
+
+The band-mean τ\* = 1 level puts the 700–800 cm⁻¹ emission level at 252 → 164 →
+101 → 64 hPa over 280 → 2240 ppm, a factor of ~1.6 per doubling, i.e. a 3.3 km
+rise and a ~21 K drop per doubling. That band's OLR is 24 W m⁻² near 220 K, where
+`dOLR/dT ≈ 0.53 W m⁻² K⁻¹`, so 21 K would be ~11 W m⁻² per doubling from one
+band; the measured whole-spectrum forcing is 3.6. The level is wrong by roughly
+6×, for exactly the reason page 3 documented and tested: cork's band-mean τ is
+the g-weighted mean over eight g-points spanning orders of magnitude, so it
+tracks the band's *strongest* absorption while the flux escapes through its
+weakest, and the inferred level always comes out too high.
+
+Rebuilt on **brightness temperature** instead, which is inverted straight from
+the escaping flux and carries no such bias. It says the same thing, correctly:
+
+| band | 140 | 280 | 560 | 1120 | 2240 | 4480 ppm |
+|---|---|---|---|---|---|---|
+| 500–630 (wing) | 248.69 | 246.74 | 244.42 | 241.77 | 239.04 | 236.38 |
+| 630–700 (core) | 203.36 | 200.71 | 199.15 | 198.33 | 197.96 | 197.83 |
+| 700–800 (wing) | 261.33 | 257.02 | 252.31 | 247.46 | 242.63 | 237.75 |
+
+ΔT_b per doubling in the 700–800 wing is −4.31, −4.72, −4.85, −4.83, −4.88 K —
+constant to within 0.25 K over five doublings, which at 6.5 K km⁻¹ is the
+emission level climbing ~750 m per doubling. A fixed step per *factor of two* is
+the logarithm, measured. The core does the opposite: −2.65, −1.56, −0.82, −0.37,
+−0.13, converging on 197.8 K.
+
+Guarded by a test the plan did not ask for,
+`test_page5_wing_brightness_temperature_falls_by_a_fixed_step`, which asserts the
+wing's steps have std < 0.25 K and mean in (−5.5, −4.0), and that the core's
+steps shrink monotonically to under a fifth of the first. The plan's Step 5
+guard on the linear half landed as
+`test_page5_core_optical_depth_is_linear_in_co2` (exponent 0.999, asserted within
+0.03 of 1) — the plan names it `test_page5_forcing_is_logarithmic`, which is not
+a test that exists; the constant-per-doubling half is
+`test_page5_co2_doubling_forcing_is_canonical`.
+
+### Log — saturation is running out of lapse rate, not out of absorber
+
+The loose statement Step 3.5 supplies — "the 15 µm core is already opaque, so
+adding CO₂ there changes nothing" — gets the conclusion right and the mechanism
+wrong, and the page says so. The core's emission level is not stuck; it rises by
+the same fixed step per doubling as every other band. It is that it left the
+troposphere long ago, and this sounding's stratosphere is isothermal at 200 K
+above 145.6 hPa, so a level rising through it changes the emitted flux by nothing.
+
+Verified by breaking it two ways:
+
+- `T_strat = 220 K`: core ΔOLR falls from +0.371 to +0.110 W m⁻² while the wings
+  only drop a fifth (+5.94 → +4.81).
+- Stratosphere warming at 2.5 K km⁻¹ above the tropopause (ozone-like): the core
+  **changes sign**, +0.371 → −2.261 W m⁻², i.e. more CO₂ raises the outgoing flux
+  in that band. Identical absorber, different temperature.
+
+Both numbers are in the page — the second in the prose, the first as Physics
+exercise 3.
+
+### Log — deviations from Step 3's literal content
+
+- **Step 3.2 asks for the sweep cost stated as "~0.12 s/call".** Measured at
+  69.7 ms with the JIT off, so the page says 70 ms and "under a second".
+- **The straight line is checked rather than asserted.** A fit-and-residual cell
+  was added: over 100–2000 ppm the line holds to 0.23 W m⁻², over the full three
+  decades it drifts and the forcing per doubling climbs 3.33 → 4.59. The page
+  calls "logarithmic" an excellent approximation over its usual range and an
+  approximation elsewhere, and attributes the drift to wing bands running out of
+  lapse rate as the core already has, plus absorption spreading outward — noting
+  that 14 bands resolve that only coarsely.
+- **Step 3.7's Code exercise 1 as specified reaches a false expectation.** It
+  implies the window and core curves are flat while the total slopes. Over
+  10 → 10 000 ppm the total falls 37 W m⁻², the window 7 and the core 5.6 — a
+  third of the change, not a negligible one. Rewritten to ask *where along the
+  axis* each moves: the core does nearly all of its falling below 100 ppm
+  (11.7 → 7.3 W m⁻²) and essentially none after (6.6 → 6.2), which is saturation
+  drawn out.
+- **Physics exercise 2's answer was measured, not guessed:** dry-column forcing
+  is 4.950 and 5.206 W m⁻² per doubling against 3.583/3.861 moist, so removing
+  water vapour makes CO₂ *more* effective. Stated in the exercise as band overlap.
+- **The craft callout gained a fourth point** — that radiative forcing is a
+  definition about what is held fixed, so the per-iteration `apply_sounding`
+  reset is not hygiene but the definition of the quantity being measured.
 
 ---
 
