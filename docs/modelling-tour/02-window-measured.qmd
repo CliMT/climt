@@ -296,10 +296,12 @@ directly and the ground sits at its bare-rock temperature.
 Two details in that run are worth more than the headline.
 
 **The 15 µm bite survives.** Look at the OLR panel at 630–700 cm⁻¹: even at
-10 ppm, the four bands of the CO₂ core still have column optical depths of 20 to
-90, and still carve a notch out of the spectrum. Carbon dioxide is a ferociously effective absorber
-where it absorbs at all — which is exactly the property that makes it a climate
-control knob, and [page 5](05-co2-knob.qmd) puts a number on it.
+10 ppm and a thousandth of the humidity, the four bands of the CO₂ core still
+have column optical depths of 3.9, 17, 89 and 9.2 — every one of them opaque,
+and together still carving a notch out of the spectrum. Carbon dioxide is a
+ferociously effective absorber where it absorbs at all — which is exactly the
+property that makes it a climate control knob, and [page 5](05-co2-knob.qmd)
+puts a number on it.
 
 **10 ppm is a floor, not zero.** Try `CO2_PPM = 1` and nothing changes. The
 k-table this component reads was built on a grid of CO₂ concentrations running
