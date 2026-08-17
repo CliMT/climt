@@ -2,8 +2,43 @@
 History
 =======
 
-Unreleased
-----------
+v.0.31.0
+--------
+
+* **New docs section** — *A Modelling Tour of the Climate System*
+  (``docs/modelling-tour/``), six in-browser pages supplying the computational
+  half of the EC2213 course notes. Each page prescribes a profile and asks
+  CORK's per-band diagnostics what it makes of it — the OLR spectrum behind a
+  single emissivity, the window's real width, the weighting function and its
+  per-band radiating levels, the analytic gray solution validated and then
+  broken, the forcing per CO₂ doubling, and the water vapour feedback with the
+  runaway limit. No time integration anywhere: single component calls and
+  parameter sweeps only. The pages' computational core lives in importable
+  Python under ``docs/modelling-tour/_tour/`` and is exercised natively by
+  ``tests/test_modelling_tour.py`` — on both the 56-band table pages 1-3 run on
+  and the shipped 14-band fallback — so nothing on a page is unguarded by a
+  test.
+
+* **Fix** — the live RCE walkthrough (``docs/radiative-transfer/09-live-rce.qmd``)
+  now draws its profiles on a logarithmic pressure axis. On the linear axis the
+  entire upper atmosphere was crushed into the top sliver of the panel, so the
+  skin temperature the surrounding text discusses was not actually visible; the
+  text also claimed an isothermal top for the non-grey column, which keeps
+  cooling to the model lid, and now says so.
+
+* **New feature** — ``CorkLongwaveRadiation`` takes a ``diffusivity_factor``
+  constructor argument, so the two-stream diffusivity ``D`` in
+  ``trans = exp(-D * tau)`` is settable per component. The default is unchanged
+  at the Elsasser value 1.66; the EC2213 notes derive their equations with
+  ``D = 2``, which the gray-equilibrium page needs to reproduce them exactly.
+
+* **New data** — the ``tour_gray_lw`` correlated-k table: single band, constant
+  ``k``, calibrated at ``D = 2`` to a diffusivity-scaled column optical depth of
+  ``tau_inf = 4``. ``scripts/generate_gray_default_table.py`` gains a
+  ``--diffusivity`` flag (the calibration target is
+  ``D * sum(k * m) == --total-optical-depth``, so it must match the ``D`` the
+  component runs with) and now resolves ``--output`` by full path rather than by
+  basename, so it can write outside the package data directory.
 
 * **Performance** — ``load_k_table`` now materialises ``.npz`` correlated-k
   tables into a plain dict instead of returning numpy's lazy ``NpzFile``.

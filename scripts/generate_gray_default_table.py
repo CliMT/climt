@@ -86,7 +86,7 @@ def _column_mass_path(nc_path):
     sympl.set_backend(sympl.DataArrayBackend())
     cork = CorkLongwaveRadiation(
         optics="correlated_k",
-        table=os.path.splitext(os.path.basename(nc_path))[0],
+        table=nc_path,
     )
     state = get_default_state([cork], grid_state=get_grid(nx=1, ny=1, nz=28))
     _, diag = cork(state)
@@ -99,6 +99,12 @@ def main():
     ap.add_argument("--output", required=True)
     ap.add_argument("--total-optical-depth", type=float, default=1.0,
                     help="Target D-scaled column optical depth (default gray tau0=1).")
+    ap.add_argument("--diffusivity", type=float, default=DIFFUSIVITY_FACTOR,
+                    help="Diffusivity factor D the component will run with. "
+                         "The calibration target is D * sum(k * m) == "
+                         "--total-optical-depth, so this MUST match the D "
+                         "passed to CorkLongwaveRadiation. The EC2213 notes "
+                         "use D=2; cork's default is 1.66.")
     args = ap.parse_args()
 
     # Pass 1: write with k=1 and read the column mass path cork integrates.
@@ -106,13 +112,14 @@ def main():
     sum_m = _column_mass_path(args.output)
 
     # Pass 2: calibrate k so D * sum(k * m) == target total.
-    k_value = args.total_optical_depth / (DIFFUSIVITY_FACTOR * sum_m)
+    k_value = args.total_optical_depth / (args.diffusivity * sum_m)
     write_single_band_table(args.output, k_value=k_value)
     print(f"wrote {args.output}")
     print(f"  column mass path sum_m = {sum_m:.6f}")
     print(f"  calibrated k = {k_value:.6g}  "
           f"(raw total tau = {k_value*sum_m:.6f}, "
-          f"D-scaled = {DIFFUSIVITY_FACTOR*k_value*sum_m:.6f})")
+          f"D-scaled at D={args.diffusivity} = "
+          f"{args.diffusivity*k_value*sum_m:.6f})")
 
 
 if __name__ == "__main__":

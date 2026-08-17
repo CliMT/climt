@@ -31,6 +31,7 @@ bodies IDENTICAL (only `tests/test_live_rce_demo.py` guards the twin).
 # run before the wheel finishes installing. So this cell is synchronous.
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 import climt
 from sympl import AdamsBashforth
 from datetime import timedelta
@@ -96,7 +97,12 @@ def _draw_evolution(snaps, days, olr, tsurf, solar, p, p_int, title):
     norm = plt.Normalize(vmin=snaps[0]["day"], vmax=snaps[-1]["day"])
 
     fig = plt.figure(figsize=(11.5, 8.4))
-    gs = fig.add_gridspec(2, 2, hspace=0.34, wspace=0.30)
+    # right=0.88 reserves a margin for the colorbar. Letting colorbar(ax=[...])
+    # steal the space instead does not work here: its length comes from the
+    # default aspect, so the bar is centred at half height and the panels it
+    # did not shrink -- ax_O and the twinned surface-temperature axis -- ran
+    # their labels straight through it.
+    gs = fig.add_gridspec(2, 2, hspace=0.34, wspace=0.30, right=0.88)
     ax_T = fig.add_subplot(gs[0, 0])
     ax_H = fig.add_subplot(gs[0, 1], sharey=ax_T)
     ax_F = fig.add_subplot(gs[1, 0], sharey=ax_T)
@@ -119,9 +125,18 @@ def _draw_evolution(snaps, days, olr, tsurf, solar, p, p_int, title):
     ax_H.set_title("Longwave heating rate")
     ax_F.set_xlabel("LW flux (W m$^{-2}$)")
     ax_F.set_title("LW flux: up (solid) / down (dashed)")
-    ax_T.invert_yaxis()                     # shared y inverts all three profiles
+    # Log-pressure y axis. On a linear axis the entire upper atmosphere is
+    # crushed into the top sliver of the panel: the gray column's isothermal
+    # layer spans 20 -> 4 hPa, which is 1.6% of a linear axis but ~19% of this
+    # one, so the skin temperature the text below discusses was simply not
+    # visible. Limits run over the *interface* levels (0.2 hPa at the top) so
+    # the flux panel's topmost point is not clipped; high -> low does the
+    # inverting, which the shared y then applies to all three profile panels.
+    ax_T.set_yscale("log")
+    ax_T.set_ylim(p_int.max(), p_int.min())
     for ax in (ax_T, ax_H, ax_F):
-        ax.grid(alpha=0.3)
+        ax.grid(alpha=0.3, which="both")
+        ax.yaxis.set_major_formatter(ScalarFormatter())   # 1000, not 10^3
     ax_H.axvline(0.0, color="0.4", lw=0.8)
 
     # Annotations that explain what the reader is looking at.
@@ -129,7 +144,17 @@ def _draw_evolution(snaps, days, olr, tsurf, solar, p, p_int, title):
     ax_T.annotate("warm surface", xy=(T_final[0], p[0]),
                   xytext=(0.42, 0.14), textcoords="axes fraction", fontsize=8,
                   arrowprops=dict(arrowstyle="->", color="0.3"))
-    ax_T.annotate("isothermal top\n(skin temperature)", xy=(T_final[-1], p[-1]),
+    # Only claim a skin temperature when the profile actually has one. The gray
+    # column relaxes to a uniform top (dT across the top two levels < 1 K); the
+    # non-grey column keeps cooling all the way to the model lid (~7 K across
+    # the same pair, at 33 days and at equilibrium alike), because its topmost
+    # layers absorb only in the strong bands, where the upwelling flux was
+    # already emitted by cold levels. Labelling that "isothermal" would be a
+    # caption contradicting its own figure.
+    isothermal_top = abs(T_final[-1] - T_final[-2]) < 2.0
+    ax_T.annotate("isothermal top\n(skin temperature)" if isothermal_top
+                  else "no isothermal top:\nstill cooling at the model lid",
+                  xy=(T_final[-1], p[-1]),
                   xytext=(0.30, 0.72), textcoords="axes fraction", fontsize=8,
                   arrowprops=dict(arrowstyle="->", color="0.3"))
     ax_H.text(0.04, 0.06, "cooling (< 0) aloft\nrelaxes toward 0\nat equilibrium",
@@ -138,8 +163,8 @@ def _draw_evolution(snaps, days, olr, tsurf, solar, p, p_int, title):
               transform=ax_F.transAxes, fontsize=8, va="top")
 
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap); sm.set_array([])
-    cbar = fig.colorbar(sm, ax=[ax_T, ax_H, ax_F], location="right",
-                        fraction=0.02, pad=0.02)
+    cax = fig.add_axes([0.945, 0.30, 0.013, 0.42])
+    cbar = fig.colorbar(sm, cax=cax)
     cbar.set_label("time (days)  —  early (dark) → late (yellow)")
 
     # OLR / surface-temperature time series: the march toward energy balance.

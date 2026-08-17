@@ -14,7 +14,7 @@ from ..optics.parmentier import (
     load_parmentier_coefficients,
     lookup_ratio_coefficients,
 )
-from .kernels import lw_transport, planck_sources_kernel
+from .kernels import DIFFUSIVITY_FACTOR, lw_transport, planck_sources_kernel
 
 
 class CorkLongwaveRadiation(TendencyComponent):
@@ -24,8 +24,10 @@ class CorkLongwaveRadiation(TendencyComponent):
         table=None,
         coefficients="solar_composition",
         rosseland_mean_fit="freedman2014",
+        diffusivity_factor=DIFFUSIVITY_FACTOR,
         **kwargs,
     ):
+        self._diffusivity_factor = diffusivity_factor
         self._optics_mode = optics
         self._has_co2_axis = False
         self._num_bands = 2 if optics == "parmentier" else None
@@ -295,6 +297,7 @@ class CorkLongwaveRadiation(TendencyComponent):
             weights,
             sigma,
             diagnostics_level=self._diagnostics_level,
+            diffusivity_factor=self._diffusivity_factor,
         )
         if self._diagnostics_level > 0:
             up_band, down_band, up_broad, down_broad, kernel_diag = lw_result
@@ -306,7 +309,7 @@ class CorkLongwaveRadiation(TendencyComponent):
 
         # Per-band optical depth: sum over g-points (weighted)
         # tau shape: (nband, ngpt, nlev, ncol)
-        D = 1.66  # diffusivity factor
+        D = self._diffusivity_factor
         tau_band = np.zeros((nband, nlev, ncol))
         for b in range(nband):
             for g_pt in range(ngpt):
