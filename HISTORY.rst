@@ -31,6 +31,9 @@ v.0.31.0
   ``trans = exp(-D * tau)`` is settable per component. The default is unchanged
   at the Elsasser value 1.66; the EC2213 notes derive their equations with
   ``D = 2``, which the gray-equilibrium page needs to reproduce them exactly.
+  The default also lives on the class, so a component pickled under an earlier
+  climt still resolves it after unpickling here rather than raising
+  ``AttributeError`` from ``array_call``.
 
 * **New data** — the ``tour_gray_lw`` correlated-k table: single band, constant
   ``k``, calibrated at ``D = 2`` to a diffusivity-scaled column optical depth of

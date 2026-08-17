@@ -29,7 +29,13 @@ tables differ only in resolution and not in physics.
 Usage (needs the ``linepyline`` conda env, which owns the HITRAN line data):
 
     conda run -n linepyline python scripts/generate_tour_spectrum_table.py \\
-        --output /tmp/earth_spectrum_lw.nc --ngpt 4 --nsub 7 --co2-nodes 5
+        --output /tmp/earth_spectrum_lw.nc
+
+The defaults reproduce the shipped table exactly: 8 g-points over 4 sub-bands
+each, i.e. 56 bands. ``--ngpt 4 --nsub 7`` (98 bands) was tried first and is
+equally valid on every test except the per-band OLR one, where 4 g-points cannot
+resolve a band's spread of absorption strengths; see Task 13's log in
+``docs/superpowers/plans/2026-08-12-modelling-tour-radiation.md``.
 
 then convert to the numpy-native format the browser reads (``climt`` env, since
 the converter goes through climt's netCDF reader):
@@ -85,11 +91,12 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--output", required=True,
                     help="output .nc path")
-    ap.add_argument("--ngpt", type=int, default=4,
-                    help="g-points per band (default 4; the shipped 14-band "
-                         "table uses 8 over 14x-wider bands)")
-    ap.add_argument("--nsub", type=int, default=7,
-                    help="sub-divisions per shipped band (default 7 -> 98 bands)")
+    ap.add_argument("--ngpt", type=int, default=8,
+                    help="g-points per band (default 8, as shipped; 4 is too "
+                         "few to resolve a band's spread of absorption)")
+    ap.add_argument("--nsub", type=int, default=4,
+                    help="sub-divisions per shipped band (default 4 -> 56 "
+                         "bands, as shipped)")
     ap.add_argument("--co2-nodes", type=int, default=5,
                     help="log-spaced CO2 nodes over 10-10000 ppm (default 5; "
                          "the shipped table uses 10)")
