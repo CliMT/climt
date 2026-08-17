@@ -3000,3 +3000,95 @@ the page's own code), `skin_temperature_probe.py` (`--budget`, `--sweep`, `--co2
 confounded when the block is optically thick: the flux arriving at its top is then
 emitted by the block itself and tracks `B(T_top)`, so no zero crossing can exist and the
 result says nothing about the physics. Only meaningful once the block is genuinely thin.
+
+---
+
+## Whole-branch review, and the three fixes it forced — 2026-08-17
+
+A reviewer took the branch against `develop` before the PR. It re-derived roughly 120 of
+the numbers quoted in the six pages' prose and found exactly one wrong, confirmed all 32
+`{pyodide}` cells execute, and confirmed the `diffusivity_factor` change is bit-identical
+at its default and the 0.31.0 bump consistent across every file that carries a version.
+Verdict: *ready to merge with fixes*. Three were taken before opening the PR.
+
+**1. Page 2 quoted the CO₂ core's optical depth wrong, by 5× at the low end.** The
+sentence read "even at 10 ppm, the four bands of the CO₂ core still have column optical
+depths of 20 to 90", inside the section that instructs the reader to set `CO2_PPM = 10`
+**and** `HUMIDITY_SCALE = 0.001`. Measured at those settings: 3.86, 16.71, 88.57, 9.19.
+The "20" was correct in the 14-band era, when the core was a *single* band, and at
+`HUMIDITY_SCALE = 1.0` (min 21.66) — which is why page 2's Physics exercise 3, "τ > 20
+even at 10 ppm", is still right: exercise 1 specifies humidity 1.0. Task 13 split the core
+into four bands and rewrote the sentence without re-measuring. The page now prints all
+four values, so it cannot drift silently again.
+
+**2. Every tour page opened with ~200 lines of RCE code.** The Task 8 log flagged this and
+deferred it to Task 14; Task 14 shipped without touching it. Fixed the way that log
+proposed: a new minimal `docs/_includes/climt-live-boot.qmd` (imports + the ready print)
+which the six tour pages now include, leaving `climt-live-setup.qmd` and its
+`integrate_with_snapshots` / `integrate_to_equilibrium` helpers to the RCE pages, where
+that code *is* the point. The two files duplicate four import lines on purpose, so
+neither page family can break the other. Verified beforehand that no tour page calls
+anything the setup include defines — all six import what they need in their own autorun
+cell, and `AdamsBashforth` appears on them only in prose.
+
+**3. Pages 1–3 ran on the 56-band table; every page test ran on the 14-band one.** This is
+the root cause of fix 1, and the more important finding. Task 13 re-pointed the pages at
+`spectrum_table()` and did not re-point `tests/test_modelling_tour.py`, so every number
+Task 13 rewrote — page 2's eleven-row τ table, page 3's 46 levels, ×770 span, six negative
+gaps — was guarded by nothing. The page-1/2/3 tests are now parametrised over both tables
+(`PAGE123_TABLES`), and `_tour/tables.py`, the switch that silently degrades 56 bands to
+14, has tests of its own: it must resolve the asset from a working directory nowhere near
+the docs tree, honour `prefer_hires=False`, and fall back when the asset is absent.
+
+### Log — what the 56-band parametrisation revealed
+
+Pages 1 and 2's assertions held on both tables unchanged. Page 3's did not, in four
+places, and each one is a real physical difference rather than a tolerance:
+
+| assertion | 14-band | 56-band |
+|---|---|---|
+| bands with a τ* = 1 level | 12 of 14 | 46 of 56 |
+| span of those levels | ×351 | ×770 |
+| deepest CO₂-core level | 8 hPa | 46 hPa (the resolved 630–648 wing) |
+| bands where T_b sits *below* T at τ* = 1 | 1 | 6 |
+| T_b vs emission-weighted T correlation | 0.94 | 0.87 |
+
+The last two are the page's own argument — "the construction fails at both ends" — showing
+up as looser numbers, so they are parameters of the test now, not loosened thresholds.
+
+One assertion turned out to be a 14-band artifact rather than a general truth: the test
+claimed T_b is warmer than the emission-weighted temperature **never colder**. On the
+56-band table three saturated CO₂ core bands (648–665, 665–682, 682–700) come out 0.3 to
+2.2 K colder. The reason is not a bug: those bands emit from the isothermal 200 K
+stratosphere, where the weighted temperature is 200.0 K whatever the weights do, so the
+comparison has no leverage and the residual band-centre inversion error sets the sign.
+Page 3 already names those same three bands, with those same numbers, in its τ* = 1
+discussion — so the prose was right and the test's docstring was over-claiming. Both the
+count and the size of the miss are now asserted.
+
+### Deferred to a follow-up (reviewer's Minor list)
+
+Not blockers, recorded so they are not lost: `scripts/generate_tour_spectrum_table.py`
+defaults to `--ngpt 4 --nsub 7` (98×4) while the shipped table is 56×8, so it cannot
+reproduce its own output without the flags in `_data/README.md`; page 4 says the gray
+table is calibrated "on climt's default 60-level grid" when the calibration is in fact
+grid-independent (4.000000006 at nz = 18, 28, 40, 60, 100); page 3 describes the 130–190
+band's τ* = 1 level as though it were the weighting peak; page 5's stratospheric-lapse-rate
+claim cannot be reproduced from the page because `lapse_rate_sounding` exposes only
+`T_strat`; page 4 declares `_tour/spectra.py` as a resource it never imports; and
+`_diffusivity_factor` is set only in `__init__`, so a component pickled under ≤0.30.0
+would `AttributeError` after unpickling under 0.31.0.
+
+### Merge-day ordering, which is not optional
+
+All seven live pages now pin `climt==0.31.0`, which is not on PyPI. **Publish the release
+to PyPI before deploying the docs site.** Deploying first leaves every live page failing
+at document setup — strictly worse than the pre-bump state, where only page 4 was broken.
+
+### Not caused by this branch
+
+`tests/test_hd209458b_reproduction.py::test_hd209458b_equilibrium_profile` fails
+(53.6% regression error at 1.01 bar). It is `@pytest.mark.slow`, excluded from CI by
+`tox.ini`, and runs `optics="parmentier"`, which never touches `load_k_table` and is
+default-preserving under the `diffusivity_factor` change. Confirm against a built
+`develop` and file separately; it should not be attributed to this work.
