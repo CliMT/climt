@@ -2687,7 +2687,9 @@ underscore-prefixed directory at all.
 **Files:**
 - Create: `docs/modelling-tour/_artifacts/generate.py`
 - Create: `docs/modelling-tour/_artifacts/*.png`
-- Modify: the six page files (add fallback images)
+- Modify: the six page files (add fallback images, repin the wheel)
+- Modify: `setup.py`, `setup.cfg`, `climt/__init__.py`, `HISTORY.rst` (version bump)
+- Modify: `docs/radiative-transfer/09-live-rce.qmd` (repin the wheel)
 
 - [ ] **Step 1: Write the artifact generator**
 
@@ -2758,11 +2760,81 @@ Expected: exit 0, no output. If it reports anything stale, a cork source edit so
 in Tasks 1–13 skipped its regeneration step — go back and run `make experiments` for the
 manifest concerned rather than fixing it up here.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Bump the version, and repin the live pages to it**
+
+Every live page pins `climt==0.30.0` in its `pyodide: packages:` front matter, and
+micropip resolves that from PyPI. **This tranche's pages cannot run against 0.30.0.**
+Two additions here postdate that release:
+
+- `tour_gray_lw` (Task 3), without which page 4's first cell dies at
+  `No k-table named 'tour_gray_lw' (.npz or .nc)`;
+- `diffusivity_factor` (Task 1), without which the same cell then dies on
+  `CorkLongwaveRadiation(..., diffusivity_factor=2.0)`.
+
+Confirmed in local preview: pages 1–3 run on the released wheel, page 4 does not. So the
+tranche is not shippable to the live site until a release carries both, and the pins are
+moved onto it.
+
+Bump the package version. `setup.cfg` drives `bumpversion` (it rewrites `setup.py`,
+`climt/__init__.py` and its own `current_version`, and commits; it does not tag):
+
+```bash
+conda run -n climt bumpversion minor
+git show --stat HEAD
+```
+
+Expected: `0.30.0` → `0.31.0` in `setup.py`, `climt/__init__.py` and `setup.cfg`.
+
+Then promote `HISTORY.rst`'s `Unreleased` heading to `v.0.31.0` and add entries for this
+tranche: the `diffusivity_factor` constructor argument, the `tour_gray_lw` table, and the
+`docs/modelling-tour/` section. Keep the `load_k_table` performance entry that is already
+sitting under `Unreleased` — it belongs to the same release.
+
+**Do not flip the page pins until 0.31.0 is actually on PyPI.** micropip resolves them at
+document setup, so a pin pointing at an unreleased version 404s and takes down *every*
+live cell on the page, not just the ones needing the new table. Once it is published:
+
+```bash
+grep -rln "climt==0.30.0" docs --include=*.qmd | xargs sed -i '' 's/climt==0.30.0/climt==0.31.0/'
+grep -rn "climt==0.3" docs --include=*.qmd
+```
+
+Expected: seven files repinned — the six tour pages and
+`docs/radiative-transfer/09-live-rce.qmd`, which pins the same version.
+
+Verify the release actually carries the table, rather than assuming the build included the
+data files — micropip installs the pure `py3-none-any` wheel, so check that one:
+
+```bash
+conda run -n climt python -m pip download climt==0.31.0 --no-deps --only-binary :all: \
+    --implementation py --abi none --platform any -d /tmp/relcheck
+unzip -l /tmp/relcheck/climt-0.31.0-py3-none-any.whl | grep -E "tour_gray_lw|\.so$"
+```
+
+Expected: both `tour_gray_lw.nc` and `tour_gray_lw.npz` listed, and **no** `.so` entries.
+Then re-render and load page 4 in a browser: the first figure must appear and the
+heating-rate check must print, with no `No k-table named` error in the cell output.
+
+Until the release lands, preview against a locally built wheel instead — build it with
+`CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh`, serve it with
+`docs/radiative-transfer/_live/serve_wheel.py` (plain `http.server` sends no CORS headers
+and will not work), and point the pins at that URL *without committing the change*.
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add docs/modelling-tour/_artifacts docs/modelling-tour/*.qmd
 git commit -m "docs(tour): static figure fallbacks and full-site render
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
+
+The version bump is its own commit (`bumpversion` makes it), and the repinning is a third,
+landing only after the release:
+
+```bash
+git add docs/modelling-tour/*.qmd docs/radiative-transfer/09-live-rce.qmd HISTORY.rst
+git commit -m "docs: pin live pages to climt 0.31.0
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
