@@ -3090,5 +3090,13 @@ at document setup — strictly worse than the pre-bump state, where only page 4 
 `tests/test_hd209458b_reproduction.py::test_hd209458b_equilibrium_profile` fails
 (53.6% regression error at 1.01 bar). It is `@pytest.mark.slow`, excluded from CI by
 `tox.ini`, and runs `optics="parmentier"`, which never touches `load_k_table` and is
-default-preserving under the `diffusivity_factor` change. Confirm against a built
-`develop` and file separately; it should not be attributed to this work.
+default-preserving under the `diffusivity_factor` change.
+
+**Confirmed pre-existing.** The reviewer could not bisect it read-only, because a worktree
+at the base commit has no compiled Fortran extensions and `SimplePhysics` fails to import
+there. The way round that: `git worktree add` at `develop` (`a796fa7`), copy this
+checkout's six built `.so` files into it, and run pytest with the worktree as the working
+directory so `''` on `sys.path` beats the editable install (`PYTHONPATH` does *not* win
+here -- the editable finder takes precedence, and the import still resolves to the main
+checkout). Verified pointing at 0.30.0 before running. Result: the same single failure,
+742 s. File it separately; it is not this branch's.
