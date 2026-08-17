@@ -22,6 +22,10 @@ project:
     # because the site is same-origin with the page (a GitHub release asset
     # sends no CORS headers). See docs/modelling-tour/_tour/tables.py.
     - "modelling-tour/_data/*.npz"
+    # Static fallback figures for the live cells, for readers whose browser
+    # blocks WebAssembly. Underscore-prefixed again, so again listed here --
+    # without this the pages render with broken images and nothing says so.
+    - "modelling-tour/_artifacts/*.png"
 
 website:
   title: "climt"

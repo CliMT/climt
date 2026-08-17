@@ -197,6 +197,16 @@ for b in range(len(nu)):
               f"{tb[b]:8.1f} {'(surface)':>7}")
 ```
 
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Emission weighting functions for four bands, and the radiating level each one
+implies, marked on the sounding.](_artifacts/03-weighting.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
 ## There is no radiating level
 
 Read the left panel first. Four bands, four completely different places.

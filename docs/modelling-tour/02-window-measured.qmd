@@ -155,6 +155,16 @@ fig.tight_layout()
 plt.show()
 ```
 
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Column optical depth per band on a log axis, and the fraction of each band's
+surface emission that reaches space.](_artifacts/02-window.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
 ## Reading it
 
 The left panel needs a log axis, which is the entire point. In the water vapour

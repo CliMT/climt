@@ -178,6 +178,19 @@ fig.tight_layout()
 plt.show()
 ```
 
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![The OLR spectrum against Planck curves, and the brightness temperature of each
+band, for a 288 K surface at 80% relative humidity.](_artifacts/01-spectrum.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here. It is rendered from this page's
+own cell by `_artifacts/generate.py`, so it cannot drift from what you would get
+by running it — but it is fixed at the defaults above, and the point of the cell
+is that you can change them.
+:::
+
 ## Reading the figure
 
 The left panel is the classic satellite picture, and the gray Planck curves are

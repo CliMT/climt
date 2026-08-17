@@ -123,6 +123,17 @@ print(f"water vapour feedback        : {slope_q - slope_rh:.3f} W/m2/K")
 print(f"gap at 310 K                 : {olr_q[-1] - olr_rh[-1]:.2f} W/m2")
 ```
 
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![OLR against surface temperature with the moisture frozen and with it
+responding: the gap between them is the water vapour
+feedback.](_artifacts/06-feedback.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
 ## Reading the gap
 
 The frozen-moisture curve climbs at **3.52 W m⁻² K⁻¹**. That is the Planck
@@ -225,6 +236,16 @@ print(f"mean dOLR/dTs over 310-350 K: "
       f"{(olr_hot[-1] - olr_hot[hot][0]) / (T_hot[-1] - T_hot[hot][0]):.3f} W/m2/K")
 print(f"  a blackbody at 330 K would manage {4 * sigma * 330**3:.2f}")
 ```
+
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![OLR against surface temperature from 280 to 350 K for a saturated column,
+flattening towards a ceiling far below σT⁴.](_artifacts/06-runaway.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
 
 Seventy kelvin of surface warming buys **48 W m⁻² of extra outgoing radiation**.
 A bare rock over the same range would have gained 502. Above 310 K the curve

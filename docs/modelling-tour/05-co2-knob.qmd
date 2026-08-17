@@ -125,6 +125,16 @@ print(f"forcing, 280 -> 560 ppm : {F1:.3f} W/m2")
 print(f"forcing, 560 -> 1120 ppm: {F2:.3f} W/m2")
 ```
 
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![OLR against CO₂ concentration on a logarithmic axis: a straight line, one
+forcing per doubling.](_artifacts/05-co2-knob.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
 ## A straight line, on a log axis
 
 The x axis is logarithmic and the curve is a straight line down it. That is the

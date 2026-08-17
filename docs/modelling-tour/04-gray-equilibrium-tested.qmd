@@ -209,6 +209,17 @@ print(f"OLR:         gray {olr:.1f}, real {olr_real:.1f} W/m2")
 print(f"layers cooling: {(H_real < 0).sum()} of {len(H_real)}")
 ```
 
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Longwave heating rate for the analytic gray profile: flat on zero under the
+gray table at D = 2, and far from zero under 14 real
+bands.](_artifacts/04-gray-tested.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
 ## What the second spectrum says
 
 The blue line is on zero to within the width of the ink. The orange one is not
