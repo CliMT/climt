@@ -19,11 +19,12 @@ pyodide:
     # unyt against 2.8 ms/call on the DataArray backend for a 60-level column.
     - "unyt"
   resources:
-    # Fetched into the Pyodide filesystem at document setup — the same files
+    # Fetched into the Pyodide filesystem at document setup — the same file
     # tests/test_modelling_tour.py imports natively. See page 1 for the
-    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
+    # mechanism and docs/_quarto.yml `project: resources:` for why it ships.
+    # Only soundings: this page compares heating rates, and never touches the
+    # per-band diagnostics that _tour/spectra.py unpacks.
     - _tour/soundings.py
-    - _tour/spectra.py
 ---
 
 {{< include ../_includes/climt-live-boot.qmd >}}
@@ -66,7 +67,9 @@ computes. It is `D` times that. To make the notes' equations exact, this page
 
 - constructs the component with `diffusivity_factor=2.0`, and
 - uses a table, `tour_gray_lw`, whose absorption coefficient was calibrated so
-  that `2 × Σ_layers τ_k = 4` on climt's default 60-level grid.
+  that `2 × Σ_layers τ_k = 4`. That sum is a column total, so it does not depend
+  on how you slice the column: it comes out 4.000000006 at 18, 28, 40, 60, 100
+  and 200 levels alike. Change `nz` below and the equilibrium still holds.
 
 Both, together. Match only one and the heating rate will not vanish, and it will
 not vanish for a reason that has nothing whatever to do with the physics you are
