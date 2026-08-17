@@ -6,7 +6,7 @@ pyodide:
   packages:
     # Installed by micropip at document setup, before any cell runs; pinned to
     # the released version this page was written against.
-    - "climt==0.30.0"
+    - "climt==0.31.0"
     # unyt is already a hard dependency of climt, so micropip would pull it in
     # regardless — it is named here because this page *relies* on it. unyt is
     # pure Python, so micropip installs it from PyPI with no wheel-building,

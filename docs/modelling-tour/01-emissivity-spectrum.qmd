@@ -7,7 +7,7 @@ pyodide:
     # Installed by micropip at document setup, before any cell runs; pinned to
     # the released version this page was written against. See
     # radiative-transfer/09-live-rce.qmd for how to preview an unreleased wheel.
-    - "climt==0.30.0"
+    - "climt==0.31.0"
     # A transitive dependency of climt, named explicitly because these pages
     # rely on it: unyt is pure Python, so micropip installs it from PyPI with
     # no wheel-building, and it backs `sympl.set_backend(climt.UnytBackend())`

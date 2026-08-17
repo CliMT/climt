@@ -10,7 +10,7 @@ pyodide:
     # Pinned so the page always runs against the climt it was written for; bump
     # on release. To preview unreleased local changes instead, swap in a
     # CORS-served localhost wheel (see the collapsed note below).
-    - "climt==0.30.0"
+    - "climt==0.31.0"
 ---
 
 ::: {.callout-note}

@@ -6,7 +6,7 @@ pyodide:
   packages:
     # Installed by micropip at document setup, before any cell runs; pinned to
     # the released version this page was written against.
-    - "climt==0.30.0"
+    - "climt==0.31.0"
     # A transitive dependency of climt, named explicitly because these pages
     # rely on it — see page 4's craft callout for why unyt and not numpy.
     - "unyt"

@@ -2776,11 +2776,9 @@ Expected: exit 0, no output. If it reports anything stale, a cork source edit so
 in Tasks 1–13 skipped its regeneration step — go back and run `make experiments` for the
 manifest concerned rather than fixing it up here.
 
-- [ ] **Step 7: Bump the version, and repin the live pages to it** — *bump done
-  (`0.31.0`, commit `9b135bb`, plus the `HISTORY.rst` entries); the repin is
-  deliberately still open, and stays open until 0.31.0 is on PyPI. Every page is
-  still pinned to `climt==0.30.0`, so page 4 cannot run on the published site
-  yet.*
+- [x] **Step 7: Bump the version, and repin the live pages to it** — *both done in
+  this PR, which bumps and releases together, so the "wait for PyPI" ordering below
+  collapses into a single merge. All seven pages now pin `climt==0.31.0`.*
 
 Every live page pins `climt==0.30.0` in its `pyodide: packages:` front matter, and
 micropip resolves that from PyPI. **This tranche's pages cannot run against 0.30.0.**
@@ -2901,9 +2899,16 @@ as verification and would otherwise report false results:
 **Step 6 results:** 630 passed, 2 skipped (`-m "not slow"`); 20 passed in the tour's slow
 subset; `scripts/build_experiments.py --check` exit 0.
 
-**The pins are still at `climt==0.30.0`,** which is the one thing about this tranche that
-is not shippable to the live site. See Step 7 — the bump landed, the repin cannot until
-0.31.0 is published.
+**The pins moved with the bump, because this PR releases.** Step 7 is written for the
+usual case, where the repin is a separate commit landing after the release is on PyPI.
+Here the bump and the release ship in the same PR, so all seven pages were repinned to
+`climt==0.31.0` straight away and the rendered site carries it (checked by decoding each
+page's `pyodide-data` block, not by grepping the HTML — quarto-live base64-encodes it).
+
+The ordering constraint has not gone away, it has only moved: **the docs deploy must not
+beat the PyPI publish.** If the site goes up first, every live page 404s at document
+setup until the wheel is published — worse than the pre-bump state, where only page 4 was
+broken. If they can race in this repo's release flow, publish first and deploy second.
 
 ---
 
