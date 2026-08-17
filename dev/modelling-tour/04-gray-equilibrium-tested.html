@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Gray equilibrium, tested – climt</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-e1d00e4dfc48dbef53bffa4c834e136a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed fullcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo light-content">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">climt</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../get-started/installation.html"> 
+<span class="menu-text">Get Started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../user-guide/introduction.html"> 
+<span class="menu-text">User Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../radiative-transfer/index.html"> 
+<span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../modelling-tour/index.html" aria-current="page"> 
+<span class="menu-text">Modelling Tour</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../experiments/index.html"> 
+<span class="menu-text">Experiments</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/CliMT/climt"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modelling-tour/04-gray-equilibrium-tested.html">Gray equilibrium, tested</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A Modelling Tour of the Climate System</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/01-emissivity-spectrum.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ε is not a number</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/02-window-measured.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The window, measured</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/03-radiating-level.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Where photons come from</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/04-gray-equilibrium-tested.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Gray equilibrium, tested</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/05-co2-knob.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CO₂ knob</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/06-water-vapour-limit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Water vapour, and the limit</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Gray equilibrium, tested</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Minimal quarto-live boot include for pages that only need climt imported.
+
+Include it once, near the top of any `format: live-html` / `engine: jupyter`
+page, with a Quarto include shortcode pointing at this file (see
+modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT repeat
+the literal include shortcode in this comment: Quarto resolves include
+shortcodes at the text level, before HTML comments are stripped, so a literal
+one here would make this file include itself.
+
+This is the tour's counterpart to climt-live-setup.qmd. That file also defines
+the ~200-line `integrate_with_snapshots` / `integrate_to_equilibrium` helpers
+for the RCE pages, and its cell carries `#| edit: false`, which quarto-live
+renders **read-only, not hidden** — so including it opened every modelling-tour
+page with four screens of RCE code that none of those pages calls. The two
+files deliberately duplicate these few import lines rather than chaining one
+include into the other, so that neither page family can break the other.
+
+The climt wheel itself is installed by micropip at document setup via the
+including page's `pyodide: packages:` front-matter block — resolved from PyPI,
+pinned to a released version. (GitHub release assets cannot be used: they send
+no CORS headers. A CORS-served localhost wheel is the way to preview
+unreleased work.)
+-->
+<div>
+<div id="pyodide-1" class="exercise-cell">
+
+</div>
+<script type="pyodide-1-contents">
+eyJhdHRyIjp7ImF1dG9ydW4iOnRydWUsImVkaXQiOmZhbHNlLCJldmFsIjp0cnVlfSwiY29kZSI6IiMgVGhlIGNsaW10IHdoZWVsIGlzIGluc3RhbGxlZCBieSBtaWNyb3BpcCBhdCBkb2N1bWVudCBzZXR1cCAoYmVmb3JlIGFueSBjZWxsXG4jIHJ1bnMpIHZpYSB0aGUgYHB5b2RpZGU6IHBhY2thZ2VzOmAgYmxvY2sgaW4gdGhlIHBhZ2UgZnJvbnQgbWF0dGVyLiBJbnN0YWxsaW5nXG4jIGhlcmUgd2l0aCBgYXdhaXQgbWljcm9waXAuaW5zdGFsbCguLi4pYCBpbnN0ZWFkIHdvdWxkIHJhY2U6IHF1YXJ0by1saXZlIGRvZXNcbiMgbm90IGF3YWl0IG9uZSBhdXRvcnVuIGNlbGwncyBhc3luYyB3b3JrIGJlZm9yZSBzdGFydGluZyB0aGUgbmV4dCwgc28gYVxuIyBkb3duc3RyZWFtIGNlbGwgY2FuIHJ1biBiZWZvcmUgdGhlIHdoZWVsIGZpbmlzaGVzIGluc3RhbGxpbmcuIFNvIHRoaXMgY2VsbCBpc1xuIyBzeW5jaHJvbm91cy5cbmltcG9ydCBudW1weSBhcyBucFxuaW1wb3J0IG1hdHBsb3RsaWIucHlwbG90IGFzIHBsdFxuaW1wb3J0IGNsaW10XG5pbXBvcnQgc3ltcGxcblxuIyBFbmQgb24gYSBwbGFpbiBzdGF0ZW1lbnQgKG5vdCBhIGRlZik6IHF1YXJ0by1saXZlIGNhcHR1cmVzIGVhY2ggY2VsbCdzIGZpbmFsXG4jIHZhbHVlIGZvciBkaXNwbGF5LCBhbmQgbWFyc2hhbGxpbmcgYSBiYXJlIGZ1bmN0aW9uIG9iamVjdCB0aHJvdWdoIEpTIGludGVyb3BcbiMgeWllbGRzIGFuIHVuaGFzaGFibGUgSnNQcm94eSB0aGF0IGFib3J0cyB0aGUgY2VsbC5cbnByaW50KFwiY2xpbXRcIiwgY2xpbXQuX192ZXJzaW9uX18sIFwicmVhZHkg4oCUIGhhc19mb3J0cmFuOlwiLCBjbGltdC5oYXNfZm9ydHJhbl9leHRlbnNpb25zKCkpIn0=
+</script>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Where this fits
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Chapter 8 solves the gray atmosphere in radiative equilibrium and gets a closed form:</p>
+<p><span class="math display">\[T(\tau) = T_e \left[\frac{1 + \tau_\infty - \tau}{2}\right]^{1/4}, \qquad
+T_g = T_e\left(1 + \frac{\tau_\infty}{2}\right)^{1/4}\]</span></p>
+<p>with a skin temperature <span class="math inline">\(2^{-1/4} T_e\)</span> at the top and a discontinuity between the ground and the air touching it. Then the chapter ends, because there is nothing more you can do to an analytic solution with a pen.</p>
+<p>There is something you can do to it with a radiation code. Two things, in fact. You can check it — feed the profile to a solver that knows nothing about the derivation and see whether it agrees the profile is in equilibrium. And once it agrees, you can take the same profile to a solver that uses real spectroscopy and watch it fall apart.</p>
+</div>
+</div>
+<p>Both are on this page, in that order. The first is the more satisfying; the second is the one that explains why every other page in this tour is non-grey.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Which τ?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>τ</code> in chapter 8 is the <strong>diffusivity-scaled</strong> optical depth. Page 2 showed where the factor comes from: a two-stream solver replaces the angular integral with a single effective slant path, <code>exp(−D τ)</code>, and the notes derive chapter 8 with <strong><code>D = 2</code></strong> (that is, <code>μ = 1/2</code>). Cork defaults to the Elsasser value <strong><code>D = 1.66</code></strong>, which is the better approximation to the real integral and the wrong one for reproducing this particular algebra.</p>
+<p>So <code>τ_∞ = 4</code> in the formula above is not the column optical depth the model computes. It is <code>D</code> times that. To make the notes’ equations exact, this page</p>
+<ul>
+<li>constructs the component with <code>diffusivity_factor=2.0</code>, and</li>
+<li>uses a table, <code>tour_gray_lw</code>, whose absorption coefficient was calibrated so that <code>2 × Σ_layers τ_k = 4</code> on climt’s default 60-level grid.</li>
+</ul>
+<p>Both, together. Match only one and the heating rate will not vanish, and it will not vanish for a reason that has nothing whatever to do with the physics you are trying to test — which is the worst kind of disagreement, because it looks like a result.</p>
+</div>
+</div>
+<section id="prescribing-the-analytic-solution" class="level2">
+<h2 class="anchored" data-anchor-id="prescribing-the-analytic-solution">Prescribing the analytic solution</h2>
+<p>Nothing is integrated here. <code>analytic_gray_equilibrium</code> in <code>_tour/soundings.py</code> evaluates chapter 8’s formula on climt’s pressure grid, taking optical depth linear in pressure — the well-mixed absorber the derivation assumes — so <code>τ* = τ_∞ p/p_s</code>, measured down from space.</p>
+<div>
+<div id="pyodide-2" class="exercise-cell">
+
+</div>
+<script type="pyodide-2-contents">
+eyJhdHRyIjp7ImF1dG9ydW4iOnRydWUsImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiaW1wb3J0IHN5c1xuc3lzLnBhdGguaW5zZXJ0KDAsIFwiX3RvdXJcIikgICAjIGhlbHBlciBtb2R1bGVzLCBzZXJ2ZWQgYWxvbmdzaWRlIHRoaXMgcGFnZVxuXG5pbXBvcnQgbnVtcHkgYXMgbnBcbmltcG9ydCBtYXRwbG90bGliLnB5cGxvdCBhcyBwbHRcbmltcG9ydCBzeW1wbCwgY2xpbXRcbmZyb20gY2xpbXQgaW1wb3J0IENvcmtMb25nd2F2ZVJhZGlhdGlvbiwgZ2V0X2RlZmF1bHRfc3RhdGUsIGdldF9ncmlkXG5cbmZyb20gc291bmRpbmdzIGltcG9ydCBhbmFseXRpY19ncmF5X2VxdWlsaWJyaXVtLCBhcHBseV9zb3VuZGluZ1xuXG5zeW1wbC5zZXRfYmFja2VuZChjbGltdC5Vbnl0QmFja2VuZCgpKVxuXG5UQVVfSU5GLCBUX0UgPSA0LjAsIDI1NS4wICAgICAgICAjIDwtIGNoYW5nZSBUQVVfSU5GIGFuZCByZS1ydW5cblNJR01BID0gNS42NzAzNzQ0MTllLThcblxubHcgPSBDb3JrTG9uZ3dhdmVSYWRpYXRpb24ob3B0aWNzPVwiY29ycmVsYXRlZF9rXCIsIHRhYmxlPVwidG91cl9ncmF5X2x3XCIsXG4gICAgICAgICAgICAgICAgICAgICAgICAgICBkaWZmdXNpdml0eV9mYWN0b3I9Mi4wKVxuc3RhdGUgPSBnZXRfZGVmYXVsdF9zdGF0ZShbbHddLCBncmlkX3N0YXRlPWdldF9ncmlkKG54PTEsIG55PTEsIG56PTYwKSlcbnAgPSBzdGF0ZVtcImFpcl9wcmVzc3VyZVwiXS52YWx1ZXNbOiwgMCwgMF1cbnBzID0gZmxvYXQoc3RhdGVbXCJzdXJmYWNlX2Fpcl9wcmVzc3VyZVwiXS52YWx1ZXMucmF2ZWwoKVswXSlcblQsIFRfc3VyZiwgdGF1X3N0YXIgPSBhbmFseXRpY19ncmF5X2VxdWlsaWJyaXVtKHAsIHBzLCBUQVVfSU5GLCBUX0UpXG5hcHBseV9zb3VuZGluZyhzdGF0ZSwgVCwgVF9zdXJmPVRfc3VyZilcblxucHJpbnQoZlwiYW5hbHl0aWMgc2tpbiB0ZW1wZXJhdHVyZSA9IHtUX0UgKiAwLjUqKjAuMjU6LjJmfSBLICAgKHRvcCBsZXZlbCB7VFstMV06LjJmfSBLKVwiKVxucHJpbnQoZlwiYW5hbHl0aWMgZ3JvdW5kICAgICAgICAgICA9IHtUX3N1cmY6LjJmfSBLXCIpXG5wcmludChmXCJzdXJmYWNlLWFpciBkaXNjb250aW51aXR5ID0ge1Rfc3VyZiAtIFRbMF06LjJmfSBLXCIpIn0=
+</script>
+</div>
+<p>The top level reads 214.70 K against an analytic skin temperature of 214.43 K. The 0.27 K is not an error in the solution; it is that the topmost model layer is centred at 1.3 hPa, where <code>τ*</code> is 0.005 rather than 0, so the profile has not quite reached its own limit. Chapter 8’s skin temperature is the value at <code>τ* = 0</code> exactly, and no grid with a finite top ever gets there.</p>
+</section>
+<section id="the-discontinuity-is-a-prediction-not-a-defect" class="level2">
+<h2 class="anchored" data-anchor-id="the-discontinuity-is-a-prediction-not-a-defect">The discontinuity is a prediction, not a defect</h2>
+<p>The ground comes out at 335.6 K and the air in contact with it at 320.6 K. Fifteen kelvin, across nothing.</p>
+<p>This is real, in the sense that it is what pure radiative equilibrium demands. The ground has to emit <code>σT_g⁴</code> upward and can only lose energy that way, while the bottom layer of air both emits and absorbs and settles at a temperature set by the radiation passing through it. Nothing in the radiative problem couples them by contact, so nothing stops them from disagreeing.</p>
+<p>What it is <em>not</em> is a state any planet is ever found in. A 15 K jump across a molecular boundary layer is violently unstable: the air in contact with the ground would rise, immediately. So this figure is the derivation telling you the honest truth about its own domain of validity — pure radiative equilibrium is not achievable near a solid surface, and something else, convection, has to take over there. Chapter 8 says as much in words. Here it is as a number you can vary.</p>
+</section>
+<section id="asking-the-model" class="level2">
+<h2 class="anchored" data-anchor-id="asking-the-model">Asking the model</h2>
+<p>Now the check. <code>lw(state)</code> runs the same correlated-<code>k</code> solver the rest of this tour uses — one band, constant absorption, <code>D = 2</code>, and no knowledge at all of where the temperature profile came from.</p>
+<div>
+<div id="pyodide-3" class="exercise-cell">
+
+</div>
+<script type="pyodide-3-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoidGVuZGVuY2llcywgZGlhZ25vc3RpY3MgPSBsdyhzdGF0ZSlcbkggPSB0ZW5kZW5jaWVzW1wiYWlyX3RlbXBlcmF0dXJlXCJdLnZhbHVlc1s6LCAwLCAwXSAqIDg2NDAwLjBcbm9sciA9IGZsb2F0KGRpYWdub3N0aWNzW1widXB3ZWxsaW5nX2xvbmd3YXZlX2ZsdXhfaW5fYWlyXCJdLnZhbHVlc1stMSwgMCwgMF0pXG50YXVfY29sdW1uID0gMi4wICogZGlhZ25vc3RpY3NbXCJsb25nd2F2ZV9vcHRpY2FsX2RlcHRoX3Blcl9iYW5kXCJdLnZhbHVlc1s6LCAwLCAwLCAwXS5zdW0oKVxuXG5wcmludChmXCJELXNjYWxlZCBjb2x1bW4gb3B0aWNhbCBkZXB0aCA9IHt0YXVfY29sdW1uOi40Zn0gICAodGFyZ2V0IHtUQVVfSU5GfSlcIilcbnByaW50KGZcIk9MUiA9IHtvbHI6LjNmfSBXL20yICAgKHNpZ21hIFRfZV40ID0ge1NJR01BICogVF9FKio0Oi4zZn0pXCIpXG5wcmludChmXCJoZWF0aW5nIHJhdGU6IG1heCB8SHwgPSB7bnAuYWJzKEgpLm1heCgpOi41Zn0gSy9kYXlcIikifQ==
+</script>
+</div>
+<p>The maximum heating rate anywhere in the column is <strong>0.002 K/day</strong>. At that rate the fastest-drifting layer needs a year and a half to move by one kelvin — hold that number, because the same layer under a real spectrum, later on this page, manages a kelvin in an hour and a half. The OLR is 239.85 W m⁻² against the required <code>σT_e⁴ = 239.76</code> — 0.04% high, which is the same finite-grid effect as the skin temperature.</p>
+<p>That is a genuine validation, and it runs in both directions.</p>
+<p>It validates the derivation, because a solver with an entirely different internal structure — layer-by-layer upward and downward sweeps over a discretised column, no closed form anywhere in it — agrees that this profile is the one that does not evolve. Chapter 8’s algebra is not a plausible-looking simplification. It is the exact equilibrium of the equations the model is solving.</p>
+<p>And it validates the model, which is the direction people forget. A radiation code is thousands of lines with a great many places to be subtly wrong, and almost nothing you can compare it against has an exact answer. This is one of the few cases that does, which is why gray-limit tests like this one are a standard part of a radiation scheme’s test suite — climt has them in <code>tests/test_grey_limit.py</code>. When you write your own component, find an analytic corner and pin it there.</p>
+</section>
+<section id="then-take-it-to-a-real-spectrum" class="level2">
+<h2 class="anchored" data-anchor-id="then-take-it-to-a-real-spectrum">Then take it to a real spectrum</h2>
+<p>The profile is a perfect equilibrium <em>for a gray atmosphere</em>. Keep the profile exactly as it is, keep the surface temperature, and hand it to the fourteen-band Earth table instead — the one pages 1 through 3 used. The atmosphere is kept dry (<code>q = 10⁻⁶</code>), because the gray table had no water vapour to speak of and the comparison should change one thing at a time: the spectrum.</p>
+<div>
+<div id="pyodide-4" class="exercise-cell">
+
+</div>
+<script type="pyodide-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibHdfcmVhbCA9IENvcmtMb25nd2F2ZVJhZGlhdGlvbihvcHRpY3M9XCJjb3JyZWxhdGVkX2tcIiwgdGFibGU9XCJlYXJ0aF9sb3dfcmVzX2x3XCIpXG5zdGF0ZV9yZWFsID0gZ2V0X2RlZmF1bHRfc3RhdGUoW2x3X3JlYWxdLCBncmlkX3N0YXRlPWdldF9ncmlkKG54PTEsIG55PTEsIG56PTYwKSlcbmFwcGx5X3NvdW5kaW5nKHN0YXRlX3JlYWwsIFQsIG5wLmZ1bGwoVC5zaGFwZSwgMWUtNiksIFRfc3VyZj1UX3N1cmYpXG50ZW5kX3JlYWwsIGRpYWdfcmVhbCA9IGx3X3JlYWwoc3RhdGVfcmVhbClcbkhfcmVhbCA9IHRlbmRfcmVhbFtcImFpcl90ZW1wZXJhdHVyZVwiXS52YWx1ZXNbOiwgMCwgMF0gKiA4NjQwMC4wXG5vbHJfcmVhbCA9IGZsb2F0KGRpYWdfcmVhbFtcInVwd2VsbGluZ19sb25nd2F2ZV9mbHV4X2luX2FpclwiXS52YWx1ZXNbLTEsIDAsIDBdKVxuXG5maWcsIGF4ID0gcGx0LnN1YnBsb3RzKGZpZ3NpemU9KDYuNSwgNS41KSlcbmF4LnBsb3QoSCwgcCAvIDEwMCwgbGFiZWw9XCJncmF5IHRhYmxlLCAkRCA9IDIkXCIsIGx3PTIpXG5heC5wbG90KEhfcmVhbCwgcCAvIDEwMCwgbGFiZWw9XCIxNCByZWFsIGJhbmRzXCIsIGx3PTIpXG5heC5heHZsaW5lKDAsIGNvbG9yPVwia1wiLCBsdz0wLjgsIGxzPVwiOlwiKVxuYXguc2V0X3lzY2FsZShcImxvZ1wiKVxuYXguc2V0X3lsaW0oMTEwMCwgMSlcbmF4LnNldCh4bGFiZWw9XCJsb25nd2F2ZSBoZWF0aW5nIHJhdGUgKEsvZGF5KVwiLCB5bGFiZWw9XCJwcmVzc3VyZSAoaFBhKVwiKVxuYXgubGVnZW5kKClcbmF4LnNldF90aXRsZShcIlRoZSBzYW1lIHByb2ZpbGUsIGp1ZGdlZCBieSB0d28gc3BlY3RyYVwiKVxuZmlnLnRpZ2h0X2xheW91dCgpXG5wbHQuc2hvdygpXG5cbnByaW50KGZcInJtcyBoZWF0aW5nOiBncmF5IHtucC5zcXJ0KChIKioyKS5tZWFuKCkpOi40Zn0sIFwiXG4gICAgICBmXCJyZWFsIHtucC5zcXJ0KChIX3JlYWwqKjIpLm1lYW4oKSk6LjRmfSBLL2RheVwiKVxucHJpbnQoZlwibWF4IHxIfDogICAgIGdyYXkge25wLmFicyhIKS5tYXgoKTouNGZ9LCByZWFsIHtucC5hYnMoSF9yZWFsKS5tYXgoKTouNGZ9IEsvZGF5XCIpXG5wcmludChmXCJPTFI6ICAgICAgICAgZ3JheSB7b2xyOi4xZn0sIHJlYWwge29scl9yZWFsOi4xZn0gVy9tMlwiKVxucHJpbnQoZlwibGF5ZXJzIGNvb2xpbmc6IHsoSF9yZWFsIDwgMCkuc3VtKCl9IG9mIHtsZW4oSF9yZWFsKX1cIikifQ==
+</script>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>If the live cell did not run
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_artifacts/04-gray-tested.png" class="img-fluid figure-img"></p>
+<figcaption>Longwave heating rate for the analytic gray profile: flat on zero under the gray table at D = 2, and far from zero under 14 real bands.</figcaption>
+</figure>
+</div>
+<p>This is the figure the cell above produces. Live cells need WebAssembly; if your browser blocks it, the static version is here.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="what-the-second-spectrum-says" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-second-spectrum-says">What the second spectrum says</h2>
+<p>The blue line is on zero to within the width of the ink. The orange one is not anywhere.</p>
+<p>The rms heating rate goes from 0.0012 K/day to 2.33 K/day — a factor of two thousand. Fifty-five of the sixty layers are cooling, most of them at 0.4 to 0.5 K/day through the troposphere and accelerating to 1.8 K/day at the model lid. The bottom layer does the opposite and heats at 16.7 K/day, because a 335.6 K ground is radiating into air that, in the window region, is nearly transparent and very cold; the bottom layer absorbs what little it can of that flux and has almost no way to get rid of it. And the OLR is not 240 W m⁻² but <strong>600 W m⁻²</strong>: with real band structure and no water vapour, this atmosphere is nothing like opaque enough to hold in a 335 K surface.</p>
+<p>None of that is a small correction. The gray model did not get the equilibrium slightly wrong; it produced a profile that a real spectrum does not recognise as an equilibrium at all, and would move away from immediately in every layer.</p>
+<p>This is worth being precise about, because it is easy to over-read. Chapter 8 is not wrong. Everything above this section stands: the algebra is exact, the solver confirms it, the skin temperature and the discontinuity are real features of gray radiative equilibrium. The problem is the word “gray”. One absorption coefficient for all wavelengths is an assumption about the <em>atmosphere</em>, and pages 1 through 3 measured how badly it fails — the brightness temperature swings 85 K across the spectrum, the optical depth spans five orders of magnitude, and the radiating level ranges from 3 hPa to the ground.</p>
+<p>Everything chapter 8 concludes downstream of that assumption inherits the error: the surface temperature, the lapse rate, the sensitivity to <code>τ_∞</code>. You can tune <code>τ_∞</code> until the gray model reproduces Earth’s 288 K, and people do, but you have then fitted one number to one observation and learned nothing you can extrapolate with. Change the CO₂ and the gray model has no way to know which part of the spectrum you changed — which is exactly what <a href="../modelling-tour/05-co2-knob.html">page 5</a> measures.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>climt craft: tendencies vs diagnostics
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>lw(state)</code> returned a <strong>pair</strong>, and this page used both halves:</p>
+<div>
+<div id="pyodide-5" class="exercise-cell">
+
+</div>
+<script type="pyodide-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoicHJpbnQoXCJ0ZW5kZW5jaWVzIDpcIiwgc29ydGVkKHRlbmRlbmNpZXMua2V5cygpKSlcbmZvciBrIGluIHNvcnRlZChkaWFnbm9zdGljcy5rZXlzKCkpOlxuICAgIHByaW50KFwiZGlhZ25vc3RpYyA6XCIsIGspIn0=
+</script>
+</div>
+<p>The split is the central design decision in sympl, and it is about <em>time</em>.</p>
+<p><strong>Tendencies</strong> are rates of change: <code>∂T/∂t</code> in K s⁻¹, which is why every heating rate on this page is multiplied by 86400 to read in K/day. A tendency is not a property of the state — it is a statement about where the state would go next. It belongs to the component, and two components handed the same state return two different tendencies, which is precisely how you couple them: add the tendencies.</p>
+<p><strong>Diagnostics</strong> are quantities computed <em>from</em> the current state that were not already in it: fluxes, optical depths, transmittances. They are properties of the state at this instant. Ask two components for the same diagnostic and, if both are correct, they should agree.</p>
+<p>One entry in that list looks like it is on the wrong side: <code>air_temperature_tendency_from_longwave</code> is a diagnostic, and it holds the same numbers as the <code>air_temperature</code> tendency. Both are there on purpose. The tendency is the component’s contribution to be <em>summed</em> with every other component’s; the diagnostic is a labelled copy that survives into the state so you can plot the longwave heating separately after the shortwave and the convection have added theirs. Sum the diagnostics by mistake and you will double-count the radiation.</p>
+<p>A component that returns tendencies is a <code>TendencyComponent</code>; one that returns an updated state directly is a <code>Stepper</code>. Only a <code>Stepper</code> — or a time integrator such as <code>sympl.AdamsBashforth</code> wrapped around your tendency components — advances anything.</p>
+<p><strong>Nothing in this tour ever does.</strong> Every number on these six pages is an instantaneous rate evaluated on a profile we wrote down by hand. When this page says the analytic profile “is an equilibrium”, the evidence is that the tendency is zero, not that anything was stepped until it stopped moving. That is a stronger statement and a much cheaper one: the equilibrium test is a single call, while integrating a non-grey column to equilibrium takes a couple of thousand steps. <a href="../radiative-transfer/09-live-rce.html">The live RCE demo</a> does it the other way, if you want to watch.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>climt craft: which state backend, and when
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Every page in this tour opens with the same line, and it has been unexplained since page 1:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A <strong>state backend</strong> decides what container the values in a state dictionary are wrapped in. It is a global setting — <code>sympl.set_backend()</code> writes it, <code>sympl.get_backend()</code> reads it — and it takes effect when a state is <em>built</em>, so set it before <code>get_default_state</code>, not after. There are two to choose from: sympl’s default <code>DataArrayBackend</code>, which wraps arrays in xarray <code>DataArray</code>s, and climt’s <code>UnytBackend</code>, which wraps them in a thin container around a <code>unyt_array</code>.</p>
+<div>
+<div id="pyodide-6" class="exercise-cell">
+
+</div>
+<script type="pyodide-6-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiaW1wb3J0IHN5bXBsXG5cbnByaW50KFwiY3VycmVudCBiYWNrZW5kOlwiLCB0eXBlKHN5bXBsLmdldF9iYWNrZW5kKCkpLl9fbmFtZV9fLCBcIlxcblwiKVxuXG5mb3IgYmFja2VuZCBpbiAoY2xpbXQuVW55dEJhY2tlbmQoKSwgc3ltcGwuRGF0YUFycmF5QmFja2VuZCgpKTpcbiAgICBzeW1wbC5zZXRfYmFja2VuZChiYWNrZW5kKVxuICAgIGRlbW8gPSBnZXRfZGVmYXVsdF9zdGF0ZShbbHddLCBncmlkX3N0YXRlPWdldF9ncmlkKG54PTEsIG55PTEsIG56PTEwKSlcbiAgICBUcSA9IGRlbW9bXCJhaXJfdGVtcGVyYXR1cmVcIl1cbiAgICBwcmludChmXCJ7dHlwZShiYWNrZW5kKS5fX25hbWVfXzoxOHN9IC0+IHt0eXBlKFRxKS5fX25hbWVfXzoxOXN9IFwiXG4gICAgICAgICAgZlwiZGltcyB7VHEuZGltc30gIHVuaXRzIHtUcS5hdHRyc1sndW5pdHMnXX0gIC52YWx1ZXMge3R5cGUoVHEudmFsdWVzKS5fX25hbWVfX31cIilcblxuc3ltcGwuc2V0X2JhY2tlbmQoY2xpbXQuVW55dEJhY2tlbmQoKSkgICAjIHB1dCBpdCBiYWNrIGJlZm9yZSByZS1ydW5uaW5nIGNlbGxzIGFib3ZlIn0=
+</script>
+</div>
+<p>Notice what is <em>not</em> different. Both containers answer <code>.values</code>, <code>.dims</code> and <code>.attrs["units"]</code> the same way, and <code>.values</code> is a plain numpy array under either. That is deliberate, and it is why nothing else on this page had to care: every <code>values[:, 0, 0]</code> and every <code>values[-1, 0, 0]</code> in this tour is backend-agnostic. Write your analysis against those three and you can switch freely.</p>
+<p><strong>When unyt is the right choice.</strong> It is faster, because the wrapper does less — measured on this page’s single-band table at 60 levels, 2.3 ms per call against 2.8 ms, which is real when a cell sweeps a parameter and negligible when the radiative transfer itself dominates (both backends sit at 99 ms on the fourteen-band table). It is pure Python, so micropip installs it in the browser with no wheel to build — which is why this section runs in Pyodide at all. And <code>unyt_array</code> does genuine dimensional analysis, which the xarray container does not:</p>
+<div>
+<div id="pyodide-7" class="exercise-cell">
+
+</div>
+<script type="pyodide-7-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoic3ltcGwuc2V0X2JhY2tlbmQoc3ltcGwuRGF0YUFycmF5QmFja2VuZCgpKVxuZCA9IGdldF9kZWZhdWx0X3N0YXRlKFtsd10sIGdyaWRfc3RhdGU9Z2V0X2dyaWQobng9MSwgbnk9MSwgbno9MTApKVxucyA9IGRbXCJhaXJfdGVtcGVyYXR1cmVcIl0gKyBkW1wiYWlyX3ByZXNzdXJlXCJdXG5wcmludChmXCJ4YXJyYXk6ICBUICsgcCA9IHtmbG9hdChzLnZhbHVlc1swLCAwLCAwXSk6LjJmfSB7cy5hdHRyc1sndW5pdHMnXX1cIilcblxuc3ltcGwuc2V0X2JhY2tlbmQoY2xpbXQuVW55dEJhY2tlbmQoKSlcbnUgPSBnZXRfZGVmYXVsdF9zdGF0ZShbbHddLCBncmlkX3N0YXRlPWdldF9ncmlkKG54PTEsIG55PTEsIG56PTEwKSlcbnRyeTpcbiAgICB1W1wiYWlyX3RlbXBlcmF0dXJlXCJdLmRhdGEgKyB1W1wiYWlyX3ByZXNzdXJlXCJdLmRhdGFcbmV4Y2VwdCBFeGNlcHRpb24gYXMgZXJyOlxuICAgIHByaW50KGZcInVueXQ6ICAgIFQgKyBwIC0+IHt0eXBlKGVycikuX19uYW1lX199XCIpIn0=
+</script>
+</div>
+<p>Adding a temperature to a pressure is meaningless. xarray returns 100784.86 and labels it <code>degK</code>; unyt refuses. The <code>units</code> in a DataArray’s <code>attrs</code> is a <em>string someone wrote down</em>, carried along and never checked, whereas unyt’s units are part of the arithmetic.</p>
+<p><strong>When the DataArray backend is the right choice.</strong> When you want the rest of xarray. States built on it go straight to <code>xarray.Dataset</code> and out to netCDF, plot themselves, align and broadcast against other xarray data, and drop into whatever analysis stack you already have. That is worth far more than half a millisecond a call the moment your work involves saving output, reading someone else’s, or comparing a run against observations. It is also sympl’s default, so it is what other people’s sympl code assumes. (One caveat: climt’s default states carry no coordinate <em>values</em>, so <code>.sel(mid_levels=3)</code> here is just positional indexing wearing a label — you get xarray’s I/O and broadcasting, not physical-coordinate selection, until you attach coordinates yourself.)</p>
+<p>The rule of thumb: <strong>unyt while computing, DataArray while analysing.</strong> Long integrations, parameter sweeps, anything in the browser, anything where you want unit errors to be loud — unyt. Post-processing, saving, sharing — DataArray.</p>
+<p><strong>One trap.</strong> The backend is read when a state is built, not when a component is called, and switching mid-session raises nothing at all. Set the backend, build a state, switch the backend, call the component, and it will happily consume the old container and hand you the new one — leaving <code>state.update(...)</code> to merge two container types into one dictionary. Nothing complains until something much later does. If you change backends, rebuild the state; the cells above restore the backend on their last line for exactly this reason.</p>
+</div>
+</div>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<section id="physics" class="level3">
+<h3 class="anchored" data-anchor-id="physics">Physics</h3>
+<ol type="1">
+<li><p><strong>The <code>τ_∞</code> knob.</strong> Vary <code>TAU_INF</code> from 0.5 to 8 in the first cell and record the ground temperature each time, comparing against <code>T_e(1 + τ_∞/2)^{1/4}</code> (269.6, 282.2, 303.3, 335.6, 381.3 K at <code>τ_∞</code> = 0.5, 1, 2, 4, 8). Then check the heating rate at each: it stays near zero throughout, which tells you the validation was not a coincidence at one value. Now note what it takes to get 288 K — and ask what would have told you that number in advance.</p></li>
+<li><p><strong>Is it convectively unstable?</strong> Chapter 8 shows the radiative lapse rate tends to <code>g/4R</code> at large <code>τ_∞</code>. Verify it: <code>dT/dz = −(g/4R)·τ*/(1 + τ*)</code>, so the steepest point is the surface, and it approaches <code>g/4R = 8.5 K km⁻¹</code>.</p>
+<p>Compare against the dry adiabat, <code>g/c_p = 9.8 K km⁻¹</code>. Since <code>c_p ≈ 3.5R</code> is <em>less</em> than <code>4R</code>, <code>g/4R</code> is <em>less</em> than <code>g/c_p</code> — so this profile’s interior is statically <strong>stable</strong>, at every <code>τ_∞</code>, and the argument “radiative equilibrium is convectively unstable, therefore convection” does not go through in this form. Where, then, does the instability actually live? (Two places. One is on this page already, 15 K wide.)</p></li>
+<li><p><strong>Pressure broadening changes the answer.</strong> Exercise 2 assumed <code>τ* ∝ p</code>. Real absorption lines broaden with pressure, so column optical depth goes roughly as <code>p²</code>. Redo the lapse rate for <code>τ* = τ_∞ (p/p_s)²</code>: the exponent doubles and the limiting rate becomes <code>g/2R = 17.1 K km⁻¹</code>, nearly twice the dry adiabat. At <code>τ_∞ = 4</code> that puts 13.7 K km⁻¹ at the surface and leaves the bottom 42% of the column unstable. <em>This</em> is the standard argument, and it turns on a detail chapter 8 folds away. Modify <code>analytic_gray_equilibrium</code> to take the exponent as an argument and plot both profiles together.</p></li>
+</ol>
+</section>
+<section id="code" class="level3">
+<h3 class="anchored" data-anchor-id="code">Code</h3>
+<ol type="1">
+<li><p><strong>Break it deliberately.</strong> Set <code>diffusivity_factor=1.66</code> in the first cell while keeping <code>table="tour_gray_lw"</code>, and re-run. The heating rate stops being zero: max |H| = 0.65 K/day, cooling at the bottom and heating at the top, with the OLR up at 263.5 W m⁻². Explain the sign structure. Then work out which <code>τ_∞</code> the profile <em>would</em> be an equilibrium for at <code>D = 1.66</code>, and check your answer by putting that value in <code>analytic_gray_equilibrium</code> while leaving the component alone.</p></li>
+<li><p><strong>Build your own table.</strong> <code>scripts/generate_gray_default_table.py</code> made <code>tour_gray_lw</code> by inverting <code>D · Σ(k·m) = τ_∞</code> for <code>k</code>. Run it for a different <code>τ_∞</code> and <code>D</code> of your choosing, load the result with <code>table="/path/to/your.nc"</code>, and confirm the analytic profile for that <code>τ_∞</code> is an equilibrium for it. If it is not, the two <code>D</code> values disagree — which is the whole content of the “Which τ?” callout, learned the way it is usually learned.</p></li>
+<li><p><strong>Where does the gray model’s OLR come from?</strong> For the gray case, plot <code>upwelling_longwave_flux_in_air</code> and <code>downwelling_longwave_flux_in_air</code> against pressure on the interface levels. The upward flux at the top must equal <code>σT_e⁴</code> and the downward flux at the top must be zero; check both. Then verify the third analytic result chapter 8 gives you: the net flux is constant with height, which is what “radiative equilibrium” means before it means anything about temperature.</p></li>
+</ol>
+</section>
+</section>
+<section id="going-deeper" class="level2">
+<h2 class="anchored" data-anchor-id="going-deeper">Going deeper</h2>
+<p>The gray assumption is the one thing this page could not repair, and <a href="../radiative-transfer/01-why-nongrey.html">Why non-grey radiation</a> takes it apart properly — what a real absorption spectrum looks like, what averaging it costs, and why the correlated-<code>k</code> method is the compromise almost every climate model makes.</p>
+
+
+<script type="pyodide-data">
+eyJvcHRpb25zIjp7ImVudiI6eyJQTE9UTFlfUkVOREVSRVIiOiJwbG90bHlfbWltZXR5cGUifSwiaW5kZXhVUkwiOiJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvcHlvZGlkZS92MC4yOC4xL2Z1bGwvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsicHlvZGlkZV9odHRwIiwibWljcm9waXAiLCJpcHl0aG9uIiwiY2xpbXQ9PTAuMzEuMCIsInVueXQiXX19
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJweW9kaWRlLTciLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl83ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS03LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzcgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzcsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTYiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl82ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS02LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzYgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzYsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl81ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS01LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzUgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzUsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl80ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS00LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzQgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTMiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl8zID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0zLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzMgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzMsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTIiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl8yID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0yLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtMi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzIgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzIsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoiX3B5b2RpZGVfdmFsdWVfMSA9IHtcbiAgY29uc3QgeyBoaWdobGlnaHRQeXRob24sIGI2NERlY29kZX0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0xLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgLy8gRGVmYXVsdCBldmFsdWF0aW9uIGNvbmZpZ3VyYXRpb25cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oe1xuICAgIGlkOiBcInB5b2RpZGUtMS1jb250ZW50c1wiLFxuICAgIGVjaG86IHRydWUsXG4gICAgb3V0cHV0OiB0cnVlXG4gIH0sIGJsb2NrLmF0dHIpO1xuXG4gIC8vIEV2YWx1YXRlIHRoZSBwcm92aWRlZCBQeXRob24gY29kZVxuICBjb25zdCByZXN1bHQgPSBweW9kaWRlT2pzLnByb2Nlc3Moe2NvZGU6IGJsb2NrLmNvZGUsIG9wdGlvbnN9LCB7fSk7XG5cbiAgLy8gRWFybHkgeWllbGQgd2hpbGUgd2Ugd2FpdCBmb3IgdGhlIGZpcnN0IGV2YWx1YXRpb24gYW5kIHJlbmRlclxuICBpZiAob3B0aW9ucy5vdXRwdXQgJiYgIShcIjFcIiBpbiBweW9kaWRlT2pzLnJlbmRlcmVkT2pzKSkge1xuICAgIGNvbnN0IGNvbnRhaW5lciA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG4gICAgY29uc3Qgc3Bpbm5lciA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG5cbiAgICBpZiAob3B0aW9ucy5lY2hvKSB7XG4gICAgICAvLyBTaG93IG91dHB1dCBhcyBoaWdobGlnaHRlZCBzb3VyY2VcbiAgICAgIGNvbnN0IHByZUVsZW0gPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwicHJlXCIpO1xuICAgICAgY29udGFpbmVyLmNsYXNzTmFtZSA9IFwic291cmNlQ29kZVwiO1xuICAgICAgcHJlRWxlbS5jbGFzc05hbWUgPSBcInNvdXJjZUNvZGUgcHl0aG9uXCI7XG4gICAgICBwcmVFbGVtLmFwcGVuZENoaWxkKGhpZ2hsaWdodFB5dGhvbihibG9jay5jb2RlKSk7XG4gICAgICBzcGlubmVyLmNsYXNzTmFtZSA9IFwic3Bpbm5lci1ncm93IHNwaW5uZXItZ3Jvdy1zbSBtLTIgcG9zaXRpb24tYWJzb2x1dGUgdG9wLTAgZW5kLTBcIjtcbiAgICAgIHByZUVsZW0uYXBwZW5kQ2hpbGQoc3Bpbm5lcik7XG4gICAgICBjb250YWluZXIuYXBwZW5kQ2hpbGQocHJlRWxlbSk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHNwaW5uZXIuY2xhc3NOYW1lID0gXCJzcGlubmVyLWJvcmRlciBzcGlubmVyLWJvcmRlci1zbVwiO1xuICAgICAgY29udGFpbmVyLmFwcGVuZENoaWxkKHNwaW5uZXIpO1xuICAgIH1cblxuICAgIHlpZWxkIGNvbnRhaW5lcjtcbiAgfVxuXG4gIHB5b2RpZGVPanMucmVuZGVyZWRPanNbXCIxXCJdID0gdHJ1ZTtcbiAgeWllbGQgYXdhaXQgcmVzdWx0O1xufVxuIn0seyJjZWxsTmFtZSI6InB5b2RpZGUtcHJlbHVkZSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InB5b2RpZGVPanMgPSB7XG4gIGNvbnN0IHtcbiAgICBQeW9kaWRlRXZhbHVhdG9yLFxuICAgIFB5b2RpZGVFbnZpcm9ubWVudE1hbmFnZXIsXG4gICAgc2V0dXBQeXRob24sXG4gICAgc3RhcnRQeW9kaWRlV29ya2VyLFxuICAgIGI2NERlY29kZSxcbiAgICBjb2xsYXBzZVBhdGgsXG4gIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHN0YXR1c0NvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKFwiZXhlcmNpc2UtbG9hZGluZy1zdGF0dXNcIik7XG4gIGNvbnN0IGluZGljYXRvckNvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKFwiZXhlcmNpc2UtbG9hZGluZy1pbmRpY2F0b3JcIik7XG4gIGluZGljYXRvckNvbnRhaW5lci5jbGFzc0xpc3QucmVtb3ZlKFwiZC1ub25lXCIpO1xuXG4gIGxldCBzdGF0dXNUZXh0ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudChcImRpdlwiKVxuICBzdGF0dXNUZXh0LmNsYXNzTGlzdCA9IFwiZXhlcmNpc2UtbG9hZGluZy1kZXRhaWxzXCI7XG4gIHN0YXR1c1RleHQgPSBzdGF0dXNDb250YWluZXIuYXBwZW5kQ2hpbGQoc3RhdHVzVGV4dCk7XG4gIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgSW5pdGlhbGlzZWA7XG5cbiAgLy8gSG9pc3QgaW5kaWNhdG9yIG91dCBmcm9tIGZpbmFsIHNsaWRlIHdoZW4gcnVubmluZyB1bmRlciByZXZlYWxcbiAgY29uc3QgcmV2ZWFsU3RhdHVzID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcihcIi5yZXZlYWwgLmV4ZXJjaXNlLWxvYWRpbmctaW5kaWNhdG9yXCIpO1xuICBpZiAocmV2ZWFsU3RhdHVzKSB7XG4gICAgcmV2ZWFsU3RhdHVzLnJlbW92ZSgpO1xuICAgIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoXCIucmV2ZWFsID4gLnNsaWRlc1wiKS5hcHBlbmRDaGlsZChyZXZlYWxTdGF0dXMpO1xuICB9XG5cbiAgLy8gTWFrZSBhbnkgcmV2ZWFsIHNsaWRlcyB3aXRoIGxpdmUgY2VsbHMgc2Nyb2xsYWJsZVxuICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKFwiLnJldmVhbCAuZXhlcmNpc2UtY2VsbFwiKS5mb3JFYWNoKChlbCkgPT4ge1xuICAgIGVsLmNsb3Nlc3QoJ3NlY3Rpb24uc2xpZGUnKS5jbGFzc0xpc3QuYWRkKFwic2Nyb2xsYWJsZVwiKTtcbiAgfSlcblxuICAvLyBQeW9kaWRlIHN1cHBsZW1lbnRhbCBkYXRhIGFuZCBvcHRpb25zXG4gIGNvbnN0IGRhdGFDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcInB5b2RpZGUtZGF0YVxcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGRhdGEgPSBKU09OLnBhcnNlKGI2NERlY29kZShkYXRhQ29udGVudCkpO1xuXG4gIC8vIEdyYWIgbGlzdCBvZiByZXNvdXJjZXMgdG8gYmUgZG93bmxvYWRlZFxuICBjb25zdCBmaWxlc0NvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwidmZzLWZpbGVcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBmaWxlcyA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKGZpbGVzQ29udGVudCkpO1xuXG4gIGxldCBweW9kaWRlUHJvbWlzZSA9IChhc3luYyAoKSA9PiB7XG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyBQeW9kaWRlYDtcbiAgICBjb25zdCBweW9kaWRlID0gYXdhaXQgc3RhcnRQeW9kaWRlV29ya2VyKGRhdGEub3B0aW9ucyk7XG5cbiAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6IG1pY3JvcGlwYDtcbiAgICBhd2FpdCBweW9kaWRlLmxvYWRQYWNrYWdlKFwibWljcm9waXBcIik7XG4gICAgY29uc3QgbWljcm9waXAgPSBhd2FpdCBweW9kaWRlLnB5aW1wb3J0KFwibWljcm9waXBcIik7XG4gICAgYXdhaXQgZGF0YS5wYWNrYWdlcy5wa2dzLm1hcCgocGtnKSA9PiAoKSA9PiB7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6ICR7cGtnfWA7XG4gICAgICByZXR1cm4gbWljcm9waXAuaW5zdGFsbChwa2cpO1xuICAgIH0pLnJlZHVjZSgoY3VyLCBuZXh0KSA9PiBjdXIudGhlbihuZXh0KSwgUHJvbWlzZS5yZXNvbHZlKCkpO1xuICAgIGF3YWl0IG1pY3JvcGlwLmRlc3Ryb3koKTtcblxuICAgIC8vIERvd25sb2FkIGFuZCBpbnN0YWxsIHJlc291cmNlc1xuICAgIGF3YWl0IGZpbGVzLm1hcCgoZmlsZSkgPT4gYXN5bmMgKCkgPT4ge1xuICAgICAgY29uc3QgbmFtZSA9IGZpbGUuc3Vic3RyaW5nKGZpbGUubGFzdEluZGV4T2YoJy8nKSArIDEpO1xuICAgICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyByZXNvdXJjZTogJHtuYW1lfWA7XG4gICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGZpbGUpO1xuICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENhbid0IGRvd25sb2FkIFxcYCR7ZmlsZX1cXGAuIEVycm9yICR7cmVzcG9uc2Uuc3RhdHVzfTogXCIke3Jlc3BvbnNlLnN0YXR1c1RleHR9XCIuYCk7XG4gICAgICB9XG4gICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuYXJyYXlCdWZmZXIoKTtcblxuICAgICAgLy8gU3RvcmUgVVJMcyBpbiB0aGUgY3dkIHdpdGhvdXQgYW55IHN1YmRpcmVjdG9yeSBzdHJ1Y3R1cmVcbiAgICAgIGlmIChmaWxlLmluY2x1ZGVzKFwiOi8vXCIpKSB7XG4gICAgICAgIGZpbGUgPSBuYW1lO1xuICAgICAgfVxuXG4gICAgICAvLyBDb2xsYXBzZSBoaWdoZXIgZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgZmlsZSA9IGNvbGxhcHNlUGF0aChmaWxlKTtcblxuICAgICAgLy8gQ3JlYXRlIGRpcmVjdG9yeSB0cmVlLCBpZ25vcmluZyBcImRpcmVjdG9yeSBleGlzdHNcIiBWRlMgZXJyb3JzXG4gICAgICBjb25zdCBwYXJ0cyA9IGZpbGUuc3BsaXQoJy8nKS5zbGljZSgwLCAtMSk7XG4gICAgICBsZXQgcGF0aCA9ICcnO1xuICAgICAgd2hpbGUgKHBhcnRzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcGF0aCArPSBwYXJ0cy5zaGlmdCgpICsgJy8nO1xuICAgICAgICB0cnkge1xuICAgICAgICAgIGF3YWl0IHB5b2RpZGUuRlMubWtkaXIocGF0aCk7XG4gICAgICAgIH0gY2F0Y2ggKGUpIHtcbiAgICAgICAgICBpZiAoZS5uYW1lICE9PSBcIkVycm5vRXJyb3JcIikgdGhyb3cgZTtcbiAgICAgICAgICBpZiAoZS5lcnJubyAhPT0gMjApIHtcbiAgICAgICAgICAgIGNvbnN0IGVycm9yVGV4dFB0ciA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5fc3RyZXJyb3IoZS5lcnJubyk7XG4gICAgICAgICAgICBjb25zdCBlcnJvclRleHQgPSBhd2FpdCBweW9kaWRlLl9tb2R1bGUuVVRGOFRvU3RyaW5nKGVycm9yVGV4dFB0cik7XG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYEZpbGVzeXN0ZW0gRXJyb3IgJHtlLmVycm5vfSBcIiR7ZXJyb3JUZXh0fVwiLmApO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyBXcml0ZSB0aGlzIGZpbGUgdG8gdGhlIFZGU1xuICAgICAgdHJ5IHtcbiAgICAgICAgcmV0dXJuIGF3YWl0IHB5b2RpZGUuRlMud3JpdGVGaWxlKGZpbGUsIG5ldyBVaW50OEFycmF5KGRhdGEpKTtcbiAgICAgIH0gY2F0Y2ggKGUpIHtcbiAgICAgICAgaWYgKGUubmFtZSAhPT0gXCJFcnJub0Vycm9yXCIpIHRocm93IGU7XG4gICAgICAgIGNvbnN0IGVycm9yVGV4dFB0ciA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5fc3RyZXJyb3IoZS5lcnJubyk7XG4gICAgICAgIGNvbnN0IGVycm9yVGV4dCA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5VVEY4VG9TdHJpbmcoZXJyb3JUZXh0UHRyKTtcbiAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGaWxlc3lzdGVtIEVycm9yICR7ZS5lcnJub30gXCIke2Vycm9yVGV4dH1cIi5gKTtcbiAgICAgIH1cbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgUHlvZGlkZSBlbnZpcm9ubWVudCBzZXR1cGA7XG4gICAgYXdhaXQgc2V0dXBQeXRob24ocHlvZGlkZSk7XG5cbiAgICBzdGF0dXNUZXh0LnJlbW92ZSgpO1xuICAgIGlmIChzdGF0dXNDb250YWluZXIuY2hpbGRyZW4ubGVuZ3RoID09IDApIHtcbiAgICAgIHN0YXR1c0NvbnRhaW5lci5wYXJlbnROb2RlLnJlbW92ZSgpO1xuICAgIH1cbiAgICByZXR1cm4gcHlvZGlkZTtcbiAgfSkoKS5jYXRjaCgoZXJyKSA9PiB7XG4gICAgc3RhdHVzVGV4dC5zdHlsZS5jb2xvciA9IFwidmFyKC0tZXhlcmNpc2UtZWRpdG9yLWhsLWVyLCAjQUQwMDAwKVwiO1xuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBlcnIubWVzc2FnZTtcbiAgICAvL2luZGljYXRvckNvbnRhaW5lci5xdWVyeVNlbGVjdG9yKFwiLnNwaW5uZXItZ3Jvd1wiKS5jbGFzc0xpc3QuYWRkKFwiZC1ub25lXCIpO1xuICAgIHRocm93IGVycjtcbiAgfSk7XG5cbiAgLy8gS2VlcCB0cmFjayBvZiBpbml0aWFsIE9KUyBibG9jayByZW5kZXJcbiAgY29uc3QgcmVuZGVyZWRPanMgPSB7fTtcblxuICBjb25zdCBwcm9jZXNzID0gYXN5bmMgKGNvbnRleHQsIGlucHV0cykgPT4ge1xuICAgIGNvbnN0IHB5b2RpZGUgPSBhd2FpdCBweW9kaWRlUHJvbWlzZTtcbiAgICBjb25zdCBldmFsdWF0b3IgPSBuZXcgUHlvZGlkZUV2YWx1YXRvcihweW9kaWRlLCBjb250ZXh0KTtcbiAgICBhd2FpdCBldmFsdWF0b3IucHJvY2VzcyhpbnB1dHMpO1xuICAgIHJldHVybiBldmFsdWF0b3IuY29udGFpbmVyO1xuICB9XG5cbiAgcmV0dXJuIHtcbiAgICBweW9kaWRlUHJvbWlzZSxcbiAgICByZW5kZXJlZE9qcyxcbiAgICBwcm9jZXNzLFxuICB9O1xufVxuIn1dfQ==
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyJfdG91ci9zb3VuZGluZ3MucHkiLCJfdG91ci9zcGVjdHJhLnB5Il0=
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../modelling-tour";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -194,6 +194,10 @@ window.Quarto = {
 <span class="menu-text">Radiative Transfer</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../modelling-tour/index.html"> 
+<span class="menu-text">Modelling Tour</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../experiments/index.html"> 
 <span class="menu-text">Experiments</span></a>
   </li>  
@@ -358,7 +362,7 @@ window.Quarto = {
 <section id="the-two-stream-approximation" class="level2">
 <h2 class="anchored" data-anchor-id="the-two-stream-approximation">The two-stream approximation</h2>
 <p>The radiative-transfer equation in a plane-parallel layer is reduced to two angular moments: the upward hemispheric flux <span class="math inline">\(F^+\)</span> and the downward <span class="math inline">\(F^-\)</span>. For each layer this yields the <strong>diffuse reflectance</strong> <span class="math inline">\(R_\text{dif}\)</span> and <strong>transmittance</strong> <span class="math inline">\(T_\text{dif}\)</span>. climt’s per-layer SW coefficients are computed in <code>_sw_dif_and_source</code>:</p>
-<div id="50fecd99" class="cell" data-execution_count="1">
+<div id="5963e15a" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.sw.kernels <span class="im">import</span> _sw_dif_and_source</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_sw_dif_and_source))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -465,7 +469,7 @@ Figure&nbsp;1: <strong>Figure 7.1</strong> — Diffuse reflectance <span class="
 <section id="longwave-transport" class="level2">
 <h2 class="anchored" data-anchor-id="longwave-transport">Longwave transport</h2>
 <p>The LW solver is simpler — no scattering, just absorption and emission. A diffusivity factor <span class="math inline">\(D = 1.66\)</span> converts vertical <span class="math inline">\(\tau\)</span> to effective-diffuse <span class="math inline">\(\tau\)</span>. The compiled kernel loops over all (band, g-point, column) triples:</p>
-<div id="bd0529f3" class="cell" data-execution_count="2">
+<div id="0646155e" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.lw.kernels <span class="im">import</span> _lw_transport_kernel</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(_lw_transport_kernel))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -474,7 +478,7 @@ Figure&nbsp;1: <strong>Figure 7.1</strong> — Diffuse reflectance <span class="
 def _lw_transport_kernel(
     tau, planck_source, surface_source, emissivity, weights,
     up_band, down_band, up_broad, down_broad,
-    diag_trans, diag_up_gpt, diag_dn_gpt, want_diag,
+    diag_trans, diag_up_gpt, diag_dn_gpt, want_diag, diffusivity_factor,
 ):
     """Consolidated multi-band, multi-g-point LW transport.
 
@@ -500,7 +504,7 @@ def _lw_transport_kernel(
                 if want_diag != 0:
                     diag_up_gpt[b, g, 0, i] = w * up_prev
                 for k in range(nlev):
-                    trans = np.exp(-DIFFUSIVITY_FACTOR * tau[b, g, k, i])
+                    trans = np.exp(-diffusivity_factor * tau[b, g, k, i])
                     up_cur = up_prev * trans + planck_source[b, g, k, i] * (1.0 - trans)
                     up_band[b, k + 1, i] += w * up_cur
                     if want_diag != 0:
@@ -512,7 +516,7 @@ def _lw_transport_kernel(
                 if want_diag != 0:
                     diag_dn_gpt[b, g, nlev, i] = 0.0
                 for k in range(nlev - 1, -1, -1):
-                    trans = np.exp(-DIFFUSIVITY_FACTOR * tau[b, g, k, i])
+                    trans = np.exp(-diffusivity_factor * tau[b, g, k, i])
                     dn_cur = dn_prev * trans + planck_source[b, g, k, i] * (1.0 - trans)
                     down_band[b, k, i] += w * dn_cur
                     if want_diag != 0:
