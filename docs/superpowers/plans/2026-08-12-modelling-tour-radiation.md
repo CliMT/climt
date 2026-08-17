@@ -2691,13 +2691,13 @@ underscore-prefixed directory at all.
 - Modify: `setup.py`, `setup.cfg`, `climt/__init__.py`, `HISTORY.rst` (version bump)
 - Modify: `docs/radiative-transfer/09-live-rce.qmd` (repin the wheel)
 
-- [ ] **Step 1: Write the artifact generator**
+- [x] **Step 1: Write the artifact generator**
 
 Create `docs/modelling-tour/_artifacts/generate.py` producing one PNG per page, reusing
 `_tour/soundings.py` and `_tour/spectra.py` so the figures cannot drift from the pages'
 physics. Name them `01-spectrum.png` … `06-runaway.png`.
 
-- [ ] **Step 2: Generate and inspect**
+- [x] **Step 2: Generate and inspect**
 
 ```bash
 conda run -n climt python docs/modelling-tour/_artifacts/generate.py
@@ -2706,7 +2706,7 @@ ls -la docs/modelling-tour/_artifacts/
 
 Expected: six PNGs. Open at least two and confirm they are not blank.
 
-- [ ] **Step 3: Add fallbacks to the pages**
+- [x] **Step 3: Add fallbacks to the pages**
 
 On each page, immediately after the main figure cell, add a collapsed callout:
 
@@ -2721,29 +2721,45 @@ browser blocks it, the static version is here.
 :::
 ```
 
-- [ ] **Step 4: Full render**
+- [x] **Step 4: Full render**
+
+Render from the **repo root**, the way `.github/workflows/docs.yml` does — not from
+inside `docs/`. With quarto 1.9.38 the `cd docs` form dies after rendering all 82
+documents, on `AlreadyExists` copying `radiative-transfer/k_distribution_demo.ipynb`
+(a committed symlink into `examples/`, which dangles once copied into `_site`). Same
+sources, same quarto, no error from the root:
 
 ```bash
-cd docs && QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render
+QUARTO_PYTHON=/Users/joymonteiro/miniconda3/envs/climt/bin/python quarto render docs/
 ```
 
 Expected: the whole site renders with no error, and `_site/modelling-tour/` contains
 `index.html` plus six page HTML files.
 
-- [ ] **Step 5: Check every cross-link resolves**
+- [x] **Step 5: Check every cross-link resolves**
+
+`realpath -m` is GNU-only and BSD `realpath` on macOS rejects it — which fails *open*,
+reporting every link as `BROKEN:`, so the check looks like it ran and found everything
+wrong. Use a portable one:
 
 ```bash
-cd docs && grep -ohE '\]\((\.\./)?[a-z0-9./-]+\.qmd\)' modelling-tour/*.qmd | sort -u | \
-  sed -E 's/^\]\(//; s/\)$//' | while read -r link; do
-    target=$(cd modelling-tour && realpath -m "$link")
-    [ -f "$target" ] || echo "BROKEN: $link"
-  done
-echo "link check done"
+cd docs && python - <<'PY'
+import glob, os, re
+bad = 0
+for page in sorted(glob.glob("modelling-tour/*.qmd")):
+    for link in re.findall(r"\]\(((?:\.\./)?[A-Za-z0-9./_-]+\.qmd)(?:#[^)]*)?\)",
+                           open(page).read()):
+        target = os.path.normpath(os.path.join(os.path.dirname(page), link))
+        if not os.path.isfile(target):
+            print(f"BROKEN: {page} -> {link}")
+            bad += 1
+print(f"link check done, {bad} broken")
+PY
 ```
 
-Expected: `link check done` with no `BROKEN:` lines.
+Expected: `link check done, 0 broken`.
 
-- [ ] **Step 6: Run the full test suite**
+- [x] **Step 6: Run the full test suite**
 
 Run: `conda run -n climt python -m pytest tests/ -v -m "not slow"`
 Then: `conda run -n climt python -m pytest tests/test_modelling_tour.py tests/test_spectrum_table.py tests/test_cork_diffusivity.py -v -m slow`
@@ -2760,7 +2776,11 @@ Expected: exit 0, no output. If it reports anything stale, a cork source edit so
 in Tasks 1–13 skipped its regeneration step — go back and run `make experiments` for the
 manifest concerned rather than fixing it up here.
 
-- [ ] **Step 7: Bump the version, and repin the live pages to it**
+- [ ] **Step 7: Bump the version, and repin the live pages to it** — *bump done
+  (`0.31.0`, commit `9b135bb`, plus the `HISTORY.rst` entries); the repin is
+  deliberately still open, and stays open until 0.31.0 is on PyPI. Every page is
+  still pinned to `climt==0.30.0`, so page 4 cannot run on the published site
+  yet.*
 
 Every live page pins `climt==0.30.0` in its `pyodide: packages:` front matter, and
 micropip resolves that from PyPI. **This tranche's pages cannot run against 0.30.0.**
@@ -2820,7 +2840,7 @@ Until the release lands, preview against a locally built wheel instead — build
 `docs/radiative-transfer/_live/serve_wheel.py` (plain `http.server` sends no CORS headers
 and will not work), and point the pins at that URL *without committing the change*.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add docs/modelling-tour/_artifacts docs/modelling-tour/*.qmd
@@ -2838,6 +2858,52 @@ git commit -m "docs: pin live pages to climt 0.31.0
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
+
+### Log — as built
+
+**The generator renders the pages' own cells, not a reimplementation of them.** Step 1
+said to reuse `_tour/soundings.py` and `_tour/spectra.py` so the figures cannot drift
+from the pages' physics. Reusing the *helpers* still leaves the plotting duplicated, and
+that is where drift actually happens — change a page's axes or its annotations and a
+hand-written fallback silently goes stale. So `_artifacts/generate.py` extracts the
+`{pyodide}` blocks out of each `.qmd` and execs them in order, saving whatever figure the
+target cell drew. The pattern is already in the repo:
+`scripts/experiments/render_live_rce_figure.py`. It needs `os.chdir` to the page
+directory, because the cells say `sys.path.insert(0, "_tour")` and reach the spectrum
+table at `_data/...`, both relative to the page — which is the working directory in the
+browser. Side benefit: running it is a fast native check that every page's code still
+runs, and it fails loudly if one does not. All seven figures render in ~11 s.
+
+**Seven PNGs, not six.** Page 6's title promises two things — the feedback and the limit —
+drawn by two different cells, so it gets `06-feedback.png` and `06-runaway.png`. The rest
+are named for what they show rather than by the plan's illustrative `01-spectrum.png …
+06-runaway.png` sequence.
+
+**`_quarto.yml` needed a third resources entry, which the plan did not mention.**
+`_artifacts/` is underscore-prefixed, so Quarto omits it from the site exactly as it omits
+`_tour/` and `_data/`. Without `- "modelling-tour/_artifacts/*.png"` the fallback callouts
+render as broken images and nothing in the render output says so. Verified positively
+after the render: all seven PNGs are under `_site/modelling-tour/_artifacts/`, and each
+page's HTML references its own.
+
+**Two of the plan's own commands were wrong** — both fixed in place above, since they read
+as verification and would otherwise report false results:
+
+- Step 4's `cd docs && quarto render` fails at the resource-copy stage on quarto 1.9.38,
+  after rendering all 82 documents, trying to copy the committed
+  `radiative-transfer/k_distribution_demo.ipynb` symlink twice. Not caused by anything in
+  this tranche — the symlink has been on `develop` since July — and CI is green because it
+  runs `quarto render docs/` from the repo root, which succeeds here too.
+- Step 5's link check used `realpath -m`, which BSD `realpath` rejects, so it printed
+  `BROKEN:` for all 13 links while the underlying links were fine. The portable
+  replacement reports 0 broken.
+
+**Step 6 results:** 630 passed, 2 skipped (`-m "not slow"`); 20 passed in the tour's slow
+subset; `scripts/build_experiments.py --check` exit 0.
+
+**The pins are still at `climt==0.30.0`,** which is the one thing about this tranche that
+is not shippable to the live site. See Step 7 — the bump landed, the repin cannot until
+0.31.0 is published.
 
 ---
 
