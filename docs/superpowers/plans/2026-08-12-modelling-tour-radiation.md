@@ -3168,7 +3168,44 @@ re-running all 33 `{pyodide}` cells across the six pages (0 failures).
   the notebook below it (52.9/63.3). Now quotes the artifact and says the
   notebook is a different machine. Pre-existing, not from this tranche.
 
-**Not done:** the 5.85 MB `.npz` stays a plain git blob (the reviewer's item 19 was
-a request for conscious sign-off, and the spec argues the case), and pages 1–3
-still say "56 bands" in prose while the loader may silently fall back to 14 —
-they print the real count in their first cell, so a reader is never misled.
+### Item 19 — the `.npz` stays a plain git blob. Signed off 2026-08-17.
+
+The reviewer asked for a conscious decision, not a change, and the constraints
+leave little room. Pyodide can only load the table from an origin the page
+already trusts, so it has to be a static asset in the repo the docs build from:
+a GitHub release asset sends no CORS headers (the 2026-07-19 spec), and the wheel
+is the wrong home for 5.85 MB that only six docs pages read — nor could it be
+netCDF there, since the pure wheel has no scipy. What is being accepted, and it
+is not small, is the permanent cost: every clone carries the blob, and it cannot
+leave history without a rewrite. Git LFS was the untaken alternative; it was not
+evaluated in depth, because it would put the asset behind a checkout step the
+docs build does not currently do.
+
+**Still not done:** pages 1–3 say "56 bands" in prose while `spectrum_table()`
+may silently fall back to the shipped 14. Each of the three prints the real count
+in its first cell, so the count itself is never misrepresented — but the numbers
+quoted *around* it would be: page 1's "284 K across the twelve bands that span
+it", page 3's τ\* = 1 pressures, all measured on the 56-band table. That only
+bites in a deployment where the asset failed to stage, which is the case the
+fallback exists to survive at all.
+
+### Finding — a one-line no-op in `cork/` costs two 200-day integrations
+
+The docs workflow went red on `build_experiments.py --check`, with
+`rce_moist_before.npz` and `rce_moist_after.npz` stale. Not a flake, and not
+pre-existing: a detached worktree at `origin/develop` passes the same check. The
+cause is the pickle fix. Both artifacts list `climt/_components/cork/**/*.py`
+among their deps, deps are content-hashed, and adding a class-level
+`_diffusivity_factor` to `lw/component.py` moved that hash — so a change that
+cannot alter a single number invalidated 57 600 five-minute steps, twice.
+
+Regenerated, and the no-op held exactly: both `.npz` came back **byte-identical**
+(md5 `d5a9a628…`, `16463fd6…`, recorded before the run), and `rce_before_after.png`
+was never rebuilt, because its own deps — those two files — still hash the same.
+The commit is `.hashes.json` alone.
+
+Worth knowing for the next CORK edit: the dep glob is deliberately coarse, so any
+touch inside `climt/_components/cork/` buys a multi-hour regeneration before the
+docs job will go green, whether or not physics moved. The throughput artifacts
+already escape this via `manual: true`; the RCE pair does not, and should not —
+its outputs really are code-determined.
