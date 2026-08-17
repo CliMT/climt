@@ -24,7 +24,7 @@ pyodide:
     - _data/earth_spectrum_lw.npz
 ---
 
-{{< include ../_includes/climt-live-setup.qmd >}}
+{{< include ../_includes/climt-live-boot.qmd >}}
 
 ::: {.callout-tip}
 ## Where this fits

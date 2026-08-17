@@ -21,7 +21,7 @@ pyodide:
     - _tour/spectra.py
 ---
 
-{{< include ../_includes/climt-live-setup.qmd >}}
+{{< include ../_includes/climt-live-boot.qmd >}}
 
 ::: {.callout-tip}
 ## Where this fits
