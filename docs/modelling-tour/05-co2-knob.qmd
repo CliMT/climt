@@ -316,11 +316,40 @@ absorber; it has run out of *lapse rate*.
 That is the mechanism the loose version misses, and it matters, because it tells
 you what would change the answer. Give this column a stratosphere that *warms*
 with height — which Earth's real ozone-heated one does — and the core's
-contribution does not merely shrink, it changes sign: replace the isothermal cap
-with a 2.5 K km⁻¹ warming one and the 630–700 band goes from +0.37 to
-−2.26 W m⁻², with more CO₂ *increasing* the outgoing flux there. Nothing about
-the optical depth changed. The absorber is identical; only the temperature it
-sits in is different.
+contribution does not merely shrink, it changes sign. `lapse_rate_sounding` takes
+a `gamma_strat` for exactly this; rebuild the sounding with
+`gamma_strat=2.5e-3` (2.5 K km⁻¹, warming upward) and re-run the decomposition:
+
+```{pyodide}
+T_warm, q_warm = lapse_rate_sounding(p, ps, T_surf=T_SURF, rh=RH,
+                                     gamma_strat=2.5e-3)
+
+
+def per_band_olr_warm(co2_ppm):
+    apply_sounding(state, T_warm, q_warm, T_surf=T_SURF)
+    state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = co2_ppm * 1e-6
+    olr_band, _ = spectral_olr(lw(state)[1], limits)
+    return olr_band
+
+
+delta_warm = per_band_olr_warm(280) - per_band_olr_warm(1120)
+print(f"isothermal stratosphere : core {delta[core].sum():+.3f} W/m2")
+print(f"warming at 2.5 K/km     : core {delta_warm[core].sum():+.3f} W/m2")
+print(f"                          total {delta_warm.sum():+.3f}, "
+      f"wings {delta_warm[wings].sum():+.3f} W/m2")
+
+# Put the state back the way the rest of the page expects to find it.
+apply_sounding(state, T, q, T_surf=T_SURF)
+```
+
+The 630–700 band goes from **+0.37 to −1.11 W m⁻²**: more CO₂ now *increases* the
+outgoing flux there. Nothing about the optical depth changed. The absorber is
+identical; only the temperature it sits in is different.
+
+Notice that the wings fall too, from +5.94 to +3.10, and the total from +7.44 to
++2.94. A warming stratosphere is not a small correction to this picture — it is
+most of it. That is one reason the real 15 µm forcing calculation is a
+stratospheric-adjustment problem and not a troposphere one.
 
 It also explains the curvature you measured two sections ago. As CO₂ rises, the
 wings' emission levels climb toward the tropopause too, and one by one they run
@@ -413,10 +442,12 @@ definition of the quantity.
    the core's (630–700), and plot all three against log CO₂. Across the full
    10 → 10 000 ppm span the total falls by 37 W m⁻², the window by 7 and the
    core by 5.6 — so the two regions everyone names account for a third of the
-   change between them. Then look at *where* along the axis each one moves: the
-   core does almost all of its falling below 100 ppm (11.7 → 7.3 W m⁻²) and
-   essentially nothing after (6.6 → 6.2 → 6.2). That curve is what saturation
-   looks like drawn out, and the total's is not parallel to it anywhere.
+   change between them. Then look at *where* along the axis each one moves. On
+   the twelve-point `co2` grid this page already defines, the core does almost
+   all of its falling over the first five points — 11.74 → 7.14 W m⁻², from 10 to
+   123 ppm — and almost none over the last four: 6.21, 6.17, 6.16, 6.16, from
+   1520 to 10 000 ppm. That curve is what saturation looks like drawn out, and
+   the total's is not parallel to it anywhere.
 
 2. **Find the saturation concentration per band.** For each band, sweep CO₂ and
    find where its brightness temperature stops changing by more than 0.1 K per

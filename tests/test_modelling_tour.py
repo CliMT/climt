@@ -48,6 +48,40 @@ def test_lapse_rate_sounding_shape_and_bounds(soundings):
     assert np.all(q > 0) and q.max() < 0.05           # sane humidity
 
 
+def test_lapse_rate_sounding_stratosphere_gradient(soundings):
+    """``gamma_strat`` warms the stratosphere with height, page 5's knob.
+
+    Default is 0.0, which must leave the profile bit-identical to the isothermal
+    one -- page 5 quotes numbers from both, and only the difference between them
+    means anything.
+    """
+    p = np.linspace(1e5, 1e2, 60)
+    T_flat, q_flat = soundings.lapse_rate_sounding(p, 1e5, T_surf=288.0)
+    T_zero, _ = soundings.lapse_rate_sounding(p, 1e5, T_surf=288.0,
+                                              gamma_strat=0.0)
+    np.testing.assert_array_equal(T_flat, T_zero)
+
+    EPSILON = soundings.EPSILON
+    T_warm, q_warm = soundings.lapse_rate_sounding(p, 1e5, T_surf=288.0,
+                                                   gamma_strat=2.5e-3)
+    strat = T_flat <= 200.0 + 1e-9        # where the isothermal cap had bitten
+    assert np.all(np.diff(T_warm[strat]) > 0)      # warms upward, monotonically
+    assert T_warm[-1] > T_flat[-1] + 20.0          # and by a lot at the lid
+
+    # The troposphere is untouched, humidity included.
+    np.testing.assert_allclose(T_warm[~strat], T_flat[~strat])
+    np.testing.assert_allclose(q_warm[~strat], q_flat[~strat])
+
+    # Fixed RH over warm, thin air would otherwise return q of order 100 kg/kg:
+    # at 1 hPa the saturation vapour pressure alone exceeds the total pressure.
+    assert np.all(q_warm > 0) and q_warm.max() <= EPSILON
+
+    # A cooling stratosphere works too, and must not cross the sign convention.
+    T_cold, _ = soundings.lapse_rate_sounding(p, 1e5, T_surf=288.0,
+                                              gamma_strat=-1e-3)
+    assert np.all(np.diff(T_cold[strat]) < 0)
+
+
 def test_saturation_vapour_pressure_matches_known_values(soundings):
     # Bolton (1980): ~611.2 Pa at 0 C, ~2339 Pa at 20 C
     assert soundings.saturation_vapour_pressure(273.15) == pytest.approx(611.2, rel=1e-3)
