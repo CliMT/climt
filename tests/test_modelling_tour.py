@@ -70,6 +70,66 @@ def spectra():
     return _load("spectra")
 
 
+# Pages 1-3 call ``tables.spectrum_table()`` and run on the 56-band table; pages
+# 4-6 name the shipped 14-band one directly. Testing pages 1-3 on both is the
+# point: the prose quotes numbers from the 56-band run, and the 14-band run is
+# the documented fallback a reader gets if the asset is missing, so neither path
+# may go unguarded. Resolved at import, because parametrize needs it at
+# collection time.
+LOW_RES = "earth_low_res_lw"
+_TABLES = _load("tables")
+HI_RES = _TABLES.spectrum_table()
+
+
+@pytest.fixture
+def tables():
+    return _TABLES
+
+
+PAGE123_TABLES = [
+    pytest.param(LOW_RES, id="14band"),
+    pytest.param(HI_RES, id="56band",
+                 marks=pytest.mark.skipif(
+                     HI_RES == _TABLES.FALLBACK,
+                     reason="the 56-band spectrum table asset is not present")),
+]
+
+
+def test_spectrum_table_finds_the_asset_from_any_working_directory(
+        tables, tmp_path, monkeypatch):
+    """The switch that decides whether pages 1-3 get 56 bands or silently 14.
+
+    It resolves by ``os.path.isfile`` on two candidates, the second of which is
+    anchored to this file rather than the caller's cwd -- that is what makes it
+    work in a test run and a native render, where the working directory is not
+    the page's. A regression here degrades all three pages' resolution and does
+    so *silently*, by design, so it is worth pinning.
+    """
+    monkeypatch.chdir(tmp_path)          # nowhere near the docs tree
+    table = tables.spectrum_table()
+    assert table != tables.FALLBACK
+    assert Path(table).is_file()
+    assert Path(table).name == tables.ASSET
+
+
+def test_spectrum_table_honours_prefer_hires(tables):
+    assert tables.spectrum_table(prefer_hires=False) == tables.FALLBACK
+
+
+def test_spectrum_table_falls_back_when_the_asset_is_missing(tables, tmp_path,
+                                                             monkeypatch):
+    """Page 1's exercise 3 and the browser-without-the-asset case."""
+    monkeypatch.chdir(tmp_path)
+    assert tables.spectrum_table(base_url="no-such-directory") == tables.FALLBACK
+
+
+def test_spectrum_table_result_is_usable_as_a_table_argument(tables):
+    """Whatever it returns must construct a component -- name or path alike."""
+    table = tables.spectrum_table()
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
+    assert lw.num_longwave_bands == (14 if table == tables.FALLBACK else 56)
+
+
 def test_brightness_temperature_inverts_planck(spectra):
     nu = np.array([300.0, 667.0, 900.0, 1400.0])
     for T in (200.0, 255.0, 288.0, 320.0):
@@ -88,13 +148,27 @@ def test_per_band_olr_sums_to_the_broadband_diagnostic(spectra):
     assert olr_band.sum() == pytest.approx(broadband, rel=1e-9)
 
 
-def test_band_limits_cover_the_expected_features(spectra):
-    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+@pytest.mark.parametrize("table, nband, required_edges", [
+    pytest.param(LOW_RES, 14, (630.0, 700.0, 800.0, 980.0, 1080.0, 1180.0),
+                 id="14band"),
+    # The 56-band table resolves the CO2 core into four bands and the window
+    # into eleven; pages 2 and 3 quote both, so their boundaries are pinned.
+    pytest.param(HI_RES, 56,
+                 (630.0, 647.5, 665.0, 682.5, 700.0, 800.0, 980.0, 1005.0,
+                  1155.0, 2525.0, 2887.5),
+                 id="56band",
+                 marks=pytest.mark.skipif(
+                     HI_RES == _TABLES.FALLBACK,
+                     reason="the 56-band spectrum table asset is not present")),
+])
+def test_band_limits_cover_the_expected_features(spectra, table, nband,
+                                                 required_edges):
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
     limits = spectra.band_limits_of(lw)
-    assert limits.shape == (14, 2)
+    assert limits.shape == (nband, 2)
     # the 15 um CO2 core and the window edges must be exact band boundaries
     edges = set(np.round(limits.ravel(), 1))
-    for edge in (630.0, 700.0, 800.0, 980.0, 1080.0, 1180.0):
+    for edge in required_edges:
         assert edge in edges
 
 
@@ -135,9 +209,10 @@ def test_emission_weight_is_monotone_for_equal_optical_depth_layers(spectra):
 
 
 @pytest.mark.slow
-def test_page1_window_is_warmer_than_the_co2_core(soundings, spectra):
+@pytest.mark.parametrize("table", PAGE123_TABLES)
+def test_page1_window_is_warmer_than_the_co2_core(soundings, spectra, table):
     """The page's central claim: brightness temperature swings ~200 K to ~285 K."""
-    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
     state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
     p = state["air_pressure"].values[:, 0, 0]
     ps = float(state["surface_air_pressure"].values.ravel()[0])
@@ -160,8 +235,10 @@ def test_page1_window_is_warmer_than_the_co2_core(soundings, spectra):
 
 
 @pytest.mark.slow
-def test_page2_window_is_transparent_and_co2_core_is_opaque(soundings, spectra):
-    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+@pytest.mark.parametrize("table", PAGE123_TABLES)
+def test_page2_window_is_transparent_and_co2_core_is_opaque(soundings, spectra,
+                                                            table):
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
     state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
     p = state["air_pressure"].values[:, 0, 0]
     ps = float(state["surface_air_pressure"].values.ravel()[0])
@@ -180,9 +257,10 @@ def test_page2_window_is_transparent_and_co2_core_is_opaque(soundings, spectra):
 
 
 @pytest.mark.slow
-def test_page2_removing_absorbers_opens_the_window(soundings):
+@pytest.mark.parametrize("table", PAGE123_TABLES)
+def test_page2_removing_absorbers_opens_the_window(soundings, table):
     """A near-N2 atmosphere: OLR should approach the surface blackbody flux."""
-    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
     state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=40))
     p = state["air_pressure"].values[:, 0, 0]
     ps = float(state["surface_air_pressure"].values.ravel()[0])
@@ -217,9 +295,9 @@ def _emission_pressure(spectra, tau_layer, p, D):
     return float(np.exp(np.interp(0.0, np.log(tau_star[::-1]), np.log(p[::-1]))))
 
 
-def _page3_column(soundings, spectra, humidity_scale=1.0, nz=60):
+def _page3_column(soundings, spectra, table=LOW_RES, humidity_scale=1.0, nz=60):
     """Page 3's column: the standard sounding, with a humidity knob."""
-    lw = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=table)
     state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=nz))
     p = state["air_pressure"].values[:, 0, 0]
     ps = float(state["surface_air_pressure"].values.ravel()[0])
@@ -237,39 +315,98 @@ def _page3_column(soundings, spectra, humidity_scale=1.0, nz=60):
 
 
 @pytest.mark.slow
-def test_page3_radiating_levels_are_a_distribution_not_a_height(soundings, spectra):
+@pytest.mark.parametrize("table, n_levels, min_span, max_core_pa", [
+    pytest.param(LOW_RES, 12, 100.0, 2000.0, id="14band"),
+    # The numbers page 3 quotes in prose: forty-six of the fifty-six bands have
+    # a tau* = 1 level, and those levels run 1.3 hPa to 1005 hPa -- a factor of
+    # 770. The core reaches 46 hPa because the 56-band table resolves the band's
+    # outer wing at 630-648, which the 14-band table averages away.
+    pytest.param(HI_RES, 46, 700.0, 5000.0, id="56band",
+                 marks=pytest.mark.skipif(
+                     HI_RES == _TABLES.FALLBACK,
+                     reason="the 56-band spectrum table asset is not present")),
+])
+def test_page3_radiating_levels_are_a_distribution_not_a_height(
+        soundings, spectra, table, n_levels, min_span, max_core_pa):
     """The page's central claim: there is no single radiating level."""
-    col = _page3_column(soundings, spectra)
+    col = _page3_column(soundings, spectra, table=table)
     limits, p_emit = col["limits"], col["p_emit"]
     centres = spectra.band_centres(limits)
 
-    # The CO2 core emits from the stratosphere.
+    # The CO2 core emits from the stratosphere and the top of the troposphere.
     core = p_emit[(centres > 630) & (centres < 700)]
-    assert np.all(core < 2000.0)                    # Pa, i.e. above ~20 hPa
+    assert np.all(core < max_core_pa)
 
     # The clearest window bands never reach tau* = 1 at all: no radiating level
     # exists for them, the surface is simply visible.
-    window = p_emit[(centres > 800) & (centres < 1080)]
+    window = p_emit[(centres > 980) & (centres < 1080)]
     assert np.all(np.isnan(window))
 
     # Across the bands that do have one, the levels span the whole atmosphere.
     have = p_emit[np.isfinite(p_emit)]
-    assert have.max() / have.min() > 100.0
+    assert have.size == n_levels
+    assert have.max() / have.min() > min_span
 
 
 @pytest.mark.slow
-def test_page3_brightness_temperature_tracks_the_emission_level(soundings, spectra):
+@pytest.mark.skipif(HI_RES == _TABLES.FALLBACK,
+                    reason="the 56-band spectrum table asset is not present")
+def test_page3_nine_of_the_eleven_window_bands_have_no_radiating_level(
+        soundings, spectra):
+    """Page 3 states the count outright, so the count is what gets asserted.
+
+    The two exceptions are 800-845 and 1130-1155 cm^-1 at the window's edges,
+    whose column tau only just scrapes past 1/D, so their "radiating level"
+    lands at or below the bottom model layer and has degenerated into "the
+    ground". Page 2 measured the same eleven bands as the window.
+    """
+    col = _page3_column(soundings, spectra, table=HI_RES)
+    limits, p_emit = col["limits"], col["p_emit"]
+    window = (limits[:, 0] >= 800.0) & (limits[:, 1] <= 1155.0)
+
+    assert window.sum() == 11
+    assert np.isnan(p_emit[window]).sum() == 9
+    # The two that do have one are at the edges, and both sit near the ground.
+    edge = limits[window][np.isfinite(p_emit[window])]
+    np.testing.assert_allclose(edge, [[800.0, 845.0], [1130.0, 1155.0]])
+    assert np.nanmin(p_emit[window]) > 9e4        # Pa: at or below the surface layer
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("table, n_below_weighted, n_below_level, max_bias, min_corr", [
+    pytest.param(LOW_RES, 0, 1, 45.0, 0.9, id="14band"),
+    # Page 3 names all six: three window-edge bands whose level degenerates into
+    # the ground, and the three saturated core bands emitting from an isothermal
+    # 200 K stratosphere, where "the temperature at tau* = 1" barely constrains.
+    # The miss is larger here (the page quotes +13, +25 and +80 K) because the
+    # narrower bands separate the strongly and weakly absorbing g-points that
+    # the 14-band table averages together.
+    pytest.param(HI_RES, 3, 6, 90.0, 0.85, id="56band",
+                 marks=pytest.mark.skipif(
+                     HI_RES == _TABLES.FALLBACK,
+                     reason="the 56-band spectrum table asset is not present")),
+])
+def test_page3_brightness_temperature_tracks_the_emission_level(
+        soundings, spectra, table, n_below_weighted, n_below_level, max_bias,
+        min_corr):
     """T_b(band) follows the emission-weighted temperature -- with a cold bias.
 
     The band-mean optical depth cork reports is the g-weighted mean over eight
     g-points whose k values span three to eight orders of magnitude. It is
     therefore dominated by the band's *strongest* absorption, while the OLR
     escapes preferentially through the band's weakest. So the band-mean
-    weighting function always places the emission too high, and T_b comes out
-    warmer than the weighted temperature -- never colder. That one-sidedness is
-    the page's punchline, so it is what gets asserted.
+    weighting function places the emission too high, and T_b comes out warmer
+    than the weighted temperature. That one-sidedness is the page's punchline,
+    so it is what gets asserted.
+
+    It has exactly one class of exception, and only on the 56-band table: the
+    saturated CO2 core bands emit from the isothermal 200 K stratosphere, where
+    the weighted temperature is 200.0 K whatever the weights do, so the
+    comparison has no leverage and the residual band-centre inversion error
+    (about 2 K) sets the sign instead. Page 3 names the same three bands in its
+    tau* = 1 discussion, at 0.3 to 2.2 K.
     """
-    col = _page3_column(soundings, spectra)
+    col = _page3_column(soundings, spectra, table=table)
     T, tau, limits = col["T"], col["tau"], col["limits"]
     _, flux_density = spectra.spectral_olr(col["diag"], limits)
     tb = spectra.brightness_temperature(flux_density, spectra.band_centres(limits))
@@ -281,50 +418,65 @@ def test_page3_brightness_temperature_tracks_the_emission_level(soundings, spect
 
     sane = tb <= 288.0            # see the band-centre test below
     bias = (tb - t_weighted)[sane]
-    assert np.all(bias > 0.0)     # always warmer, never colder
-    assert bias.max() < 45.0
-    assert np.corrcoef(t_weighted[sane], tb[sane])[0, 1] > 0.9
+    assert (bias <= 0.0).sum() == n_below_weighted
+    assert bias.min() > -2.5      # and the exceptions miss by very little
+    assert bias.max() < max_bias
+    assert np.corrcoef(t_weighted[sane], tb[sane])[0, 1] > min_corr
 
     # The page plots T at the tau* = 1 level rather than the weighted mean, so
-    # guard that comparison too. Same story, with one documented exception:
-    # 1080-1180 cm^-1 has column tau = 0.68, so its level lands inside the
-    # bottom model layer and the construction degenerates into "the ground".
+    # guard that comparison too. Same story, with a handful of bands going the
+    # other way -- the ones whose level has degenerated into the ground, or that
+    # sit in the isothermal stratosphere. Page 3 names each of them; the count is
+    # the parameter, and the page quotes the size of the miss as 0.3 to 6.6 K.
     p_emit = col["p_emit"]
     has_level = np.isfinite(p_emit) & sane
     t_level = np.exp(np.interp(np.log(p_emit[has_level]),
                                np.log(col["p"][::-1]), np.log(T[::-1])))
     level_bias = tb[has_level] - t_level
-    assert (level_bias > 0.0).sum() == level_bias.size - 1
-    assert level_bias.min() > -5.0
-    assert level_bias.max() < 45.0
-    assert np.corrcoef(t_level, tb[has_level])[0, 1] > 0.9
+    assert (level_bias <= 0.0).sum() == n_below_level
+    assert level_bias.min() > -7.0
+    assert level_bias.max() < max_bias
+    assert np.corrcoef(t_level, tb[has_level])[0, 1] > min_corr
 
 
 @pytest.mark.slow
-def test_page3_band_centre_brightness_temperature_fails_on_the_widest_band(
-        soundings, spectra):
-    """1800-3250 cm^-1 returns T_b above the surface -- an inversion artifact.
+@pytest.mark.parametrize("table, band, tb_approx", [
+    pytest.param(LOW_RES, (1800.0, 3250.0), 300.0, id="14band"),
+    # The 56-band table splits that 1450 cm^-1 monster into three; the artifact
+    # survives in the one that carries the flux, and shrinks from 300 K to 290 K
+    # because the band is narrower. Page 1 shows both side by side; page 3's
+    # callout is written about this one.
+    pytest.param(HI_RES, (2525.0, 2887.5), 290.0, id="56band",
+                 marks=pytest.mark.skipif(
+                     HI_RES == _TABLES.FALLBACK,
+                     reason="the 56-band spectrum table asset is not present")),
+])
+def test_page3_band_centre_brightness_temperature_fails_on_one_wide_band(
+        soundings, spectra, table, band, tb_approx):
+    """One band returns T_b above the surface -- an inversion artifact.
 
     Inverting a band-mean flux density at the band *centre* only works if the
-    Planck function is near-linear across the band. Over 1450 cm^-1 of shortwave
-    tail it is not, and the answer comes back hotter than the ground, which is
-    impossible. The page says so rather than plotting it silently.
+    Planck function is near-linear across the band. Over hundreds of cm^-1 of
+    shortwave tail it is not, and the answer comes back hotter than the ground,
+    which is impossible. The pages say so rather than plotting it silently.
     """
-    col = _page3_column(soundings, spectra)
+    col = _page3_column(soundings, spectra, table=table)
     limits = col["limits"]
     _, flux_density = spectra.spectral_olr(col["diag"], limits)
     tb = spectra.brightness_temperature(flux_density, spectra.band_centres(limits))
 
     bogus = np.flatnonzero(tb > 288.0)
-    assert bogus.tolist() == [len(tb) - 1]
-    np.testing.assert_allclose(limits[-1], [1800.0, 3250.0])
+    assert bogus.size == 1                    # exactly one, and we know which
+    np.testing.assert_allclose(limits[bogus[0]], band)
+    assert tb[bogus[0]] == pytest.approx(tb_approx, abs=1.0)
 
 
 @pytest.mark.slow
-def test_page3_moistening_raises_the_emission_levels(soundings, spectra):
+@pytest.mark.parametrize("table", PAGE123_TABLES)
+def test_page3_moistening_raises_the_emission_levels(soundings, spectra, table):
     """The knob: a wetter atmosphere emits from higher, colder air."""
-    dry = _page3_column(soundings, spectra, humidity_scale=1.0)
-    wet = _page3_column(soundings, spectra, humidity_scale=4.0)
+    dry = _page3_column(soundings, spectra, table=table, humidity_scale=1.0)
+    wet = _page3_column(soundings, spectra, table=table, humidity_scale=4.0)
     centres = spectra.band_centres(dry["limits"])
 
     # Every band that had a radiating level keeps it, and moves up.
@@ -332,9 +484,12 @@ def test_page3_moistening_raises_the_emission_levels(soundings, spectra):
     assert np.all(np.isfinite(wet["p_emit"][had]))
     assert np.all(wet["p_emit"][had] <= dry["p_emit"][had] + 1.0)
 
-    # The water vapour bands move a long way; the CO2 core barely moves.
+    # The water vapour bands move a long way; the CO2 core barely moves. The
+    # strongest mover is what gets asserted, not every band: on the 56-band
+    # table the 70-130 cm^-1 band is already emitting from the model lid when
+    # dry, so it has nowhere left to rise.
     rotational = (centres > 10) & (centres < 250)
-    assert (dry["p_emit"][rotational] / wet["p_emit"][rotational]).min() > 1.5
+    assert (dry["p_emit"][rotational] / wet["p_emit"][rotational]).max() > 2.0
     core = (centres > 630) & (centres < 700)
     assert (dry["p_emit"][core] / wet["p_emit"][core]).max() < 1.2
 

@@ -15,7 +15,16 @@ v.0.31.0
   runaway limit. No time integration anywhere: single component calls and
   parameter sweeps only. The pages' computational core lives in importable
   Python under ``docs/modelling-tour/_tour/`` and is exercised natively by
-  ``tests/test_modelling_tour.py``, so nothing on a page is unguarded by a test.
+  ``tests/test_modelling_tour.py`` — on both the 56-band table pages 1-3 run on
+  and the shipped 14-band fallback — so nothing on a page is unguarded by a
+  test.
+
+* **Fix** — the live RCE walkthrough (``docs/radiative-transfer/09-live-rce.qmd``)
+  now draws its profiles on a logarithmic pressure axis. On the linear axis the
+  entire upper atmosphere was crushed into the top sliver of the panel, so the
+  skin temperature the surrounding text discusses was not actually visible; the
+  text also claimed an isothermal top for the non-grey column, which keeps
+  cooling to the model lid, and now says so.
 
 * **New feature** — ``CorkLongwaveRadiation`` takes a ``diffusivity_factor``
   constructor argument, so the two-stream diffusivity ``D`` in
