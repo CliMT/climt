@@ -26,6 +26,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -42,10 +77,10 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-e1d00e4dfc48dbef53bffa4c834e136a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
 <link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -81,7 +116,7 @@ ul.task-list li input[type="checkbox"] {
 
 </head>
 
-<body class="nav-sidebar docked nav-fixed fullcontent quarto-light">
+<body class="nav-sidebar docked nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -203,13 +238,29 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-profile-we-hand-to-the-radiation-code" id="toc-the-profile-we-hand-to-the-radiation-code" class="nav-link active" data-scroll-target="#the-profile-we-hand-to-the-radiation-code">The profile we hand to the radiation code</a></li>
+  <li><a href="#reading-the-figure" id="toc-reading-the-figure" class="nav-link" data-scroll-target="#reading-the-figure">Reading the figure</a></li>
+  <li><a href="#one-band-comes-back-hotter-than-the-ground" id="toc-one-band-comes-back-hotter-than-the-ground" class="nav-link" data-scroll-target="#one-band-comes-back-hotter-than-the-ground">One band comes back hotter than the ground</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a>
+  <ul class="collapse">
+  <li><a href="#physics" id="toc-physics" class="nav-link" data-scroll-target="#physics">Physics</a></li>
+  <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a></li>
+  </ul></li>
+  <li><a href="#going-deeper" id="toc-going-deeper" class="nav-link" data-scroll-target="#going-deeper">Going deeper</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">ε is not a number</h1>
+<div class="quarto-title-block"><div><h1 class="title">ε is not a number</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -424,6 +475,8 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZm9yIG5hbWUsIHNwZWMgaW4g
 <p>The <a href="../radiative-transfer/01-why-nongrey.html">Radiative Transfer walkthrough</a> takes the same observation — that absorption is a function of wavelength — and follows it all the way down to line-by-line absorption coefficients and the k-distribution that made the 56 bands above computable.</p>
 
 
+<!-- -->
+
 <script type="pyodide-data">
 eyJvcHRpb25zIjp7ImVudiI6eyJQTE9UTFlfUkVOREVSRVIiOiJwbG90bHlfbWltZXR5cGUifSwiaW5kZXhVUkwiOiJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvcHlvZGlkZS92MC4yOC4xL2Z1bGwvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsicHlvZGlkZV9odHRwIiwibWljcm9waXAiLCJpcHl0aG9uIiwiY2xpbXQ9PTAuMzEuMCIsInVueXQiXX19
 </script>
@@ -525,6 +578,57 @@ window._ojs.runtime.interpretFromScriptTags();
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -854,7 +958,382 @@ window._ojs.runtime.interpretFromScriptTags();
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "ε is not a number"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span><span class="co"> live-html</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> jupyter</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">pyodide:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">    # Installed by micropip at document setup, before any cell runs; pinned to</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">    # the released version this page was written against. See</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    # radiative-transfer/09-live-rce.qmd for how to preview an unreleased wheel.</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - "climt==0.31.0"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    # A transitive dependency of climt, named explicitly because these pages</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">    # rely on it: unyt is pure Python, so micropip installs it from PyPI with</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">    # no wheel-building, and it backs `sympl.set_backend(climt.UnytBackend())`</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">    # below -- a thinner state wrapper than xarray DataArrays, which shows up</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">    # in the per-call cost of every cell that re-runs the radiation.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">    - "unyt"</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">    # Fetched into the Pyodide filesystem at document setup, alongside the</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co">    # wheel. These are the *same* files tests/test_modelling_tour.py imports</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">    # natively, served as site assets (docs/_quarto.yml lists them under</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">    # `project: resources:`, since Quarto otherwise skips underscore-prefixed</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">    # paths). The page imports them below rather than restating the physics</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">    # inline, so nothing on this page is unguarded by a test.</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/soundings.py</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/spectra.py</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/tables.py</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co">    # The 56-band spectrum table, ~5 MB. Too large for the wheel, so it ships as</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co">    # a site asset and arrives by exactly the same mechanism as the helpers</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co">    # above -- which works only because the docs site is same-origin with this</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co">    # page. tests/test_spectrum_table.py is the gate that says it may be used.</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co">    - _data/earth_spectrum_lw.npz</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>{{&lt; include ../_includes/climt-live-boot.qmd &gt;}}</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">## Where this fits</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Chapter 5 of the course notes builds a single-layer atmosphere: a shell of</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>emissivity ε over a surface, one radiating level, one emission temperature. Solve</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>its energy balance and a surface temperature drops out — the greenhouse effect in</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>three lines of algebra.</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>This page asks what that single number is standing in for.</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="fu">## A bigger download</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>This page draws a spectrum, so it fetches a **~5 MB spectral table** once, on top</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>of the climt wheel — 56 bands instead of the 14 that ship inside the package.</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>Your browser caches it, so pages 2 and 3, which use the same table, load it for</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>free. Pages 4–6 do not need it at all.</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>If the fetch fails the page still runs: it falls back to the shipped 14-band</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>table, and the only thing you lose is resolution.</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>The shell model gets a great deal right with very little. Give the shell an</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>emissivity ε, let it absorb εσT⁴ from the surface and re-emit εσT_a⁴ up and down,</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>and the surface warms above its bare-rock temperature by an amount that depends on</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>ε alone. One number for the whole atmosphere, one radiating level, one emission</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>temperature.</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>The question this page answers is whether that number exists. Real absorption is a</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>property of *wavelength*: CO₂ absorbs strongly near 15 µm and hardly at all near</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>10 µm, and water vapour is strong everywhere except a band in between. If ε varies</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>across the spectrum, then the ε in your shell model is an **average** — and the</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>useful question becomes: an average over what?</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="fu">## The profile we hand to the radiation code</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>Nothing here is computed by a model. We state a sounding outright — a 288 K</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>surface, a 6.5 K/km troposphere, 80% relative humidity, an isothermal 200 K</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>stratosphere — and ask the radiation code what it makes of it.</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="co">#| autorun: true</span></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"_tour"</span>)   <span class="co"># helper modules, served alongside this page</span></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sympl, climt</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> CorkLongwaveRadiation, get_default_state, get_grid</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundings <span class="im">import</span> lapse_rate_sounding, apply_sounding</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> spectra <span class="im">import</span> (band_centres, band_limits_of, band_widths,</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>                     brightness_temperature, planck_flux, spectral_olr)</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tables <span class="im">import</span> spectrum_table</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>T_SURF, RH <span class="op">=</span> <span class="fl">288.0</span>, <span class="fl">0.8</span>          <span class="co"># &lt;- change these and re-run</span></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a><span class="co"># The 56-band table if it downloaded, the shipped 14-band one if not. Which one</span></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a><span class="co"># you got changes the resolution of every figure below, so the page prints it.</span></span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>TABLE <span class="op">=</span> spectrum_table()</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>lw <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span>TABLE)</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">40</span>))</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> state[<span class="st">"air_pressure"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>ps <span class="op">=</span> <span class="bu">float</span>(state[<span class="st">"surface_air_pressure"</span>].values.ravel()[<span class="dv">0</span>])</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>T, q <span class="op">=</span> lapse_rate_sounding(p, ps, T_surf<span class="op">=</span>T_SURF, rh<span class="op">=</span>RH)</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>apply_sounding(state, T, q, T_surf<span class="op">=</span>T_SURF)</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"prescribed a </span><span class="sc">{</span>T_SURF<span class="sc">:.0f}</span><span class="ss"> K surface, RH = </span><span class="sc">{</span>RH<span class="sc">:.0%}</span><span class="ss">, </span><span class="sc">{</span><span class="bu">len</span>(p)<span class="sc">}</span><span class="ss"> levels"</span>)</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"using </span><span class="sc">{</span>lw<span class="sc">.</span>num_longwave_bands<span class="sc">}</span><span class="ss"> spectral bands"</span>)</span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a><span class="in">`lw`</span> is a component: an object you construct once and then *call*. Calling it</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>returns two dictionaries — tendencies (how fast radiation is changing the</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>temperature) and diagnostics (everything else it computed on the way). We want a</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>diagnostic, and specifically one with a band axis:</span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="in">`upwelling_longwave_flux_in_air_per_band`</span> is the upward flux at every interface</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>level **and** in each of the component's 56 spectral bands. Take its top row and</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>you have the outgoing longwave radiation, split by wavenumber.</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>Dividing each band's flux by the band's width gives a spectral flux density in</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>W m⁻² per cm⁻¹, which is what a satellite spectrometer reports. Inverting the</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>Planck function on that gives a **brightness temperature**: the temperature a</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>blackbody would need in order to radiate what we see at that wavenumber.</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>tendencies, diagnostics <span class="op">=</span> lw(state)</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>limits <span class="op">=</span> band_limits_of(lw)</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>nu, width <span class="op">=</span> band_centres(limits), band_widths(limits)</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>olr_band, flux_density <span class="op">=</span> spectral_olr(diagnostics, limits)</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>tb <span class="op">=</span> brightness_temperature(flux_density, nu)</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>edges <span class="op">=</span> np.append(limits[<span class="dv">0</span>, <span class="dv">0</span>], limits[:, <span class="dv">1</span>])     <span class="co"># (nband+1,) band edges</span></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>sigma_T4 <span class="op">=</span> <span class="fl">5.670374419e-8</span> <span class="op">*</span> T_SURF <span class="op">**</span> <span class="dv">4</span></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>core <span class="op">=</span> (nu <span class="op">&gt;</span> <span class="dv">630</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">700</span>)</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>window <span class="op">=</span> (nu <span class="op">&gt;</span> <span class="dv">800</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">1180</span>)</span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"surface emission  sigma T^4 = </span><span class="sc">{</span>sigma_T4<span class="sc">:.1f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"OLR                         = </span><span class="sc">{</span>olr_band<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"greenhouse effect           = </span><span class="sc">{</span>sigma_T4 <span class="op">-</span> olr_band<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"CO2 core  T_b = </span><span class="sc">{</span>tb[core]<span class="sc">.</span>mean()<span class="sc">:.0f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"window    T_b = </span><span class="sc">{</span>tb[window]<span class="sc">.</span>mean()<span class="sc">:.0f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>hottest <span class="op">=</span> <span class="bu">int</span>(np.argmax(tb))</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"hottest band </span><span class="sc">{</span>limits[hottest, <span class="dv">0</span>]<span class="sc">:.0f}</span><span class="ss">-</span><span class="sc">{</span>limits[hottest, <span class="dv">1</span>]<span class="sc">:.0f}</span><span class="ss"> cm^-1: "</span></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"T_b = </span><span class="sc">{</span>tb[hottest]<span class="sc">:.0f}</span><span class="ss"> K, against a </span><span class="sc">{</span>T_SURF<span class="sc">:.0f}</span><span class="ss"> K surface"</span>)</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="co"># The axes run the full width of the table, out to 3250 cm^-1, so that the far</span></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a><span class="co"># tail is on the figure and not quietly cropped out of it. Both panels share the</span></span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a><span class="co"># range: the point made below only lands if you can see the OLR panel go flat</span></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a><span class="co"># exactly where the temperature panel goes hot.</span></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>NU_MAX <span class="op">=</span> limits[<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>]</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>fig, (ax, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">4.5</span>))</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>nu_fine <span class="op">=</span> np.linspace(<span class="dv">20</span>, NU_MAX, <span class="dv">600</span>)</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>label_box <span class="op">=</span> <span class="bu">dict</span>(fc<span class="op">=</span><span class="st">"white"</span>, ec<span class="op">=</span><span class="st">"none"</span>, alpha<span class="op">=</span><span class="fl">0.75</span>, pad<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> T_ref <span class="kw">in</span> (<span class="dv">300</span>, <span class="dv">280</span>, <span class="dv">260</span>, <span class="dv">240</span>, <span class="dv">220</span>, <span class="dv">200</span>):</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> planck_flux(nu_fine, T_ref)</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>    ax.plot(nu_fine, b, color<span class="op">=</span><span class="st">"0.8"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> <span class="bu">int</span>(np.argmax(b))</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="ss">f"</span><span class="sc">{</span>T_ref<span class="sc">}</span><span class="ss"> K"</span>, (nu_fine[k], b[k]), fontsize<span class="op">=</span><span class="dv">7</span>, color<span class="op">=</span><span class="st">"0.55"</span>,</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>                ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"bottom"</span>, bbox<span class="op">=</span>label_box)</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>ax.stairs(flux_density, edges, color<span class="op">=</span><span class="st">"tab:blue"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"wavenumber (cm$^{-1}$)"</span>,</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>       ylabel<span class="op">=</span><span class="st">"spectral OLR (W m$^{-2}$ / cm$^{-1}$)"</span>, xlim<span class="op">=</span>(<span class="dv">0</span>, NU_MAX))</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="ss">f"OLR spectrum — total </span><span class="sc">{</span>olr_band<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1f}</span><span class="ss"> W m$^</span><span class="ch">{{</span><span class="ss">-2</span><span class="ch">}}</span><span class="ss">$"</span>)</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>ax2.stairs(tb, edges, color<span class="op">=</span><span class="st">"tab:blue"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>ax2.axhline(T_SURF, color<span class="op">=</span><span class="st">"k"</span>, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>ax2.annotate(<span class="ss">f"surface, </span><span class="sc">{</span>T_SURF<span class="sc">:.0f}</span><span class="ss"> K"</span>, (<span class="fl">0.99</span> <span class="op">*</span> NU_MAX, T_SURF <span class="op">+</span> <span class="dv">2</span>),</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>             fontsize<span class="op">=</span><span class="dv">8</span>, ha<span class="op">=</span><span class="st">"right"</span>, bbox<span class="op">=</span>label_box)</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lo, hi, label <span class="kw">in</span> [(<span class="dv">630</span>, <span class="dv">700</span>, <span class="st">"CO$_2$"</span>), (<span class="dv">800</span>, <span class="dv">1180</span>, <span class="st">"window"</span>)]:</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>    ax2.axvspan(lo, hi, color<span class="op">=</span><span class="st">"0.92"</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>    ax2.annotate(label, (<span class="fl">0.5</span> <span class="op">*</span> (lo <span class="op">+</span> hi), <span class="dv">194</span>), fontsize<span class="op">=</span><span class="dv">8</span>, ha<span class="op">=</span><span class="st">"center"</span>)</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>ax2.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"wavenumber (cm$^{-1}$)"</span>, ylabel<span class="op">=</span><span class="st">"brightness temperature (K)"</span>,</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>        xlim<span class="op">=</span>(<span class="dv">0</span>, NU_MAX), ylim<span class="op">=</span>(<span class="dv">190</span>, <span class="dv">310</span>))</span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>ax2.set_title(<span class="st">"Where each band radiates from"</span>)</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a><span class="co"># End the cell on plt.show(). quarto-live paints the figure a cell explicitly</span></span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a><span class="co"># shows, not whatever matplotlib happens to have open when the cell ends: leave</span></span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a><span class="co"># it out and this cell prints its numbers and draws nothing.</span></span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>::: {.callout-note collapse="true"}</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a><span class="fu">## If the live cell did not run</span></span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>![The OLR spectrum against Planck curves, and the brightness temperature of each</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>band, for a 288 K surface at 80% relative humidity.](_artifacts/01-spectrum.png)</span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a>This is the figure the cell above produces. Live cells need WebAssembly; if your</span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>browser blocks it, the static version is here. It is rendered from this page's</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>own cell by <span class="in">`_artifacts/generate.py`</span>, so it cannot drift from what you would get</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>by running it — but it is fixed at the defaults above, and the point of the cell</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>is that you can change them.</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reading the figure</span></span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>The left panel is the classic satellite picture, and the gray Planck curves are</span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>what make it legible: they are what the OLR *would* be if the atmosphere radiated</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>as a blackbody at 300, 280, … 200 K. The blue spectrum crosses them. It is not</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>tracking any one of them.</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>Two features carry the argument.</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>**The CO₂ core, 630–700 cm⁻¹ (15 µm).** The spectrum plunges to the 200 K curve.</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>This band is so opaque that the photons escaping to space were emitted high in the</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>stratosphere, and their brightness temperature is the temperature *there* — about</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>200 K, some 88 K colder than the ground.</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>**The window, 800–1180 cm⁻¹ (8.5–12.5 µm).** The spectrum rides just under the 285</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>K curve, averaging 284 K across the twelve bands that span it — within a few</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>degrees of the surface. Here the atmosphere is nearly transparent: what leaves the</span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>top of the atmosphere was emitted by the ground and the lowest kilometre or so,</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>and barely intercepted on the way out. Not quite the surface, though — the 4 K</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>deficit is water vapour's weak continuum absorption, and</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">page 2</span><span class="co">](02-window-measured.qmd)</span> measures it. Notice that the window is not flat:</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>it peaks at 285.5 K around 990 cm⁻¹ and sags towards 281 K at its 800 cm⁻¹ edge.</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>At 14 bands that structure was three flat steps.</span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>So the payoff. Your ε is a single number averaged over a curve whose brightness</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>temperature swings roughly 85 K — 200 K in the CO₂ core, 284 K in the window. The</span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>shell model's one radiating level is an average of levels that differ by more than</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>10 km in height. The average is not *wrong*; a well-chosen ε reproduces the OLR</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>your surface actually emits, which is why the shell model works at all. But it is</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>an average, and everything interesting about the climate response to CO₂ lives in</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>the shape it averaged away — because doubling CO₂ moves one part of this curve and</span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a>not the rest.</span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a><span class="fu">## One band comes back hotter than the ground</span></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a>Look at the right-hand panel past 2500 cm⁻¹, where a step sits above the dotted</span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a>surface line. The 2525–2888 cm⁻¹ band comes back at a brightness temperature of</span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a>290 K — two degrees *hotter* than the ground. Nothing in the column is above</span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a>288 K.</span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>Now put a finger on the same stretch of the left-hand panel. The OLR out there is</span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a>flat on the floor: this band radiates almost nothing at all.</span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>Before reading on: what could produce a brightness temperature no object in the</span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a>problem possesses — in the very region where almost no energy is leaving?</span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a>::: {.callout-caution collapse="true"}</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a><span class="fu">## What went wrong (open after you have had a go)</span></span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>Nothing went wrong in the radiation. The 290 K is manufactured in the last step,</span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>where we divided the band's flux by its width and inverted Planck **at the band</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>centre**.</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>That band is 362 cm⁻¹ wide, and across it the Planck function falls steeply: at</span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>288 K, πB at 2525 cm⁻¹ is about four times what it is at 2888. So the band's mean</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>flux density is weighted towards its low-wavenumber edge, while we asked what</span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>temperature would produce that flux density *at 2706 cm⁻¹*, further out on the</span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>exponential tail where a blackbody emits less. The only way to emit that much out</span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a>there is to be a little hotter. Hence 290 K.</span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a>A brightness temperature means something only when the band is narrow enough that</span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a>Planck is roughly linear across it. This is a statement about band width, not</span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a>about the code — and it is exactly what the 56 bands are buying. The shipped</span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a>14-band table covers this whole region with a **single** band, 1800–3250 cm⁻¹,</span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a>1450 cm⁻¹ wide. Both tables are available here, so run them side by side:</span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a>coarse <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_lw"</span>)</span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a><span class="co"># The coarse component needs its own state: `emissivity` is shaped (nband, ncol),</span></span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a><span class="co"># so a 14-band component cannot be handed a state built for a 56-band one. Same</span></span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a><span class="co"># grid, same prescribed sounding, different spectral resolution — nothing else.</span></span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>state_c <span class="op">=</span> get_default_state([coarse], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">40</span>))</span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a>apply_sounding(state_c, T, q, T_surf<span class="op">=</span>T_SURF)</span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a>_, d_coarse <span class="op">=</span> coarse(state_c)</span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a>l_coarse <span class="op">=</span> band_limits_of(coarse)</span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a>olr_coarse, fd_coarse <span class="op">=</span> spectral_olr(d_coarse, l_coarse)</span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a>tb_coarse <span class="op">=</span> brightness_temperature(fd_coarse, band_centres(l_coarse))</span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, lim_, olr_, tb_ <span class="kw">in</span> [(<span class="st">"14-band (shipped)"</span>, l_coarse, olr_coarse, tb_coarse),</span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>                              (<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(limits)<span class="sc">}</span><span class="ss">-band (downloaded)"</span>, limits, olr_band, tb)]:</span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, above 1800 cm^-1:"</span>)</span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> b <span class="kw">in</span> np.flatnonzero(lim_[:, <span class="dv">0</span>] <span class="op">&gt;=</span> <span class="dv">1800</span>):</span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>lim_[b,<span class="dv">0</span>]<span class="sc">:7.0f}</span><span class="ss">-</span><span class="sc">{</span>lim_[b,<span class="dv">1</span>]<span class="sc">:&lt;7.0f}</span><span class="ss"> "</span></span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"width </span><span class="sc">{</span>lim_[b,<span class="dv">1</span>]<span class="op">-</span>lim_[b,<span class="dv">0</span>]<span class="sc">:6.0f}</span><span class="ss">   "</span></span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"OLR </span><span class="sc">{</span>olr_[b]<span class="sc">:6.2f}</span><span class="ss"> W/m2   T_b </span><span class="sc">{</span>tb_[b]<span class="sc">:6.1f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a>The one wide band reports 300 K. Split it in four and the pieces come back at 266,</span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a>280, 290 and 279 K — none of them 300, and only one of them still above the</span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>surface. The artifact shrinks as the bands narrow, exactly as it should, because</span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a>it was never a fact about the atmosphere: it was a band-mean quantity pushed</span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>through a nonlinear inversion.</span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>Which is also why the left-hand panel matters here. Everything above 1800 cm⁻¹</span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a>carries 3.8 W m⁻² of the 246, because at terrestrial temperatures there is almost</span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>nothing to emit that far out. The diagnostic goes nonsensical exactly where the</span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a>energy is negligible — so the OLR, the number the climate actually cares about, is</span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>unharmed. Read the two panels together and you get the working rule: a brightness</span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a>temperature is a statement about *where* radiation came from, and it is only worth</span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a>trusting in bands that carry enough radiation to be worth asking about.</span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft</span></span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a>Four things this page relied on, which every later page assumes:</span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a>**Components are objects.** <span class="in">`CorkLongwaveRadiation(...)`</span> constructs one and fixes</span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a>its configuration — here, correlated-k optics with whichever spectral table</span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a><span class="in">`spectrum_table()`</span> found. Configuration happens at construction; the call takes</span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a>only state. That is why comparing two tables meant constructing a *second*</span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a>component rather than reconfiguring the first, and why both could then be called</span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>on the same unmodified <span class="in">`state`</span>.</span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a>**`get_grid` and `get_default_state` build a state that satisfies the component.**</span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a>You pass the list of components you intend to run, and climt returns a state</span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a>containing every field they require, on the grid you asked for, with sane defaults</span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a>and correct units. You then overwrite the parts you care about — which is exactly</span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a>what <span class="in">`apply_sounding`</span> did.</span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a>**Calling a component returns `(tendencies, diagnostics)`.** Tendencies are rates</span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a>of change of prognostic fields; diagnostics are everything else. Neither mutates</span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a><span class="in">`state`</span>, so a component call is repeatable — call it twice with different CO₂ and</span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a>you get two independent answers.</span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a>**`diagnostic_properties` is the contract.** It tells you what you may ask for,</span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a>in what units and on which dimensions, without reading the source:</span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, spec <span class="kw">in</span> <span class="bu">sorted</span>(lw.diagnostic_properties.items()):</span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:52s}</span><span class="ss"> </span><span class="sc">{</span>spec[<span class="st">'units'</span>]<span class="sc">:12s}</span><span class="ss"> </span><span class="sc">{</span>spec[<span class="st">'dims'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a>Note <span class="in">`mid_levels`</span> versus <span class="in">`interface_levels`</span>. Fluxes live on interfaces (there are</span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a><span class="in">`nz + 1`</span> of them, and the last one is the top of the atmosphere — hence</span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a><span class="in">`values[-1]`</span> for the OLR); temperatures, optical depths and heating rates live at</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a>mid-levels.</span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises</span></span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a><span class="fu">### Physics</span></span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Raise `T_SURF` by 10 K** and re-run. Does the window brightness temperature</span>
+<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a>   rise by 10 K? Does the CO₂ core? Explain the difference — and say which of the</span>
+<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a>   two the shell model's single ε is implicitly assuming.</span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Where does the greenhouse effect come from?** The printed number is</span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a>   σT⁴ − OLR. Compute it band by band with</span>
+<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>   <span class="in">`planck_flux(nu, T_SURF) * width - olr_band`</span> and sort the result. Which bands</span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a>   supply most of the 144 W m⁻²? One band comes out slightly negative — which, and</span>
+<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a>   why? (The collapsed note above is the clue.)</span>
+<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Rerun the whole page at 14 bands.** <span class="in">`spectrum_table(prefer_hires=False)`</span></span>
+<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a>   returns the shipped table, so changing one line in the first cell redraws</span>
+<span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a>   every figure at the coarse resolution. The OLR moves by 0.2 W m⁻² and the</span>
+<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a>   window brightness temperature by 0.1 K. Which claims on this page survive that</span>
+<span id="cb1-359"><a href="#cb1-359" aria-hidden="true" tabindex="-1"></a>   change untouched, and which were statements about the table rather than about</span>
+<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a>   the atmosphere?</span>
+<span id="cb1-361"><a href="#cb1-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Set `RH = 0.1`** — a very dry atmosphere. Which part of the spectrum changes</span>
+<span id="cb1-363"><a href="#cb1-363" aria-hidden="true" tabindex="-1"></a>   most, and which barely moves? Predict before you run it, then check.</span>
+<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-365"><a href="#cb1-365" aria-hidden="true" tabindex="-1"></a><span class="fu">### Code</span></span>
+<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-367"><a href="#cb1-367" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Print each band's limits alongside its OLR contribution, sorted by</span>
+<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>   contribution, so the table reads largest-first. <span class="in">`np.argsort`</span> and <span class="in">`limits[i]`</span></span>
+<span id="cb1-369"><a href="#cb1-369" aria-hidden="true" tabindex="-1"></a>   are all you need.</span>
+<span id="cb1-370"><a href="#cb1-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-371"><a href="#cb1-371" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span><span class="in">`lw.input_properties`</span> is the mirror image of <span class="in">`diagnostic_properties`</span>: what the</span>
+<span id="cb1-372"><a href="#cb1-372" aria-hidden="true" tabindex="-1"></a>   component *requires* rather than what it produces. Print every quantity with</span>
+<span id="cb1-373"><a href="#cb1-373" aria-hidden="true" tabindex="-1"></a>   its units. Note that <span class="in">`specific_humidity`</span> is in kg/kg while CO₂ is a mole</span>
+<span id="cb1-374"><a href="#cb1-374" aria-hidden="true" tabindex="-1"></a>   fraction — climt will convert units for you, but it will not guess names.</span>
+<span id="cb1-375"><a href="#cb1-375" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-376"><a href="#cb1-376" aria-hidden="true" tabindex="-1"></a><span class="fu">## Going deeper</span></span>
+<span id="cb1-377"><a href="#cb1-377" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-378"><a href="#cb1-378" aria-hidden="true" tabindex="-1"></a>The <span class="co">[</span><span class="ot">Radiative Transfer walkthrough</span><span class="co">](../radiative-transfer/01-why-nongrey.qmd)</span></span>
+<span id="cb1-379"><a href="#cb1-379" aria-hidden="true" tabindex="-1"></a>takes the same observation — that absorption is a function of wavelength — and</span>
+<span id="cb1-380"><a href="#cb1-380" aria-hidden="true" tabindex="-1"></a>follows it all the way down to line-by-line absorption coefficients and the</span>
+<span id="cb1-381"><a href="#cb1-381" aria-hidden="true" tabindex="-1"></a>k-distribution that made the 56 bands above computable.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

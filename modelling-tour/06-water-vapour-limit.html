@@ -77,10 +77,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-e1d00e4dfc48dbef53bffa4c834e136a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
 <link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -116,7 +116,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="nav-sidebar docked nav-fixed fullcontent quarto-light">
+<body class="nav-sidebar docked nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -238,13 +238,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#two-curves-one-column" id="toc-two-curves-one-column" class="nav-link active" data-scroll-target="#two-curves-one-column">Two curves, one column</a></li>
+  <li><a href="#reading-the-gap" id="toc-reading-the-gap" class="nav-link" data-scroll-target="#reading-the-gap">Reading the gap</a></li>
+  <li><a href="#why-the-curve-is-so-nearly-straight-and-where-it-stops-being" id="toc-why-the-curve-is-so-nearly-straight-and-where-it-stops-being" class="nav-link" data-scroll-target="#why-the-curve-is-so-nearly-straight-and-where-it-stops-being">Why the curve is so nearly straight — and where it stops being</a></li>
+  <li><a href="#the-window-closing" id="toc-the-window-closing" class="nav-link" data-scroll-target="#the-window-closing">The window, closing</a></li>
+  <li><a href="#both-sides-of-the-budget" id="toc-both-sides-of-the-budget" class="nav-link" data-scroll-target="#both-sides-of-the-budget">Both sides of the budget</a></li>
+  <li><a href="#how-close-is-close" id="toc-how-close-is-close" class="nav-link" data-scroll-target="#how-close-is-close">How close is close</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a>
+  <ul class="collapse">
+  <li><a href="#physics" id="toc-physics" class="nav-link" data-scroll-target="#physics">Physics</a></li>
+  <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a></li>
+  </ul></li>
+  <li><a href="#going-deeper" id="toc-going-deeper" class="nav-link" data-scroll-target="#going-deeper">Going deeper</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Water vapour, and the limit</h1>
+<div class="quarto-title-block"><div><h1 class="title">Water vapour, and the limit</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -547,6 +566,8 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoicHJpbnQoXCIgc29sYXIgICBU
 <p>The runaway greenhouse is a question about a planet, not about Earth, and the same components run on other planets with other tables. <a href="../radiative-transfer/08-multiplanet.html">Multi-planet radiation</a> puts Mars, Venus and Titan through the machinery this page has been using, with the opacity tables each one needs — including a Venus table that has already been through the door this page has only opened.</p>
 
 
+<!-- -->
+
 <script type="pyodide-data">
 eyJvcHRpb25zIjp7ImVudiI6eyJQTE9UTFlfUkVOREVSRVIiOiJwbG90bHlfbWltZXR5cGUifSwiaW5kZXhVUkwiOiJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvcHlvZGlkZS92MC4yOC4xL2Z1bGwvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsicHlvZGlkZV9odHRwIiwibWljcm9waXAiLCJpcHl0aG9uIiwiY2xpbXQ9PTAuMzEuMCIsInVueXQiXX19
 </script>
@@ -648,6 +669,57 @@ window._ojs.runtime.interpretFromScriptTags();
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -977,7 +1049,630 @@ window._ojs.runtime.interpretFromScriptTags();
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Water vapour, and the limit"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span><span class="co"> live-html</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> jupyter</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">pyodide:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">    # Installed by micropip at document setup, before any cell runs; pinned to</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    # the released version this page was written against.</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - "climt==0.31.0"</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    # A transitive dependency of climt, named explicitly because these pages</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">    # rely on it — see page 4's craft callout for why unyt and not numpy.</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - "unyt"</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">    # Fetched into the Pyodide filesystem at document setup. The same files</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">    # tests/test_modelling_tour.py imports natively — see page 1 for the</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/soundings.py</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/spectra.py</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>{{&lt; include ../_includes/climt-live-boot.qmd &gt;}}</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Where this fits</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>Chapter 4 lists the feedbacks that turn a forcing into a temperature change, and</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>puts water vapour at the top: warm the air and it holds more of the strongest</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>greenhouse gas there is, which warms it further. The notes name the mechanism</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>and give it a sign. They cannot give it a number, because the number is an</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>integral over a spectrum.</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>Page 5 measured the forcing. This page measures the feedback, by the only method</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>available to you: compute the OLR twice, once letting the moisture respond and</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>once forbidding it, and look at the gap.</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>Then it keeps going. Follow the same feedback past the temperatures Earth</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>actually reaches and it stops behaving like a feedback at all — the OLR simply</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>refuses to rise. That ceiling is the **Simpson–Nakajima limit**, and it is the</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>reason Venus has no oceans.</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Two curves, one column</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>The column is the one pages 1 to 3 and 5 used: a 6.5 K km⁻¹ troposphere under an</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>isothermal 200 K stratosphere. The surface temperature is the knob, and it is</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>turned twice.</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>On the **fixed relative humidity** run, <span class="in">`lapse_rate_sounding`</span> recomputes the</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>humidity at each surface temperature, so a warmer column is a moister one — that</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>is Clausius–Clapeyron doing its work. On the **fixed specific humidity** run the</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>moisture is pinned to the 288 K profile and never allowed to respond. Nothing</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>else differs between the two.</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co">#| autorun: true</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"_tour"</span>)   <span class="co"># helper modules, served alongside this page</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sympl, climt</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> (CorkLongwaveRadiation, CorkShortwaveRadiation,</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>                   get_default_state, get_grid)</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundings <span class="im">import</span> lapse_rate_sounding, apply_sounding</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> spectra <span class="im">import</span> (band_centres, band_limits_of, brightness_temperature,</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>                     spectral_olr)</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>lw <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_lw"</span>)</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>sw <span class="op">=</span> CorkShortwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_sw"</span>)</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([lw, sw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">40</span>))</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> state[<span class="st">"air_pressure"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>ps <span class="op">=</span> <span class="bu">float</span>(state[<span class="st">"surface_air_pressure"</span>].values.ravel()[<span class="dv">0</span>])</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>limits <span class="op">=</span> band_limits_of(lw)</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>nu <span class="op">=</span> band_centres(limits)</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># The reference moisture the "fixed q" branch is frozen at.</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>_, Q_REF <span class="op">=</span> lapse_rate_sounding(p, ps, T_surf<span class="op">=</span><span class="fl">288.0</span>, rh<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> olr_at(T_surf, rh<span class="op">=</span><span class="fl">0.8</span>, humidity<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""OLR in W/m2 for this column at a prescribed surface temperature.</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co">    Pass humidity=Q_REF to hold the moisture fixed while the column warms.</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>    T, q <span class="op">=</span> lapse_rate_sounding(p, ps, T_surf<span class="op">=</span>T_surf, rh<span class="op">=</span>rh)</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>    apply_sounding(state, T, q <span class="cf">if</span> humidity <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> humidity, T_surf<span class="op">=</span>T_surf)</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(lw(state)[<span class="dv">1</span>][<span class="st">"upwelling_longwave_flux_in_air"</span>].values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(p)<span class="sc">}</span><span class="ss"> levels, </span><span class="sc">{</span>ps<span class="op">/</span><span class="dv">100</span><span class="sc">:.0f}</span><span class="ss"> hPa surface"</span>)</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"OLR at 288 K, RH = 80%: </span><span class="sc">{</span>olr_at(<span class="fl">288.0</span>)<span class="sc">:.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>T_s <span class="op">=</span> np.linspace(<span class="fl">280.0</span>, <span class="fl">310.0</span>, <span class="dv">8</span>)</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>olr_rh <span class="op">=</span> np.array([olr_at(t) <span class="cf">for</span> t <span class="kw">in</span> T_s])                   <span class="co"># moisture responds</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>olr_q <span class="op">=</span> np.array([olr_at(t, humidity<span class="op">=</span>Q_REF) <span class="cf">for</span> t <span class="kw">in</span> T_s])    <span class="co"># moisture frozen</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>slope_rh <span class="op">=</span> np.polyfit(T_s, olr_rh, <span class="dv">1</span>)[<span class="dv">0</span>]</span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>slope_q <span class="op">=</span> np.polyfit(T_s, olr_q, <span class="dv">1</span>)[<span class="dv">0</span>]</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">5</span>))</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>ax.fill_between(T_s, olr_rh, olr_q, where<span class="op">=</span>olr_q <span class="op">&gt;=</span> olr_rh,</span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>                color<span class="op">=</span><span class="st">"#4dabf7"</span>, alpha<span class="op">=</span><span class="fl">0.25</span>, label<span class="op">=</span><span class="st">"the water vapour feedback"</span>)</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>ax.plot(T_s, olr_q, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#343a40"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="ss">f"fixed $q$   </span><span class="sc">{</span>slope_q<span class="sc">:.2f}</span><span class="ss"> W m$^</span><span class="ch">{{</span><span class="ss">-2</span><span class="ch">}}</span><span class="ss">$ K$^</span><span class="ch">{{</span><span class="ss">-1</span><span class="ch">}}</span><span class="ss">$"</span>)</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>ax.plot(T_s, olr_rh, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#1c7ed6"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="ss">f"fixed RH  </span><span class="sc">{</span>slope_rh<span class="sc">:.2f}</span><span class="ss"> W m$^</span><span class="ch">{{</span><span class="ss">-2</span><span class="ch">}}</span><span class="ss">$ K$^</span><span class="ch">{{</span><span class="ss">-1</span><span class="ch">}}</span><span class="ss">$"</span>)</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"surface temperature (K)"</span>, ylabel<span class="op">=</span><span class="st">"OLR (W m$^{-2}$)"</span>)</span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"The same warming, with and without a moisture response"</span>)</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>ax.grid(alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"dOLR/dTs, moisture frozen    : </span><span class="sc">{</span>slope_q<span class="sc">:.3f}</span><span class="ss"> W/m2/K"</span>)</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"dOLR/dTs, moisture responding: </span><span class="sc">{</span>slope_rh<span class="sc">:.3f}</span><span class="ss"> W/m2/K"</span>)</span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"water vapour feedback        : </span><span class="sc">{</span>slope_q <span class="op">-</span> slope_rh<span class="sc">:.3f}</span><span class="ss"> W/m2/K"</span>)</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"gap at 310 K                 : </span><span class="sc">{</span>olr_q[<span class="op">-</span><span class="dv">1</span>] <span class="op">-</span> olr_rh[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>::: {.callout-note collapse="true"}</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="fu">## If the live cell did not run</span></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>![OLR against surface temperature with the moisture frozen and with it</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>responding: the gap between them is the water vapour</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a>feedback.](_artifacts/06-feedback.png)</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>This is the figure the cell above produces. Live cells need WebAssembly; if your</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>browser blocks it, the static version is here.</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reading the gap</span></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a>The frozen-moisture curve climbs at **3.52 W m⁻² K⁻¹**. That is the quantity the</span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>notes quote as <span class="in">`λ ≈ −3.3 W m⁻² K⁻¹`</span>, and you have now computed it rather than</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>been told it. (It is well below the bare-surface <span class="in">`4σT³ = 5.42`</span> because the</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>atmosphere warms along with the surface, so the greenhouse effect strengthens</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>even with the moisture held still.)</span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>Calling it "the Planck response" is a small abuse worth naming, because it is the</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>same abuse the notes make. A pure Planck response warms every level by the same</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>amount. This sounding does not: <span class="in">`lapse_rate_sounding`</span> builds</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a><span class="in">`T(p) = T_surf (p/p_s)^(R Γ/g)`</span>, so a 1 K surface warming reaches the upper</span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>troposphere as only <span class="in">`(p/p_s)^0.19`</span> of a kelvin — and not at all in the</span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>stratosphere, which is pinned at <span class="in">`T_strat`</span>. What you have measured is therefore</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a>the Planck response *plus* an implicit lapse-rate feedback. That is why one</span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>number can stand in for both in the notes' energy balance; it is also why you</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>should know which one you are holding when you use it.</span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>Let the moisture respond and the same warming yields only **1.30 W m⁻² K⁻¹**.</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>The difference, **2.22 W m⁻² K⁻¹**, is the water vapour feedback. It is a</span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>positive feedback in the precise sense that matters: it *subtracts* from the</span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>rate at which the planet can shed heat, so a given forcing must be paid for with</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>more warming.</span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a>Notice where the two curves cross — at 288 K, and by construction, because</span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>that is the temperature the frozen profile was frozen at. Below it the "fixed</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>q" column is the *moister* of the two and radiates less. The feedback is not</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>the gap at any one temperature; it is the difference in slope. The shading is a</span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>picture of an integral, not of a quantity.</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>Now carry the number into page 5's arithmetic. Chapter 4 divides a forcing by a</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a>feedback parameter, and page 5 measured the forcing for a CO₂ doubling as</span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>3.58 W m⁻²:</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> λ (W m⁻² K⁻¹) <span class="pp">|</span> ΔT per doubling <span class="pp">|</span></span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Planck response only (page 5's answer) <span class="pp">|</span> 3.52 <span class="pp">|</span> 1.02 K <span class="pp">|</span></span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Planck + water vapour <span class="pp">|</span> 1.30 <span class="pp">|</span> **2.76 K** <span class="pp">|</span></span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>Page 5 ended on 1.0 K and the observation that the real answer is nearer 3 K.</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>One feedback, computed on one column with no clouds and no ice, closes most of</span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>that gap. This is the single largest reason climate sensitivity is not a</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a>textbook exercise in blackbody radiation.</span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a>Two honest caveats, both of which matter. The lapse rate is held at 6.5 K km⁻¹</span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>throughout, so this is a *fixed-lapse-rate* water vapour feedback; letting the</span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a>troposphere warm more aloft than at the surface would claw back roughly a third</span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>of it. And there are no clouds anywhere on this page.</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why the curve is so nearly straight — and where it stops being</span></span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>Over 280–310 K the fixed-RH OLR looks close to linear, and that near-linearity</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a>is what makes a single feedback parameter a sensible thing to quote at all. It</span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a>survives because of the window. Pages 1 and 2 showed 800–1180 cm⁻¹ radiating</span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>from within a few kilometres of the ground; while it stays open it tracks the</span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a>surface temperature faithfully, holding the whole curve up even as the rest of</span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a>the spectrum saturates.</span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a>So push until the window shuts. Take the column to 100% relative humidity — the</span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>most feedback-prone case there is — and run it from 280 K to 350 K.</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a>T_hot <span class="op">=</span> np.arange(<span class="fl">280.0</span>, <span class="fl">351.0</span>, <span class="fl">5.0</span>)</span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a>olr_hot, band_hot, tau_hot <span class="op">=</span> [], [], []</span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> T_hot:</span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a>    T, q <span class="op">=</span> lapse_rate_sounding(p, ps, T_surf<span class="op">=</span>t, rh<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a>    apply_sounding(state, T, q, T_surf<span class="op">=</span>t)</span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a>    _, d <span class="op">=</span> lw(state)</span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>    olr_hot.append(<span class="bu">float</span>(d[<span class="st">"upwelling_longwave_flux_in_air"</span>].values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>]))</span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a>    ob, fd <span class="op">=</span> spectral_olr(d, limits)</span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Both of these allocate: brightness_temperature builds a new array, and</span></span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>    <span class="co"># .sum(axis=0) does too. Page 5's craft callout explains why that matters --</span></span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a>    <span class="co"># stashing `d` itself would give you the last iteration's numbers fifteen</span></span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a>    <span class="co"># times over, because the arrays inside it are the component's own buffers.</span></span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a>    band_hot.append(brightness_temperature(fd, nu))</span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a>    tau_hot.append(d[<span class="st">"longwave_optical_depth_per_band"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :]</span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a>                   .<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>))</span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a>olr_hot <span class="op">=</span> np.array(olr_hot)</span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a>band_hot <span class="op">=</span> np.array(band_hot)</span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a>tau_hot <span class="op">=</span> np.array(tau_hot)</span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a>sigma <span class="op">=</span> <span class="fl">5.670374419e-8</span></span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">5</span>))</span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a>ax.plot(T_hot, sigma <span class="op">*</span> T_hot <span class="op">**</span> <span class="dv">4</span>, <span class="st">"--"</span>, color<span class="op">=</span><span class="st">"0.6"</span>, lw<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"$</span><span class="ch">\\</span><span class="st">sigma T_s^4$ — no atmosphere"</span>)</span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>ax.plot(T_hot, olr_hot, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#c92a2a"</span>, lw<span class="op">=</span><span class="fl">2.2</span>, ms<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"OLR, saturated column"</span>)</span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a>ax.axhline(olr_hot.<span class="bu">max</span>(), color<span class="op">=</span><span class="st">"#c92a2a"</span>, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="fl">1.2</span>)</span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="ss">f"the ceiling: </span><span class="sc">{</span>olr_hot<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.0f}</span><span class="ss"> W m$^</span><span class="ch">{{</span><span class="ss">-2</span><span class="ch">}}</span><span class="ss">$"</span>,</span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a>            xy<span class="op">=</span>(<span class="fl">0.05</span>, <span class="fl">0.145</span>), xycoords<span class="op">=</span><span class="st">"axes fraction"</span>,</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>            fontsize<span class="op">=</span><span class="dv">9</span>, color<span class="op">=</span><span class="st">"#c92a2a"</span>)</span>
+<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"surface temperature (K)"</span>, ylabel<span class="op">=</span><span class="st">"OLR (W m$^{-2}$)"</span>)</span>
+<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"A planet trying, and failing, to radiate its way out"</span>)</span>
+<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a>ax.grid(alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"      Ts     OLR    dOLR/dTs   sigma*Ts^4"</span>)</span>
+<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, t <span class="kw">in</span> <span class="bu">enumerate</span>(T_hot):</span>
+<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a>    d_olr <span class="op">=</span> <span class="st">""</span> <span class="cf">if</span> i <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>(olr_hot[i] <span class="op">-</span> olr_hot[i<span class="op">-</span><span class="dv">1</span>]) <span class="op">/</span> <span class="dv">5</span><span class="sc">:8.3f}</span><span class="ss">"</span></span>
+<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>t<span class="sc">:6.0f}</span><span class="ss">  </span><span class="sc">{</span>olr_hot[i]<span class="sc">:7.2f}</span><span class="ss">  </span><span class="sc">{</span>d_olr<span class="sc">:&gt;8}</span><span class="ss">    </span><span class="sc">{</span>sigma <span class="op">*</span> t<span class="op">**</span><span class="dv">4</span><span class="sc">:7.1f}</span><span class="ss">"</span>)</span>
+<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a>hot <span class="op">=</span> T_hot <span class="op">&gt;=</span> <span class="fl">310.0</span></span>
+<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">total rise, 280 -&gt; 350 K : </span><span class="sc">{</span>olr_hot[<span class="op">-</span><span class="dv">1</span>] <span class="op">-</span> olr_hot[<span class="dv">0</span>]<span class="sc">:.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  a bare surface would gain </span><span class="sc">{</span>sigma <span class="op">*</span> (<span class="dv">350</span><span class="op">**</span><span class="dv">4</span> <span class="op">-</span> <span class="dv">280</span><span class="op">**</span><span class="dv">4</span>)<span class="sc">:.0f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"mean dOLR/dTs over 310-350 K: "</span></span>
+<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>(olr_hot[<span class="op">-</span><span class="dv">1</span>] <span class="op">-</span> olr_hot[hot][<span class="dv">0</span>]) <span class="op">/</span> (T_hot[<span class="op">-</span><span class="dv">1</span>] <span class="op">-</span> T_hot[hot][<span class="dv">0</span>])<span class="sc">:.3f}</span><span class="ss"> W/m2/K"</span>)</span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  a blackbody at 330 K would manage </span><span class="sc">{</span><span class="dv">4</span> <span class="op">*</span> sigma <span class="op">*</span> <span class="dv">330</span><span class="op">**</span><span class="dv">3</span><span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a>::: {.callout-note collapse="true"}</span>
+<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a><span class="fu">## If the live cell did not run</span></span>
+<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a>![OLR against surface temperature from 280 to 350 K for a saturated column,</span>
+<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a>flattening towards a ceiling far below σT⁴.](_artifacts/06-runaway.png)</span>
+<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a>This is the figure the cell above produces. Live cells need WebAssembly; if your</span>
+<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a>browser blocks it, the static version is here.</span>
+<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a>Seventy kelvin of surface warming buys **48 W m⁻² of extra outgoing radiation**.</span>
+<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a>A bare rock over the same range would have gained 502. Above 310 K the curve</span>
+<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a>straightens out at **0.385 W m⁻² K⁻¹** — four tenths of a watt per kelvin,</span>
+<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a>against the 8.15 W m⁻² K⁻¹ a blackbody at those temperatures would manage. (The</span>
+<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a>point-to-point slopes printed above scatter by about ±0.06 around that figure;</span>
+<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a>that is the k-table's interpolation between H₂O nodes showing through, not</span>
+<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a>physics.) The atmosphere is roughly twenty times stiffer than the surface</span>
+<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a>underneath it, and it stays that way no matter how hot the surface gets.</span>
+<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a><span class="fu">## The window, closing</span></span>
+<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a>Here is where the honest diagnostic matters. Look at the window band's outgoing</span>
+<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a>flux alone and you would conclude nothing is happening — 980–1080 cm⁻¹ emits</span>
+<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a>24.8 W m⁻² at 300 K and 26.1 W m⁻² at 350 K, essentially unchanged. That</span>
+<span id="cb2-280"><a href="#cb2-280" aria-hidden="true" tabindex="-1"></a>flatness *is* the phenomenon, but you cannot see why from the flux. Put the</span>
+<span id="cb2-281"><a href="#cb2-281" aria-hidden="true" tabindex="-1"></a>band's optical depth next to its brightness temperature and the mechanism is</span>
+<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a>unmistakable.</span>
+<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a>window <span class="op">=</span> <span class="bu">int</span>(np.flatnonzero((nu <span class="op">&gt;</span> <span class="dv">980</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">1080</span>))[<span class="dv">0</span>])</span>
+<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a>co2_core <span class="op">=</span> <span class="bu">int</span>(np.flatnonzero((nu <span class="op">&gt;</span> <span class="dv">630</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">700</span>))[<span class="dv">0</span>])</span>
+<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">4.4</span>))</span>
+<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-292"><a href="#cb2-292" aria-hidden="true" tabindex="-1"></a>ax1.semilogy(T_hot, tau_hot[:, window], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#1c7ed6"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb2-293"><a href="#cb2-293" aria-hidden="true" tabindex="-1"></a>             label<span class="op">=</span><span class="st">"980–1080 cm$^{-1}$ (window)"</span>)</span>
+<span id="cb2-294"><a href="#cb2-294" aria-hidden="true" tabindex="-1"></a>ax1.semilogy(T_hot, tau_hot[:, co2_core], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#c92a2a"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb2-295"><a href="#cb2-295" aria-hidden="true" tabindex="-1"></a>             label<span class="op">=</span><span class="st">"630–700 cm$^{-1}$ (CO$_2$ core)"</span>)</span>
+<span id="cb2-296"><a href="#cb2-296" aria-hidden="true" tabindex="-1"></a>ax1.axhline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">"0.4"</span>, lw<span class="op">=</span><span class="fl">0.9</span>)</span>
+<span id="cb2-297"><a href="#cb2-297" aria-hidden="true" tabindex="-1"></a>ax1.text(<span class="dv">281</span>, <span class="fl">1.7</span>, <span class="vs">r"</span><span class="dv">$</span><span class="ch">\t</span><span class="vs">au = 1</span><span class="dv">$</span><span class="vs">: the window shuts here"</span>, fontsize<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span><span class="st">"0.3"</span>)</span>
+<span id="cb2-298"><a href="#cb2-298" aria-hidden="true" tabindex="-1"></a>ax1.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"surface temperature (K)"</span>, ylabel<span class="op">=</span><span class="st">"column optical depth"</span>)</span>
+<span id="cb2-299"><a href="#cb2-299" aria-hidden="true" tabindex="-1"></a>ax1.set_title(<span class="st">"What the water vapour does"</span>)</span>
+<span id="cb2-300"><a href="#cb2-300" aria-hidden="true" tabindex="-1"></a>ax1.grid(alpha<span class="op">=</span><span class="fl">0.3</span>, which<span class="op">=</span><span class="st">"both"</span>)</span>
+<span id="cb2-301"><a href="#cb2-301" aria-hidden="true" tabindex="-1"></a>ax1.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb2-302"><a href="#cb2-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-303"><a href="#cb2-303" aria-hidden="true" tabindex="-1"></a>ax2.plot(T_hot, T_hot, <span class="st">"--"</span>, color<span class="op">=</span><span class="st">"0.6"</span>, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"surface temperature"</span>)</span>
+<span id="cb2-304"><a href="#cb2-304" aria-hidden="true" tabindex="-1"></a>ax2.plot(T_hot, band_hot[:, window], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#1c7ed6"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb2-305"><a href="#cb2-305" aria-hidden="true" tabindex="-1"></a>         label<span class="op">=</span><span class="st">"980–1080 cm$^{-1}$ (window)"</span>)</span>
+<span id="cb2-306"><a href="#cb2-306" aria-hidden="true" tabindex="-1"></a>ax2.plot(T_hot, band_hot[:, co2_core], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#c92a2a"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb2-307"><a href="#cb2-307" aria-hidden="true" tabindex="-1"></a>         label<span class="op">=</span><span class="st">"630–700 cm$^{-1}$ (CO$_2$ core)"</span>)</span>
+<span id="cb2-308"><a href="#cb2-308" aria-hidden="true" tabindex="-1"></a>ax2.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"surface temperature (K)"</span>, ylabel<span class="op">=</span><span class="st">"brightness temperature (K)"</span>)</span>
+<span id="cb2-309"><a href="#cb2-309" aria-hidden="true" tabindex="-1"></a>ax2.set_title(<span class="st">"What space sees"</span>)</span>
+<span id="cb2-310"><a href="#cb2-310" aria-hidden="true" tabindex="-1"></a>ax2.grid(alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb2-311"><a href="#cb2-311" aria-hidden="true" tabindex="-1"></a>ax2.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb2-312"><a href="#cb2-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-313"><a href="#cb2-313" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-314"><a href="#cb2-314" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-315"><a href="#cb2-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-316"><a href="#cb2-316" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, t <span class="kw">in</span> <span class="bu">enumerate</span>(T_hot[::<span class="dv">2</span>]):</span>
+<span id="cb2-317"><a href="#cb2-317" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> i</span>
+<span id="cb2-318"><a href="#cb2-318" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  Ts=</span><span class="sc">{</span>t<span class="sc">:5.0f}</span><span class="ss">   tau(window) = </span><span class="sc">{</span>tau_hot[j, window]<span class="sc">:8.2f}</span><span class="ss">"</span></span>
+<span id="cb2-319"><a href="#cb2-319" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"   Tb(window) = </span><span class="sc">{</span>band_hot[j, window]<span class="sc">:6.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb2-320"><a href="#cb2-320" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-321"><a href="#cb2-321" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-322"><a href="#cb2-322" aria-hidden="true" tabindex="-1"></a>The window's column optical depth goes from **0.15 at 280 K to 94 at 350 K** — a</span>
+<span id="cb2-323"><a href="#cb2-323" aria-hidden="true" tabindex="-1"></a>factor of six hundred — and crosses 1 at about 300 K. That crossing is the whole</span>
+<span id="cb2-324"><a href="#cb2-324" aria-hidden="true" tabindex="-1"></a>story. Below it the band really is a window and really does watch the ground.</span>
+<span id="cb2-325"><a href="#cb2-325" aria-hidden="true" tabindex="-1"></a>Above it the band has an emission level of its own, up in the atmosphere, and</span>
+<span id="cb2-326"><a href="#cb2-326" aria-hidden="true" tabindex="-1"></a>page 3's argument takes over: what escapes is set by the temperature *there*,</span>
+<span id="cb2-327"><a href="#cb2-327" aria-hidden="true" tabindex="-1"></a>not at the surface.</span>
+<span id="cb2-328"><a href="#cb2-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-329"><a href="#cb2-329" aria-hidden="true" tabindex="-1"></a>And that temperature barely moves. The window's brightness temperature climbs</span>
+<span id="cb2-330"><a href="#cb2-330" aria-hidden="true" tabindex="-1"></a>from 277 K to 290 K while the surface warms from 280 to 300 — then gains just</span>
+<span id="cb2-331"><a href="#cb2-331" aria-hidden="true" tabindex="-1"></a>**2.8 K over the next fifty**. The dashed line in the right-hand panel is the</span>
+<span id="cb2-332"><a href="#cb2-332" aria-hidden="true" tabindex="-1"></a>surface temperature; watch the window peel away from it and flatten.</span>
+<span id="cb2-333"><a href="#cb2-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-334"><a href="#cb2-334" aria-hidden="true" tabindex="-1"></a>This is Clausius–Clapeyron closing a loop on itself. The absorber is not an</span>
+<span id="cb2-335"><a href="#cb2-335" aria-hidden="true" tabindex="-1"></a>independent variable you get to set, the way CO₂ was on page 5 — it is a</span>
+<span id="cb2-336"><a href="#cb2-336" aria-hidden="true" tabindex="-1"></a>function of temperature, and an exponential one. Warm the column and it</span>
+<span id="cb2-337"><a href="#cb2-337" aria-hidden="true" tabindex="-1"></a>manufactures more of its own opacity, which lifts the emission level, which is</span>
+<span id="cb2-338"><a href="#cb2-338" aria-hidden="true" tabindex="-1"></a>colder, which cancels most of the warming you were trying to radiate away. Every</span>
+<span id="cb2-339"><a href="#cb2-339" aria-hidden="true" tabindex="-1"></a>extra kelvin at the surface pays for its own blanket.</span>
+<span id="cb2-340"><a href="#cb2-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-341"><a href="#cb2-341" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb2-342"><a href="#cb2-342" aria-hidden="true" tabindex="-1"></a><span class="fu">## How far to trust this</span></span>
+<span id="cb2-343"><a href="#cb2-343" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-344"><a href="#cb2-344" aria-hidden="true" tabindex="-1"></a>The model is being run past the range it was built for, and the page would be</span>
+<span id="cb2-345"><a href="#cb2-345" aria-hidden="true" tabindex="-1"></a>dishonest not to say where.</span>
+<span id="cb2-346"><a href="#cb2-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-347"><a href="#cb2-347" aria-hidden="true" tabindex="-1"></a><span class="in">`saturation_vapour_pressure`</span> is Bolton's 1980 fit, calibrated for terrestrial</span>
+<span id="cb2-348"><a href="#cb2-348" aria-hidden="true" tabindex="-1"></a>temperatures — a few tens of degrees around freezing. At 350 K it is an</span>
+<span id="cb2-349"><a href="#cb2-349" aria-hidden="true" tabindex="-1"></a>extrapolation. The specific humidity it returns reaches 0.44 kg/kg there, an H₂O</span>
+<span id="cb2-350"><a href="#cb2-350" aria-hidden="true" tabindex="-1"></a>mole fraction of 0.56, which is inside <span class="in">`earth_low_res_lw`</span>'s H₂O axis (it tops out</span>
+<span id="cb2-351"><a href="#cb2-351" aria-hidden="true" tabindex="-1"></a>at 1.0) but at its far end, where the table has one node per decade. Beyond about</span>
+<span id="cb2-352"><a href="#cb2-352" aria-hidden="true" tabindex="-1"></a>355 K the formula returns <span class="in">`q &gt; 1`</span> and the sounding becomes meaningless.</span>
+<span id="cb2-353"><a href="#cb2-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-354"><a href="#cb2-354" aria-hidden="true" tabindex="-1"></a>The lapse rate is held at 6.5 K km⁻¹ throughout. A genuinely saturated column</span>
+<span id="cb2-355"><a href="#cb2-355" aria-hidden="true" tabindex="-1"></a>follows a moist adiabat, which at these temperatures is far shallower — closer to</span>
+<span id="cb2-356"><a href="#cb2-356" aria-hidden="true" tabindex="-1"></a>2 K km⁻¹ — and that difference is not a detail: the real Simpson–Nakajima limit</span>
+<span id="cb2-357"><a href="#cb2-357" aria-hidden="true" tabindex="-1"></a>is a statement about the moist adiabat specifically. Surface pressure is likewise</span>
+<span id="cb2-358"><a href="#cb2-358" aria-hidden="true" tabindex="-1"></a>pinned at 1000 hPa, though an atmosphere holding this much vapour would weigh</span>
+<span id="cb2-359"><a href="#cb2-359" aria-hidden="true" tabindex="-1"></a>substantially more.</span>
+<span id="cb2-360"><a href="#cb2-360" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-361"><a href="#cb2-361" aria-hidden="true" tabindex="-1"></a>None of that undoes the mechanism. The ceiling is real, and it is real for the</span>
+<span id="cb2-362"><a href="#cb2-362" aria-hidden="true" tabindex="-1"></a>reason the figures show. But the number below is this column's ceiling, not</span>
+<span id="cb2-363"><a href="#cb2-363" aria-hidden="true" tabindex="-1"></a>Earth's, and published estimates (≈ 282 W m⁻², Goldblatt et al. 2013) come from</span>
+<span id="cb2-364"><a href="#cb2-364" aria-hidden="true" tabindex="-1"></a>calculations that fix all three of these things.</span>
+<span id="cb2-365"><a href="#cb2-365" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-366"><a href="#cb2-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-367"><a href="#cb2-367" aria-hidden="true" tabindex="-1"></a><span class="fu">## Both sides of the budget</span></span>
+<span id="cb2-368"><a href="#cb2-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-369"><a href="#cb2-369" aria-hidden="true" tabindex="-1"></a>Everything so far has been longwave. A ceiling on the OLR only matters if there</span>
+<span id="cb2-370"><a href="#cb2-370" aria-hidden="true" tabindex="-1"></a>is something on the other side of the ledger for it to fail to balance, so bring</span>
+<span id="cb2-371"><a href="#cb2-371" aria-hidden="true" tabindex="-1"></a>in the shortwave.</span>
+<span id="cb2-372"><a href="#cb2-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-373"><a href="#cb2-373" aria-hidden="true" tabindex="-1"></a><span class="in">`CorkShortwaveRadiation`</span> needs two things the longwave did not: a solar zenith</span>
+<span id="cb2-374"><a href="#cb2-374" aria-hidden="true" tabindex="-1"></a>angle and a surface albedo. Setting the zenith to 60° and halving the</span>
+<span id="cb2-375"><a href="#cb2-375" aria-hidden="true" tabindex="-1"></a>Earth–Sun flux adjustment puts <span class="in">`S/4 = 340 W m⁻²`</span> at the top of the atmosphere</span>
+<span id="cb2-376"><a href="#cb2-376" aria-hidden="true" tabindex="-1"></a>with a realistic slant path — the standard global-mean single-column</span>
+<span id="cb2-377"><a href="#cb2-377" aria-hidden="true" tabindex="-1"></a>compromise.</span>
+<span id="cb2-378"><a href="#cb2-378" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-381"><a href="#cb2-381" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-382"><a href="#cb2-382" aria-hidden="true" tabindex="-1"></a>state[<span class="st">"zenith_angle"</span>].values[:] <span class="op">=</span> np.deg2rad(<span class="fl">60.0</span>)          <span class="co"># cos(z) = 1/2</span></span>
+<span id="cb2-383"><a href="#cb2-383" aria-hidden="true" tabindex="-1"></a>state[<span class="st">"flux_adjustment_for_earth_sun_distance"</span>].values[...] <span class="op">=</span> <span class="fl">0.5</span></span>
+<span id="cb2-384"><a href="#cb2-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-385"><a href="#cb2-385" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-386"><a href="#cb2-386" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> asr_curve(surface_albedo):</span>
+<span id="cb2-387"><a href="#cb2-387" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Absorbed shortwave at each T_hot, on the same saturated soundings."""</span></span>
+<span id="cb2-388"><a href="#cb2-388" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">"surface_albedo_for_direct_shortwave"</span>].values[:] <span class="op">=</span> surface_albedo</span>
+<span id="cb2-389"><a href="#cb2-389" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> []</span>
+<span id="cb2-390"><a href="#cb2-390" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> T_hot:</span>
+<span id="cb2-391"><a href="#cb2-391" aria-hidden="true" tabindex="-1"></a>        T, q <span class="op">=</span> lapse_rate_sounding(p, ps, T_surf<span class="op">=</span>t, rh<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb2-392"><a href="#cb2-392" aria-hidden="true" tabindex="-1"></a>        apply_sounding(state, T, q, T_surf<span class="op">=</span>t)</span>
+<span id="cb2-393"><a href="#cb2-393" aria-hidden="true" tabindex="-1"></a>        _, d <span class="op">=</span> sw(state)</span>
+<span id="cb2-394"><a href="#cb2-394" aria-hidden="true" tabindex="-1"></a>        out.append(<span class="bu">float</span>(d[<span class="st">"downwelling_shortwave_flux_in_air"</span>].values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb2-395"><a href="#cb2-395" aria-hidden="true" tabindex="-1"></a>                         <span class="op">-</span> d[<span class="st">"upwelling_shortwave_flux_in_air"</span>].values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>]))</span>
+<span id="cb2-396"><a href="#cb2-396" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(out)</span>
+<span id="cb2-397"><a href="#cb2-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-398"><a href="#cb2-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-399"><a href="#cb2-399" aria-hidden="true" tabindex="-1"></a>asr_bare <span class="op">=</span> asr_curve(<span class="fl">0.06</span>)      <span class="co"># bare ocean, no clouds</span></span>
+<span id="cb2-400"><a href="#cb2-400" aria-hidden="true" tabindex="-1"></a>asr_cloudy <span class="op">=</span> asr_curve(<span class="fl">0.30</span>)    <span class="co"># albedo raised to stand in for cloud</span></span>
+<span id="cb2-401"><a href="#cb2-401" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-402"><a href="#cb2-402" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"TOA insolation: "</span></span>
+<span id="cb2-403"><a href="#cb2-403" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">float</span>(state[<span class="st">'flux_adjustment_for_earth_sun_distance'</span>].values) <span class="op">*</span> <span class="dv">1361</span> <span class="op">*</span> <span class="fl">0.5</span><span class="sc">:.1f}</span><span class="ss">"</span></span>
+<span id="cb2-404"><a href="#cb2-404" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f" W/m2"</span>)</span>
+<span id="cb2-405"><a href="#cb2-405" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"at Ts = </span><span class="sc">{</span>T_hot[<span class="dv">1</span>]<span class="sc">:.0f}</span><span class="ss"> K:"</span>)</span>
+<span id="cb2-406"><a href="#cb2-406" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  bare ocean   ASR = </span><span class="sc">{</span>asr_bare[<span class="dv">1</span>]<span class="sc">:6.2f}</span><span class="ss">  planetary albedo "</span></span>
+<span id="cb2-407"><a href="#cb2-407" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> asr_bare[<span class="dv">1</span>] <span class="op">/</span> <span class="fl">340.25</span><span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb2-408"><a href="#cb2-408" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  albedo 0.30  ASR = </span><span class="sc">{</span>asr_cloudy[<span class="dv">1</span>]<span class="sc">:6.2f}</span><span class="ss">  planetary albedo "</span></span>
+<span id="cb2-409"><a href="#cb2-409" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> asr_cloudy[<span class="dv">1</span>] <span class="op">/</span> <span class="fl">340.25</span><span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb2-410"><a href="#cb2-410" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-411"><a href="#cb2-411" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-412"><a href="#cb2-412" aria-hidden="true" tabindex="-1"></a>A cloud-free ocean reflects almost nothing: Rayleigh scattering and a 6%</span>
+<span id="cb2-413"><a href="#cb2-413" aria-hidden="true" tabindex="-1"></a>sea-surface albedo together return only 12% of the incoming sunlight, so the</span>
+<span id="cb2-414"><a href="#cb2-414" aria-hidden="true" tabindex="-1"></a>planet absorbs about 299 W m⁻². Earth's actual planetary albedo is 0.29, and</span>
+<span id="cb2-415"><a href="#cb2-415" aria-hidden="true" tabindex="-1"></a>most of the difference is cloud, which this model has none of. Raising the</span>
+<span id="cb2-416"><a href="#cb2-416" aria-hidden="true" tabindex="-1"></a>surface albedo to 0.30 is a crude stand-in — it puts the reflected fraction in</span>
+<span id="cb2-417"><a href="#cb2-417" aria-hidden="true" tabindex="-1"></a>the right place while leaving the physics honest about what it is representing.</span>
+<span id="cb2-418"><a href="#cb2-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-419"><a href="#cb2-419" aria-hidden="true" tabindex="-1"></a>Now put the two curves on one axis.</span>
+<span id="cb2-420"><a href="#cb2-420" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-423"><a href="#cb2-423" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-424"><a href="#cb2-424" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> equilibrium(asr):</span>
+<span id="cb2-425"><a href="#cb2-425" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Where the OLR curve crosses from below — the stable balance point."""</span></span>
+<span id="cb2-426"><a href="#cb2-426" aria-hidden="true" tabindex="-1"></a>    net <span class="op">=</span> asr <span class="op">-</span> olr_hot</span>
+<span id="cb2-427"><a href="#cb2-427" aria-hidden="true" tabindex="-1"></a>    down <span class="op">=</span> np.flatnonzero(np.diff(np.sign(net)) <span class="op">&lt;</span> <span class="dv">0</span>)</span>
+<span id="cb2-428"><a href="#cb2-428" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> down.size <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb2-429"><a href="#cb2-429" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb2-430"><a href="#cb2-430" aria-hidden="true" tabindex="-1"></a>    i <span class="op">=</span> down[<span class="dv">0</span>]</span>
+<span id="cb2-431"><a href="#cb2-431" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Linear interpolation across the bracketing pair. Take the step from T_hot</span></span>
+<span id="cb2-432"><a href="#cb2-432" aria-hidden="true" tabindex="-1"></a>    <span class="co"># itself rather than writing 5.0: exercise 1 asks you to refine the grid,</span></span>
+<span id="cb2-433"><a href="#cb2-433" aria-hidden="true" tabindex="-1"></a>    <span class="co"># and a hard-coded step would silently misplace every crossing if you did.</span></span>
+<span id="cb2-434"><a href="#cb2-434" aria-hidden="true" tabindex="-1"></a>    step <span class="op">=</span> T_hot[i <span class="op">+</span> <span class="dv">1</span>] <span class="op">-</span> T_hot[i]</span>
+<span id="cb2-435"><a href="#cb2-435" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> T_hot[i] <span class="op">+</span> step <span class="op">*</span> net[i] <span class="op">/</span> (net[i] <span class="op">-</span> net[i <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb2-436"><a href="#cb2-436" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-437"><a href="#cb2-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-438"><a href="#cb2-438" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.5</span>, <span class="dv">5</span>))</span>
+<span id="cb2-439"><a href="#cb2-439" aria-hidden="true" tabindex="-1"></a>ax.plot(T_hot, olr_hot, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#c92a2a"</span>, lw<span class="op">=</span><span class="fl">2.4</span>, ms<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb2-440"><a href="#cb2-440" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"OLR (what the planet emits)"</span>)</span>
+<span id="cb2-441"><a href="#cb2-441" aria-hidden="true" tabindex="-1"></a>ax.plot(T_hot, asr_cloudy, <span class="st">"s-"</span>, color<span class="op">=</span><span class="st">"#1c7ed6"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb2-442"><a href="#cb2-442" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"absorbed solar, albedo 0.30"</span>)</span>
+<span id="cb2-443"><a href="#cb2-443" aria-hidden="true" tabindex="-1"></a>ax.plot(T_hot, asr_bare, <span class="st">"s-"</span>, color<span class="op">=</span><span class="st">"#f08c00"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb2-444"><a href="#cb2-444" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"absorbed solar, bare ocean"</span>)</span>
+<span id="cb2-445"><a href="#cb2-445" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-446"><a href="#cb2-446" aria-hidden="true" tabindex="-1"></a>T_eq <span class="op">=</span> equilibrium(asr_cloudy)</span>
+<span id="cb2-447"><a href="#cb2-447" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> T_eq <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb2-448"><a href="#cb2-448" aria-hidden="true" tabindex="-1"></a>    ax.plot([T_eq], [np.interp(T_eq, T_hot, olr_hot)], <span class="st">"*"</span>, color<span class="op">=</span><span class="st">"k"</span>, ms<span class="op">=</span><span class="dv">16</span>,</span>
+<span id="cb2-449"><a href="#cb2-449" aria-hidden="true" tabindex="-1"></a>            zorder<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb2-450"><a href="#cb2-450" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="ss">f"equilibrium</span><span class="ch">\n</span><span class="sc">{</span>T_eq<span class="sc">:.1f}</span><span class="ss"> K"</span>, xy<span class="op">=</span>(T_eq, np.interp(T_eq, T_hot, olr_hot)),</span>
+<span id="cb2-451"><a href="#cb2-451" aria-hidden="true" tabindex="-1"></a>                xytext<span class="op">=</span>(<span class="fl">0.30</span>, <span class="fl">0.18</span>), textcoords<span class="op">=</span><span class="st">"axes fraction"</span>, fontsize<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb2-452"><a href="#cb2-452" aria-hidden="true" tabindex="-1"></a>                arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>, color<span class="op">=</span><span class="st">"0.3"</span>))</span>
+<span id="cb2-453"><a href="#cb2-453" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"no crossing anywhere:</span><span class="ch">\n</span><span class="st">absorbed sunlight always wins"</span>,</span>
+<span id="cb2-454"><a href="#cb2-454" aria-hidden="true" tabindex="-1"></a>            xy<span class="op">=</span>(T_hot[<span class="op">-</span><span class="dv">5</span>], asr_bare[<span class="op">-</span><span class="dv">5</span>]), xytext<span class="op">=</span>(<span class="fl">0.40</span>, <span class="fl">0.60</span>),</span>
+<span id="cb2-455"><a href="#cb2-455" aria-hidden="true" tabindex="-1"></a>            textcoords<span class="op">=</span><span class="st">"axes fraction"</span>, fontsize<span class="op">=</span><span class="dv">9</span>, color<span class="op">=</span><span class="st">"#b35c00"</span>,</span>
+<span id="cb2-456"><a href="#cb2-456" aria-hidden="true" tabindex="-1"></a>            ha<span class="op">=</span><span class="st">"center"</span>, arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>, color<span class="op">=</span><span class="st">"#b35c00"</span>))</span>
+<span id="cb2-457"><a href="#cb2-457" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-458"><a href="#cb2-458" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"surface temperature (K)"</span>, ylabel<span class="op">=</span><span class="st">"flux (W m$^{-2}$)"</span>)</span>
+<span id="cb2-459"><a href="#cb2-459" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Where the two sides of the budget meet — and where they do not"</span>)</span>
+<span id="cb2-460"><a href="#cb2-460" aria-hidden="true" tabindex="-1"></a>ax.grid(alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb2-461"><a href="#cb2-461" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">9</span>, loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb2-462"><a href="#cb2-462" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-463"><a href="#cb2-463" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-464"><a href="#cb2-464" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-465"><a href="#cb2-465" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"albedo 0.30 : equilibrium at </span><span class="sc">{</span>equilibrium(asr_cloudy)<span class="sc">:.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb2-466"><a href="#cb2-466" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"bare ocean  : </span><span class="sc">{</span>equilibrium(asr_bare)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-467"><a href="#cb2-467" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"OLR ceiling on this branch: </span><span class="sc">{</span>olr_hot<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-468"><a href="#cb2-468" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-469"><a href="#cb2-469" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-470"><a href="#cb2-470" aria-hidden="true" tabindex="-1"></a>The blue curve crosses the red one at **294.5 K**, from above, and that crossing</span>
+<span id="cb2-471"><a href="#cb2-471" aria-hidden="true" tabindex="-1"></a>is a stable equilibrium in the ordinary way: below it the planet absorbs more</span>
+<span id="cb2-472"><a href="#cb2-472" aria-hidden="true" tabindex="-1"></a>than it emits and warms, above it the reverse. It is a few kelvin warmer than the</span>
+<span id="cb2-473"><a href="#cb2-473" aria-hidden="true" tabindex="-1"></a>real Earth because a saturated column is moister than the real one.</span>
+<span id="cb2-474"><a href="#cb2-474" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-475"><a href="#cb2-475" aria-hidden="true" tabindex="-1"></a>The orange curve never crosses. There is no surface temperature at which this</span>
+<span id="cb2-476"><a href="#cb2-476" aria-hidden="true" tabindex="-1"></a>planet can get rid of 299 W m⁻². Not at 300 K, not at 350 K, not — since the OLR</span>
+<span id="cb2-477"><a href="#cb2-477" aria-hidden="true" tabindex="-1"></a>is climbing at four tenths of a watt per kelvin — at any temperature you could</span>
+<span id="cb2-478"><a href="#cb2-478" aria-hidden="true" tabindex="-1"></a>reach before the oceans were gone. That is the runaway greenhouse, and the only</span>
+<span id="cb2-479"><a href="#cb2-479" aria-hidden="true" tabindex="-1"></a>thing separating the two curves is a change in albedo.</span>
+<span id="cb2-480"><a href="#cb2-480" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-481"><a href="#cb2-481" aria-hidden="true" tabindex="-1"></a><span class="fu">## How close is close</span></span>
+<span id="cb2-482"><a href="#cb2-482" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-483"><a href="#cb2-483" aria-hidden="true" tabindex="-1"></a>The margin is easier to feel if you turn the one knob nobody on Earth controls.</span>
+<span id="cb2-484"><a href="#cb2-484" aria-hidden="true" tabindex="-1"></a>Absorbed sunlight is exactly proportional to the incoming flux, so a brighter sun</span>
+<span id="cb2-485"><a href="#cb2-485" aria-hidden="true" tabindex="-1"></a>costs no extra radiative-transfer calls at all — the same <span class="in">`asr_cloudy`</span> array,</span>
+<span id="cb2-486"><a href="#cb2-486" aria-hidden="true" tabindex="-1"></a>scaled.</span>
+<span id="cb2-487"><a href="#cb2-487" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-490"><a href="#cb2-490" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-491"><a href="#cb2-491" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">" solar   TOA flux   equilibrium"</span>)</span>
+<span id="cb2-492"><a href="#cb2-492" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> mult <span class="kw">in</span> (<span class="fl">1.00</span>, <span class="fl">1.01</span>, <span class="fl">1.02</span>, <span class="fl">1.03</span>, <span class="fl">1.04</span>, <span class="fl">1.05</span>, <span class="fl">1.10</span>):</span>
+<span id="cb2-493"><a href="#cb2-493" aria-hidden="true" tabindex="-1"></a>    T_eq <span class="op">=</span> equilibrium(mult <span class="op">*</span> asr_cloudy)</span>
+<span id="cb2-494"><a href="#cb2-494" aria-hidden="true" tabindex="-1"></a>    verdict <span class="op">=</span> <span class="st">"none — runaway"</span> <span class="cf">if</span> T_eq <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>T_eq<span class="sc">:8.2f}</span><span class="ss"> K"</span></span>
+<span id="cb2-495"><a href="#cb2-495" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>mult<span class="sc">:4.2f}</span><span class="ss">x  </span><span class="sc">{</span><span class="fl">340.25</span> <span class="op">*</span> mult<span class="sc">:7.1f}</span><span class="ss">    </span><span class="sc">{</span>verdict<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-496"><a href="#cb2-496" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-497"><a href="#cb2-497" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-498"><a href="#cb2-498" aria-hidden="true" tabindex="-1"></a>One per cent more sunlight moves the equilibrium 3.7 K. The fourth per cent moves</span>
+<span id="cb2-499"><a href="#cb2-499" aria-hidden="true" tabindex="-1"></a>it 10.4 K. The fifth moves it to nowhere at all: the ASR curve lifts clear of the</span>
+<span id="cb2-500"><a href="#cb2-500" aria-hidden="true" tabindex="-1"></a>OLR ceiling and the crossing does not move — it *ceases to exist*.</span>
+<span id="cb2-501"><a href="#cb2-501" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-502"><a href="#cb2-502" aria-hidden="true" tabindex="-1"></a>That is the shape of the thing worth taking away. The runaway is not a gradual</span>
+<span id="cb2-503"><a href="#cb2-503" aria-hidden="true" tabindex="-1"></a>steepening you could watch coming. It is two curves losing contact, and the last</span>
+<span id="cb2-504"><a href="#cb2-504" aria-hidden="true" tabindex="-1"></a>stable state before they part is nowhere near hot enough to look alarming — 319 K</span>
+<span id="cb2-505"><a href="#cb2-505" aria-hidden="true" tabindex="-1"></a>in the table above, warm but not obviously terminal. Systems with a ceiling on</span>
+<span id="cb2-506"><a href="#cb2-506" aria-hidden="true" tabindex="-1"></a>their negative feedback fail this way: fine, fine, fine, gone.</span>
+<span id="cb2-507"><a href="#cb2-507" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-508"><a href="#cb2-508" aria-hidden="true" tabindex="-1"></a>Venus receives about 1.9 times Earth's insolation, which is not marginal at all.</span>
+<span id="cb2-509"><a href="#cb2-509" aria-hidden="true" tabindex="-1"></a>The Sun was 30% fainter when the Earth formed and has been brightening since; it</span>
+<span id="cb2-510"><a href="#cb2-510" aria-hidden="true" tabindex="-1"></a>will pass this column's threshold in roughly a billion years, whatever anyone</span>
+<span id="cb2-511"><a href="#cb2-511" aria-hidden="true" tabindex="-1"></a>does about CO₂. And notice that CO₂ *cannot* do this, however much of it you add</span>
+<span id="cb2-512"><a href="#cb2-512" aria-hidden="true" tabindex="-1"></a>— page 5 showed why. Its optical depth is something you impose from outside, and</span>
+<span id="cb2-513"><a href="#cb2-513" aria-hidden="true" tabindex="-1"></a>its bands saturate against a fixed lapse rate. Water vapour's optical depth is a</span>
+<span id="cb2-514"><a href="#cb2-514" aria-hidden="true" tabindex="-1"></a>function of the temperature it is trying to control. Only a feedback that</span>
+<span id="cb2-515"><a href="#cb2-515" aria-hidden="true" tabindex="-1"></a>supplies its own absorber can run away.</span>
+<span id="cb2-516"><a href="#cb2-516" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-517"><a href="#cb2-517" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-518"><a href="#cb2-518" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft: two components on one state</span></span>
+<span id="cb2-519"><a href="#cb2-519" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-520"><a href="#cb2-520" aria-hidden="true" tabindex="-1"></a>Every previous page ran one component. This one runs two, and the pattern is</span>
+<span id="cb2-521"><a href="#cb2-521" aria-hidden="true" tabindex="-1"></a>worth stating because it is the pattern every model in climt is built from.</span>
+<span id="cb2-522"><a href="#cb2-522" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-523"><a href="#cb2-523" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-524"><a href="#cb2-524" aria-hidden="true" tabindex="-1"></a>lw <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_lw"</span>)</span>
+<span id="cb2-525"><a href="#cb2-525" aria-hidden="true" tabindex="-1"></a>sw <span class="op">=</span> CorkShortwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_sw"</span>)</span>
+<span id="cb2-526"><a href="#cb2-526" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([lw, sw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">40</span>))</span>
+<span id="cb2-527"><a href="#cb2-527" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-528"><a href="#cb2-528" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-529"><a href="#cb2-529" aria-hidden="true" tabindex="-1"></a>**Pass the whole list to `get_default_state`.** It reads each component's</span>
+<span id="cb2-530"><a href="#cb2-530" aria-hidden="true" tabindex="-1"></a><span class="in">`input_properties`</span> and builds one state satisfying the union of them. Build the</span>
+<span id="cb2-531"><a href="#cb2-531" aria-hidden="true" tabindex="-1"></a>state from <span class="in">`[lw]`</span> alone and the shortwave call fails on a missing</span>
+<span id="cb2-532"><a href="#cb2-532" aria-hidden="true" tabindex="-1"></a><span class="in">`zenith_angle`</span>; build it twice and you have two states that will silently drift</span>
+<span id="cb2-533"><a href="#cb2-533" aria-hidden="true" tabindex="-1"></a>apart. The list is how components declare what they need, and the state is the</span>
+<span id="cb2-534"><a href="#cb2-534" aria-hidden="true" tabindex="-1"></a>single place those needs are met.</span>
+<span id="cb2-535"><a href="#cb2-535" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-536"><a href="#cb2-536" aria-hidden="true" tabindex="-1"></a>**Each component owns its own tables.** <span class="in">`lw`</span> and <span class="in">`sw`</span> load different files —</span>
+<span id="cb2-537"><a href="#cb2-537" aria-hidden="true" tabindex="-1"></a><span class="in">`earth_low_res_lw`</span> covers 10–3250 cm⁻¹ in 14 bands, <span class="in">`earth_low_res_sw`</span> covers</span>
+<span id="cb2-538"><a href="#cb2-538" aria-hidden="true" tabindex="-1"></a>3250–30 000 cm⁻¹ in 3. Neither knows the other exists. <span class="in">`sw.num_shortwave_bands`</span></span>
+<span id="cb2-539"><a href="#cb2-539" aria-hidden="true" tabindex="-1"></a>is 3 and <span class="in">`lw.num_longwave_bands`</span> is 14, and the <span class="in">`_per_band`</span> diagnostics are</span>
+<span id="cb2-540"><a href="#cb2-540" aria-hidden="true" tabindex="-1"></a>indexed on each component's own band axis — which is why <span class="in">`band_limits_of(lw)`</span></span>
+<span id="cb2-541"><a href="#cb2-541" aria-hidden="true" tabindex="-1"></a>takes the component as its argument rather than being a module constant. Never</span>
+<span id="cb2-542"><a href="#cb2-542" aria-hidden="true" tabindex="-1"></a>index a shortwave diagnostic with longwave band limits; the shapes happen not to</span>
+<span id="cb2-543"><a href="#cb2-543" aria-hidden="true" tabindex="-1"></a>match here, which is luck, not protection.</span>
+<span id="cb2-544"><a href="#cb2-544" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-545"><a href="#cb2-545" aria-hidden="true" tabindex="-1"></a>**Two calls, two dictionaries.** <span class="in">`lw(state)`</span> and <span class="in">`sw(state)`</span> each return their</span>
+<span id="cb2-546"><a href="#cb2-546" aria-hidden="true" tabindex="-1"></a>own <span class="in">`(tendencies, diagnostics)`</span>. Nothing merges them for you. This page never</span>
+<span id="cb2-547"><a href="#cb2-547" aria-hidden="true" tabindex="-1"></a>needs to, because it only reads fluxes — but if you wanted the column's total</span>
+<span id="cb2-548"><a href="#cb2-548" aria-hidden="true" tabindex="-1"></a>heating you would add <span class="in">`lw(state)[0]["air_temperature"]`</span> to</span>
+<span id="cb2-549"><a href="#cb2-549" aria-hidden="true" tabindex="-1"></a><span class="in">`sw(state)[0]["air_temperature"]`</span> yourself. That addition is the entire content</span>
+<span id="cb2-550"><a href="#cb2-550" aria-hidden="true" tabindex="-1"></a>of what a time integrator does, repeated: sum the tendencies, take a step, call</span>
+<span id="cb2-551"><a href="#cb2-551" aria-hidden="true" tabindex="-1"></a>everything again. <span class="in">`sympl.AdamsBashforth`</span> does exactly that, and the next tranche</span>
+<span id="cb2-552"><a href="#cb2-552" aria-hidden="true" tabindex="-1"></a>begins by handing it this list.</span>
+<span id="cb2-553"><a href="#cb2-553" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-554"><a href="#cb2-554" aria-hidden="true" tabindex="-1"></a>**Know which call you are paying for.** In the browser the longwave costs about</span>
+<span id="cb2-555"><a href="#cb2-555" aria-hidden="true" tabindex="-1"></a>70 ms and the shortwave about 6 — a factor of eleven, because the longwave table</span>
+<span id="cb2-556"><a href="#cb2-556" aria-hidden="true" tabindex="-1"></a>has 14 bands × 8 g-points against the shortwave's 3 × 2, and because the longwave</span>
+<span id="cb2-557"><a href="#cb2-557" aria-hidden="true" tabindex="-1"></a>kernel sweeps up and down while the two-stream shortwave does not. The solar</span>
+<span id="cb2-558"><a href="#cb2-558" aria-hidden="true" tabindex="-1"></a>ladder above exploits the other half of this: absorbed shortwave is linear in the</span>
+<span id="cb2-559"><a href="#cb2-559" aria-hidden="true" tabindex="-1"></a>incident flux with everything else fixed, so seven solar scenarios reuse one</span>
+<span id="cb2-560"><a href="#cb2-560" aria-hidden="true" tabindex="-1"></a>sweep. Before writing a nested loop, ask which axis actually requires a new call.</span>
+<span id="cb2-561"><a href="#cb2-561" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-562"><a href="#cb2-562" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-563"><a href="#cb2-563" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises</span></span>
+<span id="cb2-564"><a href="#cb2-564" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-565"><a href="#cb2-565" aria-hidden="true" tabindex="-1"></a><span class="fu">### Physics</span></span>
+<span id="cb2-566"><a href="#cb2-566" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-567"><a href="#cb2-567" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Find the limit properly.** The runaway threshold is the maximum of the OLR</span>
+<span id="cb2-568"><a href="#cb2-568" aria-hidden="true" tabindex="-1"></a>   curve, and this page only bounded it from below — the curve was still rising</span>
+<span id="cb2-569"><a href="#cb2-569" aria-hidden="true" tabindex="-1"></a>   at 350 K, where the sounding stops being trustworthy. Extend <span class="in">`T_hot`</span> to</span>
+<span id="cb2-570"><a href="#cb2-570" aria-hidden="true" tabindex="-1"></a>   355 K, watch the surface <span class="in">`q`</span> pass 0.65 kg/kg, and decide for yourself where</span>
+<span id="cb2-571"><a href="#cb2-571" aria-hidden="true" tabindex="-1"></a>   the calculation stops meaning anything. Then look up the Komabayashi–Ingersoll</span>
+<span id="cb2-572"><a href="#cb2-572" aria-hidden="true" tabindex="-1"></a>   limit and explain why a genuine asymptote requires the *stratospheric*</span>
+<span id="cb2-573"><a href="#cb2-573" aria-hidden="true" tabindex="-1"></a>   temperature to be pinned, not the tropospheric one.</span>
+<span id="cb2-574"><a href="#cb2-574" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-575"><a href="#cb2-575" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Why CO₂ cannot do this.** Repeat the crossing plot with the CO₂ raised to</span>
+<span id="cb2-576"><a href="#cb2-576" aria-hidden="true" tabindex="-1"></a>   10 000 ppm at fixed 80% relative humidity, and confirm the crossing moves but</span>
+<span id="cb2-577"><a href="#cb2-577" aria-hidden="true" tabindex="-1"></a>   never disappears. State the difference between the two gases in one sentence</span>
+<span id="cb2-578"><a href="#cb2-578" aria-hidden="true" tabindex="-1"></a>   that mentions Clausius–Clapeyron, and check it against page 5's finding that</span>
+<span id="cb2-579"><a href="#cb2-579" aria-hidden="true" tabindex="-1"></a>   the core had "run out of lapse rate" rather than out of absorber.</span>
+<span id="cb2-580"><a href="#cb2-580" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-581"><a href="#cb2-581" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**The window sets the ceiling.** The OLR ceiling in this column is</span>
+<span id="cb2-582"><a href="#cb2-582" aria-hidden="true" tabindex="-1"></a>   275 W m⁻², of which the four window bands (800–1250 cm⁻¹) supply 112 — two</span>
+<span id="cb2-583"><a href="#cb2-583" aria-hidden="true" tabindex="-1"></a>   fifths of it, from a sixth of the spectral range.</span>
+<span id="cb2-584"><a href="#cb2-584" aria-hidden="true" tabindex="-1"></a>   Argue from the τ panel what the ceiling would be on a planet whose atmosphere</span>
+<span id="cb2-585"><a href="#cb2-585" aria-hidden="true" tabindex="-1"></a>   had no window at all, and relate that to why the Simpson–Nakajima limit is</span>
+<span id="cb2-586"><a href="#cb2-586" aria-hidden="true" tabindex="-1"></a>   sometimes quoted as roughly <span class="in">`σT⁴`</span> evaluated at the tropopause.</span>
+<span id="cb2-587"><a href="#cb2-587" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-588"><a href="#cb2-588" aria-hidden="true" tabindex="-1"></a><span class="fu">### Code</span></span>
+<span id="cb2-589"><a href="#cb2-589" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-590"><a href="#cb2-590" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Solve for the equilibrium instead of reading it off.** Write</span>
+<span id="cb2-591"><a href="#cb2-591" aria-hidden="true" tabindex="-1"></a>   <span class="in">`equilibrium_temperature(asr, lo=270.0, hi=350.0, tol=0.01)`</span> that bisects on</span>
+<span id="cb2-592"><a href="#cb2-592" aria-hidden="true" tabindex="-1"></a>   <span class="in">`olr_saturated(T_s) − asr`</span>, calling the radiation code inside the loop rather</span>
+<span id="cb2-593"><a href="#cb2-593" aria-hidden="true" tabindex="-1"></a>   than interpolating a precomputed curve. Check it against the 294.5 K above,</span>
+<span id="cb2-594"><a href="#cb2-594" aria-hidden="true" tabindex="-1"></a>   count the calls it costs, then hand it <span class="in">`asr = 300.0`</span> and watch it converge</span>
+<span id="cb2-595"><a href="#cb2-595" aria-hidden="true" tabindex="-1"></a>   confidently on <span class="in">`hi`</span> — a bisection cannot fail, it can only lie. Add the guard</span>
+<span id="cb2-596"><a href="#cb2-596" aria-hidden="true" tabindex="-1"></a>   that makes it report "no equilibrium in range" honestly.</span>
+<span id="cb2-597"><a href="#cb2-597" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-598"><a href="#cb2-598" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Separate the two feedbacks.** The 2.22 W m⁻² K⁻¹ measured above mixes the</span>
+<span id="cb2-599"><a href="#cb2-599" aria-hidden="true" tabindex="-1"></a>   response of the whole moisture profile. Split it: recompute the fixed-RH curve</span>
+<span id="cb2-600"><a href="#cb2-600" aria-hidden="true" tabindex="-1"></a>   letting the humidity respond only *below* 500 hPa, then only above. Which half</span>
+<span id="cb2-601"><a href="#cb2-601" aria-hidden="true" tabindex="-1"></a>   of the atmosphere carries the feedback, and does that match what page 3's</span>
+<span id="cb2-602"><a href="#cb2-602" aria-hidden="true" tabindex="-1"></a>   weighting function would have predicted?</span>
+<span id="cb2-603"><a href="#cb2-603" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-604"><a href="#cb2-604" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Put the surface budget back in.** This page balanced the *top* of the</span>
+<span id="cb2-605"><a href="#cb2-605" aria-hidden="true" tabindex="-1"></a>   atmosphere. Plot the surface energy budget instead — downwelling longwave plus</span>
+<span id="cb2-606"><a href="#cb2-606" aria-hidden="true" tabindex="-1"></a>   downwelling shortwave minus <span class="in">`σT_s⁴`</span> — over the same 280–350 K sweep, and note</span>
+<span id="cb2-607"><a href="#cb2-607" aria-hidden="true" tabindex="-1"></a>   that it does not vanish at 294.5 K. Explain what is missing, and why every</span>
+<span id="cb2-608"><a href="#cb2-608" aria-hidden="true" tabindex="-1"></a>   model that runs to equilibrium in time needs the turbulent fluxes the next</span>
+<span id="cb2-609"><a href="#cb2-609" aria-hidden="true" tabindex="-1"></a>   tranche introduces.</span>
+<span id="cb2-610"><a href="#cb2-610" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-611"><a href="#cb2-611" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-612"><a href="#cb2-612" aria-hidden="true" tabindex="-1"></a><span class="fu">## Where next</span></span>
+<span id="cb2-613"><a href="#cb2-613" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-614"><a href="#cb2-614" aria-hidden="true" tabindex="-1"></a>That is the radiation tranche. Six pages, and not one of them integrated</span>
+<span id="cb2-615"><a href="#cb2-615" aria-hidden="true" tabindex="-1"></a>anything in time: every figure came from prescribing a state and asking a</span>
+<span id="cb2-616"><a href="#cb2-616" aria-hidden="true" tabindex="-1"></a>component what it made of it. That was deliberate. Radiative transfer is a</span>
+<span id="cb2-617"><a href="#cb2-617" aria-hidden="true" tabindex="-1"></a>mapping from a profile to a set of fluxes, and it is far easier to understand</span>
+<span id="cb2-618"><a href="#cb2-618" aria-hidden="true" tabindex="-1"></a>when nothing is moving.</span>
+<span id="cb2-619"><a href="#cb2-619" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-620"><a href="#cb2-620" aria-hidden="true" tabindex="-1"></a>But exercise 3 above has the last word. The surface budget does not close, and it</span>
+<span id="cb2-621"><a href="#cb2-621" aria-hidden="true" tabindex="-1"></a>cannot, because radiation alone does not carry heat away from a surface —</span>
+<span id="cb2-622"><a href="#cb2-622" aria-hidden="true" tabindex="-1"></a>convection and turbulence do. Chapters 10 to 12 of the notes take that up:</span>
+<span id="cb2-623"><a href="#cb2-623" aria-hidden="true" tabindex="-1"></a>turbulent heat exchange, dry convection, and radiative–convective equilibrium.</span>
+<span id="cb2-624"><a href="#cb2-624" aria-hidden="true" tabindex="-1"></a>Those need a state that evolves, which means <span class="in">`AdamsBashforth`</span>, a timestep, and a</span>
+<span id="cb2-625"><a href="#cb2-625" aria-hidden="true" tabindex="-1"></a>loop — and a whole new set of ways to be wrong.</span>
+<span id="cb2-626"><a href="#cb2-626" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-627"><a href="#cb2-627" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-628"><a href="#cb2-628" aria-hidden="true" tabindex="-1"></a><span class="fu">## Going deeper</span></span>
+<span id="cb2-629"><a href="#cb2-629" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-630"><a href="#cb2-630" aria-hidden="true" tabindex="-1"></a>The runaway greenhouse is a question about a planet, not about Earth, and the</span>
+<span id="cb2-631"><a href="#cb2-631" aria-hidden="true" tabindex="-1"></a>same components run on other planets with other tables.</span>
+<span id="cb2-632"><a href="#cb2-632" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Multi-planet radiation</span><span class="co">](../radiative-transfer/08-multiplanet.qmd)</span> puts Mars,</span>
+<span id="cb2-633"><a href="#cb2-633" aria-hidden="true" tabindex="-1"></a>Venus and Titan through the machinery this page has been using, with the</span>
+<span id="cb2-634"><a href="#cb2-634" aria-hidden="true" tabindex="-1"></a>opacity tables each one needs — including a Venus table that has already been</span>
+<span id="cb2-635"><a href="#cb2-635" aria-hidden="true" tabindex="-1"></a>through the door this page has only opened.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

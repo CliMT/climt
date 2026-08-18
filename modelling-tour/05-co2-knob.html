@@ -77,10 +77,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-e1d00e4dfc48dbef53bffa4c834e136a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
 <link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -116,7 +116,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="nav-sidebar docked nav-fixed fullcontent quarto-light">
+<body class="nav-sidebar docked nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -238,13 +238,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-sweep" id="toc-the-sweep" class="nav-link active" data-scroll-target="#the-sweep">The sweep</a></li>
+  <li><a href="#a-straight-line-on-a-log-axis" id="toc-a-straight-line-on-a-log-axis" class="nav-link" data-scroll-target="#a-straight-line-on-a-log-axis">A straight line, on a log axis</a></li>
+  <li><a href="#which-part-of-the-spectrum-pays-for-it" id="toc-which-part-of-the-spectrum-pays-for-it" class="nav-link" data-scroll-target="#which-part-of-the-spectrum-pays-for-it">Which part of the spectrum pays for it?</a></li>
+  <li><a href="#a-thousandfold-absorber-buying-a-fixed-step" id="toc-a-thousandfold-absorber-buying-a-fixed-step" class="nav-link" data-scroll-target="#a-thousandfold-absorber-buying-a-fixed-step">A thousandfold absorber buying a fixed step</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a>
+  <ul class="collapse">
+  <li><a href="#physics" id="toc-physics" class="nav-link" data-scroll-target="#physics">Physics</a></li>
+  <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a></li>
+  </ul></li>
+  <li><a href="#going-deeper" id="toc-going-deeper" class="nav-link" data-scroll-target="#going-deeper">Going deeper</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">The CO₂ knob</h1>
+<div class="quarto-title-block"><div><h1 class="title">The CO₂ knob</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -463,6 +480,8 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiVF93YXJtLCBxX3dhcm0gPSBs
 <p>The absorption data behind every number on this page came from a correlated-<code>k</code> table — eight <code>g</code>-points per band, standing in for millions of spectral lines. <a href="../radiative-transfer/04-correlated-k.html">The correlated-k method</a> explains how the table is built and what it assumes, including the assumption that fails exactly where this page has been working: that the same <code>g</code>-point is the same absorption strength at every height in the column.</p>
 
 
+<!-- -->
+
 <script type="pyodide-data">
 eyJvcHRpb25zIjp7ImVudiI6eyJQTE9UTFlfUkVOREVSRVIiOiJwbG90bHlfbWltZXR5cGUifSwiaW5kZXhVUkwiOiJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvcHlvZGlkZS92MC4yOC4xL2Z1bGwvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsicHlvZGlkZV9odHRwIiwibWljcm9waXAiLCJpcHl0aG9uIiwiY2xpbXQ9PTAuMzEuMCIsInVueXQiXX19
 </script>
@@ -564,6 +583,57 @@ window._ojs.runtime.interpretFromScriptTags();
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -893,7 +963,480 @@ window._ojs.runtime.interpretFromScriptTags();
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "The CO₂ knob"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span><span class="co"> live-html</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> jupyter</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">pyodide:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">    # Installed by micropip at document setup, before any cell runs; pinned to</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    # the released version this page was written against.</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - "climt==0.31.0"</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    # A transitive dependency of climt, named explicitly because these pages</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">    # rely on it: unyt is pure Python, so micropip installs it from PyPI with</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">    # no wheel-building, and it backs `sympl.set_backend(climt.UnytBackend())`</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">    # below. Page 4's craft callout explains the choice; this page is the one</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">    # that leans on it hardest, because every cell here is a sweep.</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">    - "unyt"</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">    # Fetched into the Pyodide filesystem at document setup. The same files</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co">    # tests/test_modelling_tour.py imports natively — see page 1 for the</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/soundings.py</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/spectra.py</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>{{&lt; include ../_includes/climt-live-boot.qmd &gt;}}</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## Where this fits</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>Chapter 4 builds the zero-dimensional model into something that can answer a</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>policy question. It defines **radiative forcing** — the change in the</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>top-of-atmosphere energy budget when you change something, holding temperature</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>fixed — pairs it with the Planck response <span class="in">`λ ≈ −3.3 W m⁻² K⁻¹`</span>, and divides one</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>by the other to get a climate sensitivity.</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>For the numerator it quotes a number: about 3.7 W m⁻² for a doubling of CO₂.</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>It has to quote it. You cannot get that number from the zero-dimensional model,</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>because the zero-dimensional model has no CO₂ in it — it has an ε, and nothing</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>in it tells you what ε does when the concentration changes.</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>You have had a spectrally resolved radiation code for four pages now. So don't</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>quote it. Measure it.</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="fu">## The sweep</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>The column is the one pages 1 to 3 used: a 288 K surface, 80% relative humidity,</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>a 6.5 K km⁻¹ troposphere under an isothermal stratosphere. The only thing that</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>changes from call to call is the CO₂ mole fraction.</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co">#| autorun: true</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"_tour"</span>)   <span class="co"># helper modules, served alongside this page</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sympl, climt</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> CorkLongwaveRadiation, get_default_state, get_grid</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundings <span class="im">import</span> lapse_rate_sounding, apply_sounding</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> spectra <span class="im">import</span> (band_centres, band_limits_of, brightness_temperature,</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>                     spectral_olr)</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>T_SURF, RH <span class="op">=</span> <span class="fl">288.0</span>, <span class="fl">0.8</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>lw <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_lw"</span>)</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">40</span>))</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> state[<span class="st">"air_pressure"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>ps <span class="op">=</span> <span class="bu">float</span>(state[<span class="st">"surface_air_pressure"</span>].values.ravel()[<span class="dv">0</span>])</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>T, q <span class="op">=</span> lapse_rate_sounding(p, ps, T_surf<span class="op">=</span>T_SURF, rh<span class="op">=</span>RH)</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>limits <span class="op">=</span> band_limits_of(lw)</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>nu <span class="op">=</span> band_centres(limits)</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> olr_at(co2_ppm, humidity<span class="op">=</span>q):</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""OLR in W/m2 for this column at a given CO2 concentration."""</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>    apply_sounding(state, T, humidity, T_surf<span class="op">=</span>T_SURF)     <span class="co"># reset every time</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">"mole_fraction_of_carbon_dioxide_in_air"</span>].values[:] <span class="op">=</span> co2_ppm <span class="op">*</span> <span class="fl">1e-6</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>    _, diagnostics <span class="op">=</span> lw(state)</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(diagnostics[<span class="st">"upwelling_longwave_flux_in_air"</span>].values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>T_SURF<span class="sc">:.0f}</span><span class="ss"> K surface, RH = </span><span class="sc">{</span>RH<span class="sc">:.0%}</span><span class="ss">, </span><span class="sc">{</span><span class="bu">len</span>(p)<span class="sc">}</span><span class="ss"> levels"</span>)</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"OLR at 280 ppm = </span><span class="sc">{</span>olr_at(<span class="dv">280</span>)<span class="sc">:.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>Twelve points, logarithmically spaced across three decades — from the table's</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>10 ppm floor to 10 000 ppm, which is roughly the Eocene.</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>Twelve, and not two hundred, for a reason worth stating out loud: each call costs</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>about 70 ms in the browser, so this sweep takes under a second and a 200-point</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>version would take fifteen. Everything on this page is a single call to <span class="in">`lw`</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>repeated; the only quantity you are ever spending is calls.</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>co2 <span class="op">=</span> np.logspace(np.log10(<span class="dv">10</span>), np.log10(<span class="dv">10000</span>), <span class="dv">12</span>)</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>olr <span class="op">=</span> np.array([olr_at(c) <span class="cf">for</span> c <span class="kw">in</span> co2])</span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="co"># The forcing between two concentrations is the OLR they differ by, with the</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co"># temperature profile held fixed -- which is exactly what this sweep does.</span></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>F1 <span class="op">=</span> olr_at(<span class="dv">280</span>) <span class="op">-</span> olr_at(<span class="dv">560</span>)</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>F2 <span class="op">=</span> olr_at(<span class="dv">560</span>) <span class="op">-</span> olr_at(<span class="dv">1120</span>)</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">5</span>))</span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>ax.plot(co2, olr, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"tab:red"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>ax.set_xscale(<span class="st">"log"</span>)</span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"CO$_2$ (ppm)"</span>, ylabel<span class="op">=</span><span class="st">"OLR (W m$^{-2}$)"</span>)</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"The top-of-atmosphere budget, as you turn one knob"</span>)</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>ax.grid(alpha<span class="op">=</span><span class="fl">0.3</span>, which<span class="op">=</span><span class="st">"both"</span>)</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lo, hi, F, y <span class="kw">in</span> [(<span class="dv">280</span>, <span class="dv">560</span>, F1, <span class="fl">0.62</span>), (<span class="dv">560</span>, <span class="dv">1120</span>, F2, <span class="fl">0.42</span>)]:</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="st">""</span>, xy<span class="op">=</span>(hi, olr_at(hi)), xytext<span class="op">=</span>(lo, olr_at(lo)),</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>                arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"&lt;-&gt;"</span>, color<span class="op">=</span><span class="st">"0.3"</span>))</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="ss">f"</span><span class="sc">{</span>lo<span class="sc">}</span><span class="ss">→</span><span class="sc">{</span>hi<span class="sc">}</span><span class="ss"> ppm</span><span class="ch">\n</span><span class="ss">$-$</span><span class="sc">{</span>F<span class="sc">:.2f}</span><span class="ss"> W m$^</span><span class="ch">{{</span><span class="ss">-2</span><span class="ch">}}</span><span class="ss">$"</span>,</span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>                xy<span class="op">=</span>(np.sqrt(lo <span class="op">*</span> hi), y), xycoords<span class="op">=</span>(<span class="st">"data"</span>, <span class="st">"axes fraction"</span>),</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>                fontsize<span class="op">=</span><span class="dv">9</span>, ha<span class="op">=</span><span class="st">"center"</span>)</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"forcing, 280 -&gt; 560 ppm : </span><span class="sc">{</span>F1<span class="sc">:.3f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"forcing, 560 -&gt; 1120 ppm: </span><span class="sc">{</span>F2<span class="sc">:.3f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>::: {.callout-note collapse="true"}</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a><span class="fu">## If the live cell did not run</span></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a>![OLR against CO₂ concentration on a logarithmic axis: a straight line, one</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>forcing per doubling.](_artifacts/05-co2-knob.png)</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>This is the figure the cell above produces. Live cells need WebAssembly; if your</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>browser blocks it, the static version is here.</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a><span class="fu">## A straight line, on a log axis</span></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>The x axis is logarithmic and the curve is a straight line down it. That is the</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>whole of the famous result: **each doubling of CO₂ costs the planet about the</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>same few watts per square metre**, whether you are going from 280 to 560 or from</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>2240 to 4480.</span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>The measured value here is **3.58 W m⁻²** for the first doubling and 3.86 for the</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>second, against the canonical 3.7 W m⁻². You just derived one of the most</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>consequential numbers in climate science from an absorption table, on a laptop or</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>a phone, in under a second — and if you carry it into chapter 4's arithmetic,</span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a><span class="in">`ΔT = F/|λ| = 3.58/3.3 = 1.09 K`</span>, you land on the notes' no-feedback sensitivity</span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>of about 1.2 K without having been told either number.</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>Take the "straight line" claim seriously enough to check how straight, though,</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>because it is a good habit and because the answer is interesting.</span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>ladder <span class="op">=</span> [<span class="dv">140</span>, <span class="dv">280</span>, <span class="dv">560</span>, <span class="dv">1120</span>, <span class="dv">2240</span>, <span class="dv">4480</span>]</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>budget <span class="op">=</span> {c: olr_at(c) <span class="cf">for</span> c <span class="kw">in</span> ladder}</span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"forcing per doubling:"</span>)</span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(ladder, ladder[<span class="dv">1</span>:]):</span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>a<span class="sc">:5d}</span><span class="ss"> -&gt; </span><span class="sc">{</span>b<span class="sc">:5d}</span><span class="ss"> ppm   </span><span class="sc">{</span>budget[a] <span class="op">-</span> budget[b]<span class="sc">:.3f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>slope, intercept <span class="op">=</span> np.polyfit(np.log10(co2), olr, <span class="dv">1</span>)</span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>residual <span class="op">=</span> olr <span class="op">-</span> (slope <span class="op">*</span> np.log10(co2) <span class="op">+</span> intercept)</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">straight-line fit over 10-10000 ppm: "</span></span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="op">-</span>slope <span class="op">*</span> np<span class="sc">.</span>log10(<span class="dv">2</span>)<span class="sc">:.3f}</span><span class="ss"> W/m2 per doubling"</span>)</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  worst departure from the line: </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(residual)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>inner <span class="op">=</span> (co2 <span class="op">&gt;=</span> <span class="dv">100</span>) <span class="op">&amp;</span> (co2 <span class="op">&lt;=</span> <span class="dv">2000</span>)</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>s2, i2 <span class="op">=</span> np.polyfit(np.log10(co2[inner]), olr[inner], <span class="dv">1</span>)</span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"over 100-2000 ppm only: </span><span class="sc">{</span><span class="op">-</span>s2 <span class="op">*</span> np<span class="sc">.</span>log10(<span class="dv">2</span>)<span class="sc">:.3f}</span><span class="ss"> W/m2 per doubling"</span>)</span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  worst departure from the line: "</span></span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(olr[inner] <span class="op">-</span> (s2 <span class="op">*</span> np.log10(co2[inner]) <span class="op">+</span> i2))<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>Over the range anybody actually argues about — 100 to 2000 ppm — the fit is a</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>straight line to within a quarter of a watt, at 3.64 W m⁻² per doubling. Over the</span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>full three decades it drifts: the forcing per doubling climbs from 3.33 W m⁻²</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a>at 140→280 to 4.59 at 2240→4480. "Logarithmic" is an excellent approximation</span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>over the range it is usually quoted for, and it is an approximation. Hold that</span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a>thought; the reason is the subject of the rest of this page.</span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a><span class="fu">## Which part of the spectrum pays for it?</span></span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a>The OLR is a sum over fourteen bands, and the sweep above collapsed it to one</span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>number. Take the collapse back apart: how much of the 7.4 W m⁻² between 280 and</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a>1120 ppm comes out of each band?</span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> per_band_olr(co2_ppm):</span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a>    apply_sounding(state, T, q, T_surf<span class="op">=</span>T_SURF)</span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">"mole_fraction_of_carbon_dioxide_in_air"</span>].values[:] <span class="op">=</span> co2_ppm <span class="op">*</span> <span class="fl">1e-6</span></span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a>    olr_band, _ <span class="op">=</span> spectral_olr(lw(state)[<span class="dv">1</span>], limits)</span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> olr_band</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a>delta <span class="op">=</span> per_band_olr(<span class="dv">280</span>) <span class="op">-</span> per_band_olr(<span class="dv">1120</span>)     <span class="co"># positive = OLR went down</span></span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a>core <span class="op">=</span> (nu <span class="op">&gt;</span> <span class="dv">630</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">700</span>)                     <span class="co"># the 15 um band core</span></span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a>wings <span class="op">=</span> ((nu <span class="op">&gt;</span> <span class="dv">500</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">630</span>)) <span class="op">|</span> ((nu <span class="op">&gt;</span> <span class="dv">700</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">800</span>))</span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a>colours <span class="op">=</span> np.where(core, <span class="st">"#c92a2a"</span>, np.where(wings, <span class="st">"#f08c00"</span>, <span class="st">"#adb5bd"</span>))</span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.5</span>))</span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a>ax.bar(np.arange(<span class="bu">len</span>(delta)), delta, color<span class="op">=</span>colours)</span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(np.arange(<span class="bu">len</span>(delta)))</span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>ax.set_xticklabels([<span class="ss">f"</span><span class="sc">{</span>lo<span class="sc">:.0f}</span><span class="ss">–</span><span class="sc">{</span>hi<span class="sc">:.0f}</span><span class="ss">"</span> <span class="cf">for</span> lo, hi <span class="kw">in</span> limits],</span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a>                   rotation<span class="op">=</span><span class="dv">60</span>, ha<span class="op">=</span><span class="st">"right"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"band (cm$^{-1}$)"</span>, ylabel<span class="op">=</span><span class="st">"$</span><span class="ch">\\</span><span class="st">Delta$OLR, 280 → 1120 ppm (W m$^{-2}$)"</span>)</span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Two doublings of CO$_2$: which bands paid"</span>)</span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"k"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, colour <span class="kw">in</span> [(<span class="st">"15 µm core"</span>, <span class="st">"#c92a2a"</span>), (<span class="st">"wings"</span>, <span class="st">"#f08c00"</span>),</span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a>                      (<span class="st">"everything else"</span>, <span class="st">"#adb5bd"</span>)]:</span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a>    ax.bar(<span class="dv">0</span>, <span class="dv">0</span>, color<span class="op">=</span>colour, label<span class="op">=</span>label)</span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"total   </span><span class="sc">{</span>delta<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:6.2f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  core  </span><span class="sc">{</span>delta[core]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:6.2f}</span><span class="ss">  (</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> delta[core]<span class="sc">.</span><span class="bu">sum</span>() <span class="op">/</span> delta<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.0f}</span><span class="ss">%)"</span>)</span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  wings </span><span class="sc">{</span>delta[wings]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:6.2f}</span><span class="ss">  (</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> delta[wings]<span class="sc">.</span><span class="bu">sum</span>() <span class="op">/</span> delta<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.0f}</span><span class="ss">%)"</span>)</span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>The band named after the gas contributes **5%**. Four fifths of the forcing comes</span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>out of the two bands on either side of it, 500–630 and 700–800 cm⁻¹, which is</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a>where CO₂ absorbs weakly.</span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a>This is the saturation argument, and it is worth stating carefully, because the</span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a>loose version of it — "the core is saturated, so adding CO₂ there does nothing" —</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>is right about the conclusion and wrong about the mechanism, in a way the next</span>
+<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a>section exposes.</span>
+<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a><span class="fu">## A thousandfold absorber buying a fixed step</span></span>
+<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a>Page 2 left you with a contradiction. In a dry column the 15 µm core's column</span>
+<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a>optical depth is very nearly *proportional* to concentration:</span>
+<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a>dry <span class="op">=</span> np.full(T.shape, <span class="fl">1e-7</span>)</span>
+<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> column_tau(co2_ppm, humidity):</span>
+<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a>    apply_sounding(state, T, humidity, T_surf<span class="op">=</span>T_SURF)</span>
+<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">"mole_fraction_of_carbon_dioxide_in_air"</span>].values[:] <span class="op">=</span> co2_ppm <span class="op">*</span> <span class="fl">1e-6</span></span>
+<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a>    _, d <span class="op">=</span> lw(state)</span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d[<span class="st">"longwave_optical_depth_per_band"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, :].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a>ppm <span class="op">=</span> np.array([<span class="fl">30.0</span>, <span class="fl">100.0</span>, <span class="fl">300.0</span>, <span class="fl">1000.0</span>, <span class="fl">3000.0</span>, <span class="fl">10000.0</span>])</span>
+<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a>tau_core <span class="op">=</span> np.array([column_tau(c, dry)[core].<span class="bu">sum</span>() <span class="cf">for</span> c <span class="kw">in</span> ppm])</span>
+<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a>exponent, log_c <span class="op">=</span> np.polyfit(np.log(ppm), np.log(tau_core), <span class="dv">1</span>)</span>
+<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c, t <span class="kw">in</span> <span class="bu">zip</span>(ppm, tau_core):</span>
+<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>c<span class="sc">:8.0f}</span><span class="ss"> ppm   tau(core) = </span><span class="sc">{</span>t<span class="sc">:10.1f}</span><span class="ss">"</span>)</span>
+<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">fit: tau = </span><span class="sc">{</span>np<span class="sc">.</span>exp(log_c)<span class="sc">:.2f}</span><span class="ss"> * ppm^</span><span class="sc">{</span>exponent<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a><span class="in">`τ ∝ ppm^0.999`</span>. Ten times the CO₂, ten times the optical depth, all the way from</span>
+<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a>30 ppm to 10 000. And yet the forcing over that same span is a near-constant few</span>
+<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a>watts per doubling. **A quantity that grows a thousandfold is driving one that</span>
+<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a>grows by a fixed step each time you double.** Those two sentences have to be</span>
+<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a>reconciled, and reconciling them is the physical content of this page.</span>
+<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a>The resolution is page 3's. The OLR does not care how opaque the column is. It</span>
+<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a>cares about the *temperature at which* the column becomes opaque — where τ<span class="sc">\*</span> = 1</span>
+<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a>sits, and what the thermometer reads there. Optical depth is the wrong variable</span>
+<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a>to be watching. Height is.</span>
+<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a>Page 3 also warned that the band-mean τ<span class="sc">\*</span> = 1 level is biased, so rather than</span>
+<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a>argue from where the emission level is, watch the one quantity that has no such</span>
+<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a>bias: brightness temperature, inverted straight from each band's escaping flux.</span>
+<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> band_tb(co2_ppm):</span>
+<span id="cb2-284"><a href="#cb2-284" aria-hidden="true" tabindex="-1"></a>    apply_sounding(state, T, q, T_surf<span class="op">=</span>T_SURF)</span>
+<span id="cb2-285"><a href="#cb2-285" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">"mole_fraction_of_carbon_dioxide_in_air"</span>].values[:] <span class="op">=</span> co2_ppm <span class="op">*</span> <span class="fl">1e-6</span></span>
+<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a>    _, flux_density <span class="op">=</span> spectral_olr(lw(state)[<span class="dv">1</span>], limits)</span>
+<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> brightness_temperature(flux_density, nu)</span>
+<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a>tb <span class="op">=</span> {c: band_tb(c) <span class="cf">for</span> c <span class="kw">in</span> ladder}</span>
+<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a>watch <span class="op">=</span> {<span class="st">"500–630 (wing)"</span>: <span class="bu">int</span>(np.flatnonzero((nu <span class="op">&gt;</span> <span class="dv">500</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">630</span>))[<span class="dv">0</span>]),</span>
+<span id="cb2-292"><a href="#cb2-292" aria-hidden="true" tabindex="-1"></a>         <span class="st">"630–700 (core)"</span>: <span class="bu">int</span>(np.flatnonzero(core)[<span class="dv">0</span>]),</span>
+<span id="cb2-293"><a href="#cb2-293" aria-hidden="true" tabindex="-1"></a>         <span class="st">"700–800 (wing)"</span>: <span class="bu">int</span>(np.flatnonzero((nu <span class="op">&gt;</span> <span class="dv">700</span>) <span class="op">&amp;</span> (nu <span class="op">&lt;</span> <span class="dv">800</span>))[<span class="dv">0</span>])}</span>
+<span id="cb2-294"><a href="#cb2-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-295"><a href="#cb2-295" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"brightness temperature (K)"</span>)</span>
+<span id="cb2-296"><a href="#cb2-296" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"band              "</span> <span class="op">+</span> <span class="st">""</span>.join(<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">:&gt;8d}</span><span class="ss">"</span> <span class="cf">for</span> c <span class="kw">in</span> ladder))</span>
+<span id="cb2-297"><a href="#cb2-297" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, b <span class="kw">in</span> watch.items():</span>
+<span id="cb2-298"><a href="#cb2-298" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:18s}</span><span class="ss">"</span> <span class="op">+</span> <span class="st">""</span>.join(<span class="ss">f"</span><span class="sc">{</span>tb[c][b]<span class="sc">:8.2f}</span><span class="ss">"</span> <span class="cf">for</span> c <span class="kw">in</span> ladder))</span>
+<span id="cb2-299"><a href="#cb2-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-300"><a href="#cb2-300" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">change per doubling (K)"</span>)</span>
+<span id="cb2-301"><a href="#cb2-301" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, b <span class="kw">in</span> watch.items():</span>
+<span id="cb2-302"><a href="#cb2-302" aria-hidden="true" tabindex="-1"></a>    steps <span class="op">=</span> [tb[y][b] <span class="op">-</span> tb[x][b] <span class="cf">for</span> x, y <span class="kw">in</span> <span class="bu">zip</span>(ladder, ladder[<span class="dv">1</span>:])]</span>
+<span id="cb2-303"><a href="#cb2-303" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:18s}</span><span class="ss">"</span> <span class="op">+</span> <span class="st">""</span>.join(<span class="ss">f"</span><span class="sc">{</span>s<span class="sc">:8.2f}</span><span class="ss">"</span> <span class="cf">for</span> s <span class="kw">in</span> steps))</span>
+<span id="cb2-304"><a href="#cb2-304" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-305"><a href="#cb2-305" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-306"><a href="#cb2-306" aria-hidden="true" tabindex="-1"></a>There it is, in two rows.</span>
+<span id="cb2-307"><a href="#cb2-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-308"><a href="#cb2-308" aria-hidden="true" tabindex="-1"></a>**The wing at 700–800 cm⁻¹ cools by 4.8 K per doubling, and by 4.8 K again, and</span>
+<span id="cb2-309"><a href="#cb2-309" aria-hidden="true" tabindex="-1"></a>again** — 4.31, 4.72, 4.85, 4.83, 4.88 across five doublings from 140 ppm to</span>
+<span id="cb2-310"><a href="#cb2-310" aria-hidden="true" tabindex="-1"></a><span class="ss">4480. </span>A fixed temperature step for every *factor of two* in concentration. At a</span>
+<span id="cb2-311"><a href="#cb2-311" aria-hidden="true" tabindex="-1"></a>lapse rate of 6.5 K km⁻¹ that is the emission level climbing about 750 m every</span>
+<span id="cb2-312"><a href="#cb2-312" aria-hidden="true" tabindex="-1"></a>time you double, which is precisely what "τ ∝ concentration" implies: multiply</span>
+<span id="cb2-313"><a href="#cb2-313" aria-hidden="true" tabindex="-1"></a>the absorber by two and the level where τ<span class="sc">\*</span> = 1 rises by one absorber scale</span>
+<span id="cb2-314"><a href="#cb2-314" aria-hidden="true" tabindex="-1"></a>height, no matter where it started. Constant step per doubling *is* the</span>
+<span id="cb2-315"><a href="#cb2-315" aria-hidden="true" tabindex="-1"></a>logarithm. The forcing is logarithmic because height is logarithmic in pressure,</span>
+<span id="cb2-316"><a href="#cb2-316" aria-hidden="true" tabindex="-1"></a>and for no other reason.</span>
+<span id="cb2-317"><a href="#cb2-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-318"><a href="#cb2-318" aria-hidden="true" tabindex="-1"></a>**The core at 630–700 cm⁻¹ does the opposite** — 2.65, 1.56, 0.82, 0.37, 0.13 K.</span>
+<span id="cb2-319"><a href="#cb2-319" aria-hidden="true" tabindex="-1"></a>Each doubling buys less than half of the last, and the band is converging on</span>
+<span id="cb2-320"><a href="#cb2-320" aria-hidden="true" tabindex="-1"></a>197.8 K. This is saturation, seen properly. The core's emission level is *not*</span>
+<span id="cb2-321"><a href="#cb2-321" aria-hidden="true" tabindex="-1"></a>stuck: it climbs by the same fixed step as everyone else, faithfully, every time.</span>
+<span id="cb2-322"><a href="#cb2-322" aria-hidden="true" tabindex="-1"></a>It is that it climbed out of the troposphere long ago — already at 280 ppm the</span>
+<span id="cb2-323"><a href="#cb2-323" aria-hidden="true" tabindex="-1"></a>band reads 200.7 K, and this sounding's stratosphere is isothermal at 200 K</span>
+<span id="cb2-324"><a href="#cb2-324" aria-hidden="true" tabindex="-1"></a>everywhere above 146 hPa. A level rising through air that is all the same</span>
+<span id="cb2-325"><a href="#cb2-325" aria-hidden="true" tabindex="-1"></a>temperature changes the emitted flux by nothing. The core has not run out of</span>
+<span id="cb2-326"><a href="#cb2-326" aria-hidden="true" tabindex="-1"></a>absorber; it has run out of *lapse rate*.</span>
+<span id="cb2-327"><a href="#cb2-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-328"><a href="#cb2-328" aria-hidden="true" tabindex="-1"></a>That is the mechanism the loose version misses, and it matters, because it tells</span>
+<span id="cb2-329"><a href="#cb2-329" aria-hidden="true" tabindex="-1"></a>you what would change the answer. Give this column a stratosphere that *warms*</span>
+<span id="cb2-330"><a href="#cb2-330" aria-hidden="true" tabindex="-1"></a>with height — which Earth's real ozone-heated one does — and the core's</span>
+<span id="cb2-331"><a href="#cb2-331" aria-hidden="true" tabindex="-1"></a>contribution does not merely shrink, it changes sign. <span class="in">`lapse_rate_sounding`</span> takes</span>
+<span id="cb2-332"><a href="#cb2-332" aria-hidden="true" tabindex="-1"></a>a <span class="in">`gamma_strat`</span> for exactly this; rebuild the sounding with</span>
+<span id="cb2-333"><a href="#cb2-333" aria-hidden="true" tabindex="-1"></a><span class="in">`gamma_strat=2.5e-3`</span> (2.5 K km⁻¹, warming upward) and re-run the decomposition:</span>
+<span id="cb2-334"><a href="#cb2-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-337"><a href="#cb2-337" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-338"><a href="#cb2-338" aria-hidden="true" tabindex="-1"></a>T_warm, q_warm <span class="op">=</span> lapse_rate_sounding(p, ps, T_surf<span class="op">=</span>T_SURF, rh<span class="op">=</span>RH,</span>
+<span id="cb2-339"><a href="#cb2-339" aria-hidden="true" tabindex="-1"></a>                                     gamma_strat<span class="op">=</span><span class="fl">2.5e-3</span>)</span>
+<span id="cb2-340"><a href="#cb2-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-341"><a href="#cb2-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-342"><a href="#cb2-342" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> per_band_olr_warm(co2_ppm):</span>
+<span id="cb2-343"><a href="#cb2-343" aria-hidden="true" tabindex="-1"></a>    apply_sounding(state, T_warm, q_warm, T_surf<span class="op">=</span>T_SURF)</span>
+<span id="cb2-344"><a href="#cb2-344" aria-hidden="true" tabindex="-1"></a>    state[<span class="st">"mole_fraction_of_carbon_dioxide_in_air"</span>].values[:] <span class="op">=</span> co2_ppm <span class="op">*</span> <span class="fl">1e-6</span></span>
+<span id="cb2-345"><a href="#cb2-345" aria-hidden="true" tabindex="-1"></a>    olr_band, _ <span class="op">=</span> spectral_olr(lw(state)[<span class="dv">1</span>], limits)</span>
+<span id="cb2-346"><a href="#cb2-346" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> olr_band</span>
+<span id="cb2-347"><a href="#cb2-347" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-348"><a href="#cb2-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-349"><a href="#cb2-349" aria-hidden="true" tabindex="-1"></a>delta_warm <span class="op">=</span> per_band_olr_warm(<span class="dv">280</span>) <span class="op">-</span> per_band_olr_warm(<span class="dv">1120</span>)</span>
+<span id="cb2-350"><a href="#cb2-350" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"isothermal stratosphere : core </span><span class="sc">{</span>delta[core]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:+.3f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-351"><a href="#cb2-351" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"warming at 2.5 K/km     : core </span><span class="sc">{</span>delta_warm[core]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:+.3f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-352"><a href="#cb2-352" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"                          total </span><span class="sc">{</span>delta_warm<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:+.3f}</span><span class="ss">, "</span></span>
+<span id="cb2-353"><a href="#cb2-353" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"wings </span><span class="sc">{</span>delta_warm[wings]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:+.3f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-354"><a href="#cb2-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-355"><a href="#cb2-355" aria-hidden="true" tabindex="-1"></a><span class="co"># Put the state back the way the rest of the page expects to find it.</span></span>
+<span id="cb2-356"><a href="#cb2-356" aria-hidden="true" tabindex="-1"></a>apply_sounding(state, T, q, T_surf<span class="op">=</span>T_SURF)</span>
+<span id="cb2-357"><a href="#cb2-357" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-358"><a href="#cb2-358" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-359"><a href="#cb2-359" aria-hidden="true" tabindex="-1"></a>The 630–700 band goes from **+0.37 to −1.11 W m⁻²**: more CO₂ now *increases* the</span>
+<span id="cb2-360"><a href="#cb2-360" aria-hidden="true" tabindex="-1"></a>outgoing flux there. Nothing about the optical depth changed. The absorber is</span>
+<span id="cb2-361"><a href="#cb2-361" aria-hidden="true" tabindex="-1"></a>identical; only the temperature it sits in is different.</span>
+<span id="cb2-362"><a href="#cb2-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-363"><a href="#cb2-363" aria-hidden="true" tabindex="-1"></a>Notice that the wings fall too, from +5.94 to +3.10, and the total from +7.44 to</span>
+<span id="cb2-364"><a href="#cb2-364" aria-hidden="true" tabindex="-1"></a>+2.94. A warming stratosphere is not a small correction to this picture — it is</span>
+<span id="cb2-365"><a href="#cb2-365" aria-hidden="true" tabindex="-1"></a>most of it. That is one reason the real 15 µm forcing calculation is a</span>
+<span id="cb2-366"><a href="#cb2-366" aria-hidden="true" tabindex="-1"></a>stratospheric-adjustment problem and not a troposphere one.</span>
+<span id="cb2-367"><a href="#cb2-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-368"><a href="#cb2-368" aria-hidden="true" tabindex="-1"></a>It also explains the curvature you measured two sections ago. As CO₂ rises, the</span>
+<span id="cb2-369"><a href="#cb2-369" aria-hidden="true" tabindex="-1"></a>wings' emission levels climb toward the tropopause too, and one by one they run</span>
+<span id="cb2-370"><a href="#cb2-370" aria-hidden="true" tabindex="-1"></a>out of lapse rate the way the core already has. Meanwhile the absorption spreads</span>
+<span id="cb2-371"><a href="#cb2-371" aria-hidden="true" tabindex="-1"></a>outward into bands that were transparent before. At fourteen bands you see this</span>
+<span id="cb2-372"><a href="#cb2-372" aria-hidden="true" tabindex="-1"></a>only coarsely — a real spectrum has the band edges marching outward through the</span>
+<span id="cb2-373"><a href="#cb2-373" aria-hidden="true" tabindex="-1"></a>line wings, which is where the textbook "logarithmic because the band widens as</span>
+<span id="cb2-374"><a href="#cb2-374" aria-hidden="true" tabindex="-1"></a>the square root of concentration" argument lives. The drift from 3.33 to</span>
+<span id="cb2-375"><a href="#cb2-375" aria-hidden="true" tabindex="-1"></a>4.59 W m⁻² per doubling is that competition, resolved as well as fourteen bands</span>
+<span id="cb2-376"><a href="#cb2-376" aria-hidden="true" tabindex="-1"></a>can resolve it.</span>
+<span id="cb2-377"><a href="#cb2-377" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-378"><a href="#cb2-378" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-379"><a href="#cb2-379" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft: sweeping a parameter</span></span>
+<span id="cb2-380"><a href="#cb2-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-381"><a href="#cb2-381" aria-hidden="true" tabindex="-1"></a>Every cell on this page is the same three lines in a loop, and each line is</span>
+<span id="cb2-382"><a href="#cb2-382" aria-hidden="true" tabindex="-1"></a>there to prevent a specific bug.</span>
+<span id="cb2-383"><a href="#cb2-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-384"><a href="#cb2-384" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-385"><a href="#cb2-385" aria-hidden="true" tabindex="-1"></a>apply_sounding(state, T, q, T_surf<span class="op">=</span>T_SURF)                     <span class="co"># 1. reset</span></span>
+<span id="cb2-386"><a href="#cb2-386" aria-hidden="true" tabindex="-1"></a>state[<span class="st">"mole_fraction_of_carbon_dioxide_in_air"</span>].values[:] <span class="op">=</span> c  <span class="co"># 2. set the knob</span></span>
+<span id="cb2-387"><a href="#cb2-387" aria-hidden="true" tabindex="-1"></a>_, diagnostics <span class="op">=</span> lw(state)                                     <span class="co"># 3. call</span></span>
+<span id="cb2-388"><a href="#cb2-388" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-389"><a href="#cb2-389" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-390"><a href="#cb2-390" aria-hidden="true" tabindex="-1"></a>**One state, mutated in place.** <span class="in">`get_default_state`</span> was called once, outside the</span>
+<span id="cb2-391"><a href="#cb2-391" aria-hidden="true" tabindex="-1"></a>loop. States are ordinary dictionaries of array containers and <span class="in">`.values[:] = ...`</span></span>
+<span id="cb2-392"><a href="#cb2-392" aria-hidden="true" tabindex="-1"></a>writes through to the array the component will read. Building a fresh state per</span>
+<span id="cb2-393"><a href="#cb2-393" aria-hidden="true" tabindex="-1"></a>iteration would work and would cost more than the radiative transfer does — at 40</span>
+<span id="cb2-394"><a href="#cb2-394" aria-hidden="true" tabindex="-1"></a>levels, state construction is comparable to the call itself.</span>
+<span id="cb2-395"><a href="#cb2-395" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-396"><a href="#cb2-396" aria-hidden="true" tabindex="-1"></a>**Reset what you are not sweeping.** <span class="in">`apply_sounding`</span> re-writes the temperature</span>
+<span id="cb2-397"><a href="#cb2-397" aria-hidden="true" tabindex="-1"></a>and humidity every iteration even though neither is being swept. That looks</span>
+<span id="cb2-398"><a href="#cb2-398" aria-hidden="true" tabindex="-1"></a>redundant and is not. <span class="in">`lw(state)`</span> returns diagnostics, and it is natural to</span>
+<span id="cb2-399"><a href="#cb2-399" aria-hidden="true" tabindex="-1"></a><span class="in">`state.update(diagnostics)`</span> — at which point the state carries the previous</span>
+<span id="cb2-400"><a href="#cb2-400" aria-hidden="true" tabindex="-1"></a>iteration's fluxes and heating rates. Worse, in a longer script something else</span>
+<span id="cb2-401"><a href="#cb2-401" aria-hidden="true" tabindex="-1"></a>may have adjusted the temperature. A sweep should differ from its neighbour in</span>
+<span id="cb2-402"><a href="#cb2-402" aria-hidden="true" tabindex="-1"></a>exactly one quantity, and the cheapest way to guarantee that is to re-prescribe</span>
+<span id="cb2-403"><a href="#cb2-403" aria-hidden="true" tabindex="-1"></a>everything else. Sweeps that drift are near-impossible to spot in the output,</span>
+<span id="cb2-404"><a href="#cb2-404" aria-hidden="true" tabindex="-1"></a>because the curve still looks smooth.</span>
+<span id="cb2-405"><a href="#cb2-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-406"><a href="#cb2-406" aria-hidden="true" tabindex="-1"></a>**Collect inside the loop.** <span class="in">`diagnostics`</span> is a fresh dictionary each call, but</span>
+<span id="cb2-407"><a href="#cb2-407" aria-hidden="true" tabindex="-1"></a>the arrays inside it are the component's own working buffers: the next call</span>
+<span id="cb2-408"><a href="#cb2-408" aria-hidden="true" tabindex="-1"></a>overwrites them. This is why <span class="in">`per_band_olr`</span> returns the result of</span>
+<span id="cb2-409"><a href="#cb2-409" aria-hidden="true" tabindex="-1"></a><span class="in">`spectral_olr(...)`</span> — a newly allocated array — rather than stashing the</span>
+<span id="cb2-410"><a href="#cb2-410" aria-hidden="true" tabindex="-1"></a><span class="in">`diagnostics`</span> dict for later. Keeping a list of <span class="in">`diagnostics`</span> dicts across a</span>
+<span id="cb2-411"><a href="#cb2-411" aria-hidden="true" tabindex="-1"></a>sweep and reading them afterwards gives you the *last* iteration's numbers,</span>
+<span id="cb2-412"><a href="#cb2-412" aria-hidden="true" tabindex="-1"></a>twelve times over, with no error anywhere. If you need the whole array, copy it:</span>
+<span id="cb2-413"><a href="#cb2-413" aria-hidden="true" tabindex="-1"></a><span class="in">`diag["upwelling_longwave_flux_in_air"].values.copy()`</span>.</span>
+<span id="cb2-414"><a href="#cb2-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-415"><a href="#cb2-415" aria-hidden="true" tabindex="-1"></a>**Radiative forcing is a definition about what you hold fixed.** Physically, this</span>
+<span id="cb2-416"><a href="#cb2-416" aria-hidden="true" tabindex="-1"></a>page's <span class="in">`olr_at(560) − olr_at(280)`</span> is the forcing precisely *because* the</span>
+<span id="cb2-417"><a href="#cb2-417" aria-hidden="true" tabindex="-1"></a>temperature profile is identical in both calls. Forcing is the instantaneous</span>
+<span id="cb2-418"><a href="#cb2-418" aria-hidden="true" tabindex="-1"></a>budget imbalance before anything adjusts. If you let the profile respond you are</span>
+<span id="cb2-419"><a href="#cb2-419" aria-hidden="true" tabindex="-1"></a>no longer measuring forcing — you are measuring a response, and dividing it by</span>
+<span id="cb2-420"><a href="#cb2-420" aria-hidden="true" tabindex="-1"></a><span class="in">`λ`</span> gets you nothing. The reset in step 1 is not just hygiene here; it is the</span>
+<span id="cb2-421"><a href="#cb2-421" aria-hidden="true" tabindex="-1"></a>definition of the quantity.</span>
+<span id="cb2-422"><a href="#cb2-422" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-423"><a href="#cb2-423" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-424"><a href="#cb2-424" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises</span></span>
+<span id="cb2-425"><a href="#cb2-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-426"><a href="#cb2-426" aria-hidden="true" tabindex="-1"></a><span class="fu">### Physics</span></span>
+<span id="cb2-427"><a href="#cb2-427" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-428"><a href="#cb2-428" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Finish chapter 4's calculation.** You have <span class="in">`F = 3.58 W m⁻²`</span>. With the</span>
+<span id="cb2-429"><a href="#cb2-429" aria-hidden="true" tabindex="-1"></a>   Planck feedback <span class="in">`λ = −3.3 W m⁻² K⁻¹`</span>, the no-feedback sensitivity is</span>
+<span id="cb2-430"><a href="#cb2-430" aria-hidden="true" tabindex="-1"></a>   <span class="in">`ΔT = F/|λ|`</span>. Compute it and compare with the ~1.2 K in the notes. Then ask</span>
+<span id="cb2-431"><a href="#cb2-431" aria-hidden="true" tabindex="-1"></a>   what the observed ~3 K per doubling implies about everything *not* in this</span>
+<span id="cb2-432"><a href="#cb2-432" aria-hidden="true" tabindex="-1"></a>   calculation, and note that this page held the water vapour fixed — which</span>
+<span id="cb2-433"><a href="#cb2-433" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">page 6</span><span class="co">](06-water-vapour-limit.qmd)</span> does not.</span>
+<span id="cb2-434"><a href="#cb2-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-435"><a href="#cb2-435" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Repeat the sweep with a dry atmosphere.** Pass <span class="in">`humidity=dry`</span> to <span class="in">`olr_at`</span></span>
+<span id="cb2-436"><a href="#cb2-436" aria-hidden="true" tabindex="-1"></a>   and redo the two doublings. The forcing goes *up*, to about 4.95 and</span>
+<span id="cb2-437"><a href="#cb2-437" aria-hidden="true" tabindex="-1"></a>   5.21 W m⁻². Why should removing an entirely different gas make CO₂ more</span>
+<span id="cb2-438"><a href="#cb2-438" aria-hidden="true" tabindex="-1"></a>   effective? (Look at which bands paid, and at what else absorbs at 500–630 and</span>
+<span id="cb2-439"><a href="#cb2-439" aria-hidden="true" tabindex="-1"></a>   700–800 cm⁻¹.) This is band overlap, and it is the reason forcings are not</span>
+<span id="cb2-440"><a href="#cb2-440" aria-hidden="true" tabindex="-1"></a>   additive.</span>
+<span id="cb2-441"><a href="#cb2-441" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-442"><a href="#cb2-442" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Where does the core's 5% come from at all?** If the core's emission level is</span>
+<span id="cb2-443"><a href="#cb2-443" aria-hidden="true" tabindex="-1"></a>   in an isothermal stratosphere, its ΔOLR ought to be exactly zero, and it is</span>
+<span id="cb2-444"><a href="#cb2-444" aria-hidden="true" tabindex="-1"></a>   +0.37 W m⁻² instead. The answer is that "the band's emission level" is a</span>
+<span id="cb2-445"><a href="#cb2-445" aria-hidden="true" tabindex="-1"></a>   fiction: 630–700 cm⁻¹ is eight <span class="in">`g`</span>-points whose absorption strengths span</span>
+<span id="cb2-446"><a href="#cb2-446" aria-hidden="true" tabindex="-1"></a>   orders of magnitude, and the weakest of them are still emitting from the</span>
+<span id="cb2-447"><a href="#cb2-447" aria-hidden="true" tabindex="-1"></a>   troposphere. Test it — rebuild the sounding with <span class="in">`T_strat=220.0`</span> and re-run</span>
+<span id="cb2-448"><a href="#cb2-448" aria-hidden="true" tabindex="-1"></a>   the decomposition. The core's contribution falls to 0.11 W m⁻² while the</span>
+<span id="cb2-449"><a href="#cb2-449" aria-hidden="true" tabindex="-1"></a>   wings only drop by a fifth. Why does raising the stratosphere's temperature</span>
+<span id="cb2-450"><a href="#cb2-450" aria-hidden="true" tabindex="-1"></a>   shrink the core's forcing without abolishing it?</span>
+<span id="cb2-451"><a href="#cb2-451" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-452"><a href="#cb2-452" aria-hidden="true" tabindex="-1"></a><span class="fu">### Code</span></span>
+<span id="cb2-453"><a href="#cb2-453" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-454"><a href="#cb2-454" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Three curves instead of one.** Rewrite the sweep to record, at each</span>
+<span id="cb2-455"><a href="#cb2-455" aria-hidden="true" tabindex="-1"></a>   concentration, the total OLR, the window's contribution (800–1180 cm⁻¹) and</span>
+<span id="cb2-456"><a href="#cb2-456" aria-hidden="true" tabindex="-1"></a>   the core's (630–700), and plot all three against log CO₂. Across the full</span>
+<span id="cb2-457"><a href="#cb2-457" aria-hidden="true" tabindex="-1"></a>   10 → 10 000 ppm span the total falls by 37 W m⁻², the window by 7 and the</span>
+<span id="cb2-458"><a href="#cb2-458" aria-hidden="true" tabindex="-1"></a>   core by 5.6 — so the two regions everyone names account for a third of the</span>
+<span id="cb2-459"><a href="#cb2-459" aria-hidden="true" tabindex="-1"></a>   change between them. Then look at *where* along the axis each one moves. On</span>
+<span id="cb2-460"><a href="#cb2-460" aria-hidden="true" tabindex="-1"></a>   the twelve-point <span class="in">`co2`</span> grid this page already defines, the core does almost</span>
+<span id="cb2-461"><a href="#cb2-461" aria-hidden="true" tabindex="-1"></a>   all of its falling over the first five points — 11.74 → 7.14 W m⁻², from 10 to</span>
+<span id="cb2-462"><a href="#cb2-462" aria-hidden="true" tabindex="-1"></a>   123 ppm — and almost none over the last four: 6.21, 6.17, 6.16, 6.16, from</span>
+<span id="cb2-463"><a href="#cb2-463" aria-hidden="true" tabindex="-1"></a>   1520 to 10 000 ppm. That curve is what saturation looks like drawn out, and</span>
+<span id="cb2-464"><a href="#cb2-464" aria-hidden="true" tabindex="-1"></a>   the total's is not parallel to it anywhere.</span>
+<span id="cb2-465"><a href="#cb2-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-466"><a href="#cb2-466" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Find the saturation concentration per band.** For each band, sweep CO₂ and</span>
+<span id="cb2-467"><a href="#cb2-467" aria-hidden="true" tabindex="-1"></a>   find where its brightness temperature stops changing by more than 0.1 K per</span>
+<span id="cb2-468"><a href="#cb2-468" aria-hidden="true" tabindex="-1"></a>   doubling. Plot that concentration against band centre. The core saturates</span>
+<span id="cb2-469"><a href="#cb2-469" aria-hidden="true" tabindex="-1"></a>   around present-day levels; ask what the plot would look like on a planet with</span>
+<span id="cb2-470"><a href="#cb2-470" aria-hidden="true" tabindex="-1"></a>   ten times Earth's CO₂ and what that means for Venus.</span>
+<span id="cb2-471"><a href="#cb2-471" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-472"><a href="#cb2-472" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Make the sweep honest about its cost.** Time the twelve-point sweep with</span>
+<span id="cb2-473"><a href="#cb2-473" aria-hidden="true" tabindex="-1"></a>   <span class="in">`time.perf_counter()`</span> and print milliseconds per call. Then build a state</span>
+<span id="cb2-474"><a href="#cb2-474" aria-hidden="true" tabindex="-1"></a>   *inside* the loop instead of reusing one, and time it again. Decide from the</span>
+<span id="cb2-475"><a href="#cb2-475" aria-hidden="true" tabindex="-1"></a>   two numbers whether the craft callout's advice was worth following at 40</span>
+<span id="cb2-476"><a href="#cb2-476" aria-hidden="true" tabindex="-1"></a>   levels, and whether your answer changes at 200.</span>
+<span id="cb2-477"><a href="#cb2-477" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-478"><a href="#cb2-478" aria-hidden="true" tabindex="-1"></a><span class="fu">## Going deeper</span></span>
+<span id="cb2-479"><a href="#cb2-479" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-480"><a href="#cb2-480" aria-hidden="true" tabindex="-1"></a>The absorption data behind every number on this page came from a correlated-<span class="in">`k`</span></span>
+<span id="cb2-481"><a href="#cb2-481" aria-hidden="true" tabindex="-1"></a>table — eight <span class="in">`g`</span>-points per band, standing in for millions of spectral lines.</span>
+<span id="cb2-482"><a href="#cb2-482" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">The correlated-k method</span><span class="co">](../radiative-transfer/04-correlated-k.qmd)</span> explains how</span>
+<span id="cb2-483"><a href="#cb2-483" aria-hidden="true" tabindex="-1"></a>the table is built and what it assumes, including the assumption that fails</span>
+<span id="cb2-484"><a href="#cb2-484" aria-hidden="true" tabindex="-1"></a>exactly where this page has been working: that the same <span class="in">`g`</span>-point is the same</span>
+<span id="cb2-485"><a href="#cb2-485" aria-hidden="true" tabindex="-1"></a>absorption strength at every height in the column.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

@@ -77,10 +77,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-e1d00e4dfc48dbef53bffa4c834e136a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
 <link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -145,7 +145,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar docked nav-fixed fullcontent quarto-light">
+<body class="nav-sidebar docked nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -267,13 +267,31 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#prescribing-the-analytic-solution" id="toc-prescribing-the-analytic-solution" class="nav-link active" data-scroll-target="#prescribing-the-analytic-solution">Prescribing the analytic solution</a></li>
+  <li><a href="#the-discontinuity-is-a-prediction-not-a-defect" id="toc-the-discontinuity-is-a-prediction-not-a-defect" class="nav-link" data-scroll-target="#the-discontinuity-is-a-prediction-not-a-defect">The discontinuity is a prediction, not a defect</a></li>
+  <li><a href="#asking-the-model" id="toc-asking-the-model" class="nav-link" data-scroll-target="#asking-the-model">Asking the model</a></li>
+  <li><a href="#then-take-it-to-a-real-spectrum" id="toc-then-take-it-to-a-real-spectrum" class="nav-link" data-scroll-target="#then-take-it-to-a-real-spectrum">Then take it to a real spectrum</a></li>
+  <li><a href="#what-the-second-spectrum-says" id="toc-what-the-second-spectrum-says" class="nav-link" data-scroll-target="#what-the-second-spectrum-says">What the second spectrum says</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a>
+  <ul class="collapse">
+  <li><a href="#physics" id="toc-physics" class="nav-link" data-scroll-target="#physics">Physics</a></li>
+  <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a></li>
+  </ul></li>
+  <li><a href="#going-deeper" id="toc-going-deeper" class="nav-link" data-scroll-target="#going-deeper">Going deeper</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Gray equilibrium, tested</h1>
+<div class="quarto-title-block"><div><h1 class="title">Gray equilibrium, tested</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -525,6 +543,8 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoic3ltcGwuc2V0X2JhY2tlbmQo
 <p>The gray assumption is the one thing this page could not repair, and <a href="../radiative-transfer/01-why-nongrey.html">Why non-grey radiation</a> takes it apart properly — what a real absorption spectrum looks like, what averaging it costs, and why the correlated-<code>k</code> method is the compromise almost every climate model makes.</p>
 
 
+<!-- -->
+
 <script type="pyodide-data">
 eyJvcHRpb25zIjp7ImVudiI6eyJQTE9UTFlfUkVOREVSRVIiOiJwbG90bHlfbWltZXR5cGUifSwiaW5kZXhVUkwiOiJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvcHlvZGlkZS92MC4yOC4xL2Z1bGwvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsicHlvZGlkZV9odHRwIiwibWljcm9waXAiLCJpcHl0aG9uIiwiY2xpbXQ9PTAuMzEuMCIsInVueXQiXX19
 </script>
@@ -626,6 +646,57 @@ window._ojs.runtime.interpretFromScriptTags();
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -955,7 +1026,470 @@ window._ojs.runtime.interpretFromScriptTags();
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Gray equilibrium, tested"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span><span class="co"> live-html</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> jupyter</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">pyodide:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">    # Installed by micropip at document setup, before any cell runs; pinned to</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    # the released version this page was written against.</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - "climt==0.31.0"</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    # unyt is already a hard dependency of climt, so micropip would pull it in</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">    # regardless — it is named here because this page *relies* on it. unyt is</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">    # pure Python, so micropip installs it from PyPI with no wheel-building,</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">    # and `sympl.set_backend(climt.UnytBackend())` then wraps state arrays in</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">    # unyt's thin unit-carrying ndarray instead of xarray DataArrays. That</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">    # matters here: this page calls the radiation component repeatedly (the</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">    # exercises sweep tau_inf and D), and with the single-band gray table the</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">    # per-call cost is mostly state wrapping, not radiative transfer — measured</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co">    # natively with the JIT off, the Pyodide-equivalent path, 2.3 ms/call on</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">    # unyt against 2.8 ms/call on the DataArray backend for a 60-level column.</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co">    - "unyt"</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">    # Fetched into the Pyodide filesystem at document setup — the same file</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">    # tests/test_modelling_tour.py imports natively. See page 1 for the</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">    # mechanism and docs/_quarto.yml `project: resources:` for why it ships.</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">    # Only soundings: this page compares heating rates, and never touches the</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">    # per-band diagnostics that _tour/spectra.py unpacks.</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/soundings.py</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>{{&lt; include ../_includes/climt-live-boot.qmd &gt;}}</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Where this fits</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>Chapter 8 solves the gray atmosphere in radiative equilibrium and gets a closed</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>form:</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>$$T(\tau) = T_e \left<span class="co">[</span><span class="ot">\frac{1 + \tau_\infty - \tau}{2}\right</span><span class="co">]</span>^{1/4}, \qquad</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>T_g = T_e\left(1 + \frac{\tau_\infty}{2}\right)^{1/4}$$</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>with a skin temperature $2^{-1/4} T_e$ at the top and a discontinuity between the</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>ground and the air touching it. Then the chapter ends, because there is nothing</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>more you can do to an analytic solution with a pen.</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>There is something you can do to it with a radiation code. Two things, in fact.</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>You can check it — feed the profile to a solver that knows nothing about the</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>derivation and see whether it agrees the profile is in equilibrium. And once it</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>agrees, you can take the same profile to a solver that uses real spectroscopy and</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>watch it fall apart.</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>Both are on this page, in that order. The first is the more satisfying; the second</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>is the one that explains why every other page in this tour is non-grey.</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## Which τ?</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>The <span class="in">`τ`</span> in chapter 8 is the **diffusivity-scaled** optical depth. Page 2 showed</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>where the factor comes from: a two-stream solver replaces the angular integral</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>with a single effective slant path, <span class="in">`exp(−D τ)`</span>, and the notes derive chapter 8</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>with **`D = 2`** (that is, <span class="in">`μ = 1/2`</span>). Cork defaults to the Elsasser value</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>**`D = 1.66`**, which is the better approximation to the real integral and the</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>wrong one for reproducing this particular algebra.</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>So <span class="in">`τ_∞ = 4`</span> in the formula above is not the column optical depth the model</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>computes. It is <span class="in">`D`</span> times that. To make the notes' equations exact, this page</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>constructs the component with <span class="in">`diffusivity_factor=2.0`</span>, and</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>uses a table, <span class="in">`tour_gray_lw`</span>, whose absorption coefficient was calibrated so</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>  that <span class="in">`2 × Σ_layers τ_k = 4`</span>. That sum is a column total, so it does not depend</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>  on how you slice the column: it comes out 4.000000006 at 18, 28, 40, 60, 100</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>  and 200 levels alike. Change <span class="in">`nz`</span> below and the equilibrium still holds.</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>Both, together. Match only one and the heating rate will not vanish, and it will</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>not vanish for a reason that has nothing whatever to do with the physics you are</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>trying to test — which is the worst kind of disagreement, because it looks like</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>a result.</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="fu">## Prescribing the analytic solution</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>Nothing is integrated here. <span class="in">`analytic_gray_equilibrium`</span> in <span class="in">`_tour/soundings.py`</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>evaluates chapter 8's formula on climt's pressure grid, taking optical depth</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>linear in pressure — the well-mixed absorber the derivation assumes — so</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="in">`τ* = τ_∞ p/p_s`</span>, measured down from space.</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co">#| autorun: true</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"_tour"</span>)   <span class="co"># helper modules, served alongside this page</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sympl, climt</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> CorkLongwaveRadiation, get_default_state, get_grid</span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> soundings <span class="im">import</span> analytic_gray_equilibrium, apply_sounding</span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>TAU_INF, T_E <span class="op">=</span> <span class="fl">4.0</span>, <span class="fl">255.0</span>        <span class="co"># &lt;- change TAU_INF and re-run</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>SIGMA <span class="op">=</span> <span class="fl">5.670374419e-8</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>lw <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"tour_gray_lw"</span>,</span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>                           diffusivity_factor<span class="op">=</span><span class="fl">2.0</span>)</span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">60</span>))</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> state[<span class="st">"air_pressure"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>ps <span class="op">=</span> <span class="bu">float</span>(state[<span class="st">"surface_air_pressure"</span>].values.ravel()[<span class="dv">0</span>])</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>T, T_surf, tau_star <span class="op">=</span> analytic_gray_equilibrium(p, ps, TAU_INF, T_E)</span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>apply_sounding(state, T, T_surf<span class="op">=</span>T_surf)</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"analytic skin temperature = </span><span class="sc">{</span>T_E <span class="op">*</span> <span class="fl">0.5</span><span class="op">**</span><span class="fl">0.25</span><span class="sc">:.2f}</span><span class="ss"> K   (top level </span><span class="sc">{</span>T[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.2f}</span><span class="ss"> K)"</span>)</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"analytic ground           = </span><span class="sc">{</span>T_surf<span class="sc">:.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"surface-air discontinuity = </span><span class="sc">{</span>T_surf <span class="op">-</span> T[<span class="dv">0</span>]<span class="sc">:.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>The top level reads 214.70 K against an analytic skin temperature of 214.43 K. The</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>0.27 K is not an error in the solution; it is that the topmost model layer is</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>centred at 1.3 hPa, where <span class="in">`τ*`</span> is 0.005 rather than 0, so the profile has not</span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>quite reached its own limit. Chapter 8's skin temperature is the value at <span class="in">`τ* = 0`</span></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>exactly, and no grid with a finite top ever gets there.</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="fu">## The discontinuity is a prediction, not a defect</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>The ground comes out at 335.6 K and the air in contact with it at 320.6 K. Fifteen</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>kelvin, across nothing.</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>This is real, in the sense that it is what pure radiative equilibrium demands.</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a>The ground has to emit <span class="in">`σT_g⁴`</span> upward and can only lose energy that way, while the</span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>bottom layer of air both emits and absorbs and settles at a temperature set by the</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>radiation passing through it. Nothing in the radiative problem couples them by</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>contact, so nothing stops them from disagreeing.</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>What it is *not* is a state any planet is ever found in. A 15 K jump across a</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>molecular boundary layer is violently unstable: the air in contact with the ground</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>would rise, immediately. So this figure is the derivation telling you the honest</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>truth about its own domain of validity — pure radiative equilibrium is not</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>achievable near a solid surface, and something else, convection, has to take over</span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>there. Chapter 8 says as much in words. Here it is as a number you can vary.</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a><span class="fu">## Asking the model</span></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>Now the check. <span class="in">`lw(state)`</span> runs the same correlated-<span class="in">`k`</span> solver the rest of this</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>tour uses — one band, constant absorption, <span class="in">`D = 2`</span>, and no knowledge at all of</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>where the temperature profile came from.</span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>tendencies, diagnostics <span class="op">=</span> lw(state)</span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>H <span class="op">=</span> tendencies[<span class="st">"air_temperature"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">*</span> <span class="fl">86400.0</span></span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>olr <span class="op">=</span> <span class="bu">float</span>(diagnostics[<span class="st">"upwelling_longwave_flux_in_air"</span>].values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a>tau_column <span class="op">=</span> <span class="fl">2.0</span> <span class="op">*</span> diagnostics[<span class="st">"longwave_optical_depth_per_band"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>].<span class="bu">sum</span>()</span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"D-scaled column optical depth = </span><span class="sc">{</span>tau_column<span class="sc">:.4f}</span><span class="ss">   (target </span><span class="sc">{</span>TAU_INF<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"OLR = </span><span class="sc">{</span>olr<span class="sc">:.3f}</span><span class="ss"> W/m2   (sigma T_e^4 = </span><span class="sc">{</span>SIGMA <span class="op">*</span> T_E<span class="op">**</span><span class="dv">4</span><span class="sc">:.3f}</span><span class="ss">)"</span>)</span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"heating rate: max |H| = </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(H)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.5f}</span><span class="ss"> K/day"</span>)</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>The maximum heating rate anywhere in the column is **0.002 K/day**. At that rate</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>the fastest-drifting layer needs a year and a half to move by one kelvin — hold</span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a>that number, because the same layer under a real spectrum, later on this page,</span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a>manages a kelvin in an hour and a half. The OLR is</span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>239.85 W m⁻² against the required <span class="in">`σT_e⁴ = 239.76`</span> — 0.04% high, which is the same</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>finite-grid effect as the skin temperature.</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>That is a genuine validation, and it runs in both directions.</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>It validates the derivation, because a solver with an entirely different internal</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a>structure — layer-by-layer upward and downward sweeps over a discretised column,</span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>no closed form anywhere in it — agrees that this profile is the one that does not</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>evolve. Chapter 8's algebra is not a plausible-looking simplification. It is the</span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a>exact equilibrium of the equations the model is solving.</span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>And it validates the model, which is the direction people forget. A radiation code</span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a>is thousands of lines with a great many places to be subtly wrong, and almost</span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a>nothing you can compare it against has an exact answer. This is one of the few</span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>cases that does, which is why gray-limit tests like this one are a standard part</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>of a radiation scheme's test suite — climt has them in <span class="in">`tests/test_grey_limit.py`</span>.</span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>When you write your own component, find an analytic corner and pin it there.</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a><span class="fu">## Then take it to a real spectrum</span></span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>The profile is a perfect equilibrium *for a gray atmosphere*. Keep the profile</span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a>exactly as it is, keep the surface temperature, and hand it to the fourteen-band</span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>Earth table instead — the one pages 1 through 3 used. The atmosphere is kept dry</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a>(<span class="in">`q = 10⁻⁶`</span>), because the gray table had no water vapour to speak of and the</span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>comparison should change one thing at a time: the spectrum.</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>lw_real <span class="op">=</span> CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_lw"</span>)</span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a>state_real <span class="op">=</span> get_default_state([lw_real], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">60</span>))</span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a>apply_sounding(state_real, T, np.full(T.shape, <span class="fl">1e-6</span>), T_surf<span class="op">=</span>T_surf)</span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a>tend_real, diag_real <span class="op">=</span> lw_real(state_real)</span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a>H_real <span class="op">=</span> tend_real[<span class="st">"air_temperature"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">*</span> <span class="fl">86400.0</span></span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>olr_real <span class="op">=</span> <span class="bu">float</span>(diag_real[<span class="st">"upwelling_longwave_flux_in_air"</span>].values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">5.5</span>))</span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a>ax.plot(H, p <span class="op">/</span> <span class="dv">100</span>, label<span class="op">=</span><span class="st">"gray table, $D = 2$"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a>ax.plot(H_real, p <span class="op">/</span> <span class="dv">100</span>, label<span class="op">=</span><span class="st">"14 real bands"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"k"</span>, lw<span class="op">=</span><span class="fl">0.8</span>, ls<span class="op">=</span><span class="st">":"</span>)</span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a>ax.set_yscale(<span class="st">"log"</span>)</span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="dv">1100</span>, <span class="dv">1</span>)</span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"longwave heating rate (K/day)"</span>, ylabel<span class="op">=</span><span class="st">"pressure (hPa)"</span>)</span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"The same profile, judged by two spectra"</span>)</span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rms heating: gray </span><span class="sc">{</span>np<span class="sc">.</span>sqrt((H<span class="op">**</span><span class="dv">2</span>).mean())<span class="sc">:.4f}</span><span class="ss">, "</span></span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"real </span><span class="sc">{</span>np<span class="sc">.</span>sqrt((H_real<span class="op">**</span><span class="dv">2</span>).mean())<span class="sc">:.4f}</span><span class="ss"> K/day"</span>)</span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"max |H|:     gray </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(H)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.4f}</span><span class="ss">, real </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(H_real)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.4f}</span><span class="ss"> K/day"</span>)</span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"OLR:         gray </span><span class="sc">{</span>olr<span class="sc">:.1f}</span><span class="ss">, real </span><span class="sc">{</span>olr_real<span class="sc">:.1f}</span><span class="ss"> W/m2"</span>)</span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"layers cooling: </span><span class="sc">{</span>(H_real <span class="op">&lt;</span> <span class="dv">0</span>)<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(H_real)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a>::: {.callout-note collapse="true"}</span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a><span class="fu">## If the live cell did not run</span></span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a>![Longwave heating rate for the analytic gray profile: flat on zero under the</span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a>gray table at D = 2, and far from zero under 14 real</span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a>bands.](_artifacts/04-gray-tested.png)</span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a>This is the figure the cell above produces. Live cells need WebAssembly; if your</span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>browser blocks it, the static version is here.</span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a><span class="fu">## What the second spectrum says</span></span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a>The blue line is on zero to within the width of the ink. The orange one is not</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>anywhere.</span>
+<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a>The rms heating rate goes from 0.0012 K/day to 2.33 K/day — a factor of two</span>
+<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a>thousand. Fifty-five of the sixty layers are cooling, most of them at 0.4 to</span>
+<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a>0.5 K/day through the troposphere and accelerating to 1.8 K/day at the model lid.</span>
+<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a>The bottom layer does the opposite and heats at 16.7 K/day, because a 335.6 K</span>
+<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a>ground is radiating into air that, in the window region, is nearly transparent and</span>
+<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a>very cold; the bottom layer absorbs what little it can of that flux and has almost</span>
+<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a>no way to get rid of it. And the OLR is not 240 W m⁻² but **600 W m⁻²**: with real</span>
+<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a>band structure and no water vapour, this atmosphere is nothing like opaque enough</span>
+<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a>to hold in a 335 K surface.</span>
+<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a>None of that is a small correction. The gray model did not get the equilibrium</span>
+<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a>slightly wrong; it produced a profile that a real spectrum does not recognise as</span>
+<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a>an equilibrium at all, and would move away from immediately in every layer.</span>
+<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a>This is worth being precise about, because it is easy to over-read. Chapter 8 is</span>
+<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a>not wrong. Everything above this section stands: the algebra</span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a>is exact, the solver confirms it, the skin temperature and the discontinuity are</span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a>real features of gray radiative equilibrium. The problem is the word "gray". One</span>
+<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a>absorption coefficient for all wavelengths is an assumption about the *atmosphere*,</span>
+<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a>and pages 1 through 3 measured how badly it fails — the brightness temperature</span>
+<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a>swings 85 K across the spectrum, the optical depth spans five orders of magnitude,</span>
+<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a>and the radiating level ranges from 3 hPa to the ground.</span>
+<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a>Everything chapter 8 concludes downstream of that assumption inherits the error:</span>
+<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a>the surface temperature, the lapse rate, the sensitivity to <span class="in">`τ_∞`</span>. You can tune</span>
+<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a><span class="in">`τ_∞`</span> until the gray model reproduces Earth's 288 K, and people do, but you have</span>
+<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a>then fitted one number to one observation and learned nothing you can extrapolate</span>
+<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a>with. Change the CO₂ and the gray model has no way to know which part of the</span>
+<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a>spectrum you changed — which is exactly what <span class="co">[</span><span class="ot">page 5</span><span class="co">](05-co2-knob.qmd)</span> measures.</span>
+<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft: tendencies vs diagnostics</span></span>
+<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a><span class="in">`lw(state)`</span> returned a **pair**, and this page used both halves:</span>
+<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"tendencies :"</span>, <span class="bu">sorted</span>(tendencies.keys()))</span>
+<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="bu">sorted</span>(diagnostics.keys()):</span>
+<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"diagnostic :"</span>, k)</span>
+<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-280"><a href="#cb2-280" aria-hidden="true" tabindex="-1"></a>The split is the central design decision in sympl, and it is about *time*.</span>
+<span id="cb2-281"><a href="#cb2-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a>**Tendencies** are rates of change: <span class="in">`∂T/∂t`</span> in K s⁻¹, which is why every heating</span>
+<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a>rate on this page is multiplied by 86400 to read in K/day. A tendency is not a</span>
+<span id="cb2-284"><a href="#cb2-284" aria-hidden="true" tabindex="-1"></a>property of the state — it is a statement about where the state would go next. It</span>
+<span id="cb2-285"><a href="#cb2-285" aria-hidden="true" tabindex="-1"></a>belongs to the component, and two components handed the same state return two</span>
+<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a>different tendencies, which is precisely how you couple them: add the tendencies.</span>
+<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a>**Diagnostics** are quantities computed *from* the current state that were not</span>
+<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a>already in it: fluxes, optical depths, transmittances. They are properties of the</span>
+<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a>state at this instant. Ask two components for the same diagnostic and, if both are</span>
+<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a>correct, they should agree.</span>
+<span id="cb2-292"><a href="#cb2-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-293"><a href="#cb2-293" aria-hidden="true" tabindex="-1"></a>One entry in that list looks like it is on the wrong side:</span>
+<span id="cb2-294"><a href="#cb2-294" aria-hidden="true" tabindex="-1"></a><span class="in">`air_temperature_tendency_from_longwave`</span> is a diagnostic, and it holds the same</span>
+<span id="cb2-295"><a href="#cb2-295" aria-hidden="true" tabindex="-1"></a>numbers as the <span class="in">`air_temperature`</span> tendency. Both are there on purpose. The</span>
+<span id="cb2-296"><a href="#cb2-296" aria-hidden="true" tabindex="-1"></a>tendency is the component's contribution to be *summed* with every other</span>
+<span id="cb2-297"><a href="#cb2-297" aria-hidden="true" tabindex="-1"></a>component's; the diagnostic is a labelled copy that survives into the state so</span>
+<span id="cb2-298"><a href="#cb2-298" aria-hidden="true" tabindex="-1"></a>you can plot the longwave heating separately after the shortwave and the</span>
+<span id="cb2-299"><a href="#cb2-299" aria-hidden="true" tabindex="-1"></a>convection have added theirs. Sum the diagnostics by mistake and you will</span>
+<span id="cb2-300"><a href="#cb2-300" aria-hidden="true" tabindex="-1"></a>double-count the radiation.</span>
+<span id="cb2-301"><a href="#cb2-301" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-302"><a href="#cb2-302" aria-hidden="true" tabindex="-1"></a>A component that returns tendencies is a <span class="in">`TendencyComponent`</span>; one that returns an</span>
+<span id="cb2-303"><a href="#cb2-303" aria-hidden="true" tabindex="-1"></a>updated state directly is a <span class="in">`Stepper`</span>. Only a <span class="in">`Stepper`</span> — or a time integrator</span>
+<span id="cb2-304"><a href="#cb2-304" aria-hidden="true" tabindex="-1"></a>such as <span class="in">`sympl.AdamsBashforth`</span> wrapped around your tendency components — advances</span>
+<span id="cb2-305"><a href="#cb2-305" aria-hidden="true" tabindex="-1"></a>anything.</span>
+<span id="cb2-306"><a href="#cb2-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-307"><a href="#cb2-307" aria-hidden="true" tabindex="-1"></a>**Nothing in this tour ever does.** Every number on these six pages is an</span>
+<span id="cb2-308"><a href="#cb2-308" aria-hidden="true" tabindex="-1"></a>instantaneous rate evaluated on a profile we wrote down by hand. When this page</span>
+<span id="cb2-309"><a href="#cb2-309" aria-hidden="true" tabindex="-1"></a>says the analytic profile "is an equilibrium", the evidence is that the tendency</span>
+<span id="cb2-310"><a href="#cb2-310" aria-hidden="true" tabindex="-1"></a>is zero, not that anything was stepped until it stopped moving. That is a stronger</span>
+<span id="cb2-311"><a href="#cb2-311" aria-hidden="true" tabindex="-1"></a>statement and a much cheaper one: the equilibrium test is a single call, while</span>
+<span id="cb2-312"><a href="#cb2-312" aria-hidden="true" tabindex="-1"></a>integrating a non-grey column to equilibrium takes a couple of thousand steps.</span>
+<span id="cb2-313"><a href="#cb2-313" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">The live RCE demo</span><span class="co">](../radiative-transfer/09-live-rce.qmd)</span> does it the other way,</span>
+<span id="cb2-314"><a href="#cb2-314" aria-hidden="true" tabindex="-1"></a>if you want to watch.</span>
+<span id="cb2-315"><a href="#cb2-315" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-316"><a href="#cb2-316" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-317"><a href="#cb2-317" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-318"><a href="#cb2-318" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft: which state backend, and when</span></span>
+<span id="cb2-319"><a href="#cb2-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-320"><a href="#cb2-320" aria-hidden="true" tabindex="-1"></a>Every page in this tour opens with the same line, and it has been unexplained</span>
+<span id="cb2-321"><a href="#cb2-321" aria-hidden="true" tabindex="-1"></a>since page 1:</span>
+<span id="cb2-322"><a href="#cb2-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-323"><a href="#cb2-323" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-324"><a href="#cb2-324" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span>
+<span id="cb2-325"><a href="#cb2-325" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-326"><a href="#cb2-326" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-327"><a href="#cb2-327" aria-hidden="true" tabindex="-1"></a>A **state backend** decides what container the values in a state dictionary are</span>
+<span id="cb2-328"><a href="#cb2-328" aria-hidden="true" tabindex="-1"></a>wrapped in. It is a global setting — <span class="in">`sympl.set_backend()`</span> writes it,</span>
+<span id="cb2-329"><a href="#cb2-329" aria-hidden="true" tabindex="-1"></a><span class="in">`sympl.get_backend()`</span> reads it — and it takes effect when a state is *built*, so</span>
+<span id="cb2-330"><a href="#cb2-330" aria-hidden="true" tabindex="-1"></a>set it before <span class="in">`get_default_state`</span>, not after. There are two to choose from:</span>
+<span id="cb2-331"><a href="#cb2-331" aria-hidden="true" tabindex="-1"></a>sympl's default <span class="in">`DataArrayBackend`</span>, which wraps arrays in xarray <span class="in">`DataArray`</span>s,</span>
+<span id="cb2-332"><a href="#cb2-332" aria-hidden="true" tabindex="-1"></a>and climt's <span class="in">`UnytBackend`</span>, which wraps them in a thin container around a</span>
+<span id="cb2-333"><a href="#cb2-333" aria-hidden="true" tabindex="-1"></a><span class="in">`unyt_array`</span>.</span>
+<span id="cb2-334"><a href="#cb2-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-337"><a href="#cb2-337" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-338"><a href="#cb2-338" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sympl</span>
+<span id="cb2-339"><a href="#cb2-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-340"><a href="#cb2-340" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"current backend:"</span>, <span class="bu">type</span>(sympl.get_backend()).<span class="va">__name__</span>, <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb2-341"><a href="#cb2-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-342"><a href="#cb2-342" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> backend <span class="kw">in</span> (climt.UnytBackend(), sympl.DataArrayBackend()):</span>
+<span id="cb2-343"><a href="#cb2-343" aria-hidden="true" tabindex="-1"></a>    sympl.set_backend(backend)</span>
+<span id="cb2-344"><a href="#cb2-344" aria-hidden="true" tabindex="-1"></a>    demo <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">10</span>))</span>
+<span id="cb2-345"><a href="#cb2-345" aria-hidden="true" tabindex="-1"></a>    Tq <span class="op">=</span> demo[<span class="st">"air_temperature"</span>]</span>
+<span id="cb2-346"><a href="#cb2-346" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">type</span>(backend)<span class="sc">.</span><span class="va">__name__</span><span class="sc">:18s}</span><span class="ss"> -&gt; </span><span class="sc">{</span><span class="bu">type</span>(Tq)<span class="sc">.</span><span class="va">__name__</span><span class="sc">:19s}</span><span class="ss"> "</span></span>
+<span id="cb2-347"><a href="#cb2-347" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"dims </span><span class="sc">{</span>Tq<span class="sc">.</span>dims<span class="sc">}</span><span class="ss">  units </span><span class="sc">{</span>Tq<span class="sc">.</span>attrs[<span class="st">'units'</span>]<span class="sc">}</span><span class="ss">  .values </span><span class="sc">{</span><span class="bu">type</span>(Tq.values)<span class="sc">.</span><span class="va">__name__</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-348"><a href="#cb2-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-349"><a href="#cb2-349" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())   <span class="co"># put it back before re-running cells above</span></span>
+<span id="cb2-350"><a href="#cb2-350" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-351"><a href="#cb2-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-352"><a href="#cb2-352" aria-hidden="true" tabindex="-1"></a>Notice what is *not* different. Both containers answer <span class="in">`.values`</span>, <span class="in">`.dims`</span> and</span>
+<span id="cb2-353"><a href="#cb2-353" aria-hidden="true" tabindex="-1"></a><span class="in">`.attrs["units"]`</span> the same way, and <span class="in">`.values`</span> is a plain numpy array under either.</span>
+<span id="cb2-354"><a href="#cb2-354" aria-hidden="true" tabindex="-1"></a>That is deliberate, and it is why nothing else on this page had to care: every</span>
+<span id="cb2-355"><a href="#cb2-355" aria-hidden="true" tabindex="-1"></a><span class="in">`values[:, 0, 0]`</span> and every <span class="in">`values[-1, 0, 0]`</span> in this tour is backend-agnostic.</span>
+<span id="cb2-356"><a href="#cb2-356" aria-hidden="true" tabindex="-1"></a>Write your analysis against those three and you can switch freely.</span>
+<span id="cb2-357"><a href="#cb2-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-358"><a href="#cb2-358" aria-hidden="true" tabindex="-1"></a>**When unyt is the right choice.** It is faster, because the wrapper does less —</span>
+<span id="cb2-359"><a href="#cb2-359" aria-hidden="true" tabindex="-1"></a>measured on this page's single-band table at 60 levels, 2.3 ms per call against</span>
+<span id="cb2-360"><a href="#cb2-360" aria-hidden="true" tabindex="-1"></a>2.8 ms, which is real when a cell sweeps a parameter and negligible when the</span>
+<span id="cb2-361"><a href="#cb2-361" aria-hidden="true" tabindex="-1"></a>radiative transfer itself dominates (both backends sit at 99 ms on the fourteen-band</span>
+<span id="cb2-362"><a href="#cb2-362" aria-hidden="true" tabindex="-1"></a>table). It is pure Python, so micropip installs it in the browser with no wheel to</span>
+<span id="cb2-363"><a href="#cb2-363" aria-hidden="true" tabindex="-1"></a>build — which is why this section runs in Pyodide at all. And <span class="in">`unyt_array`</span> does</span>
+<span id="cb2-364"><a href="#cb2-364" aria-hidden="true" tabindex="-1"></a>genuine dimensional analysis, which the xarray container does not:</span>
+<span id="cb2-365"><a href="#cb2-365" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-368"><a href="#cb2-368" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb2-369"><a href="#cb2-369" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(sympl.DataArrayBackend())</span>
+<span id="cb2-370"><a href="#cb2-370" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">10</span>))</span>
+<span id="cb2-371"><a href="#cb2-371" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> d[<span class="st">"air_temperature"</span>] <span class="op">+</span> d[<span class="st">"air_pressure"</span>]</span>
+<span id="cb2-372"><a href="#cb2-372" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"xarray:  T + p = </span><span class="sc">{</span><span class="bu">float</span>(s.values[<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>])<span class="sc">:.2f}</span><span class="ss"> </span><span class="sc">{</span>s<span class="sc">.</span>attrs[<span class="st">'units'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-373"><a href="#cb2-373" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-374"><a href="#cb2-374" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span>
+<span id="cb2-375"><a href="#cb2-375" aria-hidden="true" tabindex="-1"></a>u <span class="op">=</span> get_default_state([lw], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">10</span>))</span>
+<span id="cb2-376"><a href="#cb2-376" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb2-377"><a href="#cb2-377" aria-hidden="true" tabindex="-1"></a>    u[<span class="st">"air_temperature"</span>].data <span class="op">+</span> u[<span class="st">"air_pressure"</span>].data</span>
+<span id="cb2-378"><a href="#cb2-378" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> err:</span>
+<span id="cb2-379"><a href="#cb2-379" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"unyt:    T + p -&gt; </span><span class="sc">{</span><span class="bu">type</span>(err)<span class="sc">.</span><span class="va">__name__</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-380"><a href="#cb2-380" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-381"><a href="#cb2-381" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-382"><a href="#cb2-382" aria-hidden="true" tabindex="-1"></a>Adding a temperature to a pressure is meaningless. xarray returns 100784.86 and</span>
+<span id="cb2-383"><a href="#cb2-383" aria-hidden="true" tabindex="-1"></a>labels it <span class="in">`degK`</span>; unyt refuses. The <span class="in">`units`</span> in a DataArray's <span class="in">`attrs`</span> is a *string</span>
+<span id="cb2-384"><a href="#cb2-384" aria-hidden="true" tabindex="-1"></a>someone wrote down*, carried along and never checked, whereas unyt's units are</span>
+<span id="cb2-385"><a href="#cb2-385" aria-hidden="true" tabindex="-1"></a>part of the arithmetic.</span>
+<span id="cb2-386"><a href="#cb2-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-387"><a href="#cb2-387" aria-hidden="true" tabindex="-1"></a>**When the DataArray backend is the right choice.** When you want the rest of</span>
+<span id="cb2-388"><a href="#cb2-388" aria-hidden="true" tabindex="-1"></a>xarray. States built on it go straight to <span class="in">`xarray.Dataset`</span> and out to netCDF, plot</span>
+<span id="cb2-389"><a href="#cb2-389" aria-hidden="true" tabindex="-1"></a>themselves, align and broadcast against other xarray data, and drop into whatever</span>
+<span id="cb2-390"><a href="#cb2-390" aria-hidden="true" tabindex="-1"></a>analysis stack you already have. That is worth far more than half a millisecond a</span>
+<span id="cb2-391"><a href="#cb2-391" aria-hidden="true" tabindex="-1"></a>call the moment your work involves saving output, reading someone else's, or</span>
+<span id="cb2-392"><a href="#cb2-392" aria-hidden="true" tabindex="-1"></a>comparing a run against observations. It is also sympl's default, so it is what</span>
+<span id="cb2-393"><a href="#cb2-393" aria-hidden="true" tabindex="-1"></a>other people's sympl code assumes. (One caveat: climt's default states carry no</span>
+<span id="cb2-394"><a href="#cb2-394" aria-hidden="true" tabindex="-1"></a>coordinate *values*, so <span class="in">`.sel(mid_levels=3)`</span> here is just positional indexing</span>
+<span id="cb2-395"><a href="#cb2-395" aria-hidden="true" tabindex="-1"></a>wearing a label — you get xarray's I/O and broadcasting, not physical-coordinate</span>
+<span id="cb2-396"><a href="#cb2-396" aria-hidden="true" tabindex="-1"></a>selection, until you attach coordinates yourself.)</span>
+<span id="cb2-397"><a href="#cb2-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-398"><a href="#cb2-398" aria-hidden="true" tabindex="-1"></a>The rule of thumb: **unyt while computing, DataArray while analysing.** Long</span>
+<span id="cb2-399"><a href="#cb2-399" aria-hidden="true" tabindex="-1"></a>integrations, parameter sweeps, anything in the browser, anything where you want</span>
+<span id="cb2-400"><a href="#cb2-400" aria-hidden="true" tabindex="-1"></a>unit errors to be loud — unyt. Post-processing, saving, sharing — DataArray.</span>
+<span id="cb2-401"><a href="#cb2-401" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-402"><a href="#cb2-402" aria-hidden="true" tabindex="-1"></a>**One trap.** The backend is read when a state is built, not when a component is</span>
+<span id="cb2-403"><a href="#cb2-403" aria-hidden="true" tabindex="-1"></a>called, and switching mid-session raises nothing at all. Set the backend, build a</span>
+<span id="cb2-404"><a href="#cb2-404" aria-hidden="true" tabindex="-1"></a>state, switch the backend, call the component, and it will happily consume the old</span>
+<span id="cb2-405"><a href="#cb2-405" aria-hidden="true" tabindex="-1"></a>container and hand you the new one — leaving <span class="in">`state.update(...)`</span> to merge two</span>
+<span id="cb2-406"><a href="#cb2-406" aria-hidden="true" tabindex="-1"></a>container types into one dictionary. Nothing complains until something much later</span>
+<span id="cb2-407"><a href="#cb2-407" aria-hidden="true" tabindex="-1"></a>does. If you change backends, rebuild the state; the cells above restore the</span>
+<span id="cb2-408"><a href="#cb2-408" aria-hidden="true" tabindex="-1"></a>backend on their last line for exactly this reason.</span>
+<span id="cb2-409"><a href="#cb2-409" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb2-410"><a href="#cb2-410" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-411"><a href="#cb2-411" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises</span></span>
+<span id="cb2-412"><a href="#cb2-412" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-413"><a href="#cb2-413" aria-hidden="true" tabindex="-1"></a><span class="fu">### Physics</span></span>
+<span id="cb2-414"><a href="#cb2-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-415"><a href="#cb2-415" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**The `τ_∞` knob.** Vary <span class="in">`TAU_INF`</span> from 0.5 to 8 in the first cell and record</span>
+<span id="cb2-416"><a href="#cb2-416" aria-hidden="true" tabindex="-1"></a>   the ground temperature each time, comparing against <span class="in">`T_e(1 + τ_∞/2)^{1/4}`</span></span>
+<span id="cb2-417"><a href="#cb2-417" aria-hidden="true" tabindex="-1"></a>   (269.6, 282.2, 303.3, 335.6, 381.3 K at <span class="in">`τ_∞`</span> = 0.5, 1, 2, 4, 8). Then check</span>
+<span id="cb2-418"><a href="#cb2-418" aria-hidden="true" tabindex="-1"></a>   the heating rate at each: it stays near zero throughout, which tells you the</span>
+<span id="cb2-419"><a href="#cb2-419" aria-hidden="true" tabindex="-1"></a>   validation was not a coincidence at one value. Now note what it takes to get</span>
+<span id="cb2-420"><a href="#cb2-420" aria-hidden="true" tabindex="-1"></a>   288 K — and ask what would have told you that number in advance.</span>
+<span id="cb2-421"><a href="#cb2-421" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-422"><a href="#cb2-422" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Is it convectively unstable?** Chapter 8 shows the radiative lapse rate</span>
+<span id="cb2-423"><a href="#cb2-423" aria-hidden="true" tabindex="-1"></a>   tends to <span class="in">`g/4R`</span> at large <span class="in">`τ_∞`</span>. Verify it: <span class="in">`dT/dz = −(g/4R)·τ*/(1 + τ*)`</span>, so</span>
+<span id="cb2-424"><a href="#cb2-424" aria-hidden="true" tabindex="-1"></a>   the steepest point is the surface, and it approaches <span class="in">`g/4R = 8.5 K km⁻¹`</span>.</span>
+<span id="cb2-425"><a href="#cb2-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-426"><a href="#cb2-426" aria-hidden="true" tabindex="-1"></a>   Compare against the dry adiabat, <span class="in">`g/c_p = 9.8 K km⁻¹`</span>. Since <span class="in">`c_p ≈ 3.5R`</span> is</span>
+<span id="cb2-427"><a href="#cb2-427" aria-hidden="true" tabindex="-1"></a>   *less* than `4R`, `g/4R` is *less* than <span class="in">`g/c_p`</span> — so this profile's interior is</span>
+<span id="cb2-428"><a href="#cb2-428" aria-hidden="true" tabindex="-1"></a>   statically **stable**, at every <span class="in">`τ_∞`</span>, and the argument "radiative equilibrium</span>
+<span id="cb2-429"><a href="#cb2-429" aria-hidden="true" tabindex="-1"></a>   is convectively unstable, therefore convection" does not go through in this</span>
+<span id="cb2-430"><a href="#cb2-430" aria-hidden="true" tabindex="-1"></a>   form. Where, then, does the instability actually live? (Two places. One is on</span>
+<span id="cb2-431"><a href="#cb2-431" aria-hidden="true" tabindex="-1"></a>   this page already, 15 K wide.)</span>
+<span id="cb2-432"><a href="#cb2-432" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-433"><a href="#cb2-433" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Pressure broadening changes the answer.** Exercise 2 assumed <span class="in">`τ* ∝ p`</span>.</span>
+<span id="cb2-434"><a href="#cb2-434" aria-hidden="true" tabindex="-1"></a>   Real absorption lines broaden with pressure, so column optical depth goes</span>
+<span id="cb2-435"><a href="#cb2-435" aria-hidden="true" tabindex="-1"></a>   roughly as <span class="in">`p²`</span>. Redo the lapse rate for <span class="in">`τ* = τ_∞ (p/p_s)²`</span>: the exponent</span>
+<span id="cb2-436"><a href="#cb2-436" aria-hidden="true" tabindex="-1"></a>   doubles and the limiting rate becomes <span class="in">`g/2R = 17.1 K km⁻¹`</span>, nearly twice the</span>
+<span id="cb2-437"><a href="#cb2-437" aria-hidden="true" tabindex="-1"></a>   dry adiabat. At <span class="in">`τ_∞ = 4`</span> that puts 13.7 K km⁻¹ at the surface and leaves the</span>
+<span id="cb2-438"><a href="#cb2-438" aria-hidden="true" tabindex="-1"></a>   bottom 42% of the column unstable. *This* is the standard argument, and it</span>
+<span id="cb2-439"><a href="#cb2-439" aria-hidden="true" tabindex="-1"></a>   turns on a detail chapter 8 folds away. Modify <span class="in">`analytic_gray_equilibrium`</span> to</span>
+<span id="cb2-440"><a href="#cb2-440" aria-hidden="true" tabindex="-1"></a>   take the exponent as an argument and plot both profiles together.</span>
+<span id="cb2-441"><a href="#cb2-441" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-442"><a href="#cb2-442" aria-hidden="true" tabindex="-1"></a><span class="fu">### Code</span></span>
+<span id="cb2-443"><a href="#cb2-443" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-444"><a href="#cb2-444" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Break it deliberately.** Set <span class="in">`diffusivity_factor=1.66`</span> in the first cell</span>
+<span id="cb2-445"><a href="#cb2-445" aria-hidden="true" tabindex="-1"></a>   while keeping <span class="in">`table="tour_gray_lw"`</span>, and re-run. The heating rate stops being</span>
+<span id="cb2-446"><a href="#cb2-446" aria-hidden="true" tabindex="-1"></a>   zero: max |H| = 0.65 K/day, cooling at the bottom and heating at the top, with</span>
+<span id="cb2-447"><a href="#cb2-447" aria-hidden="true" tabindex="-1"></a>   the OLR up at 263.5 W m⁻². Explain the sign structure. Then work out which</span>
+<span id="cb2-448"><a href="#cb2-448" aria-hidden="true" tabindex="-1"></a>   <span class="in">`τ_∞`</span> the profile *would* be an equilibrium for at <span class="in">`D = 1.66`</span>, and check your</span>
+<span id="cb2-449"><a href="#cb2-449" aria-hidden="true" tabindex="-1"></a>   answer by putting that value in <span class="in">`analytic_gray_equilibrium`</span> while leaving the</span>
+<span id="cb2-450"><a href="#cb2-450" aria-hidden="true" tabindex="-1"></a>   component alone.</span>
+<span id="cb2-451"><a href="#cb2-451" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-452"><a href="#cb2-452" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Build your own table.** <span class="in">`scripts/generate_gray_default_table.py`</span> made</span>
+<span id="cb2-453"><a href="#cb2-453" aria-hidden="true" tabindex="-1"></a>   <span class="in">`tour_gray_lw`</span> by inverting <span class="in">`D · Σ(k·m) = τ_∞`</span> for <span class="in">`k`</span>. Run it for a different</span>
+<span id="cb2-454"><a href="#cb2-454" aria-hidden="true" tabindex="-1"></a>   <span class="in">`τ_∞`</span> and <span class="in">`D`</span> of your choosing, load the result with</span>
+<span id="cb2-455"><a href="#cb2-455" aria-hidden="true" tabindex="-1"></a>   <span class="in">`table="/path/to/your.nc"`</span>, and confirm the analytic profile for that <span class="in">`τ_∞`</span> is</span>
+<span id="cb2-456"><a href="#cb2-456" aria-hidden="true" tabindex="-1"></a>   an equilibrium for it. If it is not, the two <span class="in">`D`</span> values disagree — which is the</span>
+<span id="cb2-457"><a href="#cb2-457" aria-hidden="true" tabindex="-1"></a>   whole content of the "Which τ?" callout, learned the way it is usually learned.</span>
+<span id="cb2-458"><a href="#cb2-458" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-459"><a href="#cb2-459" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Where does the gray model's OLR come from?** For the gray case, plot</span>
+<span id="cb2-460"><a href="#cb2-460" aria-hidden="true" tabindex="-1"></a>   <span class="in">`upwelling_longwave_flux_in_air`</span> and <span class="in">`downwelling_longwave_flux_in_air`</span> against</span>
+<span id="cb2-461"><a href="#cb2-461" aria-hidden="true" tabindex="-1"></a>   pressure on the interface levels. The upward flux at the top must equal <span class="in">`σT_e⁴`</span></span>
+<span id="cb2-462"><a href="#cb2-462" aria-hidden="true" tabindex="-1"></a>   and the downward flux at the top must be zero; check both. Then verify the</span>
+<span id="cb2-463"><a href="#cb2-463" aria-hidden="true" tabindex="-1"></a>   third analytic result chapter 8 gives you: the net flux is constant with</span>
+<span id="cb2-464"><a href="#cb2-464" aria-hidden="true" tabindex="-1"></a>   height, which is what "radiative equilibrium" means before it means anything</span>
+<span id="cb2-465"><a href="#cb2-465" aria-hidden="true" tabindex="-1"></a>   about temperature.</span>
+<span id="cb2-466"><a href="#cb2-466" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-467"><a href="#cb2-467" aria-hidden="true" tabindex="-1"></a><span class="fu">## Going deeper</span></span>
+<span id="cb2-468"><a href="#cb2-468" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-469"><a href="#cb2-469" aria-hidden="true" tabindex="-1"></a>The gray assumption is the one thing this page could not repair, and</span>
+<span id="cb2-470"><a href="#cb2-470" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Why non-grey radiation</span><span class="co">](../radiative-transfer/01-why-nongrey.qmd)</span> takes it apart</span>
+<span id="cb2-471"><a href="#cb2-471" aria-hidden="true" tabindex="-1"></a>properly — what a real absorption spectrum looks like, what averaging it costs,</span>
+<span id="cb2-472"><a href="#cb2-472" aria-hidden="true" tabindex="-1"></a>and why the correlated-<span class="in">`k`</span> method is the compromise almost every climate model</span>
+<span id="cb2-473"><a href="#cb2-473" aria-hidden="true" tabindex="-1"></a>makes.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 
