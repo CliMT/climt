@@ -1,8 +1,8 @@
 {
   "_artifacts/lbl_overlay.png": "25e537bdad056bb66f36fe9b4c7a1edeeba4b9fbba44598e85642fb97276d6bb",
   "_artifacts/rce_before_after.png": "0df50dd5b9ec7a6a59f107963d151d37ce52f6dcc821c1e7bd4a42464a7c39e7",
-  "_artifacts/rce_moist_after.npz": "bed31b18b157719f0a4ddbf5fa6c211f74e39928f04d4fafa318e4284a3f4210",
-  "_artifacts/rce_moist_before.npz": "1a6770eea41f3c8ac70c6f602873c7705f2f20f1711f4987a2979a67b8b20387",
+  "_artifacts/rce_moist_after.npz": "62573587d173295750c42e9df6ca36e4d12d6306dcb55e0529269ad399540f62",
+  "_artifacts/rce_moist_before.npz": "42d5c84c4aa5b6ffda221d5348ceb480aaebe8457f89bb1c71c361a4423bee62",
   "_artifacts/throughput.npz": "8cc4929f97708a26ae86b271150d0699ba8cf8fc0b0462f962bc0dfb5f6b8113",
   "_artifacts/throughput.png": "e3b551ef48fe1aa0bbf8037588c53fdab56362590f85910fa4f0444ec7eb1be9"
 }

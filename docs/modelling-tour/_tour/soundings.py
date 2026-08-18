@@ -21,13 +21,23 @@ def saturation_vapour_pressure(T):
 
 
 def lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8, gamma=6.5e-3,
-                        T_strat=200.0, q_floor=1e-7):
-    """A troposphere at a constant lapse rate under an isothermal stratosphere.
+                        T_strat=200.0, q_floor=1e-7, gamma_strat=0.0):
+    """A troposphere at a constant lapse rate under a settable stratosphere.
 
     Hydrostatic balance with a constant lapse rate gives T(p) = T_surf *
     (p/ps)**(RD*gamma/G); the profile is then clipped at ``T_strat``. Humidity
     is set at fixed relative humidity ``rh`` and floored so the stratosphere
     stays inside the k-table's H2O axis.
+
+    ``gamma_strat`` gives the stratosphere a temperature gradient instead of
+    leaving it isothermal: positive values WARM with height, as Earth's real
+    ozone-heated stratosphere does. Page 5 needs this, because the 15 um core's
+    forcing is set by the temperature structure its emission level sits in, and
+    an isothermal cap is the one structure in which that forcing has nowhere to
+    come from. Height above the tropopause is taken as ``H * log(p_trop / p)``
+    with the isothermal scale height ``H = RD * T_strat / G``, which is exact
+    for the isothermal case and a good approximation for the small gradients
+    this is used with.
 
     Args:
         p: (nz,) mid-level pressure, Pa, surface first.
@@ -35,8 +45,10 @@ def lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8, gamma=6.5e-3,
         T_surf: surface temperature, K.
         rh: relative humidity, dimensionless (0-1).
         gamma: lapse rate, K/m.
-        T_strat: isothermal stratosphere temperature, K.
+        T_strat: stratosphere temperature at the tropopause, K.
         q_floor: minimum specific humidity, kg/kg.
+        gamma_strat: stratospheric temperature gradient, K/m, positive upward.
+            0.0 (the default) leaves the stratosphere isothermal.
 
     Returns:
         (T, q) each (nz,) — air temperature in K, specific humidity in kg/kg.
@@ -44,8 +56,25 @@ def lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8, gamma=6.5e-3,
     p = np.asarray(p, dtype=float)
     T = T_surf * (p / ps) ** (RD * gamma / G)
     T = np.maximum(T, T_strat)
+
+    if gamma_strat:
+        # The tropopause is where the tropospheric profile first reaches T_strat.
+        p_trop = ps * (T_strat / T_surf) ** (G / (RD * gamma))
+        scale_height = RD * T_strat / G
+        above = p < p_trop
+        z = scale_height * np.log(p_trop / p[above])
+        T[above] = T_strat + gamma_strat * z
+
     e = rh * saturation_vapour_pressure(T)
-    q = EPSILON * e / np.maximum(p - e, 1.0)
+    # Vapour pressure cannot be a large fraction of the total pressure. Without
+    # this the fixed-RH formula returns nonsense wherever the air is warm and
+    # the pressure low -- a stratosphere warmed by gamma_strat reaches ~273 K at
+    # 1 hPa, where saturation alone is 600 Pa against a total of 100, and q came
+    # out at 300 kg/kg. Clipping at half the total pressure bounds q by
+    # EPSILON = 0.622 and is a no-op everywhere else: the isothermal 200 K cap
+    # has e ~ 0.2 Pa, and the 288 K surface ~1400 Pa against 1000 hPa.
+    e = np.minimum(e, 0.5 * p)
+    q = EPSILON * e / (p - e)
     return T, np.maximum(q, q_floor)
 
 

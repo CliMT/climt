@@ -136,11 +136,21 @@ browser blocks it, the static version is here.
 
 ## Reading the gap
 
-The frozen-moisture curve climbs at **3.52 W m⁻² K⁻¹**. That is the Planck
-response — the notes quote it as `λ ≈ −3.3 W m⁻² K⁻¹`, and you have now
-computed it rather than been told it. (It is well below the bare-surface
-`4σT³ = 5.42` because the atmosphere warms along with the surface, so the
-greenhouse effect strengthens even with the moisture held still.)
+The frozen-moisture curve climbs at **3.52 W m⁻² K⁻¹**. That is the quantity the
+notes quote as `λ ≈ −3.3 W m⁻² K⁻¹`, and you have now computed it rather than
+been told it. (It is well below the bare-surface `4σT³ = 5.42` because the
+atmosphere warms along with the surface, so the greenhouse effect strengthens
+even with the moisture held still.)
+
+Calling it "the Planck response" is a small abuse worth naming, because it is the
+same abuse the notes make. A pure Planck response warms every level by the same
+amount. This sounding does not: `lapse_rate_sounding` builds
+`T(p) = T_surf (p/p_s)^(R Γ/g)`, so a 1 K surface warming reaches the upper
+troposphere as only `(p/p_s)^0.19` of a kelvin — and not at all in the
+stratosphere, which is pinned at `T_strat`. What you have measured is therefore
+the Planck response *plus* an implicit lapse-rate feedback. That is why one
+number can stand in for both in the notes' energy balance; it is also why you
+should know which one you are holding when you use it.
 
 Let the moisture respond and the same warming yields only **1.30 W m⁻² K⁻¹**.
 The difference, **2.22 W m⁻² K⁻¹**, is the water vapour feedback. It is a
@@ -406,7 +416,11 @@ def equilibrium(asr):
     if down.size == 0:
         return None
     i = down[0]
-    return T_hot[i] + 5.0 * net[i] / (net[i] - net[i + 1])
+    # Linear interpolation across the bracketing pair. Take the step from T_hot
+    # itself rather than writing 5.0: exercise 1 asks you to refine the grid,
+    # and a hard-coded step would silently misplace every crossing if you did.
+    step = T_hot[i + 1] - T_hot[i]
+    return T_hot[i] + step * net[i] / (net[i] - net[i + 1])
 
 
 fig, ax = plt.subplots(figsize=(7.5, 5))

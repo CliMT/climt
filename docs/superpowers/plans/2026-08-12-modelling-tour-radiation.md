@@ -3100,3 +3100,112 @@ directory so `''` on `sys.path` beats the editable install (`PYTHONPATH` does *n
 here -- the editable finder takes precedence, and the import still resolves to the main
 checkout). Verified pointing at 0.30.0 before running. Result: the same single failure,
 742 s. File it separately; it is not this branch's.
+
+---
+
+## The reviewer's Minor list, cleared — 2026-08-17
+
+Taken after #226 merged. Ten of the deferred items, plus the one Important one
+(the generator's defaults). Two findings came out of doing them that were bigger
+than the items themselves.
+
+### Finding — page 5's warming-stratosphere number was not reproducible, and is now wrong by 3x in the other direction
+
+The page claimed that replacing the isothermal cap with a 2.5 K km⁻¹ warming one
+sends the 630–700 band from +0.37 to **−2.26 W m⁻²**. The reviewer flagged it as
+uncheckable, because `lapse_rate_sounding` exposed only `T_strat`. It now takes a
+`gamma_strat`, and with it the measured answer is **−1.11 W m⁻²**. The sign
+change — the actual physical claim — survives; the magnitude does not, and no
+value of `gamma_strat` reaches −2.26 (the core's contribution is not even
+monotone in it: −0.32 at 1 K km⁻¹, −1.11 at 2.5, −1.13 at 5). Whatever produced
+−2.26 was a different quantity. The page now computes the number in a cell the
+reader can run, and quotes what that cell prints.
+
+### Finding — fixed-RH humidity blows up in a warm, thin stratosphere
+
+Adding `gamma_strat` immediately broke its own test: at 1 hPa a stratosphere
+warmed to ~273 K has a saturation vapour pressure of 600 Pa against a *total*
+pressure of 100, so `q = eps*e/(p-e)` ran through the `max(p-e, 1.0)` guard and
+returned **300 kg/kg**. The guard prevented a division error and hid a nonsense
+value. `lapse_rate_sounding` now clips `e` at half the total pressure, bounding
+`q` by EPSILON = 0.622.
+
+This is a no-op for everything already published — the isothermal 200 K cap has
+`e ~ 0.2 Pa` — but it is *not* a no-op for the new warm-stratosphere path, and
+that is the trap: the first number the page quoted from it (−0.82) was measured
+before the clip and was itself wrong. Both figures and every other page number
+are unchanged, verified by regenerating all seven artifact PNGs (no diff) and
+re-running all 33 `{pyodide}` cells across the six pages (0 failures).
+
+### The rest
+
+- `03`: the paragraph naming 1.3 / 2.2 / 217 hPa called them weighting-function
+  *peaks*. They are τ\* = 1 levels — the dots in the left panel, not the curve
+  maxima. Only the 6.3 µm band has an interior maximum at all (253 hPa); the CO₂
+  core and the H₂O rotational band are still rising at the model lid, so their
+  "peak" is a statement about where the grid stops. Reworded, and the second
+  point turned into the lesson it deserves to be.
+- `04`: the gray table's calibration is grid-*independent* (4.000000006 at nz =
+  18, 28, 40, 60, 100, 200), not "on climt's default 60-level grid". Also dropped
+  `_tour/spectra.py` from its `resources:`, which it never imported.
+- `05`: exercise 1's core-saturation numbers now name their grid points instead
+  of quoting a triplet that no point in the page's own `co2` array produces.
+- `06`: named the abuse in calling 3.52 W m⁻² K⁻¹ "the Planck response" — this
+  sounding warms aloft by `(p/p_s)^0.19` of a surface kelvin, so the number is
+  Planck plus an implicit lapse-rate feedback. `equilibrium()` takes its
+  interpolation step from `T_hot` instead of hard-coding 5.0, which exercise 1
+  invites you to invalidate.
+- `scripts/generate_tour_spectrum_table.py`: defaults were `--ngpt 4 --nsub 7`
+  (98 bands) while the shipped table is 56×8, so the script could not reproduce
+  its own output. Defaults now match what shipped.
+- `climt/_components/cork/lw/component.py`: `_diffusivity_factor` is a class
+  attribute as well, so instances pickled under <= 0.30.0 unpickle here without
+  `AttributeError`.
+- `tests/test_correlated_k_npz.py`: replaced `x is x` (tautological once
+  `isinstance(dict)` has passed) with an explicit not-an-NpzFile check.
+- `docs/experiments/2026-06-05-cork-co2-bands/index.qmd`: the prose quoted
+  56.6/65.3 µs per column, matching neither the figure beside it (73.5/91.4) nor
+  the notebook below it (52.9/63.3). Now quotes the artifact and says the
+  notebook is a different machine. Pre-existing, not from this tranche.
+
+### Item 19 — the `.npz` stays a plain git blob. Signed off 2026-08-17.
+
+The reviewer asked for a conscious decision, not a change, and the constraints
+leave little room. Pyodide can only load the table from an origin the page
+already trusts, so it has to be a static asset in the repo the docs build from:
+a GitHub release asset sends no CORS headers (the 2026-07-19 spec), and the wheel
+is the wrong home for 5.85 MB that only six docs pages read — nor could it be
+netCDF there, since the pure wheel has no scipy. What is being accepted, and it
+is not small, is the permanent cost: every clone carries the blob, and it cannot
+leave history without a rewrite. Git LFS was the untaken alternative; it was not
+evaluated in depth, because it would put the asset behind a checkout step the
+docs build does not currently do.
+
+**Still not done:** pages 1–3 say "56 bands" in prose while `spectrum_table()`
+may silently fall back to the shipped 14. Each of the three prints the real count
+in its first cell, so the count itself is never misrepresented — but the numbers
+quoted *around* it would be: page 1's "284 K across the twelve bands that span
+it", page 3's τ\* = 1 pressures, all measured on the 56-band table. That only
+bites in a deployment where the asset failed to stage, which is the case the
+fallback exists to survive at all.
+
+### Finding — a one-line no-op in `cork/` costs two 200-day integrations
+
+The docs workflow went red on `build_experiments.py --check`, with
+`rce_moist_before.npz` and `rce_moist_after.npz` stale. Not a flake, and not
+pre-existing: a detached worktree at `origin/develop` passes the same check. The
+cause is the pickle fix. Both artifacts list `climt/_components/cork/**/*.py`
+among their deps, deps are content-hashed, and adding a class-level
+`_diffusivity_factor` to `lw/component.py` moved that hash — so a change that
+cannot alter a single number invalidated 57 600 five-minute steps, twice.
+
+Regenerated, and the no-op held exactly: both `.npz` came back **byte-identical**
+(md5 `d5a9a628…`, `16463fd6…`, recorded before the run), and `rce_before_after.png`
+was never rebuilt, because its own deps — those two files — still hash the same.
+The commit is `.hashes.json` alone.
+
+Worth knowing for the next CORK edit: the dep glob is deliberately coarse, so any
+touch inside `climt/_components/cork/` buys a multi-hour regeneration before the
+docs job will go green, whether or not physics moved. The throughput artifacts
+already escape this via `manual: true`; the RCE pair does not, and should not —
+its outputs really are code-determined.

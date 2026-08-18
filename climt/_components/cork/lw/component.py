@@ -18,6 +18,12 @@ from .kernels import DIFFUSIVITY_FACTOR, lw_transport, planck_sources_kernel
 
 
 class CorkLongwaveRadiation(TendencyComponent):
+    # Class-level default, so an instance pickled before ``diffusivity_factor``
+    # existed (climt <= 0.30.0) still resolves it after unpickling here instead
+    # of raising AttributeError from array_call. Instances always shadow it with
+    # their own value in __init__.
+    _diffusivity_factor = DIFFUSIVITY_FACTOR
+
     def __init__(
         self,
         optics="parmentier",
