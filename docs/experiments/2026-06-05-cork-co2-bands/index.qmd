@@ -182,10 +182,12 @@ top of the already-compiled transport kernel) recovered all of it, bit-for-bit:
 
 ![Longwave throughput. The faithful 14-band cork scheme is faster than RRTMG.](_artifacts/throughput.png)
 
-The faithful scheme ends up **faster than RRTMG** (here 56.6 vs 65.3 µs/column;
-your absolute numbers will vary with machine and column count). The lesson is that
-accuracy and speed were never the trade-off — the cost was un-compiled assembly
-loops.
+The faithful scheme ends up **faster than RRTMG** — 73.5 against 91.4 µs/column
+in the run the figure above was built from, a ratio of 0.80. Your absolute numbers
+will vary with machine, thread count and column count; it is the ratio that
+carries the point, and the notebook alongside this page records a different
+machine at 52.9 against 63.3. The lesson is that accuracy and speed were never the
+trade-off — the cost was un-compiled assembly loops.
 
 **The free knob.** The same table is CO₂-adjustable from 10 to 10 000 ppm through
 a single runtime axis, interpolated geometrically (log-k against log-X_CO₂).

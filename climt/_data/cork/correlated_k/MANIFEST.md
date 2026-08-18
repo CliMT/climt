@@ -19,6 +19,7 @@ SW bands are unchanged across all planets: `3250, 8000, 14000, 30000` cm⁻¹.
 | mars_sw.nc | Mars (CO₂+N₂) | SW | 3250, 8000, 14000, 30000 | 2 | `8e186ac238e1bf7f562348f3fc70bbc006358efeb4f0d26c4aab7756a73157bb` |
 | venus_lw.nc | Venus (H₂O+CO₂) | LW option B | 10, 500, 800, 1800, 3250 | 2 | `f308088c1cc2d6f028e44b1be3a004d4c01000d6347a4bc5bfff21dd285fe6b8` |
 | venus_sw.nc | Venus (H₂O+CO₂) | SW | 3250, 8000, 14000, 30000 | 2 | `606960889f56af3b7c49e93c728be04c1a80b5555df3643cff3af94c2adbf83f` |
+| tour_gray_lw.nc | — (synthetic) | LW gray fixture — constant k, calibrated at D = 2 to `tau_inf = 4` | 10, 3250 (single band) | 1 | `e3ed927874d5d7515b38a8598462a855cb51595dc585e8d02898f8ecbdc6de69` |
 
 ## Format
 
@@ -59,6 +60,21 @@ python scripts/convert_ck_table_to_npz.py \
 ```
 
 and verify with `tests/test_gray_default_table.py`.
+
+`tour_gray_lw.nc` is a synthetic single-band, constant-k fixture for the
+Modelling Tour's gray-equilibrium page. Unlike `single_band_gray_lw` (calibrated
+at cork's default D = 1.66), it is calibrated at the **EC2213 course notes'
+D = 2** to a D-scaled column optical depth of `tau_inf = 4`. The notes' `tau` is
+the diffusivity-scaled depth, so the page must construct the component with
+`diffusivity_factor=2.0` for the analytic solution to hold. Regenerate with
+
+```sh
+python scripts/generate_gray_default_table.py \
+    --output climt/_data/cork/correlated_k/tour_gray_lw.nc \
+    --total-optical-depth 4.0 --diffusivity 2.0
+python scripts/convert_ck_table_to_npz.py \
+    climt/_data/cork/correlated_k/tour_gray_lw.nc
+```
 
 ## linepyline-derived tables
 

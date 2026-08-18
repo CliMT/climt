@@ -2,8 +2,63 @@
 History
 =======
 
-Unreleased
-----------
+v.0.31.0
+--------
+
+* **New docs section** — *A Modelling Tour of the Climate System*
+  (``docs/modelling-tour/``), six in-browser pages supplying the computational
+  half of the EC2213 course notes. Each page prescribes a profile and asks
+  CORK's per-band diagnostics what it makes of it — the OLR spectrum behind a
+  single emissivity, the window's real width, the weighting function and its
+  per-band radiating levels, the analytic gray solution validated and then
+  broken, the forcing per CO₂ doubling, and the water vapour feedback with the
+  runaway limit. No time integration anywhere: single component calls and
+  parameter sweeps only. The pages' computational core lives in importable
+  Python under ``docs/modelling-tour/_tour/`` and is exercised natively by
+  ``tests/test_modelling_tour.py`` — on both the 56-band table pages 1-3 run on
+  and the shipped 14-band fallback — so nothing on a page is unguarded by a
+  test.
+
+* **Fix** — the live RCE walkthrough (``docs/radiative-transfer/09-live-rce.qmd``)
+  now draws its profiles on a logarithmic pressure axis. On the linear axis the
+  entire upper atmosphere was crushed into the top sliver of the panel, so the
+  skin temperature the surrounding text discusses was not actually visible; the
+  text also claimed an isothermal top for the non-grey column, which keeps
+  cooling to the model lid, and now says so.
+
+* **New feature** — ``CorkLongwaveRadiation`` takes a ``diffusivity_factor``
+  constructor argument, so the two-stream diffusivity ``D`` in
+  ``trans = exp(-D * tau)`` is settable per component. The default is unchanged
+  at the Elsasser value 1.66; the EC2213 notes derive their equations with
+  ``D = 2``, which the gray-equilibrium page needs to reproduce them exactly.
+  The default also lives on the class, so a component pickled under an earlier
+  climt still resolves it after unpickling here rather than raising
+  ``AttributeError`` from ``array_call``.
+
+* **New data** — the ``tour_gray_lw`` correlated-k table: single band, constant
+  ``k``, calibrated at ``D = 2`` to a diffusivity-scaled column optical depth of
+  ``tau_inf = 4``. ``scripts/generate_gray_default_table.py`` gains a
+  ``--diffusivity`` flag (the calibration target is
+  ``D * sum(k * m) == --total-optical-depth``, so it must match the ``D`` the
+  component runs with) and now resolves ``--output`` by full path rather than by
+  basename, so it can write outside the package data directory.
+
+* **Performance** — ``load_k_table`` now materialises ``.npz`` correlated-k
+  tables into a plain dict instead of returning numpy's lazy ``NpzFile``.
+  An ``NpzFile`` re-inflates the requested array out of the zip archive on
+  every ``__getitem__``, and the CORK components index the table several
+  times per call, so table decompression dominated every radiation step
+  (~15 ms per ``k_coefficients`` read for ``earth_low_res_lw``). Measured on
+  one reference machine at nz=18, single column:
+  ``CorkLongwaveRadiation`` 57.4 -> 3.6 ms/call with numba and 89.5 -> 36.8
+  ms/call with ``NUMBA_DISABLE_JIT=1`` (the Pyodide/browser path);
+  ``CorkShortwaveRadiation`` 12.2 -> 5.0 ms/call. Outputs are bitwise
+  unchanged. The cost moves to a one-time ~18 ms at load, and the loaded
+  table now holds every array in memory (~3 MB for ``earth_low_res_lw``).
+  ``.nc`` tables already returned a dict, so both backends are now
+  consistent; the reads also happen inside the ``importlib_resources``
+  ``as_file`` block, which fixes a latent failure for zipped installs where
+  the extracted temp file is removed on block exit.
 
 v.0.30.0
 --------

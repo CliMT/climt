@@ -22,8 +22,19 @@ artifacts:
       - climt/_components/cork/**/*.py
       - climt/_data/cork/correlated_k/earth_low_res_lw.nc
   # --- data: throughput scalars
+  # manual: these are wall-clock timings, so their content tracks the machine as
+  # much as the code. Under the hash gate every edit to climt/_components/cork/**
+  # forced them to be re-recorded on whichever laptop ran the sweep: regenerating
+  # after the .npz k-table change moved CORK-LW 5.29 -> 7.35 ms/call and RRTMG-LW
+  # 6.33 -> 9.14, ~40% on both, though RRTMG was untouched by that change. That is
+  # hardware noise arriving as a committed diff and, until regenerated, a red CI
+  # job. Re-record deliberately, on a machine whose numbers are worth quoting:
+  #   python scripts/build_experiments.py --manual --only '**/throughput.*'
+  # The notebook's claim is the CORK/RRTMG ratio, which is far more portable than
+  # the absolute milliseconds.
   - out: _artifacts/throughput.npz
     out_txt: _artifacts/throughput.txt
+    manual: true
     cmd: conda run --no-capture-output -n climt python scripts/experiments/bench_cork_vs_rrtmg.py --save docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.npz
     deps:
       - scripts/experiments/bench_cork_vs_rrtmg.py
@@ -54,7 +65,11 @@ artifacts:
       - scripts/experiments/tropopause.py
       - docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_before.npz
       - docs/experiments/2026-06-05-cork-co2-bands/_artifacts/rce_moist_after.npz
+  # manual, and necessarily so: it plots throughput.npz, so gating it would drag
+  # the timings back in through the dep chain. Regenerate it in the same --manual
+  # run that re-records them.
   - out: _artifacts/throughput.png
+    manual: true
     cmd: conda run --no-capture-output -n climt python scripts/experiments/make_subproject_B_figures.py --figure throughput --npz docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.npz --out docs/experiments/2026-06-05-cork-co2-bands/_artifacts/throughput.png
     deps:
       - scripts/experiments/make_subproject_B_figures.py

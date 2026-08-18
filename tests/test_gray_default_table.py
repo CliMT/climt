@@ -38,3 +38,36 @@ def test_gray_default_table_matches_default_gray_radiation():
     olr_gray = diag_gray["upwelling_longwave_flux_in_air"].values.flat[-1]
     olr_cork = diag_cork["upwelling_longwave_flux_in_air"].values.flat[-1]
     np.testing.assert_allclose(olr_cork, olr_gray, rtol=1e-3)
+
+
+def test_generator_honours_diffusivity_and_absolute_paths(tmp_path):
+    """Calibration must use the same D the component will run with.
+
+    The EC2213 notes' tau_inf is the diffusivity-SCALED column optical depth,
+    so a table built for D=2 must satisfy 2 * sum(k * m) == tau_inf.
+    """
+    import subprocess
+    import sys
+
+    import numpy as np
+    import sympl
+
+    import climt
+    from climt import CorkLongwaveRadiation, get_default_state, get_grid
+
+    out = tmp_path / "tour_gray_lw.nc"
+    tau_inf, D = 4.0, 2.0
+    subprocess.run(
+        [sys.executable, "scripts/generate_gray_default_table.py",
+         "--output", str(out), "--total-optical-depth", str(tau_inf),
+         "--diffusivity", str(D)],
+        check=True,
+    )
+
+    sympl.set_backend(climt.UnytBackend())
+    lw = CorkLongwaveRadiation(optics="correlated_k", table=str(out),
+                               diffusivity_factor=D)
+    state = get_default_state([lw], grid_state=get_grid(nx=1, ny=1, nz=28))
+    _, diag = lw(state)
+    tau_col = float(diag["longwave_optical_depth_per_band"].values[:, 0, 0, 0].sum())
+    np.testing.assert_allclose(D * tau_col, tau_inf, rtol=1e-3)

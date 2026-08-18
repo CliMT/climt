@@ -1,0 +1,44 @@
+<!--
+Minimal quarto-live boot include for pages that only need climt imported.
+
+Include it once, near the top of any `format: live-html` / `engine: jupyter`
+page, with a Quarto include shortcode pointing at this file (see
+modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT repeat
+the literal include shortcode in this comment: Quarto resolves include
+shortcodes at the text level, before HTML comments are stripped, so a literal
+one here would make this file include itself.
+
+This is the tour's counterpart to climt-live-setup.qmd. That file also defines
+the ~200-line `integrate_with_snapshots` / `integrate_to_equilibrium` helpers
+for the RCE pages, and its cell carries `#| edit: false`, which quarto-live
+renders **read-only, not hidden** — so including it opened every modelling-tour
+page with four screens of RCE code that none of those pages calls. The two
+files deliberately duplicate these few import lines rather than chaining one
+include into the other, so that neither page family can break the other.
+
+The climt wheel itself is installed by micropip at document setup via the
+including page's `pyodide: packages:` front-matter block — resolved from PyPI,
+pinned to a released version. (GitHub release assets cannot be used: they send
+no CORS headers. A CORS-served localhost wheel is the way to preview
+unreleased work.)
+-->
+
+```{pyodide}
+#| autorun: true
+#| edit: false
+# The climt wheel is installed by micropip at document setup (before any cell
+# runs) via the `pyodide: packages:` block in the page front matter. Installing
+# here with `await micropip.install(...)` instead would race: quarto-live does
+# not await one autorun cell's async work before starting the next, so a
+# downstream cell can run before the wheel finishes installing. So this cell is
+# synchronous.
+import numpy as np
+import matplotlib.pyplot as plt
+import climt
+import sympl
+
+# End on a plain statement (not a def): quarto-live captures each cell's final
+# value for display, and marshalling a bare function object through JS interop
+# yields an unhashable JsProxy that aborts the cell.
+print("climt", climt.__version__, "ready — has_fortran:", climt.has_fortran_extensions())
+```

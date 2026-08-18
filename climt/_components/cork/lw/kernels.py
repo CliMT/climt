@@ -72,7 +72,7 @@ def planck_sources_kernel(
 def _lw_transport_kernel(
     tau, planck_source, surface_source, emissivity, weights,
     up_band, down_band, up_broad, down_broad,
-    diag_trans, diag_up_gpt, diag_dn_gpt, want_diag,
+    diag_trans, diag_up_gpt, diag_dn_gpt, want_diag, diffusivity_factor,
 ):
     """Consolidated multi-band, multi-g-point LW transport.
 
@@ -98,7 +98,7 @@ def _lw_transport_kernel(
                 if want_diag != 0:
                     diag_up_gpt[b, g, 0, i] = w * up_prev
                 for k in range(nlev):
-                    trans = np.exp(-DIFFUSIVITY_FACTOR * tau[b, g, k, i])
+                    trans = np.exp(-diffusivity_factor * tau[b, g, k, i])
                     up_cur = up_prev * trans + planck_source[b, g, k, i] * (1.0 - trans)
                     up_band[b, k + 1, i] += w * up_cur
                     if want_diag != 0:
@@ -110,7 +110,7 @@ def _lw_transport_kernel(
                 if want_diag != 0:
                     diag_dn_gpt[b, g, nlev, i] = 0.0
                 for k in range(nlev - 1, -1, -1):
-                    trans = np.exp(-DIFFUSIVITY_FACTOR * tau[b, g, k, i])
+                    trans = np.exp(-diffusivity_factor * tau[b, g, k, i])
                     dn_cur = dn_prev * trans + planck_source[b, g, k, i] * (1.0 - trans)
                     down_band[b, k, i] += w * dn_cur
                     if want_diag != 0:
@@ -123,7 +123,7 @@ def _lw_transport_kernel(
 
 def lw_transport(
     T, T_surface, tau, planck_source, surface_source, emissivity, weights, sigma,
-    diagnostics_level=0,
+    diagnostics_level=0, diffusivity_factor=DIFFUSIVITY_FACTOR,
 ):
     """Multi-band, multi-g-point LW radiative transfer (consolidated kernel).
 
@@ -137,6 +137,8 @@ def lw_transport(
         weights: (nband, ngpt) g-point quadrature weights
         sigma: Stefan-Boltzmann constant (unused, kept for interface consistency)
         diagnostics_level: 0 (fluxes only), 1 (per-layer transmittance + per-gpoint fluxes)
+        diffusivity_factor: two-stream diffusivity D in trans = exp(-D * tau).
+            Defaults to the Elsasser value 1.66. The EC2213 course notes use 2.
 
     Returns:
         If diagnostics_level == 0:
@@ -168,7 +170,7 @@ def lw_transport(
     _lw_transport_kernel(
         tau, planck_source, surface_source, emissivity, weights,
         up_band, down_band, up_broad, down_broad,
-        diag_trans, diag_up_gpt, diag_dn_gpt, want_diag,
+        diag_trans, diag_up_gpt, diag_dn_gpt, want_diag, diffusivity_factor,
     )
 
     if want_diag:
