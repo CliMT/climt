@@ -402,7 +402,7 @@ Figure&nbsp;1: <strong>Figure 3.1</strong> — Sorted absorption coefficients (e
 <section id="the-code-in-climt" class="level2">
 <h2 class="anchored" data-anchor-id="the-code-in-climt">The code in climt</h2>
 <p>climt does not build k-distributions at runtime — they arrive in pre-computed netCDF files. The read path makes the data layout explicit:</p>
-<div id="f0faa2fb" class="cell" data-execution_count="1">
+<div id="218ebe14" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> load_k_table</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(load_k_table))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
