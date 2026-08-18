@@ -102,7 +102,7 @@ div.csl-indent {
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-6dc573d0c0ad5d07ea9140e581a352db.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -195,6 +195,10 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link" href="../../radiative-transfer/index.html"> 
 <span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../modelling-tour/index.html"> 
+<span class="menu-text">Modelling Tour</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../../experiments/index.html"> 
@@ -497,7 +501,7 @@ window.Quarto = {
 <figcaption>Longwave throughput. The faithful 14-band cork scheme is faster than RRTMG.</figcaption>
 </figure>
 </div>
-<p>The faithful scheme ends up <strong>faster than RRTMG</strong> (here 56.6 vs 65.3 µs/column; your absolute numbers will vary with machine and column count). The lesson is that accuracy and speed were never the trade-off — the cost was un-compiled assembly loops.</p>
+<p>The faithful scheme ends up <strong>faster than RRTMG</strong> — 73.5 against 91.4 µs/column in the run the figure above was built from, a ratio of 0.80. Your absolute numbers will vary with machine, thread count and column count; it is the ratio that carries the point, and the notebook alongside this page records a different machine at 52.9 against 63.3. The lesson is that accuracy and speed were never the trade-off — the cost was un-compiled assembly loops.</p>
 <p><strong>The free knob.</strong> The same table is CO₂-adjustable from 10 to 10 000 ppm through a single runtime axis, interpolated geometrically (log-k against log-X_CO₂). Interpolating CO₂ <em>between</em> table nodes turns out to be fidelity-free: the off-node bias against line-by-line equals the on-node bias. (A leave-one-out test puts log-k interpolation at 5.5 % vs 30.9 % for linear-k.) The probe lives in <code>scripts/experiments/eval_co2_interp_accuracy.py</code>.</p>
 </section>
 <section id="the-answer-key" class="level2">
@@ -1363,42 +1367,44 @@ Parmentier, V., and T. Guillot. 2014. <span>“A Non-Grey Analytical Model for I
 <span id="cb11-182"><a href="#cb11-182" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-183"><a href="#cb11-183" aria-hidden="true" tabindex="-1"></a><span class="al">![Longwave throughput. The faithful 14-band cork scheme is faster than RRTMG.](_artifacts/throughput.png)</span></span>
 <span id="cb11-184"><a href="#cb11-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-185"><a href="#cb11-185" aria-hidden="true" tabindex="-1"></a>The faithful scheme ends up **faster than RRTMG** (here 56.6 vs 65.3 µs/column;</span>
-<span id="cb11-186"><a href="#cb11-186" aria-hidden="true" tabindex="-1"></a>your absolute numbers will vary with machine and column count). The lesson is that</span>
-<span id="cb11-187"><a href="#cb11-187" aria-hidden="true" tabindex="-1"></a>accuracy and speed were never the trade-off — the cost was un-compiled assembly</span>
-<span id="cb11-188"><a href="#cb11-188" aria-hidden="true" tabindex="-1"></a>loops.</span>
-<span id="cb11-189"><a href="#cb11-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-190"><a href="#cb11-190" aria-hidden="true" tabindex="-1"></a>**The free knob.** The same table is CO₂-adjustable from 10 to 10 000 ppm through</span>
-<span id="cb11-191"><a href="#cb11-191" aria-hidden="true" tabindex="-1"></a>a single runtime axis, interpolated geometrically (log-k against log-X_CO₂).</span>
-<span id="cb11-192"><a href="#cb11-192" aria-hidden="true" tabindex="-1"></a>Interpolating CO₂ *between* table nodes turns out to be fidelity-free: the</span>
-<span id="cb11-193"><a href="#cb11-193" aria-hidden="true" tabindex="-1"></a>off-node bias against line-by-line equals the on-node bias. (A leave-one-out test</span>
-<span id="cb11-194"><a href="#cb11-194" aria-hidden="true" tabindex="-1"></a>puts log-k interpolation at 5.5 % vs 30.9 % for linear-k.) The probe lives in</span>
-<span id="cb11-195"><a href="#cb11-195" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/experiments/eval_co2_interp_accuracy.py`</span>.</span>
-<span id="cb11-196"><a href="#cb11-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-197"><a href="#cb11-197" aria-hidden="true" tabindex="-1"></a><span class="fu">## 9. The answer key</span></span>
+<span id="cb11-185"><a href="#cb11-185" aria-hidden="true" tabindex="-1"></a>The faithful scheme ends up **faster than RRTMG** — 73.5 against 91.4 µs/column</span>
+<span id="cb11-186"><a href="#cb11-186" aria-hidden="true" tabindex="-1"></a>in the run the figure above was built from, a ratio of 0.80. Your absolute numbers</span>
+<span id="cb11-187"><a href="#cb11-187" aria-hidden="true" tabindex="-1"></a>will vary with machine, thread count and column count; it is the ratio that</span>
+<span id="cb11-188"><a href="#cb11-188" aria-hidden="true" tabindex="-1"></a>carries the point, and the notebook alongside this page records a different</span>
+<span id="cb11-189"><a href="#cb11-189" aria-hidden="true" tabindex="-1"></a>machine at 52.9 against 63.3. The lesson is that accuracy and speed were never the</span>
+<span id="cb11-190"><a href="#cb11-190" aria-hidden="true" tabindex="-1"></a>trade-off — the cost was un-compiled assembly loops.</span>
+<span id="cb11-191"><a href="#cb11-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-192"><a href="#cb11-192" aria-hidden="true" tabindex="-1"></a>**The free knob.** The same table is CO₂-adjustable from 10 to 10 000 ppm through</span>
+<span id="cb11-193"><a href="#cb11-193" aria-hidden="true" tabindex="-1"></a>a single runtime axis, interpolated geometrically (log-k against log-X_CO₂).</span>
+<span id="cb11-194"><a href="#cb11-194" aria-hidden="true" tabindex="-1"></a>Interpolating CO₂ *between* table nodes turns out to be fidelity-free: the</span>
+<span id="cb11-195"><a href="#cb11-195" aria-hidden="true" tabindex="-1"></a>off-node bias against line-by-line equals the on-node bias. (A leave-one-out test</span>
+<span id="cb11-196"><a href="#cb11-196" aria-hidden="true" tabindex="-1"></a>puts log-k interpolation at 5.5 % vs 30.9 % for linear-k.) The probe lives in</span>
+<span id="cb11-197"><a href="#cb11-197" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/experiments/eval_co2_interp_accuracy.py`</span>.</span>
 <span id="cb11-198"><a href="#cb11-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-199"><a href="#cb11-199" aria-hidden="true" tabindex="-1"></a>The shipped recipe, for reference:</span>
+<span id="cb11-199"><a href="#cb11-199" aria-hidden="true" tabindex="-1"></a><span class="fu">## 9. The answer key</span></span>
 <span id="cb11-200"><a href="#cb11-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-201"><a href="#cb11-201" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**14 bands**, edges (cm⁻¹): `10, 250, 350, 500, 630, 700, 800, 980, 1080, 1180,</span>
-<span id="cb11-202"><a href="#cb11-202" aria-hidden="true" tabindex="-1"></a>  1250, 1400, 1600, 1800, 3250`; **8 g-points** per band.</span>
-<span id="cb11-203"><a href="#cb11-203" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Line-only** k-distribution + a **decoupled band-grey H₂O continuum**, log-X</span>
-<span id="cb11-204"><a href="#cb11-204" aria-hidden="true" tabindex="-1"></a>  interpolated.</span>
-<span id="cb11-205"><a href="#cb11-205" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A runtime **CO₂ axis** (10 log nodes, 10–10 000 ppm).</span>
-<span id="cb11-206"><a href="#cb11-206" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Quadrilinear interpolation: T (linear), log p (linear), log X_H₂O (linear-k),</span>
-<span id="cb11-207"><a href="#cb11-207" aria-hidden="true" tabindex="-1"></a>  log X_CO₂ (**log-k**).</span>
-<span id="cb11-208"><a href="#cb11-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-209"><a href="#cb11-209" aria-hidden="true" tabindex="-1"></a>The cork optics follow the analytic non-grey framework of</span>
-<span id="cb11-210"><a href="#cb11-210" aria-hidden="true" tabindex="-1"></a>@parmentier2014; the table ships as <span class="in">`earth_low_res_lw`</span>, with the original 4-band</span>
-<span id="cb11-211"><a href="#cb11-211" aria-hidden="true" tabindex="-1"></a>table preserved as <span class="in">`earth_low_res_lw_4band_ngpt2_before`</span> for the before/after</span>
-<span id="cb11-212"><a href="#cb11-212" aria-hidden="true" tabindex="-1"></a>comparison above.</span>
-<span id="cb11-213"><a href="#cb11-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-214"><a href="#cb11-214" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
+<span id="cb11-201"><a href="#cb11-201" aria-hidden="true" tabindex="-1"></a>The shipped recipe, for reference:</span>
+<span id="cb11-202"><a href="#cb11-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-203"><a href="#cb11-203" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**14 bands**, edges (cm⁻¹): `10, 250, 350, 500, 630, 700, 800, 980, 1080, 1180,</span>
+<span id="cb11-204"><a href="#cb11-204" aria-hidden="true" tabindex="-1"></a>  1250, 1400, 1600, 1800, 3250`; **8 g-points** per band.</span>
+<span id="cb11-205"><a href="#cb11-205" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Line-only** k-distribution + a **decoupled band-grey H₂O continuum**, log-X</span>
+<span id="cb11-206"><a href="#cb11-206" aria-hidden="true" tabindex="-1"></a>  interpolated.</span>
+<span id="cb11-207"><a href="#cb11-207" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A runtime **CO₂ axis** (10 log nodes, 10–10 000 ppm).</span>
+<span id="cb11-208"><a href="#cb11-208" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Quadrilinear interpolation: T (linear), log p (linear), log X_H₂O (linear-k),</span>
+<span id="cb11-209"><a href="#cb11-209" aria-hidden="true" tabindex="-1"></a>  log X_CO₂ (**log-k**).</span>
+<span id="cb11-210"><a href="#cb11-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-211"><a href="#cb11-211" aria-hidden="true" tabindex="-1"></a>The cork optics follow the analytic non-grey framework of</span>
+<span id="cb11-212"><a href="#cb11-212" aria-hidden="true" tabindex="-1"></a>@parmentier2014; the table ships as <span class="in">`earth_low_res_lw`</span>, with the original 4-band</span>
+<span id="cb11-213"><a href="#cb11-213" aria-hidden="true" tabindex="-1"></a>table preserved as <span class="in">`earth_low_res_lw_4band_ngpt2_before`</span> for the before/after</span>
+<span id="cb11-214"><a href="#cb11-214" aria-hidden="true" tabindex="-1"></a>comparison above.</span>
 <span id="cb11-215"><a href="#cb11-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-216"><a href="#cb11-216" aria-hidden="true" tabindex="-1"></a>Every figure and number above is reproduced by the companion notebook, which</span>
-<span id="cb11-217"><a href="#cb11-217" aria-hidden="true" tabindex="-1"></a>loads the same regenerated artifacts and re-runs the analysis. Run it in the</span>
-<span id="cb11-218"><a href="#cb11-218" aria-hidden="true" tabindex="-1"></a><span class="in">`climt`</span> environment, or read it through here:</span>
-<span id="cb11-219"><a href="#cb11-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-220"><a href="#cb11-220" aria-hidden="true" tabindex="-1"></a>{{&lt; embed cork_co2_bands.ipynb echo=true &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb11-216"><a href="#cb11-216" aria-hidden="true" tabindex="-1"></a><span class="fu">## Try it yourself</span></span>
+<span id="cb11-217"><a href="#cb11-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-218"><a href="#cb11-218" aria-hidden="true" tabindex="-1"></a>Every figure and number above is reproduced by the companion notebook, which</span>
+<span id="cb11-219"><a href="#cb11-219" aria-hidden="true" tabindex="-1"></a>loads the same regenerated artifacts and re-runs the analysis. Run it in the</span>
+<span id="cb11-220"><a href="#cb11-220" aria-hidden="true" tabindex="-1"></a><span class="in">`climt`</span> environment, or read it through here:</span>
+<span id="cb11-221"><a href="#cb11-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-222"><a href="#cb11-222" aria-hidden="true" tabindex="-1"></a>{{&lt; embed cork_co2_bands.ipynb echo=true &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

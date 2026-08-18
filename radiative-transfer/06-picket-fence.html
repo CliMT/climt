@@ -99,7 +99,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-6dc573d0c0ad5d07ea9140e581a352db.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -192,6 +192,10 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link active" href="../radiative-transfer/index.html" aria-current="page"> 
 <span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../modelling-tour/index.html"> 
+<span class="menu-text">Modelling Tour</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../experiments/index.html"> 
@@ -381,7 +385,7 @@ window.Quarto = {
 <section id="the-rosseland-mean-opacity" class="level2">
 <h2 class="anchored" data-anchor-id="the-rosseland-mean-opacity">The Rosseland mean opacity</h2>
 <p><span class="math inline">\(\kappa_R\)</span> is the reciprocal of a Planck-weighted harmonic mean of <span class="math inline">\(\sigma(\nu)\)</span>. climt uses the Freedman et al.&nbsp;(2014) polynomial fit for solar-composition gas-giant atmospheres:</p>
-<div id="85b972e7" class="cell" data-execution_count="1">
+<div id="9ba91b11" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.parmentier <span class="im">import</span> compute_rosseland_mean_opacity</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(compute_rosseland_mean_opacity))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -421,7 +425,7 @@ Figure&nbsp;1: <strong>Figure 6.1</strong> — Rosseland mean opacity as a funct
 <section id="the-ratio-coefficients-gamma_i-and-beta" class="level2">
 <h2 class="anchored" data-anchor-id="the-ratio-coefficients-gamma_i-and-beta">The ratio coefficients <span class="math inline">\(\gamma_i\)</span> and <span class="math inline">\(\beta\)</span></h2>
 <p>The ratios <span class="math inline">\(\gamma_{v1}, \gamma_{v2}, \gamma_{v3}, \beta\)</span> and <span class="math inline">\(\gamma_P\)</span> are piecewise-linear functions of effective temperature <span class="math inline">\(T_\text{eff}\)</span>, fitted in <span class="citation" data-cites="parmentier2015">Parmentier et al. (<a href="#ref-parmentier2015" role="doc-biblioref">2016</a>)</span> Table 1. climt ships those coefficients and interpolates them at runtime:</p>
-<div id="3307b50d" class="cell" data-execution_count="2">
+<div id="94490bf4" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.parmentier <span class="im">import</span> lookup_ratio_coefficients</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(lookup_ratio_coefficients))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

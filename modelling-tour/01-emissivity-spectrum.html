@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>ε is not a number – climt</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-e1d00e4dfc48dbef53bffa4c834e136a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed fullcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo light-content">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">climt</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../get-started/installation.html"> 
+<span class="menu-text">Get Started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../user-guide/introduction.html"> 
+<span class="menu-text">User Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../radiative-transfer/index.html"> 
+<span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../modelling-tour/index.html" aria-current="page"> 
+<span class="menu-text">Modelling Tour</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../experiments/index.html"> 
+<span class="menu-text">Experiments</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/CliMT/climt"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modelling-tour/01-emissivity-spectrum.html">ε is not a number</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A Modelling Tour of the Climate System</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/01-emissivity-spectrum.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">ε is not a number</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/02-window-measured.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The window, measured</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/03-radiating-level.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Where photons come from</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/04-gray-equilibrium-tested.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Gray equilibrium, tested</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/05-co2-knob.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CO₂ knob</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/06-water-vapour-limit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Water vapour, and the limit</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">ε is not a number</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Minimal quarto-live boot include for pages that only need climt imported.
+
+Include it once, near the top of any `format: live-html` / `engine: jupyter`
+page, with a Quarto include shortcode pointing at this file (see
+modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT repeat
+the literal include shortcode in this comment: Quarto resolves include
+shortcodes at the text level, before HTML comments are stripped, so a literal
+one here would make this file include itself.
+
+This is the tour's counterpart to climt-live-setup.qmd. That file also defines
+the ~200-line `integrate_with_snapshots` / `integrate_to_equilibrium` helpers
+for the RCE pages, and its cell carries `#| edit: false`, which quarto-live
+renders **read-only, not hidden** — so including it opened every modelling-tour
+page with four screens of RCE code that none of those pages calls. The two
+files deliberately duplicate these few import lines rather than chaining one
+include into the other, so that neither page family can break the other.
+
+The climt wheel itself is installed by micropip at document setup via the
+including page's `pyodide: packages:` front-matter block — resolved from PyPI,
+pinned to a released version. (GitHub release assets cannot be used: they send
+no CORS headers. A CORS-served localhost wheel is the way to preview
+unreleased work.)
+-->
+<div>
+<div id="pyodide-1" class="exercise-cell">
+
+</div>
+<script type="pyodide-1-contents">
+eyJhdHRyIjp7ImF1dG9ydW4iOnRydWUsImVkaXQiOmZhbHNlLCJldmFsIjp0cnVlfSwiY29kZSI6IiMgVGhlIGNsaW10IHdoZWVsIGlzIGluc3RhbGxlZCBieSBtaWNyb3BpcCBhdCBkb2N1bWVudCBzZXR1cCAoYmVmb3JlIGFueSBjZWxsXG4jIHJ1bnMpIHZpYSB0aGUgYHB5b2RpZGU6IHBhY2thZ2VzOmAgYmxvY2sgaW4gdGhlIHBhZ2UgZnJvbnQgbWF0dGVyLiBJbnN0YWxsaW5nXG4jIGhlcmUgd2l0aCBgYXdhaXQgbWljcm9waXAuaW5zdGFsbCguLi4pYCBpbnN0ZWFkIHdvdWxkIHJhY2U6IHF1YXJ0by1saXZlIGRvZXNcbiMgbm90IGF3YWl0IG9uZSBhdXRvcnVuIGNlbGwncyBhc3luYyB3b3JrIGJlZm9yZSBzdGFydGluZyB0aGUgbmV4dCwgc28gYVxuIyBkb3duc3RyZWFtIGNlbGwgY2FuIHJ1biBiZWZvcmUgdGhlIHdoZWVsIGZpbmlzaGVzIGluc3RhbGxpbmcuIFNvIHRoaXMgY2VsbCBpc1xuIyBzeW5jaHJvbm91cy5cbmltcG9ydCBudW1weSBhcyBucFxuaW1wb3J0IG1hdHBsb3RsaWIucHlwbG90IGFzIHBsdFxuaW1wb3J0IGNsaW10XG5pbXBvcnQgc3ltcGxcblxuIyBFbmQgb24gYSBwbGFpbiBzdGF0ZW1lbnQgKG5vdCBhIGRlZik6IHF1YXJ0by1saXZlIGNhcHR1cmVzIGVhY2ggY2VsbCdzIGZpbmFsXG4jIHZhbHVlIGZvciBkaXNwbGF5LCBhbmQgbWFyc2hhbGxpbmcgYSBiYXJlIGZ1bmN0aW9uIG9iamVjdCB0aHJvdWdoIEpTIGludGVyb3BcbiMgeWllbGRzIGFuIHVuaGFzaGFibGUgSnNQcm94eSB0aGF0IGFib3J0cyB0aGUgY2VsbC5cbnByaW50KFwiY2xpbXRcIiwgY2xpbXQuX192ZXJzaW9uX18sIFwicmVhZHkg4oCUIGhhc19mb3J0cmFuOlwiLCBjbGltdC5oYXNfZm9ydHJhbl9leHRlbnNpb25zKCkpIn0=
+</script>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Where this fits
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Chapter 5 of the course notes builds a single-layer atmosphere: a shell of emissivity ε over a surface, one radiating level, one emission temperature. Solve its energy balance and a surface temperature drops out — the greenhouse effect in three lines of algebra.</p>
+<p>This page asks what that single number is standing in for.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A bigger download
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This page draws a spectrum, so it fetches a <strong>~5 MB spectral table</strong> once, on top of the climt wheel — 56 bands instead of the 14 that ship inside the package. Your browser caches it, so pages 2 and 3, which use the same table, load it for free. Pages 4–6 do not need it at all.</p>
+<p>If the fetch fails the page still runs: it falls back to the shipped 14-band table, and the only thing you lose is resolution.</p>
+</div>
+</div>
+<p>The shell model gets a great deal right with very little. Give the shell an emissivity ε, let it absorb εσT⁴ from the surface and re-emit εσT_a⁴ up and down, and the surface warms above its bare-rock temperature by an amount that depends on ε alone. One number for the whole atmosphere, one radiating level, one emission temperature.</p>
+<p>The question this page answers is whether that number exists. Real absorption is a property of <em>wavelength</em>: CO₂ absorbs strongly near 15 µm and hardly at all near 10 µm, and water vapour is strong everywhere except a band in between. If ε varies across the spectrum, then the ε in your shell model is an <strong>average</strong> — and the useful question becomes: an average over what?</p>
+<section id="the-profile-we-hand-to-the-radiation-code" class="level2">
+<h2 class="anchored" data-anchor-id="the-profile-we-hand-to-the-radiation-code">The profile we hand to the radiation code</h2>
+<p>Nothing here is computed by a model. We state a sounding outright — a 288 K surface, a 6.5 K/km troposphere, 80% relative humidity, an isothermal 200 K stratosphere — and ask the radiation code what it makes of it.</p>
+<div>
+<div id="pyodide-2" class="exercise-cell">
+
+</div>
+<script type="pyodide-2-contents">
+eyJhdHRyIjp7ImF1dG9ydW4iOnRydWUsImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiaW1wb3J0IHN5c1xuc3lzLnBhdGguaW5zZXJ0KDAsIFwiX3RvdXJcIikgICAjIGhlbHBlciBtb2R1bGVzLCBzZXJ2ZWQgYWxvbmdzaWRlIHRoaXMgcGFnZVxuXG5pbXBvcnQgbnVtcHkgYXMgbnBcbmltcG9ydCBtYXRwbG90bGliLnB5cGxvdCBhcyBwbHRcbmltcG9ydCBzeW1wbCwgY2xpbXRcbmZyb20gY2xpbXQgaW1wb3J0IENvcmtMb25nd2F2ZVJhZGlhdGlvbiwgZ2V0X2RlZmF1bHRfc3RhdGUsIGdldF9ncmlkXG5cbmZyb20gc291bmRpbmdzIGltcG9ydCBsYXBzZV9yYXRlX3NvdW5kaW5nLCBhcHBseV9zb3VuZGluZ1xuZnJvbSBzcGVjdHJhIGltcG9ydCAoYmFuZF9jZW50cmVzLCBiYW5kX2xpbWl0c19vZiwgYmFuZF93aWR0aHMsXG4gICAgICAgICAgICAgICAgICAgICBicmlnaHRuZXNzX3RlbXBlcmF0dXJlLCBwbGFuY2tfZmx1eCwgc3BlY3RyYWxfb2xyKVxuZnJvbSB0YWJsZXMgaW1wb3J0IHNwZWN0cnVtX3RhYmxlXG5cbnN5bXBsLnNldF9iYWNrZW5kKGNsaW10LlVueXRCYWNrZW5kKCkpXG5cblRfU1VSRiwgUkggPSAyODguMCwgMC44ICAgICAgICAgICMgPC0gY2hhbmdlIHRoZXNlIGFuZCByZS1ydW5cblxuIyBUaGUgNTYtYmFuZCB0YWJsZSBpZiBpdCBkb3dubG9hZGVkLCB0aGUgc2hpcHBlZCAxNC1iYW5kIG9uZSBpZiBub3QuIFdoaWNoIG9uZVxuIyB5b3UgZ290IGNoYW5nZXMgdGhlIHJlc29sdXRpb24gb2YgZXZlcnkgZmlndXJlIGJlbG93LCBzbyB0aGUgcGFnZSBwcmludHMgaXQuXG5UQUJMRSA9IHNwZWN0cnVtX3RhYmxlKClcbmx3ID0gQ29ya0xvbmd3YXZlUmFkaWF0aW9uKG9wdGljcz1cImNvcnJlbGF0ZWRfa1wiLCB0YWJsZT1UQUJMRSlcbnN0YXRlID0gZ2V0X2RlZmF1bHRfc3RhdGUoW2x3XSwgZ3JpZF9zdGF0ZT1nZXRfZ3JpZChueD0xLCBueT0xLCBuej00MCkpXG5wID0gc3RhdGVbXCJhaXJfcHJlc3N1cmVcIl0udmFsdWVzWzosIDAsIDBdXG5wcyA9IGZsb2F0KHN0YXRlW1wic3VyZmFjZV9haXJfcHJlc3N1cmVcIl0udmFsdWVzLnJhdmVsKClbMF0pXG5cblQsIHEgPSBsYXBzZV9yYXRlX3NvdW5kaW5nKHAsIHBzLCBUX3N1cmY9VF9TVVJGLCByaD1SSClcbmFwcGx5X3NvdW5kaW5nKHN0YXRlLCBULCBxLCBUX3N1cmY9VF9TVVJGKVxucHJpbnQoZlwicHJlc2NyaWJlZCBhIHtUX1NVUkY6LjBmfSBLIHN1cmZhY2UsIFJIID0ge1JIOi4wJX0sIHtsZW4ocCl9IGxldmVsc1wiKVxucHJpbnQoZlwidXNpbmcge2x3Lm51bV9sb25nd2F2ZV9iYW5kc30gc3BlY3RyYWwgYmFuZHNcIikifQ==
+</script>
+</div>
+<p><code>lw</code> is a component: an object you construct once and then <em>call</em>. Calling it returns two dictionaries — tendencies (how fast radiation is changing the temperature) and diagnostics (everything else it computed on the way). We want a diagnostic, and specifically one with a band axis: <code>upwelling_longwave_flux_in_air_per_band</code> is the upward flux at every interface level <strong>and</strong> in each of the component’s 56 spectral bands. Take its top row and you have the outgoing longwave radiation, split by wavenumber.</p>
+<p>Dividing each band’s flux by the band’s width gives a spectral flux density in W m⁻² per cm⁻¹, which is what a satellite spectrometer reports. Inverting the Planck function on that gives a <strong>brightness temperature</strong>: the temperature a blackbody would need in order to radiate what we see at that wavenumber.</p>
+<div>
+<div id="pyodide-3" class="exercise-cell">
+
+</div>
+<script type="pyodide-3-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoidGVuZGVuY2llcywgZGlhZ25vc3RpY3MgPSBsdyhzdGF0ZSlcbmxpbWl0cyA9IGJhbmRfbGltaXRzX29mKGx3KVxubnUsIHdpZHRoID0gYmFuZF9jZW50cmVzKGxpbWl0cyksIGJhbmRfd2lkdGhzKGxpbWl0cylcbm9scl9iYW5kLCBmbHV4X2RlbnNpdHkgPSBzcGVjdHJhbF9vbHIoZGlhZ25vc3RpY3MsIGxpbWl0cylcbnRiID0gYnJpZ2h0bmVzc190ZW1wZXJhdHVyZShmbHV4X2RlbnNpdHksIG51KVxuZWRnZXMgPSBucC5hcHBlbmQobGltaXRzWzAsIDBdLCBsaW1pdHNbOiwgMV0pICAgICAjIChuYmFuZCsxLCkgYmFuZCBlZGdlc1xuXG5zaWdtYV9UNCA9IDUuNjcwMzc0NDE5ZS04ICogVF9TVVJGICoqIDRcbmNvcmUgPSAobnUgPiA2MzApICYgKG51IDwgNzAwKVxud2luZG93ID0gKG51ID4gODAwKSAmIChudSA8IDExODApXG5wcmludChmXCJzdXJmYWNlIGVtaXNzaW9uICBzaWdtYSBUXjQgPSB7c2lnbWFfVDQ6LjFmfSBXL20yXCIpXG5wcmludChmXCJPTFIgICAgICAgICAgICAgICAgICAgICAgICAgPSB7b2xyX2JhbmQuc3VtKCk6LjFmfSBXL20yXCIpXG5wcmludChmXCJncmVlbmhvdXNlIGVmZmVjdCAgICAgICAgICAgPSB7c2lnbWFfVDQgLSBvbHJfYmFuZC5zdW0oKTouMWZ9IFcvbTJcIilcbnByaW50KGZcIkNPMiBjb3JlICBUX2IgPSB7dGJbY29yZV0ubWVhbigpOi4wZn0gS1wiKVxucHJpbnQoZlwid2luZG93ICAgIFRfYiA9IHt0Ylt3aW5kb3ddLm1lYW4oKTouMGZ9IEtcIilcbmhvdHRlc3QgPSBpbnQobnAuYXJnbWF4KHRiKSlcbnByaW50KGZcImhvdHRlc3QgYmFuZCB7bGltaXRzW2hvdHRlc3QsIDBdOi4wZn0te2xpbWl0c1tob3R0ZXN0LCAxXTouMGZ9IGNtXi0xOiBcIlxuICAgICAgZlwiVF9iID0ge3RiW2hvdHRlc3RdOi4wZn0gSywgYWdhaW5zdCBhIHtUX1NVUkY6LjBmfSBLIHN1cmZhY2VcIilcblxuIyBUaGUgYXhlcyBydW4gdGhlIGZ1bGwgd2lkdGggb2YgdGhlIHRhYmxlLCBvdXQgdG8gMzI1MCBjbV4tMSwgc28gdGhhdCB0aGUgZmFyXG4jIHRhaWwgaXMgb24gdGhlIGZpZ3VyZSBhbmQgbm90IHF1aWV0bHkgY3JvcHBlZCBvdXQgb2YgaXQuIEJvdGggcGFuZWxzIHNoYXJlIHRoZVxuIyByYW5nZTogdGhlIHBvaW50IG1hZGUgYmVsb3cgb25seSBsYW5kcyBpZiB5b3UgY2FuIHNlZSB0aGUgT0xSIHBhbmVsIGdvIGZsYXRcbiMgZXhhY3RseSB3aGVyZSB0aGUgdGVtcGVyYXR1cmUgcGFuZWwgZ29lcyBob3QuXG5OVV9NQVggPSBsaW1pdHNbLTEsIDFdXG5cbmZpZywgKGF4LCBheDIpID0gcGx0LnN1YnBsb3RzKDEsIDIsIGZpZ3NpemU9KDEyLCA0LjUpKVxubnVfZmluZSA9IG5wLmxpbnNwYWNlKDIwLCBOVV9NQVgsIDYwMClcbmxhYmVsX2JveCA9IGRpY3QoZmM9XCJ3aGl0ZVwiLCBlYz1cIm5vbmVcIiwgYWxwaGE9MC43NSwgcGFkPTAuNSlcbmZvciBUX3JlZiBpbiAoMzAwLCAyODAsIDI2MCwgMjQwLCAyMjAsIDIwMCk6XG4gICAgYiA9IHBsYW5ja19mbHV4KG51X2ZpbmUsIFRfcmVmKVxuICAgIGF4LnBsb3QobnVfZmluZSwgYiwgY29sb3I9XCIwLjhcIiwgbHc9MC44KVxuICAgIGsgPSBpbnQobnAuYXJnbWF4KGIpKVxuICAgIGF4LmFubm90YXRlKGZcIntUX3JlZn0gS1wiLCAobnVfZmluZVtrXSwgYltrXSksIGZvbnRzaXplPTcsIGNvbG9yPVwiMC41NVwiLFxuICAgICAgICAgICAgICAgIGhhPVwiY2VudGVyXCIsIHZhPVwiYm90dG9tXCIsIGJib3g9bGFiZWxfYm94KVxuYXguc3RhaXJzKGZsdXhfZGVuc2l0eSwgZWRnZXMsIGNvbG9yPVwidGFiOmJsdWVcIiwgbHc9MilcbmF4LnNldCh4bGFiZWw9XCJ3YXZlbnVtYmVyIChjbSReey0xfSQpXCIsXG4gICAgICAgeWxhYmVsPVwic3BlY3RyYWwgT0xSIChXIG0kXnstMn0kIC8gY20kXnstMX0kKVwiLCB4bGltPSgwLCBOVV9NQVgpKVxuYXguc2V0X3RpdGxlKGZcIk9MUiBzcGVjdHJ1bSDigJQgdG90YWwge29scl9iYW5kLnN1bSgpOi4xZn0gVyBtJF57ey0yfX0kXCIpXG5cbmF4Mi5zdGFpcnModGIsIGVkZ2VzLCBjb2xvcj1cInRhYjpibHVlXCIsIGx3PTIpXG5heDIuYXhobGluZShUX1NVUkYsIGNvbG9yPVwia1wiLCBscz1cIjpcIiwgbHc9MC44KVxuYXgyLmFubm90YXRlKGZcInN1cmZhY2UsIHtUX1NVUkY6LjBmfSBLXCIsICgwLjk5ICogTlVfTUFYLCBUX1NVUkYgKyAyKSxcbiAgICAgICAgICAgICBmb250c2l6ZT04LCBoYT1cInJpZ2h0XCIsIGJib3g9bGFiZWxfYm94KVxuZm9yIGxvLCBoaSwgbGFiZWwgaW4gWyg2MzAsIDcwMCwgXCJDTyRfMiRcIiksICg4MDAsIDExODAsIFwid2luZG93XCIpXTpcbiAgICBheDIuYXh2c3BhbihsbywgaGksIGNvbG9yPVwiMC45MlwiLCB6b3JkZXI9MClcbiAgICBheDIuYW5ub3RhdGUobGFiZWwsICgwLjUgKiAobG8gKyBoaSksIDE5NCksIGZvbnRzaXplPTgsIGhhPVwiY2VudGVyXCIpXG5heDIuc2V0KHhsYWJlbD1cIndhdmVudW1iZXIgKGNtJF57LTF9JClcIiwgeWxhYmVsPVwiYnJpZ2h0bmVzcyB0ZW1wZXJhdHVyZSAoSylcIixcbiAgICAgICAgeGxpbT0oMCwgTlVfTUFYKSwgeWxpbT0oMTkwLCAzMTApKVxuYXgyLnNldF90aXRsZShcIldoZXJlIGVhY2ggYmFuZCByYWRpYXRlcyBmcm9tXCIpXG5maWcudGlnaHRfbGF5b3V0KClcblxuIyBFbmQgdGhlIGNlbGwgb24gcGx0LnNob3coKS4gcXVhcnRvLWxpdmUgcGFpbnRzIHRoZSBmaWd1cmUgYSBjZWxsIGV4cGxpY2l0bHlcbiMgc2hvd3MsIG5vdCB3aGF0ZXZlciBtYXRwbG90bGliIGhhcHBlbnMgdG8gaGF2ZSBvcGVuIHdoZW4gdGhlIGNlbGwgZW5kczogbGVhdmVcbiMgaXQgb3V0IGFuZCB0aGlzIGNlbGwgcHJpbnRzIGl0cyBudW1iZXJzIGFuZCBkcmF3cyBub3RoaW5nLlxucGx0LnNob3coKSJ9
+</script>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>If the live cell did not run
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_artifacts/01-spectrum.png" class="img-fluid figure-img"></p>
+<figcaption>The OLR spectrum against Planck curves, and the brightness temperature of each band, for a 288 K surface at 80% relative humidity.</figcaption>
+</figure>
+</div>
+<p>This is the figure the cell above produces. Live cells need WebAssembly; if your browser blocks it, the static version is here. It is rendered from this page’s own cell by <code>_artifacts/generate.py</code>, so it cannot drift from what you would get by running it — but it is fixed at the defaults above, and the point of the cell is that you can change them.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reading-the-figure" class="level2">
+<h2 class="anchored" data-anchor-id="reading-the-figure">Reading the figure</h2>
+<p>The left panel is the classic satellite picture, and the gray Planck curves are what make it legible: they are what the OLR <em>would</em> be if the atmosphere radiated as a blackbody at 300, 280, … 200 K. The blue spectrum crosses them. It is not tracking any one of them.</p>
+<p>Two features carry the argument.</p>
+<p><strong>The CO₂ core, 630–700 cm⁻¹ (15 µm).</strong> The spectrum plunges to the 200 K curve. This band is so opaque that the photons escaping to space were emitted high in the stratosphere, and their brightness temperature is the temperature <em>there</em> — about 200 K, some 88 K colder than the ground.</p>
+<p><strong>The window, 800–1180 cm⁻¹ (8.5–12.5 µm).</strong> The spectrum rides just under the 285 K curve, averaging 284 K across the twelve bands that span it — within a few degrees of the surface. Here the atmosphere is nearly transparent: what leaves the top of the atmosphere was emitted by the ground and the lowest kilometre or so, and barely intercepted on the way out. Not quite the surface, though — the 4 K deficit is water vapour’s weak continuum absorption, and <a href="../modelling-tour/02-window-measured.html">page 2</a> measures it. Notice that the window is not flat: it peaks at 285.5 K around 990 cm⁻¹ and sags towards 281 K at its 800 cm⁻¹ edge. At 14 bands that structure was three flat steps.</p>
+<p>So the payoff. Your ε is a single number averaged over a curve whose brightness temperature swings roughly 85 K — 200 K in the CO₂ core, 284 K in the window. The shell model’s one radiating level is an average of levels that differ by more than 10 km in height. The average is not <em>wrong</em>; a well-chosen ε reproduces the OLR your surface actually emits, which is why the shell model works at all. But it is an average, and everything interesting about the climate response to CO₂ lives in the shape it averaged away — because doubling CO₂ moves one part of this curve and not the rest.</p>
+</section>
+<section id="one-band-comes-back-hotter-than-the-ground" class="level2">
+<h2 class="anchored" data-anchor-id="one-band-comes-back-hotter-than-the-ground">One band comes back hotter than the ground</h2>
+<p>Look at the right-hand panel past 2500 cm⁻¹, where a step sits above the dotted surface line. The 2525–2888 cm⁻¹ band comes back at a brightness temperature of 290 K — two degrees <em>hotter</em> than the ground. Nothing in the column is above 288 K.</p>
+<p>Now put a finger on the same stretch of the left-hand panel. The OLR out there is flat on the floor: this band radiates almost nothing at all.</p>
+<p>Before reading on: what could produce a brightness temperature no object in the problem possesses — in the very region where almost no energy is leaving?</p>
+<div class="callout callout-style-default callout-caution callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Caution</span>What went wrong (open after you have had a go)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Nothing went wrong in the radiation. The 290 K is manufactured in the last step, where we divided the band’s flux by its width and inverted Planck <strong>at the band centre</strong>.</p>
+<p>That band is 362 cm⁻¹ wide, and across it the Planck function falls steeply: at 288 K, πB at 2525 cm⁻¹ is about four times what it is at 2888. So the band’s mean flux density is weighted towards its low-wavenumber edge, while we asked what temperature would produce that flux density <em>at 2706 cm⁻¹</em>, further out on the exponential tail where a blackbody emits less. The only way to emit that much out there is to be a little hotter. Hence 290 K.</p>
+<p>A brightness temperature means something only when the band is narrow enough that Planck is roughly linear across it. This is a statement about band width, not about the code — and it is exactly what the 56 bands are buying. The shipped 14-band table covers this whole region with a <strong>single</strong> band, 1800–3250 cm⁻¹, 1450 cm⁻¹ wide. Both tables are available here, so run them side by side:</p>
+<div>
+<div id="pyodide-4" class="exercise-cell">
+
+</div>
+<script type="pyodide-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiY29hcnNlID0gQ29ya0xvbmd3YXZlUmFkaWF0aW9uKG9wdGljcz1cImNvcnJlbGF0ZWRfa1wiLCB0YWJsZT1cImVhcnRoX2xvd19yZXNfbHdcIilcbiMgVGhlIGNvYXJzZSBjb21wb25lbnQgbmVlZHMgaXRzIG93biBzdGF0ZTogYGVtaXNzaXZpdHlgIGlzIHNoYXBlZCAobmJhbmQsIG5jb2wpLFxuIyBzbyBhIDE0LWJhbmQgY29tcG9uZW50IGNhbm5vdCBiZSBoYW5kZWQgYSBzdGF0ZSBidWlsdCBmb3IgYSA1Ni1iYW5kIG9uZS4gU2FtZVxuIyBncmlkLCBzYW1lIHByZXNjcmliZWQgc291bmRpbmcsIGRpZmZlcmVudCBzcGVjdHJhbCByZXNvbHV0aW9uIOKAlCBub3RoaW5nIGVsc2UuXG5zdGF0ZV9jID0gZ2V0X2RlZmF1bHRfc3RhdGUoW2NvYXJzZV0sIGdyaWRfc3RhdGU9Z2V0X2dyaWQobng9MSwgbnk9MSwgbno9NDApKVxuYXBwbHlfc291bmRpbmcoc3RhdGVfYywgVCwgcSwgVF9zdXJmPVRfU1VSRilcbl8sIGRfY29hcnNlID0gY29hcnNlKHN0YXRlX2MpXG5sX2NvYXJzZSA9IGJhbmRfbGltaXRzX29mKGNvYXJzZSlcbm9scl9jb2Fyc2UsIGZkX2NvYXJzZSA9IHNwZWN0cmFsX29scihkX2NvYXJzZSwgbF9jb2Fyc2UpXG50Yl9jb2Fyc2UgPSBicmlnaHRuZXNzX3RlbXBlcmF0dXJlKGZkX2NvYXJzZSwgYmFuZF9jZW50cmVzKGxfY29hcnNlKSlcblxuZm9yIG5hbWUsIGxpbV8sIG9scl8sIHRiXyBpbiBbKFwiMTQtYmFuZCAoc2hpcHBlZClcIiwgbF9jb2Fyc2UsIG9scl9jb2Fyc2UsIHRiX2NvYXJzZSksXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAoZlwie2xlbihsaW1pdHMpfS1iYW5kIChkb3dubG9hZGVkKVwiLCBsaW1pdHMsIG9scl9iYW5kLCB0YildOlxuICAgIHByaW50KGZcIlxcbntuYW1lfSwgYWJvdmUgMTgwMCBjbV4tMTpcIilcbiAgICBmb3IgYiBpbiBucC5mbGF0bm9uemVybyhsaW1fWzosIDBdID49IDE4MDApOlxuICAgICAgICBwcmludChmXCIgIHtsaW1fW2IsMF06Ny4wZn0te2xpbV9bYiwxXTo8Ny4wZn0gXCJcbiAgICAgICAgICAgICAgZlwid2lkdGgge2xpbV9bYiwxXS1saW1fW2IsMF06Ni4wZn0gICBcIlxuICAgICAgICAgICAgICBmXCJPTFIge29scl9bYl06Ni4yZn0gVy9tMiAgIFRfYiB7dGJfW2JdOjYuMWZ9IEtcIikifQ==
+</script>
+</div>
+<p>The one wide band reports 300 K. Split it in four and the pieces come back at 266, 280, 290 and 279 K — none of them 300, and only one of them still above the surface. The artifact shrinks as the bands narrow, exactly as it should, because it was never a fact about the atmosphere: it was a band-mean quantity pushed through a nonlinear inversion.</p>
+<p>Which is also why the left-hand panel matters here. Everything above 1800 cm⁻¹ carries 3.8 W m⁻² of the 246, because at terrestrial temperatures there is almost nothing to emit that far out. The diagnostic goes nonsensical exactly where the energy is negligible — so the OLR, the number the climate actually cares about, is unharmed. Read the two panels together and you get the working rule: a brightness temperature is a statement about <em>where</em> radiation came from, and it is only worth trusting in bands that carry enough radiation to be worth asking about.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>climt craft
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Four things this page relied on, which every later page assumes:</p>
+<p><strong>Components are objects.</strong> <code>CorkLongwaveRadiation(...)</code> constructs one and fixes its configuration — here, correlated-k optics with whichever spectral table <code>spectrum_table()</code> found. Configuration happens at construction; the call takes only state. That is why comparing two tables meant constructing a <em>second</em> component rather than reconfiguring the first, and why both could then be called on the same unmodified <code>state</code>.</p>
+<p><strong><code>get_grid</code> and <code>get_default_state</code> build a state that satisfies the component.</strong> You pass the list of components you intend to run, and climt returns a state containing every field they require, on the grid you asked for, with sane defaults and correct units. You then overwrite the parts you care about — which is exactly what <code>apply_sounding</code> did.</p>
+<p><strong>Calling a component returns <code>(tendencies, diagnostics)</code>.</strong> Tendencies are rates of change of prognostic fields; diagnostics are everything else. Neither mutates <code>state</code>, so a component call is repeatable — call it twice with different CO₂ and you get two independent answers.</p>
+<p><strong><code>diagnostic_properties</code> is the contract.</strong> It tells you what you may ask for, in what units and on which dimensions, without reading the source:</p>
+<div>
+<div id="pyodide-5" class="exercise-cell">
+
+</div>
+<script type="pyodide-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZm9yIG5hbWUsIHNwZWMgaW4gc29ydGVkKGx3LmRpYWdub3N0aWNfcHJvcGVydGllcy5pdGVtcygpKTpcbiAgICBwcmludChmXCJ7bmFtZTo1MnN9IHtzcGVjWyd1bml0cyddOjEyc30ge3NwZWNbJ2RpbXMnXX1cIikifQ==
+</script>
+</div>
+<p>Note <code>mid_levels</code> versus <code>interface_levels</code>. Fluxes live on interfaces (there are <code>nz + 1</code> of them, and the last one is the top of the atmosphere — hence <code>values[-1]</code> for the OLR); temperatures, optical depths and heating rates live at mid-levels.</p>
+</div>
+</div>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<section id="physics" class="level3">
+<h3 class="anchored" data-anchor-id="physics">Physics</h3>
+<ol type="1">
+<li><p><strong>Raise <code>T_SURF</code> by 10 K</strong> and re-run. Does the window brightness temperature rise by 10 K? Does the CO₂ core? Explain the difference — and say which of the two the shell model’s single ε is implicitly assuming.</p></li>
+<li><p><strong>Where does the greenhouse effect come from?</strong> The printed number is σT⁴ − OLR. Compute it band by band with <code>planck_flux(nu, T_SURF) * width - olr_band</code> and sort the result. Which bands supply most of the 144 W m⁻²? One band comes out slightly negative — which, and why? (The collapsed note above is the clue.)</p></li>
+<li><p><strong>Rerun the whole page at 14 bands.</strong> <code>spectrum_table(prefer_hires=False)</code> returns the shipped table, so changing one line in the first cell redraws every figure at the coarse resolution. The OLR moves by 0.2 W m⁻² and the window brightness temperature by 0.1 K. Which claims on this page survive that change untouched, and which were statements about the table rather than about the atmosphere?</p></li>
+<li><p><strong>Set <code>RH = 0.1</code></strong> — a very dry atmosphere. Which part of the spectrum changes most, and which barely moves? Predict before you run it, then check.</p></li>
+</ol>
+</section>
+<section id="code" class="level3">
+<h3 class="anchored" data-anchor-id="code">Code</h3>
+<ol type="1">
+<li><p>Print each band’s limits alongside its OLR contribution, sorted by contribution, so the table reads largest-first. <code>np.argsort</code> and <code>limits[i]</code> are all you need.</p></li>
+<li><p><code>lw.input_properties</code> is the mirror image of <code>diagnostic_properties</code>: what the component <em>requires</em> rather than what it produces. Print every quantity with its units. Note that <code>specific_humidity</code> is in kg/kg while CO₂ is a mole fraction — climt will convert units for you, but it will not guess names.</p></li>
+</ol>
+</section>
+</section>
+<section id="going-deeper" class="level2">
+<h2 class="anchored" data-anchor-id="going-deeper">Going deeper</h2>
+<p>The <a href="../radiative-transfer/01-why-nongrey.html">Radiative Transfer walkthrough</a> takes the same observation — that absorption is a function of wavelength — and follows it all the way down to line-by-line absorption coefficients and the k-distribution that made the 56 bands above computable.</p>
+
+
+<script type="pyodide-data">
+eyJvcHRpb25zIjp7ImVudiI6eyJQTE9UTFlfUkVOREVSRVIiOiJwbG90bHlfbWltZXR5cGUifSwiaW5kZXhVUkwiOiJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvcHlvZGlkZS92MC4yOC4xL2Z1bGwvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsicHlvZGlkZV9odHRwIiwibWljcm9waXAiLCJpcHl0aG9uIiwiY2xpbXQ9PTAuMzEuMCIsInVueXQiXX19
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJweW9kaWRlLTUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl81ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS01LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzUgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzUsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl80ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS00LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzQgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTMiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl8zID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0zLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzMgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzMsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTIiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl8yID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0yLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtMi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzIgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzIsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoiX3B5b2RpZGVfdmFsdWVfMSA9IHtcbiAgY29uc3QgeyBoaWdobGlnaHRQeXRob24sIGI2NERlY29kZX0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0xLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgLy8gRGVmYXVsdCBldmFsdWF0aW9uIGNvbmZpZ3VyYXRpb25cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oe1xuICAgIGlkOiBcInB5b2RpZGUtMS1jb250ZW50c1wiLFxuICAgIGVjaG86IHRydWUsXG4gICAgb3V0cHV0OiB0cnVlXG4gIH0sIGJsb2NrLmF0dHIpO1xuXG4gIC8vIEV2YWx1YXRlIHRoZSBwcm92aWRlZCBQeXRob24gY29kZVxuICBjb25zdCByZXN1bHQgPSBweW9kaWRlT2pzLnByb2Nlc3Moe2NvZGU6IGJsb2NrLmNvZGUsIG9wdGlvbnN9LCB7fSk7XG5cbiAgLy8gRWFybHkgeWllbGQgd2hpbGUgd2Ugd2FpdCBmb3IgdGhlIGZpcnN0IGV2YWx1YXRpb24gYW5kIHJlbmRlclxuICBpZiAob3B0aW9ucy5vdXRwdXQgJiYgIShcIjFcIiBpbiBweW9kaWRlT2pzLnJlbmRlcmVkT2pzKSkge1xuICAgIGNvbnN0IGNvbnRhaW5lciA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG4gICAgY29uc3Qgc3Bpbm5lciA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG5cbiAgICBpZiAob3B0aW9ucy5lY2hvKSB7XG4gICAgICAvLyBTaG93IG91dHB1dCBhcyBoaWdobGlnaHRlZCBzb3VyY2VcbiAgICAgIGNvbnN0IHByZUVsZW0gPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwicHJlXCIpO1xuICAgICAgY29udGFpbmVyLmNsYXNzTmFtZSA9IFwic291cmNlQ29kZVwiO1xuICAgICAgcHJlRWxlbS5jbGFzc05hbWUgPSBcInNvdXJjZUNvZGUgcHl0aG9uXCI7XG4gICAgICBwcmVFbGVtLmFwcGVuZENoaWxkKGhpZ2hsaWdodFB5dGhvbihibG9jay5jb2RlKSk7XG4gICAgICBzcGlubmVyLmNsYXNzTmFtZSA9IFwic3Bpbm5lci1ncm93IHNwaW5uZXItZ3Jvdy1zbSBtLTIgcG9zaXRpb24tYWJzb2x1dGUgdG9wLTAgZW5kLTBcIjtcbiAgICAgIHByZUVsZW0uYXBwZW5kQ2hpbGQoc3Bpbm5lcik7XG4gICAgICBjb250YWluZXIuYXBwZW5kQ2hpbGQocHJlRWxlbSk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHNwaW5uZXIuY2xhc3NOYW1lID0gXCJzcGlubmVyLWJvcmRlciBzcGlubmVyLWJvcmRlci1zbVwiO1xuICAgICAgY29udGFpbmVyLmFwcGVuZENoaWxkKHNwaW5uZXIpO1xuICAgIH1cblxuICAgIHlpZWxkIGNvbnRhaW5lcjtcbiAgfVxuXG4gIHB5b2RpZGVPanMucmVuZGVyZWRPanNbXCIxXCJdID0gdHJ1ZTtcbiAgeWllbGQgYXdhaXQgcmVzdWx0O1xufVxuIn0seyJjZWxsTmFtZSI6InB5b2RpZGUtcHJlbHVkZSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InB5b2RpZGVPanMgPSB7XG4gIGNvbnN0IHtcbiAgICBQeW9kaWRlRXZhbHVhdG9yLFxuICAgIFB5b2RpZGVFbnZpcm9ubWVudE1hbmFnZXIsXG4gICAgc2V0dXBQeXRob24sXG4gICAgc3RhcnRQeW9kaWRlV29ya2VyLFxuICAgIGI2NERlY29kZSxcbiAgICBjb2xsYXBzZVBhdGgsXG4gIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHN0YXR1c0NvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKFwiZXhlcmNpc2UtbG9hZGluZy1zdGF0dXNcIik7XG4gIGNvbnN0IGluZGljYXRvckNvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKFwiZXhlcmNpc2UtbG9hZGluZy1pbmRpY2F0b3JcIik7XG4gIGluZGljYXRvckNvbnRhaW5lci5jbGFzc0xpc3QucmVtb3ZlKFwiZC1ub25lXCIpO1xuXG4gIGxldCBzdGF0dXNUZXh0ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudChcImRpdlwiKVxuICBzdGF0dXNUZXh0LmNsYXNzTGlzdCA9IFwiZXhlcmNpc2UtbG9hZGluZy1kZXRhaWxzXCI7XG4gIHN0YXR1c1RleHQgPSBzdGF0dXNDb250YWluZXIuYXBwZW5kQ2hpbGQoc3RhdHVzVGV4dCk7XG4gIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgSW5pdGlhbGlzZWA7XG5cbiAgLy8gSG9pc3QgaW5kaWNhdG9yIG91dCBmcm9tIGZpbmFsIHNsaWRlIHdoZW4gcnVubmluZyB1bmRlciByZXZlYWxcbiAgY29uc3QgcmV2ZWFsU3RhdHVzID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcihcIi5yZXZlYWwgLmV4ZXJjaXNlLWxvYWRpbmctaW5kaWNhdG9yXCIpO1xuICBpZiAocmV2ZWFsU3RhdHVzKSB7XG4gICAgcmV2ZWFsU3RhdHVzLnJlbW92ZSgpO1xuICAgIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoXCIucmV2ZWFsID4gLnNsaWRlc1wiKS5hcHBlbmRDaGlsZChyZXZlYWxTdGF0dXMpO1xuICB9XG5cbiAgLy8gTWFrZSBhbnkgcmV2ZWFsIHNsaWRlcyB3aXRoIGxpdmUgY2VsbHMgc2Nyb2xsYWJsZVxuICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKFwiLnJldmVhbCAuZXhlcmNpc2UtY2VsbFwiKS5mb3JFYWNoKChlbCkgPT4ge1xuICAgIGVsLmNsb3Nlc3QoJ3NlY3Rpb24uc2xpZGUnKS5jbGFzc0xpc3QuYWRkKFwic2Nyb2xsYWJsZVwiKTtcbiAgfSlcblxuICAvLyBQeW9kaWRlIHN1cHBsZW1lbnRhbCBkYXRhIGFuZCBvcHRpb25zXG4gIGNvbnN0IGRhdGFDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcInB5b2RpZGUtZGF0YVxcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGRhdGEgPSBKU09OLnBhcnNlKGI2NERlY29kZShkYXRhQ29udGVudCkpO1xuXG4gIC8vIEdyYWIgbGlzdCBvZiByZXNvdXJjZXMgdG8gYmUgZG93bmxvYWRlZFxuICBjb25zdCBmaWxlc0NvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwidmZzLWZpbGVcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBmaWxlcyA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKGZpbGVzQ29udGVudCkpO1xuXG4gIGxldCBweW9kaWRlUHJvbWlzZSA9IChhc3luYyAoKSA9PiB7XG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyBQeW9kaWRlYDtcbiAgICBjb25zdCBweW9kaWRlID0gYXdhaXQgc3RhcnRQeW9kaWRlV29ya2VyKGRhdGEub3B0aW9ucyk7XG5cbiAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6IG1pY3JvcGlwYDtcbiAgICBhd2FpdCBweW9kaWRlLmxvYWRQYWNrYWdlKFwibWljcm9waXBcIik7XG4gICAgY29uc3QgbWljcm9waXAgPSBhd2FpdCBweW9kaWRlLnB5aW1wb3J0KFwibWljcm9waXBcIik7XG4gICAgYXdhaXQgZGF0YS5wYWNrYWdlcy5wa2dzLm1hcCgocGtnKSA9PiAoKSA9PiB7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6ICR7cGtnfWA7XG4gICAgICByZXR1cm4gbWljcm9waXAuaW5zdGFsbChwa2cpO1xuICAgIH0pLnJlZHVjZSgoY3VyLCBuZXh0KSA9PiBjdXIudGhlbihuZXh0KSwgUHJvbWlzZS5yZXNvbHZlKCkpO1xuICAgIGF3YWl0IG1pY3JvcGlwLmRlc3Ryb3koKTtcblxuICAgIC8vIERvd25sb2FkIGFuZCBpbnN0YWxsIHJlc291cmNlc1xuICAgIGF3YWl0IGZpbGVzLm1hcCgoZmlsZSkgPT4gYXN5bmMgKCkgPT4ge1xuICAgICAgY29uc3QgbmFtZSA9IGZpbGUuc3Vic3RyaW5nKGZpbGUubGFzdEluZGV4T2YoJy8nKSArIDEpO1xuICAgICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyByZXNvdXJjZTogJHtuYW1lfWA7XG4gICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGZpbGUpO1xuICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENhbid0IGRvd25sb2FkIFxcYCR7ZmlsZX1cXGAuIEVycm9yICR7cmVzcG9uc2Uuc3RhdHVzfTogXCIke3Jlc3BvbnNlLnN0YXR1c1RleHR9XCIuYCk7XG4gICAgICB9XG4gICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuYXJyYXlCdWZmZXIoKTtcblxuICAgICAgLy8gU3RvcmUgVVJMcyBpbiB0aGUgY3dkIHdpdGhvdXQgYW55IHN1YmRpcmVjdG9yeSBzdHJ1Y3R1cmVcbiAgICAgIGlmIChmaWxlLmluY2x1ZGVzKFwiOi8vXCIpKSB7XG4gICAgICAgIGZpbGUgPSBuYW1lO1xuICAgICAgfVxuXG4gICAgICAvLyBDb2xsYXBzZSBoaWdoZXIgZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgZmlsZSA9IGNvbGxhcHNlUGF0aChmaWxlKTtcblxuICAgICAgLy8gQ3JlYXRlIGRpcmVjdG9yeSB0cmVlLCBpZ25vcmluZyBcImRpcmVjdG9yeSBleGlzdHNcIiBWRlMgZXJyb3JzXG4gICAgICBjb25zdCBwYXJ0cyA9IGZpbGUuc3BsaXQoJy8nKS5zbGljZSgwLCAtMSk7XG4gICAgICBsZXQgcGF0aCA9ICcnO1xuICAgICAgd2hpbGUgKHBhcnRzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcGF0aCArPSBwYXJ0cy5zaGlmdCgpICsgJy8nO1xuICAgICAgICB0cnkge1xuICAgICAgICAgIGF3YWl0IHB5b2RpZGUuRlMubWtkaXIocGF0aCk7XG4gICAgICAgIH0gY2F0Y2ggKGUpIHtcbiAgICAgICAgICBpZiAoZS5uYW1lICE9PSBcIkVycm5vRXJyb3JcIikgdGhyb3cgZTtcbiAgICAgICAgICBpZiAoZS5lcnJubyAhPT0gMjApIHtcbiAgICAgICAgICAgIGNvbnN0IGVycm9yVGV4dFB0ciA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5fc3RyZXJyb3IoZS5lcnJubyk7XG4gICAgICAgICAgICBjb25zdCBlcnJvclRleHQgPSBhd2FpdCBweW9kaWRlLl9tb2R1bGUuVVRGOFRvU3RyaW5nKGVycm9yVGV4dFB0cik7XG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYEZpbGVzeXN0ZW0gRXJyb3IgJHtlLmVycm5vfSBcIiR7ZXJyb3JUZXh0fVwiLmApO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyBXcml0ZSB0aGlzIGZpbGUgdG8gdGhlIFZGU1xuICAgICAgdHJ5IHtcbiAgICAgICAgcmV0dXJuIGF3YWl0IHB5b2RpZGUuRlMud3JpdGVGaWxlKGZpbGUsIG5ldyBVaW50OEFycmF5KGRhdGEpKTtcbiAgICAgIH0gY2F0Y2ggKGUpIHtcbiAgICAgICAgaWYgKGUubmFtZSAhPT0gXCJFcnJub0Vycm9yXCIpIHRocm93IGU7XG4gICAgICAgIGNvbnN0IGVycm9yVGV4dFB0ciA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5fc3RyZXJyb3IoZS5lcnJubyk7XG4gICAgICAgIGNvbnN0IGVycm9yVGV4dCA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5VVEY4VG9TdHJpbmcoZXJyb3JUZXh0UHRyKTtcbiAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGaWxlc3lzdGVtIEVycm9yICR7ZS5lcnJub30gXCIke2Vycm9yVGV4dH1cIi5gKTtcbiAgICAgIH1cbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgUHlvZGlkZSBlbnZpcm9ubWVudCBzZXR1cGA7XG4gICAgYXdhaXQgc2V0dXBQeXRob24ocHlvZGlkZSk7XG5cbiAgICBzdGF0dXNUZXh0LnJlbW92ZSgpO1xuICAgIGlmIChzdGF0dXNDb250YWluZXIuY2hpbGRyZW4ubGVuZ3RoID09IDApIHtcbiAgICAgIHN0YXR1c0NvbnRhaW5lci5wYXJlbnROb2RlLnJlbW92ZSgpO1xuICAgIH1cbiAgICByZXR1cm4gcHlvZGlkZTtcbiAgfSkoKS5jYXRjaCgoZXJyKSA9PiB7XG4gICAgc3RhdHVzVGV4dC5zdHlsZS5jb2xvciA9IFwidmFyKC0tZXhlcmNpc2UtZWRpdG9yLWhsLWVyLCAjQUQwMDAwKVwiO1xuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBlcnIubWVzc2FnZTtcbiAgICAvL2luZGljYXRvckNvbnRhaW5lci5xdWVyeVNlbGVjdG9yKFwiLnNwaW5uZXItZ3Jvd1wiKS5jbGFzc0xpc3QuYWRkKFwiZC1ub25lXCIpO1xuICAgIHRocm93IGVycjtcbiAgfSk7XG5cbiAgLy8gS2VlcCB0cmFjayBvZiBpbml0aWFsIE9KUyBibG9jayByZW5kZXJcbiAgY29uc3QgcmVuZGVyZWRPanMgPSB7fTtcblxuICBjb25zdCBwcm9jZXNzID0gYXN5bmMgKGNvbnRleHQsIGlucHV0cykgPT4ge1xuICAgIGNvbnN0IHB5b2RpZGUgPSBhd2FpdCBweW9kaWRlUHJvbWlzZTtcbiAgICBjb25zdCBldmFsdWF0b3IgPSBuZXcgUHlvZGlkZUV2YWx1YXRvcihweW9kaWRlLCBjb250ZXh0KTtcbiAgICBhd2FpdCBldmFsdWF0b3IucHJvY2VzcyhpbnB1dHMpO1xuICAgIHJldHVybiBldmFsdWF0b3IuY29udGFpbmVyO1xuICB9XG5cbiAgcmV0dXJuIHtcbiAgICBweW9kaWRlUHJvbWlzZSxcbiAgICByZW5kZXJlZE9qcyxcbiAgICBwcm9jZXNzLFxuICB9O1xufVxuIn1dfQ==
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyJfdG91ci9zb3VuZGluZ3MucHkiLCJfdG91ci9zcGVjdHJhLnB5IiwiX3RvdXIvdGFibGVzLnB5IiwiX2RhdGEvZWFydGhfc3BlY3RydW1fbHcubnB6Il0=
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../modelling-tour";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

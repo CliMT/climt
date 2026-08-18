@@ -99,7 +99,7 @@ div.csl-indent {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-6dc573d0c0ad5d07ea9140e581a352db.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60797f16c70fa601ba463f620f70b76e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -192,6 +192,10 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link active" href="../radiative-transfer/index.html" aria-current="page"> 
 <span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../modelling-tour/index.html"> 
+<span class="menu-text">Modelling Tour</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../experiments/index.html"> 
@@ -398,7 +402,7 @@ Figure&nbsp;1: <strong>Figure 3.1</strong> — Sorted absorption coefficients (e
 <section id="the-code-in-climt" class="level2">
 <h2 class="anchored" data-anchor-id="the-code-in-climt">The code in climt</h2>
 <p>climt does not build k-distributions at runtime — they arrive in pre-computed netCDF files. The read path makes the data layout explicit:</p>
-<div id="4b700e8a" class="cell" data-execution_count="1">
+<div id="2ad440e7" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> inspect</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt._components.cork.optics.correlated_k <span class="im">import</span> load_k_table</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inspect.getsource(load_k_table))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -414,20 +418,23 @@ Figure&nbsp;1: <strong>Figure 3.1</strong> — Sorted absorption coefficients (e
             to ``.nc`` (design-spec format, requires scipy).
 
     Returns:
-        dict-like object exposing ``k_coefficients``, ``gpoint_weights``,
+        dict of numpy arrays exposing ``k_coefficients``, ``gpoint_weights``,
         ``temperature_grid``, ``pressure_grid_log`` and (LW/SW-specific)
-        auxiliary arrays.
+        auxiliary arrays. Both backends return a fully materialised dict, so
+        callers can index the table in a hot loop without re-reading the file.
     """
     if os.path.isfile(name_or_path):
         if name_or_path.endswith(".nc"):
             return _load_netcdf_table(name_or_path)
-        return np.load(name_or_path, allow_pickle=True)
+        return _load_npz_table(name_or_path)
 
     pkg = importlib_resources.files("climt._data.cork.correlated_k")
     npz_path = pkg.joinpath(f"{name_or_path}.npz")
     with importlib_resources.as_file(npz_path) as f:
         if os.path.isfile(f):
-            return np.load(f, allow_pickle=True)
+            # Must read inside the as_file() block: for a zipped install the
+            # path is a temporary extraction that is removed on block exit.
+            return _load_npz_table(f)
 
     nc_path = pkg.joinpath(f"{name_or_path}.nc")
     with importlib_resources.as_file(nc_path) as f:
