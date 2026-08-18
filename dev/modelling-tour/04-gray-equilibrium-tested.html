@@ -354,7 +354,7 @@ T_g = T_e\left(1 + \frac{\tau_\infty}{2}\right)^{1/4}\]</span></p>
 <p>So <code>τ_∞ = 4</code> in the formula above is not the column optical depth the model computes. It is <code>D</code> times that. To make the notes’ equations exact, this page</p>
 <ul>
 <li>constructs the component with <code>diffusivity_factor=2.0</code>, and</li>
-<li>uses a table, <code>tour_gray_lw</code>, whose absorption coefficient was calibrated so that <code>2 × Σ_layers τ_k = 4</code> on climt’s default 60-level grid.</li>
+<li>uses a table, <code>tour_gray_lw</code>, whose absorption coefficient was calibrated so that <code>2 × Σ_layers τ_k = 4</code>. That sum is a column total, so it does not depend on how you slice the column: it comes out 4.000000006 at 18, 28, 40, 60, 100 and 200 levels alike. Change <code>nz</code> below and the equilibrium still holds.</li>
 </ul>
 <p>Both, together. Match only one and the heating rate will not vanish, and it will not vanish for a reason that has nothing whatever to do with the physics you are trying to test — which is the worst kind of disagreement, because it looks like a result.</p>
 </div>
@@ -540,7 +540,7 @@ eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJweW9kaWRlLTciLCJpbmxpbmUiOmZhbHNlLCJtZXRob2RO
 </div>
 </div>
 <script type="vfs-file">
-WyJfdG91ci9zb3VuZGluZ3MucHkiLCJfdG91ci9zcGVjdHJhLnB5Il0=
+WyJfdG91ci9zb3VuZGluZ3MucHkiXQ==
 </script>
 </section>
 
