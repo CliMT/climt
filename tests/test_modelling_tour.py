@@ -1,8 +1,7 @@
 """The science the Modelling Tour pages claim, checked natively.
 
 Pyodide cells cannot run in CI, so each page's computational core lives in
-``docs/modelling-tour/_tour/`` as importable Python and is exercised here. This
-mirrors the pattern of ``tests/test_live_rce_demo.py``.
+``docs/modelling-tour/_tour/`` as importable Python and is exercised here.
 
 ``docs/modelling-tour`` contains a hyphen and is not a valid package path, so
 the helpers are loaded by file path.
@@ -912,7 +911,8 @@ def test_wind_relaxation_holds_the_wind_up(stepping):
     the equilibrium is independent of how fast it started.
     """
     longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
-                                           table="single_band_gray_lw")
+                                           table=PAGE7_GRAY_TABLE,
+                                           diffusivity_factor=PAGE7_DIFFUSIVITY)
     surface = climt.SlabSurface()
     boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="bulk",
                                                roughness_length=1e-3)
@@ -996,3 +996,137 @@ def test_draw_evolution_builds_the_four_panel_figure(stepping):
         assert figure.axes[0].get_yscale() == "log"
     finally:
         plt.close("all")
+
+
+# ------------------------------------------------------------------ page 7
+#
+# Inherited from the deleted tests/test_live_rce_demo.py, on the deleted
+# radiative-transfer/09-live-rce.qmd. Same two claims, re-measured on page 7's
+# configuration: UnytBackend rather than DataArrayBackend, nz=28 rather than 18,
+# dt=12 h rather than 2 h, a 2 m slab rather than 5 m.
+
+PAGE7_STEPS = 300      # far enough to separate the two columns unambiguously;
+                       # the page itself runs longer. See the log below.
+
+# The tables page 7 actually declares, and the diffusivity that goes with the
+# gray one. NOT `single_band_gray_lw`, which is what the deleted page used:
+# page 7's gray half must reproduce page 4's analytic profile, and that only
+# works against the table page 4 calibrated (D = 2, D * sum(tau) = 4).
+# Per the global constraint, a test asserts on the table its page declares.
+PAGE7_GRAY_TABLE = "tour_gray_lw"
+PAGE7_DIFFUSIVITY = 2.0
+PAGE7_NONGREY_TABLE = "earth_low_res_lw"
+
+
+def _page7_gray_column(nz=28, slab_depth=2.0):
+    """Page 7's gray column: page 4's table and diffusivity, over a slab."""
+    longwave = climt.CorkLongwaveRadiation(
+        optics="correlated_k", table=PAGE7_GRAY_TABLE,
+        diffusivity_factor=PAGE7_DIFFUSIVITY)
+    surface = climt.SlabSurface()
+    state = climt.get_default_state([longwave, surface],
+                                    grid_state=get_grid(nx=1, ny=1, nz=nz))
+    state["ocean_mixed_layer_thickness"].values[:] = slab_depth
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+    return [longwave, surface], state
+
+
+@pytest.fixture(scope="module")
+def page7_columns():
+    """Both of page 7's integrations, run once and shared."""
+    import sympl as _sympl
+
+    _sympl.set_backend(climt.UnytBackend())
+    stepping_module = _load("stepping")
+    timestep = climt.UnytTimeDelta(hours=12)
+
+    gray_components, gray_state = _page7_gray_column()
+    nongrey_components, nongrey_state = _gray_column(
+        table=PAGE7_NONGREY_TABLE)
+    return {
+        PAGE7_GRAY_TABLE: stepping_module.integrate(
+            gray_components, [], gray_state, timestep, PAGE7_STEPS),
+        PAGE7_NONGREY_TABLE: stepping_module.integrate(
+            nongrey_components, [], nongrey_state, timestep, PAGE7_STEPS),
+    }
+
+
+def _olr(state):
+    return float(state["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+
+def _surface_temperature(state):
+    return float(state["surface_temperature"].values.ravel()[0])
+
+
+@pytest.mark.slow
+def test_page7_nongrey_column_is_the_more_efficient_radiator(page7_columns):
+    """Page 7's comparison: spectral windows let the column radiate better.
+
+    The non-grey table resolves atmospheric windows through which surface
+    emission escapes more or less directly to space. The single-band gray
+    column has no such windows, so at matched conditions the non-grey column
+    emits more to space and runs cooler at the surface.
+
+    Measured separations at PAGE7_STEPS (see the log): OLR 265.8 vs 234.4
+    W/m^2 and surface 271.9 vs 334.1 K. Thresholds are half of each.
+    """
+    gray = page7_columns[PAGE7_GRAY_TABLE]
+    nongrey = page7_columns[PAGE7_NONGREY_TABLE]
+
+    assert _olr(nongrey) > _olr(gray) + 15.0, (
+        f"non-grey OLR {_olr(nongrey):.1f} should exceed gray "
+        f"{_olr(gray):.1f} W/m^2 — windows radiate to space more efficiently")
+    assert _surface_temperature(nongrey) < _surface_temperature(gray) - 30.0, (
+        f"non-grey surface {_surface_temperature(nongrey):.1f} K should be "
+        f"cooler than gray {_surface_temperature(gray):.1f} K")
+
+
+@pytest.mark.slow
+def test_page7_nongrey_column_cools_faster_aloft(page7_columns):
+    """Page 7's second comparison: a steeper temperature drop-off aloft.
+
+    Band-resolved absorption concentrates cooling in the strongly absorbing
+    bands high in the column, which the gray column smears out. Measured:
+    -6.84 K/level non-grey against -2.82 K/level gray; threshold is half.
+    """
+    top_gradient = {}
+    for name, state in page7_columns.items():
+        temperature = state["air_temperature"].values[:, 0, 0]
+        # Level index increases upward; mean of the top three level-to-level
+        # differences, in K per level.
+        top_gradient[name] = float(np.mean(np.diff(temperature)[-3:]))
+
+    assert top_gradient[PAGE7_NONGREY_TABLE] < \
+        top_gradient[PAGE7_GRAY_TABLE] - 2.0, (
+        f"non-grey top-of-column gradient {top_gradient[PAGE7_NONGREY_TABLE]:.2f}"
+        f" K/level should be markedly steeper than gray "
+        f"{top_gradient[PAGE7_GRAY_TABLE]:.2f} K/level")
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("table", [PAGE7_GRAY_TABLE, PAGE7_NONGREY_TABLE])
+def test_page7_flux_diagnostics_survive_the_update_order(page7_columns, table):
+    """The update-order gotcha, on both of page 7's tables.
+
+    ``stepping.integrate`` applies the prognostic state *before* the
+    diagnostics. Reversing that clobbers the longwave fluxes SlabSurface
+    consumes, and the surface heats without bound.
+    """
+    state = page7_columns[table]
+
+    for flux in ("upwelling_longwave_flux_in_air",
+                 "downwelling_longwave_flux_in_air"):
+        assert flux in state, f"{flux} missing — diagnostics were clobbered"
+        values = state[flux].values
+        assert np.all(np.isfinite(values)), f"{flux} has non-finite values"
+        assert np.all(values >= 0.0), f"{flux} must be non-negative"
+
+    temperature = state["air_temperature"].values
+    assert np.all(np.isfinite(temperature))
+    assert temperature.min() > 150.0 and temperature.max() < 400.0, (
+        f"air temperature ran to [{temperature.min():.1f}, "
+        f"{temperature.max():.1f}] K — suspect a flux-coupling regression")
+    assert 150.0 < _surface_temperature(state) < 400.0

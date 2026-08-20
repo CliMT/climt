@@ -10,7 +10,7 @@ reimplementation of them: this script extracts the ``{pyodide}`` blocks out of
 the ``.qmd`` files and execs them in order, exactly as a reader would run them,
 then saves whatever figure the target cell drew. So a fallback cannot quietly
 drift from the cell it stands in for -- edit the cell and re-run this, and the
-PNG follows. The same trick as ``scripts/experiments/render_live_rce_figure.py``.
+PNG follows.
 
 Cells run natively here (numba on, real climt) rather than under Pyodide, which
 is the point: this is a fast check that the pages' code still runs at all, and
