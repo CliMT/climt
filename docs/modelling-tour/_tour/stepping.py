@@ -88,6 +88,17 @@ def integrate_with_history(tendency_components, stepper_components, state,
         * ``snapshots`` -- list of dicts with ``day``, ``T`` (mid levels),
           ``H`` (longwave heating rate, K/day), ``U`` and ``D`` (up and
           downwelling longwave flux on interface levels)
+
+    ``T`` is the state *after* the step, while ``H``, ``U`` and ``D`` come from
+    the diagnostics the components returned, which were evaluated at the
+    start-of-step state -- so the fluxes lag the temperature by one step. That
+    is the design and not a bug: it is the radiation that produced this
+    temperature. Do not "fix" it by reordering the loop, which would apply
+    diagnostics before the new state and break the update order above.
+
+    ``n_snapshots`` is a ceiling rather than a count: the snapshot steps are
+    rounded onto integers and de-duplicated, so asking for more snapshots than
+    there are steps yields one per step and no more.
     """
     model = AdamsBashforth(*tendency_components)
     day = timestep.total_seconds() / DAY_SECONDS

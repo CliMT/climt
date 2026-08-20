@@ -827,7 +827,8 @@ def test_integrate_keeps_the_flux_diagnostics(stepping):
     SlabSurface consumes stale fluxes, and the surface heats without bound.
     """
     components, state = _gray_column()
-    stepping.integrate(components, [], state, climt.UnytTimeDelta(hours=12), 20)
+    stepping.integrate(components, [], state,
+                       climt.UnytTimeDelta(hours=12), 100)
 
     for flux in ("upwelling_longwave_flux_in_air",
                  "downwelling_longwave_flux_in_air"):
@@ -936,6 +937,25 @@ def test_wind_relaxation_holds_the_wind_up(stepping):
     assert lowest < 8.0, (
         "the lowest level should sit below the target: drag is still acting, "
         "which is the point")
+
+
+def test_wind_relaxation_leaves_a_loaded_wind_alone(stepping):
+    """``initialise=False`` is how pages 11/12 attach to a state from disk.
+
+    That state carries a wind profile already sheared by the surface drag;
+    overwriting it with a uniform ``speed`` would throw away part of the
+    equilibrium, and nothing would error.
+    """
+    boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="bulk")
+    state = climt.get_default_state([boundary_layer],
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    profile = np.linspace(2.0, 9.0, 28).reshape(28, 1, 1)
+    state["eastward_wind"].values[:] = profile
+
+    stepping.wind_relaxation(state, 5.0, initialise=False)
+
+    np.testing.assert_allclose(state["eastward_wind"].values, profile)
+    assert np.all(state["equilibrium_eastward_wind"].values == 5.0)
 
 
 def test_unyt_relaxation_units_are_parseable(stepping):
