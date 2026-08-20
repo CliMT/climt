@@ -55,7 +55,7 @@ def integrate(tendency_components, stepper_components, state, timestep,
     Returns:
         The same ``state`` object, for convenience.
     """
-    model = AdamsBashforth(list(tendency_components))
+    model = AdamsBashforth(*tendency_components)
     for _ in range(n_steps):
         diagnostics, new_state = model(state, timestep)
         state.update(new_state)
@@ -89,7 +89,7 @@ def integrate_with_history(tendency_components, stepper_components, state,
           ``H`` (longwave heating rate, K/day), ``U`` and ``D`` (up and
           downwelling longwave flux on interface levels)
     """
-    model = AdamsBashforth(list(tendency_components))
+    model = AdamsBashforth(*tendency_components)
     day = timestep.total_seconds() / DAY_SECONDS
     # total_seconds() returns a unyt quantity under UnytBackend; the history is
     # plain numbers, so strip the units here rather than in six page cells.
