@@ -445,7 +445,12 @@ class SimpleBoundaryLayer(Stepper):
             applied_latent,
             params,
             num_cols,
-            timestep.total_seconds(),
+            # A plain float, not the unyt_quantity UnytTimeDelta.total_seconds()
+            # returns: numba strips the units on the way in, but Pyodide has no
+            # numba, and the pure-Python kernel then adds seconds to the
+            # dimensionless tridiagonal diagonal in _diffuse_profile. Same
+            # coercion, same reason, as sea_ice/component.py.
+            float(timestep.total_seconds()),
             self._flux_mode,
         )
 

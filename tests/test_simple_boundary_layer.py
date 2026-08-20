@@ -573,3 +573,53 @@ def test_none_mode_multi_column_conserves_every_column():
         after = _per_column_budgets(new_state, dp, name)
         assert np.allclose(after, expected, rtol=1e-12), name
         assert np.all(np.isfinite(np.asarray(new_state[name]))), name
+
+
+# ------------------------------------------------- the no-numba / browser path
+
+def test_boundary_layer_kernel_is_handed_a_plain_float_timestep():
+    """Guards the Pyodide path: the kernel must never receive a unyt quantity.
+
+    ``timestep.total_seconds()`` is a plain float for ``datetime.timedelta``
+    but a ``unyt_quantity`` in seconds for ``climt.UnytTimeDelta``, which is
+    the timestep type the UnytBackend requires. numba strips those units on
+    the way into the kernel; the pure-Python path does not, and the units then
+    collide inside ``_diffuse_profile``, where a dimensionless tridiagonal
+    diagonal is added to a seconds-carrying exchange coefficient.
+
+    ``NUMBA_DISABLE_JIT=1`` reproduces the real failure, but CI runs with the
+    JIT on, where the bug is invisible. Asserting on the source is the only
+    way to keep it from coming back in routine CI.
+    """
+    import inspect
+    from climt._components.simple_boundary_layer import component as sbl
+
+    source = inspect.getsource(sbl.SimpleBoundaryLayer.array_call)
+    assert "float(timestep.total_seconds())" in source, (
+        "array_call must coerce the timestep to a plain float before calling "
+        "_boundary_layer_kernel: UnytTimeDelta.total_seconds() returns a "
+        "unyt_quantity in seconds, and without numba to strip the units it "
+        "collides with the dimensionless tridiagonal diagonal in "
+        "_diffuse_profile. See sea_ice/component.py for the same coercion.")
+
+
+def test_bulk_fluxes_run_under_the_unyt_backend():
+    """The component runs with the timestep type the modelling-tour pages use.
+
+    Restores the default backend afterwards: ``sympl.set_backend`` is global,
+    and the rest of this file builds states expecting DataArrays.
+    """
+    import sympl
+
+    sympl.set_backend(climt.UnytBackend())
+    try:
+        component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+        state = climt.get_default_state(
+            [component], grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+        diagnostics, new_state = component(state, climt.UnytTimeDelta(hours=1))
+    finally:
+        sympl.set_backend(sympl.DataArrayBackend())
+
+    assert np.all(np.isfinite(new_state["air_temperature"].values))
+    assert np.all(np.isfinite(
+        diagnostics["surface_upward_sensible_heat_flux"].values))
