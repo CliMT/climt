@@ -1156,3 +1156,164 @@ def test_page7_flux_diagnostics_survive_the_update_order(page7_columns, table):
         f"air temperature ran to [{temperature.min():.1f}, "
         f"{temperature.max():.1f}] K — suspect a flux-coupling regression")
     assert 150.0 < _surface_temperature(state) < 400.0
+
+
+@pytest.fixture
+def budgets():
+    return _load("budgets")
+
+
+def test_toa_imbalance_is_absorbed_solar_minus_olr(budgets):
+    """With no atmospheric shortwave absorption, TOA net = surface SW - OLR.
+
+    Every page in this tranche prescribes the absorbed shortwave at the
+    surface and runs no shortwave component, so the planet's absorbed
+    shortwave *is* the surface's. The function must read that from the state
+    rather than take it as an argument, or a page can quote a budget that
+    disagrees with its own configuration.
+    """
+    components, state = _gray_column()
+    stepping_module = _load("stepping")
+    stepping_module.integrate(components, [], state,
+                              climt.UnytTimeDelta(hours=12), 5)
+
+    olr = float(state["upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+    assert budgets.toa_imbalance(state) == pytest.approx(SOLAR - olr, abs=1e-9)
+
+
+def test_toa_imbalance_closes_on_a_converged_column(budgets):
+    """The whole point: near equilibrium, the budget is near zero."""
+    components, state = _gray_column()
+    _load("stepping").integrate(components, [], state,
+                                climt.UnytTimeDelta(hours=12), 700)
+    assert abs(budgets.toa_imbalance(state)) < 1.0
+
+
+def test_surface_imbalance_counts_every_term(budgets):
+    """Radiation in, radiation out, and the two turbulent fluxes out."""
+    longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
+                                           table="single_band_gray_lw")
+    surface = climt.SlabSurface()
+    boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="bulk")
+    state = climt.get_default_state([longwave, surface, boundary_layer],
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    state["ocean_mixed_layer_thickness"].values[:] = 2.0
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+    _load("stepping").integrate([longwave, surface], [boundary_layer], state,
+                                climt.UnytTimeDelta(hours=1), 10)
+
+    expected = (
+        SOLAR
+        + float(state["downwelling_longwave_flux_in_air"].values[0, 0, 0])
+        - float(state["upwelling_longwave_flux_in_air"].values[0, 0, 0])
+        - float(state["surface_upward_sensible_heat_flux"].values.ravel()[0])
+        - float(state["surface_upward_latent_heat_flux"].values.ravel()[0])
+    )
+    assert budgets.surface_imbalance(state) == pytest.approx(expected, abs=1e-9)
+
+
+def test_surface_imbalance_works_without_turbulent_fluxes(budgets):
+    """Pages 7 has no boundary layer; the two flux terms are then zero."""
+    components, state = _gray_column()
+    _load("stepping").integrate(components, [], state,
+                                climt.UnytTimeDelta(hours=12), 5)
+    expected = (
+        SOLAR
+        + float(state["downwelling_longwave_flux_in_air"].values[0, 0, 0])
+        - float(state["upwelling_longwave_flux_in_air"].values[0, 0, 0])
+    )
+    assert budgets.surface_imbalance(state) == pytest.approx(expected, abs=1e-9)
+
+
+def test_column_enthalpy_matches_the_conservation_suite_formula(budgets):
+    """Same integral tests/test_conservation.py uses, so page 10 can quote it.
+
+    Cp_dry * T + Lv * q, mass-weighted by dp/g. If these two ever disagree,
+    page 10's enthalpy-conservation claim is guarded by a test measuring
+    something else.
+    """
+    from sympl import get_constant
+
+    components, state = _gray_column()
+    # A gray-longwave column carries no humidity of its own; give it one, so
+    # the latent half of the integral is actually exercised.
+    state["specific_humidity"] = state["air_temperature"].copy(deep=True)
+    state["specific_humidity"].values[:] = 4e-3
+
+    Cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure",
+                       "J/kg/degK")
+    Lv = get_constant("latent_heat_of_condensation", "J/kg")
+    g = get_constant("gravitational_acceleration", "m/s^2")
+    p_int = state["air_pressure_on_interface_levels"].values[:, 0, 0]
+    dp = p_int[:-1] - p_int[1:]
+    T = state["air_temperature"].values[:, 0, 0]
+    q = state["specific_humidity"].values[:, 0, 0]
+    expected = float(np.sum((Cpd * T + Lv * q) * dp / g))
+
+    assert budgets.column_enthalpy(state) == pytest.approx(expected, rel=1e-12)
+
+
+def test_pressure_thickness_is_positive_and_sums_to_the_column(budgets):
+    """Bottom-first layer masses, in Pa, summing to the full column depth."""
+    _components, state = _gray_column()
+    p_int = state["air_pressure_on_interface_levels"].values[:, 0, 0]
+    dp = budgets.pressure_thickness(state)
+
+    assert dp.shape == (28,)
+    assert np.all(dp > 0.0)
+    assert float(np.sum(dp)) == pytest.approx(
+        float(p_int[0] - p_int[-1]), rel=1e-12)
+
+
+def test_evaporation_rate_inverts_the_latent_heat_flux(budgets):
+    """Page 12 closes the moisture budget against this."""
+    from sympl import get_constant
+
+    components, state = _gray_column()
+    state["surface_upward_latent_heat_flux"].values[:] = 80.0
+    Lv = get_constant("latent_heat_of_condensation", "J/kg")
+    assert budgets.evaporation_rate(state) == pytest.approx(
+        80.0 / float(Lv) * 86400.0, rel=1e-12)
+
+
+def test_evaporation_rate_is_zero_without_a_boundary_layer(budgets):
+    """A page with no surface flux component has no latent heat flux at all.
+
+    Missing quantities read as zero rather than raising, so page 10 can print
+    the same budget table as page 12 without branching on its component list.
+    """
+    _components, state = _gray_column()
+    del state["surface_upward_latent_heat_flux"]
+    assert budgets.evaporation_rate(state) == 0.0
+
+
+def test_precipitation_rate_adds_convective_and_grid_scale(budgets):
+    """mm/day from Emanuel plus kg/m^2-per-step from GridScaleCondensation."""
+    _components, state = _gray_column()
+    assert budgets.precipitation_rate(
+        state, climt.UnytTimeDelta(hours=1)) == 0.0
+
+    state["convective_precipitation_rate"] = \
+        state["surface_temperature"].copy(deep=True)
+    state["convective_precipitation_rate"].values[:] = 3.0
+    state["precipitation_amount"] = state["surface_temperature"].copy(deep=True)
+    state["precipitation_amount"].values[:] = 0.5    # kg/m^2 per 1-hour step
+
+    # 0.5 mm per hour is 12 mm/day, on top of the convective 3 mm/day.
+    assert budgets.precipitation_rate(
+        state, climt.UnytTimeDelta(hours=1)) == pytest.approx(15.0, rel=1e-12)
+    assert budgets.precipitation_rate(
+        state, climt.UnytTimeDelta(hours=2)) == pytest.approx(9.0, rel=1e-12)
+
+
+def test_summary_reports_the_five_numbers_the_pages_quote(budgets):
+    components, state = _gray_column()
+    _load("stepping").integrate(components, [], state,
+                                climt.UnytTimeDelta(hours=12), 5)
+    report = budgets.summary(state)
+    assert set(report) == {"surface_temperature", "olr", "absorbed_shortwave",
+                           "toa_imbalance", "surface_imbalance"}
+    assert all(np.isfinite(value) for value in report.values())
+    assert report["absorbed_shortwave"] == pytest.approx(SOLAR)
