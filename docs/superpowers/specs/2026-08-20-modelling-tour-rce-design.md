@@ -300,23 +300,28 @@ page 11's dry one, and the page says why.
 
 - **Knob:** CO₂, and surface temperature.
 - **Craft:** `ImplicitTendencyComponent` — the third and last component protocol,
-  and the one with a trap (see below); precipitation and convective diagnostics;
-  timestep sensitivity, demonstrated rather than asserted.
+  and the warning it provokes (see below); precipitation and convective
+  diagnostics; timestep sensitivity, demonstrated rather than asserted.
 - **Claims to test:** the lapse rate lies between dry and moist adiabatic and near
   the latter through the lower troposphere; precipitation ≈ latent heat flux / L_v
   at equilibrium; the sensitivity value.
 
-**The implicit-component trap, which is page 12's best craft material.**
-`EmanuelConvectionPython` is an `ImplicitTendencyComponent`, and sympl emits a
-warning when one is placed inside a `TendencyStepper`: *"Using an
-ImplicitTendencyComponent in sympl TendencyStepper objects may lead to
-scientifically invalid results."* The reason is real — an implicit component
-computes tendencies *for* a specified timestep and assumes they are applied over
-exactly that timestep, which a multi-stage Adams-Bashforth does not do. Page 12
-therefore does not put it in `AdamsBashforth`. `_tour/stepping.py` gains a third
-component category, applied over its own timestep, and the page explains the
-distinction. Any published example that puts Emanuel inside `AdamsBashforth` is
-doing the thing sympl warns about.
+**A warning the page will print, and should explain rather than obey.**
+`EmanuelConvectionPython` is an `ImplicitTendencyComponent`, so constructing an
+`AdamsBashforth` around it makes sympl emit: *"Using an ImplicitTendencyComponent
+in sympl TendencyStepper objects may lead to scientifically invalid results."*
+**Emanuel goes inside `AdamsBashforth` anyway** — that is how climt has always run
+it, and it works. The warning is generic to the component protocol, not a finding
+about this scheme at these timesteps, and restructuring the loop around it would
+buy nothing and cost the reader a special case to remember.
+
+What the page owes the reader is the sentence explaining it, because the warning
+*will* appear in their browser output on the first run and an unexplained warning
+in a teaching page reads as a bug. One line: this is sympl saying it cannot verify
+that an implicitly-formulated component is safe inside a multi-stage stepper; here
+it is, and page 12's own timestep-sensitivity experiment is where you check that
+claim yourself. `_tour/stepping.py` therefore keeps exactly two component
+categories, tendency and stepper, as page 07 introduced them.
 
 ## Shipped equilibrium states
 
