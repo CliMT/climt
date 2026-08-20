@@ -8,6 +8,8 @@ mirrors the pattern of ``tests/test_live_rce_demo.py``.
 the helpers are loaded by file path.
 """
 import importlib.util
+import os
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +21,13 @@ from climt import CorkLongwaveRadiation, get_default_state, get_grid
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOUR = REPO_ROOT / "docs/modelling-tour/_tour"
+
+
+# The pages do `sys.path.insert(0, "_tour")` and then import helpers by bare
+# name; _tour modules import each other the same way. Match that here so a
+# module loaded by path can still `import assets`.
+if str(TOUR) not in sys.path:
+    sys.path.insert(0, str(TOUR))
 
 
 def _load(name):
@@ -728,3 +737,46 @@ def test_page6_olr_saturates_at_high_surface_temperature(soundings):
     hot = olr(340.0) - olr(330.0)
     assert hot < warm            # the OLR response flattens
     assert olr(340.0) < 400.0    # nowhere near sigma T^4 = 757 W/m2
+
+
+@pytest.fixture
+def assets():
+    return _load("assets")
+
+
+def test_assets_resolve_finds_a_staged_file_from_any_working_directory(
+        assets, monkeypatch, tmp_path):
+    """Resolution must not depend on the caller's working directory.
+
+    In the browser the page's working directory *is* the page directory, so
+    `_data/x.npz` resolves directly. Natively -- a test run, a static-figure
+    render, someone poking at it from the repo root -- it does not, and the
+    fallback is the path relative to this module's own location.
+    """
+    monkeypatch.chdir(tmp_path)
+    found = assets.resolve("earth_spectrum_lw.npz")
+    assert found is not None and os.path.isfile(found)
+
+
+def test_assets_resolve_returns_none_for_a_missing_asset(assets, tmp_path,
+                                                        monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert assets.resolve("no_such_asset.npz") is None
+
+
+def test_assets_locate_falls_back_to_resolve_outside_pyodide(assets, tmp_path,
+                                                             monkeypatch):
+    """`locate` is `resolve` plus a browser-only fetch. Natively they agree."""
+    monkeypatch.chdir(tmp_path)
+    assert assets.locate("earth_spectrum_lw.npz") == \
+        assets.resolve("earth_spectrum_lw.npz")
+    assert assets.locate("no_such_asset.npz") is None
+
+
+def test_assets_honours_a_non_default_base_url(assets, tmp_path, monkeypatch):
+    """Page 11 and 12 pass the same `_data`, but the argument must work."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "elsewhere").mkdir()
+    (tmp_path / "elsewhere" / "probe.npz").write_bytes(b"x")
+    assert assets.resolve("probe.npz", base_url="elsewhere") == \
+        os.path.join("elsewhere", "probe.npz")
