@@ -22,6 +22,9 @@ from climt import CorkLongwaveRadiation, get_default_state, get_grid
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOUR = REPO_ROOT / "docs/modelling-tour/_tour"
 
+SOLAR = 240.0     # prescribed absorbed shortwave at the surface, W m^-2, on
+                  # every tranche 2 page. There is no shortwave component.
+
 
 # The pages do `sys.path.insert(0, "_tour")` and then import helpers by bare
 # name; _tour modules import each other the same way. Match that here so a
@@ -780,3 +783,196 @@ def test_assets_honours_a_non_default_base_url(assets, tmp_path, monkeypatch):
     (tmp_path / "elsewhere" / "probe.npz").write_bytes(b"x")
     assert assets.resolve("probe.npz", base_url="elsewhere") == \
         os.path.join("elsewhere", "probe.npz")
+
+
+# ------------------------------------------------------- _tour/stepping.py
+
+
+@pytest.fixture
+def stepping():
+    return _load("stepping")
+
+
+def _gray_column(nz=28, slab_depth=2.0, table="single_band_gray_lw"):
+    """Page 07's column: gray longwave over a slab, prescribed absorbed solar."""
+    longwave = climt.CorkLongwaveRadiation(optics="correlated_k", table=table)
+    surface = climt.SlabSurface()
+    state = climt.get_default_state([longwave, surface],
+                                    grid_state=get_grid(nx=1, ny=1, nz=nz))
+    state["ocean_mixed_layer_thickness"].values[:] = slab_depth
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+    return [longwave, surface], state
+
+
+def test_integrate_advances_the_clock_and_the_state(stepping):
+    components, state = _gray_column()
+    start = state["time"]
+    T0 = state["air_temperature"].values.copy()
+
+    timestep = climt.UnytTimeDelta(hours=12)
+    out = stepping.integrate(components, [], state, timestep, 10)
+
+    assert out is state                       # stepped in place, and returned
+    assert (out["time"] - start).total_seconds() == pytest.approx(10 * 12 * 3600)
+    assert not np.allclose(out["air_temperature"].values, T0)
+
+
+def test_integrate_keeps_the_flux_diagnostics(stepping):
+    """The update-order gotcha that broke the old demo once already.
+
+    The prognostic state is applied *before* the diagnostics. Reverse it and
+    the stepper carries the longwave fluxes forward at their pre-step value,
+    SlabSurface consumes stale fluxes, and the surface heats without bound.
+    """
+    components, state = _gray_column()
+    stepping.integrate(components, [], state, climt.UnytTimeDelta(hours=12), 20)
+
+    for flux in ("upwelling_longwave_flux_in_air",
+                 "downwelling_longwave_flux_in_air"):
+        values = state[flux].values
+        assert np.all(np.isfinite(values)) and np.all(values >= 0.0)
+    surface = float(state["surface_temperature"].values.ravel()[0])
+    assert 150.0 < surface < 400.0
+
+
+def test_integrate_runs_stepper_components_too(stepping):
+    """Page 08 onward puts a Stepper in the same loop as the tendencies."""
+    components, state = _gray_column()
+    boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="bulk")
+    state = climt.get_default_state(components + [boundary_layer],
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    state["ocean_mixed_layer_thickness"].values[:] = 2.0
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+
+    stepping.integrate(components, [boundary_layer], state,
+                       climt.UnytTimeDelta(hours=1), 10)
+
+    # The stepper's own diagnostics survive into the state.
+    assert "surface_upward_sensible_heat_flux" in state
+    assert np.all(np.isfinite(
+        state["surface_upward_sensible_heat_flux"].values))
+    assert np.all(np.isfinite(state["air_temperature"].values))
+
+
+def test_integrate_rejects_a_plain_timedelta(stepping):
+    """The UnytTimeDelta gotcha, asserted rather than left as prose.
+
+    Page 07 teaches this; if sympl ever stops raising, the page's craft note is
+    wrong and this test is where we find out.
+    """
+    from datetime import timedelta
+
+    components, state = _gray_column()
+    with pytest.raises(Exception) as caught:
+        stepping.integrate(components, [], state, timedelta(hours=12), 1)
+    assert "degK" in str(caught.value) or "unit" in str(caught.value).lower()
+
+
+def test_history_records_every_step_and_n_snapshots(stepping):
+    components, state = _gray_column()
+    state, history = stepping.integrate_with_history(
+        components, [], state, climt.UnytTimeDelta(hours=12), 12,
+        n_snapshots=4)
+
+    assert history["days"].shape == (12,)
+    assert history["olr"].shape == (12,)
+    assert history["surface_temperature"].shape == (12,)
+    assert history["days"][0] == pytest.approx(0.5)     # 12 h, in days
+    assert history["days"][-1] == pytest.approx(6.0)
+    assert len(history["snapshots"]) == 4
+    first, last = history["snapshots"][0], history["snapshots"][-1]
+    assert first["day"] < last["day"]
+    for key in ("T", "H", "U", "D"):
+        assert np.all(np.isfinite(first[key]))
+    assert first["T"].shape == (28,)          # mid levels
+    assert first["U"].shape == (29,)          # interface levels
+
+
+def test_history_olr_matches_the_final_state(stepping):
+    """The recorded series is the state's own diagnostic, not a recomputation."""
+    components, state = _gray_column()
+    state, history = stepping.integrate_with_history(
+        components, [], state, climt.UnytTimeDelta(hours=12), 8)
+
+    assert history["olr"][-1] == pytest.approx(
+        float(state["upwelling_longwave_flux_in_air"].values[-1, 0, 0]))
+    assert history["surface_temperature"][-1] == pytest.approx(
+        float(state["surface_temperature"].values.ravel()[0]))
+
+
+def test_wind_relaxation_holds_the_wind_up(stepping):
+    """Without a momentum source the column spins down; with one it does not.
+
+    Measured without relaxation: the lowest-level wind reaches 0.000 m/s and
+    the equilibrium is independent of how fast it started.
+    """
+    longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
+                                           table="single_band_gray_lw")
+    surface = climt.SlabSurface()
+    boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="bulk",
+                                               roughness_length=1e-3)
+    state = climt.get_default_state([longwave, surface, boundary_layer],
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    state["ocean_mixed_layer_thickness"].values[:] = 2.0
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+
+    relaxation = stepping.wind_relaxation(state, 8.0, timescale_hours=24.0)
+    assert "equilibrium_eastward_wind" in state
+    assert state["eastward_wind_relaxation_timescale"].attrs["units"] == "s"
+
+    stepping.integrate([longwave, surface, relaxation], [boundary_layer],
+                       state, climt.UnytTimeDelta(hours=1), 500)
+
+    lowest = float(state["eastward_wind"].values[0, 0, 0])
+    assert lowest > 1.0, (
+        f"lowest-level wind {lowest:.3f} m/s — the relaxation is not holding "
+        "the wind up against the surface drag")
+    assert lowest < 8.0, (
+        "the lowest level should sit below the target: drag is still acting, "
+        "which is the point")
+
+
+def test_unyt_relaxation_units_are_parseable(stepping):
+    """Pins the reason the subclass exists.
+
+    The stock component's tendency units come from pint and read
+    '1.0 meter / second ** 2', which unyt refuses. If sympl ever emits
+    something unyt can parse, this shim can go -- and this is where we notice.
+    """
+    import sympl as _sympl
+
+    stock = _sympl.RelaxationTendencyComponent("eastward_wind", "m s^-1")
+    assert "**" in stock.tendency_properties["eastward_wind"]["units"], (
+        "sympl's tendency units are no longer pint-formatted — re-check "
+        "whether stepping.UnytRelaxation is still needed")
+
+    ours = stepping.UnytRelaxation("eastward_wind", "m s^-1", "m s^-2")
+    assert ours.tendency_properties["eastward_wind"]["units"] == "m s^-2"
+
+
+def test_draw_evolution_builds_the_four_panel_figure(stepping):
+    """The figure the pages end on: it must draw without a display attached."""
+    import matplotlib
+    matplotlib.use("Agg", force=True)
+    import matplotlib.pyplot as plt
+
+    components, state = _gray_column()
+    state, history = stepping.integrate_with_history(
+        components, [], state, climt.UnytTimeDelta(hours=12), 8, n_snapshots=3)
+
+    plt.close("all")
+    try:
+        with pytest.warns(UserWarning, match="non-interactive"):
+            stepping.draw_evolution(history, state, SOLAR, title="test")
+        figure = plt.gcf()
+        # three profile panels, the OLR panel with its twin, and the colorbar
+        assert len(figure.axes) == 6
+        assert figure.axes[0].get_yscale() == "log"
+    finally:
+        plt.close("all")
