@@ -1004,6 +1004,27 @@ def test_draw_evolution_builds_the_four_panel_figure(stepping):
 # radiative-transfer/09-live-rce.qmd. Same two claims, re-measured on page 7's
 # configuration: UnytBackend rather than DataArrayBackend, nz=28 rather than 18,
 # dt=12 h rather than 2 h, a 2 m slab rather than 5 m.
+#
+# READ THIS BEFORE WRITING PAGE 07.
+#
+# 1. These tests hard-code page 07's five configuration choices, and the page
+#    must declare exactly those: `tour_gray_lw` at `diffusivity_factor=2.0`,
+#    `earth_low_res_lw` at the default 1.66, nz=28, dt=12 h, and a 2 m slab.
+#
+# 2. THE OLR SEPARATION IS A TRANSIENT OF THE 300-STEP RUN, NOT AN EQUILIBRIUM
+#    RESULT. At PAGE7_STEPS the gray column is essentially converged (OLR
+#    234.4 against SOLAR = 240) while the non-grey one is not (OLR 265.8, i.e.
+#    26 W/m^2 above the forcing and still cooling hard). At the true
+#    equilibrium page 07 is heading for, *both* columns radiate 240 W/m^2 and
+#    the OLR gap closes to zero by construction. So page 07 must either run at
+#    PAGE7_STEPS, or add a second test at its own step count, or simply not
+#    quote the OLR gap in its text. The surface-temperature and top-gradient
+#    separations do not have this problem: both strengthen as the non-grey
+#    column converges.
+#
+# 3. Page 07 must NOT reuse the deleted page's "change one string and re-run"
+#    framing. Its two columns differ in table *and* in diffusivity factor
+#    *and* in total optical depth -- it is no longer one string.
 
 PAGE7_STEPS = 300      # far enough to separate the two columns unambiguously;
                        # the page itself runs longer. See the log below.
@@ -1036,13 +1057,15 @@ def _page7_gray_column(nz=28, slab_depth=2.0):
 @pytest.fixture(scope="module")
 def page7_columns():
     """Both of page 7's integrations, run once and shared."""
-    import sympl as _sympl
-
-    _sympl.set_backend(climt.UnytBackend())
+    # Load-bearing: this module-scoped fixture is instantiated before the
+    # function-scoped autouse `_unyt_backend` one.
+    sympl.set_backend(climt.UnytBackend())
     stepping_module = _load("stepping")
     timestep = climt.UnytTimeDelta(hours=12)
 
     gray_components, gray_state = _page7_gray_column()
+    # `_gray_column` is the shared stepping helper, named for its default
+    # table; handed the non-grey table it builds the non-grey column.
     nongrey_components, nongrey_state = _gray_column(
         table=PAGE7_NONGREY_TABLE)
     return {
@@ -1063,15 +1086,18 @@ def _surface_temperature(state):
 
 @pytest.mark.slow
 def test_page7_nongrey_column_is_the_more_efficient_radiator(page7_columns):
-    """Page 7's comparison: spectral windows let the column radiate better.
+    """Page 7's comparison: its two configurations separate, and which way.
 
-    The non-grey table resolves atmospheric windows through which surface
-    emission escapes more or less directly to space. The single-band gray
-    column has no such windows, so at matched conditions the non-grey column
-    emits more to space and runs cooler at the surface.
+    These are page 7's two whole configurations, not one knob: they differ in
+    table, in diffusivity factor (2.0 against the default 1.66) and in total
+    optical depth (the gray table is calibrated to tau_inf = 4). The
+    separation asserted here is their combined effect -- the gray column's
+    opacity dominates the surface gap; spectral windows are one contributor,
+    not the whole of it.
 
     Measured separations at PAGE7_STEPS (see the log): OLR 265.8 vs 234.4
-    W/m^2 and surface 271.9 vs 334.1 K. Thresholds are half of each.
+    W/m^2 and surface 271.9 vs 334.1 K. Thresholds are half of each. NOTE the
+    OLR half of this is transient -- see point 2 of the page-7 comment block.
     """
     gray = page7_columns[PAGE7_GRAY_TABLE]
     nongrey = page7_columns[PAGE7_NONGREY_TABLE]
