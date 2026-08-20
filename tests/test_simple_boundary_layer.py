@@ -591,6 +591,8 @@ def test_boundary_layer_kernel_is_handed_a_plain_float_timestep():
     JIT on, where the bug is invisible. Asserting on the source is the only
     way to keep it from coming back in routine CI.
     """
+    # A fast canary; the real path is exercised by
+    # test_component_runs_with_the_jit_disabled below.
     import inspect
     from climt._components.simple_boundary_layer import component as sbl
 
@@ -623,3 +625,41 @@ def test_bulk_fluxes_run_under_the_unyt_backend():
     assert np.all(np.isfinite(new_state["air_temperature"].values))
     assert np.all(np.isfinite(
         diagnostics["surface_upward_sensible_heat_flux"].values))
+
+
+_NO_NUMBA_REPRO = """
+import numpy as np
+import sympl
+import climt
+
+sympl.set_backend(climt.UnytBackend())
+component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+state = climt.get_default_state(
+    [component], grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+diagnostics, new_state = component(state, climt.UnytTimeDelta(hours=1))
+print(float(
+    np.asarray(diagnostics['surface_upward_sensible_heat_flux']).ravel()[0]))
+"""
+
+
+def test_component_runs_with_the_jit_disabled():
+    """Runs the real Pyodide-shaped path: no numba, UnytBackend, one step.
+
+    numba reads NUMBA_DISABLE_JIT at import time, so this has to happen in a
+    fresh interpreter. Without the float() coercion in array_call the child
+    dies with unyt's UnitOperationError, which is exactly what a reader sees
+    in the browser.
+    """
+    import os
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-c", _NO_NUMBA_REPRO],
+        env={**os.environ, "NUMBA_DISABLE_JIT": "1"},
+        capture_output=True, text=True)
+
+    assert result.returncode == 0, (
+        "SimpleBoundaryLayer failed with the JIT disabled -- it will fail the "
+        "same way in Pyodide, which has no numba at all:\n" + result.stderr)
+    assert np.isfinite(float(result.stdout.strip().splitlines()[-1]))
