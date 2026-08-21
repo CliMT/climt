@@ -124,7 +124,14 @@ def _gsc_kernel_np(T, q, p, p_int, params):
             eps_val = params.Rd / params.Rh2O
             q_sat_k = eps_val * es / (p_col[k] - (1.0 - eps_val) * es)
 
-            if q_col[k] > q_sat_k:
+            # High in the column the Bolton denominator
+            # p - (1 - eps) * es can go negative (at p ~ 20 Pa a warm T
+            # gives es > p), which makes q_sat_k negative. A dry layer
+            # then satisfies q > q_sat_k, condensed_q comes out negative,
+            # and the component *creates* vapour and cools the layer --
+            # a mass and energy violation reported as negative
+            # precipitation. Saturation is only physical where q_sat > 0.
+            if q_sat_k > 0.0 and q_col[k] > q_sat_k:
                 dqsat_dT = params.Lv * q_sat_k / (params.Rh2O * T_col[k] ** 2)
                 condensed_q = (q_col[k] - q_sat_k) / (
                     1.0 + params.Lv / params.Cpd * dqsat_dT

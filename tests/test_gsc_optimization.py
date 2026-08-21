@@ -67,7 +67,9 @@ def test_gsc_precipitation_amount_is_positive_mass_per_area():
     precip = diagnostics['precipitation_amount'].values
 
     # Hand-computed expectation: condensed mass per unit area.
-    g = 9.80665
+    # Read the constant the component reads, so a constants change cannot
+    # fail this test for the wrong reason.
+    g = float(sympl.get_constant('gravitational_acceleration', 'm/s^2'))
     dp = p_int[:-1, ...] - p_int[1:, ...]
     condensed = q_before - outputs['specific_humidity'].values
     expected = np.sum(condensed * dp / g, axis=0)
@@ -80,6 +82,33 @@ def test_gsc_precipitation_amount_is_positive_mass_per_area():
     assert np.all(precip > 1.0)
     assert np.all(precip < 1000.0)
     np.testing.assert_allclose(precip, expected, rtol=1e-10)
+
+
+def test_a_bone_dry_column_neither_rains_nor_gains_water():
+    """A column with no water in it condenses nothing. Exactly nothing.
+
+    High in the column the Bolton denominator ``p - (1 - eps) * es`` goes
+    negative -- at climt's default top-of-model 20 Pa a 290 K layer has
+    ``es`` far above ``p`` -- so ``q_sat`` comes out negative and a dry layer
+    reads as supersaturated. Without the ``q_sat > 0`` guard the component
+    then *creates* ~6 g/kg of vapour in the top layer, cools it, and reports
+    a negative ``precipitation_amount``: mass and energy from nowhere.
+    """
+    grid = get_grid(nx=1, ny=1, nz=28)
+
+    sympl.set_backend(sympl.DataArrayBackend())
+
+    gsc = GridScaleCondensation()
+    state = get_default_state([gsc], grid_state=grid)
+    state['specific_humidity'].values[:] = 0.0
+
+    T_before = state['air_temperature'].values.copy()
+
+    diagnostics, outputs = gsc(state, timedelta(minutes=10))
+
+    assert np.all(diagnostics['precipitation_amount'].values == 0.0)
+    assert np.all(outputs['specific_humidity'].values == 0.0)
+    np.testing.assert_array_equal(outputs['air_temperature'].values, T_before)
 
 
 if __name__ == "__main__":
