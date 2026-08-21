@@ -1355,3 +1355,114 @@ def test_precipitation_rate_from_a_real_grid_scale_condensation(budgets):
     # An hour of condensing a supersaturated boundary layer is a heavy but
     # physical rain rate; a factor-of-1000 units error cannot land in here.
     assert 1e2 < rate < 1e5
+
+
+@pytest.fixture
+def states():
+    return _load("states")
+
+
+def _page11_components():
+    """Page 11's exact component list, used by the round-trip tests."""
+    longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
+                                           table="earth_low_res_lw")
+    surface = climt.SlabSurface()
+    boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="bulk")
+    adjustment = climt.DryConvectiveAdjustment()
+    return [longwave, surface, boundary_layer, adjustment]
+
+
+def test_state_round_trips_values_dims_and_units(states, tmp_path):
+    """Save a state, load it back, and get the same state.
+
+    Values, dimension names and units all have to survive. Values alone is not
+    enough: a page that reloads a state with the right numbers under the wrong
+    dims produces a plausible, wrong figure.
+    """
+    components = _page11_components()
+    state = climt.get_default_state(components,
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    state["air_temperature"].values[:] = np.linspace(288.0, 200.0, 28
+                                                     ).reshape(28, 1, 1)
+    state["surface_temperature"].values[:] = 291.5
+    state["specific_humidity"].values[:] = 3e-3
+
+    path = states.save(str(tmp_path / "probe.npz"), state,
+                       dict(note="round-trip probe"))
+    reloaded, provenance = states.load(
+        path, _page11_components(), grid_state=get_grid(nx=1, ny=1, nz=28))
+
+    assert provenance["note"] == "round-trip probe"
+    for name in ("air_temperature", "surface_temperature", "specific_humidity",
+                 "air_pressure", "ocean_mixed_layer_thickness"):
+        np.testing.assert_allclose(reloaded[name].values, state[name].values)
+        assert tuple(reloaded[name].dims) == tuple(state[name].dims)
+        assert reloaded[name].attrs["units"] == state[name].attrs["units"]
+
+
+def test_load_records_the_climt_version_and_the_configuration(states, tmp_path):
+    """Provenance travels with the state or the state means nothing."""
+    components = _page11_components()
+    state = climt.get_default_state(components,
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    path = states.save(str(tmp_path / "probe.npz"), state,
+                       dict(table="earth_low_res_lw", nz=28, dt_hours=1.0,
+                            n_steps=1700, slab_depth_m=2.0, solar=SOLAR,
+                            co2_ppm=330.0,
+                            components=["CorkLongwaveRadiation", "SlabSurface"],
+                            toa_imbalance=0.02, surface_imbalance=-0.01))
+    _, provenance = states.load(path, _page11_components(),
+                                grid_state=get_grid(nx=1, ny=1, nz=28))
+
+    assert provenance["climt_version"] == climt.__version__
+    assert provenance["saved_at"]                      # ISO timestamp, non-empty
+    assert provenance["table"] == "earth_low_res_lw"
+    assert provenance["nz"] == 28
+    assert provenance["components"][0] == "CorkLongwaveRadiation"
+
+
+def test_load_fails_loudly_on_a_dimension_mismatch(states, tmp_path):
+    """The whole reason load rebuilds instead of unpickling.
+
+    A state saved at nz=28 must not quietly load into an nz=20 grid.
+    """
+    components = _page11_components()
+    state = climt.get_default_state(components,
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    path = states.save(str(tmp_path / "probe.npz"), state, {})
+
+    with pytest.raises(ValueError, match="air_temperature"):
+        states.load(path, _page11_components(),
+                    grid_state=get_grid(nx=1, ny=1, nz=20))
+
+
+def test_load_fails_loudly_on_a_missing_quantity(states, tmp_path):
+    """A component list that needs something the file does not carry."""
+    longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
+                                           table="earth_low_res_lw")
+    thin_state = climt.get_default_state(
+        [longwave], grid_state=get_grid(nx=1, ny=1, nz=28))
+    path = states.save(str(tmp_path / "thin.npz"), thin_state, {})
+
+    with pytest.raises(ValueError, match="not in the saved state"):
+        states.load(path, _page11_components(),
+                    grid_state=get_grid(nx=1, ny=1, nz=28))
+
+
+def test_load_returns_none_for_a_missing_asset(states):
+    """A page whose data asset did not stage degrades, it does not crash."""
+    assert states.load("no_such_equilibrium.npz", _page11_components(),
+                       grid_state=get_grid(nx=1, ny=1, nz=28)) == (None, None)
+
+
+def test_describe_names_the_configuration(states, tmp_path):
+    text = states.describe(dict(
+        climt_version="0.31.0", saved_at="2026-08-20T10:00:00",
+        table="earth_low_res_lw", nz=28, dt_hours=1.0, n_steps=1700,
+        slab_depth_m=2.0, solar=240.0, co2_ppm=330.0,
+        wind_m_s=5.0, wind_timescale_hours=24.0, roughness_length_m=1e-3,
+        components=["CorkLongwaveRadiation", "SlabSurface"],
+        toa_imbalance=0.02, surface_imbalance=-0.01))
+    for token in ("0.31.0", "earth_low_res_lw", "28", "1700", "240", "330",
+                  "5.0 m/s"):
+        assert token in text
