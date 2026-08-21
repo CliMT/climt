@@ -1215,7 +1215,7 @@ def test_surface_imbalance_counts_every_term(budgets):
 
 
 def test_surface_imbalance_works_without_turbulent_fluxes(budgets):
-    """Pages 7 has no boundary layer; the two flux terms are then zero."""
+    """Page 7 has no boundary layer; the two flux terms are then zero."""
     components, state = _gray_column()
     _load("stepping").integrate(components, [], state,
                                 climt.UnytTimeDelta(hours=12), 5)
@@ -1317,3 +1317,41 @@ def test_summary_reports_the_five_numbers_the_pages_quote(budgets):
                            "toa_imbalance", "surface_imbalance"}
     assert all(np.isfinite(value) for value in report.values())
     assert report["absorbed_shortwave"] == pytest.approx(SOLAR)
+
+
+def test_precipitation_rate_from_a_real_grid_scale_condensation(budgets):
+    """The loop the hand-set-key test leaves open: run the real component.
+
+    ``GridScaleCondensation`` declares ``precipitation_amount`` in kg m^-2,
+    and ``precipitation_rate`` trusts that label. This steps the real
+    component on a supersaturated column and checks the mm/day it produces
+    against the condensed water mass computed by hand.
+    """
+    condensation = climt.GridScaleCondensation()
+    state = climt.get_default_state([condensation],
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    state["air_temperature"].values[:] = 280.0
+    state["specific_humidity"].values[:] = 0.0
+    state["specific_humidity"].values[:5] = 0.03
+
+    q_before = state["specific_humidity"].values.copy()
+    p_int = state["air_pressure_on_interface_levels"].values.copy()
+
+    timestep = climt.UnytTimeDelta(hours=1)
+    diagnostics, outputs = condensation(state, timestep)
+    state.update(diagnostics)
+
+    # Hand-computed: condensed specific humidity times layer mass dp/g.
+    dp = np.asarray(p_int[:-1, ...] - p_int[1:, ...])
+    condensed = np.asarray(q_before - outputs["specific_humidity"].values)
+    expected_kg_per_m2 = float(np.sum(condensed * dp / 9.80665))
+    expected_mm_per_day = expected_kg_per_m2 * 86400.0 / float(
+        timestep.total_seconds())
+
+    rate = budgets.precipitation_rate(state, timestep)
+
+    assert expected_kg_per_m2 > 0
+    assert rate == pytest.approx(expected_mm_per_day, rel=1e-10)
+    # An hour of condensing a supersaturated boundary layer is a heavy but
+    # physical rain rate; a factor-of-1000 units error cannot land in here.
+    assert 1e2 < rate < 1e5

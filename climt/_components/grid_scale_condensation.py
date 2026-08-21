@@ -23,7 +23,6 @@ class GSCParams(NamedTuple):
     Rd: float
     Rh2O: float
     g: float
-    rhow: float
 
 
 class GridScaleCondensation(Stepper):
@@ -74,14 +73,12 @@ class GridScaleCondensation(Stepper):
         self._Rd = get_constant("gas_constant_of_dry_air", "J/kg/degK")
         self._Rh2O = get_constant("gas_constant_of_vapor_phase", "J/kg/degK")
         self._g = get_constant("gravitational_acceleration", "m/s^2")
-        self._rhow = get_constant("density_of_liquid_phase", "kg/m^3")
         self._params = GSCParams(
             Cpd=float(self._Cpd),
             Lv=float(self._Lv),
             Rd=float(self._Rd),
             Rh2O=float(self._Rh2O),
             g=float(self._g),
-            rhow=float(self._rhow),
         )
 
     def array_call(self, state, timestep):
@@ -136,8 +133,13 @@ def _gsc_kernel_np(T, q, p, p_int, params):
                 new_q[k, i] = q_col[k] - condensed_q
                 new_T[k, i] = T_col[k] + params.Lv / params.Cpd * condensed_q
 
-                dp = p_int_col[k + 1] - p_int_col[k]
-                mass = dp / (params.g * params.rhow)
+                # Interface pressures are bottom-first, so the layer
+                # thickness in pressure is p_int[k] - p_int[k + 1] > 0.
+                # dp / g is the layer mass per unit area in kg m^-2, which
+                # makes col_precip an accumulation in kg m^-2 (== mm of
+                # liquid water), matching the declared diagnostic units.
+                dp = p_int_col[k] - p_int_col[k + 1]
+                mass = dp / params.g
                 col_precip += condensed_q * mass
 
         precip[i] = col_precip
