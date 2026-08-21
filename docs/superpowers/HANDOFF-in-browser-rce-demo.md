@@ -1,5 +1,24 @@
 # Handoff — in-browser non-grey RCE demo
 
+> **SUPERSEDED (2026-08-21).** The live-RCE demo this document hands off no
+> longer exists as a standalone page: it was retired into the *Modelling Tour*
+> tranche (`docs/modelling-tour/`, plan
+> `docs/superpowers/plans/2026-08-20-modelling-tour-rce.md`) by commit
+> `a7c2e8c`. Everything below is kept as the record of how the in-browser
+> approach was worked out — the gotchas section in particular is still live
+> knowledge — but the paths it names are gone. Where the work went:
+>
+> | This document says | Now |
+> | --- | --- |
+> | `docs/radiative-transfer/09-live-rce.qmd` | the `docs/modelling-tour/` pages |
+> | `docs/_includes/climt-live-setup.qmd` | `docs/_includes/climt-live-boot.qmd` (the site's single boot include) |
+> | `docs/radiative-transfer/_live/rce_helpers.py` (`integrate_to_equilibrium`) | `docs/modelling-tour/_tour/stepping.py` (`integrate`), with `_tour/budgets.py` deciding what "equilibrium" means |
+> | `docs/radiative-transfer/_live/serve_wheel.py` | `scripts/serve_wheel.py` |
+> | `tests/test_live_rce_demo.py` | `tests/test_modelling_tour.py` |
+>
+> The "flux-coupling update order" gotcha below is now enforced by
+> `stepping.integrate` and guarded by a test in `tests/test_modelling_tour.py`.
+
 **Branch:** `feature/pyodide-cork-prep` (PR #217 open; local commits **unpushed**).
 **Env:** run all Python/pytest in the `climt` conda env.
 **Plan/spec:** `docs/superpowers/plans/2026-07-19-in-browser-nongrey-rce-demo.md`.
