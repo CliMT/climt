@@ -26,7 +26,11 @@ a ``SOLAR`` it did not actually use.
 import numpy as np
 from sympl import get_constant
 
-DAY_SECONDS = 86400.0
+# Defined once, in the module that owns the time loop. A page that imports
+# ``budgets`` must therefore also list ``_tour/stepping.py`` in its
+# ``pyodide: resources:`` -- every page that quotes a budget steps a column
+# anyway.
+from stepping import DAY_SECONDS
 
 
 def _column(state, name):

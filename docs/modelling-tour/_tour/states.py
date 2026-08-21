@@ -56,7 +56,15 @@ def save(path, state, provenance):
 
     meta = dict(provenance)
     meta["climt_version"] = climt.__version__
-    meta["saved_at"] = datetime.datetime.utcnow().isoformat(timespec="seconds")
+    # `datetime.utcnow()` is deprecated from Python 3.12 (which CI builds), so
+    # ask for UTC explicitly. The tzinfo is then dropped again so the stored
+    # string keeps its naive-UTC shape, "2026-08-20T10:00:00": already-saved
+    # states and `describe` both print it verbatim, and an appended "+00:00"
+    # would make the shipped equilibria disagree with the ones a reader saves.
+    meta["saved_at"] = (
+        datetime.datetime.now(datetime.timezone.utc)
+        .replace(tzinfo=None)
+        .isoformat(timespec="seconds"))
 
     arrays = {}
     layout = {}

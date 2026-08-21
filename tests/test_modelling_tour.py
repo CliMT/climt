@@ -26,10 +26,16 @@ SOLAR = 240.0     # prescribed absorbed shortwave at the surface, W m^-2, on
 
 
 # The pages do `sys.path.insert(0, "_tour")` and then import helpers by bare
-# name; _tour modules import each other the same way. Match that here so a
-# module loaded by path can still `import assets`.
+# name; _tour modules import each other the same way. Make that work here too,
+# so a module loaded by path can still `import assets`.
+#
+# Appended, not inserted at 0: this stays on sys.path for the whole pytest
+# session, and `_tour/tables.py` would otherwise shadow PyTables (import name
+# `tables`, a common transitive dependency of the pandas/xarray HDF5 stack)
+# for every test that runs after this file is collected. Appending still
+# resolves the bare `import assets`, while a real installed package wins.
 if str(TOUR) not in sys.path:
-    sys.path.insert(0, str(TOUR))
+    sys.path.append(str(TOUR))
 
 
 def _load(name):
@@ -1056,24 +1062,34 @@ def _page7_gray_column(nz=28, slab_depth=2.0):
 
 @pytest.fixture(scope="module")
 def page7_columns():
-    """Both of page 7's integrations, run once and shared."""
-    # Load-bearing: this module-scoped fixture is instantiated before the
-    # function-scoped autouse `_unyt_backend` one.
-    sympl.set_backend(climt.UnytBackend())
-    stepping_module = _load("stepping")
-    timestep = climt.UnytTimeDelta(hours=12)
+    """Both of page 7's integrations, run once and shared.
 
-    gray_components, gray_state = _page7_gray_column()
-    # `_gray_column` is the shared stepping helper, named for its default
-    # table; handed the non-grey table it builds the non-grey column.
-    nongrey_components, nongrey_state = _gray_column(
-        table=PAGE7_NONGREY_TABLE)
-    return {
-        PAGE7_GRAY_TABLE: stepping_module.integrate(
-            gray_components, [], gray_state, timestep, PAGE7_STEPS),
-        PAGE7_NONGREY_TABLE: stepping_module.integrate(
-            nongrey_components, [], nongrey_state, timestep, PAGE7_STEPS),
-    }
+    Restores the backend itself. Being module-scoped, this fixture is set up
+    before the function-scoped autouse ones -- including
+    ``conftest.reset_sympl_backend``, which would otherwise capture the
+    ``UnytBackend`` set here as its "saved" value and restore *to* it for the
+    remainder of the session, leaking into every later file that sets no
+    backend of its own.
+    """
+    saved_backend = sympl.get_backend()
+    sympl.set_backend(climt.UnytBackend())
+    try:
+        stepping_module = _load("stepping")
+        timestep = climt.UnytTimeDelta(hours=12)
+
+        gray_components, gray_state = _page7_gray_column()
+        # `_gray_column` is the shared stepping helper, named for its default
+        # table; handed the non-grey table it builds the non-grey column.
+        nongrey_components, nongrey_state = _gray_column(
+            table=PAGE7_NONGREY_TABLE)
+        yield {
+            PAGE7_GRAY_TABLE: stepping_module.integrate(
+                gray_components, [], gray_state, timestep, PAGE7_STEPS),
+            PAGE7_NONGREY_TABLE: stepping_module.integrate(
+                nongrey_components, [], nongrey_state, timestep, PAGE7_STEPS),
+        }
+    finally:
+        sympl.set_backend(saved_backend)
 
 
 def _olr(state):
@@ -1341,10 +1357,13 @@ def test_precipitation_rate_from_a_real_grid_scale_condensation(budgets):
     diagnostics, outputs = condensation(state, timestep)
     state.update(diagnostics)
 
-    # Hand-computed: condensed specific humidity times layer mass dp/g.
+    # Hand-computed: condensed specific humidity times layer mass dp/g. Read
+    # the constant the component reads, so a constants change cannot fail this
+    # test for the wrong reason.
+    g = float(sympl.get_constant("gravitational_acceleration", "m/s^2"))
     dp = np.asarray(p_int[:-1, ...] - p_int[1:, ...])
     condensed = np.asarray(q_before - outputs["specific_humidity"].values)
-    expected_kg_per_m2 = float(np.sum(condensed * dp / 9.80665))
+    expected_kg_per_m2 = float(np.sum(condensed * dp / g))
     expected_mm_per_day = expected_kg_per_m2 * 86400.0 / float(
         timestep.total_seconds())
 
@@ -1466,3 +1485,123 @@ def test_describe_names_the_configuration(states, tmp_path):
     for token in ("0.31.0", "earth_low_res_lw", "28", "1700", "240", "330",
                   "5.0 m/s"):
         assert token in text
+
+
+# --- The browser constraint, checked ----------------------------------------
+
+_NO_NUMBA_TOUR = '''
+import sys
+sys.path.append({tour!r})
+
+import numpy as np
+import sympl
+import climt
+
+import budgets
+import states
+import stepping
+
+sympl.set_backend(climt.UnytBackend())
+
+longwave = climt.CorkLongwaveRadiation(
+    optics="correlated_k", table="tour_gray_lw", diffusivity_factor=2.0)
+surface = climt.SlabSurface()
+boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes="bulk")
+adjustment = climt.DryConvectiveAdjustment()
+condensation = climt.GridScaleCondensation()
+
+
+def build():
+    return [climt.CorkLongwaveRadiation(optics="correlated_k",
+                                        table="tour_gray_lw",
+                                        diffusivity_factor=2.0),
+            climt.SlabSurface(),
+            climt.SimpleBoundaryLayer(surface_fluxes="bulk"),
+            climt.DryConvectiveAdjustment(),
+            climt.GridScaleCondensation()]
+
+
+grid = climt.get_grid(nx=1, ny=1, nz=28)
+state = climt.get_default_state(
+    [longwave, surface, boundary_layer, adjustment, condensation],
+    grid_state=grid)
+state["ocean_mixed_layer_thickness"].values[:] = 2.0
+state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+state["downwelling_shortwave_flux_in_air"].values[0, ...] = {solar!r}
+state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+state["air_temperature"].values[:] = np.linspace(
+    288.0, 200.0, 28).reshape(28, 1, 1)
+state["specific_humidity"].values[:] = 3e-3
+
+stepping.integrate([longwave, surface],
+                   [boundary_layer, adjustment, condensation],
+                   state, climt.UnytTimeDelta(hours=1), 3)
+
+summary = budgets.summary(state)
+path = states.save({path!r}, state, dict(table="tour_gray_lw", nz=28))
+reloaded, provenance = states.load(
+    path, build(), grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+assert provenance["nz"] == 28
+np.testing.assert_allclose(reloaded["air_temperature"].values,
+                           state["air_temperature"].values)
+print(summary["toa_imbalance"], summary["surface_temperature"])
+'''
+
+
+def test_the_tour_helpers_run_with_the_jit_disabled(tmp_path):
+    """The tranche's own code, on the path Pyodide will take: no numba.
+
+    Every page runs this code in a browser where numba does not exist, so the
+    kernels execute as plain Python and nothing strips units off the timestep
+    on the way in. numba reads NUMBA_DISABLE_JIT at import time, so this has
+    to be a fresh interpreter. It steps a real column through
+    ``stepping.integrate`` with all five browser-safe component kinds, reads
+    ``budgets.summary`` off the result, and round-trips it through
+    ``states.save``/``states.load``.
+    """
+    import os
+    import subprocess
+
+    script = _NO_NUMBA_TOUR.format(
+        tour=str(TOUR), solar=SOLAR, path=str(tmp_path / "nonumba.npz"))
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        env={**os.environ, "NUMBA_DISABLE_JIT": "1"},
+        capture_output=True, text=True)
+
+    assert result.returncode == 0, (
+        "the _tour helpers failed with the JIT disabled -- they will fail the "
+        "same way in Pyodide, which has no numba at all:\n" + result.stderr)
+    last_line = result.stdout.strip().splitlines()[-1]
+    imbalance, surface_temperature = (float(v) for v in last_line.split())
+    assert np.isfinite(imbalance)
+    assert 150.0 < surface_temperature < 400.0
+
+
+def test_saved_at_is_naive_utc_and_not_a_deprecated_call(states, tmp_path):
+    """`saved_at` stays "YYYY-MM-DDTHH:MM:SS", with no deprecation warning.
+
+    ``datetime.utcnow()`` is deprecated from Python 3.12, which CI builds, so
+    ``save`` asks for UTC explicitly -- but the aware datetime it gets back
+    would print a "+00:00" offset that the shipped equilibria and
+    ``describe`` do not carry. The tz is dropped again, and this pins that.
+    """
+    import datetime
+    import warnings
+
+    state = climt.get_default_state(_page11_components(),
+                                    grid_state=get_grid(nx=1, ny=1, nz=28))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        path = states.save(str(tmp_path / "stamp.npz"), state, {})
+
+    _, provenance = states.load(path, _page11_components(),
+                                grid_state=get_grid(nx=1, ny=1, nz=28))
+    stamp = provenance["saved_at"]
+
+    parsed = datetime.datetime.fromisoformat(stamp)
+    assert parsed.tzinfo is None, stamp
+    assert stamp == parsed.isoformat(timespec="seconds")
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    assert abs((now - parsed).total_seconds()) < 600, (
+        "saved_at should be UTC, not local time: " + stamp)
