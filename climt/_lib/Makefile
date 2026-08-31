@@ -6,6 +6,7 @@ EMAN_DIR = emanuel
 RRTMG_LW_DIR = rrtmg_lw
 RRTMG_SW_DIR = rrtmg_sw
 DCMIP_DIR=dcmip
+SOCRATES_DIR=socrates
 
 FFTW_GZ = fftw-3.3.6-pl2.tar.gz
 SHT_GZ = shtns-2.7-r557.tar.gz
@@ -27,7 +28,7 @@ ifeq ($(CLIMT_ARCH),Windows)
 endif
 
 
-all: simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip
+all: simple_physics_lib emanuel_lib rrtmg_lw_lib rrtmg_sw_lib libdcmip socrates_lib
 
 # Simple Physics Configuration
 
@@ -64,6 +65,12 @@ libdcmip: $(CLIMT_ARCH)/libdcmip.a
 $(CLIMT_ARCH)/libdcmip.a: $(DCMIP_DIR)/*.f90
 	cd $(DCMIP_DIR); make; cp libdcmip.a $(LIB_DIR); touch ../../_components/dcmip/_dcmip.pyx
 
+# Socrates Configuration
+
+socrates_lib: $(CLIMT_ARCH)/librunes.a
+
+$(CLIMT_ARCH)/librunes.a: $(SOCRATES_DIR)/socrates_2511.tar.xz socrates/patchfiles/*.f90
+	cd socrates; make CLIMT_ARCH=$(CLIMT_ARCH)
 
 
 clean:
@@ -75,6 +82,7 @@ clean:
 	cd $(RRTMG_LW_DIR); make clean
 	cd $(RRTMG_SW_DIR); make clean
 	cd $(DCMIP_DIR); make clean
+	cd $(SOCRATES_DIR); make clean CLIMT_ARCH=$(CLIMT_ARCH)
 
 clean_libs:
 	if [ -d  include ]; then rm -Rf include; fi

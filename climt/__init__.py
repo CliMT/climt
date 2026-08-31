@@ -26,6 +26,10 @@ from ._components import (
     SimpleBoundaryLayer,
     SimplePhysics,
     SlabSurface,
+    SimCloud,
+    SimCloudCondensation,
+    SocratesLongwave,
+    SocratesShortwave,
 )
 from ._core import (
     ConstantNotFoundError,
@@ -81,6 +85,8 @@ __all__ = (
     RRTMGShortwave,
     CorkLongwaveRadiation,
     CorkShortwaveRadiation,
+    SocratesLongwave,
+    SocratesShortwave,
     EmanuelConvection,
     EmanuelConvectionPython,
     SlabSurface,
@@ -95,6 +101,8 @@ __all__ = (
     LandIce,
     DataOcean,
     SimpleBoundaryLayer,
+    SimCloud,
+    SimCloudCondensation,
 )
 
 

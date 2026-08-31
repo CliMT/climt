@@ -1,0 +1,138 @@
+#! /bin/bash
+#
+# Script to fit droplet spectra for SES spectral configurations.
+#
+
+#--- LW --------------------------------------------------------------
+
+prep_spec <<EOF > /dev/null
+sp_lw_ses
+8
+1
+1
+0
+0
+m
+4.000000000E-05  2.000000000E-02
+1.923076923E-05  4.000000000E-05
+1.250000000E-05  1.923076923E-05
+1.020408163E-05  1.250000000E-05
+9.090909091E-06  1.020408163E-05
+7.142857143E-06  9.090909091E-06
+5.000000000E-06  7.142857143E-06
+2.500000000E-06  5.000000000E-06
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+n
+6
+n
+p
+150 330
+4
+-1
+EOF
+
+specfile="sp_lw_ses"
+fitfile="fit_lw_ses"
+monfile="mon_lw_ses"
+avgfile="avg_lw_ses"
+
+rm -f $fitfile $monfile $avgfile
+Cscatter_average -s $specfile -P 1 \
+   -t -p 250 \
+   -f 5 $fitfile $monfile 1.e3 \
+   -a $avgfile \
+   scatter_drop_type5
+
+prep_spec <<EOF2 > /dev/null
+sp_lw_ses
+a
+10
+5
+$fitfile
+1.50000E-06 5.00000E-05
+-1
+EOF2
+
+#--- SW --------------------------------------------------------------
+
+prep_spec <<EOF > /dev/null
+sp_sw_ses
+9
+1
+1
+0
+0
+m
+2.000000000E-07     4.545454545E-07
+4.545454545E-07     5.000000000E-07
+5.000000000E-07     6.250000000E-07
+6.250000000E-07     7.007708479E-07
+7.007708479E-07     8.333333333E-07
+8.333333333E-07     1.176470588E-06
+1.176470588E-06     1.666666667E-06
+1.666666667E-06     2.500000000E-06
+2.500000000E-06     5.000000000E-06
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+n
+2
+n
+$RAD_DATA/solar/kurucz_95_reduced
+n
+3
+a
+-1
+EOF
+
+specfile="sp_sw_ses"
+fitfile="fit_sw_ses"
+monfile="mon_sw_ses"
+avgfile="avg_sw_ses"
+
+rm -f $fitfile $monfile $avgfile
+Cscatter_average -s $specfile -P 1 \
+   -t -S $RAD_DATA/solar/kurucz_95_reduced \
+   -f 5 $fitfile $monfile 1.e3 \
+   -a $avgfile \
+   scatter_drop_type5
+
+prep_spec <<EOF2 > /dev/null
+sp_sw_ses
+a
+10
+5
+$fitfile
+2.00000E-06 5.00000E-05
+-1
+EOF2

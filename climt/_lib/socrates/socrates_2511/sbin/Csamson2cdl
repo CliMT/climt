@@ -1,0 +1,28 @@
+#! /bin/bash
+#
+# Script to run the code to convert SAMSON files to CDL.
+#
+touch $LOCK_FILE
+#
+# Process options
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -n) OUTNAME=$2 ; shift 2 ;;
+      -u) OUTUNIT=$2 ; shift 2 ;;
+      -L) OUTLONG=$2 ; shift 2 ;;
+      -*) echo "Invalid option" ; exit 1 ;;
+      *) INPUT=$1 ; shift ;;
+   esac
+done
+cat > /tmp/s2c.$$ << EOF
+$INPUT
+$OUTFILE
+$OUTNAME
+$OUTUNIT
+$OUTLONG
+EOF
+samson2cdl < /tmp/s2c.$$ > /dev/null
+rm -f /tmp/s2c.$$
+rm -f $LOCK_FILE

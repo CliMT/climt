@@ -1,0 +1,16 @@
+#! /bin/bash
+#
+# SCRIPT TO GENERATE MIE SCATTERING DATA FOR ONE EFFECTIVE RADIUS ACROSS
+# ONE OF ROCKEL'S DISTRIBUTIONS.
+#
+
+for NE in 0.01 0.1 0.175 0.25
+do 
+echo "Effective Radius and Variance: ${1} $NE"
+DIST=`./convert $1 $NE`
+#echo $DIST
+Cscatter -w $RAD_DATA/cloud/wl_cloud \
+         -r $RAD_DATA/cloud/refract_methane_ice \
+         -l -M -o Iss${1}_${NE} \
+         -t 3 -n 1.e8 -m 1.0 $DIST
+done

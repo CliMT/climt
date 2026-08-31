@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+#   Script to run case 27.
+#
+resrm laer27
+Cl_run_cdl -s $RAD_DATA/spectra/hadcm3/sp_lw_hadcm3 -R 1 8 -I \
+   -g 2 -c -t 12 -v 13 -C 5 -B laer27
+diff -q laer27.hrts laer27_ref.hrts || exit 1
+resrm laer27
+echo OK
+exit 0

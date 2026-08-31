@@ -1,0 +1,107 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Testing code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+err=0
+
+echo ---
+echo "Testing simple calls to the runes interface:"
+cd runes
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing the runes_nc driver using LFRic diagnostic input:"
+cd runes_nc
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing raw_input to convert column data into input files:"
+cd raw_input
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdl for ICRCCM case 27 (LW) on AER profiles:"
+cd aer_cmp
+./run27 || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdf on multiple profiles:"
+cd netcdf/7460_28
+./run_me || err=1
+cd ../../
+
+echo ---
+echo "Test Cl_run_cdf for CIRC case 6"
+echo "(HadGEM, GA7, SES and 300/260 band spectral files):"
+cd netcdf/CIRC_case6
+./run_me || err=1
+echo ---
+echo "Testing pseudo-spherical geometry code:"
+./run_me_sph || err=1
+cd ../../
+
+echo ---
+echo "Testing photolysis and non-LTE code:"
+cd sp_uv
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Test McICA code (create mcica_data file and run on CRM profile):"
+cd netcdf/mcica
+./run_me || err=1
+cd ../../
+
+echo ---
+echo "Testing creation of aerosol properties for a spectral file:"
+cd prep_data
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing generating and running with prescribed optical properties:"
+cd prsc
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing Crun_mono to calculate radiances:"
+cd rc3
+./run_rc3 || err=1
+cd ../
+
+echo ---
+echo "Testing Ccorr_k to generate correlated-k coefficients:"
+cd corr_k
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing flexchem chemistry:"
+cd flexchem
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing CDL scripts:"
+cd cdl
+./run_me || err=1
+cd ../
+
+echo ---
+if [ $err -gt 0 ] ; then
+  echo "Some tests failed."
+  exit 1
+else
+  echo "All passed."
+  exit 0
+fi

@@ -1,0 +1,12 @@
+#
+# Full list of general programs
+#
+TARGET_GEN: prep_spec tidy_90
+
+prep_spec: prep_spec.o radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o prep_spec prep_spec.o \
+	   radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+tidy_90: tidy_90.o radlib.$(LIBSUFFIX)
+	$(LINK) -o tidy_90 tidy_90.o radlib.$(LIBSUFFIX)
+

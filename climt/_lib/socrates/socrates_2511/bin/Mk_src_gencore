@@ -1,0 +1,5 @@
+SOURCE90_GENCORE = interp1d.f90 \
+		read_spectrum.f90 \
+		set_n_cloud_parameter.f90 \
+		spline_evaluate.f90 \
+		spline_fit.f90

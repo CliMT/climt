@@ -1,0 +1,79 @@
+.TH Cinterp 1 "12-2-2007"
+.SH NAME
+Cinterp \- Interpolate a CDL/netCDF input field on to a new grid
+.SH USAGE
+Cinterp \fB\-g\fR \fIgrid\-file\fR \fB\-o\fR \fIoutput\-file\fR
+        \fB\-n\fR \fIvariable\-name\fR \fB\-u\fR \fIvariable\-units\fR
+        \fB\-L\fR \fIvariable\-long\-name\fR
+        \fB\-lnn | \-lgn | \-lng | \-lgg | \-cnn | \-cgn | \-cng | \-cgg\fR
+        \fIinput-file\fR
+
+
+.SH DESCRIPTION
+A script to interpolate a field to the pressure levels given by a \fIgrid\-file\fR. Input files can be in CDL or netCDF format. The variable found in the \fIgrid\-file\fR will not matter as only the pressure levels will be used. The type of interpolation must be specified from 1 of 8 options.
+
+.SH OPTIONS
+
+.LP
+
+.TP
+\fB\-g\fR \fIgrid\-file\fR 
+The file name of a CDL/netCDF file containing the required pressure levels.
+
+.TP
+\fB\-o\fR \fIoutput\-file\fR 
+The file name for the output CDL/netCDF file. Files will not be overwritten if they already exist.
+
+.TP
+\fB\-n\fR \fIvariable\-name\fR
+Name of the output field (same as file suffix).
+
+.TP
+\fB\-u\fR \fIvariable\-units\fR
+Units of the output field.
+
+.TP
+\fB\-L\fR \fIvariable\-long\-name\fR
+Long name of the output field (up to 40 characters).
+
+.TP
+\fB\-lnn\fR
+Interpolate the fields linearly in the pressure.
+
+.TP
+\fB\-lgn\fR
+Interpolate the fields linearly in the logarithm of the pressure.
+
+.TP
+\fB\-lng\fR
+Interpolate the logarithms of the fields linearly in the pressure.
+
+.TP
+\fB\-lgg\fR
+Interpolate the logarithms of the fields linearly in the logarithm of the pressure.
+
+.TP
+\fB\-cnn\fR
+Interpolate the fields using a cubic spline in the pressure.
+
+.TP
+\fB\-cgn\fR
+Interpolate the fields using a cubic spline in the logarithm of the pressure.
+
+.TP
+\fB\-cng\fR
+Interpolate the logarithms of the fields using a cubic spline in the pressure.
+
+.TP
+\fB\-cgg\fR
+Interpolate the logarithms of the fields using a cubic spline in the logarithm of the pressure.
+
+
+.SH SEE ALSO
+\fBCcdl2cdf\fR(1), \fBCcdf2cdl\fR(1), \fBCl_run_cdf\fR(1)
+
+.SH BUGS
+Please report bugs to "james.manners@metoffice.gov.uk" or "jean-claude.thelen@metoffice.gov.uk".
+
+.SH AUTHOR
+Original code by John M. Edwards, now supported by James Manners and Jean-Claude Thelen, Met. Office, Exeter, UK

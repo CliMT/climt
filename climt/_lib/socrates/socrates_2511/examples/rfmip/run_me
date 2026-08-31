@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#wget http://aims3.llnl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/RFMIP/UColorado/UColorado-RFMIP-1-2/atmos/fx/multiple/none/v20190401/multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc
+pyerr=0
+ln -s $RAD_DIR/python/RFMIP* .
+python RFMIP_run_soc.py multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc || pyerr=1
+python RFMIP_create_submission_files.py --physics_index 1 || pyerr=1
+# python RFMIP_run_soc.py multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc ga7_ref || pyerr=1
+# python RFMIP_create_submission_files.py --physics_index 2 || pyerr=1
+# python RFMIP_plot.py
+
+ierr=0
+if [ $pyerr -eq 0 ]; then
+    which nccmp &>/dev/null || ierr=1
+    if [ $ierr -gt 0 ]; then
+        echo "Install nccmp to compare to KGOs"
+	ierr=0
+    else
+        for f in `ls *_gn.nc`
+        do
+            diff_err=0
+            (nccmp --data --metadata $f KGO/$f && \
+             echo "$f matched gfortran12 KGO: Pass") || \
+            (nccmp --data --metadata $f KGO/ifort19_$f && \
+             echo "$f matched ifort19 KGO: Pass") || diff_err=1
+            if [ $diff_err -gt 0 ]; then
+                echo "$f did not compare"
+                ierr=1
+            fi
+        done
+    fi
+fi
+
+if [[ $ierr -gt 0 || $pyerr -gt 0 ]] ; then
+    echo "Error in the script" `pwd`$0
+    exit 1
+else
+    rm PI* PD* 4xCO2* future* 0.5xCO2* 2xCO2* 3xCO2* 8xCO2* p4K* LGM* *_gn.nc
+    rm *.py
+    exit 0
+fi

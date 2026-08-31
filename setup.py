@@ -49,6 +49,7 @@ requirements = [
     "sympl>=0.5.0",
     "cython>=0.25",
     "importlib_resources",
+    "cffi>=1.0.0",
 ]
 
 test_requirements = [
@@ -321,6 +322,7 @@ setup(
     install_requires=requirements,
     cmdclass=cmdclass,
     ext_modules=ext_modules,
+    cffi_modules=["climt/_components/socrates/runesbuild.py:ffi_builder"],
     include_dirs=include_dirs,
     license="BSD license",
     zip_safe=False,

@@ -1,0 +1,13 @@
+#
+# Pattern Matching Rules
+#
+%.o : %.mod
+
+%.o : %.f
+	$(FORTCOMP) $<
+
+%.o : %.f90
+	$(FORTCOMP) $<
+
+$(SOURCE_ODEPACK:.f=.o): %.o: %.f
+	$(FORTCOMP) $(FLAGS_ODEPACK) $<

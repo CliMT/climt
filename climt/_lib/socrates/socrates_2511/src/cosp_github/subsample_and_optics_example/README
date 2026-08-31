@@ -1,0 +1,19 @@
+COSP 2 differs from COSP 1 in requiring users to map grid-scale inputs to
+subgrid-scale inputs, if required, and to convert cloud physical properties
+to the optical properties required by each simulator. The paper describing
+COSP 2, http://doi.org/10.5194/10.5194/gmd-11-77-2018, has further details.
+
+This directory includes routines to perform both steps consistent with COSP 1.
+The routines take as input a fixed description of clouds and precipitation.
+
+Subcolumn samples are generated using the SCOPS routines and random number
+generator originally developed for the ISSCP simulator, including three
+possible specifications for cloud overlap. These routines are in subcol/.
+
+Routines mapping cloud and precipitation to optical properties are in optics/.
+These routines are the same as are used in COSP 1.
+
+Users are encouraged to use information already available from the host model
+and/or to develop their own versions of these routines consistent with host
+model assumptions so that output from COSP is more consistent with the cloud
+and radiation properties affecting the model's solution. 

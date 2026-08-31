@@ -1,0 +1,133 @@
+.TH Cscatter 1 "29-10-2007"
+.SH NAME
+Cscatter \- Calculate single scattering properties
+.SH USAGE
+Cscatter \fB\-w\fR \fIwavelength\-file\fR \fB\-r\fR \fIrefract\-file\fR \fB\-c|\-l\fR
+         \fB\-t\fR \fItype-of-scatterer\fR [\fB\-C\fR \fIcomponent\fR]
+         [\fB\-h\fR \fIwater\-refract\-file\fR \fIhumidity\-file\fR]
+         \fB\-M | \-A\fR
+         \fB\-g\fR \fIw r0 sigma\fR \fB|\fR \fB\-m\fR \fIw alpha rm beta\fR \fB|\fR \fB\-f\fR \fIdist\-file\fR
+         \fB\-n\fR \fIN\fR \fB\-P\fR \fImoments\fR \fB\-o\fR \fIoutput\-file\fR [\fB\-v\fR]
+
+
+.SH DESCRIPTION
+This program calculates the monochromatic single scattering
+properties of spherical particles averaged over a size distribution
+at a range of specified wavelengths.
+
+A file of wavelengths for the calculation and a file of
+refractive indices are read in. A distribution and a
+scattering algorithm are supplied. The program calculates
+single scattering properties at each of the wavelengths given.
+
+.SH OPTIONS
+
+.LP
+
+.TP
+\fB\-w\fR \fIwavelength\-file\fR
+The file containing the wavelengths for the calculation. These should be in metres, specified one to a line between a pair of directives \fB*BEGIN_DATA\fR and \fB*END\fR. Comments are permitted outside the region of data.
+
+.TP
+\fB\-r\fR \fIrefract\-file\fR 
+The file of refractive indices for the material which comprises the particle. Between the directives \fB*BEGIN_DATA\fR and \fB*END\fR, each line should have three numbers, the wavelength, the real part of the refrective index and the imaginary part of the refractive index. The range of wavelengths in this file must be wider than that covered by the \fIwavelength\-file\fR since the program cannot extrapolate. 
+
+.TP
+\fB\-c\fR
+Cubic splines are to be used when interpolating the refractive indices to the wavelengths (best for well resolved data).
+
+.TP
+\fB\-l\fR
+Linear interpolation of the refractive indices is to be used (best for poorly resolved data).
+
+.TP
+\fB\-t\fR \fItype-of-scatterer\fR
+Type of scatterer: \fI0\fR unassigned, for use of the scattering code on
+any unusual particles; \fI1\fR for aerosols; \fI2\fR for droplets; and \fI3\fR 
+for ice crystals. These numbers are set in the module bin/scatter_pp_pcf.f90.
+
+.TP
+\fB\-C\fR \fIcomponent\fR
+The number identifying the aerosol component (for use with \fB\-t\fR 1). These numbers are in the file bin/rad_pcf.f90.
+
+.TP
+\fB\-h\fR \fIwater\-refract\-file\fR \fIhumidity\-file\fR
+The file of refractive indices for water (see \fB\-r\fR for format) followed by a file of humidities for use with moist aerosols. Between the directives \fB*BEGIN_DATA\fR and \fB*END\fR, values of relative humidity should be given, one on each line.
+
+.TP
+\fB\-M\fR
+Perform a full Mie caclulation.
+
+.TP
+\fB\-A\fR
+Perform the scattering calculation using modified ADT (anomalous diffraction theory). This is only available using a gamma size distribution.
+
+.TP
+\fB\-g\fR
+Use a log-normal distribution with the following parameters:
+.RS
+.TP
+\fIw\fR
+Weight for this mode of the distribution.
+.TP
+\fIr0\fR
+Geometric mean particle radius in metres.
+.TP
+\fIsigma\fR
+Geometric standard deviation of the radius distribution.
+.RE
+
+.TP
+\fB\-m\fR
+Use a modified gamma distribution with the following parameters:
+.RS
+.TP
+\fIw\fR
+Weight for this mode of the distribution.
+.TP
+\fIalpha rm beta\fR defined by:
+
+.RS
+dn/dr = \fIN\fR \fIbeta\fR (r/\fIrm\fR)^(\fIalpha\fR-1) exp[-(r/\fIrm\fR)^\fIbeta\fR]
+.RE
+.RS
+        -----------------------------------------
+.RS
+.RE
+                  \fIrm\fR Gamma(\fIalpha\fR/\fIbeta\fR)
+.RE
+.RE
+
+.TP
+\fB\-f\fR \fIdist\-file\fR
+Take the size distribution from an external file. \fIdist\-file\fR should begin with the directive \fB*SPHERE\fR followed by \fB*BEGIN_DATA\fR. The data should then specify the radius (in metres) and number density per unit range of sizes at that radius on each line, followed by an \fB*END\fR directive.
+
+.TP
+\fB\-n\fR \fIN\fR
+Total number density (for use with analytic distributions, \fB\-g\fR or \fB\-m\fR).
+
+.TP
+\fB\-P\fR \fImoments\fR
+The number of moments of the phase function to be calculated.
+
+.TP
+\fB\-o\fR \fIoutput\-file\fR
+The name of the output file.
+
+.TP
+\fB\-v\fR
+Show verbose output from the Fortran routine (optional).
+
+.LP
+Multimodal distributions may be specified by repeating the options \fB\-g\fR
+and \fB\-m\fR as required, but note that only one type of distribution may
+be used in one invocation of the program.
+
+.SH SEE ALSO
+\fBCcdl2cdf\fR(1), \fBCcdf2cdl\fR(1), \fBCl_run_cdf\fR(1)), \fBCl_run_cdl\fR(1), \fBCinterp\fR(1)
+
+.SH BUGS
+Please report bugs to "james.manners@metoffice.gov.uk".
+
+.SH AUTHOR
+Original code by John M. Edwards, now supported by James Manners, Met. Office, Exeter, UK

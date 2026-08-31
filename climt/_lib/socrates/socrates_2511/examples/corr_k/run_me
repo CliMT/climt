@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+rm -f h2o* cfc113_* sp_lw_300_skel sp_lw_300_dev* 2>/dev/null
+
+./prep_spec_300 >/dev/null
+
+(diff -q sp_lw_300_gfortran12 sp_lw_300_dev && \
+ diff -q sp_lw_300_gfortran12_k sp_lw_300_dev_k && \
+ echo 'Matched gfortran12 output') || \
+(diff -q sp_lw_300_ifort19 sp_lw_300_dev && \
+ diff -q sp_lw_300_ifort19_k sp_lw_300_dev_k && \
+ echo 'Matched ifort19 output') || \
+(diff -q sp_lw_300_gfortran5 sp_lw_300_dev && \
+ diff -q sp_lw_300_gfortran12_k sp_lw_300_dev_k && \
+ echo 'Matched gfortran5 output') || \
+(diff -q sp_lw_300_gfortran14 sp_lw_300_dev && \
+ diff -q sp_lw_300_gfortran12_k sp_lw_300_dev_k && \
+ echo 'Matched gfortran14 output') || \
+(diff -q sp_lw_300_ifx2025 sp_lw_300_dev && \
+ diff -q sp_lw_300_ifort19_k sp_lw_300_dev_k && \
+ echo 'Matched ifx2025 output') || \
+    ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f h2o* cfc113_* sp_lw_300_skel sp_lw_300_dev* 2>/dev/null
+  echo OK
+  exit 0
+fi

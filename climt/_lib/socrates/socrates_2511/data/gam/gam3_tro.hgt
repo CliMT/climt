@@ -1,0 +1,38 @@
+netcdf gam3_tro.hgt{                                                            
+
+dimensions:
+    lat            =   1;
+    lon            =   1;
+    plev           =  18;
+
+
+variables:
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                         
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "LONGITUDE";                                        
+    float plev(plev);                                                         
+             plev:units = "Pa";                                               
+             plev:title = "PRESSURE";                                        
+
+    float hgt(plev,lon,lat);                                                   
+             hgt:units = "m";                                                 
+             hgt:title = "HEIGHT";                                                           
+
+data:                                                                           
+              lat =   .000000E+00;
+              lon =   .000000E+00;
+             plev =   .100000E+03,  .300000E+03,  .100000E+04,  .300000E+04,
+                      .500000E+04,  .700000E+04,  .905919E+04,  .915024E+04,
+                      .100000E+05,  .150000E+05,  .200000E+05,  .250000E+05,
+                      .300000E+05,  .400000E+05,  .500000E+05,  .700000E+05,
+                      .850000E+05,  .989738E+05;
+              hgt =   .493160E+05,  .404550E+05,  .313420E+05,  .237660E+05,
+                      .205410E+05,  .185080E+05,  .169870E+05,  .169270E+05,
+                      .164030E+05,  .139790E+05,  .121780E+05,  .107060E+05,
+                      .944800E+04,  .735700E+04,  .565000E+04,  .293700E+04,
+                      .131000E+04,  .000000E+00;
+
+}                                                                               

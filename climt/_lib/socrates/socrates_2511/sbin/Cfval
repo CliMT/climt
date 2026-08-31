@@ -1,0 +1,47 @@
+#! /bin/bash
+#
+# Script to run the program to evaluate a field a given pressure.
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$*
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod interp_mode_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+# Process options
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -p) pressure=$2 ; shift 2 ;;
+      -lnn) interpolate=$IP_1_LIN_LIN ; shift ;;
+      -lgn) interpolate=$IP_1_LOG_LIN ; shift ;;
+      -lng) interpolate=$IP_1_LIN_LOG ; shift ;;
+      -lgg) interpolate=$IP_1_LOG_LOG ; shift ;;
+      -cnn) interpolate=$IP_3_LIN_LIN ; shift ;;
+      -cgn) interpolate=$IP_3_LOG_LIN ; shift ;;
+      -cng) interpolate=$IP_3_LIN_LOG ; shift ;;
+      -cgg) interpolate=$IP_3_LOG_LOG ; shift ;;
+      -*) echo "Invalid option"; exit -1 ;;
+      *) infile=$1 ; shift ;;
+   esac
+done
+if [ ! "$interpolate" ] ; then echo "Interpolation scheme not set"; exit 1 ; fi
+if [ ! "$pressure" ] ; then echo "Pressure not set"; exit 1 ; fi
+if [ ! "$infile" ] ; then echo "Input file not set"; exit 1 ; fi
+cat > /tmp/fv.$$ << EOF
+$infile
+$pressure
+$interpolate
+EOF
+fval < /tmp/fv.$$ | sed -e 1,6d
+rm -f /tmp/fv.$$
+rm -f $LOCK_FILE

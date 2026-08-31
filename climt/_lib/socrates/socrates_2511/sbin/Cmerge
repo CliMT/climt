@@ -1,0 +1,68 @@
+#! /bin/bash
+#
+# Script to run the program for merging with observational data.
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$@
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod interp_mode_pcf.f90
+. $RAD_SCRIPT/set_param_mod method_merge_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+#
+# Process options
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -b) BACKGROUND=$2 ; shift 2 ;;
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -n) OUTNAME=$2 ; shift 2 ;;
+      -u) OUTUNIT=$2 ; shift 2 ;;
+      -L) OUTLONG=$2 ; shift 2 ;;
+      -d) MERGE=$IP_MERGE_DIRECT ; shift ;;
+      -l) MERGE=$IP_MERGE_LINEAR P_LOW=$2 P_HIGH=$3 ; shift 3 ;;
+      -z) MERGE=$IP_MERGE_ZERO ; shift ;;
+      -t) C_TOP=y; shift ;;
+      -lnn) INTERPOLATE=$IP_1_LIN_LIN ; shift ;;
+      -lgn) INTERPOLATE=$IP_1_LOG_LIN ; shift ;;
+      -lng) INTERPOLATE=$IP_1_LIN_LOG ; shift ;;
+      -lgg) INTERPOLATE=$IP_1_LOG_LOG ; shift ;;
+      -cnn) INTERPOLATE=$IP_3_LIN_LIN ; shift ;;
+      -cgn) INTERPOLATE=$IP_3_LOG_LIN ; shift ;;
+      -cng) INTERPOLATE=$IP_3_LIN_LOG ; shift ;;
+      -cgg) INTERPOLATE=$IP_3_LOG_LOG ; shift ;;
+      -*) echo "Invalid option" ; exit 1 ;;
+      *) MERGE_FIELD=$1 ; shift ;;
+   esac
+done
+# If -t is not set double-sided merging is requested.
+cat > /tmp/mrg.$$ << EOF
+$BACKGROUND
+$MERGE_FIELD
+${C_TOP:-n}
+$MERGE
+EOF
+if [ $MERGE -eq $IP_MERGE_LINEAR ]  
+then cat >> /tmp/mrg.$$ << EOF
+$P_LOW $P_HIGH
+$INTERPOLATE
+EOF
+fi
+cat >> /tmp/mrg.$$ << EOF
+$OUTFILE
+$OUTNAME
+$OUTUNIT
+$OUTLONG
+EOF
+merge < /tmp/mrg.$$ > /dev/null
+rm -f /tmp/mrg.$$
+rm -f $LOCK_FILE

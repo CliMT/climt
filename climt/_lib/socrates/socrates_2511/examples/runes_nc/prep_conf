@@ -1,0 +1,111 @@
+#!/bin/bash
+
+# This script takes a configuration namelist from an LFRic run
+# extracts the bits that are relevant for the offline run and
+# writes them to a file with the name supplied to CFT.
+# The directory for spectral files and the mcica data file needs
+# to be defined on the runes_nc command line.
+
+CF=configuration.nml
+
+CFT=conf.tmp
+rm -f $CFT
+touch $CFT
+
+
+grep "&aerosols" $CF >> $CFT
+
+grep easyaerosol_lw $CF >> $CFT
+grep easyaerosol_sw $CF >> $CFT
+grep l_radaer $CF >> $CFT
+grep sulphuric_strat_climatology $CF >> $CFT
+
+grep sulphuric_strat_column $CF >> $CFT
+echo "/" >> $CFT
+
+
+grep "&radiation" $CF >> $CFT
+
+grep cloud_entrapment $CF >> $CFT
+grep cloud_inhomogeneity $CF >> $CFT
+grep cloud_overlap $CF >> $CFT
+grep cloud_representation $CF >> $CFT
+grep droplet_effective_radius $CF >> $CFT
+grep scatter_method_lw $CF >> $CFT
+grep topography $CF >> $CFT
+
+grep i_cloud_ice_type_lw $CF >> $CFT
+grep i_cloud_ice_type_sw $CF >> $CFT
+grep i_cloud_liq_type_lw $CF >> $CFT
+grep i_cloud_liq_type_sw $CF >> $CFT
+
+grep l_rayleigh_sw $CF >> $CFT
+grep l_trans_zen_correction $CF >> $CFT
+
+grep cloud_vertical_decorr $CF >> $CFT
+grep constant_droplet_effective_radius $CF >> $CFT
+grep liu_aparam $CF >> $CFT
+grep liu_bparam $CF >> $CFT
+
+grep spectral_file_lw $CF | sed "s/'.*\//'/" >> $CFT
+grep spectral_file_sw $CF | sed "s/'.*\//'/" >> $CFT
+grep mcica_data_file $CF | sed "s/'.*\//'/" >> $CFT
+
+echo "/" >> $CFT
+
+
+grep "&radiative_gases" $CF >> $CFT
+
+grep cfc113_rad_opt $CF >> $CFT
+grep cfc11_rad_opt $CF >> $CFT
+grep cfc12_rad_opt $CF >> $CFT
+grep ch4_rad_opt $CF >> $CFT
+grep co2_rad_opt $CF >> $CFT
+grep co_rad_opt $CF >> $CFT
+grep cs_rad_opt $CF >> $CFT
+grep h2_rad_opt $CF >> $CFT
+grep h2o_rad_opt $CF >> $CFT
+grep hcfc22_rad_opt $CF >> $CFT
+grep hcn_rad_opt $CF >> $CFT
+grep he_rad_opt $CF >> $CFT
+grep hfc134a_rad_opt $CF >> $CFT
+grep k_rad_opt $CF >> $CFT
+grep li_rad_opt $CF >> $CFT
+grep n2_rad_opt $CF >> $CFT
+grep n2o_rad_opt $CF >> $CFT
+grep na_rad_opt $CF >> $CFT
+grep nh3_rad_opt $CF >> $CFT
+grep o2_rad_opt $CF >> $CFT
+grep o3_rad_opt $CF >> $CFT
+grep rb_rad_opt $CF >> $CFT
+grep so2_rad_opt $CF >> $CFT
+grep tio_rad_opt $CF >> $CFT
+grep vo_rad_opt $CF >> $CFT
+
+grep cfc113_mix_ratio $CF >> $CFT
+grep cfc11_mix_ratio $CF >> $CFT
+grep cfc12_mix_ratio $CF >> $CFT
+grep ch4_mix_ratio $CF >> $CFT
+grep co2_mix_ratio $CF >> $CFT
+grep co_mix_ratio $CF >> $CFT
+grep cs_mix_ratio $CF >> $CFT
+grep h2_mix_ratio $CF >> $CFT
+grep h2o_mix_ratio $CF >> $CFT
+grep hcfc22_mix_ratio $CF >> $CFT
+grep hcn_mix_ratio $CF >> $CFT
+grep he_mix_ratio $CF >> $CFT
+grep hfc134a_mix_ratio $CF >> $CFT
+grep k_mix_ratio $CF >> $CFT
+grep li_mix_ratio $CF >> $CFT
+grep n2_mix_ratio $CF >> $CFT
+grep n2o_mix_ratio $CF >> $CFT
+grep na_mix_ratio $CF >> $CFT
+grep nh3_mix_ratio $CF >> $CFT
+grep o2_mix_ratio $CF >> $CFT
+grep o3_mix_ratio $CF >> $CFT
+grep rb_mix_ratio $CF >> $CFT
+grep so2_mix_ratio $CF >> $CFT
+grep tio_mix_ratio $CF >> $CFT
+grep vo_mix_ratio $CF >> $CFT
+echo "/" >> $CFT
+

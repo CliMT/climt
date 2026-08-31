@@ -1,0 +1,6 @@
+File of gas fraction values used for tabulation of k-coefficients
+including self-broadening.
+*BEGIN_DATA
+0.9
+1.0
+*END

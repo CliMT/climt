@@ -1,0 +1,30 @@
+netcdf test_gen_null{                                                           
+
+dimensions:
+    lon            =   1;
+    lat            =   1;
+    plev           =   1;
+
+
+variables:
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "longitude";                                        
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "latitude";                                         
+    float plev(plev);                                                         
+             plev:units = "pa";                                               
+             plev:title = "pressure";                                        
+
+    float null(plev,lat,lon);                                                  
+             null:units = "none";                                             
+             null:title = "null field";                                                      
+
+data:
+              lon =  0.000000E+00;
+              lat =  0.000000E+00;
+             plev =  0.100000E+04;
+             null =  0.000000E+00;
+
+}

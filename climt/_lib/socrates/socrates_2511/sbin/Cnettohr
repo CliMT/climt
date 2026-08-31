@@ -1,0 +1,19 @@
+#! /bin/bash
+#
+# Script to run the conversion from net fluxes to heating rates.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -*) echo "Invalid option."; exit -1 ;;
+       *) INFILE=$1 ; shift ;;
+   esac
+done
+cat > /tmp/nth.$$ << EOF
+$INFILE
+$OUTFILE
+EOF
+nettohr < /tmp/nth.$$ > /dev/null
+rm -f /tmp/nth.$$
+rm -f $LOCK_FILE

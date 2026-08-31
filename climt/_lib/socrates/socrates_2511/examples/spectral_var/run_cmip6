@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+if [ ! $SOCRATES_DATA_DIR ] ; then
+  SOCRATES_DATA_DIR=.
+fi
+
+CMIP6_DATA_DIR=${SOCRATES_DATA_DIR}/solarisheppa/cmip6
+
+# Download CMIP6 solar variability data
+if [[ -r $CMIP6_DATA_DIR ]]; then
+  gunzip -c ${CMIP6_DATA_DIR}/solarforcing-picontrol-fx_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_18500101-18730128.nc.gz \
+                            > solarforcing-picontrol-fx_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_18500101-18730128.nc
+  gunzip -c ${CMIP6_DATA_DIR}/solarforcing-ref-mon_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_18500101-22991231.nc.gz \
+                            > solarforcing-ref-mon_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_18500101-22991231.nc
+else
+  echo 'CMIP6 data not accessible'
+  exit 0
+fi
+
+# Remove files created by previous runs
+rm -f sp_sw_ga9*
+
+# Add PI Control solar variability data to spectral file
+prep_spec << EOF > picontrol.log
+$RAD_DATA/spectra/ga9/sp_sw_ga9
+n
+sp_sw_ga9
+17
+y
+12
+-2
+6
+solarforcing-picontrol-fx_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_18500101-18730128.nc
+0
+1
+-1
+EOF
+mv sp_sw_ga9_var sp_sw_ga9_cmip6_picontrol
+
+# Add solar reference scenario data to spectral file
+prep_spec << EOF > ref_mon.log
+sp_sw_ga9
+a
+17
+y
+12
+-2
+6
+solarforcing-ref-mon_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_18500101-22991231.nc
+0
+0
+-1
+EOF
+mv sp_sw_ga9_var sp_sw_ga9_cmip6_ref_mon
+
+# Check against KGO
+diff -q sp_sw_ga9_cmip6_picontrol $RAD_DATA/spectra/ga9_solar_var/sp_sw_ga9_cmip6_picontrol || ierr=1
+diff sp_sw_ga9_cmip6_ref_mon $RAD_DATA/spectra/ga9_solar_var/sp_sw_ga9_cmip6_ref_mon > ref_mon.diff || \
+diff -q ref_mon.diff ref_mon_gfortran_diff || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f sp_sw_ga9* *.log *.diff
+  rm -f *.nc 2>/dev/null
+  echo OK
+  exit 0
+fi

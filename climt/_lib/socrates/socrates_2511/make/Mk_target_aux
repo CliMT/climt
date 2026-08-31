@@ -1,0 +1,162 @@
+#
+# Full list of auxiliary programs
+#
+
+AUX_CDF: l_run_cdf cdf2cdl cdl2cdf dentomix_cdf interp_cdf \
+		cdf2samson samson2cdf calc_horizon_angles \
+		runes_nc
+
+AUX_CDL: l_run_cdl run_mono assign_subcols dentomix dentoq format_size \
+		fval gen_horiz_cdl gen_null gen_surf_cdl \
+		gen_view_cdl hmrsph inc_field ice_size interp \
+		merge mid_point nettohr phgt prep_opt_profile \
+		raw_input scale_field vert_int wadd \
+		samson2cdl cdl2samson runes_driver phoenix2sol \
+		orb_elem
+
+
+TARGET_AUX: AUX_CDL AUX_CDF
+
+#
+# Main Radiance Code
+#
+
+l_run_cdf: l_run_cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o l_run_cdf \
+	   l_run_cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+l_run_cdl: l_run_cdl.o radlib.$(LIBSUFFIX)
+	$(LINK) -o l_run_cdl l_run_cdl.o radlib.$(LIBSUFFIX)
+
+runes_driver: runes_driver.o radlib.$(LIBSUFFIX)
+	$(LINK) -o runes_driver runes_driver.o radlib.$(LIBSUFFIX)
+
+runes_nc: runes_nc.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o runes_nc \
+	runes_nc.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+#
+# Monochromatic Version
+#
+
+run_mono: run_mono.o radlib.$(LIBSUFFIX)
+	$(LINK) -o run_mono run_mono.o radlib.$(LIBSUFFIX)
+
+#
+# Auxiliary programs
+#
+
+assign_subcols: assign_subcols.o radlib.$(LIBSUFFIX)
+	$(LINK) -o assign_subcols assign_subcols.o radlib.$(LIBSUFFIX)
+
+cdf2cdl: cdf2cdl.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o cdf2cdl \
+	   cdf2cdl.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+cdl2cdf: cdl2cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o cdl2cdf \
+	   cdl2cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+dentomix: dentomix.o radlib.$(LIBSUFFIX)
+	$(LINK) -o dentomix dentomix.o radlib.$(LIBSUFFIX)
+
+dentomix_cdf: dentomix_cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o dentomix_cdf \
+	   dentomix_cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+dentoq: dentoq.o radlib.$(LIBSUFFIX)
+	$(LINK) -o dentoq dentoq.o radlib.$(LIBSUFFIX)
+
+dewtoq: dewtoq.o radlib.$(LIBSUFFIX)
+	$(LINK) -o dewtoq dewtoq.o radlib.$(LIBSUFFIX)
+
+format_size: format_size.o radlib.$(LIBSUFFIX)
+	$(LINK) -o format_size format_size.o radlib.$(LIBSUFFIX)
+
+fval: fval.o radlib.$(LIBSUFFIX)
+	$(LINK) -o fval fval.o radlib.$(LIBSUFFIX)
+
+gen_horiz_cdl: gen_horiz_cdl.o radlib.$(LIBSUFFIX)
+	$(LINK) -o gen_horiz_cdl gen_horiz_cdl.o radlib.$(LIBSUFFIX)
+
+gen_null: gen_null.o radlib.$(LIBSUFFIX)
+	$(LINK) -o gen_null gen_null.o radlib.$(LIBSUFFIX)
+
+gen_surf_cdl: gen_surf_cdl.o radlib.$(LIBSUFFIX)
+	$(LINK) -o gen_surf_cdl gen_surf_cdl.o radlib.$(LIBSUFFIX)
+
+gen_view_cdl: gen_view_cdl.o radlib.$(LIBSUFFIX)
+	$(LINK) -o gen_view_cdl gen_view_cdl.o radlib.$(LIBSUFFIX)
+
+hmrsph: hmrsph.o radlib.$(LIBSUFFIX)
+	$(LINK) -o hmrsph hmrsph.o radlib.$(LIBSUFFIX)
+
+inc_field: inc_field.o radlib.$(LIBSUFFIX)
+	$(LINK) -o inc_field inc_field.o radlib.$(LIBSUFFIX)
+
+ice_size: ice_size.o radlib.$(LIBSUFFIX)
+	$(LINK) -o ice_size ice_size.o radlib.$(LIBSUFFIX)
+
+interp: interp.o radlib.$(LIBSUFFIX)
+	$(LINK) -o interp interp.o radlib.$(LIBSUFFIX)
+
+interp_cdf: interp_cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o interp_cdf \
+	   interp_cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+merge: merge.o radlib.$(LIBSUFFIX)
+	$(LINK) -o merge merge.o radlib.$(LIBSUFFIX)
+
+mid_point: mid_point.o radlib.$(LIBSUFFIX)
+	$(LINK) -o mid_point mid_point.o radlib.$(LIBSUFFIX)
+
+nettohr: nettohr.o radlib.$(LIBSUFFIX)
+	$(LINK) -o nettohr nettohr.o radlib.$(LIBSUFFIX)
+
+phgt: phgt.o radlib.$(LIBSUFFIX)
+	$(LINK) -o phgt phgt.o radlib.$(LIBSUFFIX)
+
+prep_opt_profile: prep_opt_profile.o radlib.$(LIBSUFFIX)
+	$(LINK) -o prep_opt_profile prep_opt_profile.o radlib.$(LIBSUFFIX)
+
+raw_input: raw_input.o radlib.$(LIBSUFFIX)
+	$(LINK) -o raw_input raw_input.o radlib.$(LIBSUFFIX)
+
+samson2cdl: samson2cdl.o radlib.$(LIBSUFFIX)
+	$(LINK) -o samson2cdl samson2cdl.o radlib.$(LIBSUFFIX)
+
+samson2cdf: samson2cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o samson2cdf \
+	   samson2cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+genln2cdf: genln2cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o genln2cdf \
+	   genln2cdf.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+cdl2samson: cdl2samson.o radlib.$(LIBSUFFIX)
+	$(LINK) -o cdl2samson cdl2samson.o radlib.$(LIBSUFFIX)
+
+cdf2samson: cdf2samson.o $(CDF_OBJ) radlib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o cdf2samson \
+	   cdf2samson.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+scale_field: scale_field.o radlib.$(LIBSUFFIX)
+	$(LINK) -o scale_field scale_field.o radlib.$(LIBSUFFIX)
+
+vert_int: vert_int.o radlib.$(LIBSUFFIX)
+	$(LINK) -o vert_int vert_int.o radlib.$(LIBSUFFIX)
+
+wadd: wadd.o radlib.$(LIBSUFFIX)
+	$(LINK) -o wadd wadd.o radlib.$(LIBSUFFIX)
+
+calc_horizon_angles: calc_horizon_angles.o \
+           socrates_horizon_1d.o socrates_horizon_2d.o rad_ccf.o realtype_rd.o
+	$(LINK) -L$(LIBCDF_PATH) -o calc_horizon_angles calc_horizon_angles.o \
+           socrates_horizon_1d.o socrates_horizon_2d.o rad_ccf.o realtype_rd.o \
+           -l$(LIBCDF_NAME)
+
+phoenix2sol: phoenix2sol.o radlib.$(LIBSUFFIX)
+	$(LINK) -o phoenix2sol phoenix2sol.o radlib.$(LIBSUFFIX)
+
+orb_elem: orb_elem.o radlib.$(LIBSUFFIX)
+	$(LINK) -o orb_elem orb_elem.o radlib.$(LIBSUFFIX)

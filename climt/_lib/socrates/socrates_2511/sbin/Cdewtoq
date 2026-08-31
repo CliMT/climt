@@ -1,0 +1,29 @@
+#! /bin/bash
+#
+# Script to run the program to convert dewpoints to specific humidity.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -o) outfile=$2 ; shift 2 ;;
+      -u) conversion=u ; shift ;;
+      -g) conversion=g ; t_trans=$2 ; shift 2 ;;
+      -*) echo "Invalid option."; exit -1 ;;
+       *) infile=$1 ; shift ;;
+   esac
+done
+cat > /tmp/dwq.$$ << EOF
+$infile
+EOF
+if [ $conversion = u ]
+   then echo "1" >> /tmp/dwq.$$
+elif [ $conversion = g ]
+   then echo "2" >> /tmp/dwq.$$
+   echo $t_trans >> /tmp/dwq.$$
+fi
+cat >> /tmp/dwq.$$ << EOF
+$outfile
+EOF
+dewtoq < /tmp/dwq.$$ > /dev/null
+rm -f /tmp/dwq.$$
+rm -f $LOCK_FILE

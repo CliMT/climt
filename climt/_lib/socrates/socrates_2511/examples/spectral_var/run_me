@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+if [ ! $SOCRATES_DATA_DIR ] ; then
+  SOCRATES_DATA_DIR=.
+fi
+
+CMIP5_DATA_DIR=${SOCRATES_DATA_DIR}/solarisheppa/cmip5
+
+# Download CMIP5 solar variability data
+if [[ -r $CMIP5_DATA_DIR ]]; then
+  gunzip -c ${CMIP5_DATA_DIR}/spectra_1610_2000a_21Jan09.txt.gz > spectra_1610_2000a_21Jan09.txt
+  gunzip -c ${CMIP5_DATA_DIR}/spectra_1882_2000m_17Dec08.txt.gz > spectra_1882_2000m_17Dec08.txt
+  gunzip -c ${CMIP5_DATA_DIR}/spectra_2000_2008m_6May09.txt.gz > spectra_2000_2008m_6May09.txt
+else
+  echo 'CMIP5 data not accessible'
+  exit 0
+fi
+
+# Remove files created by previous runs
+rm -f sp_sw_ga7*
+
+# Copy GA7 shortwave spectral file here and remove block 17
+# to illustrate creation of block from scratch
+cp ../../data/spectra/ga7/sp_sw_ga7 .
+cp ../../data/spectra/ga7/sp_sw_ga7_k .
+sed -i '/BLOCK: TYPE =   17/,/END/d' sp_sw_ga7
+
+# Add solar variability data to spectral file
+prep_spec << EOF
+sp_sw_ga7
+a
+17
+1
+2
+0
+../../data/solar/lean_12
+a
+8
+272
+5
+spectra_1610_2000a_21Jan09.txt
+1416
+5
+spectra_1882_2000m_17Dec08.txt
+108
+5
+spectra_2000_2008m_6May09.txt
+0
+144
+-1
+EOF
+
+# Check that block 17 was created successfully
+diff -q sp_sw_ga7 ../../data/spectra/ga7/sp_sw_ga7 || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f sp_sw_ga7*
+  rm -f *.txt 2>/dev/null
+  echo OK
+  exit 0
+fi

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# PhotoComp Intercomparison case P1a for O3 -> O(1D) + O2
+# See https://homepages.see.leeds.ac.uk/~lecmc/sparcj/ for details
+
+ierr=0
+
+./mk_atm
+
+# Cl_run_cdf -B atm -s ../sp_uv/sp_xsw_photol -S -R 1 26 -g 3 -r -C 5 -sg
+# fmove atm xsw_photol_sg_r
+# Cl_run_cdf -B atm -s ../sp_uv/sp_xsw_photol -S -R 1 26 -g 3 -C 5 -sg
+# fmove atm xsw_photol_sg
+# Cl_run_cdf -B atm -s ../sp_uv/sp_xsw_photol -S -R 1 26 -g 3 -r -C 5
+# fmove atm xsw_photol_r
+# Cl_run_cdf -B atm -s ../sp_uv/sp_xsw_photol -S -R 1 26 -g 3 -C 5
+# fmove atm xsw_photol
+
+Cl_run_cdf -B atm -s ../sp_uv/sp_411nm_photol -S -R 1 411 -g 3 -r -C 5 -sg
+fmove atm sp_411nm_sg_r
+# Cl_run_cdf -B atm -s ../sp_uv/sp_411nm_photol -S -R 1 411 -g 3 -r -C 5 -sg -ch 411
+# fmove atm sp_411nm_sg_r_ch
+
+Ccdf2cdl -o cdl_sp_411nm_sg_r.ph_rate_18 sp_411nm_sg_r.ph_rate_18
+diff -q cdl_sp_411nm_sg_r.ph_rate_18 cdl_sp_411nm_ref_P1a.ph_rate_18 || ierr=1
+
+Ccdl2cdf -o UCI-ref_P1a.j_o3_1d cdl_UCI-ref_P1a.j_o3_1d
+# python plot_vs_ref.py sp_411nm_sg_r.ph_rate_18 UCI-ref_P1a.j_o3_1d
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f atm_* cdl_atm_* atm.*
+  rm -f UCI-ref_P1a.j_o3_1d cdl_sp_411nm_sg_r.ph_rate_18
+  resrm xsw_photol_sg_r
+  resrm xsw_photol_sg
+  resrm xsw_photol_r
+  resrm xsw_photol
+  resrm sp_411nm_sg_r
+  resrm sp_411nm_sg_r_ch
+  echo 'OK'
+  exit 0
+fi

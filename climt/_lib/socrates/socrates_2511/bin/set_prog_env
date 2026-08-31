@@ -1,0 +1,2 @@
+LIBCDF_PATH=/usr/lib/x86_64-linux-gnu
+export LD_LIBRARY_PATH=$LIBCDF_PATH:$LD_LIBRARY_PATH

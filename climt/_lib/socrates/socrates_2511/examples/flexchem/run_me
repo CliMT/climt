@@ -1,0 +1,23 @@
+#!/bin/bash
+# Test flexchem
+
+# Run the flexchem driver for the analytical case (Heng, 2017)
+flexchem_driver heng2017 > output.txt
+# Run the flexchem driver for the hot Jupiter network of Venot+ (2019)
+flexchem_driver venot2019 >> output.txt
+
+# Test output against KGO
+ierr=0
+
+(diff -q output.txt kgo_output.txt && \
+ echo 'Matched KGO output') || \
+(diff -q output.txt ifort19_output.txt && \
+ echo 'Matched ifort19 output') || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f output.txt
+  echo OK
+  exit 0
+fi

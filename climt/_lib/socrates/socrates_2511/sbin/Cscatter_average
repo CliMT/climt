@@ -1,0 +1,105 @@
+#! /bin/bash
+#set -xv
+#
+# Script to run program averaging scattering data
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$*
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod weighting_pcf.f90
+. $RAD_SCRIPT/set_param_mod method_weight_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+#
+# Process options
+while [ $# -gt 0 ]
+do case $1 in
+      -s) SPECTRUM=$2 ; shift 2 ;;
+      -S) WEIGHT=$IP_WEIGHT_SOLAR ; SOLAR_FILE=$2 ; shift 2 ;;
+      -p) WEIGHT=$IP_WEIGHT_PLANCK ; TEMPERATURE=$2 ; shift 2 ;;
+      -d) WEIGHT=$IP_WEIGHT_DPLANCK ; TEMPERATURE=$2 ; shift 2 ;;
+      -u) WEIGHT=$IP_WEIGHT_UNIFORM ; shift ;;
+      -P) MOMENT=$2 ; shift 2 ;;
+      -w) METHOD=$IP_WEIGHT_THIN ; shift ;;
+      -t) METHOD=$IP_WEIGHT_THICK ; shift ;;
+      -i) FILTER=$2 ; shift 2 ;;
+      -a) AVERAGE=T ; AVERAGE_FILE=$2 ; shift 2 ;;
+      -f) PARAMETRIZE=T ; FIT=$2 ; FIT_FILE=$3 ; \
+            MON_FILE=$4 ; DENSITY=$5 ; shift 5 ;;
+      -v) verbose=T ; shift ;;
+      -x) RETAIN=T ; CFILE=$2 ; shift 2 ;;
+       *) INPUT=$1 ; shift ;;
+   esac
+done
+cat > /tmp/sa.$$ << EOF
+$SPECTRUM
+$INPUT
+$WEIGHT
+EOF
+if [ $WEIGHT -ne $IP_WEIGHT_UNIFORM ]
+then
+if [ $WEIGHT -eq $IP_WEIGHT_SOLAR ]
+then cat >> /tmp/sa.$$ << EOF
+$SOLAR_FILE
+EOF
+elif [ $WEIGHT -eq $IP_WEIGHT_PLANCK ] || [ $WEIGHT -eq $IP_WEIGHT_DPLANCK ]
+then cat >> /tmp/sa.$$ << EOF
+$TEMPERATURE
+EOF
+fi
+fi
+if [ "$METHOD" ] 
+   then echo $METHOD >> /tmp/sa.$$
+else
+   echo "Method of averaging not specified."
+   exit 1
+fi
+if [ "$FILTER" ]
+  then echo "y" >> /tmp/sa.$$
+       echo $FILTER >> /tmp/sa.$$
+else
+  echo "n" >> /tmp/sa.$$
+fi
+if [ "$AVERAGE" = T ] 
+then cat >> /tmp/sa.$$ << EOF
+y
+$AVERAGE_FILE
+EOF
+else cat >> /tmp/sa.$$ << EOF
+n
+EOF
+fi
+echo $MOMENT >> /tmp/sa.$$
+if [ "$PARAMETRIZE" = T ]
+then cat >> /tmp/sa.$$ << EOF
+y
+$FIT_FILE
+$MON_FILE
+$DENSITY
+$FIT
+EOF
+else cat >> /tmp/sa.$$ << EOF
+n
+EOF
+fi
+if [ "$verbose" ] 
+  then scatter_average_90 < /tmp/sa.$$
+else
+  scatter_average_90 < /tmp/sa.$$ > /dev/null
+fi
+if [ ! "$RETAIN" ]
+  then rm -f /tmp/sa.$$
+else
+  mv /tmp/sa.$$ $CFILE
+fi
+#echo /tmp/sa.$$
+rm -f $LOCK_FILE

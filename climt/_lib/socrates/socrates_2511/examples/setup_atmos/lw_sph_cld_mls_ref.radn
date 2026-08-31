@@ -1,0 +1,50 @@
+netcdf wk_mls.radn{                                                             
+
+dimensions:
+    lon            =   1;
+    lat            =   1;
+    level          =   1;
+    direction      =   1;
+
+
+variables:
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "longitude";                                        
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "latitude";                                         
+    int level(level);                                                         
+             level:units = "none";                                            
+             level:title = "radiance level";                                 
+    int direction(direction);                                                 
+             direction:units = "none";                                        
+             direction:title = "viewing direction";                          
+
+    float pol(direction,lat,lon);                                              
+             pol:units = "degrees";                                           
+             pol:title = "polar viewing angles";                                             
+
+    float azim(direction,lat,lon);                                             
+             azim:units = "degrees";                                          
+             azim:title = "azimuthal viewing angles";                                        
+
+    float rlev(level);                                                         
+             rlev:units = "none";                                             
+             rlev:title = "radiance levels";                                                 
+
+    float radiance(direction,level,lat,lon);                                   
+             radiance:units = "wm-2.str-1";                                   
+             radiance:title = "radiance";                                                    
+
+data:
+              lon =  0.000000E+00;
+              lat =  0.000000E+00;
+            level =     1;
+        direction =     1;
+              pol =  0.000000E+00;
+             azim =  0.000000E+00;
+             rlev =  0.000000E+00;
+         radiance =  0.742117E+02;
+
+}

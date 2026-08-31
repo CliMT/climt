@@ -1,0 +1,20 @@
+Size distribution of Mineral Dust
+Division 4
+r1 = 1.000e-6 um
+r2 = 3.162e-6 um
+r (m)    n(r)
+n(r) is chosen so that the integral
+of n(r)dr between r0 and r1 equals
+N = 1.0e+8, i.e n(r) = N / (r1 - r0)
+*SPHERE
+*BEGIN_DATA
+3.162e-8 0.000e+00
+1.000e-7 0.000e+00
+3.162e-7 0.000e+00
+9.999e-7 0.000e+00
+1.000e-6 4.625e+13
+3.162e-6 4.625e+13
+3.163e-6 0.000e+00
+1.000e-5 0.000e+00
+3.162e-5 0.000e+00
+*END

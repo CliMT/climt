@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# This script creates a 300 band LW spectral file, calculates example
+# water vapour k-terms for bands 38-40 using a cut-down HITRAN line
+# list, and adds foreign and self broadened continuum coefficients.
+# CFC-113 coefficients are also added as an example of the use of
+# cross-section data.
+
+# Set HITRAN database directory (only a cut-down database is included
+# with the distribution):
+HITRAN_DIR="$RAD_DATA/gases"
+
+# Note, this is meant as an example script for the use of Ccorr_k. Use 
+# 'man Ccorr_k' for an explanation of the options to the corr_k program.
+
+./prep_skel_300
+
+echo 'Water vapour'
+Ccorr_k -F pt48 \
+  -D $HITRAN_DIR/01_hit09_cut.par \
+  -R 38 40 -c 2500.0 -i 0.2 -l 1 1.0e2 -t 1.0e-3  \
+  -k -s sp_lw_300_skel +p -lk -np 4 \
+  -o h2o_l -m h2o_lm -L h2o_lbl.nc -sm h2o_map.nc
+
+echo 'Foreign-broadened continuum'
+Ccorr_k -C 33 1.0e-4 1.0e4 -F pt48 \
+  -D $HITRAN_DIR/01_hit09_cut.par \
+  -P 7 -R 38 39 -c 2500.0 -i 0.2 -f $RAD_DATA/continua/caviar_frn \
+  -k -s sp_lw_300_skel +p -p -r ref_pt_surf \
+  -o h2o_f_caviar -m h2o_fm_caviar -L h2o_lbl.nc
+
+echo 'Foreign-broadened continuum (MT_CKD HITRAN format)'
+Ccorr_k -C 33 1.0e-4 1.0e4 -F pt48 \
+  -D $HITRAN_DIR/01_hit09_cut.par \
+  -P 7 -R 40 40 -c 2500.0 -i 0.2 \
+  -f $RAD_DATA/continua/absco-ref_wv-mt-ckd4p3.nc \
+  -k -s sp_lw_300_skel +p -p -r ref_pt_surf \
+  -o h2o_f_mt_ckd4p3 -m h2o_fm_mt_ckd4p3 -L h2o_lbl.nc
+
+echo 'Foreign-broadened continuum (generalised continuum)'
+Ccorr_k -F $RAD_DATA/continua/pt_cont \
+  -R 38 40 -i 0.2 -ct 1 38 2.4e2 -t 1.0e-3 \
+  -f $RAD_DATA/continua/caviar_frn \
+  -k -s sp_lw_300_skel +p -lk \
+  -o h2o-air_c -m h2o-air_cm -L h2o-air_lbl.nc -lw h2o_map.nc
+
+echo 'Self-broadened continuum'
+Ccorr_k -C 33 1.0e-4 1.0e4 -F pt48 \
+  -D $HITRAN_DIR/01_hit09_cut.par \
+  -P 7 -R 38 39 -c 2500.0 -i 0.2 \
+  -e $RAD_DATA/continua/caviar_s296 $RAD_DATA/continua/caviar_s260 \
+  -k -s sp_lw_300_skel +p -p -r ref_pt_surf \
+  -o h2o_s_caviar -m h2o_sm_caviar -L h2o_lbl.nc
+
+echo 'Self-broadened continuum (MT_CKD HITRAN format)'
+Ccorr_k -C 33 1.0e-4 1.0e4 -F pt48 \
+  -D $HITRAN_DIR/01_hit09_cut.par \
+  -P 7 -R 40 40 -c 2500.0 -i 0.2 \
+  -e $RAD_DATA/continua/absco-ref_wv-mt-ckd4p3.nc \
+     $RAD_DATA/continua/absco-ref_wv-mt-ckd4p3.nc \
+  -k -s sp_lw_300_skel +p -p -r ref_pt_surf \
+  -o h2o_s_mt_ckd4p3 -m h2o_sm_mt_ckd4p3 -L h2o_lbl.nc
+
+echo 'Self-broadened continuum (generalised continuum)'
+Ccorr_k -F $RAD_DATA/continua/pt_cont \
+  -R 38 40 -c 2500.0 -i 0.2 -ct 1 1 10.0 -t 1.0e-3 \
+  -e $RAD_DATA/continua/caviar_s296 $RAD_DATA/continua/caviar_s260 \
+  -k -s sp_lw_300_skel +p -lk \
+  -o h2o-h2o_c -m h2o-h2o_cm -L h2o-h2o_lbl.nc -lw h2o_map.nc
+
+echo 'CFC 113'
+Ccorr_k -F pt48 \
+  -X $HITRAN_DIR/CFC-113_IR00.xsc \
+  -R 79 124 -i 1.0 -l 16 0.4e-5 -t 1.0e-3 \
+  -s sp_lw_300_skel +p -lk -np 4 \
+  -o cfc113_l -m cfc113_lm -L cfc113_lbl.nc
+
+
+prep_spec > /dev/null <<EOF
+sp_lw_300_skel
+n
+sp_lw_300_dev
+5
+h2o_l
+9
+h2o_f_caviar
+19
+h2o-air_c
+9
+y
+h2o_f_mt_ckd4p3
+9
+y
+h2o_s_caviar
+9
+y
+h2o_s_mt_ckd4p3
+19
+y
+h2o-h2o_c
+5
+y
+cfc113_l
+6
+n
+p
+150 330
+4
+-1
+EOF
+
+tidy_90 > /dev/null <<EOF
+sp_lw_300_dev
+o
+8
+1
+1
+-1
+EOF
+
+exit 0

@@ -1,0 +1,8 @@
+SOURCE_FLEXCHEM = flexchem_driver.f90 \
+                  flexchem_kinds_mod.f90 \
+                  flexchem_kinetics_mod.f90 \
+                  flexchem_mod.f90 \
+                  flexchem_input_mod.f90 \
+                  flexchem_test_mod.f90 \
+                  realtype_rd.f90
+SOURCE_ODEPACK = opkda1.f opkda2.f opkdmain.f 

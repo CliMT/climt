@@ -1,0 +1,163 @@
+! *****************************COPYRIGHT*******************************
+! (C) Crown copyright Met Office. All rights reserved.
+! For further details please refer to the file COPYRIGHT.txt
+! which you should have received as part of this distribution.
+! *****************************COPYRIGHT*******************************
+!
+!     ------------------------------------------------------------------
+!      Module to call DISORT
+!     ------------------------------------------------------------------
+!
+!     Convert variables to DISORT's grid. Only one column can be called
+!     at a time.
+      DO l=1, n_profile
+!
+        DO i=1, n_layer
+          dtauc(i)=tau(l, i)
+          ssalb(i)=omega(l, i)
+          pmom(0, i)=1.0e+00
+!         The phase function supplied to this routine may contain only
+!         one element if a Henyey-Greenstein phase function is used, 
+!         so the full phase function is filled in for DISORT.
+          IF (l_henyey_greenstein_pf) THEN
+            DO ls=1, ls_global_trunc+1
+              pmom(ls, i)=phase_fnc(l, i, 1)**ls
+            ENDDO
+          ELSE
+            DO ls=1, n_order_phase
+              pmom(ls, i)=phase_fnc(l, i, ls)
+            ENDDO
+          ENDIF
+        ENDDO
+!
+        IF (isolir == IP_infra_red) THEN
+!
+          DO i=0, n_layer
+            temper(i)=t_level(l, i)
+          ENDDO
+          noplnk=.false.
+!         Convert from wavelengths in metres to frequency in inverse
+!         centimeters.
+          wvnmlo=1.0e-2/wavelength_long
+          wvnmhi=1.0e-2/wavelength_short
+!
+        ELSE
+!
+          noplnk=.true.
+!
+        ENDIF
+!
+!       Optical depths for calculation of radiances:
+        usrtau=.true.
+        DO i=1, n_viewing_level
+          utau(i)=0.0e+00
+          k=1
+          DO WHILE (k < i_rad_layer(i))
+            utau(i)=utau(i)+dtauc(k)
+            k=k+1
+          ENDDO
+          utau(i)=utau(i)+frac_rad_layer(i)*dtauc(i_rad_layer(i))
+        ENDDO
+!
+!       Conversion to streams from spherical harmonic representation:
+        nstr=ls_global_trunc+1
+        IF (l_sph_flux_mode) THEN
+          nphi=0
+        ELSE
+          nphi=ls_global_trunc+2
+          DO j=1, nphi
+            phi(j)=3.6e+02*_m4_real_1`('j-1)/_m4_real_1`('nphi)
+          ENDDO
+        ENDIF
+!
+!       Viewing directions:
+!       DISORT expects these to be arranged in increasing order of
+!       the cosines of the viewing angles. Also, DISORT specifies
+!       polar and azimuthal angles separately, and the azimuthal
+!       angles must be the computational ones. We therefore reset
+!       the directions supplied to a set compatible with DISORT.
+        numu=0
+        DO k=1, n_direction
+          l_included=.false.
+          DO k1=1, numu
+            l_included=(abs(direction(l, k, 1)-umu(k1)) < 1.0e-06)
+          ENDDO
+          IF (.NOT.l_included) THEN
+            numu=numu+1
+            umu_temp(numu)=direction(l, k, 1)
+            pointer(numu)=numu
+          ENDIF
+        ENDDO
+        CALL shell_sort(numu, pointer, umu_temp)
+        DO k=1, numu
+          umu(k)=umu(pointer(k))
+        ENDDO
+!
+!       Reset the array of directions:
+        n_direction=nphi*numu
+        IF (n_direction > nd_direction) THEN
+          WRITE(iu_err, '(/a)')
+     &      '*** error: too many directions are required in disort.'
+          ierr=i_err_fatal
+          RETURN
+        ENDIF
+        DO k=1, numu
+          DO k1=1, nphi
+            direction(l, k1+(k-1)*nphi, 1)=umu(k)
+            direction(l, k1+(k-1)*nphi, 2)=phi(k)
+          ENDDO
+        ENDDO
+!
+!       Upper boundary conditions:
+        ibcnd=0
+        IF (l_iso_inc) THEN
+          fisot=iso_inc(l)
+        ELSE
+          fisot=0.0e+00
+        ENDIF
+        ttemp=0.0e+00
+        temis=0.0e+00
+!       Only a Lambertian surface is considered.
+        lamber=.true.
+!
+!       Algorithmic control:
+        accur=0.0
+        DO j=1, 7
+          prnt(j)=.false.
+        ENDDO
+!
+        CALL disort(n_layer, dtauc, ssalb, pmom, temper
+     &    , wvnmlo, wvnmhi, usrtau, n_viewing_level, utau, nstr
+     &    , usrang, numu, umu, nphi, phi, ibcnd, solar_irrad(l)
+     &    , zen_0(l), azim_0(l), fisot, lamber, rho_alb(l, 1), hl
+     &    , t_ground(l), ttemp, temis, l_rescale
+     &    , noplnk, l_sph_flux_mode, accur, prnt, header
+     &    , nd_layer, nd_viewing_level, nd_direction
+     &    , nd_phase_term, nd_direction
+     &    , rfldir, rfldn, flup, dfdt, uavg, uu, u0u, albmed, trnmed
+     &    )
+!
+        IF (l_sph_flux_mode) THEN
+!
+!         Assign the fluxes
+          DO i=0, n_layer
+            flux_direct(l, i)=rfldir(i+1)
+            flux_down(l, i)=rfldn(i+1)+rfldir(i+1)
+            flux_up(l, i)=flup(i+1)
+          ENDDO
+!
+        ELSE
+!
+!         Convert back to radiances.
+          DO i=1, n_viewing_level
+            DO k=1, numu
+              DO k1=1, nphi
+                radiance(l, i, k1+nphi*(k-1))=uu(k, i, k1)
+              ENDDO
+            ENDDO
+          ENDDO
+!
+        ENDIF
+!
+      ENDDO
+!     ------------------------------------------------------------------

@@ -1,0 +1,52 @@
+SOURCE90_SCAT =	adt_mitchell96.f90 \
+		bna_factor_ccf.f90 \
+		calc_gauss_weight_90.f90 \
+		cloud_fit_90.f90 \
+		cloud_fit_parm_acf.f90 \
+		cloud_fitting.f90 \
+		conjugate_gradient_cloud_90.f90 \
+		db_interp_ss_mono.f90 \
+		db_read_single_wavelength.f90 \
+		db_scatter_integral.f90 \
+		db_type_ucf.f90 \
+		decompose_phf_90.f90 \
+		def_sct_db.f90 \
+		def_db_crystal_geometry.f90 \
+		def_db_ss_mono.f90 \
+		def_size_dist.f90 \
+		def_s_scat_prop.f90 \
+		distribution_pcf.f90 \
+		get_db_wavelengths.f90 \
+		get_refract_index.f90 \
+		get_wavelengths.f90 \
+		ice_db_read_geometry.f90 \
+		legendre_weight.f90 \
+		line_search_cloud_90.f90 \
+		max_size_acf.f90 \
+		measure_particle_pcf.f90 \
+		method_weight_pcf.f90 \
+		number_particle_90.f90 \
+		open_average_90.f90 \
+		parm_integ_acf.f90 \
+		particle_size_90.f90 \
+                polynomialroots.f90 \
+		prec_integral_tcf.f90 \
+		proj_area_particle.f90 \
+		read_scatter_block_90.f90 \
+		scatter_algorithm_pcf.f90 \
+		scatter_integral_90.f90 \
+		select_weight_scatter_90.f90 \
+		shape_particle_pcf.f90 \
+		size_integral_90.f90 \
+		fit_parabola_90.f90 \
+		volume_particle.f90 \
+		weightings_90.f90 \
+		weightings_single_90.f90 \
+		write_average_90.f90
+
+SOURCE77_SCAT =	grow_particles.f \
+		adt_integral.f \
+		gamma_fnc.f \
+		refractive_index.f \
+		mie_scatter.f
+

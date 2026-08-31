@@ -1,0 +1,408 @@
+.TH Cl_run_cdl 1 "10-8-2018"
+.SH NAME
+Cl_run_cdl \- Driver for the SOCRATES Radiative Transfer Code
+.SH USAGE
+Cl_run_cdl \fB\-s\fR \fIspectral\-file\fR \fB\-R\fR \fIfirst\-band last\-band\fR
+           \fB\-B\fR \fIbasename\fR \fB \-I|\-S \fR
+           \fB\-C\fR \fIcloud\-scheme\fR [\fB\-K\fR \fIcloud\-representation\fR]
+           [\fB\-dp\fR \fIdecorrelation\-scale\fR]
+           [\fB+dp\fR \fIconvective\-decorrelation\-scale\fR]
+           [\fB\-m\fR \fIfractional\-standard\-deviation\fR \fB\+m\fR \fImcica\-sampling\fR]
+           [\fB\-d\fR \fIdrop\-type\fR] [\fB+d\fR \fIconvective\-drop\-type\fR]
+           [\fB\-i\fR \fIice\-type\fR] [\fB+i\fR \fIconvective\-ice\-type\fR]
+           [\fB\-g\fR \fIgas\-overlap\fR [\fItype\fR] [\fIn_g\fR [\fIg_split\fR]]] [\fB\-a\fR] [\fB\+A\fR]
+           [\fB\-c\fR] [\fB\-u\fR] [\fB\-q\fR] [\fB\-r\fR] [\fB+R\fR] [\fB\-x\fR \fIcommand\-file\fR] [\fB\-o\fR]
+           [\fB\-z\fR \fIscattering\-option\fR] [\fB\-dbg\fR]
+           \fB[\fR \fB\+S\fR \fIn1 n2 n3 n4\fR \fB\-G\fR \fIbasis truncation\fR
+             \fB\+F\fR \fB\+P\fR \fB\-H\fR \fB\-e\fR \fB\-Y\fR \fB\-T\fR \fB\-Z\fR \fIorder\fR \fB]\fR
+            \fB|\fR \fB[\fR \fB\-t\fR \fItwo\-stream\-scheme\fR \fB\-v\fR \fIsolver\fR 
+            \fB\-ds\fR \fIdir_scal\fR \fB\-ha\fR \fIhalf_angle\fR \fB]\fR
+            \fB|\fR \fB[\fR \fB\-Q\fR \fIGaussian\-order\fR \fB]\fR
+           [\fB\-F\fR \fIfilter\-file\fR] [\fB\-ch\fR \fInum-channels\fR]
+
+.SH DESCRIPTION
+A script to run the CDL version of the SOCRATES Radiative Transfer Code. Profiles of atmospheric data are read in along with a spectral file containing details of the absorbers present in a number of spectral bands. Output profiles of fluxes or radiances are calculated for the thermal (long wave) or solar (short wave) regions.
+
+.SH OPTIONS
+
+.LP
+
+.B General Options
+
+These options are used whether fluxes or radiances are calculated.
+
+.TP
+\fB\-s\fR \fIspectral\-file\fR 
+The full pathname of the spectral file (examples of which can be found in $RAD_DATA/spectra).
+
+.TP
+\fB\-R\fR \fIfirst\-band last\-band\fR
+The range of spectral bands to be used. Normally, this will be from 1 to the number of bands in the spectral file, but a sub-range may be selected. The wavelengths of each of the spectral bands may be found in block 1 of the spectral file.
+
+.TP
+\fB\-B\fR \fIbasename\fR
+The base-name of the CDL input and output files.
+
+.TP
+\fB\-I\fR
+Solve for a thermal source (LW).
+
+.TP
+\fB\-S\fR
+Solve for a solar source (SW).
+
+.TP
+\fB\-C\fR \fIcloud\-scheme\fR
+Treatment of the vertical overlap between different cloudy layers, as defined in cloud\_scheme\_pcf.f90:
+.RS
+.TP
+.B 2 \fR(recommended for a mixed column)
+Maximum/random overlap in a mixed column
+.TP
+.B 3
+Maximum overlap in a column model
+.TP
+.B 4
+Random overlap in a mixed column
+.TP
+.B 5
+Clear column
+.TP
+.B 6 \fR(recommended for a triple column)
+Maximum/random overlap in a triple column with split between convective and layer cloud
+.TP
+.B 7
+Coupled overlap with partial correlation of cloud
+.TP
+.B 8
+Coupled overlap with partial correlation of cloud with a separate treatment of convective cloud
+.TP
+.B 10
+McICA scheme used (allows greater flexibility for representing unresolved cloud). If McICA is selected then '-m' and '+m' options set the fractional standard deviation and sampling respectively.
+.RE
+
+.TP
+\fB\-K\fR \fIcloud\-representation\fR
+The macroscopic division of cloud in a single atmospheric layer. Ice and water parts are considered as a single cloud region for the purposes of overlap as described above. \fIcloud\-representation\fR, as defined in cloud\_representation\_pcf.f90, is given by:
+.RS
+.TP
+.B 1
+Ice and water mixed homogeneously
+.TP
+.B 2
+Ice and water clouds are treated separately
+.TP
+.B 3 
+Clouds are divided into homogeneously mixed stratiform and convective parts
+.TP
+.B 4
+Clouds divided into ice and water phases and into stratiform and convective components.
+.RE
+
+.TP
+\fB\-dp\fR \fIdecorrelation\-scale\fR
+Decorrelation scale for large scale cloud in pressure units (only for use with -C 7/8/10)
+.RE
+
+.TP
+\fB\+dp\fR \fIconvective\-decorrelation\-scale\fR
+Decorrelation scale for convective cloud in pressure units (only for use with -C 8)
+.RE
+
+.TP
+\fB\-m\fR \fIfractional\-standard\-deviation\fR
+standard deviation divided by mean of unresolved water content (only for use with -C 10, defaults to 0.75).
+.RE
+
+.TP
+\fB\+m\fR \fImcica\-sampling\fR
+Method for sampling cloud sub-columns (only for use with -C 10)
+.RS
+.TP
+.B 0
+Full sampling (all k-terms sample all sub-columns)
+.TP
+.B 1
+Single sampling (each k-term samples one sub-column)
+.TP
+.B 2
+Optimal sampling (more important k-terms sample multiple sub-columns). This is the default.
+.RE
+
+.TP
+\fB\-d\fR \fIdrop\-type\fR
+Type of water droplet (chosen from those set in the spectral file)
+
+.TP
+\fB\+d\fR \fIconvective\-drop\-type\fR
+Type of convective water droplet
+
+.TP
+\fB\-i\fR \fIice\-type\fR
+Type of ice-crystal
+
+.TP
+\fB\+i\fR \fIconvective\-ice\-type\fR
+Type of convective ice-crystal
+
+.TP
+\fB\-g\fR \fIgas\-overlap\fR [\fItype\fR] [\fIn_g\fR [\fIg_split\fR]]
+Include gaseous absorption using specified overlap assumption, as defined in gas\_overlap\_pcf.f90:
+.RS
+.TP
+.B 1
+Consider absorption by only one gas specified by \fItype\fR, as given in gas\_list\_pcf.f90
+.TP
+.B 2
+Random overlap (accurate but slow)
+.TP
+.B 3
+Exact overlap of minor gas k-terms with major gas (requires sub-band mappings)
+.TP
+.B 4
+Equivalent extinction with corrected scaling (recommended for fast runs)
+.TP
+.B 5
+Equivalent extinction (obsolete method removed: now points to method 4)
+.TP
+.B 6
+Equivalent extinction using modulus of flux (obsolete method removed: now points to method 4)
+.TP
+.B 7
+Mixed gases used in the SES2 scheme (required for ses spectral files)
+.TP
+.B 8
+Random overlap with resorting and rebinning. Number of bins is specified by \fIn_g\fR:
+.RS
+.TP
+.B 0
+Use the bins of the strongest absorber in each band.
+.TP
+.B > 0
+Gaussian quadrature is used to set the bins. The band is divided into two larger bins at \fIg_split\fR with \fIn_g\fR sub-bins in each larger bin. If \fIg_split\fR = 0 or 1 no split is imposed.
+.RE
+.RE
+
+.TP
+\fB\-a\fR 
+Include aerosols
+
+.TP
+\fB\+A\fR 
+Prescribed profiles of aerosols are provided as input files
+
+.TP
+\fB\-c\fR 
+Include continuum absorption
+
+.TP
+\fB\-u\fR 
+Include generalised continuum absorption
+
+.TP
+\fB\-q\fR 
+Use a quadratic variation of the thermal source function over the layer. In two-stream IR codes it is usual to assume that the source function is linear in the optical depth across each layer. With this option the temperatures in the .t file are used to specify a quadratic variation of the source function. This option is mainly for use in GCMs to avoid the generation of wavelike heating patterns.
+
+.TP
+\fB\-r\fR
+Include Rayleigh Scattering
+
+.TP
+\fB+R\fR
+Apply rescaling to the optical properties. Rescaling is always recommended when the size parameter becomes larger than 1 and the phase function develops a strong forward peak.
+
+.TP
+\fB\-x\fR \fIcommand\-file\fR
+Retain input to l_run\_cdl in a named file
+
+.TP
+\fB\-o\fR
+Show output of l_run\_cdf on standard out. This is generally prompts for information that is passed directly by the script, but may provide useful information for debugging.
+
+.TP
+\fB\-z\fR \fIscattering\-option\fR
+Treatment of scattering:
+.RS
+.TP
+.B 1 \fR(default)
+Full treatment of scattering
+.TP
+.B 2
+Scattering ignored completely: this is often sufficiently accurate in the IR where scattering is prodominantly in the forward direction.
+.TP
+.B 3
+Scattering treated as absorption: this is a reasonable approximation only very rarely for small particles at long wavelengths.
+.TP
+.B 4
+Approximate scattering: downward fluxes calculated ignoring reflection.
+.TP
+.B 5
+Hybrid scattering method: treatment of scattering is dependent on the method specified for each k-term in the spectral file.
+.RE
+
+.TP
+\fB\-dbg\fR
+Use idbc to debug source code
+
+.TP
+\fB\-F\fR \fIfilter\-file\fR
+The name of the filter file to be convolved with the fluxes
+
+.TP
+\fB\-ch\fR \fInum-channels\fR
+The number of channels for output. This must divide exactly into the range of bands used. Defaults to 1.
+
+.LP
+
+.B Calculation of two-stream fluxes
+
+.TP
+\fB\-t\fR \fItwo\-stream\-scheme\fR
+Two-stream approximation, chosen from those defined in two\_stream\_scheme\_pcf.f90:
+.RS
+.TP
+.B 2
+Eddington's approximation
+.TP
+.B 4
+Discrete ordinate method
+.TP
+.B 6
+Practical improved flux method (version of Zdunkowski et al. 1985)
+.TP
+.B 12 \fR(recommended for LW)
+Practical improved flux method (1985) with Elsasser's diffusivity (D=1.66)
+.TP
+.B 14
+User defined test approximation
+.TP
+.B 15
+Hemispheric mean approximation
+.TP
+.B 16 \fR(recommended for SW)
+Practical improved flux method (original form of 1980)
+.RE
+
+In this code, schemes with delta-rescaling are not treated as separate schemes, but delta-rescaling is controlled with the option +R. Hence, for the delta-Eddington scheme we use the options +R -t 2, but omit +R for the Eddington scheme itself.
+
+.TP
+\fB\-v\fR \fIsolver\fR
+Solver used for the two-stream calculations, chosen from those defined in solver\_pcf.f90. The solver must be consistent with the treatment of cloud overlap (set using \-C and \-K). Where there are no clouds or the atmosphere is divided into homogeneous subcolumns (-C 5,3) the solver may be -v 13 or -v 1. Where clear and cloudy fluxes are combined together, the recommended solvers should be used. Options for \fIsolver\fR are:
+.RS
+.TP
+.B 1
+Pentadiagonal solver for homogeneous column
+.TP
+.B 9
+Coupled overlap scheme with approximate scattering
+.TP
+.B 11
+Direct solution for coupled overlap
+.TP
+.B 13 \fR(recommended solver for clear-sky)
+Direct solution in a homogeneous column
+.TP
+.B 14
+Direct solution for coupled overlap with separation between convective and stratiform clouds
+.TP
+.B 15
+Direct solution for coupled overlap with separation between convective and stratiform clouds with approximate scattering
+.TP
+.B 16 \fR(recommended solver for coupled overlap)
+Direct solution for coupled overlap (modified for correct treatment of shadowing by Robin Hogan)
+.TP
+.B 17 \fR(recommended solver for triple overlap)
+Direct solution for coupled overlap with separation between convective and stratiform clouds (modified for correct treatment of shadowing by Robin Hogan)
+.RE
+
+.TP
+\fB\-ds\fR \fIdir_scal\fR
+Scaling method for direct flux - three options: 0 no scaling, 1 delta-scaling, 2 phase function scaling
+
+.TP
+\fB\-ha\fR \fIhalf_angle\fR
+If dir_scal=2 specify half viewing angle: 0.25 - 5.0 degree
+
+.TP
+\fB\-Q\fR \fIGaussian\-order\fR
+Use Gaussian integration of the specified order. This option is available only in the IR as an alternative to the two-stream equations: there is no treatment of scattering here.
+
+.LP
+
+.B Full Spectral Calculation
+
+See the user guide for a more detailed explanation of the options.
+
+.TP
+\fB\+S\fR \fIn1 n2 n3 n4\fR
+Calculate radiances by doing a full spectral calculation.
+.RS
+.TP
+\fIn1\fR
+Sets the type of truncation used with spherical harmonics, 
+as defined in sph\_truncation\_pcf.f90:
+1 triangular, 2 rhomboid, 3 symmetric
+.TP
+\fIn2\fR
+l-order of spherical harmonics
+.TP
+\fIn3\fR
+min m-order of spherical harmonics
+.TP
+\fIn4\fR
+max m-order of spherical harmonics
+.RE
+
+.TP
+\fB\-G\fR \fIbasis truncation\fR
+Specify BRDF function to define surface characteristics. \fIbasis\fR must be set to 5 for a Lambertian surface, \fItruncation\fR is the order of truncation of the BRDF (usually 0).
+
+.LP
+
+.B Arguments that can follow +S
+
+.TP
+\fB\+F\fR
+Calculate fluxes rather than radiances
+
+.TP
+\fB\+P\fR
+Calculate photolysis rates rather than radiances (not yet implemented)
+
+.TP
+\fB\-H\fR
+Include the Heney-Greenstein approximation
+
+.TP
+\fB\-e\fR
+Use Euler transformation to improve convergence
+
+.TP
+\fB\-Y\fR
+Direct Calculation of Radiances
+
+.TP
+\fB\-T\fR
+Use the Iterative Source Function Technique. In general better than -Y.
+
+.TP
+\fB\-Z\fR \fIorder\fR
+Specify the \fIorder\fR of the solar truncation
+
+.SH INPUT FILES
+Spectral files can be found in the following directory of the source distribution: $RAD\_DIR/data/spectra/
+
+In order to run, l\_run\_cdl also requires a number of CDL input files providing atmospheric profiles and boundary conditions. Files have a common \fIbasename\fR and a suffix referring to the contents. The suffixes known to the code can be found in $RAD\_BIN/input\_head\_pcf.f90. 
+
+.SH OUTPUT FILES
+Output is given in CDL files with the following suffixes: .uflx (upward flux), .dflx (diffuse downward flux), .sflx (direct downward flux), .vflx (total downward flux: dflx+sflx), .nflx (net downward flux: vflx-uflx), .hrts (heating rates, K/day), .radn (radiance), .photol (rate of photolysis).
+
+.SH SEE ALSO
+\fBCl_run_cdf\fR(1), \fBCcdl2cdf\fR(1), \fBCcdf2cdl\fR(1), \fBCinterp\fR(1)
+
+.SH BUGS
+Please report any bugs found to "james.manners@metoffice.gov.uk" along with any suggestions for improvement.
+
+.SH AUTHOR
+Original code by John M. Edwards, now supported by James Manners,
+Met. Office, Exeter, UK

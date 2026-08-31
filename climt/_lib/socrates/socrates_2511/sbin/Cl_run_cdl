@@ -1,0 +1,402 @@
+#! /bin/bash
+#
+# Script to run the radiation code on a set of CDL files.
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$*
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod rad_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+# Defaults
+#
+dp_corr_strat=1.0e4
+dp_corr_conv=1.0e4
+rad_mcica_sigma=0.75
+rad_mcica_sampling=2
+dbg=F
+angular_integration=$IP_TWO_STREAM
+#
+# Process options
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -a) c_aerosol=a ; shift ;;
+      +A) overlay=true ; shift ;;
+      -B) base_name=$2 ; shift 2 ;;
+      -C) cloud_scheme=$2 ; shift 2 ;;
+      -c) c_continuum=c ; shift ;;
+      -u) c_cont_gen=u ; shift ;;
+      -ch) n_channel=$2 ; shift 2 ;;
+      -d) c_drop=d ; drop_type=$2 ; shift 2 ;;
+      +d) convective_drop_type=$2 ; shift 2 ;;
+      -dp) dp_corr_strat=$2 ; shift 2 ;;
+      +dp) dp_corr_conv=$2 ; shift 2 ;;
+      -e) euler_trnf=T ; shift ;;
+      +F) sph_flux=T ; shift ;;
+      -F) filter=$2; shift 2 ;;
+      -ds) modify_dir=T ; dir_scal=$2 ; shift 2 ;;
+      -ha) half_angle=$2 ; shift 2 ;;
+      -G) brdf_basis=$2 ; ls_brdf_trunc=$3 ; shift 3 ;;
+      -g) c_gas=g ; gas_overlap=$2 ; shift 2 ; \
+          if [ $gas_overlap -eq $IP_OVERLAP_SINGLE ] ; \
+          then gas_type=$1 ; shift ; \
+          elif [ $gas_overlap -eq $IP_OVERLAP_RANDOM_RESORT_REBIN ] ; \
+          then n_esft_red=$1 ; \
+            if [ $n_esft_red -ne "0" ] ; \
+            then gpnt_split=$2 ; shift 2 ; \
+            else shift ; fi ; \
+          fi ;;
+      -H) hg_phf=T ; shift ;;
+      -I) isolir=$IP_INFRA_RED ; shift ;;
+      +i) convective_ice_type=$2 ; shift 2 ;;
+      -i) c_ice=i ; ice_type=$2 ;  shift 2 ;;
+      -K) cloud_representation=$2 ; shift 2 ;;
+      -L) lanczos=T ; shift ;;
+      -m) rad_mcica_sigma=$2 ; shift 2 ;;
+      +m) rad_mcica_sampling=$2 ; shift 2 ;;
+      -o) verbose=T ; shift ;;
+      +P) sph_phtl=T ; shift ;;
+      -Q) angular_integration=$IP_IR_GAUSS ; gauss_order=$2 ; shift 2 ;;
+      -q) quadratic=T ; shift ;;
+      +R) rescale=T ; shift ;;
+      -R) range_1=$2; range_2=$3 ; shift 3 ;;
+      -r) c_rayleigh=r ; shift ;;
+      +S) angular_integration=$IP_SPHERICAL_HARMONIC ; truncation=$2 ; \
+          ls_global_trunc=$3 ; ms_min=$4 ; ms_max=$5 ; shift 5 ; \
+          if [ $truncation -eq $IP_TRUNC_ADAPTIVE ] ; \
+          then accuracy_adptive=$2 ; shift ; fi ;;
+      -S) isolir=$IP_SOLAR ; shift ;;
+      -s) spectral_file=$2 ; shift 2 ;;
+      -T) sph_algorithm=$IP_SPH_REDUCED_ITER ; shift ;;
+      -t) angular_integration=$IP_TWO_STREAM ; two_stream=$2 ; shift 2 ;;
+      -v) solver=$2 ; shift 2 ;;
+      -x) retain=T ; CFILE=$2 ; shift 2 ;;
+      -Y) sph_algorithm=$IP_SPH_DIRECT ; shift ;;
+      -Z) n_phf_solar=$2 ; shift 2 ;;
+      -z) SCATTER_FLAG=$2 ; shift 2 ;;
+      -dbg) dbg=T  ; shift ;;
+       *) echo "Unknown option: $1"; exit 1 ;;
+   esac
+done
+#
+# ASSEMBLE PROCESS FLAG
+#
+process_flag=$c_gas$c_continuum$c_cont_gen$c_rayleigh$c_drop$c_ice$c_aerosol
+#
+# CHECK FLAGS FOR CONVECTIVE CLOUDS HERE
+#
+if [ "$convective_drop_type" ] && [ ! "$c_drop" ]
+   then echo "Convective cloud cannot be used alone."
+   exit
+fi
+if [ "$convective_ice_type" ] && [ ! "$c_ice" ]
+   then echo "Convective cloud cannot be used alone."
+   exit
+fi
+#
+# BUILD UP INPUT FILE TO INTERACTIVE VERSION CHECKING AS WE GO
+#
+if [ "$spectral_file" ] 
+   then echo $spectral_file > /tmp/lrcdl.$$
+else
+   echo "Spectral file not set."
+   exit  
+fi
+if [ "$n_channel" ]
+   then echo $n_channel >> /tmp/lrcdl.$$
+else
+    echo "1" >> /tmp/lrcdl.$$
+fi
+if [ "$base_name" ] 
+   then echo $base_name >> /tmp/lrcdl.$$
+else
+   echo "Base name not set."
+   exit  
+fi
+if [ "$isolir" ]
+   then echo $isolir >> /tmp/lrcdl.$$
+else
+   echo "Spectral region not set."
+   exit  
+fi
+if [ "$range_1" ]
+   then echo $range_1 $range_2 >> /tmp/lrcdl.$$
+else
+   echo "Range of bands not set"
+   exit
+fi
+if [ "$n_channel" ]
+   then
+   n_band=$(($range_2-$range_1+1))
+   bnd_per_ch=$(($n_band/$n_channel))
+   case $n_channel in
+      1) ;;
+      $n_band) ;;
+      $(($n_band/$bnd_per_ch))) i=0 ; \
+	 while [[ $i -lt $n_band ]] ; \
+	 do echo $(($i/$bnd_per_ch + 1)) >> /tmp/lrcdl.$$ ; \
+            i=$(($i+1)) ; \
+	 done ;;
+      *) echo "Cannot determine channel map" ; exit ;;
+   esac
+fi
+if [ "$filter" ]
+   then echo "y" >> /tmp/lrcdl.$$
+   echo $filter >> /tmp/lrcdl.$$
+else
+   echo "n" >> /tmp/lrcdl.$$
+fi
+if [ "$modify_dir" ]
+# set either 0 for no scaling or 2 for csr scaling
+    then echo $dir_scal >> /tmp/lrcdl.$$
+    if [ $dir_scal -eq 2 ]
+       then echo $half_angle >> /tmp/lrcdl.$$
+    fi 
+else
+    echo "1" >> /tmp/lrcdl.$$
+fi
+echo $process_flag >> /tmp/lrcdl.$$
+if [ "$gas_overlap" ] 
+   then echo $gas_overlap >> /tmp/lrcdl.$$
+   if [ $gas_overlap -eq $IP_OVERLAP_SINGLE ]
+      then echo $gas_type >> /tmp/lrcdl.$$
+   elif [ $gas_overlap -eq $IP_OVERLAP_RANDOM_RESORT_REBIN ]
+      then echo $n_esft_red >> /tmp/lrcdl.$$
+           echo $gpnt_split >> /tmp/lrcdl.$$
+   fi
+fi
+if [ "$c_aerosol" ] 
+   then if [ "$overlay" = true ]
+      then echo y >> /tmp/lrcdl.$$
+      else
+         echo n >> /tmp/lrcdl.$$
+      fi
+fi
+if [ "$cloud_scheme" ]
+   then echo $cloud_scheme >> /tmp/lrcdl.$$
+else
+   echo "Cloud scheme not set."
+   exit 
+fi
+#
+# Duplicate Logic of driver
+#
+if [ $cloud_scheme -ne $IP_CLOUD_CLEAR ] 
+   then if [ ! "$cloud_representation" ]
+      then echo "No representation of clouds has been specified."
+      exit 1;
+   fi
+   echo $cloud_representation >> /tmp/lrcdl.$$
+   if [ "$c_ice" ] && [ "$c_drop" ]
+      then if [ $cloud_representation -eq $IP_CLOUD_HOMOGEN ] \
+         || [ $cloud_representation -eq $IP_CLOUD_ICE_WATER ]
+         then echo $drop_type >> /tmp/lrcdl.$$
+         echo $ice_type >> /tmp/lrcdl.$$
+      elif [ $cloud_representation -eq $IP_CLOUD_CONV_STRAT ] \
+         || [ $cloud_representation -eq $IP_CLOUD_CSIW ]
+         then echo $drop_type >> /tmp/lrcdl.$$
+         echo $ice_type >> /tmp/lrcdl.$$
+#        Check that convective propeties have been set.
+         if [ ! "$convective_drop_type" ] \
+            || [ ! "$convective_ice_type" ]
+            then echo "Types of convective particles have not been set."
+            exit 1 
+         fi
+         echo $convective_drop_type >> /tmp/lrcdl.$$
+         echo $convective_ice_type >> /tmp/lrcdl.$$
+      fi
+   elif [ "$c_ice" ] && [ ! "$c_drop" ]
+      then if [ $cloud_representation -eq $IP_CLOUD_HOMOGEN ] \
+         || [ $cloud_representation -eq $IP_CLOUD_ICE_WATER ]
+         then echo $ice_type >> /tmp/lrcdl.$$
+      elif [ $cloud_representation -eq $IP_CLOUD_CONV_STRAT ] \
+         || [ $cloud_representation -eq $IP_CLOUD_CSIW ]
+         then echo $ice_type >> /tmp/lrcdl.$$
+#        Check that convective propeties have been set.
+         if [ ! "$convective_ice_type" ]
+            then echo "Types of convective particles have not been set."
+            exit 1 
+         fi
+         echo $convective_ice_type >> /tmp/lrcdl.$$
+      fi
+   elif [ ! "$c_ice" ] && [ "$c_drop" ]
+      then if [ $cloud_representation -eq $IP_CLOUD_HOMOGEN ] \
+         || [ $cloud_representation -eq $IP_CLOUD_ICE_WATER ]
+         then echo $drop_type >> /tmp/lrcdl.$$
+      elif [ $cloud_representation -eq $IP_CLOUD_CONV_STRAT ] \
+         || [ $cloud_representation -eq $IP_CLOUD_CSIW ]
+         then echo $drop_type >> /tmp/lrcdl.$$
+#        Check that convective propeties have been set.
+         if [ ! "$convective_drop_type" ]
+            then echo "Types of convective particles have not been set."
+            exit 1 
+         fi
+         echo $convective_drop_type >> /tmp/lrcdl.$$
+      fi
+   else
+      echo "No cloudy processes are included although clouds are."
+      exit 1
+   fi
+fi
+if [ $cloud_scheme -eq $IP_CLOUD_PART_CORR ] 
+   then echo $dp_corr_strat >> /tmp/lrcdl.$$
+fi
+if [ $cloud_scheme -eq $IP_CLOUD_PART_CORR_CNV ] 
+   then echo $dp_corr_strat >> /tmp/lrcdl.$$
+        echo $dp_corr_conv >> /tmp/lrcdl.$$
+fi
+if [ $cloud_scheme -eq $IP_CLOUD_MCICA ] 
+   then echo $dp_corr_strat >> /tmp/lrcdl.$$
+        echo $rad_mcica_sigma >> /tmp/lrcdl.$$
+        echo $rad_mcica_sampling >> /tmp/lrcdl.$$
+fi
+echo $angular_integration >> /tmp/lrcdl.$$
+if [ $angular_integration -eq $IP_TWO_STREAM ]
+   then if [ "$two_stream" ]
+      then echo $two_stream >> /tmp/lrcdl.$$
+   else
+      if [ $isolir -eq $IP_INFRA_RED ]
+         then echo "12" >> /tmp/lrcdl.$$
+      else
+         echo "16" >> /tmp/lrcdl.$$
+      fi
+   fi
+   if [ "$rescale" ]
+      then echo ".T." >> /tmp/lrcdl.$$
+   else
+      echo ".F." >> /tmp/lrcdl.$$
+   fi
+   if [ "$solver" ]
+      then echo $solver >> /tmp/lrcdl.$$
+   else
+      if [ $cloud_scheme -eq $IP_CLOUD_CLEAR ] || \
+         [ $cloud_scheme -eq $IP_CLOUD_COLUMN_MAX ] || \
+         [ $cloud_scheme -eq $IP_CLOUD_MCICA ]
+         then echo "13" >> /tmp/lrcdl.$$
+      elif [ $cloud_scheme -eq $IP_CLOUD_MIX_MAX ] || \
+           [ $cloud_scheme -eq $IP_CLOUD_MIX_RANDOM ] || \
+           [ $cloud_scheme -eq $IP_CLOUD_PART_CORR ]
+         then echo "16" >> /tmp/lrcdl.$$
+      elif [ $cloud_scheme -eq $IP_CLOUD_TRIPLE ] || \
+           [ $cloud_scheme -eq $IP_CLOUD_PART_CORR_CNV ]
+         then echo "17" >> /tmp/lrcdl.$$
+      else
+         echo "Solver not set."
+         exit 1
+      fi
+   fi
+else if [ $angular_integration -eq $IP_IR_GAUSS ]
+      then echo $gauss_order >> /tmp/lrcdl.$$
+else if [ $angular_integration -eq $IP_SPHERICAL_HARMONIC ]
+      then echo $truncation >> /tmp/lrcdl.$$
+   if [ "$rescale" ]
+      then echo ".T." >> /tmp/lrcdl.$$
+   else
+      echo ".F." >> /tmp/lrcdl.$$
+   fi
+   echo $ls_global_trunc >> /tmp/lrcdl.$$
+   if [ "$truncation" -eq $IP_TRUNC_TRIANGULAR ] || \
+      [ "$truncation" -eq $IP_TRUNC_RHOMBOHEDRAL ] || \
+      [ "$truncation" -eq $IP_TRUNC_ADAPTIVE ]
+      then echo $ms_min >> /tmp/lrcdl.$$
+      echo $ms_max >> /tmp/lrcdl.$$
+   fi
+   if [ "$truncation" -eq $IP_TRUNC_ADAPTIVE ]
+      then echo $accuracy_adaptive >> /tmp/lrcdl.$$
+   fi
+   if [ "$euler_trnf" ]
+      then echo "Y" >> /tmp/lrcdl.$$
+   else
+      echo "N" >> /tmp/lrcdl.$$
+   fi
+   echo $ls_brdf_trunc >> /tmp/lrcdl.$$
+   if [ "$hg_phf" ]
+      then echo "Y" >> /tmp/lrcdl.$$
+   else
+      echo "N" >> /tmp/lrcdl.$$
+   fi
+#
+#  Define the mode: radiances are calculated by default
+#
+   sph_mode=R
+   if [ "$sph_flux" = T ]  
+     then sph_mode="F" 
+   elif [ "$sph_phtl" = T ]
+     then sph_mode="J"
+   fi
+#
+   if [ "$sph_mode" = F ]
+      then echo "F" >> /tmp/lrcdl.$$
+   elif [ "$sph_mode" = J ]
+      then echo "J" >> /tmp/lrcdl.$$
+   else
+      echo "R" >> /tmp/lrcdl.$$
+      if [ "$sph_algorithm" ]
+         then echo "$sph_algorithm" >> /tmp/lrcdl.$$
+         if [ "$isolir" -eq $IP_SOLAR ] \
+               && [ "$sph_algorithm" -eq $IP_SPH_REDUCED_ITER ]
+            then if [ ! "$n_phf_solar" ]
+               then n_phf_solar=$ls_global_trunc
+            fi
+            echo "$n_phf_solar" >> /tmp/lrcdl.$$
+            if [ "$lanczos" ]
+               then echo "Y" >> /tmp/lrcdl.$$
+            else
+               echo "N" >> /tmp/lrcdl.$$
+            fi
+         fi
+      else
+         echo "Spherical algorithm not set." ; exit 1
+      fi
+   fi
+   echo $brdf_basis >> /tmp/lrcdl.$$
+   else
+      echo "Illegal Angular integration scheme"
+      exit
+   fi
+fi
+fi
+echo ${SCATTER_FLAG:-$IP_SCATTER_FULL} >> /tmp/lrcdl.$$
+# if [ "$SCATTER_FLAG" -eq $IP_NO_SCATTER_ABS ] \
+#    || [ "$SCATTER_FLAG" -eq $IP_NO_SCATTER_EXT ] 
+#    then BAND=$range_1
+#    while [ $BAND -le $range_2 ]
+#    do
+#       echo T >> /tmp/lrcdl.$$
+#       BAND=$(expr $BAND + 1)
+#    done
+# fi
+if [ "$isolir" -eq $IP_INFRA_RED ]
+   then if [ "$quadratic" = T ] 
+      then echo "q" >> /tmp/lrcdl.$$
+   else
+      echo "l" >> /tmp/lrcdl.$$
+   fi
+fi
+if [ "$dbg" = T ] ; then
+  cd $RAD_BIN
+  echo " run < /tmp/lrcdl.$$ "
+  idbc l_run_cdl
+else
+  if [ "$verbose" ] 
+    then l_run_cdl < /tmp/lrcdl.$$
+  else
+    l_run_cdl < /tmp/lrcdl.$$ > /dev/null
+  fi
+fi
+if [ ! "$retain" ] 
+   then rm -f /tmp/lrcdl.$$
+else
+   mv /tmp/lrcdl.$$ $CFILE
+fi
+rm -f $LOCK_FILE

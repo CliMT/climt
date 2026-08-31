@@ -1,0 +1,15 @@
+#
+# Pathnames for compilers and global options for naming files
+#
+FORTCOMP        = gfortran -c -fcheck=all,no-recursion -fbacktrace -g -Wtabs -Werror -std=f2018
+LINK            = gfortran -Wl,-rpath=${NETCDFF_ROOT}/lib -fcheck=all,no-recursion -fbacktrace -g -Wtabs -Werror -std=f2018
+LIBLINK         = ar rvu
+INCCDF_PATH     = ${NETCDFF_ROOT}/include
+LIBCDF_PATH     = ${NETCDFF_ROOT}/lib
+LIBCDF_NAME     = netcdff
+OMPARG          = -fopenmp
+FLAGS_ODEPACK   = -w -std=legacy -fallow-argument-mismatch
+
+LIBSUFFIX       = a
+
+.SUFFIXES: $(SUFFIXES) .f90

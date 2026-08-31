@@ -1,0 +1,35 @@
+#!/bin/bash
+# Test COSP
+
+# Download and check COSP github code
+./check_cosp_github.sh
+
+# Run the COSP driver
+if [ -f cosp_input_um_2d.nc ] ; then
+  cosp_driver cosp_input_um_2d.nc > output.txt
+else
+  echo 'COSP input data not accessible'
+  exit 0
+fi
+
+# Test output against KGO
+ierr=0
+
+(diff -q output.txt ifort_19_0_0.txt && \
+ echo 'Matched ifort 19.0.0 output') || \
+(diff -q output.txt gfortran_12_2_0.txt && \
+ echo 'Matched gfortran 12.2.0 output') || \
+(diff -q output.txt gfortran_5_4_0.txt && \
+ echo 'Matched gfortran 5.4.0 output') || \
+(diff -q output.txt ifx_2025_0_4.txt && \
+ echo 'Matched ifx 2025.0.4 output') || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f output.txt
+  rm -f cosp_input_um_2d.nc
+  rm -f cosp_out.nc
+  echo OK
+  exit 0
+fi

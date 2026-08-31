@@ -1,0 +1,19 @@
+#! /bin/bash
+#
+# Script to run the program generating data at mid-points of layers.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -*) echo "Invalid option."; exit -1 ;;
+       *) INFILE=$1 ; shift ;;
+   esac
+done
+cat > /tmp/mpt.$$ << EOF
+$INFILE
+$OUTFILE
+EOF
+mid_point < /tmp/mpt.$$ > /dev/null
+rm -f /tmp/mpt.$$
+rm -f $LOCK_FILE

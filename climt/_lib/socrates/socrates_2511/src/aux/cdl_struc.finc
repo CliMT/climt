@@ -1,0 +1,74 @@
+! *****************************COPYRIGHT*******************************
+! (C) Crown copyright Met Office. All rights reserved.
+! For further details please refer to the file COPYRIGHT.txt
+! which you should have received as part of this distribution.
+! *****************************COPYRIGHT*******************************
+!
+!     ------------------------------------------------------------------
+!     Module containing declarations for a CDL-field.
+!
+!     Warning: Changes to the lengths of character strings require care
+!     as they occur in various places but must be defined with explicit
+!     sizes. Failure to ensure consistency may result in misleading
+!     error messages: in particular, check that NAME_VERT_COORD is given
+!     a size matching that set here.
+!
+!     ------------------------------------------------------------------
+!
+!
+!     Sizes for the declaration of arrays
+      INTEGER
+     &    nd_cdl_dimen
+!           Array size for CDL dimensions
+     &  , nd_cdl_dimen_size
+!           Array size for number of values in a CDL-dimension
+     &  , nd_cdl_data
+!           Array size for CDL data
+     &  , nd_cdl_var
+!           Number of CDL variables
+!
+      INTEGER
+     &    n_dimension
+!           Number of CDL dimesions
+     &  , n_var
+!           Number of CDL variables
+      CHARACTER
+     &    dimension_name(nd_cdl_dimen)*24
+!           Names of dimensions
+     &  , dimension_type(nd_cdl_dimen)*6
+!           Types of dimensions
+     &  , dimension_long(nd_cdl_dimen)*40
+!           Long names of dimensions
+     &  , dimension_unit(nd_cdl_dimen)*20
+!           Units of dimensions
+     &  , var_name(nd_cdl_var)*24
+!           Name of variable
+     &  , var_type(nd_cdl_var)*6
+!           Type of variable
+     &  , var_long(nd_cdl_var)*40
+!           Long name of variable
+     &  , var_unit(nd_cdl_var)*20
+!           Unit of variable
+      INTEGER
+     &    dimension_array_int(nd_cdl_dimen_size, nd_cdl_dimen)
+!           Values of integral dimensions
+      REAL  (RealK)
+     &    dimension_array_fl(nd_cdl_dimen_size, nd_cdl_dimen)
+!           Values of floating point dimensions
+      INTEGER
+     &    dimension_size(nd_cdl_dimen)
+!           Sizes of dimensions
+     &  , n_data(nd_cdl_var)
+!           Number of data elements
+     &  , n_dimension_var(nd_cdl_var)
+!           Number of dimensions used by variable
+     &  , list_dimension_var(nd_cdl_dimen, nd_cdl_var)
+!           List of dimensions used in the variable
+      INTEGER
+     &    data_int(nd_cdl_data, nd_cdl_var)
+!           Integral data fields
+      REAL  (RealK)
+     &    data_fl(nd_cdl_data, nd_cdl_var)
+!           Floating point data fields
+!
+!     ------------------------------------------------------------------

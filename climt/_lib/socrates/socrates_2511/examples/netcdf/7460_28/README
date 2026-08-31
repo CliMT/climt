@@ -1,0 +1,45 @@
+
+This directory contains example netCDF input and output files for a 1x20 column section of Cloud Resolving Model data. Information about the run is contained in 7460_28.info, and the plots 7460_28.eps and 7460_28a.eps show various properties of the clouds and resulting radiation fields.
+
+The top level directory contains single column data of the average values.
+The directory ipa0/ contains the full 20 column data.
+
+To test the radiation code run the following commands:
+
+cp 7460_28.surflw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_lw_hadgem1_3 -R 1 9 -I -G 5 0 -t 12 +R -v 11 -g 2 -c -C 2 -K 1 -d 1 -i 1
+mv 7460_28.dflx test_lw_avg.dflx
+mv 7460_28.hrts test_lw_avg.hrts
+mv 7460_28.nflx test_lw_avg.nflx
+mv 7460_28.uflx test_lw_avg.uflx
+
+cp 7460_28.surfsw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -G 5 0 -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3
+mv 7460_28.hrts test_sw_avg.hrts
+mv 7460_28.nflx test_sw_avg.nflx
+mv 7460_28.sflx test_sw_avg.sflx
+mv 7460_28.uflx test_sw_avg.uflx
+mv 7460_28.vflx test_sw_avg.vflx
+mv 7460_28.dflx test_sw_avg.dflx
+
+cd ipa0
+
+cp 7460_28.surflw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_lw_hadgem1_3 -R 1 9 -I -G 5 0 -t 12 +R -v 11 -g 2 -c -C 2 -K 1 -d 1 -i 1
+mv 7460_28.dflx test_lw.dflx
+mv 7460_28.hrts test_lw.hrts
+mv 7460_28.nflx test_lw.nflx
+mv 7460_28.uflx test_lw.uflx
+
+cp 7460_28.surfsw 7460_28.surf
+$RAD_SCRIPT/Cl_run_cdf -B 7460_28 -s $RAD_DIR/data/spectra/hadgem1/sp_sw_hadgem1_3 -R 1 6 -S -G 5 0 -t 2 +R -v 11 -g 2 -r -C 2 -K 1 -d 3 -i 3
+mv 7460_28.hrts test_sw.hrts
+mv 7460_28.nflx test_sw.nflx
+mv 7460_28.sflx test_sw.sflx
+mv 7460_28.uflx test_sw.uflx
+mv 7460_28.vflx test_sw.vflx
+mv 7460_28.dflx test_sw.dflx
+
+The output files you have created (test*) should resemble the example output files in the directory.
+
+James Manners 15.8.06

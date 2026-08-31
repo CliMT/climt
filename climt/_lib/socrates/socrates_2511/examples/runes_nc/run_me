@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Test the runes_nc offline code
+
+# Prepare the configuration file
+
+./prep_conf
+
+# Run the offline driver and write ascii output
+
+cp lfric_diag.nc lfric_runes_diag.nc
+
+runes_nc -conf_file  conf.tmp \
+         -input_file lfric_runes_diag.nc \
+         -spectral_dir ${RAD_DATA}/spectra/ga9/ \
+         -ascii
+                
+# Use ascii output to compare against KGO
+
+ierr=0
+
+(diff -q sw_fluxes_offline.txt kgo_sw_fluxes_offline.txt && \
+ echo 'Matched SW output') || ierr=1
+(diff -q lw_fluxes_offline.txt kgo_lw_fluxes_offline.txt && \
+ echo 'Matched LW output') || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f sw_fluxes_offline.txt lw_fluxes_offline.txt
+  rm -f sw_fluxes_lfric.txt lw_fluxes_lfric.txt
+  rm -f conf.tmp lfric_runes_diag.nc
+  echo OK
+  exit 0
+fi

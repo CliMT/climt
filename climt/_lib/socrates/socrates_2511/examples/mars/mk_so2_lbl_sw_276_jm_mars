@@ -1,0 +1,60 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+# Set environment variables
+procs=24
+. ./env_mars
+
+# Bespoke HITRAN file with CO2 broadening instead of air
+HITRAN_SO2="${ARCHIVE_DATA}/HITRAN2020/so2_111122.par_co2"
+
+# HITRAN2012 UV cross-sections identical to HITRAN2020
+HITRAN_UV_SO2="$GAS_DATA_DIR/SO2_UV08.xsc"
+if [ ! -s $HITRAN_UV_SO2 ] ; then
+    wget -nc https://lweb.cfa.harvard.edu/hitran/HITRAN2012/UV/Cross-sections/SO2_UV08.zip
+    unzip SO2_UV08.zip -d $GAS_DATA_DIR
+    rm -f SO2_UV08.zip
+fi
+
+mkdir -p ${SW_DATA}
+
+if [ ! -s $SO2_LBL_SW ] ; then
+  skelfile="${SW_DATA}/sp_sw_276_jm_mars_skel"
+  ./mk_sp_sw_276_jm_mars_skel $skelfile > /dev/null
+  
+  echo "Generating SO2 line absorption data"
+  for ((i = 200; i < 277; i++))
+  do
+    lbl_base="${SW_DATA}/so2_blbl_s${i}_${PT_FILE}"
+    if [ ! -s ${lbl_base}.nc ] || [ ! -f ${lbl_base}.done ] ; then
+      rm -f ${lbl_base}*
+      ck_args="Ccorr_k -F ${GAS_DATA_DIR}/${PT_FILE} -BD $HITRAN_SO2 \
+        -lo 9 -R ${i} ${i} -c 50000.0 -i 0.5 \
+        -s $skelfile -m ${lbl_base}_lm -L ${lbl_base}.nc \
+        -np $procs"
+      if command -v sbatch &> /dev/null ; then
+        sbatch -W -n $procs -o ${lbl_base}_log -t 360 ${ck_args} &
+      else
+        ${ck_args} > ${lbl_base}_log
+      fi
+    fi 
+  done
+
+  wait
+  echo "Concatenating band data into a single file"
+  lblcat $SW_DATA/so2_blbl_s*_${PT_FILE}.nc $SO2_LBL_SW
+else
+  echo "File exists:" $SO2_LBL_SW
+fi
+
+# Check job progress using:
+# sacct --format=jobname%30,jobid%9,elapsed,totalcpu,ncpus%5,reqmem,exitcode,state
+# Use scancel to kill
+
+exit 0

@@ -1,0 +1,5 @@
+clean:
+	rm -f *.o *.mod
+
+depend:
+	mkdep

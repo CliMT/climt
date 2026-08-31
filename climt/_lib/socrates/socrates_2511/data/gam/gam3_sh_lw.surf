@@ -1,0 +1,31 @@
+netcdf gam3_sh_lw.surf{
+
+dimensions:
+    lat            =   1 ;
+    lon            =   1 ;
+    basis          =   1 ;
+
+
+variables:
+    float lon(lon) ;
+             lon:units = "None" ;
+             lon:title = "LONGITUDE" ;
+    float lat(lat) ;
+             lat:units = "None" ;
+             lat:title = "GRID POINT" ;
+    int basis(basis) ;
+             basis:units = "None" ;
+             basis:title = "BASIS FUNCTION" ;
+
+    float alb(basis,lat,lon) ;
+             alb:units = "None" ;
+             alb:title = "ALBEDO WEIGHTS" ;
+
+
+data:
+            lat   =  0.000000E+00;
+            lon   =  0.000000E+00 ;
+            basis =   1 ;
+              alb =  0.000000E+00;
+
+}

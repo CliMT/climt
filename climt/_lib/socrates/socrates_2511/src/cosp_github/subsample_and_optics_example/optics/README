@@ -1,0 +1,17 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Written by Dustin Swales (dustin.swales@noaa.gov) 2017
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Overview:
+This directory contains example subroutines and functions to compute optical fields needed
+by COSP.
+
+Contents:
+array_lib.F90:
+cosp_optics.F90:
+cosp_utils.F90
+math_lib.F90
+mrgrnk.F90:
+optics_lib.F90
+quickbeam_optics.F90
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

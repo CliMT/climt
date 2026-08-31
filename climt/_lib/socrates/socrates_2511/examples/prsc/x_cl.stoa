@@ -1,0 +1,25 @@
+netcdf /temp/hc0300/haddb/cnvtest/YYY.stoa{                                   
+
+dimensions:
+    lat          =   1 ;
+    lon          =   1 ;
+
+
+variables:
+    float lon(lon) ; 
+             lon:units = "None" ; 
+             lon:title = "LONGITUDE" ;
+    float lat(lat) ;                                                       
+             lat:units = "None" ;                                            
+             lat:title = "LATITUDE" ;                                      
+
+    float stoa(lat,lon) ;                                                  
+             stoa:units = "Wm-2" ;                                         
+             stoa:title = "SOLAR TOA" ;                                                  
+
+data:                                                                           
+            lat   =   .10000E+01 ;
+            lon   =   .10000E+01 ;
+            stoa  =   .13680E+04 ;
+
+}                                                                               

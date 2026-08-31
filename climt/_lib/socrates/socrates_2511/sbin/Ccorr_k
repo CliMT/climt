@@ -1,0 +1,324 @@
+#! /bin/bash
+#set -xv
+#
+# Script to run the correlated-k program
+#
+touch $LOCK_FILE
+#
+# Store the original positional parameters since they will be
+# overwritten by set_param_mod.
+#
+ARG=$*
+#
+# Obtain Configured values of parameters
+#
+. $RAD_SCRIPT/set_param_mod rad_pcf.f90
+. $RAD_SCRIPT/set_param_mod weighting_pcf.f90
+. $RAD_SCRIPT/set_param_mod gas_list_pcf.f90
+. $RAD_SCRIPT/set_param_mod ck_fit_pcf.f90
+#
+# Restore the original positional parameters.
+#
+set -- $ARG
+#
+#
+# Process options
+#
+# Initial versions
+#
+CTN_ADJUST=n
+FRN_INCLUDE=n
+GAS=0
+FIT_TYPE=$IP_CK_NONE
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -C) CTN_NUM_PATH=$2 ; CTN_MIN_PATH=$3 ; CTN_MAX_PATH=$4 ; shift 4 ;;
+      -D) DATABASE=$2 ; shift 2 ;;
+      -BD) BDATABASE=$2 ; shift 2 ;;
+      -X) XDATABASE=$2 ; shift 2 ;;
+      -UVX) UVXDATABASE=$2 ; shift 2 ;;
+      -CIA) CIADATABASE=$2 ; shift 2 ;;
+      -L) LBL_FILE=$2 ; shift 2 ;;
+      -F) FILE_PT=$2 ; shift 2 ;;
+      -I) INST_FILE=$2 ; shift 2 ;;
+      -T) DRYRUN=y ; CFILE=$2 ; shift 2 ;;
+      -P) CTN_NUM_PP=$2 ; shift 2 ;;
+      -R) BAND_1=$2 ; BAND_2=$3 ; shift 3 ;;
+      -c) CUTOFF=$2 ; shift 2 ;;
+      -e) SELF_CF=y ; SELF_CF_296=$2 ; SELF_CF_260=$3 ; shift 3 ;;
+      -f) FRN_CF=y ; FRN_CF_FILE=$2 ; shift 2 ;;
+      -i) LINE_INC=$2 ; shift 2 ;;
+      -k) CTN_ADJUST=y ; shift ;;
+      -l) LINE_DATA=y ; GAS=$2 ; LINE_MAX_PATH=$3 ; shift 3 ;;
+      -lo) LINE_DATA=y ; GAS=$2 ; shift 2 ;;
+      -ct) CONT_DATA=y ; GAS_1=$2 ; GAS_2=$3 CONT_MAX_PATH=$4 ; shift 4 ;;
+      -cw) CONT_LINE_WGT=y ; GAS=$2 ; LINE_MAX_PATH=$3 ; shift 3 ;;
+      -s) SPECTRUM=$2 ; shift 2 ;;
+      -x) FRN_INCLUDE=y ; LINE_FRN_CF=y ; FRN_CF_FILE=$2 ; shift 2 ;;
+      +S) WEIGHT=$IP_WEIGHT_SOLAR ; SOLAR_FILE=$2 ; shift 2 ;;
+      +p) WEIGHT=$IP_WEIGHT_PLANCK ; shift ;;
+      +d) WEIGHT=$IP_WEIGHT_DPLANCK ; shift ;;
+      -u) WEIGHT=$IP_WEIGHT_UNIFORM ; shift ;;
+      -n) FIT_TYPE=$IP_CK_FIXED_N ; NUM_K=$2 ; shift 2 ;;
+      -m) MON_FILE=$2 ; shift 2 ;;
+      -o) OUT_FILE=$2 ; shift 2 ;;
+      -t) FIT_TYPE=$IP_CK_TOL ; TOL=$2 ; shift 2 ;;
+      -b) FIT_TYPE=$IP_CK_BIN ; TOL=$2 ; shift 2 ;;
+      -r) REF_PT_FILE=$2 ; shift 2 ;;
+      -p) SCALE_FNC=$IP_SCALE_POWER_LAW ; shift ;;
+      -q) SCALE_FNC=$IP_SCALE_POWER_QUAD ; shift ;;
+      -d) SCALE_FNC=$IP_SCALE_DOPPLER_QUAD ; shift ;;
+      -p2) SCALE_FNC=$IP_SCALE_DBL_POW_LAW ; shift ;;
+      -q2) SCALE_FNC=$IP_SCALE_DBL_POW_QUAD ; shift ;;
+      -d2) SCALE_FNC=$IP_SCALE_DBL_DOP_QUAD ; shift ;;
+      -lk) SCALE_FNC=$IP_SCALE_LOOKUP ; shift ;;
+      -lm) LOAD_MAP=y ; MAP_FILE=$2 ; shift 2 ;;
+      -sm) SAVE_MAP=y ; MAP_FILE=$2 ; shift 2 ;;
+      -lw) LOAD_WEIGHT=y ; MAP_FILE=$2 ; shift 2 ;;
+      -sb) SELF_BROADENING=y ; GAS_FRAC_FILE=$2 ; shift 2 ;;
+      -lp) LINE_PROF_CORR=$2 ; shift 2 ;;
+      -np) N_OMP_THREADS=$2 ; shift 2 ;;
+      -*) echo "Error: invalid option" ; exit 1 ;;
+      +*) echo "Error: invalid option" ; exit 1 ;;
+   esac
+done
+#
+if [ -z "$CONT_DATA" ] && ([ "$SELF_CF" ] || [ "$FRN_CF" ])
+  then GAS=$IP_H2O
+fi
+#
+if [ "$CONT_DATA" ] && [ $SCALE_FNC -eq $IP_SCALE_LOOKUP ]
+  then SCALE_FNC=$IP_SCALE_T_LOOKUP
+fi
+#
+echo $LBL_FILE > /tmp/ck.$$
+#
+# Line list
+#
+if [ "$DATABASE" ]
+  then echo l >> /tmp/ck.$$
+  echo $DATABASE >> /tmp/ck.$$
+  echo $RAD_DATA/gases/parsum.dat >> /tmp/ck.$$
+else if [ "$BDATABASE" ]
+  then echo b >> /tmp/ck.$$
+  echo $BDATABASE >> /tmp/ck.$$
+  echo $RAD_DATA/gases/parsum.dat >> /tmp/ck.$$
+else if [ "$XDATABASE" ]
+  then echo x >> /tmp/ck.$$
+  echo $XDATABASE >> /tmp/ck.$$
+else if [ "$UVXDATABASE" ]
+  then echo u >> /tmp/ck.$$
+  echo $UVXDATABASE >> /tmp/ck.$$
+else
+  echo n >> /tmp/ck.$$
+      fi
+    fi
+  fi
+fi
+if [ "$CIADATABASE" ]
+  then echo y >> /tmp/ck.$$
+  echo $CIADATABASE >> /tmp/ck.$$
+else
+  echo n >> /tmp/ck.$$
+fi
+echo $SPECTRUM >> /tmp/ck.$$
+#
+# Type of data to be generated.
+#
+if [ "$INST_FILE" ]
+  then echo y >> /tmp/ck.$$
+  echo $INST_FILE >> /tmp/ck.$$
+else
+  echo n >> /tmp/ck.$$
+fi
+if [ "$LINE_DATA" ]
+  then echo y >> /tmp/ck.$$
+else
+  echo n >> /tmp/ck.$$
+  if [ "$CONT_DATA" ]
+    then echo y >> /tmp/ck.$$
+  else
+    echo n >> /tmp/ck.$$
+  fi
+fi
+if [ -z "$CONT_DATA" ] && [ "$FRN_CF" ]
+  then echo y >> /tmp/ck.$$
+  echo $FRN_CF_FILE >> /tmp/ck.$$
+else
+  echo n >> /tmp/ck.$$
+fi
+if [ -z "$CONT_DATA" ] && [ "$SELF_CF" ]
+  then echo y >> /tmp/ck.$$
+  echo $SELF_CF_296 >> /tmp/ck.$$
+  echo $SELF_CF_260 >> /tmp/ck.$$
+else
+  echo n >> /tmp/ck.$$
+fi
+#
+# Actual gas
+#
+if [ "$LINE_DATA" ]
+  then echo $GAS >> /tmp/ck.$$
+  else if [ "$CONT_DATA" ]
+    then echo $GAS_1 $GAS_2 >> /tmp/ck.$$
+  fi
+fi
+#
+# Water vapour continua
+#
+if [ "$CONT_DATA" ] && [ -z "$CIADATABASE" ]
+  then if ([ $GAS_1 -eq $IP_H2O ] && [ $GAS_2 -eq $IP_AIR ]) || \
+          ([ $GAS_1 -eq $IP_AIR ] && [ $GAS_2 -eq $IP_H2O ])
+    then if [ "$FRN_CF" ]
+      then echo y >> /tmp/ck.$$
+      echo $FRN_CF_FILE >> /tmp/ck.$$
+    else
+      echo n >> /tmp/ck.$$
+    fi
+  else
+    if ([ $GAS_1 -eq $IP_H2O ] && [ $GAS_2 -eq $IP_H2O ])
+      then if [ "$SELF_CF" ]
+        then echo y >> /tmp/ck.$$
+        echo $SELF_CF_296 >> /tmp/ck.$$
+        echo $SELF_CF_260 >> /tmp/ck.$$
+      else
+        echo n >> /tmp/ck.$$
+      fi
+    fi
+  fi
+fi
+#
+# Weighting of continuum transmissions
+#
+if [ "$CONT_DATA" ]
+  then if [ "$CONT_LINE_WGT" ]
+    then echo y >> /tmp/ck.$$
+    echo $GAS >> /tmp/ck.$$
+    echo $LINE_MAX_PATH >> /tmp/ck.$$
+  else
+    echo n >> /tmp/ck.$$
+  fi
+fi
+#
+# Selection of bands
+#
+echo $BAND_1 $BAND_2 >> /tmp/ck.$$
+#
+# Selection of pressures and temperatures.
+#
+echo f >> /tmp/ck.$$
+echo $FILE_PT >> /tmp/ck.$$
+#
+# Selection of scaling functions.
+#
+if [ "$SCALE_FNC" ]
+  then echo "y" >> /tmp/ck.$$
+       echo $SCALE_FNC >> /tmp/ck.$$
+       if [ $SCALE_FNC -ne $IP_SCALE_LOOKUP ] && \
+          [ $SCALE_FNC -ne $IP_SCALE_T_LOOKUP ]
+         then echo "f" >> /tmp/ck.$$
+              echo $REF_PT_FILE >> /tmp/ck.$$
+       fi
+else
+  echo "n" >> /tmp/ck.$$
+fi
+#
+# Details of line integration.
+#
+if [ "$DATABASE" ] || [ "$BDATABASE" ]
+  then if [ $GAS -eq $IP_H2O ]
+          then echo $CTN_ADJUST >> /tmp/ck.$$
+               echo $FRN_INCLUDE >> /tmp/ck.$$
+               if [ "$LINE_FRN_CF" ]
+                 then echo $FRN_CF_FILE >> /tmp/ck.$$
+               fi
+       fi
+  echo $CUTOFF >> /tmp/ck.$$
+  if [ "$LINE_PROF_CORR" ]
+    then echo $LINE_PROF_CORR >> /tmp/ck.$$
+  else
+    echo 1 >> /tmp/ck.$$
+  fi
+  echo $LINE_INC >> /tmp/ck.$$
+else
+  if [ "$XDATABASE" ] || [ "$UVXDATABASE" ] || [ "$CONT_DATA" ]
+    then echo $LINE_INC >> /tmp/ck.$$
+  fi
+fi
+if [ "$LINE_DATA" ]
+  then if [ "$SELF_BROADENING" ]
+    then echo y >> /tmp/ck.$$
+    echo $GAS_FRAC_FILE >> /tmp/ck.$$
+  else
+    echo n >> /tmp/ck.$$
+  fi
+fi
+if [ -z "$CONT_DATA" ] && ([ "$FRN_CF" ] || [ "$SELF_CF" ])
+  then echo $CTN_MIN_PATH >> /tmp/ck.$$
+       echo $CTN_MAX_PATH >> /tmp/ck.$$
+       echo $CTN_NUM_PATH >> /tmp/ck.$$
+       echo $CTN_NUM_PP >> /tmp/ck.$$
+fi
+if [ "$LINE_DATA" ] || [ "$CONT_DATA" ]
+  then echo $FIT_TYPE >> /tmp/ck.$$
+       case $FIT_TYPE in
+         $IP_CK_TOL) echo $TOL >> /tmp/ck.$$ ;;
+         $IP_CK_FIXED_N) echo $NUM_K >> /tmp/ck.$$ ;;
+         $IP_CK_BIN) echo $TOL >> /tmp/ck.$$ ;;
+       esac
+fi
+if [ $FIT_TYPE -ne $IP_CK_NONE ] ; then
+  if [ "$LINE_DATA" ]
+    then echo $LINE_MAX_PATH >> /tmp/ck.$$
+  else
+    if [ "$CONT_DATA" ]
+      then echo $CONT_MAX_PATH >> /tmp/ck.$$
+    fi
+  fi
+  if [ "$LINE_DATA" ] || [ "$CONT_DATA" ]
+    then if [ "$LOAD_MAP" ]
+      then echo y >> /tmp/ck.$$
+    else
+      echo n >> /tmp/ck.$$
+      if [ "$LOAD_WEIGHT" ]
+        then echo y >> /tmp/ck.$$
+      else
+        echo n >> /tmp/ck.$$
+      fi
+    fi
+    if [ -z "$LOAD_MAP" ] && [ -z "$LOAD_WEIGHT" ]
+      then if [ "$SAVE_MAP" ]
+        then echo y >> /tmp/ck.$$
+      else
+        echo n >> /tmp/ck.$$
+      fi
+    fi
+    if [ "$LOAD_MAP" ] || [ "$LOAD_WEIGHT" ] || [ "$SAVE_MAP" ]
+      then echo $MAP_FILE >> /tmp/ck.$$
+    fi
+  fi
+fi
+if [ $FIT_TYPE -ne $IP_CK_NONE ] || \
+   ([ -z "$CONT_DATA" ] && ([ "$SELF_CF" ] || [ "$FRN_CF" ]))
+  then echo $WEIGHT >> /tmp/ck.$$
+  if [ $WEIGHT -eq $IP_WEIGHT_SOLAR ]
+  then echo $SOLAR_FILE >> /tmp/ck.$$
+  fi  
+  echo $OUT_FILE >> /tmp/ck.$$
+fi
+echo $MON_FILE >> /tmp/ck.$$
+if [ "$N_OMP_THREADS" ]
+  then echo $N_OMP_THREADS >> /tmp/ck.$$
+       export OMP_NUM_THREADS=$N_OMP_THREADS
+else
+  echo 1 >> /tmp/ck.$$
+fi
+if [ "$DRYRUN" ]
+  then mv /tmp/ck.$$ $CFILE
+else
+  ( corr_k < /tmp/ck.$$ )
+#> /dev/null
+fi
+rm -f $LOCK_FILE
+rm -f /tmp/ck.$$

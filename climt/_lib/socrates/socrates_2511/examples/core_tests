@@ -1,0 +1,50 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Testing code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+err=0
+
+echo ---
+echo "Testing Cl_run_cdl for ICRCCM case 27 (LW) on AER profiles:"
+cd aer_cmp
+./run27 || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdf on multiple profiles:"
+cd netcdf/7460_28
+./run_me || err=1
+cd ../../
+
+echo ---
+echo "Test Cl_run_cdf for CIRC case 6"
+echo "(HadGEM, GA7, SES and 300/260 band spectral files):"
+cd netcdf/CIRC_case6
+./run_me || err=1
+cd ../../
+
+echo ---
+echo "Test McICA code (create mcica_data file and run on CRM profile):"
+cd netcdf/mcica
+./run_me || err=1
+cd ../../
+
+echo ---
+echo "Testing Crun_mono to calculate radiances:"
+cd rc3
+./run_rc3 || err=1
+cd ../
+
+echo ---
+if [ $err -gt 0 ] ; then
+  echo "Some tests failed."
+  exit 1
+else
+  echo "All passed."
+  exit 0
+fi

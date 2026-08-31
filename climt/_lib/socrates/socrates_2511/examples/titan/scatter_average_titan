@@ -1,0 +1,80 @@
+#! /bin/bash
+#
+# Script to fit droplet and ice spectra for Titan spectral configurations.
+#
+
+#--- LW --------------------------------------------------------------
+
+specfile="sp_lw_10_dsa_titan"
+fitdrop="fit_drop_lw_titan"
+mondrop="mon_drop_lw_titan"
+avgdrop="avg_drop_lw_titan"
+fitice="fit_ice_lw_titan"
+monice="mon_ice_lw_titan"
+avgice="avg_ice_lw_titan"
+
+rm -f $fitdrop $mondrop $avgdrop
+Cscatter_average -s $specfile -P 1 \
+   -t -p 90 \
+   -f 5 $fitdrop $mondrop 453.4 \
+   -a $avgdrop \
+   scatter_drop_titan_type5
+
+rm -f $fitice $monice $avgice
+Cscatter_average -s $specfile -P 1 \
+   -w -p 90 \
+   -f 1 $fitice $monice 490.0 \
+   -a $avgice \
+   scatter_ice_titan_type1
+
+prep_spec <<EOF > /dev/null
+$specfile
+n
+sp_lw_10_titan
+10
+5
+$fitdrop
+1.50000E-06 5.00000E-05
+12
+1
+$fitice
+-1
+EOF
+
+#--- SW --------------------------------------------------------------
+
+specfile="sp_sw_14_dsa_titan_sun"
+fitdrop="fit_drop_sw_titan"
+mondrop="mon_drop_sw_titan"
+avgdrop="avg_drop_sw_titan"
+fitice="fit_ice_sw_titan"
+monice="mon_ice_sw_titan"
+avgice="avg_ice_sw_titan"
+
+rm -f $fitdrop $mondrop $avgdrop
+Cscatter_average -s $specfile -P 1 \
+   -t -S $RAD_DATA/solar/lean_12 \
+   -f 5 $fitdrop $mondrop 453.4 \
+   -a $avgdrop \
+   scatter_drop_titan_type5
+
+rm -f $fitice $monice $avgice
+Cscatter_average -s $specfile -P 1 \
+   -w -S $RAD_DATA/solar/lean_12 \
+   -f 1 $fitice $monice 490.0 \
+   -a $avgice \
+   scatter_ice_titan_type1
+
+prep_spec <<EOF > /dev/null
+$specfile
+n
+sp_sw_14_titan
+10
+5
+$fitdrop
+1.50000E-06 5.00000E-05
+12
+1
+$fitice
+-1
+EOF

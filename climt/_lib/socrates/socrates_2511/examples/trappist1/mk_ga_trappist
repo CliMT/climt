@@ -1,0 +1,46 @@
+#!/bin/bash
+
+cp -r ../../data/spectra/ga9 .
+cd ga9
+prep_spec <<EOF
+sp_sw_ga9
+n
+sp_sw_ga9_trappist1
+2
+y
+n
+../../../data/solar/trappist1
+y
+-1
+EOF
+cd ..
+
+cp -L -r ../../data/spectra/ga9_ref .
+cd ga9_ref
+prep_spec <<EOF
+sp_sw_260_jm3
+n
+sp_sw_260_jm3_trappist1
+2
+y
+n
+../../../data/solar/trappist1
+n
+-1
+EOF
+cd ..
+
+mkdir ga9_hybrid
+cp ga9/sp_lw_ga9* ga9_hybrid/.
+cp ga9_ref/sp_sw_260_jm3_trappist1* ga9_hybrid/.
+cd ga9_hybrid
+assign_subcols <<EOF
+sp_sw_260_jm3_trappist1
+0
+sp_lw_ga9
+0
+../ga9/mcica_data
+64
+EOF
+
+exit 0

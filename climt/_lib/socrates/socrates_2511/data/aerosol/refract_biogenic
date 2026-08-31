@@ -1,0 +1,10 @@
+ Wavelength-independent refractive index
+ for a biogenic aerosol ('secondary organic').
+ Value extrapolated from Lund-Myhre and Neilson,
+ assuming organic fraction is 100%
+ Wavelength (m)   Re(m) Im(m)
+ --------------   ----- -----
+*BEGIN_DATA
+   2.00000e-07    1.43   0.0
+   0.10000e+00    1.43   0.0
+*END_DATA

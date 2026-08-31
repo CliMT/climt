@@ -1,0 +1,3 @@
+SOURCE90_NLTE = nlte_heating_data_mod.f90 \
+	        nlte_heating_mod.f90 \
+	        sw_nlte_heating_mod.f90

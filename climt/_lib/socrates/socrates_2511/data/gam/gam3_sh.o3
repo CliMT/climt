@@ -1,0 +1,38 @@
+netcdf gam3_sh.o3{                                                              
+
+dimensions:
+    lat            =   1;
+    lon            =   1;
+    plev           =  18;
+
+
+variables:
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                         
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "LONGITUDE";                                        
+    float plev(plev);                                                         
+             plev:units = "Pa";                                               
+             plev:title = "PRESSURE";                                        
+
+    float o3(plev,lon,lat);                                                    
+             o3:units = "None";                                               
+             o3:title = "MMR OF OZONE";                                                      
+
+data:                                                                           
+              lat =   .000000E+00;
+              lon =   .000000E+00;
+             plev =   .100000E+03,  .300000E+03,  .100000E+04,  .300000E+04,
+                      .500000E+04,  .700000E+04,  .100000E+05,  .150000E+05,
+                      .200000E+05,  .203471E+05,  .205516E+05,  .250000E+05,
+                      .300000E+05,  .400000E+05,  .500000E+05,  .700000E+05,
+                      .850000E+05,  .983021E+05;
+               o3 =   .445000E-05,  .107000E-04,  .105000E-04,  .709000E-05,
+                      .493000E-05,  .282000E-05,  .112000E-05,  .798000E-06,
+                      .316000E-06,  .309000E-06,  .306000E-06,  .233000E-06,
+                      .156000E-06,  .792000E-07,  .567000E-07,  .563000E-07,
+                      .443000E-07,  .372000E-07;
+
+}                                                                               

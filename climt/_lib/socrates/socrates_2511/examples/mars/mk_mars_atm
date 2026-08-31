@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Convert the column data in mars_atm.raw into Socrates input file format
+rm -f mars_1*
+rm -f mars_2*
+raw_input <<EOF > /dev/null
+mars_atm.raw
+mars
+n
+EOF
+
+Cgen_horiz_cdl -o mars_1.szen -n szen \
+                 -L "Solar zenith angle" -u "Degrees" \
+                 -F 30.0 -N 0.0 -T 0.0
+Cgen_horiz_cdl -o mars_1.stoa -n stoa \
+                 -L "Solar Irradiance" -u "W.m-2" \
+                 -F 586.2 -N 0.0 -T 0.0
+Cgen_surf_cdl -o mars_1.surfsw -n alb \
+                 -L "Surface Albedo" -u "None" \
+                 -b 0.25 -N 0.0 -T 0.0
+
+# Convert to netCDF
+rm -f mars.*
+Ccdl2cdf -o mars.q mars_1.q
+Ccdl2cdf -o mars.co2 mars_1.co2
+Ccdl2cdf -o mars.n2 mars_1.n2
+Ccdl2cdf -o mars.ar mars_1.ar
+Ccdl2cdf -o mars.t mars_1.t
+Ccdl2cdf -o mars.tstar mars_2.tstar
+Ccdl2cdf -o mars.szen mars_1.szen
+Ccdl2cdf -o mars.stoa mars_1.stoa
+Ccdl2cdf -o mars.surf mars_1.surfsw
+rm -f mars_1*
+rm -f mars_2*
+
+# Generate temperature on levels
+python3 $RAD_DIR/python/ncout_tl.py mars
+
+exit 0

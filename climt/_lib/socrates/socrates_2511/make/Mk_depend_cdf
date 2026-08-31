@@ -1,0 +1,56 @@
+#
+# Routines that use the netcdf include files
+#
+
+read_cdf.o: read_cdf.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) read_cdf.f90
+
+read_nc.o: read_nc.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) read_nc.f90
+
+write_cdf.o: write_cdf.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) write_cdf.f90
+
+write_nc.o: write_nc.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) write_nc.f90
+
+dimensions_field_cdf_ucf.o: dimensions_field_cdf_ucf.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) dimensions_field_cdf_ucf.f90
+
+l_run_cdf.o: l_run_cdf.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) l_run_cdf.f90 
+
+runes_nc.o: runes_nc.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) runes_nc.f90
+
+corr_k_single.o: corr_k_single.f90
+	$(FORTCOMP) $(OMPARG) -I$(INCCDF_PATH) corr_k_single.f90
+
+make_block_17.o: make_block_17.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) make_block_17.f90
+
+calc_horizon_angles.o: calc_horizon_angles.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) calc_horizon_angles.f90
+
+lblcat.o: lblcat.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) lblcat.f90 
+
+cosp2_io.o: cosp2_io.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) cosp2_io.f90
+
+cosp_driver.o: cosp_driver.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) cosp_driver.f90
+
+set_extern_ckd_frn_data.o: set_extern_ckd_frn_data.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) set_extern_ckd_frn_data.f90
+
+set_extern_ckd_self_data.o: set_extern_ckd_self_data.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) set_extern_ckd_self_data.f90
+
+#
+# Object dependencies for programs that use netCDF
+#
+
+CDF_OBJ = $(MODULES_CDF:.f90=.o) $(SOURCE90_CDF:.f90=.o) $(SOURCE77_CDF:.f=.o)
+
+COSP_CDF_OBJ = $(MODULES_COSP_CDF:.f90=.o)

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Convert the column data in glatm.raw into Socrates input file format
+rm -f tropical_*
+raw_input <<EOF > /dev/null
+glatm.raw
+tropical
+n
+EOF
+Cgen_horiz_cdl -o tropical_1.szen -n szen \
+                 -L "Solar zenith angle" -u "Degrees" \
+                 -F 30.0 -N 0.0 -T 0.0
+Cgen_horiz_cdl -o tropical_1.stoa -n stoa \
+                 -L "Solar Irradiance" -u "W.m-2" \
+                 -F 1365.0 -N 0.0 -T 0.0
+Cgen_surf_cdl -o tropical_1.surfsw -n alb \
+                 -L "Surface Albedo" -u "None" \
+                 -b 0.06 -N 0.0 -T 0.0
+Cgen_surf_cdl -o tropical_1.surflw -n alb \
+                 -L "Surface Albedo" -u "None" \
+                 -b 0.0 -N 0.0 -T 0.0
+
+# Convert to netCDF
+rm -f tropical.*
+Ccdl2cdf -o tropical.q tropical_1.q
+Ccdl2cdf -o tropical.co2 tropical_1.co2
+Ccdl2cdf -o tropical.o3 tropical_1.o3
+Ccdl2cdf -o tropical.n2o tropical_1.n2o
+Ccdl2cdf -o tropical.co tropical_1.co
+Ccdl2cdf -o tropical.ch4 tropical_1.ch4
+Ccdl2cdf -o tropical.o2 tropical_1.o2
+Ccdl2cdf -o tropical.no tropical_2.no
+Ccdl2cdf -o tropical.no2 tropical_2.no2
+Ccdl2cdf -o tropical.n2 tropical_2.n2
+Ccdl2cdf -o tropical.o tropical_1.o
+Ccdl2cdf -o tropical.n tropical_1.n
+Ccdl2cdf -o tropical.t tropical_1.t
+Ccdl2cdf -o tropical.tl tropical_3.tl
+Ccdl2cdf -o tropical.tstar tropical_4.tstar
+Ccdl2cdf -o tropical.szen tropical_1.szen
+Ccdl2cdf -o tropical.stoa tropical_1.stoa
+Ccdl2cdf -o tropical.surfsw tropical_1.surfsw
+Ccdl2cdf -o tropical.surflw tropical_1.surflw
+rm -f tropical_*
+
+exit 0

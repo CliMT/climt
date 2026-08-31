@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# Add CMIP7 solar variability data (version 4.6) to the GA9 spectral files
+# This script creates the following files:
+#   sp_sw_ga9_cmip7_picontrol_4_6
+#   sp_sw_ga9_cmip7_ref_mon_4_6
+#   sp_sw_ga9_cmip7_ref_day_4_6
+
+if [ ! $SOCRATES_DATA_DIR ] ; then
+  SOCRATES_DATA_DIR=.
+fi
+
+CMIP7_DATA_DIR=${SOCRATES_DATA_DIR}/solarisheppa/cmip7
+PICON_FILE='multiple_input4MIPs_solar_CMIP_SOLARIS-HEPPA-CMIP-4-6_gn.nc'
+MONTH_FILE='multiple_input4MIPs_solar_CMIP_SOLARIS-HEPPA-CMIP-4-6_gn_185001-202312.nc'
+DAILY_FILE='multiple_input4MIPs_solar_CMIP_SOLARIS-HEPPA-CMIP-4-6_gn_18500101-20231231.nc'
+
+# Download CMIP7 solar variability data
+if [[ -r $CMIP7_DATA_DIR ]]; then
+  echo "Gunzipping data from $CMIP7_DATA_DIR"
+  gunzip -c ${CMIP7_DATA_DIR}/${PICON_FILE}.gz > ${PICON_FILE}
+  gunzip -c ${CMIP7_DATA_DIR}/${MONTH_FILE}.gz > ${MONTH_FILE}
+  gunzip -c ${CMIP7_DATA_DIR}/${DAILY_FILE}.gz > ${DAILY_FILE}
+else
+  for i in $(seq 1 3); do
+    if [[ $i == 1 ]]; then
+      SOLARIS_FILE=$PICON_FILE
+      CLOUD_LOC='XaSb85EpGNYqkEw'
+    elif [[ $i == 2 ]]; then
+      SOLARIS_FILE=$MONTH_FILE
+      CLOUD_LOC='n7cacmRBjk5Gb8f'
+    else
+      SOLARIS_FILE=$DAILY_FILE
+      CLOUD_LOC='nJFTPcnFwZ3smTo'
+    fi
+    if [[ ! -f $SOLARIS_FILE ]]; then
+      if [[ ! -f $SOLARIS_FILE.gz ]]; then
+	echo 'Downloading data from SOLARIS website'
+        wget https://cloud.iaa.es/index.php/s/${CLOUD_LOC}/download/$SOLARIS_FILE.gz
+      fi
+      echo "Gunzipping local data"
+      gunzip -c $SOLARIS_FILE.gz > $SOLARIS_FILE
+    fi
+  done
+fi
+
+echo 'Checking files are at vn4.6'
+PICON_VN=`ncdump -h $PICON_FILE | grep -o 'source_version = ".*"'`
+if [[ $PICON_VN != 'source_version = "4.6"' ]]; then
+  echo 'PI control data is not at version 4.6: '$PICON_VN
+  exit 1
+fi
+MONTH_VN=`ncdump -h $MONTH_FILE | grep -o 'source_version = ".*"'`
+if [[ $MONTH_VN != 'source_version = "4.6"' ]]; then
+  echo 'Monthly data is not at version 4.6: '$MONTH_VN
+  exit 1
+fi
+DAILY_VN=`ncdump -h $DAILY_FILE | grep -o 'source_version = ".*"'`
+if [[ $DAILY_VN != 'source_version = "4.6"' ]]; then
+  echo 'Daily data is not at version 4.6: '$DAILY_VN
+  exit 1
+fi
+
+# Remove files created by previous runs
+rm -f sp_sw_ga9*
+
+echo 'Adding PI Control solar variability data to spectral file'
+prep_spec << EOF > picontrol.log
+$RAD_DATA/spectra/ga9/sp_sw_ga9
+n
+sp_sw_ga9
+17
+y
+12
+-2
+6
+$PICON_FILE
+0
+1
+-1
+EOF
+mv sp_sw_ga9_var sp_sw_ga9_cmip7_picontrol_4_6
+rm $PICON_FILE
+
+echo 'Adding monthly solar reference scenario data to spectral file'
+prep_spec << EOF > ref_mon.log
+sp_sw_ga9
+a
+17
+y
+12
+-2
+6
+$MONTH_FILE
+0
+0
+-1
+EOF
+mv sp_sw_ga9_var sp_sw_ga9_cmip7_ref_mon_4_6
+rm $MONTH_FILE
+
+echo 'Adding daily solar reference scenario data to spectral file'
+prep_spec << EOF > ref_day.log
+sp_sw_ga9
+a
+17
+y
+12
+-2
+6
+$DAILY_FILE
+0
+0
+-1
+EOF
+mv sp_sw_ga9_var sp_sw_ga9_cmip7_ref_day_4_6
+rm $DAILY_FILE
+
+exit 0
