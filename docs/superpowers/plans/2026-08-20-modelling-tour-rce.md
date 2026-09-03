@@ -2878,18 +2878,92 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Log — Task 0 measurements
 
-*Fill this in as Steps 2–6 run. Paste the actual stdout, not a paraphrase. Note the machine and the date; tranche 1's cost model assumed the same reference machine and the comparison only means something if it is.*
+**Machine:** Apple Silicon, 5 performance + 6 efficiency cores (`hw.perflevel0.logicalcpu`=5, `hw.perflevel1.logicalcpu`=6). **Date:** 2026-09-03. Same reference machine as tranche 1. Cost/stability/convergence measured with `NUMBA_DISABLE_JIT=1` (the browser proxy); the moist-stack numbers (see below) measured with numba **on** — see the note there.
+
+**1 — Per-step cost (`cost`, numba off, the browser proxy):**
 
 ```
-(measurement output goes here)
+  07-gray         2.61 ms/step native (~0.009 s/step browser)
+  07-14band      49.41 ms/step native (~0.173 s/step browser)
+  08-bl           3.70 ms/step native (~0.013 s/step browser)
+  09-moist-bl    51.37 ms/step native (~0.180 s/step browser)
+  11-dry-rce     53.92 ms/step native (~0.189 s/step browser)
+  12-moist-rce   56.78 ms/step native (~0.199 s/step browser)
 ```
+Radiation dominates ~18×; every non-radiative component this tranche adds is nearly free. Cost is set by dt and step count.
+
+**2 — Largest stable dt (`stability`, 200-step blow-up test):**
+
+```
+  07-gray        24 h      08-bl         24 h      11-dry-rce    24 h
+  07-14band      24 h      09-moist-bl    6 h      12-moist-rce   6 h
+```
+**CAVEAT — the 200-step test is unreliable for the moist stacks.** It reports `12-moist-rce` "stable at 6 h", but over a real (thousands-of-steps) convergence run the moist column goes non-finite at 6 h (a `condensibles.py` log-of-negative precedes the blow-up). The repo's own Emanuel examples all run this column at **5 min** (`examples/gmd_radiative_convective_python_emanuel.ipynb`, `gmd_radiative_convective_unyt.py`, `gmd_radiative_convective.py`: `UnytTimeDelta(minutes=5)`); `column_code_with_slab.py` uses 10 min. Page 12's dt is **5 min**, not 6 h.
+
+**3 — Steps to equilibrium (`convergence`, cold start, numba off; `|TOA|<0.5 W/m²`):**
+
+```
+  stack        dt     n_steps  (days)  TOA      Tsurf     dT(sfc-air)  Ttop     Ttop/Te   wall
+  07-gray      12 h    600      300 d   +0.419   335.43 K   +15.16 K    214.96   0.8428    1.5 s
+  07-14band    12 h   2300     1150 d   -0.499   267.85 K    +7.08 K    113.08   0.4433  108.6 s
+  08-bl        12 h    625      312 d   +0.458   332.40 K    +6.40 K    214.95   0.8427    2.3 s
+  09-moist-bl   6 h   2450      612 d   -0.177   289.21 K    +4.24 K    124.12   0.4866  122.3 s
+  11-dry-rce   12 h   1650      825 d   -0.495   266.60 K    +3.88 K    119.81   0.4697   85.0 s
+```
+(`Te = (240/σ)^¼ = 255.06 K`; skin temp `Te/2^¼ = 214.48 K` — the gray tops sit right at it.) The `convergence` run CRASHED on the 6th stack (`12-moist-rce` at 6 h — the blow-up above), so its shard holds these five; the moist stack was measured separately at 5 min:
+
+**3b — Moist stack at dt = 5 min, numba ON (`scripts/experiments/tour_rce_moist_probe.py`):**
+
+```
+  default start   n_steps=123400 (428 d)  TOA=+0.262  Tsurf=286.67 K  [856 s native, numba on]
+  2xCO2           n_steps= 20000 ( 69 d)  TOA=+0.487  Tsurf=288.85 K  [136 s]
+  warm-steep      n_steps=118800 (412 d)  TOA=-0.479  Tsurf=286.74 K  [802 s]
+```
+Numba is ON here on purpose: step count is a physics quantity (numba-independent), and numba makes the run ~10× faster (~7 ms/step vs the 56.8 ms/step browser cost recorded in §1). The offline state generator (Task 9) runs natively, so it gets numba; only the browser cell is bound by §1's cost.
+
+**4 — Start-independence (`independence`; two starts: climt default vs +40 K/steeper):**
+
+```
+  11-dry-rce  @12 h: default 1650 st (266.60 K), warm-steep 1525 st (266.52 K)
+              -> surface |dT| 0.078 K; max column |dT| 2.01 K
+  12-moist-rce @5 min: default 123400 st (286.67 K), warm-steep 118800 st (286.74 K)
+              -> surface |dT| 0.064 K; max column |dT| 3.84 K
+```
+**Reading (a ruling — this is the plan's Step 5 gate).** The script prints `PATH-DEPENDENT` for both, because both exceed its 0.5 K whole-column tolerance. This is **not** genuine multiple equilibria: in both stacks the **surface** is reproducible to <0.08 K, both starts met the `|TOA|<0.5` gate, and the spread is confined to the slow-relaxing upper column. The `|TOA|<0.5 W/m²` criterion (a whole-column energy check) does not pin the stratosphere — whose radiative relaxation time is far longer than the surface's — to <0.5 K. So the equilibria are start-independent where it is measured (the surface), and Task 9 must tighten what "converged" means for the shipped *profile*: either a stricter gate (e.g. `|TOA|<0.1` plus a profile-stationarity check) or a residual-test tolerance that admits a few K aloft. Page 12 proceeds; it may claim surface start-independence, and should show/annotate the upper-level spread rather than deny it. **This does not reach "reconsider the tranche's shape with the spec's author" — the mundane cause (a surface-tight, interior-loose convergence test) fully explains it.** The earlier `independence-moist` = 21 K was pure under-resolution (dt=0.25 h × 12000 steps = 125 d, vs the 428 d needed).
+
+**5 — 2×CO₂ response (`co2`, from equilibrium, double CO₂, re-converge):**
+
+```
+  11-dry-rce  @12 h:  266.60 -> 267.51 K  (+0.913 K) in   175 steps  TOA +0.409
+  12-moist-rce @5 min: 286.67 -> 288.85 K  (+2.179 K) in 20000 steps  TOA +0.487
+```
+The moist response is ~2.4× the dry — water-vapour feedback via Emanuel + condensation. (Each pair of end-states sits on opposite sides of the 0.5 W/m² gate, so both warmings carry a few-tenths-K convergence-slop; fine for a teaching page, quote as ≈.)
+
+**6 — Supersaturation page 09 quotes (`supersat`, page-09 stack, dt=1 h, 200 steps):**
+
+```
+  with condensation      peak RH 100.0%   precip 2.693 mm/day   SH 48.54  LH 75.42  Bowen 0.644
+  without condensation   peak RH 456.7%   precip 0.000 mm/day   SH 79.50  LH 32.33  Bowen 2.459
+```
+Without a moisture sink the boundary layer drives the column to **457 %** relative humidity; `GridScaleCondensation` holds it at 100 % and rains out 2.69 mm/day. Bowen ratio over the saturated surface is 0.64.
+
+**The number each page takes from here (Step 7):**
+
+| Page | Number(s) |
+|---|---|
+| 07 | gray dt 12 h / 600 steps / 1.5 s, top 214.96 K = skin `Te/2^¼`=214.48 K; 14-band dt 12 h / 2300 steps / 108.6 s, top 113.08 K (0.443 `Te`) |
+| 08 | surface–air discontinuity: gray radiative-only +15.16 K → gray radiative+turbulent +6.40 K |
+| 09 | peak RH 100 % (with) vs 457 % (without) condensation; Bowen 0.64 over a saturated surface |
+| 10 | — (no time loop) |
+| 11 | dry state dt 12 h / 1650 steps; 2×CO₂ +0.91 K in 175 steps |
+| 12 | Emanuel dt 5 min; moist state 123 400 steps (428 d); 2×CO₂ +2.18 K |
 
 **Decisions taken from these numbers:**
 
-- Slab depth for pages 11 and 12: _______
-- `dt` for each page: _______
-- Step counts for the two shipped equilibria: _______
-- Levers applied, if any, and why: _______
+- **Slab depth for pages 11 and 12:** **2 m** (unchanged, the shipped value). No lever applied — see below.
+- **`dt` for each page:** 07 gray **12 h**, 07 14-band **12 h**; 08 **12 h**; 09 illustrative loop **1 h** (equilibrium at 6 h); 11 dry **12 h**; 12 moist **5 min** (the Emanuel convention — **not** the 6 h the 200-step stability test wrongly cleared).
+- **Step counts for the two shipped equilibria:** dry (page 11) **≈1650 steps @ 12 h** (825 d); moist (page 12) **≈123 400 steps @ 5 min** (428 d).
+- **Levers applied, if any, and why:** **None.** Page 12 is never spun up live in the browser — 123 400 steps × 56.8 ms ≈ **117 min** in-browser is impossible — so it **loads a precomputed equilibrium** (Task 9, already the plan's design), generated natively-with-numba in ~14 min (measured, §3b). Because the browser never runs the spin-up, the browser-cell-time levers (thinner slab / faster perturbation / fewer levels) do not apply, and the shipped-state config stays 2 m / 5 min / nz = 28. The only follow-on for Task 9 is a stricter convergence/residual criterion for the *profile* (see §4), not a physics or resolution change.
 
 ---
 
