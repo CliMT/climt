@@ -1174,6 +1174,97 @@ def test_page7_flux_diagnostics_survive_the_update_order(page7_columns, table):
     assert 150.0 < _surface_temperature(state) < 400.0
 
 
+# Page 7's reveal. `PAGE7_GRAY_TABLE`, `PAGE7_DIFFUSIVITY` and
+# `_page7_gray_column` above are its configuration; these are chapter 8's two
+# analytic constants, the ones page 4 prescribed and page 7 must recover.
+PAGE7_TAU_INF = 4.0
+PAGE7_TE = 255.0
+
+
+@pytest.fixture(scope="module")
+def page7_gray_equilibrium():
+    """The gray column, stepped to equilibrium once and shared.
+
+    900 steps at 12 h, 450 simulated days: page 7's own run. Restores the
+    backend itself, for the reason ``page7_columns`` gives.
+    """
+    saved_backend = sympl.get_backend()
+    sympl.set_backend(climt.UnytBackend())
+    try:
+        components, state = _page7_gray_column()
+        yield _load("stepping").integrate(
+            components, [], state, climt.UnytTimeDelta(hours=12), 900)
+    finally:
+        sympl.set_backend(saved_backend)
+
+
+@pytest.mark.slow
+def test_page7_gray_column_finds_page4s_analytic_profile(
+        page7_gray_equilibrium, soundings):
+    """Page 7's reveal, and the strongest claim in the tranche.
+
+    Page 4 checked that the heating rate vanishes on a profile it was handed.
+    Page 7 hands the model nothing and gets the same profile back. Measured
+    max |dT| is 0.103 K; the threshold is 0.5 K, comfortable but not vacuous.
+    """
+    state = page7_gray_equilibrium
+    p = state["air_pressure"].values[:, 0, 0]
+    surface_pressure = float(state["surface_air_pressure"].values.ravel()[0])
+
+    T_analytic, T_ground_analytic, _ = soundings.analytic_gray_equilibrium(
+        p, surface_pressure, tau_inf=PAGE7_TAU_INF, T_e=PAGE7_TE)
+    T = state["air_temperature"].values[:, 0, 0]
+
+    assert np.max(np.abs(T - T_analytic)) < 0.5, (
+        f"max |T - T(tau)| = {np.max(np.abs(T - T_analytic)):.3f} K; the "
+        "column did not find chapter 8's profile")
+    surface = _surface_temperature(state)
+    assert abs(surface - T_ground_analytic) < 0.5, (
+        f"surface {surface:.2f} K vs analytic {T_ground_analytic:.2f} K")
+
+
+@pytest.mark.slow
+def test_page7_top_level_sits_near_the_skin_temperature(
+        page7_gray_equilibrium):
+    """The isothermal top the figure labels is the skin temperature.
+
+    Measured +0.63 K above Te/2^(1/4); the threshold is 1.0 K. The residual is
+    real and physical -- the top level is a finite layer, not the tau -> 0
+    limit -- so this is not a tolerance to tighten toward zero.
+    """
+    T_top = float(page7_gray_equilibrium["air_temperature"].values[-1, 0, 0])
+    skin = PAGE7_TE / 2.0 ** 0.25
+    assert abs(T_top - skin) < 1.0, (
+        f"top level {T_top:.2f} K vs skin temperature {skin:.2f} K")
+
+
+@pytest.mark.slow
+def test_page7_gray_column_reaches_energy_balance(page7_gray_equilibrium,
+                                                  budgets):
+    """The convergence claim, read off the budget rather than a curve."""
+    assert abs(budgets.toa_imbalance(page7_gray_equilibrium)) < 0.2
+
+
+@pytest.mark.slow
+def test_page7_mixed_layer_depth_changes_speed_not_equilibrium():
+    """Page 7's knob, and the cleanest lesson in the tranche.
+
+    1 m and 5 m slabs reach the *same* equilibrium at very different speeds.
+    Heat capacity sets response time; it does not set where you end up.
+    """
+    stepping_module = _load("stepping")
+    finals = {}
+    for depth in (1.0, 5.0):
+        components, state = _page7_gray_column(slab_depth=depth)
+        stepping_module.integrate(components, [], state,
+                                  climt.UnytTimeDelta(hours=12), 1400)
+        finals[depth] = _surface_temperature(state)
+
+    assert abs(finals[1.0] - finals[5.0]) < 0.5, (
+        f"1 m settled at {finals[1.0]:.2f} K and 5 m at {finals[5.0]:.2f} K — "
+        "slab depth must not change the equilibrium")
+
+
 @pytest.fixture
 def budgets():
     return _load("budgets")

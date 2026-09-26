@@ -119,6 +119,7 @@ website:
         - modelling-tour/04-gray-equilibrium-tested.qmd
         - modelling-tour/05-co2-knob.qmd
         - modelling-tour/06-water-vapour-limit.qmd
+        - modelling-tour/07-stepping-a-column.qmd
 
 # HTML appearance, declared at the *top level* rather than under `format: html:`
 # on purpose. The Modelling Tour pages set `format: live-html` -- a separate

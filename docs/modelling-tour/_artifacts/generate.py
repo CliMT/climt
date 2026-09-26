@@ -46,6 +46,7 @@ FIGURES = {
     "05-co2-knob.qmd": [(1, "05-co2-knob.png")],
     "06-water-vapour-limit.qmd": [(1, "06-feedback.png"),
                                   (2, "06-runaway.png")],
+    "07-stepping-a-column.qmd": [(1, "07-stepping.png")],
 }
 
 
