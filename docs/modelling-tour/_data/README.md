@@ -52,3 +52,58 @@ conda run -n climt python -m pytest tests/test_spectrum_table.py -m slow
 `--ngpt 4 --nsub 7` (98 bands, 5.2 MB) was tried first and is equally valid on
 every test except the per-band OLR one; see the log in
 `docs/superpowers/plans/2026-08-12-modelling-tour-radiation.md`, Task 13.
+
+## `rce_dry_equilibrium.npz` and `rce_moist_equilibrium.npz`
+
+Two single-column radiative-convective equilibrium states, loaded by pages 11
+and 12 so those pages can run perturbation experiments instead of spending
+thousands of in-browser steps spinning up. `_tour/states.py` loads them;
+`_tour/assets.py` finds them.
+
+| | dry (page 11) | moist (page 12) |
+|---|---|---|
+| components | Cork LW, SlabSurface, SimpleBoundaryLayer, DryConvectiveAdjustment | + EmanuelConvectionPython, GridScaleCondensation |
+| water vapour | none — a CO₂-only atmosphere | evolves, supplied by the surface |
+| LW table | `earth_low_res_lw` (14 bands) | `earth_low_res_lw` |
+| grid | nz = 28, one column | nz = 28, one column |
+| timestep | 12 h | 5 min (the Emanuel convention) |
+| slab depth | 2 m | 2 m |
+| absorbed SW | 240 W m⁻², prescribed at the surface | same |
+| CO₂ | 330 ppm | 330 ppm |
+| size | a few kB | a few kB |
+
+Each file carries its own provenance — climt version, timestep, step count,
+and the TOA and surface imbalances it finished at. `_tour/states.describe()`
+prints it, and pages 11 and 12 print it above their first figure, so a reader
+is never looking at an equilibrium without also seeing what produced it.
+
+**Page 11's column is genuinely dry.** Its 14-band radiation sees CO₂ alone, so
+it equilibrates well below Earth's surface temperature and no number on that
+page is comparable with tranche 1's. The difference between page 11 and page 12
+is, to first order, the water vapour greenhouse plus its feedback.
+
+**What "converged" means here.** The generator runs until the top-of-atmosphere
+imbalance is under 0.5 W m⁻² *and* the surface temperature has stopped moving.
+The surface *flux* imbalance is not usable as a gate — the one-step flux lag
+`_tour/stepping.py` documents makes it oscillate several W m⁻² step to step even
+at equilibrium — so the surface criterion is that the mean surface temperature
+over one 1000-step window equals the mean over the previous one. That is a
+strict form of the drift the residual test below checks, and it is why the
+shipped step counts (dry ≈ 3500 at 12 h) are larger than Task 0's cold-start
+convergence measurement: Task 0 stopped at the first TOA crossing, which lands
+mid-transient while the surface is still settling.
+
+### Regenerating
+
+Only when `tests/test_modelling_tour.py::test_shipped_equilibrium_is_still_an_equilibrium`
+fails — that test is the staleness guard, deliberately in place of the
+dependency-hash machinery in `scripts/build_experiments.py`, which cannot tell
+a no-op in `cork/` from a physics change and has charged for the difference.
+
+```sh
+conda run -n climt python scripts/generate_tour_equilibria.py
+conda run -n climt python -m pytest tests/test_modelling_tour.py -k shipped_equilibrium
+```
+
+The script's defaults are exactly what shipped. After regenerating, re-check
+every number pages 11 and 12 quote — the state moved, so they may have too.

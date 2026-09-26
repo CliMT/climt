@@ -2987,7 +2987,7 @@ Pages 11 and 12 load an equilibrium. This task produces the two files, the gener
   - Two `.npz` files loadable by `states.load`.
   - CLI: `python scripts/generate_tour_equilibria.py [--dry] [--moist] [--out DIR]`, whose **defaults reproduce exactly what shipped** — the lesson `generate_tour_spectrum_table.py` taught by not doing so.
 
-- [ ] **Step 1: Write the residual test first**
+- [x] **Step 1: Write the residual test first** — done, verbatim from below; appended after the existing `states` tests.
 
 Add to `tests/test_modelling_tour.py`:
 
@@ -3083,12 +3083,12 @@ def test_shipped_equilibrium_provenance_is_complete(states, asset):
     assert "None" not in states.describe(provenance)
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails** — 4 failed (FileNotFoundError on the generator), as expected.
 
 Run: `conda run -n climt python -m pytest tests/test_modelling_tour.py -k "shipped_equilibrium" -v`
 Expected: FAIL — the generator script and both `.npz` files do not exist.
 
-- [ ] **Step 3: Write the generator**
+- [x] **Step 3: Write the generator** — written, with two deviations from the draft below, both recorded in the log.
 
 Create `scripts/generate_tour_equilibria.py`:
 
@@ -3284,7 +3284,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 4: Set `MOIST_DT_HOURS` from Task 8's measurement**
+- [x] **Step 4: Set `MOIST_DT_HOURS` from Task 8's measurement** — set to `5.0 / 60.0` h (5 min), not the 6 h the `stability` probe reported. Task 8's CAVEAT and §Decisions both say 5 min: the 200-step stability test clears 6 h but the moist column goes non-finite over a real run there, and the repo's Emanuel examples all use 5 min. `DRY_DT_HOURS` was likewise set to 12 h (not the draft's 1.0) per §Decisions and page 11's quoted numbers — confirmed with the spec author. See the log.
 
 `MOIST_DT_HOURS = 0.25` above is a placeholder marked as one. Replace it with the largest stable timestep Task 8's `stability` measured for `12-moist-rce`, and delete the `# replace with` comment. If Task 8 has not run, stop — this task depends on it.
 
@@ -3324,7 +3324,7 @@ for kind in ('dry', 'moist'):
 
 Expected: `max |dT|` below ~0.05 K for both — the convergence threshold's worth of slack, not more. A larger difference means the run is not deterministic at the level the pages quote, and the pages' precision has to come down to match.
 
-- [ ] **Step 8: Document both files in `_data/README.md`**
+- [x] **Step 8: Document both files in `_data/README.md`** — appended, following the `earth_spectrum_lw.npz` shape; added a timestep row and a "what converged means here" note explaining the surface-temperature-stationarity gate.
 
 Append a section, following the shape of the existing `earth_spectrum_lw.npz` one:
 
@@ -3403,18 +3403,48 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Log — the two equilibria as generated
 
-*Fill in from Step 5.*
+**Run 2026-09-04, climt 0.31.0, numba ON, reference machine (Apple Silicon).**
 
 | | dry | moist |
 |---|---|---|
-| `dt` | | |
-| steps to converge | | |
-| simulated days | | |
-| final TOA imbalance (W m⁻²) | | |
-| final surface imbalance (W m⁻²) | | |
-| surface temperature (K) | | |
-| file size | | |
-| native wall clock | | |
+| `dt` | 12 h | 5 min |
+| steps to converge | 3500 | _(pending — run in progress)_ |
+| simulated days | 1750 d | |
+| final TOA imbalance (W m⁻²) | −0.130 | |
+| final surface imbalance (W m⁻²) | +1.384 (instantaneous — see note) | |
+| surface temperature (K) | 266.478 | |
+| file size | 28.0 kB | |
+| native wall clock | ~35 s (after numba compile) | |
+
+**Two deviations from the draft generator in Step 3, both forced by Task 8 and
+by the residual test written first:**
+
+1. **The four pre-Task-8 constants were reconciled to the measurements.**
+   `DRY_DT_HOURS` 1.0 → **12** (§Decisions / page 11, confirmed with the spec
+   author); `MOIST_DT_HOURS` 0.25 → **5/60 h** (Task 8 CAVEAT: the 200-step
+   stability test wrongly clears 6 h); `CONVERGENCE_W_M2` 0.1 → **0.5** (the
+   gate the campaign measured with, per §4 "ships directly from this
+   convergence"); `MAX_STEPS` 40000 → **400000** (the moist run needs
+   ~123 000). climt's defaults were verified to match the measurement's initial
+   conditions (CO₂ 330 ppm, `specific_humidity` 0, `surface_specific_humidity`
+   0), so `build_state` reproduces the states Task 8 measured.
+
+2. **Convergence is TOA balance AND surface-temperature stationarity, not the
+   draft's TOA-only gate.** The draft (TOA-only, |TOA|<0.5) stopped the dry run
+   at 1450 steps on a *transient dip* of the oscillating TOA, while the surface
+   was still +3.5 W m⁻² out of balance and descending — the residual test
+   (written first) caught it: the surface drifted 0.0513 K > 0.05 in ten steps.
+   Adding a surface **flux** gate fails too: the one-step flux lag
+   `_tour/stepping.py` documents makes `surface_imbalance` oscillate ±several
+   W m⁻² step to step forever (measured: a clean +3.6 / −8.0 / +1.6 / −2.0
+   limit cycle), so it never sits under any small threshold. The surface
+   **temperature**, though, settles into a ±0.05 K limit cycle. So the second
+   gate is that the mean surface temperature over one 1000-step window equals
+   the previous window's mean to within 0.02 K (means cancel the oscillation
+   whatever its period). This is why the shipped dry state is 3500 steps, not
+   Task 0's cold-start 1650 (measured numba-OFF, TOA-only): those numbers stop
+   mid-transient. Page 11 should quote the shipped 3500 / 266.48 K, not 1650 /
+   266.60 K.
 
 ---
 
