@@ -208,10 +208,16 @@ In temperature, the same change looks less tidy. The lowest level cools by
 given heat to the air above it, which is what convection does. The adjusted
 profile falls at exactly the dry adiabatic lapse rate, along the dashed line.
 
-Ten layers were adjusted, not eight. The scheme mixed the eight unstable layers
-and found their mixed θ warmer than the air just above, so it took that air in
-too, and so on until the air above was warmer in θ than the mixture. Convection
-reaches into the stable air above the unstable layer. The knob below shows how far.
+Ten layers were adjusted, not eight: the mixing reached into the stable air above
+the unstable layers. The scheme works down the column from the top. Starting at
+each level, it looks upward and mixes up to the highest level whose θ is below
+the plain average of θ from the starting level up to and including it. Level 6
+mixes with level 7 first. Each level from 5 down to 1 then mixes everything up to
+level 8. Last, level 0 takes in level 9 as well. Which
+layers the scheme mixes follows from this rule, and the rule is not the only
+reasonable one: the first physics exercise finds a nine-layer answer that would
+also be stable. The knob below shows how far the mixing reaches for other
+profiles.
 
 ::: {.callout-note}
 ## Why θ and not T
@@ -288,8 +294,12 @@ did.
 
 The θ panels also say how the scheme could have got this wrong. Averaging θ over
 the adjusted layers, or averaging T, gives a different answer. Both are
-"mixing". Only the enthalpy-weighted mean conserves energy, and that is the one
-the scheme uses.
+"mixing". Only the enthalpy-weighted mean conserves energy, and that is the mean
+the scheme gives the mixed layers. It does not use that mean to decide *which*
+layers to mix. For that it takes a plain average of θ over the levels, one vote
+per level, whatever the level's mass. That choice cannot break conservation, but
+it can change how deep the mixing reaches, and on this profile it does. The
+first physics exercise shows how.
 
 ## The knob: depth and strength of the instability
 
@@ -368,9 +378,14 @@ and each call has only a small instability to remove.
    still unstable against the air above it, and it has to grow. (Over eight layers
    it is 295.06 K, warmer than level 8's 293.33 K. Over nine it is 294.75 K,
    already colder than level 9's 295.06 K, so nine layers would be enough. The
-   scheme mixes ten, at 294.80 K. It works down the column from the top, mixing
-   each unstable stretch as it finds it, and the stretch it ends with need not be
-   the smallest that would do. Both answers leave a neutral layer under stable air.)
+   scheme mixes ten, at 294.80 K, because it decides how far to mix with a plain
+   average of θ that ignores each layer's mass. When it reaches level 0, levels 1
+   to 8 have already been mixed to 294.65 K. Level 0 is at 298.78 K, and it is the
+   thinnest layer in the column, about 6 hPa against about 49 hPa for level 9.
+   Counted as one vote in ten, it lifts the plain average over levels 0 to 9 to
+   295.11 K, just above level 9's 295.06 K, so level 9 is taken in. Weighted by
+   mass, as the mixed value itself is, the average is 294.80 K. Both answers leave
+   a neutral layer under stable air.)
 
 2. **An instability deeper than the troposphere.** Set `UNSTABLE_LEVELS = 24` and
    run the first two cells. How far up does the adjustment reach, and what stops

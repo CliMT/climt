@@ -2014,14 +2014,8 @@ def _page10_column(unstable_levels=8, gamma_unstable=14e-3, gamma=6.5e-3,
 
 
 def _page10_theta(state):
-    from sympl import get_constant
-
-    Rd = float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
-    Cp = float(get_constant("heat_capacity_of_dry_air_at_constant_pressure",
-                            "J/kg/degK"))
-    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
-    T = state["air_temperature"].to_units("degK").values[:, 0, 0]
-    return T * (1.0e5 / p) ** (Rd / Cp)
+    """Dry potential temperature, K: page 9's helper, without the humidity."""
+    return _virtual_potential_temperature(state)[0]
 
 
 def _page10_adjust(**column_kwargs):
@@ -2190,6 +2184,59 @@ def test_page10_mixed_theta_by_hand():
     assert mixed(9) == pytest.approx(294.75, abs=0.005)
     assert theta[9] == pytest.approx(295.06, abs=0.005)
     assert mixed(10) == pytest.approx(294.80, abs=0.005)
+
+
+def test_page10_the_extent_is_decided_by_a_plain_theta_average():
+    """Why ten layers, not nine: the page's account of the scheme.
+
+    Replays ``_dry_adj_kernel_np`` top-down. Every mix but the last stops at
+    level 8; at k = 0, levels 1-8 already sit at 294.65 K, and the thin, warm
+    level 0 lifts the *unweighted* mean over 0-9 above theta at level 9, while
+    the mass-weighted mixed value is 294.80 K.
+    """
+    from sympl import get_constant
+
+    with _unyt_backend_restored():
+        adjustment, state = _page10_column()
+        kappa = (float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+                 / float(get_constant(
+                     "heat_capacity_of_dry_air_at_constant_pressure",
+                     "J/kg/degK")))
+        p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+        p_int = state["air_pressure_on_interface_levels"].to_units(
+            "Pa").values[:, 0, 0]
+        T = state["air_temperature"].values[:, 0, 0].copy()
+        _, new_state = adjustment(state, climt.UnytTimeDelta(**PAGE10_DT))
+        scheme = new_state["air_temperature"].values[:, 0, 0]
+    dp = p_int[:-1] - p_int[1:]
+    exner = (p / 1.0e5) ** kappa
+
+    mixes = {}
+    for k in range(len(T) - 1, -1, -1):
+        theta = T / exner
+        top = -1
+        for m in range(k + 1, len(T)):
+            if theta[k:m + 1].mean() > theta[m]:
+                top = m
+        if top == -1:
+            continue
+        if k == 0:
+            assert theta[1:9] == pytest.approx(294.65, abs=0.005)
+            assert theta[0] == pytest.approx(298.78, abs=0.005)
+            assert theta[:10].mean() == pytest.approx(295.11, abs=0.005)
+            assert theta[9] == pytest.approx(295.06, abs=0.005)
+            assert theta[:10].mean() > theta[9]
+        layer = slice(k, top + 1)
+        mixed = (T[layer] * dp[layer]).sum() / (exner[layer] * dp[layer]).sum()
+        T[layer] = mixed * exner[layer]
+        mixes[k] = (top, mixed)
+
+    assert {k: top for k, (top, _) in mixes.items()} == {
+        6: 7, 5: 8, 4: 8, 3: 8, 2: 8, 1: 8, 0: 9}
+    assert mixes[0][1] == pytest.approx(294.80, abs=0.005)
+    np.testing.assert_allclose(T, scheme, rtol=1e-12)
+    assert dp[0] / 100 == pytest.approx(5.5, abs=0.05)
+    assert dp[9] / 100 == pytest.approx(48.7, abs=0.05)
 
 
 def test_page10_moisture_makes_a_moist_theta_uniform(budgets):
