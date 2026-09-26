@@ -35,6 +35,31 @@ gate a real comparison rather than an interpolation exercise.
 - source: `linepyline:earth_hifi`, HITRAN 2024 + MT_CKD 4.3, pseudovoigt,
   dnu = 0.1 cm⁻¹
 
+### `rce_moist_2xco2_equilibrium.npz` — page 12's 2×CO₂, run offline
+
+`rce_moist_equilibrium.npz` with CO₂ doubled to 660 ppm and re-converged under
+the same two gates, same components, same 5 min timestep. Page 12 loads it
+beside the base state rather than running the experiment: it took 73 600 steps
+(≈ 256 simulated days), which at the ~0.19 s a step the moist column costs in
+the browser is nearly four hours. Page 11's dry 2×CO₂ still runs live — 1000
+steps at 12 h, about three minutes.
+
+Its provenance records what it was perturbed from (`perturbed_from`,
+`perturbed_from_saved_at`, the base's surface temperature) and the warming
+(`warming_k`). `test_shipped_2xco2_state_is_the_shipped_moist_state_perturbed`
+checks that stamp against the shipped base, so regenerating the base without
+this file fails a test instead of quietly changing the number page 12 quotes.
+
+**What the warming does and does not mean.** The difference between the two
+files is +1.647 K. Both files pass the ±0.5 W m⁻² TOA gate, but at this
+column's feedback, about 2.0 W m⁻² K⁻¹, that gate allows each state to sit
+up to ~0.25 K from its own equilibrium, and here the two errors add: the base
+finished at −0.485 W m⁻² (slightly warm) and the doubled state at +0.500
+(slightly cool). A Gregory regression over the doubled run puts the
+equilibrium-to-equilibrium warming at ≈ 2.1 K. Quote the file difference as a
+lower bound, or quote the regression, but do not quote +1.65 K as the
+column's sensitivity.
+
 ### Regenerating
 
 The generation step needs the `linepyline` conda env (it owns the HITRAN line
@@ -53,7 +78,7 @@ conda run -n climt python -m pytest tests/test_spectrum_table.py -m slow
 every test except the per-band OLR one; see the log in
 `docs/superpowers/plans/2026-08-12-modelling-tour-radiation.md`, Task 13.
 
-## `rce_dry_equilibrium.npz` and `rce_moist_equilibrium.npz`
+## `rce_dry_equilibrium.npz`, `rce_moist_equilibrium.npz` and `rce_moist_2xco2_equilibrium.npz`
 
 Two single-column radiative-convective equilibrium states, loaded by pages 11
 and 12 so those pages can run perturbation experiments instead of spending
@@ -102,8 +127,14 @@ a no-op in `cork/` from a physics change and has charged for the difference.
 
 ```sh
 conda run -n climt python scripts/generate_tour_equilibria.py
-conda run -n climt python -m pytest tests/test_modelling_tour.py -k shipped_equilibrium
+conda run -n climt python -m pytest tests/test_modelling_tour.py -k shipped
 ```
+
+With no arguments it writes all three files, the 2×CO₂ state last because it
+starts from the moist state just written. `--moist-2xco2` alone rebuilds only
+the 2×CO₂ state from the moist file already there. Set `NUMBA_NUM_THREADS=1`
+when running several of these at once: a single column gains nothing from
+numba's threads, and oversubscribed cores made each step ~10× slower.
 
 The script's defaults are exactly what shipped. After regenerating, re-check
 every number pages 11 and 12 quote — the state moved, so they may have too.

@@ -1,7 +1,11 @@
-"""Generate the two radiative-convective equilibrium states pages 11 and 12 ship.
+"""Generate the radiative-convective equilibrium states pages 11 and 12 ship.
 
 Pages 11 and 12 perturb an equilibrium rather than spending thousands of
-in-browser steps finding one. This produces those states.
+in-browser steps finding one. This produces those states: the dry and the
+moist equilibrium, and the moist one re-equilibrated at doubled CO2. Page 11's
+2xCO2 runs live (1000 steps at 12 h, ~3 min in the browser); page 12's
+cannot, because at the moist column's 5 min timestep it takes ~74 000 steps,
+so it ships too.
 
 **The defaults here are exactly what shipped.** Running this with no arguments
 must reproduce the committed files to within the convergence threshold. That is
@@ -11,6 +15,7 @@ invocation cost an afternoon.
 
     conda run -n climt python scripts/generate_tour_equilibria.py
     conda run -n climt python scripts/generate_tour_equilibria.py --moist
+    conda run -n climt python scripts/generate_tour_equilibria.py --moist-2xco2
     conda run -n climt python scripts/generate_tour_equilibria.py --out /tmp
 
 The configuration constants below are Task 0's measured decisions (see the plan
@@ -65,6 +70,7 @@ SURFACE_SPECIFIC_HUMIDITY = 0.015    # saturated surface, page 9's default
 WIND_M_S = 5.0                # the wind the relaxation holds the column at
 WIND_TIMESCALE_HOURS = 24.0
 ROUGHNESS_LENGTH_M = 1e-3
+CO2_DOUBLING = 2.0            # the perturbation rce_moist_2xco2_equilibrium.npz ships
 
 
 # The wind relaxation is NOT in these lists. It is built per-state by
@@ -139,10 +145,15 @@ def build_state(components, moist):
     return state, relaxation
 
 
-def run_to_equilibrium(components, moist, dt_hours, check_every=50):
-    tendencies, steppers = split(components)
-    state, relaxation = build_state(components, moist)
-    tendencies = tendencies + [relaxation]
+def run_to_equilibrium(tendencies, steppers, state, dt_hours,
+                       check_every=50, print_every=50):
+    """Step ``state`` in place until it passes both gates; return the steps taken.
+
+    ``tendencies`` must already include the wind relaxation. The starting
+    state is the caller's: a fresh ``build_state`` for the spin-ups, a loaded
+    equilibrium for the 2xCO2 re-equilibration, or a deliberately different
+    profile for a start-independence check.
+    """
     timestep = climt.UnytTimeDelta(hours=dt_hours)
 
     window = max(1, STEADY_WINDOW_STEPS // check_every)   # checks per window
@@ -164,12 +175,15 @@ def run_to_equilibrium(components, moist, dt_hours, check_every=50):
         else:
             drift = float("inf")
 
-        print(f"  step {step + check_every:6d}  "
-              f"({(step + check_every) * dt_hours / 24.0:7.1f} d)  "
-              f"TOA {toa:+8.4f}  surf(flux) {surface_imbalance:+8.4f} W/m^2  "
-              f"Tsurf {surface:8.4f} K  drift {drift:.4f} K")
-        if abs(toa) < CONVERGENCE_W_M2 and drift < SURFACE_STEADY_K:
-            return state, step + check_every
+        converged = abs(toa) < CONVERGENCE_W_M2 and drift < SURFACE_STEADY_K
+        if converged or (step + check_every) % print_every == 0:
+            print(f"  step {step + check_every:6d}  "
+                  f"({(step + check_every) * dt_hours / 24.0:7.1f} d)  "
+                  f"TOA {toa:+8.4f}  surf(flux) {surface_imbalance:+8.4f} "
+                  f"W/m^2  Tsurf {surface:8.4f} K  drift {drift:.4f} K",
+                  flush=True)
+        if converged:
+            return step + check_every
     raise SystemExit(
         f"did not converge in {MAX_STEPS} steps at dt = {dt_hours} h: need "
         f"|TOA| < {CONVERGENCE_W_M2} W/m^2 and a surface drift < "
@@ -177,17 +191,10 @@ def run_to_equilibrium(components, moist, dt_hours, check_every=50):
         f"{budgets.toa_imbalance(state):+.4f}")
 
 
-def generate(kind, out_dir):
-    moist = (kind == "moist")
-    components = moist_components() if moist else dry_components()
-    dt_hours = MOIST_DT_HOURS if moist else DRY_DT_HOURS
-    print(f"{kind} equilibrium: dt = {dt_hours} h, nz = {NZ}, "
-          f"slab = {SLAB_DEPTH_M} m, CO2 = {CO2_PPM} ppm")
-
-    state, n_steps = run_to_equilibrium(components, moist, dt_hours)
-    provenance = dict(
+def _provenance(components, dt_hours, n_steps, state, co2_ppm):
+    return dict(
         table=TABLE, nz=NZ, dt_hours=dt_hours, n_steps=n_steps,
-        slab_depth_m=SLAB_DEPTH_M, solar=SOLAR, co2_ppm=CO2_PPM,
+        slab_depth_m=SLAB_DEPTH_M, solar=SOLAR, co2_ppm=co2_ppm,
         wind_m_s=WIND_M_S, wind_timescale_hours=WIND_TIMESCALE_HOURS,
         roughness_length_m=ROUGHNESS_LENGTH_M,
         components=[type(c).__name__ for c in components] + ["UnytRelaxation"],
@@ -197,12 +204,84 @@ def generate(kind, out_dir):
         surface_steady_k=SURFACE_STEADY_K,
         steady_window_steps=STEADY_WINDOW_STEPS,
     )
-    path = os.path.join(out_dir, f"rce_{kind}_equilibrium.npz")
+
+
+def _write(path, state, provenance):
     states.save(path, state, provenance)
     print(states.describe({**provenance,
                            "climt_version": climt.__version__,
                            "saved_at": "(just now)"}))
     print(f"wrote {path} ({os.path.getsize(path) / 1024:.1f} kB)")
+
+
+def generate(kind, out_dir):
+    moist = (kind == "moist")
+    components = moist_components() if moist else dry_components()
+    dt_hours = MOIST_DT_HOURS if moist else DRY_DT_HOURS
+    print(f"{kind} equilibrium: dt = {dt_hours} h, nz = {NZ}, "
+          f"slab = {SLAB_DEPTH_M} m, CO2 = {CO2_PPM} ppm")
+
+    tendencies, steppers = split(components)
+    state, relaxation = build_state(components, moist)
+    n_steps = run_to_equilibrium(tendencies + [relaxation], steppers, state,
+                                 dt_hours)
+    _write(os.path.join(out_dir, f"rce_{kind}_equilibrium.npz"), state,
+           _provenance(components, dt_hours, n_steps, state, CO2_PPM))
+
+
+def load_equilibrium(kind, data_dir=DATA_DIR):
+    """A shipped equilibrium, ready to step: ``(tendencies, steppers, state,
+    provenance)``, with the wind relaxation rebuilt on the loaded state as the
+    pages and the residual test do it."""
+    components = moist_components() if kind == "moist" else dry_components()
+    tendencies, steppers = split(components)
+    state, provenance = states.load(
+        os.path.join(data_dir, f"rce_{kind}_equilibrium.npz"), components,
+        grid_state=climt.get_grid(nx=1, ny=1, nz=NZ))
+    # initialise=False: keep the spun-up, drag-sheared wind profile.
+    tendencies = tendencies + [stepping.wind_relaxation(
+        state, provenance["wind_m_s"], provenance["wind_timescale_hours"],
+        initialise=False)]
+    return tendencies, steppers, state, provenance
+
+
+def generate_doubled(kind, out_dir):
+    """Page 12's 2xCO2 experiment, run offline: double CO2 on the shipped
+    equilibrium and re-converge under the same two gates.
+
+    It ships rather than running in the browser because at dt = 5 min it takes
+    tens of thousands of steps, and page 12 costs ~0.19 s a step there. It
+    starts from the file in ``out_dir``, so regenerate the base state first
+    if that has changed.
+    """
+    components = moist_components() if kind == "moist" else dry_components()
+    dt_hours = MOIST_DT_HOURS if kind == "moist" else DRY_DT_HOURS
+    tendencies, steppers, state, base = load_equilibrium(kind, out_dir)
+    before = float(state["surface_temperature"].values.ravel()[0])
+    co2_ppm = CO2_DOUBLING * base["co2_ppm"]
+    print(f"{kind} 2xCO2: from rce_{kind}_equilibrium.npz "
+          f"(Tsurf {before:.3f} K), CO2 {base['co2_ppm']} -> {co2_ppm} ppm, "
+          f"dt = {dt_hours} h")
+
+    state["mole_fraction_of_carbon_dioxide_in_air"].values[:] = co2_ppm * 1e-6
+    n_steps = run_to_equilibrium(tendencies, steppers, state, dt_hours,
+                                 print_every=STEADY_WINDOW_STEPS)
+    after = float(state["surface_temperature"].values.ravel()[0])
+    provenance = _provenance(components, dt_hours, n_steps, state, co2_ppm)
+    provenance.update(
+        perturbed_from=f"rce_{kind}_equilibrium.npz",
+        perturbed_from_saved_at=base["saved_at"],
+        base_surface_temperature_k=before,
+        surface_temperature_k=after,
+        warming_k=after - before,
+    )
+    print(f"  warming {after - before:+.3f} K in {n_steps} steps "
+          f"({n_steps * dt_hours / 24.0:.1f} d)")
+    _write(os.path.join(out_dir, f"rce_{kind}_2xco2_equilibrium.npz"), state,
+           provenance)
+
+
+TARGETS = ("dry", "moist", "moist-2xco2")
 
 
 def main():
@@ -211,15 +290,23 @@ def main():
                         help="generate only the dry equilibrium")
     parser.add_argument("--moist", action="store_true",
                         help="generate only the moist equilibrium")
+    parser.add_argument("--moist-2xco2", action="store_true",
+                        help="generate only page 12's 2xCO2 re-equilibration, "
+                             "from the moist equilibrium already in --out")
     parser.add_argument("--out", default=DATA_DIR,
                         help=f"output directory (default: {DATA_DIR})")
     args = parser.parse_args()
 
     sympl.set_backend(climt.UnytBackend())
     os.makedirs(args.out, exist_ok=True)
-    wanted = [k for k, on in (("dry", args.dry), ("moist", args.moist)) if on]
-    for kind in wanted or ["dry", "moist"]:
-        generate(kind, args.out)
+    chosen = dict(dry=args.dry, moist=args.moist,
+                  **{"moist-2xco2": args.moist_2xco2})
+    # In this order: the 2xCO2 run starts from the moist file just written.
+    for target in [t for t in TARGETS if chosen[t]] or TARGETS:
+        if target == "moist-2xco2":
+            generate_doubled("moist", args.out)
+        else:
+            generate(target, args.out)
 
 
 if __name__ == "__main__":

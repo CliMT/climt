@@ -1631,6 +1631,7 @@ def _generator():
 @pytest.mark.parametrize("asset, build", [
     ("rce_dry_equilibrium.npz", "dry_components"),
     ("rce_moist_equilibrium.npz", "moist_components"),
+    ("rce_moist_2xco2_equilibrium.npz", "moist_components"),
 ])
 def test_shipped_equilibrium_is_still_an_equilibrium(states, asset, build):
     """The residual test. Ten steps must not move the shipped state.
@@ -1677,7 +1678,8 @@ def test_shipped_equilibrium_is_still_an_equilibrium(states, asset, build):
 
 
 @pytest.mark.parametrize("asset", ["rce_dry_equilibrium.npz",
-                                   "rce_moist_equilibrium.npz"])
+                                   "rce_moist_equilibrium.npz",
+                                   "rce_moist_2xco2_equilibrium.npz"])
 def test_shipped_equilibrium_provenance_is_complete(states, asset):
     """Every field `states.describe` prints must actually be there.
 
@@ -1696,3 +1698,41 @@ def test_shipped_equilibrium_provenance_is_complete(states, asset):
                   "toa_imbalance", "surface_imbalance"):
         assert provenance.get(field) is not None, f"{asset} lacks {field}"
     assert "None" not in states.describe(provenance)
+
+
+def test_shipped_2xco2_state_is_the_shipped_moist_state_perturbed(states):
+    """Page 12 quotes the warming from this file, so it must be *this* base.
+
+    The 2xCO2 state is made from rce_moist_equilibrium.npz by
+    ``generate_tour_equilibria.py --moist-2xco2``. If the base is regenerated
+    and the 2xCO2 state is not, the warming page 12 quotes is measured from an
+    equilibrium the page no longer loads. The base's own ``saved_at`` stamp,
+    recorded in the perturbed file, is what ties the two together.
+    """
+    generator = _generator()
+    grid = get_grid(nx=1, ny=1, nz=generator.NZ)
+    base_state, base = states.load(str(DATA / "rce_moist_equilibrium.npz"),
+                                   generator.moist_components(),
+                                   grid_state=grid)
+    state, doubled = states.load(
+        str(DATA / "rce_moist_2xco2_equilibrium.npz"),
+        generator.moist_components(), grid_state=grid)
+
+    assert doubled["perturbed_from"] == "rce_moist_equilibrium.npz"
+    assert doubled["perturbed_from_saved_at"] == base["saved_at"], (
+        "rce_moist_2xco2_equilibrium.npz was made from a different moist "
+        "equilibrium than the one shipped. Re-run "
+        "scripts/generate_tour_equilibria.py --moist-2xco2.")
+    assert doubled["co2_ppm"] == generator.CO2_DOUBLING * base["co2_ppm"]
+    for key in ("table", "nz", "dt_hours", "slab_depth_m", "solar",
+                "wind_m_s", "wind_timescale_hours", "roughness_length_m",
+                "components"):
+        assert doubled[key] == base[key], key
+
+    co2 = state["mole_fraction_of_carbon_dioxide_in_air"].values
+    np.testing.assert_allclose(co2, doubled["co2_ppm"] * 1e-6)
+    before = float(base_state["surface_temperature"].values.ravel()[0])
+    after = float(state["surface_temperature"].values.ravel()[0])
+    assert doubled["base_surface_temperature_k"] == pytest.approx(before)
+    assert doubled["warming_k"] == pytest.approx(after - before)
+    assert after > before, "doubling CO2 cooled the moist column"
