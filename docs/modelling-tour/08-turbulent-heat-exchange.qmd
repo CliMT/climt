@@ -1,0 +1,636 @@
+---
+title: "Turbulent heat exchange"
+format: live-html
+engine: jupyter
+pyodide:
+  packages:
+    # Installed by micropip at document setup, before any cell runs; pinned to
+    # the released version this page was written against. See
+    # ../_includes/climt-live-boot.qmd for how to preview an unreleased wheel.
+    - "climt==0.31.0"
+    - "unyt"
+  resources:
+    # Fetched into the Pyodide filesystem at document setup — the same files
+    # tests/test_modelling_tour.py imports natively. See page 1 for the
+    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
+    # stepping.py is the time loop, the recorder, the wind relaxation and the
+    # headline figure; budgets.py reads the jump and the fluxes off a state
+    # (and imports stepping, so both must be here). This page prescribes no
+    # profile, so no soundings.py.
+    - _tour/stepping.py
+    - _tour/budgets.py
+---
+
+{{< include ../_includes/climt-live-boot.qmd >}}
+
+::: {.callout-tip}
+## Where this fits
+
+Chapter 10 of the notes puts the surface and the air in contact. Up to now they
+have exchanged energy only by radiation, and [page 4](04-gray-equilibrium-tested.qmd)
+derived what that leaves behind: in chapter 8's gray radiative equilibrium the
+ground is *warmer than the air touching it*, by a finite jump. [Page 7](07-stepping-a-column.qmd)
+found that jump by stepping a column — 15.15 K — and noted that nothing in a purely
+radiative column can remove it.
+
+Real air in contact with a warmer surface does not sit still. It is heated from below,
+it becomes buoyant, and it mixes. This page adds the process that does that — a
+turbulent boundary layer — and watches the jump shrink. It also runs into a
+problem that every single-column model has, and fixing it is the better half of
+the page.
+:::
+
+## The column
+
+Page 7's gray column, unchanged — the `tour_gray_lw` table at diffusivity 2, 28
+levels, a 2 m slab, 240 W m⁻² absorbed at the ground — plus one component:
+`SimpleBoundaryLayer`, the scheme of Frierson, Held and Zurita-Gotor (2006). It
+computes the turbulent fluxes of heat, moisture and momentum between the surface
+and the lowest model layer, and mixes them up through a boundary layer whose depth
+it diagnoses every step.
+
+There is also one line you would not expect, and it is flagged in the code. Hold
+that thought until [the column that stops moving](#the-column-that-stops-moving).
+
+```{pyodide}
+#| autorun: true
+import sys
+sys.path.insert(0, "_tour")   # helper modules, served alongside this page
+
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+import sympl
+import climt
+from climt import (get_default_state, get_grid, CorkLongwaveRadiation,
+                   SlabSurface, SimpleBoundaryLayer, UnytTimeDelta)
+
+import budgets
+import stepping
+
+sympl.set_backend(climt.UnytBackend())
+
+SOLAR = 240.0        # absorbed shortwave at the surface, W/m^2 (prescribed)
+NZ = 28
+SLAB_DEPTH = 2.0     # metres of water
+WIND = 5.0           # m/s: the wind the column is held toward. A knob.
+Z0 = 1e-3            # surface roughness length, m. The other knob.
+DT = UnytTimeDelta(hours=1)
+
+
+def turbulent_column(z0=Z0, wind=WIND, boundary_layer=True):
+    """Page 7's gray column, a boundary layer, and a wind to drive it."""
+    lw = CorkLongwaveRadiation(optics="correlated_k", table="tour_gray_lw",
+                               diffusivity_factor=2.0)
+    surface = SlabSurface()
+    steppers = ([SimpleBoundaryLayer(surface_fluxes="bulk", roughness_length=z0)]
+                if boundary_layer else [])
+    state = get_default_state([lw, surface] + steppers,
+                              grid_state=get_grid(nx=1, ny=1, nz=NZ))
+    state["ocean_mixed_layer_thickness"].values[:] = SLAB_DEPTH
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+
+    tendencies = [lw, surface]
+    if boundary_layer and wind is not None:
+        # A momentum source. Without this line the column has no wind, and
+        # the boundary layer has almost nothing to work with. See below.
+        tendencies.append(stepping.wind_relaxation(state, wind))
+    return tendencies, steppers, state
+
+
+def lowest_wind(state):
+    return float(state["eastward_wind"].values[0, 0, 0])
+
+
+def recorder(**options):
+    """What every run on this page writes down, every step."""
+    return stepping.Recorder(DT, jump=budgets.surface_air_jump,
+                             flux=budgets.sensible_heat_flux,
+                             wind=lowest_wind, **options)
+
+
+tendencies, steppers, state = turbulent_column()
+print("tendency components:", [type(c).__name__ for c in tendencies])
+print("stepper components: ", [type(c).__name__ for c in steppers])
+```
+
+## The discontinuity, eroded
+
+Two runs. The first is page 7's column with no boundary layer, stepped 900 times
+at 12 hours, exactly as there. The second adds the boundary layer and steps
+**hourly**, 12 000 times — 500 days.
+
+Why hourly? The purely radiative column's equilibrium does not depend on the
+timestep: at 12 h and at 1 h it lands on the same 15.15 K. The turbulent column's
+does. Stepped at 12 h its sensible heat flux swings from one step to the next
+and averages 39.6 W m⁻²; at 1 h it averages 34.7; at 30 minutes, 34.2. Only the
+last two agree, so this page steps hourly.
+A timestep is part of a model's configuration, and this is how you find out
+whether yours is short enough: halve it and see whether the answer moves.
+
+**This cell takes about two and a half minutes in a browser** — 12 000 steps at
+about 11 ms each in Pyodide (measured with the JIT off, the native stand-in for
+the browser). The spinner is expected. The knob cells further down start from
+the equilibrium it finds, and are much quicker.
+
+```{pyodide}
+N_STEPS = 12000        # 500 days at 1 h
+
+rad_tendencies, _, radiative = turbulent_column(boundary_layer=False)
+stepping.integrate(rad_tendencies, [], radiative, UnytTimeDelta(hours=12), 900)
+
+tendencies, steppers, turbulent = turbulent_column()
+record = recorder()
+stepping.integrate(tendencies, steppers, turbulent, DT, N_STEPS,
+                   after_step=record)
+
+stepping.draw_discontinuity(radiative, turbulent, record,
+                            title="The surface–air discontinuity, before and "
+                                  "after turbulence")
+print(f"radiative only:    jump {budgets.surface_air_jump(radiative):5.2f} K   "
+      f"surface {budgets.summary(radiative)['surface_temperature']:.2f} K")
+print(f"+ boundary layer:  jump {record.mean('jump'):5.2f} K   "
+      f"surface {budgets.summary(turbulent)['surface_temperature']:.2f} K   "
+      f"sensible heat flux {record.mean('flux'):.1f} W/m2  (30-day means)")
+print(f"TOA imbalance {budgets.toa_imbalance(turbulent):+.3f} W/m2")
+```
+
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Left: the radiative-equilibrium column near the surface, with the ground 15.15 K
+warmer than the lowest air layer. Right: the same column with a boundary layer,
+where the jump is down to about 7.5 K. Below: the sensible heat flux over 500 days,
+rising in the first weeks and settling near 35 W m⁻², with an hour-to-hour
+flicker.](_artifacts/08-turbulent.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
+The jump falls from **15.15 K to 7.47 K**. The boundary layer carries
+34.7 W m⁻² of sensible heat from the ground into the air, and that heat no
+longer has to leave the surface as radiation. So the surface cools, from 335.53 K
+to 332.97 K. The lowest air warms, and the jump closes from both sides.
+
+Look at the flux panel before moving on. The flux does not settle to a line. It
+flickers, by about ±2 W m⁻² from hour to hour. The scheme chooses the depth of the
+boundary layer level by level, as the lowest height where the bulk Richardson
+number exceeds its critical value. At equilibrium the depth sits near 550 m, and
+every six hours or so it jumps to one or two kilometres for a single step, mixes,
+and collapses again. The jump and the flux saw-tooth with it, by about ±0.3 K and
+±2 W m⁻². So every number on this page is a **30-day mean**, which is what
+`record.mean` returns. A single step's value would be one sample of a saw-tooth.
+
+::: {.callout-note}
+## climt craft: a Stepper in the loop
+
+Page 7 said a `Stepper` returns the new state directly, rather than a rate, and
+that `stepping.integrate`'s second list was for them. This is the first page to
+fill it:
+
+```{pyodide}
+print("tendencies:", [type(c).__name__ for c in tendencies])
+print("steppers:  ", [type(c).__name__ for c in steppers])
+diagnostics, new_state = steppers[0](turbulent, DT)
+print("\nSimpleBoundaryLayer returns new values of:", sorted(new_state))
+```
+
+`SimpleBoundaryLayer` solves its vertical diffusion *implicitly* — it computes the
+profile at the end of the step directly, which stays stable for timesteps that
+would blow up an explicit rate. Its answer is a new temperature, humidity and wind,
+not a tendency, so it cannot go inside `AdamsBashforth`, which sums rates. It is
+called inside the same loop instead, after the tendency update, on the state
+the radiation and the slab have just produced. Both lists are in the loop page 7
+printed; `import inspect; print(inspect.getsource(stepping.integrate))` shows it
+again, with the one addition this page needs — the `after_step` hook, which the recorder above
+uses.
+:::
+
+::: {.callout-note}
+## climt craft: diagnostics that are fluxes
+
+`budgets.sensible_heat_flux` reads `surface_upward_sensible_heat_flux` out of the
+state, and that quantity is a *diagnostic* of the boundary layer. It is the flux
+the scheme **applied**: evaluated after the implicit solve, from the temperature
+of the lowest layer at the end of the step, so the column's heat budget closes to
+round-off. It is not a formula applied to the state afterwards, which would give
+a slightly different number. What you plotted is what the model did.
+
+`SlabSurface` reads the same quantity as an *input*, and takes that heat out of the
+ocean. One number, written by one component and read by another, is how the
+surface's energy budget and the atmosphere's stay the same budget.
+:::
+
+::: {.callout-note}
+## climt craft: three surface-flux modes, and the double-counting trap
+
+`SimpleBoundaryLayer(surface_fluxes=...)` takes one of three values, and which
+one you want depends on what else is in the column:
+
+- **`'bulk'`** (the default, used here) — the scheme computes the surface fluxes
+  itself from its own exchange coefficient, applies them, and reports them as
+  diagnostics.
+- **`'external'`** — another component has computed the fluxes. They become
+  *inputs*, and the scheme applies them as given.
+- **`None`** — no surface exchange at all. The diffusion only mixes the column
+  internally, with no-flux boundaries, and conserves every column integral
+  exactly.
+
+The trap is pairing `'bulk'` with a component that *also* applies surface fluxes.
+Both then heat the lowest layer, and the surface loses the heat twice, with no
+error message. climt's classic case is `SimplePhysics(surface_fluxes=True)`, which
+computes and applies its own. It is a compiled component and does not run in this
+browser, but the trap is real wherever it does. A code exercise below has you
+watch the flux entries move between inputs and diagnostics as the mode changes.
+:::
+
+## The column that stops moving
+
+That flagged line in the first cell: `stepping.wind_relaxation(state, wind)`.
+Take it out, start the column with a 10 m s⁻¹ wind, and watch what happens to the
+wind. This run is 200 days, **about a minute in a browser**.
+
+```{pyodide}
+N_SPIN = 24 * 200       # 200 days at 1 h
+
+calm_tendencies, calm_steppers, calm = turbulent_column(wind=None)  # no source
+calm["eastward_wind"].values[:] = 10.0                              # a start
+spin = recorder(profiles=["eastward_wind"], profile_every=24 * 20)
+stepping.integrate(calm_tendencies, calm_steppers, calm, DT, N_SPIN,
+                   after_step=spin)
+
+p = calm["air_pressure"].values[:, 0, 0] / 100.0
+fig, (ax_u, ax_t) = plt.subplots(1, 2, figsize=(11, 4.4),
+                                 gridspec_kw=dict(width_ratios=[1, 1.5]))
+colours = plt.get_cmap("viridis")(np.linspace(0, 1, len(spin["profile_days"])))
+for day, profile, colour in zip(spin["profile_days"], spin["eastward_wind"],
+                                colours):
+    ax_u.plot(profile, p, "o-", ms=3, color=colour,
+              label=f"day {day:.0f}" if day >= 1 else "hour 1")
+ax_u.set(xlabel="eastward wind (m/s)", ylabel="pressure (hPa)",
+         title="Wind profile, every 20 days", ylim=(p[0] + 10, 300))
+ax_u.legend(fontsize=7, ncol=2)
+ax_u.grid(alpha=0.3)
+
+ax_t.plot(spin["days"], spin["wind"], color="#c92a2a", lw=1.8)
+ax_t.set(xlabel="time (days)", ylabel="lowest-level wind (m/s)",
+         title="No momentum source: the boundary layer spins down")
+ax_t.grid(alpha=0.3)
+fig.tight_layout()
+plt.show()
+
+print(f"lowest-level wind after {spin['days'][-1]:.0f} days: "
+      f"{lowest_wind(calm):.3f} m/s")
+print(f"wind above the boundary layer: {calm['eastward_wind'].values[-1, 0, 0]:.3f} m/s")
+print(f"sensible heat flux {spin.mean('flux'):.1f} W/m2, "
+      f"jump {spin.mean('jump'):.2f} K (last 30 days)")
+```
+
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Left: eastward wind profiles every 20 days over 200 days. The lowest few levels
+decay from 10 m s⁻¹ towards zero while the rest of the column stays at
+10 m s⁻¹. Right: the lowest-level wind, falling from 10 to about 3 m s⁻¹ in a
+day, then creeping to zero.](_artifacts/08-spindown.png)
+
+The figure the cell above produces.
+:::
+
+::: {.callout-important}
+## Your column stops moving, and it takes its heat flux with it
+
+The lowest-level wind falls from 10 to 3.2 m s⁻¹ in the first day, and to 1.5 by
+day five. Then it creeps: 0.40 m s⁻¹ at day 60, and **0.000** by day 200. Above
+the boundary layer the wind does not change at all. There is no drag up there and
+nothing else acting, so it stays at 10 m s⁻¹ forever, cut off from the ground.
+
+A single column has no dynamics. No pressure gradient, no Coriolis force, nothing
+that makes wind. The only thing acting on the wind near the ground is the boundary
+layer's own surface drag, and drag only removes momentum. So whatever wind you
+set is an *initial condition*, and in this column initial conditions do not
+survive. Run it to 500 days from 0, 5 or 10 m s⁻¹ and all three end in the same
+equilibrium, with the same dead-calm surface.
+
+Dead calm is not a small change. The bulk formula makes the heat flux proportional
+to the wind speed at the lowest level, and the heat flux falls from 34.7 to
+**15.0 W m⁻²** while the jump grows back from 7.47 to **10.11 K**. (Those are from
+500-day runs. The cell above stops at 200 days and prints 15.1 and 10.14, with the
+surface still settling.) Even the 15.0 is
+not physics: the scheme never lets the wind speed it uses fall below 1 m s⁻¹, so
+the flux of a dead-calm column is the flux of that floor.
+
+This is a GCM's boundary-layer scheme being run in a configuration that starves
+half of it. That is what a column model *is*: every process that the missing
+dimensions would have supplied, you have to supply, or go without. Noticing
+which ones is the skill.
+:::
+
+## Giving it a wind
+
+The fix is a **momentum source**: something that pushes the wind toward a
+value, the way the large-scale pressure gradient does in a real atmosphere. The
+simplest is **Newtonian relaxation**,
+
+$$
+\frac{du}{dt} = -\frac{u - u_\text{eq}}{\tau},
+$$
+
+which pulls the wind `u` toward a target `u_eq` on a timescale `τ`. Both
+parameters are physical: what you relax toward, and how fast.
+`stepping.wind_relaxation` builds this as a sympl component, and writes the two
+parameters into the state as fields of their own:
+
+```{pyodide}
+held_tendencies, held_steppers, held = turbulent_column(wind=None)
+held["eastward_wind"].values[:] = 10.0          # the same start as above
+relaxation = stepping.wind_relaxation(held, WIND, timescale_hours=24.0,
+                                      initialise=False)
+held_tendencies.append(relaxation)
+
+print(type(relaxation).__mro__[1].__name__, "inputs:")
+for name, properties in relaxation.input_properties.items():
+    print(f"  {name:36s} {properties['units']}")
+for name in ("equilibrium_eastward_wind", "eastward_wind_relaxation_timescale"):
+    field = held[name]
+    print(f"{name} = {float(field.values.ravel()[0]):g} {field.attrs['units']}")
+```
+
+The same 10 m s⁻¹ start, now with the relaxation, for 60 days (**about 15 seconds
+in a browser**):
+
+```{pyodide}
+held_record = recorder(profiles=["eastward_wind"], profile_every=24 * 20)
+stepping.integrate(held_tendencies, held_steppers, held, DT, 24 * 60,
+                   after_step=held_record)
+
+fig, (ax_u, ax_t) = plt.subplots(1, 2, figsize=(11, 4.4),
+                                 gridspec_kw=dict(width_ratios=[1, 1.5]))
+ax_u.plot(held["eastward_wind"].values[:, 0, 0], p, "o-", ms=3, color="#1c7ed6",
+          label="relaxed to 5 m/s, day 60")
+ax_u.plot(spin["eastward_wind"][3], p, "o-", ms=3, color="#c92a2a",
+          label=f"no source, day {spin['profile_days'][3]:.0f}")
+ax_u.set(xlabel="eastward wind (m/s)", ylabel="pressure (hPa)",
+         title="Wind profile", ylim=(p[0] + 10, 300))
+ax_u.legend(fontsize=8)
+ax_u.grid(alpha=0.3)
+
+calm_part = spin["days"] <= held_record["days"][-1]
+ax_t.plot(spin["days"][calm_part], spin["wind"][calm_part], color="#c92a2a",
+          lw=1.8, label="no momentum source")
+ax_t.plot(held_record["days"], held_record["wind"], color="#1c7ed6", lw=1.8,
+          label="relaxed toward 5 m/s")
+ax_t.axhline(WIND, color="0.4", ls="--", lw=1, label="the target, 5 m/s")
+ax_t.set(xlabel="time (days)", ylabel="lowest-level wind (m/s)",
+         title="With a momentum source, the wind persists")
+ax_t.legend(fontsize=8)
+ax_t.grid(alpha=0.3)
+fig.tight_layout()
+plt.show()
+
+print(f"lowest-level wind at day 60: {lowest_wind(held):.2f} m/s "
+      f"(no source: {spin['wind'][calm_part][-1]:.2f} m/s)")
+```
+
+The wind persists. It does not reach 5 m s⁻¹ at the lowest level, and the gap is
+what the next section but one is about.
+
+::: {.callout-note}
+## climt craft: Newtonian relaxation, and what a forcing is
+
+climt's own examples hold the wind up by brute force. The last line of the time
+loop in `examples/column_code_with_slab.py` (line 120) is
+
+```python
+state['eastward_wind'].values[:] = 3.
+```
+
+and `examples/gmd_radiative_convective.py` does the same at line 118. That
+works. But the assumption lives in a line at the bottom of a loop, where nobody
+reading the component list will see it.
+
+`sympl.RelaxationTendencyComponent` is the same idea done as a component. It
+returns a tendency like any other, so it composes with the radiation and the
+slab inside `AdamsBashforth`. It carries units. And it sits in the component
+list, where a reader looking for the assumptions will find it. (`stepping.py`
+subclasses it for one small reason: the stock version's tendency units come out
+of pint as `'1.0 meter / second ** 2'`, which unyt cannot parse. A small, real
+friction between two libraries.)
+
+The timescale has to be chosen with care. It must be long compared with the
+timestep, or the relaxation becomes a hard reset — and past a point, with this
+integrator, an unstable one. It must be short compared with the run, or it is no
+forcing at all. At 24 h against a 1 h step and a 500-day run, it is neither.
+:::
+
+## The knob: wind speed
+
+::: {.callout-warning}
+## The knob
+
+`WINDS` below — the speed the column is relaxed toward, in m s⁻¹. Tested from 2
+to 10 m s⁻¹. Outside that range is untested.
+:::
+
+Each run starts from the 5 m s⁻¹ equilibrium the headline cell found, changes the
+target, and steps 1000 hours (about 42 days) — **about 15 seconds each in a
+browser**, rather than two and a half minutes for another 500-day spin-up. That is
+enough for the jump and the flux: they agree with 500-day cold starts to within
+0.01 K and 0.1 W m⁻². It is not quite enough for the surface temperature, which is
+still settling by a few tenths of a kelvin, so the cell does not quote it.
+
+```{pyodide}
+WINDS = (2.0, 10.0)    # <- m/s; 5 m/s is the headline run
+N_RESETTLE = 1000      # hours
+
+
+def resettle(wind=WIND, z0=Z0, every_step=None, n_steps=N_RESETTLE):
+    """Start from the headline equilibrium, change one thing, let it re-settle.
+
+    ``every_step``, if given, runs at the end of every step, before the record.
+    """
+    state = copy.deepcopy(turbulent)
+    lw, surface = tendencies[:2]
+    boundary_layer = [SimpleBoundaryLayer(surface_fluxes="bulk",
+                                          roughness_length=z0)]
+    if every_step is None:
+        forcing = [stepping.wind_relaxation(state, wind, initialise=False)]
+    else:
+        forcing = []
+    run = recorder()
+
+    def after_step(state):
+        if every_step is not None:
+            every_step(state)
+        run(state)
+
+    stepping.integrate([lw, surface] + forcing, boundary_layer, state, DT,
+                       n_steps, after_step=after_step)
+    return state, run
+
+
+knob = {WIND: record}
+for wind in WINDS:
+    knob[wind] = resettle(wind=wind)[1]
+
+winds = sorted(knob)
+fig, ax_j = plt.subplots(figsize=(7.5, 4.2))
+ax_j.plot(winds, [knob[w].mean("jump") for w in winds], "o-", color="#c92a2a",
+          lw=2)
+ax_j.set_xlabel("relaxation target wind (m/s)")
+ax_j.set_ylabel("surface − air jump (K)", color="#c92a2a")
+ax_f = ax_j.twinx()
+ax_f.plot(winds, [knob[w].mean("flux") for w in winds], "s-", color="#1c7ed6",
+          lw=2)
+ax_f.set_ylabel("sensible heat flux (W/m²)", color="#1c7ed6")
+ax_j.set_title("More wind, more exchange, a smaller jump")
+ax_j.grid(alpha=0.3)
+fig.tight_layout()
+plt.show()
+
+for wind in winds:
+    print(f"target {wind:4.1f} m/s: lowest-level wind {knob[wind].mean('wind'):.2f} m/s, "
+          f"jump {knob[wind].mean('jump'):.2f} K, "
+          f"sensible heat flux {knob[wind].mean('flux'):.1f} W/m2")
+```
+
+| target wind | lowest-level wind | surface − air jump | sensible heat flux | surface T |
+|---|---|---|---|---|
+| none (dead calm) | 0.00 m s⁻¹ | 10.11 K | 15.0 W m⁻² | 334.50 K |
+| 2 m s⁻¹ | 1.34 m s⁻¹ | 9.33 K | 20.0 W m⁻² | 334.13 K |
+| 5 m s⁻¹ | 2.89 m s⁻¹ | 7.47 K | 34.7 W m⁻² | 332.97 K |
+| 10 m s⁻¹ | 5.12 m s⁻¹ | 6.16 K | 51.2 W m⁻² | 331.56 K |
+
+These are 30-day means after 500-day cold starts, one per row, which is where the
+surface temperatures come from (`scripts/experiments/tour_page8_measurements.py`
+reproduces them). The cell above gives the same jumps and fluxes in a fraction of
+the time. More wind moves more heat, and the jump shrinks, but it does not
+vanish. At 10 m s⁻¹ it is still 6.2 K.
+
+## A forcing is not an assignment
+
+Now run the same column the other way: no relaxation, and the wind assigned back
+to 5 m s⁻¹ at the end of every step, the way `examples/column_code_with_slab.py`
+does. **About 15 seconds in a browser.**
+
+```{pyodide}
+def assign_wind(state):
+    state["eastward_wind"].values[:] = WIND      # climt's examples' idiom
+
+
+assigned_state, assigned = resettle(every_step=assign_wind)
+
+for label, run in (("relaxed toward 5 m/s", record),
+                   ("assigned 5 m/s every step", assigned)):
+    print(f"{label:27s} lowest-level wind {run.mean('wind'):.2f} m/s   "
+          f"sensible heat flux {run.mean('flux'):.1f} W/m2   "
+          f"jump {run.mean('jump'):.2f} K")
+```
+
+::: {.callout-important}
+## A forcing is not an assignment
+
+Both runs are "5 m s⁻¹". Relaxing toward 5 m s⁻¹ leaves the lowest level at
+**2.89 m s⁻¹**, because the surface drag is still acting on it and the relaxation
+only pulls. The assignment pins the lowest level at exactly **5.00**, and so
+overrides the drag at the one level where the exchange happens. It moves
+**45.1 W m⁻²** of heat against the relaxation's 34.7, from the same nominal wind,
+and the jump is 6.13 K rather than 7.47.
+
+Neither is *wrong*. They are different physical statements. The relaxation says:
+*something aloft keeps pushing the air toward 5 m s⁻¹, and the ground drags on
+it*. The assignment says: *the wind at the lowest level is 5 m s⁻¹, whatever the
+ground does*. A model reports the consequences of whichever you wrote. You should
+be able to say which one you meant.
+:::
+
+## The second knob: roughness length
+
+::: {.callout-warning}
+## The knob
+
+`ROUGHNESS` below — the surface roughness length `z0`, in metres. Tested from
+3.21 × 10⁻⁵ m (the scheme's default, a smooth sea) to 0.1 m (rough land).
+Outside that range is untested.
+:::
+
+Same route, the relaxation back at 5 m s⁻¹ — **about 30 seconds in a browser**:
+
+```{pyodide}
+ROUGHNESS = (3.21e-5, 1e-1)    # <- metres; 1e-3 is the headline run
+
+rough = {Z0: record}
+for z0 in ROUGHNESS:
+    rough[z0] = resettle(z0=z0)[1]
+
+for z0 in sorted(rough):
+    print(f"z0 = {z0:8.2e} m: lowest-level wind {rough[z0].mean('wind'):.2f} m/s, "
+          f"jump {rough[z0].mean('jump'):.2f} K, "
+          f"sensible heat flux {rough[z0].mean('flux'):.1f} W/m2")
+```
+
+From the scheme's smooth-sea default to rough land, the sensible heat flux goes
+26.9 → 34.7 → 50.6 W m⁻² and the jump 8.94 → 7.47 → 4.80 K. Look at the wind column
+too, though: the lowest-level wind *falls* as the surface gets rougher, 3.30 →
+2.89 → 2.04 m s⁻¹. A rougher surface exchanges heat more efficiently, and it also
+drags harder on the wind that does the exchanging. The two knobs are not
+independent. Measured in a dead-calm column instead, the same three roughness
+lengths give only 9.7, 15.0 and 31.1 W m⁻².
+
+## Exercises
+
+### Physics
+
+1. **The sign of the surface change.** Before looking at the headline numbers,
+   predict: when the boundary layer is switched on, does the surface warm or cool?
+   Explain it from the surface energy budget — what the surface receives and what
+   it gets rid of, before and after — and then check against the cell. (It cools,
+   by 2.6 K at 5 m s⁻¹. Why does the *air* above it not warm by more than it does?
+   Print the whole temperature profile of both columns and compare.)
+
+2. **Why the jump does not close.** At 10 m s⁻¹ the jump is still 6.2 K, not zero.
+   What would have to change for it to close entirely? Think about what sets the
+   bulk flux — the wind, the exchange coefficient, and the temperature difference
+   itself — and what keeps supplying the surface with energy that the air cannot
+   take away fast enough.
+
+3. **The relaxation timescale.** The relaxation above uses τ = 24 h. Predict what
+   happens at τ = 1 h and at τ = 100 days, then change `timescale_hours` in
+   `turbulent_column`'s call to `stepping.wind_relaxation` and check. (Measured on
+   500-day runs: at 100 days the lowest wind is 0.44 m s⁻¹ and the column is all
+   but dead calm — 15.0 W m⁻², as with no forcing at all. At 1 h the run *fails*:
+   after 135 steps the radiation reports non-finite fluxes. The relaxation is a
+   stiff term, and at τ equal to the timestep it is outside the region where
+   `AdamsBashforth` is stable. At τ = 2 h it runs, and the lowest wind reaches
+   4.07 m s⁻¹, most of the way to a hard reset.)
+
+### Code
+
+1. **Conservation.** Build a column with `SimpleBoundaryLayer(surface_fluxes=None)`,
+   give it some humidity and a wind, and call the boundary layer on its own ten
+   times. Check with `budgets.column_enthalpy` that the column's enthalpy does not
+   change — to round-off, not approximately. Then do the same with `'bulk'` and
+   say where the difference went.
+
+2. **The modes' contracts.** Print `SimpleBoundaryLayer(surface_fluxes=mode)`'s
+   `input_properties` and `diagnostic_properties` for each of the three modes. The
+   two surface-flux entries move: diagnostics under `'bulk'`, inputs under
+   `'external'`, absent under `None`. Explain why each is where it is.
+
+3. **Speed or component?** Relax `northward_wind` as well — call
+   `stepping.wind_relaxation(state, 5.0, quantity_name="northward_wind")` and add
+   it to the tendencies — and keep the eastward target at 5 m s⁻¹. Does the
+   sensible heat flux respond to the wind *speed*, or to the eastward component
+   alone? Predict it from the bulk formula before you run it.
+
+## Going deeper
+
+The scheme's equations — the bulk Richardson number that sets the boundary-layer
+depth, the K-profile of eddy diffusivity, and the one modification climt makes to
+the surface-layer coefficient — are in the [`SimpleBoundaryLayer` user
+guide](../user-guide/simple_boundary_layer.qmd). The original is Frierson, D. M. W.,
+I. M. Held and P. Zurita-Gotor (2006), "A gray-radiation aquaplanet moist GCM.
+Part I: static stability and eddy scale", *J. Atmos. Sci.* 63, 2548–2566.

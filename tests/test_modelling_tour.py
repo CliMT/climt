@@ -6,6 +6,8 @@ Pyodide cells cannot run in CI, so each page's computational core lives in
 ``docs/modelling-tour`` contains a hyphen and is not a valid package path, so
 the helpers are loaded by file path.
 """
+import contextlib
+import copy
 import importlib.util
 import os
 import sys
@@ -1268,6 +1270,379 @@ def test_page7_mixed_layer_depth_changes_speed_not_equilibrium():
     assert abs(finals[1.0] - finals[5.0]) < 0.5, (
         f"1 m settled at {finals[1.0]:.2f} K and 5 m at {finals[5.0]:.2f} K — "
         "slab depth must not change the equilibrium")
+
+
+# ------------------------------------------------------------------ page 8
+#
+# Page 7's gray column, plus SimpleBoundaryLayer(surface_fluxes='bulk') and a
+# wind held up by stepping.wind_relaxation. dt = 1 h, NOT page 7's 12 h: the
+# turbulent column's equilibrium depends on the timestep (sensible heat flux
+# 34.7 W/m^2 at 1 h, 34.2 at 30 min, 47 at 12 h), so the page steps hourly.
+# The radiative-only column's does not (15.15 K at both), so the page runs
+# that one at page 7's 12 h.
+#
+# Numbers are 30-day means, as on the page: at equilibrium the boundary layer
+# deepens for a step every six hours or so, and the jump and the flux flicker
+# with it by about +-0.3 K and +-2 W/m^2. Measured with
+# scripts/experiments/tour_page8_measurements.py.
+
+PAGE8_Z0 = 1e-3
+PAGE8_WIND = 5.0
+PAGE8_STEPS = 12000          # dt = 1 h, 500 days; the cold start converges
+PAGE8_RESTART_STEPS = 1000   # the knob cells restart from the headline
+                             # equilibrium and re-settle in this many steps
+PAGE8_DT = dict(hours=1)
+
+# (target wind, minimum sensible heat flux, maximum jump). Measured 30-day
+# means: 20.0, 34.7, 51.2 W/m^2 and 9.33, 7.47, 6.16 K. The thresholds allow
+# ~25% -- they check the monotone response, not a fit.
+PAGE8_WIND_CASES = [
+    (2.0, 15.0, 10.0),
+    (5.0, 28.0, 8.5),
+    (10.0, 42.0, 7.0),
+]
+
+
+@contextlib.contextmanager
+def _unyt_backend_restored():
+    """UnytBackend for the duration, and whatever was set before, after."""
+    saved_backend = sympl.get_backend()
+    sympl.set_backend(climt.UnytBackend())
+    try:
+        yield
+    finally:
+        sympl.set_backend(saved_backend)
+
+
+def _page8_column(z0=PAGE8_Z0, wind=PAGE8_WIND, slab_depth=2.0, nz=28,
+                  boundary_layer=True):
+    """Page 8's column: page 7's gray column, a boundary layer, and a wind.
+
+    ``wind=None`` omits the momentum source, which is how the page shows what
+    happens without one -- the column spins itself down to dead calm.
+    """
+    stepping_module = _load("stepping")
+    longwave = climt.CorkLongwaveRadiation(
+        optics="correlated_k", table=PAGE7_GRAY_TABLE,
+        diffusivity_factor=PAGE7_DIFFUSIVITY)
+    surface = climt.SlabSurface()
+    steppers = ([climt.SimpleBoundaryLayer(surface_fluxes="bulk",
+                                           roughness_length=z0)]
+                if boundary_layer else [])
+    state = climt.get_default_state([longwave, surface] + steppers,
+                                    grid_state=get_grid(nx=1, ny=1, nz=nz))
+    state["ocean_mixed_layer_thickness"].values[:] = slab_depth
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+
+    tendencies = [longwave, surface]
+    if boundary_layer and wind is not None:
+        tendencies.append(stepping_module.wind_relaxation(state, wind))
+    return tendencies, steppers, state
+
+
+def _lowest_wind(state):
+    return float(state["eastward_wind"].values[0, 0, 0])
+
+
+def _page8_recorder(stepping_module, budgets_module):
+    return stepping_module.Recorder(
+        climt.UnytTimeDelta(**PAGE8_DT),
+        jump=budgets_module.surface_air_jump,
+        flux=budgets_module.sensible_heat_flux,
+        wind=_lowest_wind)
+
+
+@pytest.fixture(scope="module")
+def page8_equilibrium():
+    """The headline turbulent column at 5 m/s, cold-started to equilibrium.
+
+    Shared by every page-8 test that, like the page's own knob cells, starts
+    from it. Returns ``(tendencies, steppers, state, record)``; tests must
+    deep-copy the state before stepping it.
+    """
+    with _unyt_backend_restored():
+        stepping_module = _load("stepping")
+        record = _page8_recorder(stepping_module, _load("budgets"))
+        tendencies, steppers, state = _page8_column()
+        stepping_module.integrate(tendencies, steppers, state,
+                                  climt.UnytTimeDelta(**PAGE8_DT),
+                                  PAGE8_STEPS, after_step=record)
+        yield tendencies, steppers, state, record
+
+
+def _page8_restart(page8_equilibrium, wind=PAGE8_WIND, z0=PAGE8_Z0,
+                   reset=None):
+    """What the page's knob cells do: copy the equilibrium, change one thing,
+    and step PAGE8_RESTART_STEPS. ``reset`` assigns the wind back every step
+    instead of relaxing it. Call inside ``_unyt_backend_restored``."""
+    stepping_module = _load("stepping")
+    tendencies, steppers, base, _ = page8_equilibrium
+    state = copy.deepcopy(base)
+    longwave, surface = tendencies[:2]
+    if z0 != PAGE8_Z0:
+        steppers = [climt.SimpleBoundaryLayer(surface_fluxes="bulk",
+                                              roughness_length=z0)]
+    record = _page8_recorder(stepping_module, _load("budgets"))
+    if reset is None:
+        here = [longwave, surface,
+                stepping_module.wind_relaxation(state, wind,
+                                                initialise=False)]
+        after_step = record
+    else:
+        here = [longwave, surface]
+
+        def after_step(state):
+            state["eastward_wind"].values[:] = reset
+            record(state)
+    stepping_module.integrate(here, steppers, state,
+                              climt.UnytTimeDelta(**PAGE8_DT),
+                              PAGE8_RESTART_STEPS, after_step=after_step)
+    return state, record
+
+
+@pytest.mark.slow
+def test_page8_turbulence_shrinks_the_surface_air_discontinuity(
+        page8_equilibrium):
+    """Page 8's reveal. Measured 15.15 K -> 7.47 K (30-day mean) at z0=1e-3,
+    5 m/s.
+
+    Thresholds sit either side of the measurement with room, so this checks
+    that turbulence erodes the discontinuity, not by exactly how much. The
+    radiative column runs at 12 h, as on the page -- its equilibrium does not
+    depend on the timestep.
+    """
+    with _unyt_backend_restored():
+        budgets_module = _load("budgets")
+        tendencies, steppers, state = _page8_column(boundary_layer=False)
+        _load("stepping").integrate(tendencies, steppers, state,
+                                    climt.UnytTimeDelta(hours=12), 900)
+        radiative = budgets_module.surface_air_jump(state)
+    turbulent = page8_equilibrium[3].mean("jump")
+
+    assert radiative > 13.0, (
+        f"radiative-equilibrium jump {radiative:.2f} K — page 4's "
+        "discontinuity should be there before anything erodes it")
+    assert turbulent < radiative - 4.0, (
+        f"turbulent jump {turbulent:.2f} K vs radiative {radiative:.2f} K — "
+        "the boundary layer should erode it")
+
+
+@pytest.mark.slow
+def test_page8_turbulent_column_is_converged(page8_equilibrium):
+    """The headline is an equilibrium, read off the budget."""
+    with _unyt_backend_restored():
+        imbalance = _load("budgets").toa_imbalance(page8_equilibrium[2])
+    assert abs(imbalance) < 0.1, f"TOA imbalance {imbalance:+.3f} W/m^2"
+
+
+@pytest.mark.slow
+def test_page8_a_column_with_no_momentum_source_spins_itself_down():
+    """Why the page needs a wind forcing at all.
+
+    Nothing drives a wind in a column with no dynamics, and the boundary
+    layer's own surface drag removes any wind prescribed as an initial
+    condition. Measured: three initialisations spanning 0-10 m/s all end at a
+    lowest-level wind of 0.000 and the same equilibrium.
+    """
+    with _unyt_backend_restored():
+        stepping_module = _load("stepping")
+        budgets_module = _load("budgets")
+        finals = {}
+        for wind in (0.0, 5.0, 10.0):
+            tendencies, steppers, state = _page8_column(wind=None)
+            state["eastward_wind"].values[:] = wind
+            record = _page8_recorder(stepping_module, budgets_module)
+            stepping_module.integrate(tendencies, steppers, state,
+                                      climt.UnytTimeDelta(**PAGE8_DT),
+                                      PAGE8_STEPS, after_step=record)
+            finals[wind] = (record.mean("jump"), _lowest_wind(state))
+
+    jumps = [jump for jump, _ in finals.values()]
+    assert max(jumps) - min(jumps) < 0.5, (
+        f"initial wind changed the equilibrium jump: {finals} — without a "
+        "momentum source it must not, and page 8's argument for adding one "
+        "depends on that")
+    for _, lowest_wind in finals.values():
+        assert abs(lowest_wind) < 0.1, (
+            f"lowest-level wind {lowest_wind:.3f} m/s — the drag should have "
+            "removed it entirely")
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("wind, min_flux, max_jump", PAGE8_WIND_CASES)
+def test_page8_wind_speed_is_a_knob_once_it_is_held_up(
+        page8_equilibrium, wind, min_flux, max_jump):
+    """Page 8's knob, over the range the page says was tested, by the page's
+    own route: restart from the 5 m/s equilibrium at the new wind.
+
+    Thresholds allow ~25% on the measured 30-day means -- this checks the
+    monotone response, not a fit.
+    """
+    with _unyt_backend_restored():
+        if wind == PAGE8_WIND:
+            record = page8_equilibrium[3]
+        else:
+            _, record = _page8_restart(page8_equilibrium, wind=wind)
+    flux, jump = record.mean("flux"), record.mean("jump")
+    assert flux > min_flux, f"wind={wind}: sensible heat flux {flux:.2f} W/m^2"
+    assert jump < max_jump, f"wind={wind}: jump {jump:.2f} K"
+
+
+@pytest.mark.slow
+def test_page8_restart_lands_where_a_cold_start_does(page8_equilibrium):
+    """The knob cells' shortcut is honest.
+
+    They restart from the headline equilibrium and step PAGE8_RESTART_STEPS
+    rather than cold-starting 12 000. At 10 m/s, the largest change the page
+    makes, the two must agree on the 30-day-mean jump and flux.
+    """
+    with _unyt_backend_restored():
+        _, restarted = _page8_restart(page8_equilibrium, wind=10.0)
+        stepping_module = _load("stepping")
+        record = _page8_recorder(stepping_module, _load("budgets"))
+        tendencies, steppers, state = _page8_column(wind=10.0)
+        stepping_module.integrate(tendencies, steppers, state,
+                                  climt.UnytTimeDelta(**PAGE8_DT),
+                                  PAGE8_STEPS, after_step=record)
+    assert restarted.mean("jump") == pytest.approx(record.mean("jump"),
+                                                   abs=0.15)
+    assert restarted.mean("flux") == pytest.approx(record.mean("flux"),
+                                                   abs=1.5)
+
+
+@pytest.mark.slow
+def test_page8_rougher_surface_moves_more_heat(page8_equilibrium):
+    """The second knob, at the page's own wind, over the range the page says
+    was tested. Asserts the monotone ordering of the 30-day-mean flux."""
+    with _unyt_backend_restored():
+        fluxes = {PAGE8_Z0: page8_equilibrium[3].mean("flux")}
+        for z0 in (3.21e-5, 1e-1):
+            fluxes[z0] = _page8_restart(page8_equilibrium, z0=z0)[1].mean(
+                "flux")
+    assert fluxes[3.21e-5] < fluxes[1e-3] < fluxes[1e-1], (
+        f"sensible heat flux by z0: {fluxes} — a rougher surface must move "
+        "more heat")
+
+
+@pytest.mark.slow
+def test_page8_relaxation_lets_the_drag_win_near_the_ground(
+        page8_equilibrium):
+    """The comparison that distinguishes a forcing from an assignment.
+
+    Relaxing toward 5 m/s leaves the lowest level near 2.9, because the
+    surface drag is still acting and the relaxation only pulls. Assigning the
+    wind back every step -- the idiom in examples/column_code_with_slab.py --
+    pins it at exactly 5.0 and so overrides the drag at the one level where
+    the exchange happens, delivering more flux from the same nominal wind.
+    """
+    relaxed = page8_equilibrium[3]
+    with _unyt_backend_restored():
+        reset_state, reset = _page8_restart(page8_equilibrium,
+                                            reset=PAGE8_WIND)
+
+    assert 1.0 < relaxed.mean("wind") < 4.5, (
+        f"relaxed lowest-level wind {relaxed.mean('wind'):.2f} m/s — it "
+        "should sit well below the 5 m/s target, because the drag is still "
+        "acting")
+    assert _lowest_wind(reset_state) == pytest.approx(PAGE8_WIND)
+    assert reset.mean("flux") > relaxed.mean("flux") + 3.0, (
+        f"hard reset {reset.mean('flux'):.1f} vs relaxation "
+        f"{relaxed.mean('flux'):.1f} W/m^2 — pinning the lowest level "
+        "overrides the drag where the exchange happens, so it must move more "
+        "heat")
+
+
+def test_page8_no_flux_mode_conserves_the_column():
+    """The third mode: with surface_fluxes=None the diffusion conserves.
+
+    Cheap, so unmarked: ten steps is enough, because conservation is exact
+    rather than asymptotic.
+    """
+    with _unyt_backend_restored():
+        budgets_module = _load("budgets")
+        longwave = climt.CorkLongwaveRadiation(
+            optics="correlated_k", table=PAGE7_GRAY_TABLE,
+            diffusivity_factor=PAGE7_DIFFUSIVITY)
+        boundary_layer = climt.SimpleBoundaryLayer(surface_fluxes=None)
+        state = climt.get_default_state([longwave, boundary_layer],
+                                        grid_state=get_grid(nx=1, ny=1, nz=28))
+        state["specific_humidity"].values[:] = 4e-3
+        state["eastward_wind"].values[:] = 5.0
+        before = budgets_module.column_enthalpy(state)
+
+        timestep = climt.UnytTimeDelta(**PAGE8_DT)
+        for _ in range(10):
+            diagnostics, new_state = boundary_layer(state, timestep)
+            state.update(new_state)
+            state.update(diagnostics)
+
+        after = budgets_module.column_enthalpy(state)
+    assert after == pytest.approx(before, rel=1e-9), (
+        "surface_fluxes=None must conserve every column integral exactly")
+
+
+def test_page8_helpers_record_and_reset_every_step():
+    """``integrate(after_step=...)`` runs once per step, after the clock, and
+    ``Recorder`` keeps what it is given. Cheap and unmarked: the slow tests
+    above all lean on these two."""
+    with _unyt_backend_restored():
+        stepping_module = _load("stepping")
+        budgets_module = _load("budgets")
+        tendencies, steppers, state = _page8_column(wind=None)
+        record = stepping_module.Recorder(
+            climt.UnytTimeDelta(**PAGE8_DT), profiles=["eastward_wind"],
+            profile_every=2, jump=budgets_module.surface_air_jump,
+            flux=budgets_module.sensible_heat_flux, wind=_lowest_wind)
+
+        def after_step(state):
+            state["eastward_wind"].values[:] = 7.0
+            record(state)
+
+        start = state["time"]
+        stepping_module.integrate(tendencies, steppers, state,
+                                  climt.UnytTimeDelta(**PAGE8_DT), 5,
+                                  after_step=after_step)
+        elapsed = float((state["time"] - start).total_seconds())
+
+    assert elapsed == pytest.approx(5 * 3600.0)
+    np.testing.assert_allclose(record["days"], np.arange(1, 6) / 24.0)
+    np.testing.assert_allclose(record["wind"], 7.0)
+    assert record["flux"][-1] == pytest.approx(
+        float(state["surface_upward_sensible_heat_flux"].values.ravel()[0]))
+    assert record["eastward_wind"].shape == (3, 28)
+    np.testing.assert_allclose(record["profile_days"], [1 / 24, 3 / 24,
+                                                        5 / 24])
+    assert record.mean("wind", days=1.0) == pytest.approx(7.0)
+
+
+def test_page8_headline_figure_draws(tmp_path):
+    """``draw_discontinuity`` builds its three panels from short runs."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    with _unyt_backend_restored():
+        stepping_module = _load("stepping")
+        budgets_module = _load("budgets")
+        timestep = climt.UnytTimeDelta(**PAGE8_DT)
+        tendencies, steppers, radiative = _page8_column(boundary_layer=False)
+        stepping_module.integrate(tendencies, steppers, radiative, timestep, 3)
+        tendencies, steppers, turbulent = _page8_column()
+        record = _page8_recorder(stepping_module, budgets_module)
+        stepping_module.integrate(tendencies, steppers, turbulent, timestep,
+                                  50, after_step=record)
+        plt.close("all")
+        try:
+            stepping_module.draw_discontinuity(radiative, turbulent, record,
+                                               title="test")
+            figure = plt.gcf()
+            assert len(figure.axes) == 3
+            assert "jump" in "".join(
+                text.get_text() for text in figure.axes[0].texts)
+        finally:
+            plt.close("all")
 
 
 @pytest.fixture

@@ -111,6 +111,25 @@ def surface_imbalance(state):
     )
 
 
+def surface_air_jump(state):
+    """Surface temperature minus the lowest model layer's, K.
+
+    Chapter 8's discontinuity. Radiative equilibrium leaves a jump here that
+    nothing radiative can remove; page 8's boundary layer is what erodes it.
+    """
+    return float(_scalar(state, "surface_temperature")
+                 - _column(state, "air_temperature")[0])
+
+
+def sensible_heat_flux(state):
+    """Upward sensible heat flux at the surface, W m^-2; 0.0 if absent.
+
+    With ``SimpleBoundaryLayer(surface_fluxes='bulk')`` this is the flux the
+    scheme *applied* on its last step, not a re-derivation from the state.
+    """
+    return _scalar(state, "surface_upward_sensible_heat_flux")
+
+
 def evaporation_rate(state):
     """Evaporation implied by the surface latent heat flux, mm day^-1.
 

@@ -47,6 +47,8 @@ FIGURES = {
     "06-water-vapour-limit.qmd": [(1, "06-feedback.png"),
                                   (2, "06-runaway.png")],
     "07-stepping-a-column.qmd": [(1, "07-stepping.png")],
+    "08-turbulent-heat-exchange.qmd": [(1, "08-turbulent.png"),
+                                       (3, "08-spindown.png")],
 }
 
 

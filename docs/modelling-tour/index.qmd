@@ -37,6 +37,7 @@ The science on each page stands alone; the code does not.
 | [The CO₂ knob](05-co2-knob.qmd) | 4 — A deeper look at the zero-dimensional model | the forcing per doubling, and which bands supply it |
 | [Water vapour, and the limit](06-water-vapour-limit.qmd) | 4 and beyond | the feedback, drawn; and the runaway limit |
 | [Stepping a column](07-stepping-a-column.qmd) | 9, 10 | radiative equilibrium, found rather than assumed |
+| [Turbulent heat exchange](08-turbulent-heat-exchange.qmd) | 10 | bulk fluxes, and the discontinuity they erode |
 
 ## What this tranche does not cover
 

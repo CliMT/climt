@@ -40,7 +40,7 @@ DAY_SECONDS = 86400.0
 
 
 def integrate(tendency_components, stepper_components, state, timestep,
-              n_steps):
+              n_steps, after_step=None):
     """Step ``state`` forward ``n_steps`` times, in place.
 
     Args:
@@ -51,6 +51,16 @@ def integrate(tendency_components, stepper_components, state, timestep,
         state: a climt state dict. Modified in place.
         timestep: a ``climt.UnytTimeDelta``.
         n_steps: number of steps.
+        after_step: optional ``f(state)``, called at the very end of every
+            step, after the clock has advanced -- to record something (a
+            :class:`Recorder`), or to overwrite something. Page 8 uses the
+            second to assign the wind back every step, the way climt's
+            examples do.
+
+            Use this rather than calling ``integrate(..., 1)`` in a loop of
+            your own. Each call builds a fresh ``AdamsBashforth``, which has
+            no memory of earlier steps, so a loop of one-step calls silently
+            runs forward Euler instead of the third-order scheme.
 
     Returns:
         The same ``state`` object, for convenience.
@@ -65,7 +75,66 @@ def integrate(tendency_components, stepper_components, state, timestep,
             state.update(stepper_state)
             state.update(stepper_diagnostics)
         state["time"] += timestep
+        if after_step is not None:
+            after_step(state)
     return state
+
+
+class Recorder:
+    """Record scalars off the state every step -- an ``after_step`` for
+    :func:`integrate`.
+
+    Give it the timestep, and one function per series, each taking a state and
+    returning a number; it keeps the elapsed time in days alongside them::
+
+        record = Recorder(timestep, jump=budgets.surface_air_jump,
+                          flux=budgets.sensible_heat_flux)
+        integrate(tendencies, steppers, state, timestep, n, after_step=record)
+        record["days"], record["flux"]            # numpy arrays
+
+    ``profiles`` names state quantities to snapshot as whole columns every
+    ``profile_every`` steps, the first after step 1. They come back as a 2-D
+    array, one row per snapshot, with the snapshot days under
+    ``"profile_days"``.
+
+    Days count from the first step this recorder saw, so a recorder attached
+    to a state that has already run for a year still starts its axis near 0.
+    """
+
+    def __init__(self, timestep, profiles=(), profile_every=24, **series):
+        self._dt_days = float(timestep.total_seconds()) / DAY_SECONDS
+        self._series = series
+        self._profile_every = profile_every
+        self._values = {name: [] for name in series}
+        self._values["days"] = []
+        self._snapshots = {name: [] for name in profiles}
+        self._snapshot_days = []
+        self._step = 0
+
+    def __call__(self, state):
+        self._step += 1
+        day = self._step * self._dt_days
+        self._values["days"].append(day)
+        for name, read in self._series.items():
+            self._values[name].append(float(read(state)))
+        if self._snapshots and (self._step - 1) % self._profile_every == 0:
+            self._snapshot_days.append(day)
+            for name in self._snapshots:
+                values = np.asarray(state[name].values, dtype=float)
+                self._snapshots[name].append(
+                    values.reshape(values.shape[0], -1)[:, 0].copy())
+
+    def __getitem__(self, name):
+        if name == "profile_days":
+            return np.array(self._snapshot_days)
+        if name in self._snapshots:
+            return np.array(self._snapshots[name])
+        return np.array(self._values[name])
+
+    def mean(self, name, days=30.0):
+        """Mean of series ``name`` over its last ``days`` days."""
+        elapsed = self["days"]
+        return float(np.mean(self[name][elapsed > elapsed[-1] - days]))
 
 
 def integrate_with_history(tendency_components, stepper_components, state,
@@ -279,6 +348,84 @@ def draw_evolution(history, state, solar, title=""):
         fig.suptitle(title, fontsize=13, y=0.98)
     # Required in the browser: quarto-live paints the figure a cell shows, and
     # a cell that only creates one paints nothing.
+    plt.show()
+
+
+def draw_discontinuity(radiative_state, turbulent_state, record,
+                       depth_hpa=200.0, title=""):
+    """Page 8's headline: the surface--air jump, before and after turbulence.
+
+    Two profile panels side by side, zoomed to the lowest ``depth_hpa`` of the
+    column, each with the surface temperature drawn as a point at the surface
+    pressure and the jump to the lowest model layer labelled in K; beneath
+    them, the sensible heat flux the boundary layer applied, step by step
+    (faint) and as daily means.
+
+    Args:
+        radiative_state: the converged column with no boundary layer.
+        turbulent_state: the converged column with one.
+        record: the :class:`Recorder` from the turbulent run, carrying
+            ``flux`` (W m^-2) and ``days``.
+        depth_hpa: how much of the column above the surface to show.
+        title: figure suptitle.
+    """
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure(figsize=(11.0, 7.8))
+    gs = fig.add_gridspec(2, 2, height_ratios=[1.35, 1.0], hspace=0.38,
+                          wspace=0.12)
+    ax_rad = fig.add_subplot(gs[0, 0])
+    ax_turb = fig.add_subplot(gs[0, 1], sharex=ax_rad, sharey=ax_rad)
+    ax_flux = fig.add_subplot(gs[1, :])
+
+    panels = ((ax_rad, radiative_state, "Radiative equilibrium", "#c92a2a"),
+              (ax_turb, turbulent_state, "+ boundary layer", "#1c7ed6"))
+    for ax, state, label, colour in panels:
+        p = state["air_pressure"].values[:, 0, 0] / 100.0
+        T = state["air_temperature"].values[:, 0, 0]
+        ps = float(state["surface_air_pressure"].values.ravel()[0]) / 100.0
+        Ts = float(state["surface_temperature"].values.ravel()[0])
+        shown = p > ps - depth_hpa
+        ax.plot(T[shown], p[shown], "o-", color=colour, lw=2, ms=4,
+                label="air (model layers)")
+        ax.plot([Ts], [ps], "s", color="k", ms=8, label="surface")
+        ax.plot([T[0], Ts], [p[0], ps], ":", color="0.35", lw=1.2)
+        note = f"jump {Ts - T[0]:.2f} K"
+        if state is turbulent_state:
+            # The drawn profile is one step of a flickering equilibrium; say
+            # what it averages to, which is the number the page quotes.
+            note += f"\n(30-day mean {record.mean('jump'):.2f} K)"
+        ax.annotate(note, xy=(0.5 * (T[0] + Ts), 0.5 * (p[0] + ps)),
+                    xytext=(0.60, 0.30), textcoords="axes fraction",
+                    fontsize=10, fontweight="bold", ha="center",
+                    arrowprops=dict(arrowstyle="->", color="0.3"))
+        ax.set_title(label)
+        ax.set_xlabel("temperature (K)")
+        ax.grid(alpha=0.3)
+    ax_rad.set_ylabel("pressure (hPa)")
+    ps = float(radiative_state["surface_air_pressure"].values.ravel()[0])
+    ax_rad.set_ylim(ps / 100.0 + 8.0, ps / 100.0 - depth_hpa)
+    ax_rad.legend(loc="upper right", fontsize=8)
+    plt.setp(ax_turb.get_yticklabels(), visible=False)
+
+    days, flux = record["days"], record["flux"]
+    ax_flux.plot(days, flux, color="#1c7ed6", lw=0.4, alpha=0.35,
+                 label="every step")
+    per_day = int(round(1.0 / (days[1] - days[0]))) if len(days) > 1 else 1
+    n_days = len(flux) // per_day
+    if n_days:
+        daily = flux[:n_days * per_day].reshape(n_days, per_day).mean(axis=1)
+        ax_flux.plot((np.arange(n_days) + 0.5) * per_day * (days[1] - days[0]),
+                     daily, color="#1c7ed6", lw=1.8, label="daily mean")
+    ax_flux.set_xlabel("time (days)")
+    ax_flux.set_ylabel("sensible heat flux (W m$^{-2}$)")
+    ax_flux.set_title("Sensible heat flux the boundary layer applied, "
+                      "surface to air")
+    ax_flux.grid(alpha=0.3)
+    ax_flux.legend(loc="upper right", fontsize=8)
+
+    if title:
+        fig.suptitle(title, fontsize=13, y=0.99)
     plt.show()
 
 
