@@ -1252,13 +1252,18 @@ def test_page7_mixed_layer_depth_changes_speed_not_equilibrium():
     1 m and 5 m slabs reach the *same* equilibrium at very different speeds.
     Heat capacity sets response time; it does not set where you end up.
     """
-    stepping_module = _load("stepping")
-    finals = {}
-    for depth in (1.0, 5.0):
-        components, state = _page7_gray_column(slab_depth=depth)
-        stepping_module.integrate(components, [], state,
-                                  climt.UnytTimeDelta(hours=12), 1400)
-        finals[depth] = _surface_temperature(state)
+    saved_backend = sympl.get_backend()
+    sympl.set_backend(climt.UnytBackend())
+    try:
+        stepping_module = _load("stepping")
+        finals = {}
+        for depth in (1.0, 5.0):
+            components, state = _page7_gray_column(slab_depth=depth)
+            stepping_module.integrate(components, [], state,
+                                      climt.UnytTimeDelta(hours=12), 1400)
+            finals[depth] = _surface_temperature(state)
+    finally:
+        sympl.set_backend(saved_backend)
 
     assert abs(finals[1.0] - finals[5.0]) < 0.5, (
         f"1 m settled at {finals[1.0]:.2f} K and 5 m at {finals[5.0]:.2f} K — "

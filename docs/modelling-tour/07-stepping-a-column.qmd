@@ -312,8 +312,8 @@ them is not "what non-grey radiation does". It is what a gray atmosphere tuned t
 
 **This cell takes about two and a half minutes in a browser** — the same
 900 steps, but each fourteen-band radiation call costs about 0.17 s in Pyodide
-against 9 ms for the gray one (measured with the JIT off, the native stand-in for
-the browser; Task 0 of this tranche's plan). The spinner is expected.
+against about 8 ms for the gray one (measured with the JIT off, the native
+stand-in for the browser). The spinner is expected.
 
 ```{pyodide}
 components14, state14 = gray_column(table="earth_low_res_lw", diffusivity=1.66)
@@ -338,8 +338,8 @@ through it, and it does not need to be hot to get rid of 240 W m⁻².
 **And this column has not finished.** The OLR is 244.92 W m⁻², so the top of the
 atmosphere is still out of balance by −4.92 W m⁻² and the column is still cooling;
 the figure says so in its bottom-right annotation. Stepped on to 2300 steps (1150
-days, about 6½ minutes in a browser — Task 0's measurement log, same
-configuration), it reaches a balance of −0.50 W m⁻² with the surface at 267.85 K,
+days, about 6½ minutes in a browser — set `N_STEPS = 2300` in this cell to
+reproduce it, or see `scripts/experiments/tour_rce_measurements.py`), it reaches a balance of −0.50 W m⁻² with the surface at 267.85 K,
 another 0.7 K down. Most of the remaining change is aloft: the top level goes on
 to 113.1 K. The upper layers of this column radiate only in the strong CO₂ bands,
 at very low pressure, and relax far more slowly than the surface does.
@@ -437,7 +437,7 @@ does not change.
 
 1. **Break the timestep.** Raise `DT_HOURS` in the gray cell and re-run. 24 h is
    fine. From about 30 h the surface temperature starts flipping between two
-   values on alternate steps — 0.15 K apart at 30 h, 0.42 K at 36 h — which is the
+   values on alternate steps — about 0.17 K apart at 30 h, 0.42 K at 36 h — which is the
    integrator, not the physics: look closely at the end of the time series, or print
    `history["surface_temperature"][-4:]`. At 60 h it fails outright, 36 steps in:
    the longwave component raises a `ValueError` saying its fluxes went non-finite
