@@ -50,15 +50,16 @@ Its provenance records what it was perturbed from (`perturbed_from`,
 checks that stamp against the shipped base, so regenerating the base without
 this file fails a test instead of quietly changing the number page 12 quotes.
 
-**What the warming does and does not mean.** The difference between the two
-files is +1.647 K. Both files pass the ±0.5 W m⁻² TOA gate, but at this
-column's feedback, about 2.0 W m⁻² K⁻¹, that gate allows each state to sit
-up to ~0.25 K from its own equilibrium, and here the two errors add: the base
-finished at −0.485 W m⁻² (slightly warm) and the doubled state at +0.500
-(slightly cool). A Gregory regression over the doubled run puts the
-equilibrium-to-equilibrium warming at ≈ 2.1 K. Quote the file difference as a
-lower bound, or quote the regression, but do not quote +1.65 K as the
-column's sensitivity.
+**What the warming does and does not mean.** The moist column never
+reaches TOA = 0. `EmanuelConvectionPython` is not fully energy-conserving
+(a known property of the scheme), so the column settles with a steady TOA
+imbalance of about +0.3 W m⁻² that no amount of stepping removes. The
+|TOA| < 0.5 gate stops a spin-up where TOA first dips inside that band, which
+is not where the column settles. Stepped on for 60 000 steps, the base settles
+0.10 K below its file (279.86 K, TOA +0.31) and the 2×CO₂ state 0.07 K above
+its own (281.68 K, TOA +0.35). **Page 12 quotes the settled difference,
++1.82 K**, not the +1.647 K between the files.
+`scripts/experiments/tour_rce_shipped_remeasure.py settle-moist` reproduces it.
 
 ### Regenerating
 

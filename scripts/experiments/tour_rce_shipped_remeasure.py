@@ -15,11 +15,16 @@ there is one definition of each, and measures:
                  compared with rce_dry_equilibrium.npz.
     indep-moist  the same for the moist column, against rce_moist_equilibrium.npz.
 
-Page 12's own 2xCO2 is not here: it ships, as rce_moist_2xco2_equilibrium.npz,
-from `generate_tour_equilibria.py --moist-2xco2`.
+    settle-moist both shipped moist states stepped on 60 000 steps: where
+                 each settles, and the settled 2xCO2 warming page 12 quotes.
+
+Page 12's 2xCO2 *state* is not made here: it ships, as
+rce_moist_2xco2_equilibrium.npz, from `generate_tour_equilibria.py
+--moist-2xco2`. `settle-moist` measures the warming from it.
 
     python scripts/experiments/tour_rce_shipped_remeasure.py co2-dry indep-dry
     python scripts/experiments/tour_rce_shipped_remeasure.py indep-moist
+    python scripts/experiments/tour_rce_shipped_remeasure.py settle-moist
 
 Each measurement writes debug_data/tour_rce_remeasure_<name>.json.
 """
@@ -111,10 +116,54 @@ def _independence(kind):
     return result
 
 
+def settle_moist(n_steps=60000, window_steps=30000):
+    """Step both shipped moist states on, and compare where they settle.
+
+    The moist column never reaches TOA = 0. EmanuelConvectionPython is not
+    fully energy-conserving, so the column settles with a steady TOA
+    imbalance of about +0.3 W/m^2. The |TOA| < 0.5 gate stops a spin-up
+    wherever TOA first dips inside that band, which is not where it settles.
+    Page 12's 2xCO2 warming is therefore the difference between the two
+    *settled* surface temperatures: the mean over the last ``window_steps``
+    of ``n_steps``, from each shipped file.
+    """
+    settled = {}
+    for label, filename in (("base", "rce_moist_equilibrium.npz"),
+                            ("2xco2", "rce_moist_2xco2_equilibrium.npz")):
+        tendencies, steppers, state, provenance = gen.load_equilibrium(
+            "moist", filename=filename)
+        timestep = climt.UnytTimeDelta(hours=provenance["dt_hours"])
+        rows = []
+        for k in range(n_steps // 50):
+            gen.stepping.integrate(tendencies, steppers, state, timestep, 50)
+            rows.append(((k + 1) * 50, gen.budgets.toa_imbalance(state),
+                         _surface(state)))
+        rows = np.array(rows)
+        tail = rows[rows[:, 0] > n_steps - window_steps]
+        days = tail[:, 0] * provenance["dt_hours"] / 24.0
+        settled[label] = dict(
+            shipped_surface_k=float(provenance.get(
+                "surface_temperature_k", rows[0, 2])),
+            settled_surface_k=float(tail[:, 2].mean()),
+            settled_toa=float(tail[:, 1].mean()),
+            settled_toa_std=float(tail[:, 1].std()),
+            trend_k_per_100d=float(100.0 * np.polyfit(days, tail[:, 2], 1)[0]))
+        print(f"  {label:6s} settles at {settled[label]['settled_surface_k']:.4f} K, "
+              f"TOA {settled[label]['settled_toa']:+.3f} "
+              f"(std {settled[label]['settled_toa_std']:.3f}), trend "
+              f"{settled[label]['trend_k_per_100d']:+.4f} K/100 d", flush=True)
+    warming = (settled["2xco2"]["settled_surface_k"]
+               - settled["base"]["settled_surface_k"])
+    print(f"  settled 2xCO2 warming: {warming:+.3f} K")
+    return dict(settled, warming_k=warming, n_steps=n_steps,
+                window_steps=window_steps)
+
+
 MEASUREMENTS = {
     "co2-dry": co2_dry,
     "indep-dry": lambda: _independence("dry"),
     "indep-moist": lambda: _independence("moist"),
+    "settle-moist": settle_moist,
 }
 
 

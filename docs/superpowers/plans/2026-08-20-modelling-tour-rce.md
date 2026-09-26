@@ -2956,7 +2956,10 @@ Re-measured with `scripts/experiments/tour_rce_shipped_remeasure.py`, which take
       266.478 -> 267.678 K  (+1.200 K)  strict gate at 2350 steps; +1.197 K by step 1000 (TOA -0.028)
   moist 2xCO2 (from rce_moist_equilibrium.npz, dt 5 min):
       279.965 -> 281.613 K  (+1.647 K)  73 600 steps (256 d), TOA +0.500
-      Gregory regression over the run: lambda ~2.0 W/m^2/K, F ~3.9 W/m^2, TOA = 0 at 281.86 K
+  moist, both shipped states stepped on 60 000 steps (settle-moist; mean over the last 30 000):
+      base   settles at 279.862 K, TOA +0.306 (std 0.008)   (file: 279.965 K)
+      2xCO2  settles at 281.683 K, TOA +0.347 (std 0.010)   (file: 281.613 K; still +0.016 K/100 d)
+      settled 2xCO2 warming: +1.82 K
   dry start-independence (warm-steep start, strict gate):
       3350 steps, Tsurf 266.478 vs 266.478 K (7e-6 K); column max |dT| 0.024 K at 3 hPa
   moist start-independence (warm-steep start, strict gate):
@@ -2966,7 +2969,8 @@ Re-measured with `scripts/experiments/tour_rce_shipped_remeasure.py`, which take
 **Reading.**
 - **Start-independence holds, and now on converged runs.** Two starts ~50 K apart agree at the surface to 0.002 K (moist) and 7 × 10⁻⁶ K (dry), and through the troposphere to under 0.01 K. The only visible spread is at the top model level (3 hPa), where the radiative relaxation time is longest. §4's reading was right about that, just on the wrong runs.
 - **Dry sensitivity: +1.20 K, not +0.91 K.** Page 11 runs it live for 1000 steps (Task 14 Step 1).
-- **Moist sensitivity: ≈ 2.1 K, not +2.18 K, and not the +1.65 K file difference either.** The ±0.5 W m⁻² gate leaves each moist state up to 0.5 / λ ≈ 0.25 K from its own equilibrium. Here the errors add: the base stopped at −0.485 (slightly warm) and the doubled state at +0.500 (slightly cool). Correcting both by their imbalance / λ gives 281.86 − 279.73 ≈ 2.1 K, about 1.75× the dry response. That §5's 2.18 K is close to this is a coincidence: it came from runs 7 K too warm.
+- **Moist sensitivity: +1.82 K**, about 1.5× the dry response. It is not §5's +2.18 K, and not the +1.647 K between the shipped files. **The moist column never reaches TOA = 0.** `EmanuelConvectionPython` is not fully energy-conserving (a known property of the scheme, confirmed with the spec author 2026-09-26), so the column settles with a steady TOA imbalance of about +0.3 W m⁻². The cold start with the gate at 0.1 W m⁻² shows it: that run swept through ±0.1 near step 205 000 and parked at +0.30, 279.863 K. So the ±0.5 gate stops a spin-up wherever TOA first enters the band on its way to +0.3, not where the column settles. The shipped base stopped 0.10 K warm of its settled state and the 2×CO₂ state 0.07 K cool, and both files are kept as shipped. The sensitivity is the difference between the *settled* states, measured by `settle-moist`. (An earlier draft of this section quoted ≈ 2.1 K from a Gregory regression to TOA = 0. That was wrong: it assumed an equilibrium this column does not have.)
+- **A tighter gate does not help.** Neither 0.1 nor any threshold below +0.3 is a convergence criterion for this column. A threshold can only be passed transiently, while TOA sweeps through it. If the moist states are ever regenerated, stop on a flat trend in TOA (for example a 30-day running mean), not on its magnitude.
 - **Why the moist gate is loose and the dry one is not.** The drift window is 1000 *steps*: 500 days at 12 h, but only 3.5 days at 5 min. For the moist column the drift gate barely constrains anything, and |TOA| < 0.5 does all the work. The dry states are unaffected (both imbalances < 0.15 W m⁻²).
 
 **The number each page takes from here (Step 7):**
@@ -2978,7 +2982,7 @@ Re-measured with `scripts/experiments/tour_rce_shipped_remeasure.py`, which take
 | 09 | peak RH 100 % (with) vs 457 % (without) condensation; Bowen 0.64 over a saturated surface |
 | 10 | — (no time loop) |
 | 11 | dry state dt 12 h / **3500 steps / 266.48 K** (shipped); 2×CO₂ **+1.20 K**, run live for 1000 steps (§7) |
-| 12 | Emanuel dt 5 min; moist state **200 550 steps (≈ 696 d) / 279.97 K** (shipped); 2×CO₂ **≈ 2.1 K** equilibrium-to-equilibrium, +1.65 K between the shipped files, run offline (§7); start-independent to 0.002 K at the surface (§7) |
+| 12 | Emanuel dt 5 min; moist state **200 550 steps (≈ 696 d) / 279.97 K** (shipped); 2×CO₂ **+1.82 K** between the settled states (not the +1.65 K between the files), run offline (§7); settles at TOA ≈ +0.3, not 0 (Emanuel is not fully conservative); start-independent to 0.002 K at the surface (§7) |
 
 **Decisions taken from these numbers:**
 
@@ -3485,7 +3489,7 @@ by the residual test written first:**
 | | moist 2×CO₂ |
 |---|---|
 | steps after doubling | 73 600 (≈ 256 d) |
-| surface temperature | 281.613 K (+1.647 K on the base) |
+| surface temperature | 281.613 K (+1.647 K on the base file; +1.82 K once both settle, see Task 8 log §7) |
 | final TOA imbalance | +0.500 W m⁻² (just inside the gate) |
 | file size | 31.3 kB |
 | native wall clock | ~9 min, Linux, `NUMBA_NUM_THREADS=1` (≈ 7 ms/step) |
@@ -4972,7 +4976,9 @@ If `test_page12_precipitation_balances_evaporation_at_equilibrium` fails with pr
 3. **The moisture budget**: precipitation and evaporation printed side by side, with the residual.
 4. **The knob, run offline**: load `rce_moist_2xco2_equilibrium.npz` beside the base state, print its `states.describe` block (660 ppm, 73 600 steps), and compare the two states: the surface warming, the two temperature profiles and the two humidity profiles. Compare the sensitivity with page 11's dry +1.20 K and say why they differ. **The cell does not integrate.** At dt = 5 min the re-equilibration is 73 600 steps, nearly four hours in the browser, so it ships (see `_data/README.md`, and `generate_tour_equilibria.py --moist-2xco2`). The prose above the cell says so, and says that page 11 ran its own doubling live, so the reader knows what they are being handed and why. The short live run a reader *can* afford (say 500 steps from the doubled base, ~1.5 min) shows the warming starting, and is an optional code exercise, not the cell.
 
-   **Which number to quote.** The two files differ by **+1.647 K**, but that is not the column's sensitivity. Each state passes the ±0.5 W m⁻² gate, and at this column's feedback (≈ 2.0 W m⁻² K⁻¹, Gregory regression over the doubled run) that leaves each up to ~0.25 K from its own equilibrium. Here the errors add: the base finished at −0.485 W m⁻², the doubled state at +0.500. The regression's equilibrium-to-equilibrium warming is **≈ 2.1 K**, about 1.75× the dry column's 1.20 K. Either quote ≈ 2.1 K and show the regression, or quote +1.65 K explicitly as a lower bound. Never quote +1.65 K against page 11's 1.20 as a ratio.
+   **Which number to quote: +1.82 K**, about 1.5× page 11's dry +1.20 K. That is the difference between the two states *as they settle* when stepped on (Task 8 log §7, `tour_rce_shipped_remeasure.py settle-moist`), not the +1.647 K between the files. The files were stopped by the ±0.5 W m⁻² gate on the way to a settled state that is not at TOA = 0.
+
+   **The page must not claim the moist column balances at the top.** `EmanuelConvectionPython` is not fully energy-conserving (known), so this column settles with TOA ≈ +0.3 W m⁻² and stays there. `budgets.summary` will print that number, so the page says what it is before a reader finds it: the scheme's non-conservation, visible as a residual that does not decay. Contrast it with page 11's dry column, whose residual does decay. The *moisture* budget (cell 3) is a separate claim, and still closes.
 5. **Timestep sensitivity, demonstrated rather than asserted**: run a short perturbation at two timesteps and compare. This is where the page cashes the cheque the warning note writes.
 
 **Prose:**
@@ -5020,9 +5026,9 @@ Already measured, 2026-09-26 (`generate_tour_equilibria.py --moist-2xco2`, from 
 | steps (dt = 5 min) | 200 550 | 73 600 after doubling (≈ 256 d) |
 | surface temperature | 279.965 K | 281.613 K |
 | TOA imbalance | −0.485 W m⁻² | +0.500 W m⁻² |
-| file difference | | **+1.647 K** |
-| Gregory regression over the doubled run | | λ ≈ 2.0 W m⁻² K⁻¹, F ≈ 3.9 W m⁻², TOA = 0 at 281.86 K |
-| equilibrium-to-equilibrium warming | | **≈ 2.1 K** (base corrected by its −0.485 / λ) |
+| file difference | | +1.647 K (not the number to quote) |
+| settled, 60 000 steps on (mean of last 30 000) | 279.862 K, TOA +0.306 | 281.683 K, TOA +0.347 |
+| **settled 2×CO₂ warming** | | **+1.82 K** |
 
 ---
 

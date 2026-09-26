@@ -229,14 +229,17 @@ def generate(kind, out_dir):
            _provenance(components, dt_hours, n_steps, state, CO2_PPM))
 
 
-def load_equilibrium(kind, data_dir=DATA_DIR):
+def load_equilibrium(kind, data_dir=DATA_DIR, filename=None):
     """A shipped equilibrium, ready to step: ``(tendencies, steppers, state,
     provenance)``, with the wind relaxation rebuilt on the loaded state as the
-    pages and the residual test do it."""
+    pages and the residual test do it. ``filename`` defaults to
+    ``rce_<kind>_equilibrium.npz``; pass another to load, say, the 2xCO2
+    state with ``kind``'s components."""
     components = moist_components() if kind == "moist" else dry_components()
     tendencies, steppers = split(components)
+    filename = filename or f"rce_{kind}_equilibrium.npz"
     state, provenance = states.load(
-        os.path.join(data_dir, f"rce_{kind}_equilibrium.npz"), components,
+        os.path.join(data_dir, filename), components,
         grid_state=climt.get_grid(nx=1, ny=1, nz=NZ))
     # initialise=False: keep the spun-up, drag-sheared wind profile.
     tendencies = tendencies + [stepping.wind_relaxation(
