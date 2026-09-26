@@ -1,5 +1,10 @@
 # climt.docs Implementation Plan
 
+> **Status (2026-09-26): not started.** No `climt/_docs/` package or tests exist.
+> Since this plan was written, the Quarto site's quartodoc API reference
+> (`docs/api/`) has come to cover much of the same ground (signatures, docstrings,
+> properties). Decide whether the offline CLI is still wanted before executing.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship a `python -m climt.docs show <Symbol>` CLI inside the climt package that surfaces constructor signatures, full docstrings, base classes, sympl `input/output/diagnostic/tendency_properties` (units + dims), and import paths for any public climt symbol — without requiring graphify or any external tooling.

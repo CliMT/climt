@@ -73,16 +73,14 @@ coverage: ## check code coverage quickly with the default Python
 		coverage html
 		$(BROWSER) htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/climt.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ climt
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	$(BROWSER) docs/_build/html/index.html
+docs: ## build the Quarto site, including the quartodoc API reference
+	cd docs && quartodoc build
+	quarto render docs/
+	$(BROWSER) docs/_site/index.html
 
-servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+servedocs: ## preview the Quarto site, re-rendering on change
+	cd docs && quartodoc build
+	quarto preview docs/
 
 release: clean ## package and upload a release
 	python setup.py sdist upload
