@@ -4373,7 +4373,54 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Log — page 9's column as converged
 
-*Fill in from Step 2: converged surface temperature, sensible and latent flux, Bowen ratio, peak relative humidity with and without condensation, precipitation rate, step count and `dt`.*
+Measured 2026-09-26 with `scripts/experiments/tour_page9_measurements.py` (Linux, 4 cores, numba on for physics, `NUMBA_NUM_THREADS=1`; `cost` with `NUMBA_DISABLE_JIT=1`). Column exactly as the page builds it: `earth_low_res_lw` (default diffusivity), nz 28, 2 m slab, SOLAR 240, `SimpleBoundaryLayer(bulk, z0=1e-3)`, `wind_relaxation` 5 m/s / 24 h, `GridScaleCondensation` last. Every flux is a 30-day mean (converged) or a 10-day mean (the page's 30-day cells).
+
+**Deviation from Step 1's `_page9_column`: the surface humidity.** The plan wrote `surface_specific_humidity = RH * 0.015`, a fixed number that nothing updates. At the 289.4 K this column settles at, 0.015 kg/kg is **131 % of saturation**. The spec's "saturated surface" and the "surface relative humidity" knob are then neither saturated nor a relative humidity. Measured with the fixed 0.015: Ts 289.39 K, SH 31.7, LH 92.8, Bowen **0.34** (surface RH 1.32). The page and tests instead use a new `stepping.SurfaceHumidity(rh)` stepper, first in the stepper list, that sets `q_s = rh * q_sat(Ts, ps)` every step with `soundings.saturation_specific_humidity`, the formula `GridScaleCondensation` condenses to. That is also what `SimplePhysics` does internally. All numbers below use it.
+
+**Converged cold start, dt 1 h, 24 000 steps (1000 d), surface RH 1.0:**
+
+```
+  day 1000   Ts 289.37 K  SH 44.7  LH 63.5  Bowen 0.704  jump 7.46 K  BL depth median 723 m (mean 1703)
+             q0 6.98 g/kg  theta_v - theta (lowest level) 1.20 K  peak RH 100.0 %  P 2.19 mm/d  TOA -0.14
+  day  900   Ts 289.40 K  Bowen 0.702  TOA -0.22      day 800  Ts 289.47  TOA -0.37
+  day  700   Ts 289.59 K  Bowen 0.694  TOA -0.63      day 30   Ts 293.65 (30-d mean)  TOA -117
+```
+Evaporation 63.5 W m⁻² / Lv = 2.19 mm/day = precipitation. Converges in ~900 days (21 600 steps at 1 h): over an hour in a browser at ~0.18 s/step. So the page runs **30-day cold starts live** (spec: "yes, live, short") and quotes the converged numbers from the script. `PAGE9_STEPS = 21600`.
+
+**The spec's claim, checked at the column's own temperature:** latent exceeds sensible over a saturated surface at **289.37 K**, Bowen **0.70**. Holds, and the column is near the spec's ~288 K. (Well above Earth's ocean-mean ~0.1–0.2: this column's lowest air is saturated.)
+
+**Timestep (converged, RH 1.0):**
+
+```
+  dt 30 min  Ts 289.33  SH 44.1  LH 63.3  Bowen 0.696
+  dt  1 h    Ts 289.37  SH 44.7  LH 63.5  Bowen 0.704
+  dt  3 h    Ts 289.42  SH 46.8  LH 64.1  Bowen 0.730
+  dt  6 h    Ts 289.41  SH 49.3  LH 64.5  Bowen 0.764
+```
+Surface temperature is dt-independent; the fluxes are not (as on page 8). dt = 1 h.
+
+**Knob and comparisons (converged, 1000 d):**
+
+```
+  RH 0.4      Ts 288.32 K  SH 67.1  LH 16.2  Bowen 4.15   BL median 993 m
+  RH 0 (dry)  Ts 266.58 K  SH 17.2  LH  0.0               BL median 445 m
+  condense first (order swapped)  Ts 289.48  Bowen 0.709  end-of-step peak RH 103.9 % (max 127.6 %)
+```
+The drier surface is 1.05 K *colder* converged (less vapour, less greenhouse), though 1.9 K warmer at day 30. Moist minus dry surface: **22.8 K**, the water-vapour greenhouse the surface supplied. Boundary-layer top: 723 m moist vs 445 m dry (medians); page 8's gray column sat near 550 m.
+
+**The page's cells (30-day cold starts at 1 h; 10-day means):**
+
+```
+  headline RH 1.0   Ts 291.14  SH 46.6  LH 72.6  Bowen 0.64  TOA -93.8  P 2.44   (lowest level at the last step: q 7.30 g/kg, theta_v - theta 1.25 K)
+  knob RH 0.4       Ts 293.06  SH 69.8  LH 18.6  Bowen 3.75
+  condensation cell, from the headline state, +10 days:
+    with       peak RH 100.0 %                          P 1.89 mm/d  LH 64.8  Bowen 0.69
+    without    peak RH 219 % after 1 d, 707 % after 10 d, at 836 hPa   LH 36.0  Bowen 2.12
+```
+
+**Supersaturation (replaces Task 0 §6).** Task 0's `supersat` (457 % vs 100 %, Bowen 0.64) was 200 steps from a cold start with the fixed 0.015 surface and a loop of one-step `integrate` calls, which is forward Euler. Its 457 % is superseded by the 707 % above. With no sink at all from a cold start, the column has no equilibrium: lowest-level q 16.8 g/kg at day 30, 24.4 at day 60, 44.0 at day 100, 266 at day 360, surface 298 → 305 → 315 → 348 K, and the radiation returns non-finite fluxes after **8881 steps (370 d)**.
+
+**Cost:** 34.7 ms/step native, JIT off, on this machine (Task 0's reference machine: 51.4 ms). Page cells, JIT off, here: headline 25.2 s, knob 25.2 s, condensation 19.0 s. Browser at 0.18 s/step: about 2 min, 2 min, 1.5 min.
 
 ---
 

@@ -20,6 +20,42 @@ def saturation_vapour_pressure(T):
     return 611.2 * np.exp(17.67 * Tc / (Tc + 243.5))
 
 
+def saturation_specific_humidity(T, p):
+    """Saturation specific humidity, kg/kg, at temperature ``T`` (K) and
+    pressure ``p`` (Pa).
+
+    Written the way ``climt.GridScaleCondensation`` writes it -- Bolton's
+    vapour pressure, ``epsilon = Rd / Rv`` from sympl's constants, and
+    ``q = epsilon e / (p - (1 - epsilon) e)`` -- so that "relative humidity
+    1" here is exactly the threshold at which that component starts to
+    condense. (``lapse_rate_sounding`` above uses the rounder 0.622 and the
+    mixing-ratio form; the two differ by well under 1 % in the troposphere,
+    which is harmless for a prescribed profile but not for a test asserting
+    that the condensation holds relative humidity at 1.)
+    """
+    from sympl import get_constant
+
+    epsilon = (float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+               / float(get_constant("gas_constant_of_vapor_phase",
+                                    "J/kg/degK")))
+    e_sat = saturation_vapour_pressure(T)
+    return epsilon * e_sat / np.maximum(
+        np.asarray(p, dtype=float) - (1.0 - epsilon) * e_sat, 1.0)
+
+
+def relative_humidity(state):
+    """A column's relative humidity profile, (nz,) as a fraction, bottom
+    first -- ``specific_humidity`` over :func:`saturation_specific_humidity`.
+    """
+    def column(name):
+        values = np.asarray(state[name].values, dtype=float)
+        return values.reshape(values.shape[0], -1)[:, 0]
+
+    return (column("specific_humidity")
+            / saturation_specific_humidity(column("air_temperature"),
+                                           column("air_pressure")))
+
+
 def lapse_rate_sounding(p, ps, T_surf=288.0, rh=0.8, gamma=6.5e-3,
                         T_strat=200.0, q_floor=1e-7, gamma_strat=0.0):
     """A troposphere at a constant lapse rate under a settable stratosphere.

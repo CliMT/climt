@@ -1645,6 +1645,341 @@ def test_page8_headline_figure_draws(tmp_path):
             plt.close("all")
 
 
+# ------------------------------------------------------------------ page 9
+#
+# Page 8's column with the 14-band earth_low_res_lw table, a wet surface and
+# GridScaleCondensation. The surface humidity is held at a fixed relative
+# humidity *of the surface's own temperature* by stepping.SurfaceHumidity --
+# not at a fixed number, which the column would leave behind as it cooled
+# (0.015 kg/kg is 131 % of saturation at the 289 K this column settles at).
+#
+# dt = 1 h, as on page 8: converged sensible heat flux 49.3 W/m^2 at 6 h,
+# 46.8 at 3 h, 44.7 at 1 h, 44.1 at 30 min. The column takes ~900 days to
+# converge, which is over an hour in a browser, so the page's cells run 30-day
+# cold starts and quote the converged numbers from
+# scripts/experiments/tour_page9_measurements.py. These tests guard both: the
+# converged claims on converged runs, and the cells' claims on the cells'
+# own route. Numbers are 30-day means for converged runs and 10-day means for
+# the page's 30-day runs, as the page quotes them.
+
+PAGE9_DT = dict(hours=1)
+PAGE9_STEPS = 21600          # 900 days; the surface is within 0.03 K of its
+                             # day-1000 value, and |TOA| < 0.25 W/m^2
+PAGE9_CELL_STEPS = 720       # the page's cold-start cells: 30 days
+PAGE9_RESTART_STEPS = 240    # its condensation cell: 10 more days
+
+
+def _page9_column(surface_relative_humidity=1.0, nz=28, slab_depth=2.0,
+                  condensation=True, wind=PAGE8_WIND):
+    """Page 9's column: 14-band radiation, boundary layer, wet surface.
+
+    Carries page 8's wind relaxation. Every configuration from page 8 on does:
+    a column with no momentum source spins itself down to dead calm, and its
+    surface fluxes -- including the latent flux this page is about -- are then
+    those of a windless planet.
+    """
+    stepping_module = _load("stepping")
+    longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
+                                           table="earth_low_res_lw")
+    surface = climt.SlabSurface()
+    steppers = [stepping_module.SurfaceHumidity(surface_relative_humidity),
+                climt.SimpleBoundaryLayer(surface_fluxes="bulk",
+                                          roughness_length=PAGE8_Z0)]
+    if condensation:
+        steppers.append(climt.GridScaleCondensation())
+    state = climt.get_default_state([longwave, surface] + steppers,
+                                    grid_state=get_grid(nx=1, ny=1, nz=nz))
+    state["ocean_mixed_layer_thickness"].values[:] = slab_depth
+    state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+    state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+    state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+    relaxation = stepping_module.wind_relaxation(state, wind)
+    return [longwave, surface, relaxation], steppers, state
+
+
+def _virtual_potential_temperature(state):
+    """theta_v = theta * (1 + 0.61 q), from state quantities."""
+    from sympl import get_constant
+
+    Rd = float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+    Cp = float(get_constant("heat_capacity_of_dry_air_at_constant_pressure",
+                            "J/kg/degK"))
+    p = state["air_pressure"].values[:, 0, 0]
+    T = state["air_temperature"].values[:, 0, 0]
+    q = state["specific_humidity"].values[:, 0, 0]
+    theta = T * (1.0e5 / p) ** (Rd / Cp)
+    return theta, theta * (1.0 + 0.61 * q)
+
+
+def _peak_relative_humidity(state):
+    """Largest relative humidity in the column, by the saturation formula
+    GridScaleCondensation uses (``soundings.saturation_specific_humidity``),
+    so the page, this test and the measurement script all agree."""
+    return float(np.max(_load("soundings").relative_humidity(state)))
+
+
+def _page9_recorder(stepping_module, budgets_module):
+    return stepping_module.Recorder(
+        climt.UnytTimeDelta(**PAGE9_DT),
+        sh=budgets_module.sensible_heat_flux,
+        lh=budgets_module.latent_heat_flux,
+        ts=_surface_temperature,
+        blh=lambda state: float(
+            state["boundary_layer_height"].values.ravel()[0]),
+        peak_rh=_peak_relative_humidity)
+
+
+def _page9_run(n_steps, **column_kwargs):
+    """A cold start of ``n_steps``. Call inside ``_unyt_backend_restored``.
+    Returns ``(tendencies, steppers, state, record)``."""
+    stepping_module = _load("stepping")
+    record = _page9_recorder(stepping_module, _load("budgets"))
+    tendencies, steppers, state = _page9_column(**column_kwargs)
+    stepping_module.integrate(tendencies, steppers, state,
+                              climt.UnytTimeDelta(**PAGE9_DT), n_steps,
+                              after_step=record)
+    return tendencies, steppers, state, record
+
+
+def _bowen(record, days):
+    return record.mean("sh", days) / record.mean("lh", days)
+
+
+@pytest.fixture(scope="module")
+def page9_equilibrium():
+    """Page 9's column at surface relative humidity 1.0, converged."""
+    with _unyt_backend_restored():
+        yield _page9_run(PAGE9_STEPS)
+
+
+@pytest.fixture(scope="module")
+def page9_cell():
+    """What the page's headline cell leaves behind: a 30-day cold start."""
+    with _unyt_backend_restored():
+        yield _page9_run(PAGE9_CELL_STEPS)
+
+
+def test_page9_virtual_potential_temperature_identity():
+    """theta_v - theta = 0.61 q theta, to machine precision.
+
+    Cheap and exact: this is the definition, and the page derives it in a
+    cell. If a reader's arithmetic disagrees with the page, it is the page
+    that is wrong, so pin it.
+    """
+    with _unyt_backend_restored():
+        tendencies, steppers, state = _page9_column()
+        state["specific_humidity"].values[:] = 8e-3
+        theta, theta_v = _virtual_potential_temperature(state)
+    np.testing.assert_allclose(theta_v - theta, 0.61 * 8e-3 * theta,
+                               rtol=1e-12)
+
+
+def test_page9_surface_humidity_follows_the_surface_temperature():
+    """``SurfaceHumidity`` writes RH * q_sat(Ts, ps) -- and q_sat is the
+    saturation GridScaleCondensation condenses to, so "relative humidity 1"
+    means one thing at the surface and in the air."""
+    with _unyt_backend_restored():
+        soundings_module = _load("soundings")
+        timestep = climt.UnytTimeDelta(**PAGE9_DT)
+        tendencies, steppers, state = _page9_column(
+            surface_relative_humidity=0.7)
+        surface_humidity, condensation = steppers[0], steppers[-1]
+        q_surface = {}
+        for surface_temperature in (280.0, 300.0):
+            state["surface_temperature"].values[:] = surface_temperature
+            _, new_state = surface_humidity(state, timestep)
+            q_surface[surface_temperature] = float(np.asarray(
+                new_state["surface_specific_humidity"]).ravel()[0])
+            expected = 0.7 * float(soundings_module.saturation_specific_humidity(
+                surface_temperature,
+                float(state["surface_air_pressure"].values.ravel()[0])))
+            assert q_surface[surface_temperature] == pytest.approx(
+                expected, rel=1e-12)
+        assert q_surface[300.0] > 2.0 * q_surface[280.0]
+
+        # A column 2 % supersaturated everywhere below 500 hPa comes out of
+        # GridScaleCondensation at relative humidity 1 by the same formula.
+        # (Its adjustment is linearised in temperature, so it is exact only
+        # for small excesses -- which is what one hourly step leaves it.)
+        p = state["air_pressure"].values[:, 0, 0]
+        T = state["air_temperature"].values[:, 0, 0]
+        low = p > 5.0e4
+        q = np.zeros_like(T)
+        q[low] = 1.02 * soundings_module.saturation_specific_humidity(T, p)[low]
+        state["specific_humidity"].values[:, 0, 0] = q
+        _, condensed = condensation(state, timestep)
+        state.update(condensed)
+        relative_humidity = soundings_module.relative_humidity(state)
+    np.testing.assert_allclose(relative_humidity[low], 1.0, atol=1e-3)
+
+
+@pytest.mark.slow
+def test_page9_latent_flux_exceeds_sensible_over_a_saturated_surface(
+        page9_equilibrium):
+    """Page 9's headline claim, at this column's own converged temperature.
+
+    The spec phrases it "over a saturated ~288 K surface". Measured: the
+    column converges at 289.37 K with a Bowen ratio of 0.70 (30-day means,
+    1000 days, dt 1 h), so the claim holds as the spec states it. The page
+    quotes both.
+    """
+    _, _, state, record = page9_equilibrium
+    with _unyt_backend_restored():
+        imbalance = _load("budgets").toa_imbalance(state)
+    surface = record.mean("ts")
+    bowen = _bowen(record, 30.0)
+
+    assert abs(imbalance) < 0.5, f"TOA imbalance {imbalance:+.3f} W/m^2"
+    assert 286.0 < surface < 292.0, (
+        f"converged surface {surface:.2f} K -- the page quotes 289.37 K")
+    assert bowen < 1.0, (
+        f"Bowen ratio {bowen:.2f} at surface {surface:.1f} K -- over a "
+        "saturated surface the latent flux should dominate")
+    assert 0.55 < bowen < 0.85, f"Bowen ratio {bowen:.3f}; the page quotes 0.70"
+
+
+@pytest.mark.slow
+def test_page9_headline_cell_is_already_latent_dominated(page9_cell):
+    """The headline cell's 30 days: far from equilibrium, and the page says
+    so, but the partition it shows is already the converged one's sign.
+    Measured 10-day means: SH 46.6, LH 72.6 W/m^2, Bowen 0.64, TOA -94."""
+    _, _, state, record = page9_cell
+    with _unyt_backend_restored():
+        imbalance = _load("budgets").toa_imbalance(state)
+    assert _bowen(record, 10.0) < 0.8
+    assert imbalance < -50.0, (
+        f"TOA {imbalance:+.1f} W/m^2 -- the page tells readers the 30-day "
+        "column is far from equilibrium")
+
+
+@pytest.mark.slow
+def test_page9_condensation_removes_the_supersaturation(page9_cell):
+    """The reason GridScaleCondensation is in the stack from this page on,
+    by the page's own route: from the headline cell's state, ten more days
+    with the sink and without it. Measured: peak relative humidity 100 %
+    with it, 707 % without, and the precipitation 1.89 mm/day."""
+    tendencies, steppers, base, _ = page9_cell
+    peaks, rain = {}, {}
+    with _unyt_backend_restored():
+        stepping_module = _load("stepping")
+        budgets_module = _load("budgets")
+        timestep = climt.UnytTimeDelta(**PAGE9_DT)
+        for label, keep in (("with", True), ("without", False)):
+            state = copy.deepcopy(base)
+            here = steppers if keep else steppers[:2]
+            if not keep:
+                del state["precipitation_amount"]
+            record = stepping_module.Recorder(
+                timestep, peak_rh=_peak_relative_humidity,
+                precip=lambda s: budgets_module.precipitation_rate(s,
+                                                                   timestep))
+            stepping_module.integrate(tendencies, here, state, timestep,
+                                      PAGE9_RESTART_STEPS, after_step=record)
+            peaks[label] = float(np.max(record["peak_rh"]))
+            rain[label] = record.mean("precip", 10.0)
+
+    # GridScaleCondensation's adjustment is linearised in temperature, so it
+    # leaves ~1e-5 of the excess behind. That is saturated, for any purpose
+    # this page has.
+    assert peaks["with"] < 1.0 + 1e-4, (
+        f"peak RH {peaks['with']:.4f} with condensation last in the stepper "
+        "list -- nothing the step leaves behind should be supersaturated")
+    assert peaks["without"] > 4.0, (
+        f"peak RH without condensation {peaks['without']:.2f} -- the page "
+        "quotes 707 % after ten days")
+    assert rain["with"] > 1.0 and rain["without"] == 0.0, rain
+
+
+@pytest.mark.slow
+def test_page9_a_column_with_no_moisture_sink_has_no_equilibrium():
+    """What the page says happens to a sink-free column left alone: the
+    vapour keeps accumulating, and the surface keeps warming. Measured at
+    day 60 of a cold start: 24.4 g/kg at the lowest level, surface 304.8 K,
+    both still rising; the run fails outright at day 370."""
+    with _unyt_backend_restored():
+        _, _, state, record = _page9_run(24 * 60, condensation=False)
+    q_lowest = float(state["specific_humidity"].values[0, 0, 0])
+    assert q_lowest > 0.018, f"lowest-level q {q_lowest * 1e3:.1f} g/kg"
+    assert record.mean("ts", 5.0) > record["ts"][24 * 30] + 2.0, (
+        "the surface should still be warming at day 60")
+
+
+@pytest.mark.slow
+def test_page9_surface_relative_humidity_moves_the_bowen_ratio(page9_cell):
+    """Page 9's knob, by the knob cell's route (30-day cold starts), over the
+    range the page says was tested. Measured 10-day means: Bowen 3.75 at RH
+    0.4 and 0.64 at 1.0 -- the partition flips."""
+    with _unyt_backend_restored():
+        _, _, _, dry = _page9_run(PAGE9_CELL_STEPS,
+                                  surface_relative_humidity=0.4)
+    wet = page9_cell[3]
+    assert _bowen(dry, 10.0) > 1.0 > _bowen(wet, 10.0), (
+        f"Bowen ratio {_bowen(dry, 10.0):.2f} at RH 0.4, "
+        f"{_bowen(wet, 10.0):.2f} at RH 1.0 -- a drier surface partitions "
+        "more into sensible heat")
+
+
+@pytest.mark.slow
+def test_page9_a_drier_surface_ends_colder(page9_equilibrium):
+    """The knob's converged half, which the page quotes because it reverses
+    the 30-day answer: at RH 0.4 the column settles at 288.32 K, 1.05 K
+    colder than at RH 1.0, at Bowen 4.15. Less vapour, less greenhouse."""
+    with _unyt_backend_restored():
+        _, _, _, dry = _page9_run(PAGE9_STEPS, surface_relative_humidity=0.4)
+    wet = page9_equilibrium[3]
+    assert _bowen(dry, 30.0) > 3.0
+    assert dry.mean("ts") < wet.mean("ts") - 0.5, (
+        f"RH 0.4 at {dry.mean('ts'):.2f} K vs RH 1.0 at "
+        f"{wet.mean('ts'):.2f} K -- the page says the drier column ends "
+        "colder")
+
+
+@pytest.mark.slow
+def test_page9_the_surface_supplies_a_greenhouse_and_a_deeper_mixed_layer(
+        page9_equilibrium):
+    """Two converged comparisons against the same column over a dry surface.
+
+    Measured: dry 266.58 K against moist 289.37 K, the water-vapour
+    greenhouse the surface supplied; and a boundary layer whose median depth
+    is 445 m dry and 723 m moist (medians, because the depth jumps for single
+    steps and the mean is not where it sits).
+    """
+    with _unyt_backend_restored():
+        _, _, _, dry = _page9_run(PAGE9_STEPS, surface_relative_humidity=0.0)
+    moist = page9_equilibrium[3]
+    warming = moist.mean("ts") - dry.mean("ts")
+    assert 18.0 < warming < 28.0, (
+        f"moist minus dry surface temperature {warming:.2f} K -- the page "
+        "quotes about 23 K")
+
+    def median_depth(record):
+        days = record["days"]
+        return float(np.median(record["blh"][days > days[-1] - 30.0]))
+
+    assert median_depth(moist) > median_depth(dry) + 150.0, (
+        f"median boundary-layer depth {median_depth(moist):.0f} m moist vs "
+        f"{median_depth(dry):.0f} m dry")
+
+
+def test_page9_headline_figure_draws():
+    """``draw_moisture`` builds its three panels from a short run."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    with _unyt_backend_restored():
+        _, _, state, record = _page9_run(50)
+        plt.close("all")
+        try:
+            _load("stepping").draw_moisture(state, record, title="test")
+            figure = plt.gcf()
+            assert len(figure.axes) == 3
+            assert "θ" in "".join(t.get_text()
+                                  for t in figure.axes[0].texts)
+        finally:
+            plt.close("all")
+
+
 @pytest.fixture
 def budgets():
     return _load("budgets")
@@ -2005,7 +2340,8 @@ state["air_temperature"].values[:] = np.linspace(
 state["specific_humidity"].values[:] = 3e-3
 
 stepping.integrate([longwave, surface],
-                   [boundary_layer, adjustment, condensation],
+                   [stepping.SurfaceHumidity(1.0), boundary_layer, adjustment,
+                    condensation],
                    state, climt.UnytTimeDelta(hours=1), 3)
 
 summary = budgets.summary(state)
@@ -2026,8 +2362,9 @@ def test_the_tour_helpers_run_with_the_jit_disabled(tmp_path):
     kernels execute as plain Python and nothing strips units off the timestep
     on the way in. numba reads NUMBA_DISABLE_JIT at import time, so this has
     to be a fresh interpreter. It steps a real column through
-    ``stepping.integrate`` with all five browser-safe component kinds, reads
-    ``budgets.summary`` off the result, and round-trips it through
+    ``stepping.integrate`` with all five browser-safe component kinds and
+    page 9's ``SurfaceHumidity``, reads ``budgets.summary`` off the result,
+    and round-trips it through
     ``states.save``/``states.load``.
     """
     import os

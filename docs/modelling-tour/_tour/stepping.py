@@ -501,3 +501,137 @@ def wind_relaxation(state, speed, timescale_hours=24.0,
         state[quantity_name].values[:] = speed
 
     return UnytRelaxation(quantity_name, "m s^-1", "m s^-2")
+
+
+class SurfaceHumidity(sympl.Stepper):
+    """Keep the surface's specific humidity at a fixed relative humidity.
+
+    ``SimpleBoundaryLayer`` computes the latent heat flux from
+    ``surface_specific_humidity``, and treats it as an *input*: nothing in
+    climt's browser-safe stack writes it, so whatever value it is given stays
+    put while the surface warms and cools underneath it. A fixed number is
+    then a surface whose relative humidity drifts with its temperature --
+    0.015 kg/kg, for instance, is saturated at about 293 K and 130 % saturated
+    at 289 K. (``SimplePhysics``, which does not run in a browser, sets it
+    from the surface temperature internally, which is what this does.)
+
+    This sets ``surface_specific_humidity = relative_humidity * q_sat(Ts, ps)``
+    every step, from the surface temperature the slab has just produced. Put
+    it in the stepper list *before* the boundary layer, so the boundary layer
+    sees the humidity of the surface it is exchanging with.
+
+    ``q_sat`` is ``soundings.saturation_specific_humidity``, the form
+    ``GridScaleCondensation`` uses, so relative humidity 1 here and in the
+    air mean the same thing. A page using this must list ``_tour/soundings.py``
+    in its ``pyodide: resources:``.
+    """
+
+    input_properties = {
+        "surface_temperature": {"dims": ["*"], "units": "degK"},
+        "surface_air_pressure": {"dims": ["*"], "units": "Pa"},
+    }
+    diagnostic_properties = {}
+    output_properties = {
+        "surface_specific_humidity": {"dims": ["*"], "units": "kg/kg"},
+    }
+
+    def __init__(self, relative_humidity=1.0, **kwargs):
+        self.relative_humidity = float(relative_humidity)
+        super(SurfaceHumidity, self).__init__(**kwargs)
+
+    def array_call(self, state, timestep):
+        from soundings import saturation_specific_humidity
+
+        q_surface = self.relative_humidity * saturation_specific_humidity(
+            np.asarray(state["surface_temperature"], dtype=float),
+            np.asarray(state["surface_air_pressure"], dtype=float))
+        return {}, {"surface_specific_humidity": q_surface}
+
+
+def draw_moisture(state, record, depth_hpa=250.0, title=""):
+    """Page 9's headline: what the moisture does to the column's buoyancy.
+
+    Three panels. Left, potential temperature and virtual potential
+    temperature over the lowest ``depth_hpa`` of the column, with the gap
+    between them shaded -- that gap *is* the moisture's contribution to
+    buoyancy. Middle, specific humidity against its saturation value over
+    the same depth. Right, the sensible and latent heat fluxes the boundary
+    layer applied, step by step (faint) and as daily means.
+
+    Args:
+        state: the column at the end of the run.
+        record: the :class:`Recorder` from the run, carrying ``sh`` and
+            ``lh`` (W m^-2) and ``days``.
+        depth_hpa: how much of the column above the surface to show.
+        title: figure suptitle.
+    """
+    import matplotlib.pyplot as plt
+    from soundings import saturation_specific_humidity
+
+    Rd = float(sympl.get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+    Cp = float(sympl.get_constant(
+        "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"))
+    p = np.asarray(state["air_pressure"].values, dtype=float)[:, 0, 0]
+    T = np.asarray(state["air_temperature"].values, dtype=float)[:, 0, 0]
+    q = np.asarray(state["specific_humidity"].values, dtype=float)[:, 0, 0]
+    theta = T * (1.0e5 / p) ** (Rd / Cp)
+    theta_v = theta * (1.0 + 0.61 * q)
+    q_sat = saturation_specific_humidity(T, p)
+    ps = float(np.asarray(state["surface_air_pressure"].values).ravel()[0])
+    shown = p > ps - depth_hpa * 100.0
+    hpa = p / 100.0
+
+    fig = plt.figure(figsize=(12.0, 4.8))
+    gs = fig.add_gridspec(1, 3, width_ratios=[1.0, 1.0, 1.6], wspace=0.32)
+    ax_th = fig.add_subplot(gs[0, 0])
+    ax_q = fig.add_subplot(gs[0, 1], sharey=ax_th)
+    ax_f = fig.add_subplot(gs[0, 2])
+
+    ax_th.fill_betweenx(hpa[shown], theta[shown], theta_v[shown],
+                        color="#1c7ed6", alpha=0.25, lw=0)
+    ax_th.plot(theta[shown], hpa[shown], "o-", color="#c92a2a", ms=3, lw=1.8,
+               label="θ")
+    ax_th.plot(theta_v[shown], hpa[shown], "o-", color="#1c7ed6", ms=3,
+               lw=1.8, label="θ$_v$ = θ(1 + 0.61q)")
+    gap = theta_v[0] - theta[0]
+    ax_th.annotate(f"θ$_v$ − θ = {gap:.2f} K\nat the lowest level",
+                   xy=(0.5 * (theta[0] + theta_v[0]), hpa[0]),
+                   xytext=(0.40, 0.30), textcoords="axes fraction",
+                   fontsize=9, arrowprops=dict(arrowstyle="->", color="0.3"))
+    ax_th.set(xlabel="potential temperature (K)", ylabel="pressure (hPa)",
+              title="Moisture adds buoyancy")
+    ax_th.set_ylim(ps / 100.0 + 5.0, ps / 100.0 - depth_hpa)
+    ax_th.legend(loc="upper left", fontsize=8)
+    ax_th.grid(alpha=0.3)
+
+    ax_q.plot(q[shown] * 1e3, hpa[shown], "o-", color="#2b8a3e", ms=3,
+              lw=1.8, label="specific humidity q")
+    ax_q.plot(q_sat[shown] * 1e3, hpa[shown], "--", color="0.4", lw=1.2,
+              label="saturation q$_{sat}$")
+    ax_q.set(xlabel="specific humidity (g kg$^{-1}$)",
+             title="Water the surface supplied")
+    ax_q.legend(loc="upper right", fontsize=8)
+    ax_q.grid(alpha=0.3)
+    plt.setp(ax_q.get_yticklabels(), visible=False)
+
+    days = record["days"]
+    per_day = int(round(1.0 / (days[1] - days[0]))) if len(days) > 1 else 1
+    n_days = len(days) // per_day
+    for name, label, colour in (("sh", "sensible", "#c92a2a"),
+                                ("lh", "latent", "#1c7ed6")):
+        series = record[name]
+        ax_f.plot(days, series, color=colour, lw=0.4, alpha=0.3)
+        if n_days:
+            daily = series[:n_days * per_day].reshape(n_days, per_day).mean(1)
+            ax_f.plot((np.arange(n_days) + 0.5) * per_day * (days[1] - days[0]),
+                      daily, color=colour, lw=2.0,
+                      label=f"{label} (daily mean)")
+    ax_f.set(xlabel="time (days)", ylabel="upward flux at the surface "
+             "(W m$^{-2}$)", title="How the surface sheds its heat")
+    ax_f.set_ylim(bottom=0.0)
+    ax_f.legend(loc="upper right", fontsize=8)
+    ax_f.grid(alpha=0.3)
+
+    if title:
+        fig.suptitle(title, fontsize=13, y=1.02)
+    plt.show()

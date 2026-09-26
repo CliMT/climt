@@ -121,6 +121,7 @@ website:
         - modelling-tour/06-water-vapour-limit.qmd
         - modelling-tour/07-stepping-a-column.qmd
         - modelling-tour/08-turbulent-heat-exchange.qmd
+        - modelling-tour/09-moisture-and-buoyancy.qmd
 
 # HTML appearance, declared at the *top level* rather than under `format: html:`
 # on purpose. The Modelling Tour pages set `format: live-html` -- a separate

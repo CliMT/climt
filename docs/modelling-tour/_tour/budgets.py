@@ -130,6 +130,17 @@ def sensible_heat_flux(state):
     return _scalar(state, "surface_upward_sensible_heat_flux")
 
 
+def latent_heat_flux(state):
+    """Upward latent heat flux at the surface, W m^-2; 0.0 if absent.
+
+    The flux ``SimpleBoundaryLayer(surface_fluxes='bulk')`` applied, as for
+    :func:`sensible_heat_flux`. It is zero unless the surface has a
+    ``surface_specific_humidity`` above the air's -- which, from page 9 on,
+    ``stepping.SurfaceHumidity`` gives it.
+    """
+    return _scalar(state, "surface_upward_latent_heat_flux")
+
+
 def evaporation_rate(state):
     """Evaporation implied by the surface latent heat flux, mm day^-1.
 
