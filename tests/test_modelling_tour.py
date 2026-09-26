@@ -1980,6 +1980,239 @@ def test_page9_headline_figure_draws():
             plt.close("all")
 
 
+# --- Page 10: dry convection ------------------------------------------------
+#
+# One call, no time loop. The profile is the page's: a constant lapse rate
+# written exactly in pressure, T = Ts (p/ps)^(Rd Gamma/g), superadiabatic in the
+# lowest layers and continuous into 6.5 K/km above them, floored at 200 K.
+# Numbers are those the page quotes; its cells print them.
+
+PAGE10_DT = dict(hours=1)
+
+
+def _page10_column(unstable_levels=8, gamma_unstable=14e-3, gamma=6.5e-3,
+                   T_surface=300.0, T_min=200.0, specific_humidity=0.0,
+                   nz=28):
+    """Page 10's prescribed profile: superadiabatic near the ground."""
+    from sympl import get_constant
+
+    adjustment = climt.DryConvectiveAdjustment()
+    state = climt.get_default_state([adjustment],
+                                    grid_state=get_grid(nx=1, ny=1, nz=nz))
+    Rd = float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+    g = float(get_constant("gravitational_acceleration", "m/s^2"))
+    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].to_units("Pa").values.ravel()[0])
+
+    T = T_surface * (p / ps) ** (Rd * gamma_unstable / g)
+    top = unstable_levels - 1
+    T[unstable_levels:] = (T[top] * (p[unstable_levels:] / p[top])
+                           ** (Rd * gamma / g))
+    state["air_temperature"].values[:, 0, 0] = np.maximum(T, T_min)
+    state["specific_humidity"].values[:] = specific_humidity
+    return adjustment, state
+
+
+def _page10_theta(state):
+    from sympl import get_constant
+
+    Rd = float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+    Cp = float(get_constant("heat_capacity_of_dry_air_at_constant_pressure",
+                            "J/kg/degK"))
+    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+    T = state["air_temperature"].to_units("degK").values[:, 0, 0]
+    return T * (1.0e5 / p) ** (Rd / Cp)
+
+
+def _page10_adjust(**column_kwargs):
+    """The page's one call: (state before, state after, levels adjusted)."""
+    adjustment, before = _page10_column(**column_kwargs)
+    diagnostics, new_state = adjustment(before,
+                                        climt.UnytTimeDelta(**PAGE10_DT))
+    after = copy.deepcopy(before)
+    after.update(new_state)
+    adjusted = np.abs(after["air_temperature"].values[:, 0, 0]
+                      - before["air_temperature"].values[:, 0, 0]) > 1e-6
+    return before, after, adjusted
+
+
+def test_page10_the_prescribed_profile_is_unstable_where_the_page_says():
+    """theta falls with height through the eight superadiabatic layers only."""
+    with _unyt_backend_restored():
+        _, state = _page10_column()
+        theta = _page10_theta(state)
+    assert np.all(np.diff(theta[:8]) < 0)
+    assert np.all(np.diff(theta[7:]) > 0)
+    assert theta[0] == pytest.approx(298.78, abs=0.005)
+    assert theta[7] == pytest.approx(291.83, abs=0.005)
+
+
+def test_page10_adjustment_makes_theta_uniform():
+    """Page 10's first claim: ten layers share one theta, 294.80 K, and the
+    column above them is left stable."""
+    with _unyt_backend_restored():
+        before, after, adjusted = _page10_adjust()
+        theta = _page10_theta(after)
+        p = after["air_pressure"].to_units("Pa").values[:, 0, 0]
+        dT = (after["air_temperature"].values[:, 0, 0]
+              - before["air_temperature"].values[:, 0, 0])
+
+    assert adjusted.sum() == 10, (
+        f"{adjusted.sum()} levels adjusted; the page says ten -- the eight "
+        "unstable layers and two of the stable air above them")
+    assert np.array_equal(np.where(adjusted)[0], np.arange(10))
+    assert p[adjusted][-1] / 100 == pytest.approx(745.0, abs=0.5)
+    spread = float(theta[adjusted].max() - theta[adjusted].min())
+    assert spread < 1e-9, (
+        f"theta spread {spread:.2e} K across the adjusted layers -- an "
+        "adjusted layer is by definition neutrally stratified")
+    assert theta[0] == pytest.approx(294.80, abs=0.005)
+    assert np.all(np.diff(theta[9:]) > 0), "the air above is left stable"
+    assert -dT[0] == pytest.approx(3.99, abs=0.005)
+    assert dT.max() == pytest.approx(2.82, abs=0.005)
+    assert np.argmax(dT) == 7
+
+
+def test_page10_adjustment_conserves_column_enthalpy(budgets):
+    """Page 10's second claim, and the test of whether you understood it.
+
+    Measured relative change: exactly 0.0 on the page's profile, JIT on or
+    off. tests/test_conservation.py::TestDryConvectionConservation asserts
+    the same thing through a different route; this one asserts it on page
+    10's own profile, with budgets.column_enthalpy -- the function the page
+    calls.
+    """
+    with _unyt_backend_restored():
+        before, after, _ = _page10_adjust()
+        h_before = budgets.column_enthalpy(before)
+        h_after = budgets.column_enthalpy(after)
+    assert h_after == pytest.approx(h_before, rel=1e-14), (
+        f"enthalpy changed by {abs(h_after - h_before) / h_before:.2e} "
+        "relative -- dry adjustment mixes, it does not heat")
+
+
+def test_page10_a_stable_column_is_left_alone():
+    """The control. Nothing to adjust means nothing adjusted."""
+    with _unyt_backend_restored():
+        adjustment, state = _page10_column(gamma_unstable=6.5e-3)
+        before = state["air_temperature"].values.copy()
+        diagnostics, new_state = adjustment(state,
+                                            climt.UnytTimeDelta(**PAGE10_DT))
+        np.testing.assert_allclose(new_state["air_temperature"].values,
+                                   before)
+
+
+def test_page10_adjustment_returns_a_state_not_tendencies():
+    """The craft claim: a Stepper's signature is different, and visibly so."""
+    with _unyt_backend_restored():
+        adjustment, state = _page10_column()
+        before = state["air_temperature"].values.copy()
+        result = adjustment(state, climt.UnytTimeDelta(**PAGE10_DT))
+        after_call = state["air_temperature"].values.copy()
+    assert isinstance(result, tuple) and len(result) == 2
+    diagnostics, new_state = result
+    assert dict(diagnostics) == {}
+    assert sorted(new_state) == ["air_temperature", "specific_humidity"]
+    assert not any("tendency" in key for key in new_state)
+    np.testing.assert_array_equal(after_call, before)   # input left alone
+
+
+def test_page10_the_timestep_is_ignored():
+    """The craft callout: adjustment is instantaneous, whatever DT is."""
+    with _unyt_backend_restored():
+        adjustment, state = _page10_column()
+        _, one_hour = adjustment(state, climt.UnytTimeDelta(hours=1))
+        _, one_day = adjustment(state, climt.UnytTimeDelta(days=1))
+        np.testing.assert_array_equal(one_hour["air_temperature"].values,
+                                      one_day["air_temperature"].values)
+
+
+@pytest.mark.parametrize("levels, gamma, n_adjusted, top_hPa, max_dT", [
+    (4, 10e-3, 4, 968, 0.05), (4, 14e-3, 5, 942, 0.92),
+    (4, 20e-3, 5, 942, 2.58),
+    (8, 10e-3, 8, 836, 0.21), (8, 14e-3, 10, 745, 3.99),
+    (8, 20e-3, 11, 695, 10.69),
+    (12, 10e-3, 12, 643, 0.46), (12, 14e-3, 14, 534, 8.93),
+    (12, 20e-3, 17, 370, 23.12),
+])
+def test_page10_knob_reach(levels, gamma, n_adjusted, top_hPa, max_dT):
+    """The knob table: how far the adjusted layer reaches."""
+    with _unyt_backend_restored():
+        before, after, adjusted = _page10_adjust(unstable_levels=levels,
+                                                 gamma_unstable=gamma)
+        p = after["air_pressure"].to_units("Pa").values[:, 0, 0]
+        dT = np.abs(after["air_temperature"].values[:, 0, 0]
+                    - before["air_temperature"].values[:, 0, 0])
+    assert adjusted.sum() == n_adjusted
+    assert p[adjusted][-1] / 100 == pytest.approx(top_hPa, abs=0.5)
+    assert dT.max() == pytest.approx(max_dT, abs=0.005)
+
+
+def test_page10_knob_extremes():
+    """The prose around the knob table: the mixed theta at 20 K/km over twelve
+    layers, and the physics exercise's floor-limited deep instability."""
+    with _unyt_backend_restored():
+        _, after, _ = _page10_adjust(unstable_levels=12, gamma_unstable=20e-3)
+        assert _page10_theta(after)[0] == pytest.approx(275.59, abs=0.005)
+        for levels in (20, 24, 28):
+            _, after, adjusted = _page10_adjust(unstable_levels=levels)
+            p = after["air_pressure"].to_units("Pa").values[:, 0, 0]
+            assert p[adjusted][-1] / 100 == pytest.approx(318, abs=0.5)
+
+
+def test_page10_mixed_theta_by_hand():
+    """Physics exercise 1: the enthalpy-conserving mixed theta over n layers.
+
+    Eight is still unstable against level 8; nine would already be stable;
+    the scheme mixes ten.
+    """
+    from sympl import get_constant
+
+    with _unyt_backend_restored():
+        _, state = _page10_column()
+        kappa = (float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+                 / float(get_constant(
+                     "heat_capacity_of_dry_air_at_constant_pressure",
+                     "J/kg/degK")))
+        p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+        p_int = state["air_pressure_on_interface_levels"].to_units(
+            "Pa").values[:, 0, 0]
+        T = state["air_temperature"].values[:, 0, 0]
+        theta = _page10_theta(state)
+    dp = p_int[:-1] - p_int[1:]
+
+    def mixed(n):
+        return ((T[:n] * dp[:n]).sum()
+                / ((p[:n] / 1.0e5) ** kappa * dp[:n]).sum())
+
+    assert mixed(8) == pytest.approx(295.06, abs=0.005)
+    assert theta[8] == pytest.approx(293.33, abs=0.005)
+    assert mixed(9) == pytest.approx(294.75, abs=0.005)
+    assert theta[9] == pytest.approx(295.06, abs=0.005)
+    assert mixed(10) == pytest.approx(294.80, abs=0.005)
+
+
+def test_page10_moisture_makes_a_moist_theta_uniform(budgets):
+    """Code exercise 2: with uniform humidity, enthalpy is still conserved but
+    the dry theta is no longer uniform."""
+    with _unyt_backend_restored():
+        _, dry, _ = _page10_adjust()
+        results = {}
+        for q in (0.01, 0.02):
+            before, after, adjusted = _page10_adjust(specific_humidity=q)
+            theta = _page10_theta(after)
+            results[q] = (theta[adjusted].max() - theta[adjusted].min(),
+                          budgets.column_enthalpy(before),
+                          budgets.column_enthalpy(after),
+                          after["air_temperature"].values[0, 0, 0])
+        dry_T0 = dry["air_temperature"].values[0, 0, 0]
+    assert results[0.01][0] == pytest.approx(0.06, abs=0.005)
+    assert results[0.02][0] == pytest.approx(0.12, abs=0.005)
+    for spread, h_before, h_after, _ in results.values():
+        assert h_after == pytest.approx(h_before, rel=1e-14)
+    assert dry_T0 - results[0.01][3] == pytest.approx(0.03, abs=0.005)
+
+
 @pytest.fixture
 def budgets():
     return _load("budgets")

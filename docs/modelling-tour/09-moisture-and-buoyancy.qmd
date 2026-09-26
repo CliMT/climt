@@ -279,7 +279,7 @@ rearranged. The table makes the size of it visible. At the lowest level, with
 
 The headline figure shows two more things worth a look. In the left panel, θ
 *falls* with height between about 910 and 875 hPa, by about 2 K. That air is
-statically unstable, and nothing on this page removes it. Page 10 introduces the
+statically unstable, and nothing on this page removes it. [Page 10](10-dry-convection.qmd) introduces the
 component that does. In the middle panel, the water has not got far. It fills the
 air below about 875 hPa, where the boundary layer's mixing stops, and saturates
 it. Above that the air is still as dry as climt's default state left it. Nothing on this page lifts vapour

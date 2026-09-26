@@ -50,6 +50,7 @@ FIGURES = {
     "08-turbulent-heat-exchange.qmd": [(1, "08-turbulent.png"),
                                        (3, "08-spindown.png")],
     "09-moisture-and-buoyancy.qmd": [(1, "09-buoyancy.png")],
+    "10-dry-convection.qmd": [(1, "10-dry-convection.png")],
 }
 
 

@@ -39,6 +39,7 @@ The science on each page stands alone; the code does not.
 | [Stepping a column](07-stepping-a-column.qmd) | 9, 10 | radiative equilibrium, found rather than assumed |
 | [Turbulent heat exchange](08-turbulent-heat-exchange.qmd) | 10 | bulk fluxes, and the discontinuity they erode |
 | [Moisture changes the buoyancy](09-moisture-and-buoyancy.qmd) | 10 | θ_v, the Bowen ratio, and why a sink is needed |
+| [Dry convection](10-dry-convection.qmd) | 11 | enthalpy-conserving mixing to a dry adiabat |
 
 ## What this tranche does not cover
 
