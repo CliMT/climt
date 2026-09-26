@@ -96,7 +96,7 @@ def turbulent_column(z0=Z0, wind=WIND, boundary_layer=True):
     if boundary_layer and wind is not None:
         # A momentum source. Without this line the column has no wind, and
         # the boundary layer has almost nothing to work with. See below.
-        tendencies.append(stepping.wind_relaxation(state, wind))
+        tendencies.append(stepping.wind_relaxation(state, wind, timescale_hours=24.0))
     return tendencies, steppers, state
 
 

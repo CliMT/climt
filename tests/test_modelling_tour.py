@@ -1277,7 +1277,7 @@ def test_page7_mixed_layer_depth_changes_speed_not_equilibrium():
 # Page 7's gray column, plus SimpleBoundaryLayer(surface_fluxes='bulk') and a
 # wind held up by stepping.wind_relaxation. dt = 1 h, NOT page 7's 12 h: the
 # turbulent column's equilibrium depends on the timestep (sensible heat flux
-# 34.7 W/m^2 at 1 h, 34.2 at 30 min, 47 at 12 h), so the page steps hourly.
+# 34.7 W/m^2 at 1 h, 34.2 at 30 min, 39.6 at 12 h, 30-day means), so the page steps hourly.
 # The radiative-only column's does not (15.15 K at both), so the page runs
 # that one at page 7's 12 h.
 #
