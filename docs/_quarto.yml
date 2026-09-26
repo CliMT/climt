@@ -123,6 +123,7 @@ website:
         - modelling-tour/08-turbulent-heat-exchange.qmd
         - modelling-tour/09-moisture-and-buoyancy.qmd
         - modelling-tour/10-dry-convection.qmd
+        - modelling-tour/11-dry-rce.qmd
 
 # HTML appearance, declared at the *top level* rather than under `format: html:`
 # on purpose. The Modelling Tour pages set `format: live-html` -- a separate

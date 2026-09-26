@@ -1,0 +1,552 @@
+---
+title: "Dry RCE"
+format: live-html
+engine: jupyter
+pyodide:
+  packages:
+    # Installed by micropip at document setup, before any cell runs; pinned to
+    # the released version this page was written against. See
+    # ../_includes/climt-live-boot.qmd for how to preview an unreleased wheel.
+    - "climt==0.31.0"
+    - "unyt"
+  resources:
+    # Fetched into the Pyodide filesystem at document setup — the same files
+    # tests/test_modelling_tour.py imports natively. See page 1 for the
+    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
+    # states.py loads the shipped equilibrium and finds it through assets.py;
+    # stepping.py is the time loop; budgets.py reads the energy budgets.
+    - _tour/assets.py
+    - _tour/states.py
+    - _tour/stepping.py
+    - _tour/budgets.py
+    # The shipped dry equilibrium. Staged into the Pyodide filesystem at the
+    # same relative path it has on disk, which is why _tour/assets.py can find
+    # it with a plain os.path.isfile in both environments.
+    - _data/rce_dry_equilibrium.npz
+---
+
+{{< include ../_includes/climt-live-boot.qmd >}}
+
+::: {.callout-tip}
+## Where this fits
+
+Chapter 12 of the notes: radiative-convective equilibrium. Every piece is already
+on the table. [Page 7](07-stepping-a-column.qmd) stepped a column of radiation
+over a slab ocean, [page 8](08-turbulent-heat-exchange.qmd) added the turbulent
+exchange between the surface and the air, and [page 10](10-dry-convection.qmd)
+introduced the scheme that removes a static instability. This page runs all four
+together until nothing changes.
+
+It also closes a loop that [page 1](01-emissivity-spectrum.qmd) opened. Every
+page from 1 to 6 used a sounding someone typed in: a troposphere cooling at
+6.5 K km⁻¹ and an isothermal stratosphere at 200 K. Here nobody types in a
+profile. The column makes its own, and it does not choose 6.5 K km⁻¹.
+:::
+
+## This column is dry, and its numbers are not Earth's
+
+The column has no water vapour at all. Its fourteen-band longwave radiation sees
+330 ppm of CO₂ and nothing else, so most of the spectrum is window and the column
+is a poor greenhouse. It settles at a surface temperature of about 266 K, far
+below Earth's 288 K. **No number on this page can be compared with the numbers on
+pages 1 to 6**, which all had water vapour in them. Page 12, still to come, puts
+the water back.
+
+## You are perturbing a shipped equilibrium
+
+This page does not spin its column up. It loads one: a state that
+`scripts/generate_tour_equilibria.py` stepped for 3500 steps of 12 hours, 1750
+simulated days, and saved beside this page as `_data/rce_dry_equilibrium.npz`.
+Doing that here would take about eight minutes of stepping in your browser, and
+watching a column find its equilibrium was page 7's subject. This page is about
+what the equilibrium looks like and how it responds.
+
+An equilibrium means nothing without the configuration that produced it, so the
+file carries that configuration with it, and the first cell prints it. The cell
+builds the component list first, in the open, because the file is only an
+equilibrium *for these components*. It runs in a few seconds.
+
+```{pyodide}
+#| autorun: true
+import sys
+sys.path.insert(0, "_tour")   # helper modules, served alongside this page
+
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+import sympl
+from sympl import get_constant
+import climt
+from climt import (get_grid, CorkLongwaveRadiation, SlabSurface,
+                   SimpleBoundaryLayer, DryConvectiveAdjustment, UnytTimeDelta)
+
+import budgets
+import states
+import stepping
+
+sympl.set_backend(climt.UnytBackend())
+
+# In the order the page defends below: radiation, surface, boundary layer,
+# adjustment.
+components = [
+    CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw"),
+    SlabSurface(),
+    SimpleBoundaryLayer(surface_fluxes="bulk", roughness_length=1e-3),
+    DryConvectiveAdjustment(),
+]
+tendency = [c for c in components if not hasattr(c, "output_properties")]
+stepper = [c for c in components if hasattr(c, "output_properties")]
+
+state, provenance = states.load("rce_dry_equilibrium.npz", components,
+                                grid_state=get_grid(nx=1, ny=1, nz=28))
+if state is None:
+    raise RuntimeError("rce_dry_equilibrium.npz did not reach the browser; "
+                       "reload the page")
+
+# Page 8's momentum source, rebuilt on the loaded state. It has to come after
+# the state exists, because it writes its target fields into it -- which is
+# also why it is not in `components` above and not in the shipped file's
+# component list. The provenance records the wind it was spun up at; use the
+# same one, or you are perturbing a different model.
+# initialise=False: the loaded state already carries a spun-up, drag-sheared
+# wind profile. Flattening it to a uniform 5 m/s would discard part of the
+# equilibrium we just loaded.
+tendency.append(stepping.wind_relaxation(state, provenance["wind_m_s"],
+                                         provenance["wind_timescale_hours"],
+                                         initialise=False))
+DT = UnytTimeDelta(hours=provenance["dt_hours"])
+
+print(states.describe(provenance))
+print()
+for name, value in budgets.summary(state).items():
+    print(f"{name:20s} {value:9.2f}")
+```
+
+The TOA imbalance is −0.13 W m⁻² and the surface temperature 266.48 K. The
+surface imbalance is +1.38 W m⁻², and that number needs a warning, given in the
+convergence section below.
+
+## The profile it found
+
+The next cell draws the equilibrium. θ, the potential temperature, is page 10's
+test for which levels the adjustment has mixed: they share one θ, to rounding
+error. The cell shades them and draws the dry adiabat through them. The dashed
+grey profile is page 7's fourteen-band column, which had radiation and a slab and
+nothing else, stepped on until its TOA imbalance was zero to three decimal places:
+10 000 steps of 12 hours. Its temperatures are written into the cell, because
+recomputing them here would take almost half an hour.
+`scripts/experiments/tour_page11_measurements.py radiative` recomputes them, and
+so does page 7's non-grey cell with `N_STEPS = 10000`.
+
+```{pyodide}
+#| autorun: true
+Rd = float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+Cp = float(get_constant("heat_capacity_of_dry_air_at_constant_pressure",
+                        "J/kg/degK"))
+g = float(get_constant("gravitational_acceleration", "m/s^2"))
+P0 = 1.0e5                        # Pa, the reference pressure for theta
+DRY_ADIABAT = 1e3 * g / Cp        # K/km
+TRANCHE_1 = 6.5                   # K/km, what pages 1-6 prescribed
+
+# Page 7's 14-band column (earth_low_res_lw, diffusivity 1.66, 2 m slab,
+# 240 W/m^2 at the surface, no boundary layer, no convection) after 10 000
+# steps of 12 h, TOA imbalance 0.000 W/m^2. Bottom level first.
+PAGE7_T = np.array([
+    260.6, 255.5, 250.5, 245.6, 241.0, 236.3, 231.6, 227.2, 222.8, 218.1,
+    213.3, 208.4, 203.3, 198.0, 192.6, 187.1, 181.3, 175.3, 169.1, 162.9,
+    156.4, 149.6, 142.5, 135.0, 126.4, 117.5, 110.0, 101.2])
+PAGE7_SURFACE = 267.78
+
+
+def theta(state):
+    """Potential temperature, K, bottom level first."""
+    T = state["air_temperature"].values[:, 0, 0]
+    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+    return T * (P0 / p) ** (Rd / Cp)
+
+
+def lapse_rate(state):
+    """-dT/dz in K/km between adjacent levels, from the hypsometric thickness."""
+    T = state["air_temperature"].values[:, 0, 0]
+    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+    dz = (Rd * 0.5 * (T[:-1] + T[1:]) / g) * np.log(p[:-1] / p[1:])
+    return -np.diff(T) / dz * 1000.0
+
+
+def convecting(state):
+    """Pairs of adjacent levels the adjustment has mixed: one theta."""
+    return np.abs(np.diff(theta(state))) < 1e-6
+
+
+p_hPa = state["air_pressure"].to_units("Pa").values[:, 0, 0] / 100
+ps_hPa = float(state["surface_air_pressure"].to_units("Pa").values.ravel()[0]) / 100
+T = state["air_temperature"].values[:, 0, 0]
+T_surface = float(state["surface_temperature"].values.ravel()[0])
+mixed = convecting(state)
+pairs = np.where(mixed)[0]
+bottom, top = pairs[0], pairs[-1] + 1         # the convecting layer's levels
+theta_mixed = theta(state)[bottom]
+lapse = lapse_rate(state)
+p_between = np.sqrt(p_hPa[:-1] * p_hPa[1:])   # where each lapse rate lives
+
+fig, (ax_T, ax_G) = plt.subplots(1, 2, figsize=(11, 5.6), sharey=True,
+                                 gridspec_kw=dict(width_ratios=[3, 2]))
+for ax in (ax_T, ax_G):
+    ax.axhspan(p_hPa[bottom], p_hPa[top], color="#fff0d6", zorder=0)
+    ax.grid(alpha=0.3)
+ax_T.plot(PAGE7_T, p_hPa, "--", color="0.55", lw=1.5,
+          label="page 7: radiation only")
+ax_T.plot([PAGE7_SURFACE], [ps_hPa], "o", mfc="white", mec="0.55")
+adiabat = p_hPa[p_hPa >= 150]
+ax_T.plot(theta_mixed * (adiabat / (P0 / 100)) ** (Rd / Cp), adiabat, ":",
+          color="#c92a2a", lw=1.5,
+          label=f"dry adiabat, θ = {theta_mixed:.2f} K")
+ax_T.plot(T, p_hPa, "o-", color="#1864ab", lw=2, ms=4,
+          label="this page: radiative-convective")
+ax_T.plot([T_surface], [ps_hPa], "o", color="#1864ab")
+ax_T.set(xlabel="temperature (K)", ylabel="pressure (hPa)",
+         ylim=(ps_hPa + 15, 0), xlim=(95, 275),
+         title="Temperature (dots at the ground: the surface)")
+ax_T.legend(loc="upper right", fontsize=8)
+
+ax_G.plot(lapse, p_between, "o-", color="#1864ab", lw=2, ms=4)
+ax_G.axvline(DRY_ADIABAT, color="#c92a2a", ls=":", lw=1.5,
+             label=f"dry adiabat, {DRY_ADIABAT:.2f} K/km")
+ax_G.axvline(TRANCHE_1, color="0.3", ls="--", lw=1,
+             label="pages 1–6, 6.5 K/km")
+ax_G.set(xlabel="lapse rate −dT/dz (K/km)", xlim=(0, 12),
+         title="Lapse rate")
+ax_G.legend(loc="upper right", fontsize=8)
+ax_G.text(0.4, np.sqrt(p_hPa[bottom] * p_hPa[top]), "convecting", fontsize=8,
+          color="#8a5a00")
+fig.suptitle("Dry radiative-convective equilibrium (shaded: the convecting layer)")
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Two panels against pressure, from the ground to the top of the model, with
+the layer from 968 to 534 hPa shaded. Left: the equilibrium temperature. Through
+the shaded layer it lies on a dotted dry adiabat, θ = 264.85 K. Above it the
+temperature keeps falling, more and more slowly, to about 112 K at the top. A
+dashed grey profile, page 7's radiation-only column, lies to its left everywhere,
+colder by up to about 25 K near 700 hPa and by about 10 K at the top, while its
+surface dot sits about 1.3 K to the right of this page's. Right: the lapse rate,
+on a vertical dotted line at 9.76 K/km through the shaded layer and just above
+it, falling off above about 400 hPa to about 1 K/km at the top, and between 2 and
+8 K/km in the three layers nearest the ground. A dashed line marks 6.5 K/km.](_artifacts/11-dry-rce.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
+Read the right panel first. Through the shaded layer the lapse rate is a
+vertical line at 9.76 K km⁻¹. Nothing on this page set that number. The
+radiation cools the air aloft and the surface heats the air below, until θ falls
+with height. The adjustment then mixes the unstable air back to a single θ, and a
+single θ *is* the dry adiabat. So wherever the column convects, it sits on
+g/c_p. The next cell measures it.
+
+```{pyodide}
+print(f"convecting layer   {p_hPa[bottom]:.0f} to {p_hPa[top]:.0f} hPa, "
+      f"{top - bottom + 1} levels, theta = {theta_mixed:.2f} K")
+print(f"lapse rate there   {lapse[mixed].mean():.2f} K/km")
+print(f"dry adiabat g/Cp   {DRY_ADIABAT:.2f} K/km")
+print(f"pages 1-6 assumed  {TRANCHE_1:.2f} K/km")
+print(f"\nsurface {T_surface:.2f} K, lowest air {T[0]:.2f} K, "
+      f"jump {T_surface - T[0]:.2f} K")
+print(f"lapse rate in the lowest three layers: "
+      f"{', '.join(f'{x:.1f}' for x in lapse[:3])} K/km")
+print(f"top of the model   {T[-1]:.2f} K at {p_hPa[-1]:.1f} hPa")
+
+difference = T - PAGE7_T
+k = int(np.argmax(difference))
+print(f"\nagainst page 7's radiation-only column:")
+print(f"  surface           {T_surface - PAGE7_SURFACE:+.2f} K")
+print(f"  air, largest      {difference[k]:+.2f} K at {p_hPa[k]:.0f} hPa")
+print(f"  air, top level    {difference[-1]:+.2f} K")
+```
+
+In the shipped state, the layer from 968 to 534 hPa sits on the dry adiabat, at
+9.76 K km⁻¹. That is half as steep again as the 6.5 K km⁻¹ pages 1 to 6 assumed,
+and Earth's troposphere is close to 6.5. Page 12 will show where the difference
+comes from.
+
+The layer's top is not fixed. At a 12-hour timestep the equilibrium is a small
+cycle rather than a fixed point, and over 30 days of stepping the highest level
+the adjustment mixes moves between 589 and 370 hPa on 56 of the 60 steps, and
+reaches only 836 hPa on the other 4
+(`scripts/experiments/tour_page11_measurements.py convection`). The layer's
+lapse rate is 9.76 K km⁻¹ on every one of those steps.
+
+**The tropopause emerges.** Above the convecting layer, the lapse rate does not
+jump to zero at a 200 K floor, as pages 1 to 6 had it. It falls off gradually,
+below 9 K km⁻¹ above about 340 hPa and to about 1 K km⁻¹ near the model top, and
+the temperature keeps falling all the way to 111.73 K. There is no temperature
+minimum. What this column has instead is a level where convection stops and
+radiation alone sets the profile above. That level is this column's tropopause,
+and nothing in the configuration names it.
+
+The air below about 970 hPa is not on the adiabat either. Its three lapse rates
+are 4.9, 2.2 and 8.1 K km⁻¹, all stable, because that is where the boundary
+layer mixes. `SimpleBoundaryLayer` diffuses temperature itself, not θ
+(its kernel passes `air_temperature` to its diffusion solver), so it pulls the
+layers it mixes toward one temperature. Uniform temperature is a stable profile.
+The ground is 2.27 K warmer than the air above it, against 7.14 K in page 7's
+column at equilibrium.
+
+### Against page 7
+
+Page 7's column is the same radiation over the same slab, without the boundary
+layer and the adjustment. At equilibrium its temperature falls at 81.5 K km⁻¹
+between its two lowest levels, eight times the dry adiabatic rate, an instability
+nothing in that column could remove.
+Adding the two components changed the air far more than the ground. The air
+warms by up to 25.4 K at 695 hPa, and by 10.5 K at the top. The surface cools by
+only 1.30 K.
+
+Most of the answer is how transparent this atmosphere is. With the air made
+too cold to emit anything, the surface's own emission reaching space is 244.06 W m⁻², 85 % of
+σT_s⁴. Warming the air from page 7's profile to this page's, surface held fixed,
+raises the OLR by only 4.43 W m⁻², and a surface 1.30 K cooler gives those watts
+back (`tour_page11_measurements.py radiative`). The first physics exercise asks
+you to follow that through.
+
+::: {.callout-note}
+## climt craft: ordering components defensibly
+
+The list is radiation, surface, boundary layer, adjustment. The first two are
+tendency components. `AdamsBashforth` evaluates both on the same start-of-step
+state and adds their tendencies, so their order within the list changes nothing.
+The two steppers do run in order, after that update, and their order is a choice.
+
+- **Surface, then boundary layer.** `stepping.integrate` runs every stepper
+  after the tendency update, so the boundary layer always sees the surface
+  temperature this step produced. Its fluxes depend on that temperature, so this
+  is the order you want, and the split into two lists enforces it.
+- **Boundary layer, then adjustment.** The boundary layer heats the lowest air
+  every step, which can make it unstable against the air above. The adjustment
+  runs last, so it removes that instability in the same step. Over 30 days of
+  stepping, not one step ended with θ falling with height anywhere in the column.
+- **The defensible alternative** is adjustment first. It removes the instability
+  the radiation created and leaves the boundary layer's heating for the next
+  step. The equilibrium hardly notices: 1000 steps in that order end with a
+  30-day mean surface temperature 0.001 K from this order's. What changes is
+  what a single state looks like. In that order every one of the last 60 steps
+  ended with θ falling with height somewhere between about 970 and 880 hPa
+  (`tour_page11_measurements.py order`), so a profile you plot or save is not
+  one the adjustment has seen. The shipped file was made in this page's order.
+
+The wind relaxation sits at the end of the tendency list, and it cannot be
+declared with the rest. `stepping.wind_relaxation` writes its target wind and
+timescale into the state it will act on, so it can only be built once the state
+exists: after `states.load`, on the loaded state.
+:::
+
+::: {.callout-note}
+## climt craft: the budgets are the convergence test
+
+A curve that has stopped visibly moving is not converged. It may be moving more
+slowly than you can see. Page 7's fourteen-band column is the example: after 900
+steps its TOA was still 4.9 W m⁻² out of balance, and its surface had another
+0.8 K to fall.
+
+`budgets.toa_imbalance(state)` is absorbed sunlight minus OLR. At equilibrium it
+is zero, because nothing else can leave the planet. `budgets.surface_imbalance`
+is the same account for the surface: sunlight plus downwelling longwave, minus
+upwelling longwave and the turbulent fluxes. The generator called the shipped
+state converged when two tests passed:
+
+- |TOA imbalance| < 0.5 W m⁻²;
+- the mean surface temperature over the last 1000 steps within 0.02 K of the
+  mean over the 1000 before.
+
+Why not a surface imbalance below some threshold? Because in this loop the
+surface imbalance never settles. The fluxes a state carries were computed at the
+start of the step, before the temperatures they are compared with. So
+`surface_imbalance` alternates by several W m⁻² from step to step, even at
+equilibrium. That is the +1.38 W m⁻² in the first cell. The surface temperature
+shows the same small alternation, a few hundredths of a kelvin, so the second
+test compares means, which cancel it. That is also why the next cell reports
+30-day means.
+:::
+
+## The knob: CO₂
+
+::: {.callout-warning}
+## The knob
+
+`CO2_FACTOR` below: what the CO₂ is multiplied by. `N_STEPS` is how long to
+integrate, at the shipped 12-hour timestep.
+:::
+
+[Page 5](05-co2-knob.qmd) could compute the *forcing* from doubling CO₂: how
+much the OLR drops when the gas is added and nothing else changes. It could not
+say how much the surface warms, because nothing in it could respond. This column can. The
+cell doubles CO₂ in a copy of the equilibrium, prints the instantaneous forcing,
+and steps the copy until it balances again.
+
+**This cell takes a little over two minutes in a browser.** That is 1000 steps
+at about 0.13 s each, measured with the JIT off, the native stand-in for the
+browser. It prints a line every 100 steps, all at the end.
+
+```{pyodide}
+CO2_FACTOR = 2.0       # <- multiply CO2 by this
+N_STEPS = 1000         # 500 days at 12 h
+
+longwave = components[0]
+
+
+def olr_now(column):
+    """OLR from one longwave call, temperatures as they stand."""
+    return float(longwave(column)[1]["upwelling_longwave_flux_in_air"]
+                 .values[-1, 0, 0])
+
+
+perturbed = copy.deepcopy(state)
+perturbed["mole_fraction_of_carbon_dioxide_in_air"].values[:] *= CO2_FACTOR
+forcing = olr_now(state) - olr_now(perturbed)
+print(f"CO2 {provenance['co2_ppm']:.0f} -> "
+      f"{provenance['co2_ppm'] * CO2_FACTOR:.0f} ppm: instantaneous forcing "
+      f"{forcing:+.2f} W/m^2\n")
+
+record = stepping.Recorder(
+    DT, surface=lambda s: float(s["surface_temperature"].values.ravel()[0]),
+    toa=budgets.toa_imbalance, surface_imbalance=budgets.surface_imbalance)
+stepping.integrate(tendency, stepper, perturbed, DT, N_STEPS,
+                   after_step=record)
+
+print(f"{'step':>6} {'day':>6} {'T_s (K)':>9} {'TOA (W/m^2)':>12}")
+for step in range(100, N_STEPS + 1, 100):
+    print(f"{step:6d} {record['days'][step - 1]:6.0f} "
+          f"{record['surface'][step - 1]:9.3f} {record['toa'][step - 1]:+12.3f}")
+
+before, after = budgets.summary(state), budgets.summary(perturbed)
+print(f"\n{'':20s} {'before':>9} {'after':>9}")
+for name in before:
+    print(f"{name:20s} {before[name]:9.2f} {after[name]:9.2f}")
+
+final = record.mean("surface", days=30)
+warming = final - before["surface_temperature"]
+far = np.nonzero(np.abs(record["surface"] - final) > 0.1)[0]
+print(f"\nlast 30 days: T_s {final:.3f} K, TOA "
+      f"{record.mean('toa', days=30):+.3f}, surface "
+      f"{record.mean('surface_imbalance', days=30):+.3f} W/m^2")
+print(f"warming {warming:+.2f} K in {N_STEPS} steps", end="")
+if far.size == 0:
+    print("; within 0.1 K of it throughout")
+elif far[-1] + 1 < N_STEPS:
+    print(f"; within 0.1 K of it from day {record['days'][far[-1] + 1]:.0f}")
+else:
+    print("; still more than 0.1 K from it at the end: run longer")
+if abs(forcing) > 0.01:
+    print(f"response: {forcing / warming:.2f} W/m^2 of extra OLR per K of "
+          "warming")
+```
+
+Doubling CO₂ cuts the OLR by 4.08 W m⁻² at first. The column then warms until the
+TOA balances again. The surface warms by +1.16 K, comparing the mean over the
+last 30 days with the shipped state, and it stays within 0.1 K of that from day
+164 on. From step 300 on, the TOA imbalance is within 0.3 W m⁻² of zero at every
+hundredth step. Over the last 30 days the TOA imbalance averages +0.01 W m⁻², and
+the surface imbalance, which flickers by several W m⁻² from step to step,
+averages +0.00 W m⁻². Both budgets close. That is how you know the column has
+arrived. A curve that looks flat would not tell you.
+
+**+1.16 K per doubling is this column's climate sensitivity, measured.** Every
+kelvin of surface warming bought 3.51 W m⁻² of extra OLR. A blackbody surface at
+266 K would buy 4σT³ = 4.29 W m⁻² per kelvin, and warm only 0.95 K. This one
+warms more, mostly because only 85 % of what the surface emits reaches space, so
+a kelvin of surface warming adds only about 0.85 × 4.29 = 3.65 W m⁻² of OLR
+directly. It is still a small warming, because nothing in this column amplifies
+it. There is no water vapour to increase as the column warms. Page 12 adds the
+water.
+
+## climt craft: saving and loading a state
+
+The shipped equilibrium arrived through `states.save` and `states.load`. You can
+do the same with the one you just made. The provenance is what makes the file
+worth having: without it, a reader has a temperature profile and no idea what
+produced it.
+
+```{pyodide}
+path = states.save("./rce_dry_2xco2.npz", perturbed, dict(
+    provenance,
+    co2_ppm=provenance["co2_ppm"] * CO2_FACTOR,
+    n_steps=N_STEPS,
+    perturbed_from="rce_dry_equilibrium.npz",
+    toa_imbalance=budgets.toa_imbalance(perturbed),
+    surface_imbalance=budgets.surface_imbalance(perturbed),
+))
+reloaded, reloaded_provenance = states.load(
+    path, components, grid_state=get_grid(nx=1, ny=1, nz=28))
+print(states.describe(reloaded_provenance))
+print("\nlargest temperature difference after the round trip: "
+      f"{np.abs(reloaded['air_temperature'].values - perturbed['air_temperature'].values).max():.1e} K")
+```
+
+`states.load` does not unpickle anything. It builds a fresh state for the
+components you pass it and copies the saved arrays in, one quantity at a time,
+checking each one's dimensions and units against what those components expect. A
+file saved for a different component list, a different grid or a units
+convention that has since changed fails at a named quantity, instead of loading
+into something that looks right and is not an equilibrium.
+
+Two things do not travel with the file. The components are not in it, so load
+it with the same list you saved it from. And the wind relaxation is not a
+component the file knows about, so after loading, rebuild it on the loaded state
+with `initialise=False`, exactly as the first cell did.
+
+## Exercises
+
+### Physics
+
+1. **A 25 K warmer troposphere for 1.30 K of surface.** Against page 7's column,
+   the convecting column's air is warmer by up to 25.4 K and its surface cooler by
+   1.30 K. Use the `olr_now` function from the knob cell to find out why so little
+   of the air's warming reaches the ground. Put page 7's air, `PAGE7_T`, over this
+   page's surface and compute the OLR. Then set every air temperature to 1 K and
+   compute it again: what is left is the surface's own emission reaching space.
+   (You should find 235.53 W m⁻², against 239.96 W m⁻² for `olr_now(state)`,
+   and 244.06 W m⁻² for the surface alone. Most of the OLR is the surface
+   shining through the window. The air's warming adds only 4.43 W m⁻², and a
+   surface 1.30 K cooler removes about the same.)
+
+2. **Why 9.76, when Earth is close to 6.5?** Nothing on this page can make the
+   convecting layer steeper or shallower than g/c_p: the adjustment mixes to a
+   single θ, and a single θ is the dry adiabat. What would a rising parcel have
+   to be carrying to cool more slowly than g/c_p as it rises? What happens to
+   that when the parcel cools? Page 12 answers it.
+
+### Code
+
+1. **Halve CO₂.** Set `CO2_FACTOR = 0.5` and re-run the knob cell. The forcing
+   from CO₂ is roughly logarithmic in concentration, so if the response is too,
+   halving should cool the surface by about as much as doubling warmed it.
+   (It cools by 1.10 K, over 30-day means, against +1.16 K for doubling, so the
+   response is close to symmetric in log CO₂.)
+
+2. **Take the adjustment out.** Run the knob cell with `CO2_FACTOR = 1.0`, and
+   with `stepper[:-1]` in place of `stepper` in its `stepping.integrate` call,
+   which drops `DryConvectiveAdjustment`.
+   Does the column go back to page 7's profile? (Not in 1000 steps. The lapse
+   rate turns superadiabatic in places, up to 15 K km⁻¹, and the TOA imbalance
+   never settles: it is still swinging by more than 1 W m⁻² after 1000 steps. But
+   the air stays 3.5 to 28.5 K warmer than page 7's, because the boundary layer
+   takes over part of the adjustment's job. In an unstable column its depth,
+   chosen by a bulk Richardson number, sometimes reaches 7 km. Take the
+   boundary layer out as well, with `stepper[:0]`, and in the same 1000 steps
+   the air ends between 0.3 and 9 K warmer than page 7's instead. Set
+   `perturbed["surface_upward_sensible_heat_flux"]` to zero before the loop
+   when you do: nothing else updates
+   it, and `SlabSurface` would go on losing the last value the boundary layer
+   left there, 16 W m⁻², for ever. `tour_page11_measurements.py noadjust` has
+   the numbers.)
+
+## Going deeper
+
+Page 12, still to come, loads a moist equilibrium made the same way, with water
+vapour supplied by the surface and moist convection added to the stack, and
+asks what latent heat does to the lapse rate this page measured.

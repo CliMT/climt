@@ -51,6 +51,7 @@ FIGURES = {
                                        (3, "08-spindown.png")],
     "09-moisture-and-buoyancy.qmd": [(1, "09-buoyancy.png")],
     "10-dry-convection.qmd": [(1, "10-dry-convection.png")],
+    "11-dry-rce.qmd": [(1, "11-dry-rce.png")],
 }
 
 

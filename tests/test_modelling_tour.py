@@ -2824,3 +2824,369 @@ def test_shipped_2xco2_state_is_the_shipped_moist_state_perturbed(states):
     assert doubled["base_surface_temperature_k"] == pytest.approx(before)
     assert doubled["warming_k"] == pytest.approx(after - before)
     assert after > before, "doubling CO2 cooled the moist column"
+
+
+# ------------------------------------------------------------------ page 11
+#
+# Page 11 loads rce_dry_equilibrium.npz and perturbs it. Its component list is
+# the generator's dry_components(), and the wind relaxation is rebuilt on the
+# loaded state with initialise=False, as the page does it. Numbers are those
+# the page's cells print; the ones it quotes from longer runs come from
+# scripts/experiments/tour_page11_measurements.py.
+
+PAGE11_PAGE = REPO_ROOT / "docs/modelling-tour/11-dry-rce.qmd"
+PAGE11_2XCO2_STEPS = 1000     # 500 days at 12 h; ~2 min in a browser
+PAGE11_MONTH_STEPS = 60       # 30 days at 12 h: the averaging window
+DRY_ADIABAT_K_PER_KM = 9.76   # g / c_p, to the precision the page quotes
+TRANCHE_1_LAPSE_K_PER_KM = 6.5
+
+
+def _lapse_rate_profile(state):
+    """-dT/dz in K/km between mid levels, from the hypsometric thickness."""
+    from sympl import get_constant
+
+    Rd = float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+    g = float(get_constant("gravitational_acceleration", "m/s^2"))
+    T = state["air_temperature"].values[:, 0, 0]
+    p = state["air_pressure"].values[:, 0, 0]
+    T_mean = 0.5 * (T[:-1] + T[1:])
+    dz = (Rd * T_mean / g) * np.log(p[:-1] / p[1:])
+    return -np.diff(T) / dz * 1000.0
+
+
+def _page11_equilibrium():
+    """(tendencies, steppers, state, provenance), as the page builds them.
+
+    Call inside ``_unyt_backend_restored``.
+    """
+    generator = _generator()
+    components = generator.dry_components()
+    tendencies, steppers = generator.split(components)
+    state, provenance = _load("states").load(
+        str(DATA / "rce_dry_equilibrium.npz"), components,
+        grid_state=get_grid(nx=1, ny=1, nz=generator.NZ))
+    tendencies = tendencies + [_load("stepping").wind_relaxation(
+        state, provenance["wind_m_s"], provenance["wind_timescale_hours"],
+        initialise=False)]
+    return tendencies, steppers, state, provenance
+
+
+def _page11_cells(upto, monkeypatch):
+    """Exec the page's own cells 0..upto, as a reader would; return the
+    namespace. The cells find _tour/ and _data/ relative to the page."""
+    import re
+
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    cells = re.findall(r"```\{pyodide\}\n(.*?)```", PAGE11_PAGE.read_text(),
+                       flags=re.DOTALL)
+    monkeypatch.chdir(PAGE11_PAGE.parent)
+    # Cell 0 does sys.path.insert(0, "_tour"); keep that out of the session.
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    namespace = {"__name__": "__main__"}
+    try:
+        for index in range(upto + 1):
+            exec(compile(cells[index], f"11-dry-rce.qmd[cell {index}]",
+                         "exec"), namespace)
+    finally:
+        plt.close("all")
+    return namespace
+
+
+def _page11_theta(state):
+    from sympl import get_constant
+
+    kappa = (float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+             / float(get_constant(
+                 "heat_capacity_of_dry_air_at_constant_pressure",
+                 "J/kg/degK")))
+    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+    return state["air_temperature"].values[:, 0, 0] * (1.0e5 / p) ** kappa
+
+
+def test_page11_the_shipped_column_is_dry():
+    """The page's second section, and the plan's first suspect if the lapse
+    rate ever comes out near 6.5: moisture would pull it toward moist
+    adiabatic, page 12's result arriving a page early."""
+    with _unyt_backend_restored():
+        _, _, state, provenance = _page11_equilibrium()
+    assert np.all(state["specific_humidity"].values == 0.0)
+    assert np.all(state["surface_specific_humidity"].values == 0.0)
+    assert provenance["co2_ppm"] == 330.0
+    assert float(state["surface_temperature"].values.ravel()[0]) == \
+        pytest.approx(266.48, abs=0.005)
+
+
+@pytest.mark.slow
+def test_page11_convecting_layer_is_dry_adiabatic():
+    """Page 11's reveal, and the number tranche 1 assumed away.
+
+    The convecting layer is the levels dry adjustment actually touches. The
+    shipped state was saved straight after an adjustment call, so calling the
+    scheme on it again moves nothing by more than rounding (~1e-13 K). So:
+    take one step of everything *but* the adjustment -- which re-creates the
+    instability radiation and the boundary layer make each step -- and then
+    see which levels the adjustment moves.
+    """
+    with _unyt_backend_restored():
+        tendencies, steppers, state, provenance = _page11_equilibrium()
+        adjustment = steppers[-1]
+        assert isinstance(adjustment, climt.DryConvectiveAdjustment)
+
+        _, again = adjustment(state, climt.UnytTimeDelta(hours=12))
+        assert np.abs(again["air_temperature"].values
+                      - state["air_temperature"].values).max() < 1e-8
+
+        timestep = climt.UnytTimeDelta(hours=provenance["dt_hours"])
+        _load("stepping").integrate(tendencies, steppers[:-1], state,
+                                    timestep, 1)
+        before = state["air_temperature"].values[:, 0, 0].copy()
+        _, adjusted = adjustment(state, timestep)
+        state.update(adjusted)
+        touched = np.abs(state["air_temperature"].values[:, 0, 0]
+                         - before) > 1e-8
+        lapse = _lapse_rate_profile(state)
+
+    convecting = touched[:-1] & touched[1:]
+    assert convecting.sum() >= 3, (
+        "dry adjustment touched fewer than four levels after one step from "
+        "the shipped equilibrium -- there is no convecting layer to make a "
+        "claim about")
+    mean_lapse = float(np.mean(lapse[convecting]))
+    assert mean_lapse == pytest.approx(DRY_ADIABAT_K_PER_KM, rel=0.01), (
+        f"convecting-layer lapse rate {mean_lapse:.2f} K/km is not within "
+        f"1% of dry adiabatic ({DRY_ADIABAT_K_PER_KM})")
+    assert mean_lapse > 8.0, (
+        f"lapse rate {mean_lapse:.2f} K/km -- page 11's whole point is that "
+        "it is NOT the 6.5 K/km tranche 1 prescribed")
+
+
+def test_page11_tropopause_emerges_rather_than_being_prescribed():
+    """Above the convecting layer the profile is stable, and nothing capped it.
+
+    Tranche 1 prescribed a 200 K isothermal stratosphere. Here the top of
+    convection is wherever the scheme stops, and the air above it is whatever
+    radiation makes it: the lapse rate falls off gradually and the
+    temperature keeps falling to the lid, with no minimum.
+    """
+    with _unyt_backend_restored():
+        _, _, state, _ = _page11_equilibrium()
+        T = state["air_temperature"].values[:, 0, 0]
+        p_hPa = state["air_pressure"].values[:, 0, 0] / 100.0
+        lapse = _lapse_rate_profile(state)
+
+    assert not np.any(np.isclose(T, 200.0, atol=0.05)), (
+        "a level sitting at exactly 200.0 K suggests a prescribed cap leaked "
+        "in from tranche 1's soundings")
+    assert lapse[-1] < lapse[3], (
+        "the upper column should be less steeply lapsing than the convecting "
+        "layer below it")
+    assert np.all(np.diff(T[3:]) < 0), "no temperature minimum above 970 hPa"
+    assert T[-1] == pytest.approx(111.73, abs=0.005)
+    upper = np.sqrt(p_hPa[:-1] * p_hPa[1:]) < 340.0
+    assert np.all(lapse[upper] < 9.0)
+    assert lapse[-1] == pytest.approx(1.3, abs=0.05)
+
+
+def test_page11_headline_cells_print_what_the_page_says(monkeypatch, capsys):
+    """Cells 0-2, run as the page runs them, print the numbers its prose
+    quotes: the convecting layer, its lapse rate, the boundary layer's
+    stable bottom, and the comparison with page 7's column."""
+    with _unyt_backend_restored():
+        namespace = _page11_cells(2, monkeypatch)
+    out = capsys.readouterr().out
+
+    for text in ("TOA -0.130, surface +1.384 W/m^2",
+                 "convecting layer   968 to 534 hPa, 11 levels",
+                 "lapse rate there   9.76 K/km",
+                 "dry adiabat g/Cp   9.76 K/km",
+                 "jump 2.27 K",
+                 "4.9, 2.2, 8.1 K/km",
+                 "top of the model   111.73 K",
+                 "surface           -1.30 K",
+                 "air, largest      +25.41 K at 695 hPa",
+                 "air, top level    +10.53 K"):
+        assert text in out, f"{text!r} not printed:\n{out}"
+    assert namespace["top"] == 13 and namespace["bottom"] == 3
+
+
+@pytest.mark.slow
+def test_page11_page7_profile_is_page7s_column_at_equilibrium(monkeypatch):
+    """The dashed profile the headline cell writes in, recomputed.
+
+    Page 7's 14-band column -- LW and slab only, from climt's default state
+    -- stepped 10 000 steps at 12 h. The cell rounds to 0.1 K. ~30 s native.
+    """
+    with _unyt_backend_restored():
+        namespace = _page11_cells(1, monkeypatch)
+        longwave = climt.CorkLongwaveRadiation(
+            optics="correlated_k", table="earth_low_res_lw",
+            diffusivity_factor=1.66)
+        slab = climt.SlabSurface()
+        state = climt.get_default_state(
+            [longwave, slab], grid_state=get_grid(nx=1, ny=1, nz=28))
+        state["ocean_mixed_layer_thickness"].values[:] = 2.0
+        state["downwelling_shortwave_flux_in_air"].values[:] = 0.0
+        state["downwelling_shortwave_flux_in_air"].values[0, ...] = SOLAR
+        state["upwelling_shortwave_flux_in_air"].values[:] = 0.0
+        stepping_module = _load("stepping")
+        stepping_module.integrate([longwave, slab], [], state,
+                                  climt.UnytTimeDelta(hours=12), 10000)
+        imbalance = _load("budgets").toa_imbalance(state)
+
+    assert abs(imbalance) < 0.005
+    np.testing.assert_allclose(namespace["PAGE7_T"],
+                               state["air_temperature"].values[:, 0, 0],
+                               atol=0.06)
+    assert namespace["PAGE7_SURFACE"] == pytest.approx(
+        float(state["surface_temperature"].values.ravel()[0]), abs=0.005)
+    assert _lapse_rate_profile(state)[0] == pytest.approx(81.5, abs=0.05)
+
+
+def test_page11_the_surface_shines_through_the_window(monkeypatch):
+    """Physics exercise 1 and the "Against page 7" prose: one longwave call
+    on hybrids of the two states."""
+    with _unyt_backend_restored():
+        namespace = _page11_cells(1, monkeypatch)
+        state, longwave = namespace["state"], namespace["components"][0]
+
+        def olr(column):
+            return float(longwave(column)[1][
+                "upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+        hybrid = copy.deepcopy(state)
+        hybrid["air_temperature"].values[:, 0, 0] = namespace["PAGE7_T"]
+        cold_air = copy.deepcopy(state)
+        cold_air["air_temperature"].values[:] = 1.0
+        base, warm_air_off, surface_only = (olr(state), olr(hybrid),
+                                            olr(cold_air))
+    sigma_T4 = 5.670374419e-8 * float(
+        state["surface_temperature"].values.ravel()[0]) ** 4
+    assert base == pytest.approx(239.96, abs=0.005)
+    assert warm_air_off == pytest.approx(235.53, abs=0.005)
+    assert base - warm_air_off == pytest.approx(4.43, abs=0.005)
+    assert surface_only == pytest.approx(244.06, abs=0.005)
+    assert surface_only / sigma_T4 == pytest.approx(0.85, abs=0.005)
+
+
+@pytest.mark.slow
+def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
+    """Page 11's knob: a *measured* dry climate sensitivity.
+
+    Tranche 1's page 5 could only compute the forcing. This integrates to the
+    new equilibrium, as the page's knob cell does -- one 1000-step
+    ``integrate`` -- and reads the warming off: the 30-day mean surface
+    temperature minus the shipped one. Measured +1.16 K (the plan's +1.20 was
+    a single sample from a loop that restarts AdamsBashforth every 50 steps).
+    """
+    with _unyt_backend_restored():
+        tendencies, steppers, state, provenance = _page11_equilibrium()
+        stepping_module = _load("stepping")
+        budgets_module = _load("budgets")
+        longwave = tendencies[0]
+
+        def olr(column):
+            return float(longwave(column)[1][
+                "upwelling_longwave_flux_in_air"].values[-1, 0, 0])
+
+        before = float(state["surface_temperature"].values.ravel()[0])
+        perturbed = copy.deepcopy(state)
+        perturbed["mole_fraction_of_carbon_dioxide_in_air"].values[:] *= 2.0
+        forcing = olr(state) - olr(perturbed)
+
+        timestep = climt.UnytTimeDelta(hours=provenance["dt_hours"])
+        record = stepping_module.Recorder(
+            timestep,
+            surface=lambda s: float(
+                s["surface_temperature"].values.ravel()[0]),
+            toa=budgets_module.toa_imbalance,
+            surface_imbalance=budgets_module.surface_imbalance)
+        stepping_module.integrate(tendencies, steppers, perturbed, timestep,
+                                  PAGE11_2XCO2_STEPS, after_step=record)
+        imbalance = budgets_module.toa_imbalance(perturbed)
+
+    final = record.mean("surface", days=30)
+    warming = final - before
+    assert 0.70 < warming < 1.62, (
+        f"2xCO2 dry surface warming {warming:+.2f} K is outside +-40% of the "
+        "measured +1.16 K -- check that the run reached equilibrium")
+    assert warming == pytest.approx(1.16, abs=0.01), "the page quotes +1.16 K"
+    assert forcing == pytest.approx(4.08, abs=0.005)
+    assert forcing / warming == pytest.approx(3.51, abs=0.02)
+    assert abs(imbalance) < 0.5, (
+        f"TOA imbalance {imbalance:+.3f} W/m^2 -- the perturbed run has not "
+        f"equilibrated in {PAGE11_2XCO2_STEPS} steps, so the warming is a "
+        "lower bound, not a sensitivity")
+    assert abs(record.mean("toa", days=30)) < 0.05
+    assert abs(record.mean("surface_imbalance", days=30)) < 0.05
+    off = np.where(np.abs(record["surface"] - final) > 0.1)[0].max() + 1
+    assert record["days"][off] == pytest.approx(164, abs=0.5)
+    assert np.all(np.abs(record["toa"][299::100]) < 0.3)
+
+
+@pytest.mark.slow
+def test_page11_halving_co2_is_roughly_symmetric():
+    """Code exercise 1: -1.10 K for halving against +1.16 K for doubling."""
+    with _unyt_backend_restored():
+        tendencies, steppers, state, provenance = _page11_equilibrium()
+        before = float(state["surface_temperature"].values.ravel()[0])
+        state["mole_fraction_of_carbon_dioxide_in_air"].values[:] *= 0.5
+        timestep = climt.UnytTimeDelta(hours=provenance["dt_hours"])
+        record = _load("stepping").Recorder(
+            timestep,
+            surface=lambda s: float(
+                s["surface_temperature"].values.ravel()[0]))
+        _load("stepping").integrate(tendencies, steppers, state, timestep,
+                                    PAGE11_2XCO2_STEPS, after_step=record)
+    assert record.mean("surface", days=30) - before == pytest.approx(
+        -1.10, abs=0.01)
+
+
+@pytest.mark.slow
+def test_page11_adjustment_last_leaves_every_step_stable():
+    """The ordering callout. In the page's order no step ends with theta
+    falling anywhere; with the adjustment before the boundary layer, every
+    step does, between about 970 and 880 hPa."""
+    with _unyt_backend_restored():
+        stepping_module = _load("stepping")
+        results = {}
+        for name, reorder in (("shipped", lambda s: s),
+                              ("swapped", lambda s: s[::-1])):
+            tendencies, steppers, state, provenance = _page11_equilibrium()
+            unstable = []
+            stepping_module.integrate(
+                tendencies, reorder(steppers), state,
+                climt.UnytTimeDelta(hours=provenance["dt_hours"]),
+                PAGE11_MONTH_STEPS,
+                after_step=lambda column: unstable.append(
+                    np.where(np.diff(_page11_theta(column)) < -1e-6)[0]))
+            results[name] = unstable
+            p_hPa = state["air_pressure"].values[:, 0, 0] / 100.0
+    assert not any(len(levels) for levels in results["shipped"])
+    assert all(len(levels) for levels in results["swapped"])
+    where = p_hPa[np.concatenate(results["swapped"])]
+    assert np.all((where > 870) & (where < 970)), where
+
+
+def test_page11_saved_state_round_trips(monkeypatch, tmp_path):
+    """Cell 4's craft: save a state with its provenance and load it back.
+
+    Uses the loaded equilibrium itself rather than cell 3's 1000-step run;
+    the round trip is what is being checked.
+    """
+    with _unyt_backend_restored():
+        states_module = _load("states")
+        _, _, state, provenance = _page11_equilibrium()
+        path = states_module.save(
+            str(tmp_path / "rce_dry_2xco2.npz"), state,
+            dict(provenance, co2_ppm=660.0, n_steps=1000,
+                 perturbed_from="rce_dry_equilibrium.npz"))
+        reloaded, meta = states_module.load(
+            path, _generator().dry_components(),
+            grid_state=get_grid(nx=1, ny=1, nz=28))
+    assert meta["perturbed_from"] == "rce_dry_equilibrium.npz"
+    assert "660.0 ppm" in states_module.describe(meta)
+    np.testing.assert_array_equal(reloaded["air_temperature"].values,
+                                  state["air_temperature"].values)
