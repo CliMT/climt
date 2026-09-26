@@ -3408,13 +3408,21 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 | | dry | moist |
 |---|---|---|
 | `dt` | 12 h | 5 min |
-| steps to converge | 3500 | _(pending — run in progress)_ |
-| simulated days | 1750 d | |
-| final TOA imbalance (W m⁻²) | −0.130 | |
-| final surface imbalance (W m⁻²) | +1.384 (instantaneous — see note) | |
-| surface temperature (K) | 266.478 | |
-| file size | 28.0 kB | |
-| native wall clock | ~35 s (after numba compile) | |
+| steps to converge | 3500 | 200 550 |
+| simulated days | 1750 d | ≈ 696 d |
+| final TOA imbalance (W m⁻²) | −0.130 | −0.485 |
+| final surface imbalance (W m⁻²) | +1.384 (instantaneous — see note) | −1.565 (instantaneous — see note) |
+| surface temperature (K) | 266.478 | 279.965 |
+| file size | 28.0 kB | 31.2 kB |
+| native wall clock | ~35 s (after numba compile) | ~25 min (inferred from the two files' `saved_at` stamps, 04:34:58 → 04:59:51 UTC; not timed directly) |
+
+The moist figures are read back from `rce_moist_equilibrium.npz`'s own
+provenance (`__meta__`), which the run wrote on 2026-09-04. Two things to
+note. 200 550 steps is well over Task 0's cold-start ~123 000; that is the
+same surface-temperature-stationarity gate that took the dry run from 1650 to
+3500 (deviation 2 below). And the final TOA imbalance, −0.485 W m⁻², only just
+clears the 0.5 gate, so pages 12 onward should not quote it to better than
+±0.5 W m⁻².
 
 **Two deviations from the draft generator in Step 3, both forced by Task 8 and
 by the residual test written first:**
