@@ -170,14 +170,19 @@ def describe(provenance):
     rather than markdown: it goes through ``print()`` in a ``{pyodide}`` cell.
     """
     components = ", ".join(provenance.get("components", []))
-    return "\n".join([
+    dt_hours = provenance.get("dt_hours")
+    # A sub-hour step reads better in minutes: "5 min", not "0.0833... h".
+    dt = ("{:g} min".format(round(60 * dt_hours, 6))
+          if isinstance(dt_hours, float) and dt_hours < 1
+          else "{} h".format(dt_hours))
+    lines = [
         "equilibrium state, as shipped",
         "  climt          {}".format(provenance.get("climt_version")),
         "  saved          {}".format(provenance.get("saved_at")),
         "  LW table       {}".format(provenance.get("table")),
         "  grid           nz = {}, single column".format(provenance.get("nz")),
-        "  spin-up        {} steps at dt = {} h".format(
-            provenance.get("n_steps"), provenance.get("dt_hours")),
+        "  spin-up        {} steps at dt = {}".format(
+            provenance.get("n_steps"), dt),
         "  slab depth     {} m".format(provenance.get("slab_depth_m")),
         "  absorbed SW    {} W/m^2 (prescribed at the surface)".format(
             provenance.get("solar")),
@@ -189,7 +194,24 @@ def describe(provenance):
         "  residual       TOA {:+.3f}, surface {:+.3f} W/m^2".format(
             provenance.get("toa_imbalance", float("nan")),
             provenance.get("surface_imbalance", float("nan"))),
-    ])
+    ]
+    # Moist states only; a dry file has none of these, so its block is
+    # unchanged. The surface humidity is part of the configuration (page 9's
+    # stepper), and the settled TOA is the residual the moist column keeps.
+    if "surface_relative_humidity" in provenance:
+        lines.insert(-2, "  surface RH     {:.0f} %, at the surface's own "
+                     "temperature".format(
+                         100 * provenance["surface_relative_humidity"]))
+    if "window_mean_toa_w_m2" in provenance:
+        lines.append("  settled TOA    {:+.3f} W/m^2, mean over the last "
+                     "{} steps".format(provenance["window_mean_toa_w_m2"],
+                                       provenance.get("steady_window_steps")))
+    if "perturbed_from" in provenance:
+        saved = provenance.get("perturbed_from_saved_at")
+        lines.append("  perturbed from {}{}".format(
+            provenance["perturbed_from"],
+            " (saved {})".format(saved) if saved else ""))
+    return "\n".join(lines)
 
 
 def _exists(path):

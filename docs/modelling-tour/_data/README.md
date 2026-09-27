@@ -98,9 +98,12 @@ mid-transient while the surface is still settling.
 Two things are different about it. First, it is noisy: episodic convection
 swings the instantaneous TOA by about 0.5 W m⁻², while its late drift is only
 about 0.05 K a month, and 1000 steps at 5 min is 3.5 days. Second, it never
-reaches TOA = 0. `EmanuelConvectionPython` is not fully energy-conserving, so
-the column settles with a steady imbalance of about −1.1 W m⁻² that no amount
-of stepping removes. So the moist gate works on trends over 60-day
+reaches TOA = 0. It settles with a steady imbalance of about −1.1 W m⁻² that no
+amount of stepping removes. Most of it is `DryConvectiveAdjustment`, which
+conserves enthalpy with a moist heat capacity while the rest of the stack
+counts dry air's: +0.97 W m⁻² of the source, against +0.03 from
+`EmanuelConvectionPython` (`scripts/experiments/tour_page12_measurements.py
+energy`; page 12 explains it). So the moist gate works on trends over 60-day
 (17 280-step) windows. The mean surface temperature and the mean TOA must each
 match the previous window's, to 0.01 K and 0.1 W m⁻², and the mean TOA must be
 inside ±2 W m⁻². The file records the residual it settled at

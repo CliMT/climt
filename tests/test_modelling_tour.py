@@ -2755,8 +2755,9 @@ def test_shipped_equilibrium_is_still_an_equilibrium(states, asset, build):
     budgets_module = _load("budgets")
     imbalance = budgets_module.toa_imbalance(state)
 
-    # The moist column never reaches TOA = 0: EmanuelConvectionPython is not
-    # fully energy-conserving, so it settles with a steady residual (about
+    # The moist column never reaches TOA = 0: DryConvectiveAdjustment
+    # conserves a moist-cp enthalpy the rest of the stack does not count
+    # (page 12), so it settles with a steady residual (about
     # -1.1 W/m^2 over its saturated surface). Its file records the residual
     # it settled at, as the mean over the gate's last window, and the check
     # is against that. The dry files carry no such key: they settle at 0.
@@ -3260,3 +3261,312 @@ def test_page11_saved_state_round_trips(monkeypatch, tmp_path):
     assert "660.0 ppm" in states_module.describe(meta)
     np.testing.assert_array_equal(reloaded["air_temperature"].values,
                                   state["air_temperature"].values)
+
+
+# ------------------------------------------------------------------ page 12
+#
+# Page 12 loads rce_moist_equilibrium.npz, its doubled-CO2 twin, and page 11's
+# dry state for comparison. Its component list is the generator's
+# moist_components(), built in the open in cell 0. Numbers the cells print are
+# checked by exec'ing the cells; numbers the page quotes from longer runs come
+# from scripts/experiments/tour_page12_measurements.py, and the slow tests at
+# the end re-measure the ones that can be afforded.
+#
+# The page's reveal is not the one its spec expected. The spec says latent
+# heating relaxes the lapse rate to near 6.5 K/km. In this column it relaxes it
+# by ~0.3 K/km: the grid-scale condensation does ~99 % of the raining, and the
+# dry adjustment keeps the lowest ~180 hPa on the dry adiabat. The tests pin
+# what the column does, and what the page says about it.
+
+PAGE12_PAGE = REPO_ROOT / "docs/modelling-tour/12-moist-rce.qmd"
+PAGE12_BAND_HPA = (500.0, 792.2)    # above the adjusted layer, to 500 hPa
+
+
+def _page_cells(page, indices, monkeypatch):
+    """Exec a page's cells ``indices``, in order, as a reader would run them;
+    return the namespace. The cells find _tour/ and _data/ relative to the
+    page."""
+    import re
+
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    cells = re.findall(r"```\{pyodide\}\n(.*?)```", page.read_text(),
+                       flags=re.DOTALL)
+    monkeypatch.chdir(page.parent)
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    namespace = {"__name__": "__main__"}
+    try:
+        for index in indices:
+            exec(compile(cells[index], f"{page.name}[cell {index}]", "exec"),
+                 namespace)
+    finally:
+        plt.close("all")
+    return namespace
+
+
+def _page12_equilibrium(filename="rce_moist_equilibrium.npz"):
+    """(tendencies, steppers, state, provenance), as the page builds them.
+
+    Call inside ``_unyt_backend_restored``.
+    """
+    generator = _generator()
+    components = generator.moist_components()
+    tendencies, steppers = generator.split(components)
+    state, provenance = _load("states").load(
+        str(DATA / filename), components,
+        grid_state=get_grid(nx=1, ny=1, nz=generator.NZ))
+    tendencies = tendencies + [_load("stepping").wind_relaxation(
+        state, provenance["wind_m_s"], provenance["wind_timescale_hours"],
+        initialise=False)]
+    return tendencies, steppers, state, provenance
+
+
+def _band(p):
+    """Layers whose midpoint lies above the adjusted layer, below 500 hPa."""
+    p_mid = np.sqrt(p[:-1] * p[1:]) / 100.0
+    return (p_mid > PAGE12_BAND_HPA[0]) & (p_mid < PAGE12_BAND_HPA[1])
+
+
+def test_moist_adiabatic_lapse_rate(soundings):
+    """The rate is small in warm air, climbs back to g/cp in cold air, and
+    matches the numbers page 12 quotes."""
+    with _unyt_backend_restored():
+        warm = soundings.moist_adiabatic_lapse_rate(300.0, 1.0e5)
+        cold = soundings.moist_adiabatic_lapse_rate(200.0, 2.0e4)
+        lowest = soundings.moist_adiabatic_lapse_rate(280.69, 101040.0)
+    assert warm < 4.0
+    assert cold == pytest.approx(DRY_ADIABAT_K_PER_KM, abs=0.05)
+    assert lowest == pytest.approx(5.57, abs=0.005)
+
+
+@pytest.mark.parametrize("T_start, mean_lapse", [(284.0, 6.52),
+                                                 (286.0, 6.19)])
+def test_moist_adiabat_averages_what_page12_says(soundings, T_start,
+                                                 mean_lapse):
+    """'A parcel saturated at 284 K at 1000 hPa averages 6.52 K/km to 500'."""
+    with _unyt_backend_restored():
+        p = np.geomspace(1.0e5, 5.0e4, 400)
+        T = soundings.moist_adiabat(T_start, 1.0e5, p)
+    dz = np.sum(287.0 * 0.5 * (T[1:] + T[:-1]) / 9.80665
+                * np.log(p[:-1] / p[1:]))
+    assert 1e3 * (T[0] - T[-1]) / dz == pytest.approx(mean_lapse, abs=0.005)
+
+
+def test_moist_adiabat_starts_where_it_starts(soundings):
+    with _unyt_backend_restored():
+        T = soundings.moist_adiabat(285.0, 9.0e4, np.array([1.0e5, 9.0e4,
+                                                            5.0e4]))
+    assert np.isnan(T[0])
+    assert T[1] == pytest.approx(285.0)
+    assert T[2] < T[1]
+
+
+def test_describe_adds_the_moist_lines_only_for_moist_states(states):
+    """Page 12's describe block shows the surface humidity and the settled
+    TOA; page 11's is unchanged."""
+    with _unyt_backend_restored():
+        generator = _generator()
+        grid = get_grid(nx=1, ny=1, nz=generator.NZ)
+        _, moist = states.load(str(DATA / "rce_moist_equilibrium.npz"),
+                               generator.moist_components(), grid_state=grid)
+        _, dry = states.load(str(DATA / "rce_dry_equilibrium.npz"),
+                             generator.dry_components(), grid_state=grid)
+    moist_text, dry_text = states.describe(moist), states.describe(dry)
+    assert "295800 steps at dt = 5 min" in moist_text
+    assert "surface RH     100 %" in moist_text
+    assert "settled TOA    -1.095 W/m^2" in moist_text
+    assert "3500 steps at dt = 12.0 h" in dry_text
+    for token in ("surface RH", "settled TOA", "perturbed from"):
+        assert token not in dry_text
+
+
+def test_page12_headline_cells_print_what_the_page_says(monkeypatch, capsys):
+    """Cells 0-2, run as the page runs them, print the numbers its prose
+    quotes."""
+    with _unyt_backend_restored():
+        namespace = _page_cells(PAGE12_PAGE, range(3), monkeypatch)
+    out = capsys.readouterr().out
+
+    for text in ("'CorkLongwaveRadiation', 'SlabSurface', "
+                 "'EmanuelConvectionPython', 'UnytRelaxation'",
+                 "295800 steps at dt = 5 min",
+                 "settled TOA    -1.095 W/m^2",
+                 "surface_temperature     285.99",
+                 "toa_imbalance            -1.27",
+                 "dry surface (p. 11)     266.48",
+                 "adjusted layer      968 to 792 hPa, lapse rate 9.76 K/km, "
+                 "relative humidity 32 to 83 %",
+                 "above it, to 500    lapse rate 9.48 K/km (page 11's dry "
+                 "column: 9.75); the moist adiabat there 7.5 to 9.3",
+                 "(280.7 K): 5.57 K/km; it passes 6.5 at 876 hPa, where "
+                 "T = 270.6 K",
+                 "(286.0 K): 6.24 K/km on average to 500 hPa, where it is "
+                 "251.3 K and this column 231.4 K",
+                 "+19.51 K"):
+        assert text in out, f"{text!r} not printed:\n{out}"
+    assert (namespace["bottom"], namespace["top"]) == (3, 8)
+
+
+def test_page12_lapse_rate_lies_between_dry_and_moist_adiabatic(soundings):
+    """The spec's claim, as far as it holds.
+
+    Above the adjusted layer the moist column lapses less steeply than dry
+    adiabatic and more steeply than its own moist adiabat. It is *not* near
+    the moist adiabat -- the spec expected that, and the page explains why it
+    does not happen in this stack. If this ever comes out near 6.5, the page's
+    'Why this column is not on its moist adiabat' section is wrong.
+    """
+    with _unyt_backend_restored():
+        _, _, state, _ = _page12_equilibrium()
+        T = state["air_temperature"].values[:, 0, 0]
+        p = state["air_pressure"].values[:, 0, 0]
+        lapse = _lapse_rate_profile(state)
+        moist = soundings.moist_adiabatic_lapse_rate(
+            0.5 * (T[:-1] + T[1:]), np.sqrt(p[:-1] * p[1:]))
+    band = _band(p)
+    assert band.sum() == 6
+    assert np.all(np.abs(lapse[3:8] - DRY_ADIABAT_K_PER_KM) < 0.01), (
+        "the adjusted layer should be on the dry adiabat")
+    assert moist[band].mean() < lapse[band].mean() < DRY_ADIABAT_K_PER_KM - 0.2
+    assert lapse[band].mean() > 8.5, (
+        f"{lapse[band].mean():.2f} K/km above the adjusted layer: the column "
+        "has moved toward its moist adiabat -- page 12's explanation of why "
+        "it does not needs re-measuring")
+
+
+def test_page12_moist_column_is_warmer_than_the_dry_one(states):
+    """The water vapour greenhouse plus its feedback, as a difference."""
+    generator = _generator()
+    with _unyt_backend_restored():
+        grid = get_grid(nx=1, ny=1, nz=generator.NZ)
+        dry, _ = states.load(str(DATA / "rce_dry_equilibrium.npz"),
+                             generator.dry_components(), grid_state=grid)
+        moist, _ = states.load(str(DATA / "rce_moist_equilibrium.npz"),
+                               generator.moist_components(), grid_state=grid)
+    difference = (float(moist["surface_temperature"].values.ravel()[0])
+                  - float(dry["surface_temperature"].values.ravel()[0]))
+    assert difference == pytest.approx(19.51, abs=0.005)
+
+
+def test_page12_knob_cell_takes_the_warming_apart(monkeypatch, capsys):
+    """Cell 4: the offline 2xCO2 state, and the radiation-only decomposition
+    that says the water vapour feedback is the whole difference from page
+    11's +1.15 K."""
+    with _unyt_backend_restored():
+        _page_cells(PAGE12_PAGE, (0, 1, 4), monkeypatch)
+    out = capsys.readouterr().out
+    for text in ("CO2            660.0 ppm",
+                 "180550 steps at dt = 5 min",
+                 "perturbed from rce_moist_equilibrium.npz "
+                 "(saved 2026-09-27T02:22:56)",
+                 "+2.26 K file to file; +2.22 K between",
+                 "forcing, CO2 doubled and nothing else   +4.69 W/m^2",
+                 "(+3.95 per K)", "(-1.89 per K)",
+                 "warming if the vapour had not changed   +1.19 K"):
+        assert text in out, f"{text!r} not printed:\n{out}"
+
+
+def test_page12_emanuel_inside_adamsbashforth_warns_and_still_works():
+    """Pins the warning the page explains -- and that it is the only one.
+
+    If sympl ever stops emitting it, page 12's warning callout describes
+    something the reader will not see. The second warning sympl can emit
+    here, about being handed a list, is silenced by stepping.py splatting
+    its components; the page says nothing about it, so it must stay silent.
+    """
+    import warnings
+
+    from sympl import AdamsBashforth
+
+    with _unyt_backend_restored():
+        convection = climt.EmanuelConvectionPython()
+        longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
+                                               table="earth_low_res_lw")
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            AdamsBashforth(longwave, climt.SlabSurface(), convection)
+
+    messages = " ".join(str(w.message) for w in caught)
+    assert "ImplicitTendencyComponent" in messages, (
+        "sympl no longer warns about an ImplicitTendencyComponent inside a "
+        "TendencyStepper — page 12's warning callout needs rewriting")
+    assert "individual Prognostics" not in messages
+
+
+@pytest.mark.slow
+def test_page12_budget_cell_closes_the_moisture_budget(monkeypatch, capsys):
+    """Cell 3: two days at 5 min. P balances E, the rain is grid-scale, the
+    condensation heats above the adjusted layer, and the dry adjustment adds
+    the ~1 W/m^2 the TOA residual is made of."""
+    with _unyt_backend_restored():
+        namespace = _page_cells(PAGE12_PAGE, range(4), monkeypatch)
+    out = capsys.readouterr().out
+    for text in ("precipitation    2.62 mm/day  (Emanuel 0.03, grid-scale "
+                 "2.59)",
+                 "evaporation      2.59 mm/day",
+                 "P - E           +0.03 mm/day",
+                 "sensible 27.8, latent 74.9 W/m^2: Bowen ratio 0.37",
+                 "  745 hPa   2.57",
+                 "  370 hPa   0.79",
+                 "column enthalpy added: adjustment +0.95, condensation "
+                 "+0.00 W/m^2"):
+        assert text in out, f"{text!r} not printed:\n{out}"
+    P, E = namespace["P"], namespace["E"]
+    assert P > 0.0, "an equilibrium moist column must precipitate"
+    assert abs(P - E) < 0.05 * E, "the moisture budget does not close"
+    assert namespace["P_conv"] < 0.05 * P, "Emanuel is doing the raining"
+
+
+@pytest.mark.slow
+def test_page12_timestep_cell_moves_emanuel_not_the_column(monkeypatch,
+                                                           capsys):
+    """Cell 5: at 10 min Emanuel's rain collapses; the column hardly moves."""
+    with _unyt_backend_restored():
+        _page_cells(PAGE12_PAGE, (0, 1, 3, 5), monkeypatch)
+    out = capsys.readouterr().out
+    for text in ("surface temperature (K)    285.99   286.02",
+                 "precipitation (mm/day)       2.62     2.75",
+                 "  from Emanuel              0.029    0.002",
+                 "evaporation (mm/day)         2.59     2.54",
+                 "TOA imbalance (W/m^2)       -1.03    -0.95",
+                 "largest difference: -0.26 K at 268 hPa"):
+        assert text in out, f"{text!r} not printed:\n{out}"
+
+
+@pytest.mark.slow
+def test_page12_thirty_day_means_the_page_quotes():
+    """The 30-day numbers page 12 quotes for the base state
+    (``tour_page12_measurements.py month``): P 2.65 and E 2.64 mm/day, Emanuel's
+    0.03 of it, the Bowen ratio, and the lapse rates."""
+    with _unyt_backend_restored():
+        tendencies, steppers, state, provenance = _page12_equilibrium()
+        stepping_module = _load("stepping")
+        budgets_module = _load("budgets")
+        timestep = climt.UnytTimeDelta(hours=provenance["dt_hours"])
+
+        def surface(name):
+            return lambda s: float(s[name].values.ravel()[0])
+
+        record = stepping_module.Recorder(
+            timestep, profiles=("air_temperature",), profile_every=1,
+            precipitation=lambda s: budgets_module.precipitation_rate(
+                s, timestep),
+            convective=surface("convective_precipitation_rate"),
+            evaporation=budgets_module.evaporation_rate,
+            sensible=budgets_module.sensible_heat_flux,
+            latent=budgets_module.latent_heat_flux)
+        stepping_module.integrate(tendencies, steppers, state, timestep,
+                                  30 * 288, after_step=record)
+        p = state["air_pressure"].values[:, 0, 0]
+    T = record["air_temperature"].mean(axis=0)
+    dz = (287.0 * 0.5 * (T[:-1] + T[1:]) / 9.80665) * np.log(p[:-1] / p[1:])
+    lapse = -np.diff(T) / dz * 1000.0
+    assert record.mean("precipitation") == pytest.approx(2.65, abs=0.005)
+    assert record.mean("evaporation") == pytest.approx(2.64, abs=0.005)
+    assert record.mean("convective") == pytest.approx(0.03, abs=0.005)
+    assert (record.mean("sensible") / record.mean("latent")
+            == pytest.approx(0.37, abs=0.005))
+    assert lapse[_band(p)].mean() == pytest.approx(9.48, abs=0.005)
+    assert lapse[p[:-1] > 5.0e4].mean() == pytest.approx(9.07, abs=0.005)

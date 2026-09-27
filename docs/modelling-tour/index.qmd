@@ -41,6 +41,7 @@ The science on each page stands alone; the code does not.
 | [Moisture changes the buoyancy](09-moisture-and-buoyancy.qmd) | 10 | θ_v, the Bowen ratio, and why a sink is needed |
 | [Dry convection](10-dry-convection.qmd) | 11 | enthalpy-conserving mixing to a dry adiabat |
 | [Dry RCE](11-dry-rce.qmd) | 12 | a 9.76 K/km adiabat, an emergent tropopause, a measured sensitivity |
+| [Moist RCE](12-moist-rce.qmd) | 12 and beyond | the moist adiabat, where 6.5 K/km comes from, and a sensitivity twice the dry one |
 
 ## What this tranche does not cover
 

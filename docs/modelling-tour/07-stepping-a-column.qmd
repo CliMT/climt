@@ -217,7 +217,7 @@ and 10 meet one each. That is what `integrate`'s second argument, empty here, is
 for: steppers run after the tendency update, in the order given.
 
 The third is the **`ImplicitTendencyComponent`**, which returns tendencies but
-needs the timestep to compute them. Page 12's moist convection scheme is one, and
+needs the timestep to compute them. [Page 12](12-moist-rce.qmd)'s moist convection scheme is one, and
 sympl warns when you put it inside `AdamsBashforth`. Page 12 explains the warning
 when you get there.
 :::
@@ -289,7 +289,7 @@ You could saturate the column and get page 4's profile back.
 The fourteen-band table below *does* read humidity, and reads zero. So the
 non-grey column you are about to run is an atmosphere whose only greenhouse gas
 is CO₂. Hold on to that: it is why its surface comes out so cold, and it is
-exactly what makes the comparison on page 12, where the column supplies its own
+exactly what makes the comparison on [page 12](12-moist-rce.qmd), where the column supplies its own
 water vapour, worth drawing.
 :::
 

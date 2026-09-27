@@ -1,0 +1,835 @@
+---
+title: "Moist RCE"
+format: live-html
+engine: jupyter
+pyodide:
+  packages:
+    # Installed by micropip at document setup, before any cell runs; pinned to
+    # the released version this page was written against. See
+    # ../_includes/climt-live-boot.qmd for how to preview an unreleased wheel.
+    - "climt==0.31.0"
+    - "unyt"
+  resources:
+    # Fetched into the Pyodide filesystem at document setup — the same files
+    # tests/test_modelling_tour.py imports natively. See page 1 for the
+    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
+    # states.py loads the shipped equilibria and finds them through
+    # assets.py; stepping.py is the time loop and page 9's surface-humidity
+    # stepper; budgets.py reads the budgets; soundings.py holds the saturation
+    # humidity and the moist adiabat.
+    - _tour/assets.py
+    - _tour/states.py
+    - _tour/stepping.py
+    - _tour/budgets.py
+    - _tour/soundings.py
+    # The shipped moist equilibrium, its doubled-CO2 twin, and page 11's dry
+    # equilibrium for comparison. Staged at the same relative paths they have
+    # on disk, which is why _tour/assets.py finds them with a plain
+    # os.path.isfile in both environments.
+    - _data/rce_moist_equilibrium.npz
+    - _data/rce_moist_2xco2_equilibrium.npz
+    - _data/rce_dry_equilibrium.npz
+---
+
+{{< include ../_includes/climt-live-boot.qmd >}}
+
+::: {.callout-tip}
+## Where this fits
+
+Chapter 12 of the notes, and a little beyond. [Page 11](11-dry-rce.qmd) ran
+radiation, a slab surface, a boundary layer and dry convective adjustment until
+nothing changed. The column made its own lapse rate, 9.76 K km⁻¹, not the
+6.5 K km⁻¹ that pages 1 to 6 assumed. Page 11 ended on a question: what would a
+rising parcel have to carry to cool more slowly than that? The answer is water
+vapour. When it condenses it releases latent heat, and the parcel cools less as
+it rises.
+
+This page puts the water back and asks whether the column comes back to 6.5.
+In this column it comes back only a little. The page measures by how much and
+why, and shows what the moist adiabat would have done.
+:::
+
+## The water is back
+
+The stack is page 11's, with three additions. The surface is held saturated at
+its own temperature every step, by the stepper
+[page 9](09-moisture-and-buoyancy.qmd) introduced, so it evaporates. Two
+components can take the water out again. `EmanuelConvectionPython` is a moist
+convection scheme: it lifts air from near the ground, condenses the vapour that
+air carries, rains it out and warms the air aloft. `GridScaleCondensation`,
+page 9's sink, removes the vapour wherever a level is supersaturated and
+releases its latent heat at that level.
+
+The two columns are otherwise the same: the same fourteen-band radiation at
+330 ppm of CO₂, the same 240 W m⁻² absorbed at the surface, the same 2 m slab
+and 5 m s⁻¹ wind. The difference in their surface temperatures, +19.51 K, is the
+water vapour greenhouse and its feedback, measured as the difference between two
+models that each found their own equilibrium. [Page 6](06-water-vapour-limit.qmd)
+could only draw that from profiles typed in. The moist column settles at 286 K,
+close to Earth's 288 K. That is not a validation: this column has no clouds, its
+air absorbs no sunlight, and its sunlight is a number written in at the surface.
+
+## You are perturbing a shipped equilibrium
+
+As on page 11, the column is not spun up here. It was stepped by
+`scripts/generate_tour_equilibria.py`: 295 800 steps of 5 minutes, about 1027
+simulated days, which would take about thirteen hours in your browser. The file
+beside this page, `_data/rce_moist_equilibrium.npz`, is where it ended.
+
+The timestep is 5 minutes, not page 11's 12 hours, because of Emanuel's scheme.
+climt's own examples all run it at 5 minutes, and a 5-minute timescale is among
+the scheme's parameters: `reference_mass_flux_timescale` defaults to 300 s. The
+last cell on this page shows what changes when you step it at 10 minutes.
+
+The first cell builds the component list, loads the equilibrium, and prints the
+configuration the file carries. It runs in a few seconds. Two lines are new
+since page 11: the surface humidity, and the TOA imbalance the column settled
+at.
+
+```{pyodide}
+#| autorun: true
+import sys
+sys.path.insert(0, "_tour")   # helper modules, served alongside this page
+
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+import sympl
+from sympl import get_constant
+import climt
+from climt import (get_grid, CorkLongwaveRadiation, SlabSurface,
+                   EmanuelConvectionPython, SimpleBoundaryLayer,
+                   DryConvectiveAdjustment, GridScaleCondensation,
+                   UnytTimeDelta)
+
+import budgets
+import soundings
+import states
+import stepping
+
+sympl.set_backend(climt.UnytBackend())
+
+longwave = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+slab = SlabSurface()
+convection = EmanuelConvectionPython()
+boundary_layer = SimpleBoundaryLayer(surface_fluxes="bulk", roughness_length=1e-3)
+adjustment = DryConvectiveAdjustment()
+condensation = GridScaleCondensation()
+
+# Page 11's four, plus page 9's saturated surface and two ways to rain. The
+# order is the one the shipped file was made in; the split puts Emanuel with
+# the tendency components and everything else among the steppers.
+components = [longwave, slab, convection, stepping.SurfaceHumidity(1.0),
+              boundary_layer, adjustment, condensation]
+tendency = [c for c in components if not hasattr(c, "output_properties")]
+stepper = [c for c in components if hasattr(c, "output_properties")]
+
+grid = get_grid(nx=1, ny=1, nz=28)
+state, provenance = states.load("rce_moist_equilibrium.npz", components,
+                                grid_state=grid)
+# Page 11's equilibrium, for comparison. It was made with page 11's four
+# components, so it loads with those.
+dry, _ = states.load("rce_dry_equilibrium.npz",
+                     [longwave, slab, boundary_layer, adjustment],
+                     grid_state=grid)
+if state is None or dry is None:
+    raise RuntimeError("an equilibrium file did not reach the browser; "
+                       "reload the page")
+
+# Page 8's momentum source, rebuilt on the loaded state as page 11 does it.
+tendency.append(stepping.wind_relaxation(state, provenance["wind_m_s"],
+                                         provenance["wind_timescale_hours"],
+                                         initialise=False))
+DT = UnytTimeDelta(hours=provenance["dt_hours"])     # 5 minutes
+
+print("tendency components:", [type(c).__name__ for c in tendency])
+print("stepper components: ", [type(c).__name__ for c in stepper])
+print()
+print(states.describe(provenance))
+print()
+for name, value in budgets.summary(state).items():
+    print(f"{name:20s} {value:9.2f}")
+print(f"{'dry surface (p. 11)':20s} "
+      f"{float(dry['surface_temperature'].values.ravel()[0]):9.2f}")
+```
+
+The surface is at 285.99 K, 19.51 K warmer than page 11's. The TOA imbalance in
+the file is −1.27 W m⁻², and the column settled at about −1.1 W m⁻², the mean
+over the last 60 days of its spin-up. **This column never balances at the top.**
+Page 11's dry column does: its 30-day mean is +0.01 W m⁻². The budget section
+below shows which component is responsible, and it is not the one you might
+guess.
+
+::: {.callout-note}
+## climt craft: `ImplicitTendencyComponent`, the third protocol
+
+[Page 7](07-stepping-a-column.qmd) introduced two kinds of component: tendency
+components, which return rates of change for `AdamsBashforth` to integrate, and
+steppers, which return the new state themselves. `EmanuelConvectionPython` is the
+third and last kind sympl has, an `ImplicitTendencyComponent`. It returns
+tendencies, like a tendency component, but it needs the timestep to compute
+them, like a stepper, and it keeps a memory between calls, its cloud-base mass
+flux, in the state.
+
+It goes in the tendency list. The first line of output above shows it there,
+because the split asks one question, "does it return a state?", and Emanuel does
+not. `_tour/stepping.py` still has exactly two lists, and that is a decision.
+Running Emanuel as a stepper would mean a third code path, and a special case
+every later reader has to remember. climt has always run it inside
+`AdamsBashforth`, and the column's results are usable. The budget section below
+is where you meet the warning this provokes, and the last cell is where you test
+the decision.
+:::
+
+## The profile it found
+
+The next cell draws the equilibrium in three panels. The shaded layer is the one
+the dry adjustment has mixed: its levels share one θ, page 10's test. The
+dashed grey profile is page 11's dry column. The green dash-dotted curve in the
+left panel is a **moist adiabat**: the temperature of a saturated parcel that
+starts at the surface, at the surface's temperature, and rises, condensing as it
+goes. It is where the column would sit if latent heat set its profile all the way
+up. In the middle panel the green curve is the rate such a parcel would cool at,
+evaluated at each level's own temperature. The right panel is the water vapour,
+against the most the air could hold at its temperature.
+
+```{pyodide}
+#| autorun: true
+Rd = float(get_constant("gas_constant_of_dry_air", "J/kg/degK"))
+Cp = float(get_constant("heat_capacity_of_dry_air_at_constant_pressure",
+                        "J/kg/degK"))
+g = float(get_constant("gravitational_acceleration", "m/s^2"))
+P0 = 1.0e5                        # Pa, the reference pressure for theta
+DRY_ADIABAT = 1e3 * g / Cp        # K/km
+TRANCHE_1 = 6.5                   # K/km, what pages 1-6 prescribed
+
+
+def profile(column, name):
+    """One quantity's column as a 1-D array, bottom level first."""
+    values = np.asarray(column[name].values, dtype=float)
+    return values.reshape(values.shape[0], -1)[:, 0]
+
+
+def surface(column, name):
+    return float(np.asarray(column[name].values, dtype=float).ravel()[0])
+
+
+def theta(column):
+    """Potential temperature, K."""
+    return (profile(column, "air_temperature")
+            * (P0 / profile(column, "air_pressure")) ** (Rd / Cp))
+
+
+def lapse_rate(column):
+    """-dT/dz in K/km between adjacent levels, from the hypsometric thickness."""
+    T = profile(column, "air_temperature")
+    p = profile(column, "air_pressure")
+    dz = (Rd * 0.5 * (T[:-1] + T[1:]) / g) * np.log(p[:-1] / p[1:])
+    return -np.diff(T) / dz * 1000.0
+
+
+def adjusted_layer(column):
+    """(bottom, top) levels of the deepest layer the adjustment has mixed.
+
+    Mixed levels share one theta. (With vapour in it, the scheme makes a
+    moist theta uniform, page 10's second exercise, so the dry one is uniform
+    only to about 0.01 K here.)"""
+    mixed = np.abs(np.diff(theta(column))) < 0.01
+    runs, start = [], None
+    for k, flag in enumerate(np.append(mixed, False)):
+        if flag and start is None:
+            start = k
+        elif not flag and start is not None:
+            runs.append((start, k))
+            start = None
+    return max(runs, key=lambda run: run[1] - run[0])
+
+
+p = profile(state, "air_pressure")
+p_hPa = p / 100
+ps_hPa = surface(state, "surface_air_pressure") / 100
+T = profile(state, "air_temperature")
+T_dry = profile(dry, "air_temperature")
+T_surface = surface(state, "surface_temperature")
+T_surface_dry = surface(dry, "surface_temperature")
+q = profile(state, "specific_humidity")
+q_sat = soundings.saturation_specific_humidity(T, p)
+lapse, lapse_dry = lapse_rate(state), lapse_rate(dry)
+moist_rate = soundings.moist_adiabatic_lapse_rate(T, p)   # at each level's T
+p_between = np.sqrt(p_hPa[:-1] * p_hPa[1:])   # where each lapse rate lives
+bottom, top = adjusted_layer(state)
+theta_mixed = theta(state)[bottom:top + 1].mean()
+# A saturated parcel from the surface, at the surface's temperature: where
+# the column would sit if the moist adiabat set it all the way up.
+upper = p_hPa >= 200
+parcel = soundings.moist_adiabat(T_surface, ps_hPa * 100, p[upper])
+
+fig, (ax_T, ax_G, ax_q) = plt.subplots(
+    1, 3, figsize=(13, 5.6), sharey=True,
+    gridspec_kw=dict(width_ratios=[3, 2, 2]))
+for ax in (ax_T, ax_G, ax_q):
+    ax.axhspan(p_hPa[bottom], p_hPa[top], color="#fff0d6", zorder=0)
+    ax.grid(alpha=0.3)
+ax_T.plot(T_dry, p_hPa, "--", color="0.55", lw=1.5,
+          label="page 11: dry")
+ax_T.plot([T_surface_dry], [ps_hPa], "o", mfc="white", mec="0.55")
+adiabat = p_hPa >= 150
+ax_T.plot(theta_mixed * (p_hPa[adiabat] / (P0 / 100)) ** (Rd / Cp),
+          p_hPa[adiabat], ":", color="#c92a2a", lw=1.5,
+          label=f"dry adiabat, θ = {theta_mixed:.2f} K")
+ax_T.plot(parcel, p_hPa[upper], "-.", color="#2b8a3e", lw=1.5,
+          label=f"moist adiabat from the surface, {T_surface:.1f} K")
+ax_T.plot(T, p_hPa, "o-", color="#1864ab", lw=2, ms=4,
+          label="this page: moist")
+ax_T.plot([T_surface], [ps_hPa], "o", color="#1864ab")
+ax_T.set(xlabel="temperature (K)", ylabel="pressure (hPa)",
+         ylim=(ps_hPa + 15, 0), xlim=(95, 295),
+         title="Temperature (dots at the ground: the surface)")
+ax_T.legend(loc="upper right", fontsize=8)
+
+ax_G.plot(lapse_dry, p_between, "--", color="0.55", lw=1.5,
+          label="page 11: dry")
+ax_G.plot(lapse, p_between, "o-", color="#1864ab", lw=2, ms=4,
+          label="this page: moist")
+ax_G.plot(moist_rate, p_hPa, "-.", color="#2b8a3e", lw=1.5,
+          label="moist adiabat, at this T")
+ax_G.axvline(DRY_ADIABAT, color="#c92a2a", ls=":", lw=1.5,
+             label=f"dry adiabat, {DRY_ADIABAT:.2f} K/km")
+ax_G.axvline(TRANCHE_1, color="0.3", ls="--", lw=1,
+             label="pages 1–6, 6.5 K/km")
+ax_G.set(xlabel="lapse rate −dT/dz (K/km)", xlim=(0, 12),
+         title="Lapse rate")
+ax_G.legend(loc="center left", fontsize=7)
+
+ax_q.plot(1e3 * q, p_hPa, "o-", color="#1864ab", lw=2, ms=4,
+          label="specific humidity")
+ax_q.plot(1e3 * q_sat, p_hPa, "--", color="#1864ab", lw=1,
+          label="saturation")
+ax_q.set(xlabel="specific humidity (g/kg)", xlim=(0, 7),
+         title="Water vapour")
+ax_q.legend(loc="upper right", fontsize=8)
+fig.suptitle("Moist radiative-convective equilibrium "
+             "(shaded: the layer the dry adjustment has mixed)")
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Three panels against pressure, from the ground to the top of the model, with
+the layer from 968 to 792 hPa shaded. Left: temperature. This page's moist
+profile lies about 15 to 16 K to the right of page 11's dashed dry one through
+the lower troposphere and 10 to 13 K above 400 hPa, and crosses it between 100
+and 70 hPa, being 3 to 4 K colder between 70 and 45 hPa. Through the shaded
+layer it lies on a dotted dry adiabat, θ = 281.02 K. A green dash-dotted moist adiabat from the
+surface at 286.0 K lies far to its right, about 20 K warmer by 500 hPa. Middle:
+the lapse rate. The moist column's is 9.76 K/km through the shaded layer, about
+9.2 to 9.6 K/km from there to 400 hPa, and 8 to 8.4 K/km between 300 and
+120 hPa. The dry column's is 9.76 K/km from about 970 to 530 hPa. A green
+dash-dotted curve, the moist adiabatic rate at each level's temperature, runs from about
+5.6 K/km at the ground to meet the dry adiabat's 9.76 K/km near 300 hPa; dashed
+at 6.5 K/km, pages 1 to 6. Right: specific humidity, about 3.3 g/kg in the
+lowest two levels, 1.8 g/kg through the shaded layer, falling to near zero by
+400 hPa, with its saturation value dashed: well above it through the shaded
+layer, close to it above.](_artifacts/12-moist-rce.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
+The water warmed the whole troposphere, by about 15 K at the ground. It did not
+bend the profile onto the moist adiabat. In the middle panel, the blue line
+stays near the dotted dry adiabat almost all the way to 400 hPa, and nowhere near
+the green one. The next cell measures it.
+
+```{pyodide}
+# The layers above the adjusted one, up to 500 hPa, and the moist adiabat's
+# rate at the temperature midway through each.
+band = (p_between < p_hPa[top]) & (p_between > 500)
+moist_band = soundings.moist_adiabatic_lapse_rate(
+    0.5 * (T[:-1] + T[1:]), p_between * 100)[band]
+RH = q / q_sat
+crossing = int(np.argmax(moist_rate > TRANCHE_1))
+parcel_500 = soundings.moist_adiabat(T_surface, ps_hPa * 100,
+                                     np.array([5.0e4]))[0]
+T_500 = np.interp(np.log(5.0e4), np.log(p[::-1]), T[::-1])
+z_500 = (Rd * 0.5 * (T_surface + parcel_500) / g) * np.log(ps_hPa * 100 / 5.0e4)
+
+print(f"adjusted layer      {p_hPa[bottom]:.0f} to {p_hPa[top]:.0f} hPa, "
+      f"lapse rate {lapse[bottom:top].mean():.2f} K/km, relative humidity "
+      f"{100 * RH[bottom:top + 1].min():.0f} to "
+      f"{100 * RH[bottom:top + 1].max():.0f} %")
+print(f"above it, to 500    lapse rate {lapse[band].mean():.2f} K/km "
+      f"(page 11's dry column: {lapse_dry[band].mean():.2f}); the moist "
+      f"adiabat there {moist_band.min():.1f} to {moist_band.max():.1f}")
+print(f"dry adiabat g/Cp    {DRY_ADIABAT:.2f} K/km")
+print(f"pages 1-6 assumed   {TRANCHE_1:.2f} K/km")
+print(f"\nmoist adiabat at the lowest air ({T[0]:.1f} K): "
+      f"{moist_rate[0]:.2f} K/km; it passes 6.5 at {p_hPa[crossing]:.0f} hPa, "
+      f"where T = {T[crossing]:.1f} K")
+print(f"a saturated parcel from the surface ({T_surface:.1f} K): "
+      f"{1e3 * (T_surface - parcel_500) / z_500:.2f} K/km on average to 500 "
+      f"hPa, where it is {parcel_500:.1f} K and this column {T_500:.1f} K")
+print(f"\nsurface {T_surface:.2f} K against page 11's {T_surface_dry:.2f} K: "
+      f"{T_surface - T_surface_dry:+.2f} K")
+```
+
+The layer from 968 to 792 hPa is on the dry adiabat, at 9.76 K km⁻¹, exactly as
+page 11's convecting layer was. Above it, up to 500 hPa, the lapse rate is
+9.48 K km⁻¹ in the loaded state and 9.48 K km⁻¹ averaged over 30 days of
+stepping (`scripts/experiments/tour_page12_measurements.py month`). Page 11's
+dry column has 9.75 K km⁻¹ across the same levels. So the water has relaxed the
+lapse rate there by about 0.3 K km⁻¹. It lies between the dry adiabat and the
+moist one, as it should, but much nearer the dry.
+
+That is not the textbook result, and it is not a mistake in the cell. The rest of this section says where 6.5 K km⁻¹ comes from, and what, in
+this column, stops the moist adiabat from setting the profile.
+
+### Where 6.5 came from
+
+A rising parcel cools as it expands. If it is dry, it cools at g/c_p,
+9.76 K km⁻¹. If it is saturated, every kelvin it cools condenses some vapour, and
+the latent heat released makes up part of the cooling. It then cools at the
+**moist adiabatic lapse rate**,
+
+$$
+\Gamma_m = g \, \frac{1 + L_v r_s / (R_d T)}{c_p + L_v^2 r_s \epsilon / (R_d T^2)},
+$$
+
+where r_s is the saturation mixing ratio and ε = R_d/R_v.
+`soundings.moist_adiabatic_lapse_rate` computes it, with the same constants and
+the same saturation humidity as `GridScaleCondensation`. The second term in the
+denominator is the latent heat, and it depends steeply on temperature, because
+r_s does. Warm air holds a lot of vapour, so Γ_m is small. Cold air holds almost
+none, so Γ_m climbs back towards g/c_p.
+
+In this column Γ_m is 5.57 K km⁻¹ at the lowest level, where the air is at
+280.7 K. It passes 6.5 K km⁻¹ at 876 hPa, where the air is at 270.6 K, and
+reaches 9.2 K km⁻¹ by 534 hPa. A single moist adiabat is therefore not one
+number. What pages 1 to 6 used is an average. A parcel saturated at 284 K at
+1000 hPa cools by 6.52 K km⁻¹ on average between 1000 and 500 hPa
+(`tour_page12_measurements.py adiabat`). One that starts at this column's
+surface, at 286.0 K, averages 6.24 K km⁻¹ up to 500 hPa (the cell above). That is where 6.5 comes from: it is
+what latent heating does to air saturated at about Earth's surface temperature,
+averaged through the lower troposphere.
+
+This column has that surface and does not follow that adiabat. By 500 hPa the
+parcel is at 251.3 K and the column at 231.4 K.
+
+### Why this column is not on its moist adiabat
+
+Three measurements say why. They come from the cells below and from
+`tour_page12_measurements.py`, which steps the loaded state on and averages
+(`month` and `heating`).
+
+- **The air where the column convects is not saturated.** Relative humidity in
+  the adjusted layer runs from 32 % at its bottom to 83 % at its top. Unsaturated
+  air rises and sinks on the dry adiabat, and the dry adjustment puts it there.
+  The scheme mixes the vapour too, which is why the specific humidity is uniform
+  through the shaded layer in the right panel.
+- **Almost all the rain is grid-scale.** Of the 2.65 mm day⁻¹ this column
+  rains, averaged over 30 days, Emanuel's scheme supplies 0.03 mm day⁻¹. It is
+  active, with a non-zero cloud-base mass flux on 63 % of steps, but its own
+  CAPE diagnostic is never positive over five days (mean −4 J kg⁻¹).
+- **The latent heat is released at the levels that saturate.** The vapour mixed
+  up to the top of the adjusted layer condenses just above it, at 745 hPa, and
+  in the levels up to 370 hPa that saturate from time to time.
+  `GridScaleCondensation` heats them by up to 2.5 K per day, in place. That is
+  what relaxes the lapse rate above 792 hPa by the 0.3 K km⁻¹ measured above.
+
+The second code exercise tests the explanation. Take `GridScaleCondensation`
+out, and within about ten days Emanuel's scheme carries all the rain
+(2.56 mm day⁻¹). The layer from 792 to 589 hPa then lapses at 7.2 to 8.5 K km⁻¹,
+within 0.8 K km⁻¹ in every layer of the moist adiabat evaluated on that
+column's own temperatures, 7.6 to 8.9 K km⁻¹. Latent heating does set the lapse
+rate when the convection scheme does the condensing. In the shipped stack the grid-scale
+condensation gets to the vapour first. And the stack needs that component,
+because without it the air at 792 hPa sits at about 157 % relative humidity.
+The numbers are from `tour_page12_measurements.py nogsc` and the exercise.
+
+## The budgets
+
+::: {.callout-warning}
+## The warning you are about to see
+
+The next cell is the first on this page to step the column, and your browser will
+print a `UserWarning` from sympl: *"Using an ImplicitTendencyComponent in sympl
+TendencyStepper objects may lead to scientifically invalid results."* This is
+sympl saying that it cannot check whether an implicitly formulated component,
+Emanuel's scheme, is safe inside a multi-stage stepper like `AdamsBashforth`. It
+is printed when a cell builds one, and it can appear again in cell 5, which
+builds another. climt has always run the scheme this way. The last cell on this page is where you check
+what the warning is worried about, and it turns out to be right about Emanuel's
+rain and nearly irrelevant to this column.
+:::
+
+The next cell steps a copy of the equilibrium for two days, 576 steps. **It takes
+about a minute and a half in a browser.** It also wraps the adjustment and the
+condensation in a small class, `Metered`, that records the column enthalpy each
+adds and the heating each applies, step by step. That is how the section after
+it attributes the TOA imbalance.
+
+```{pyodide}
+class Metered:
+    """Wrap a stepper, and keep its books: the column enthalpy it adds, in
+    W/m^2, and the temperature change it makes at each level, every step."""
+
+    def __init__(self, stepper):
+        self.stepper = stepper
+        self.enthalpy = []
+        self.heating = []
+
+    def __call__(self, column, timestep):
+        before = budgets.column_enthalpy(column)
+        T_before = profile(column, "air_temperature").copy()
+        diagnostics, new = self.stepper(column, timestep)
+        after = dict(column)
+        after.update(new)
+        seconds = float(timestep.total_seconds())
+        self.enthalpy.append((budgets.column_enthalpy(after) - before) / seconds)
+        self.heating.append(profile(after, "air_temperature") - T_before)
+        return diagnostics, new
+
+
+def recorder(timestep):
+    """The series cells 3 and 5 compare, recorded every step."""
+    return stepping.Recorder(
+        timestep, profiles=("air_temperature",), profile_every=1,
+        surface=lambda c: surface(c, "surface_temperature"),
+        precipitation=lambda c: budgets.precipitation_rate(c, timestep),
+        convective=lambda c: surface(c, "convective_precipitation_rate"),
+        evaporation=budgets.evaporation_rate,
+        sensible=budgets.sensible_heat_flux,
+        latent=budgets.latent_heat_flux,
+        toa=budgets.toa_imbalance)
+
+
+N_DAYS = 2
+metered = {id(adjustment): Metered(adjustment),
+           id(condensation): Metered(condensation)}
+run = copy.deepcopy(state)
+record = recorder(DT)
+stepping.integrate(tendency, [metered.get(id(s), s) for s in stepper], run,
+                   DT, N_DAYS * 288, after_step=record)
+
+
+def mean(rec, name):
+    return rec.mean(name, days=N_DAYS)
+
+
+P, E = mean(record, "precipitation"), mean(record, "evaporation")
+P_conv = mean(record, "convective")
+SH, LH = mean(record, "sensible"), mean(record, "latent")
+print(f"{N_DAYS} days at 5 min, means:")
+print(f"  precipitation   {P:5.2f} mm/day  (Emanuel {P_conv:.2f}, "
+      f"grid-scale {P - P_conv:.2f})")
+print(f"  evaporation     {E:5.2f} mm/day  (latent heat flux / Lv)")
+print(f"  P - E           {P - E:+5.2f} mm/day")
+print(f"  sensible {SH:.1f}, latent {LH:.1f} W/m^2: Bowen ratio {SH / LH:.2f}")
+print(f"  surface temperature {mean(record, 'surface'):.2f} K, "
+      f"TOA imbalance {mean(record, 'toa'):+.2f} W/m^2")
+
+heating = np.mean(metered[id(condensation)].heating, axis=0) * 288
+print("\nwhere the grid-scale condensation heats (K/day):")
+for k in np.nonzero(heating > 0.1)[0]:
+    print(f"  {p_hPa[k]:5.0f} hPa  {heating[k]:5.2f}")
+print(f"\ncolumn enthalpy added: adjustment "
+      f"{np.mean(metered[id(adjustment)].enthalpy):+.2f}, condensation "
+      f"{np.mean(metered[id(condensation)].enthalpy):+.2f} W/m^2")
+```
+
+### The moisture budget closes
+
+Over the two days the column rains 2.62 mm day⁻¹ and evaporates 2.59, a residual
+of +0.03 mm day⁻¹. Over 30 days they are 2.65 and 2.64
+(`tour_page12_measurements.py month`). Two days is short for a column that rains
+in bursts: a single 5-minute step of grid-scale condensation can rain at over
+100 mm day⁻¹. Two-day means of P − E scatter by 0.17 mm day⁻¹ over a month, and
+this cell's +0.03 is well inside that. At equilibrium the column cannot be
+storing water, so everything the surface evaporates comes down again.
+
+The surface loses 27.8 W m⁻² as sensible heat and 74.9 W m⁻² as latent heat
+over the two days, a Bowen ratio of 0.37 (0.37 over 30 days as well). That is
+page 9's saturated surface doing what page 9 said it would: most of what the
+surface loses to the air, it loses as water.
+
+::: {.callout-note}
+## climt craft: precipitation and convective diagnostics
+
+The two ways this column rains report it differently.
+`EmanuelConvectionPython` writes `convective_precipitation_rate`, already a rate
+in mm day⁻¹. `GridScaleCondensation` writes `precipitation_amount`, the water it
+removed on the step it was called for, in kg m⁻². That is mm of water, over one
+timestep, so it only becomes a rate once you divide by the step.
+`budgets.precipitation_rate(state, timestep)` does that and adds the two, which is
+why it takes the timestep and `budgets.evaporation_rate(state)`, the latent heat
+flux over L_v, does not. Pass it the wrong timestep and the grid-scale rain is
+off by the ratio, with nothing to tell you.
+:::
+
+### Where the missing watt comes from
+
+The column settled at a TOA imbalance of −1.1 W m⁻². It sends 1.1 W m⁻² more
+to space than it absorbs, and yet it is not cooling. Stepped on for 60 000 more
+steps, its surface drifts by −0.03 K per 100 days
+(`scripts/experiments/tour_rce_shipped_remeasure.py settle-moist`), which takes
+a few hundredths of a W m⁻² out of the 2 m slab, not a whole one. So something in
+the column is adding energy that the budget does not count.
+
+The last line of the cell's output says what. Over the two days, the dry
+adjustment adds +0.95 W m⁻² of column enthalpy, c_p T + L_v q, and the
+condensation adds none. The same measurement over five days, applied to every
+component, gives +0.97 W m⁻² for the adjustment and +0.03 W m⁻² for Emanuel's
+scheme, and zero for everything else except the boundary layer, whose
+105.36 W m⁻² is exactly the surface's sensible and latent heat
+(`tour_page12_measurements.py energy`). The two sources add up to 1.0 W m⁻²,
+which is most of the −1.1 at the top; five days is too short to pin the rest.
+
+This is the dry adjustment's bookkeeping. Page 10's second code exercise met
+the ingredient: the scheme uses a heat capacity that depends on the moisture. The scheme conserves the enthalpy of moist air, whose heat
+capacity includes the vapour's. That is exactly conserved: the same five days
+show a change of 0.0000 W m⁻² in it. Everything else in the stack, and
+`budgets.column_enthalpy`, counts c_p of dry air. In a column of uniform
+humidity, as on page 10, the two agree. When the scheme mixes moist air near the
+ground with drier air above, they do not, and in this column the difference is
+about 1 W m⁻², step after step. Page 11's column had no vapour at all,
+so it balanced at the top.
+
+::: {.callout-note}
+## climt craft: keeping a component's books
+
+`Metered` is a dozen lines, and it works for any stepper: call it, compare the
+state before and after, keep the difference. The same idea checks a tendency
+component, by calling it on the state and integrating its tendencies over the
+column's mass. It is the cheapest test there is that a component conserves what
+you think it conserves. A number like the −1.1 W m⁻² at the top is a sum over
+every component in the stack. Metering them one at a time is how you find out
+whose it is, instead of guessing.
+:::
+
+## The knob: CO₂, run offline
+
+::: {.callout-warning}
+## The knob
+
+`rce_moist_2xco2_equilibrium.npz` below: the shipped equilibrium with CO₂
+doubled to 660 ppm and stepped on until it settled again, by
+`scripts/generate_tour_equilibria.py --moist-2xco2`.
+:::
+
+Page 11 doubled CO₂ in the browser and watched its column warm: 1000 steps of 12
+hours, about two minutes. This column needed 180 550 steps of 5 minutes, about
+627 simulated days, to settle again, and at about 0.15 s a step that is nearly
+eight hours in a browser. So the experiment was run offline, and ships as
+a third file. The cell loads it beside the base state, prints what the file says
+was run, and takes the warming apart with the radiation alone, the way page 11's
+exercise took its OLR apart. It does not step anything, and it runs in a few
+seconds.
+
+```{pyodide}
+doubled, doubled_provenance = states.load(
+    "rce_moist_2xco2_equilibrium.npz", components, grid_state=grid)
+print(states.describe(doubled_provenance))
+
+T_surface_2x = surface(doubled, "surface_temperature")
+print(f"\nsurface {T_surface:.3f} K -> {T_surface_2x:.3f} K: "
+      f"{T_surface_2x - T_surface:+.2f} K file to file; "
+      f"{doubled_provenance['window_mean_warming_k']:+.2f} K between the "
+      "two runs' last-60-day means")
+
+
+def olr_now(column):
+    """OLR from one longwave call, temperatures as they stand."""
+    return float(longwave(column)[1]["upwelling_longwave_flux_in_air"]
+                 .values[-1, 0, 0])
+
+
+def swapped(*names):
+    """The base state with some fields taken from the doubled one."""
+    column = copy.deepcopy(state)
+    for name in names:
+        column[name].values[:] = doubled[name].values
+    return column
+
+
+warming = T_surface_2x - T_surface
+forcing = olr_now(state) - olr_now(
+    swapped("mole_fraction_of_carbon_dioxide_in_air"))
+from_T = olr_now(swapped("air_temperature", "surface_temperature")) - olr_now(state)
+from_q = olr_now(swapped("specific_humidity")) - olr_now(state)
+print(f"\nforcing, CO2 doubled and nothing else   {forcing:+.2f} W/m^2")
+print(f"OLR change from the warmer temperatures {from_T:+.2f} W/m^2 "
+      f"({from_T / warming:+.2f} per K)")
+print(f"OLR change from the extra vapour        {from_q:+.2f} W/m^2 "
+      f"({from_q / warming:+.2f} per K)")
+print(f"warming if the vapour had not changed   "
+      f"{forcing / (from_T / warming):+.2f} K")
+
+T_2x = profile(doubled, "air_temperature")
+q_2x = profile(doubled, "specific_humidity")
+wet = q > 1e-5                                 # below the dry stratosphere
+fig, (ax_dT, ax_dq) = plt.subplots(1, 2, figsize=(9, 4.8), sharey=True)
+ax_dT.plot(T_2x - T, p_hPa, "o-", color="#c92a2a", ms=4)
+ax_dT.plot([warming], [ps_hPa], "o", color="#c92a2a", mfc="white")
+ax_dT.axvline(0, color="0.5", lw=0.8)
+ax_dT.set(xlabel="warming (K)", ylabel="pressure (hPa)",
+          ylim=(ps_hPa + 15, 0), title="2×CO₂ minus base: temperature")
+ax_dq.plot(100 * (q_2x[wet] / q[wet] - 1), p_hPa[wet], "o-", color="#1864ab",
+           ms=4)
+ax_dq.set(xlabel="change in specific humidity (%)",
+          title="… and water vapour")
+for ax in (ax_dT, ax_dq):
+    ax.grid(alpha=0.3)
+fig.tight_layout()
+plt.show()
+```
+
+The two files differ by +2.26 K at the surface. Stepped on for 60 000 more steps
+each and averaged over the last 30 000, the base settles at 285.99 K and the
+doubled state at 288.23 K, **+2.24 K**
+(`scripts/experiments/tour_rce_shipped_remeasure.py settle-moist`). Averaging
+each over 30 days, as page 11 did, gives +2.23 K. The provenance's own
+cross-check, the difference between the two spin-ups' last 60-day means, is
++2.22 K.
+
+**+2.24 K per doubling is this column's climate sensitivity, about twice page
+11's dry +1.15 K.** The rest of the cell's output says why. Doubling CO₂ cuts the
+OLR of the moist column by 4.69 W m⁻², a little more than the dry column's 4.08.
+To get those watts back, the column warms. Warmer temperatures alone would raise
+the OLR by 3.95 W m⁻² per kelvin of surface warming. But the warmer air holds more
+vapour, 24 % more near the ground and 19 to 28 % more through the lower
+troposphere, and the extra vapour on its own lowers the OLR by 1.89 W m⁻² per
+kelvin. Each kelvin of warming buys only the difference, about 2 W m⁻². Had the
+vapour stayed where it was, the column would have warmed by 1.19 K: almost
+exactly page 11's dry answer. **The water vapour feedback is the whole
+difference between the two sensitivities.**
+
+The lapse rate hardly changes. Averaged over 30 days, the layers below 500 hPa
+lapse at 9.07 K km⁻¹ in the base state and 9.02 in the doubled one
+(`tour_page12_measurements.py month`), so the upper air warms nearly as much as
+the lower: 2.6 K near the ground, 2.3 K at 400 hPa. On Earth the moist adiabat
+makes the upper troposphere warm more than the surface, which offsets part of
+the water vapour feedback. This column stays close to the dry adiabat for most
+of its depth, so it has almost none of that offset.
+
+## Timestep sensitivity, measured
+
+The warning said that sympl cannot check Emanuel's scheme inside
+`AdamsBashforth`. Here is the check. The next cell steps the equilibrium for the
+same two days as cell 3, at 10 minutes instead of 5, and compares the two.
+**It takes about 45 seconds in a browser**: 288 steps, half as many as cell 3,
+because each is twice as long.
+
+```{pyodide}
+DT_LONG = UnytTimeDelta(minutes=10)     # <- the timestep to compare with 5 min
+long_run = copy.deepcopy(state)
+long_record = recorder(DT_LONG)
+n_steps = round(N_DAYS * 86400 / float(DT_LONG.total_seconds()))
+stepping.integrate(tendency, stepper, long_run, DT_LONG, n_steps,
+                   after_step=long_record)
+
+label = f"{float(DT_LONG.total_seconds()) / 60:g} min"
+print(f"{'':24s} {'5 min':>8} {label:>8}")
+for label, name, fmt in [("surface temperature (K)", "surface", "8.2f"),
+                         ("precipitation (mm/day)", "precipitation", "8.2f"),
+                         ("  from Emanuel", "convective", "8.3f"),
+                         ("evaporation (mm/day)", "evaporation", "8.2f"),
+                         ("TOA imbalance (W/m^2)", "toa", "+8.2f")]:
+    print(f"{label:24s} {mean(record, name):{fmt}} "
+          f"{mean(long_record, name):{fmt}}")
+profiles = [rec["air_temperature"].mean(axis=0)
+            for rec in (record, long_record)]
+difference = profiles[1] - profiles[0]
+k = int(np.argmax(np.abs(difference)))
+print(f"\n{N_DAYS}-day mean temperature, largest difference: "
+      f"{difference[k]:+.2f} K at {p_hPa[k]:.0f} hPa")
+```
+
+The warning was right about Emanuel's scheme. At 10 minutes it rains
+0.002 mm day⁻¹ over the two days, against 0.029 at 5. Its output depends on the
+step it is called with, which is what sympl says it cannot vouch for. Over
+30 days of a 60-day run the scheme's rain goes 0.056, 0.029, 0.007 and
+0.000 mm day⁻¹ at 2.5, 5, 10 and 20 minutes: it roughly halves, or worse, each
+time the step doubles (`tour_page12_measurements.py timestep`).
+
+The column barely notices. The grid-scale condensation picks up the rain Emanuel
+drops. Over the same 30 days the surface is at 285.98, 286.01, 286.04 and
+286.06 K, and the lapse rate below 500 hPa is 9.07 K km⁻¹ at the first three
+steps and 9.08 at 20 minutes. At 10 minutes the two days' mean temperature
+differs by at most 0.26 K anywhere in the column. That is why running Emanuel
+inside `AdamsBashforth` is safe *in this stack*: the scheme does about 1 % of the
+raining, so what the timestep does to it hardly matters. The TOA residual
+does grow with the step, from −1.05 at 2.5 minutes to −1.96 W m⁻² at 20. In a
+stack where Emanuel does the raining, as in the second code exercise below, the
+same check would matter much more, and you should run it again.
+
+## Exercises
+
+### Physics
+
+1. **Twice the dry sensitivity: which way would you have guessed?** Before you
+   read the knob cell's output, predict whether the moist column's warming per
+   doubling should be larger or smaller than page 11's +1.15 K, and why. Then
+   explain the cell's last line, the warming with the vapour held fixed. (It is
+   larger. A warmer column holds more vapour, and vapour is a greenhouse gas, so
+   the column has to warm further to get its watts back. With the vapour held
+   fixed it would warm by 1.19 K, nearly the dry 1.15 K.)
+
+2. **The moist adiabat is not one number.** In this column the moist adiabatic
+   rate passes 6.5 K km⁻¹ at 876 hPa. Why there? Use
+   `soundings.moist_adiabat` to find the temperature at which a parcel saturated
+   at 1000 hPa averages 6.5 K km⁻¹ between 1000 and 500 hPa. (The rate is set
+   by how much vapour saturated air holds, and that falls by about 7 % for every
+   kelvin of cooling. 6.5 K km⁻¹ is the rate at 270.6 K and 876 hPa. A parcel
+   from 284 K averages 6.52 K km⁻¹, and one from 286 K averages 6.19.)
+
+### Code
+
+1. **Halve the timestep.** Set `DT_LONG = UnytTimeDelta(minutes=2.5)` in the
+   last cell and run it again. The cell works out the step count itself, 1152
+   steps, **about three minutes in a browser**. Does Emanuel's rain double
+   again? (It does more than that: over those two days it is 0.117 mm day⁻¹,
+   four times the 0.029 at 5 minutes. The surface temperature is within
+   0.06 K.)
+
+2. **Take the grid-scale condensation out.** Step a copy of the equilibrium for
+   ten days without it, and look at the lapse rate above the adjusted layer and
+   the humidity at its top:
+
+   ```python
+   no_condensation = [s for s in stepper if s is not condensation]
+   test = copy.deepcopy(state)
+   stepping.integrate(tendency, no_condensation, test, DT, 10 * 288)
+   print(lapse_rate(test)[top:top + 5])
+   print(soundings.relative_humidity(test)[top])
+   ```
+
+   That is 2880 steps, **about seven minutes in a browser**. (Emanuel's scheme
+   takes over all the rain within about ten days. The layers from 792 to
+   589 hPa lapse at 7.2 to 8.5 K km⁻¹, close to the moist adiabat on their
+   own temperatures, and the air at 792 hPa is supersaturated, at about 157 %
+   relative humidity, because nothing now removes vapour at the level where it
+   saturates.)
+
+## Going deeper, and where the tour ends
+
+This is the last page. The column you have now has radiation that sees CO₂ and
+water vapour, a surface that evaporates, a boundary layer, dry and moist
+convection and condensation, and it finds its own equilibrium. Several things
+are deliberately absent:
+
+- **No clouds.** The water that condenses rains out at once. Nothing reflects
+  sunlight or traps longwave the way a cloud would.
+- **No shortwave component.** Every page from 7 on writes 240 W m⁻² in at the
+  surface, so the air absorbs no sunlight at all. climt has a
+  `CorkShortwaveRadiation`, but it has not yet been tested the way this tour's
+  longwave has, so no page here relies on it.
+- **No sea ice, no land, no latitude.** One column, over a 2 m slab of water.
+
+Two things this page found are properties of this stack rather than of the
+atmosphere. The dry adjustment's heat capacity puts about 1 W m⁻² into the
+column that the budget does not count. And with grid-scale condensation in the
+stack, the moist convection scheme has little to do, so the lapse rate stays
+near the dry adiabat. A column that is to be on its moist adiabat has to let the
+convection scheme do the condensing.

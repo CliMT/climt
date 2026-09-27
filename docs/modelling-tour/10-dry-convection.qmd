@@ -258,7 +258,7 @@ which is why `before` is still there to plot.
 The timestep is part of every `Stepper`'s signature, so it has to be passed, but
 this scheme ignores it. Adjustment is instantaneous: it removes all of the
 instability in one call, whatever `DT` is. On [page 11](11-dry-rce.qmd), and on
-page 12, the timestep does matter, because it sets how often the radiation can
+[page 12](12-moist-rce.qmd), the timestep does matter, because it sets how often the radiation can
 make the column unstable again between calls.
 :::
 
@@ -364,7 +364,7 @@ anything: 0.46 K at most, even with twelve layers. At 20 K km⁻¹ over twelve l
 the mixed θ is 275.59 K, the lowest level cools by 23.12 K, and the mixing
 reaches 370 hPa. That is an extreme column, and no real one gets there: convection
 removes instability as fast as the surface and the radiation create it, so the
-instability never builds up. On [page 11](11-dry-rce.qmd), and on page 12, the
+instability never builds up. On [page 11](11-dry-rce.qmd), and on [page 12](12-moist-rce.qmd), the
 scheme is called every step, and each call has only a small instability to
 remove.
 

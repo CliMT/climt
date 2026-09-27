@@ -49,7 +49,7 @@ The column has no water vapour at all. Its fourteen-band longwave radiation sees
 330 ppm of CO₂ and nothing else, so most of the spectrum is window and the column
 is a poor greenhouse. It settles at a surface temperature of about 266 K, far
 below Earth's 288 K. **No number on this page can be compared with the numbers on
-pages 1 to 6**, which all had water vapour in them. Page 12, still to come, puts
+pages 1 to 6**, which all had water vapour in them. [Page 12](12-moist-rce.qmd) puts
 the water back.
 
 ## You are perturbing a shipped equilibrium
@@ -271,7 +271,7 @@ print(f"  air, top level    {difference[-1]:+.2f} K")
 
 In the shipped state, the layer from 968 to 534 hPa sits on the dry adiabat, at
 9.76 K km⁻¹. That is half as steep again as the 6.5 K km⁻¹ pages 1 to 6 assumed,
-and Earth's troposphere is close to 6.5. Page 12 will show where the difference
+and Earth's troposphere is close to 6.5. [Page 12](12-moist-rce.qmd) will show where the difference
 comes from.
 
 The layer's top is not fixed. At a 12-hour timestep the equilibrium is a small
@@ -482,7 +482,7 @@ the surface by 1 K with the air held fixed and the OLR rises by only
 3.37 W m⁻², 79 % of 4σT³; the surface alone would have to warm by 1.21 K. The
 air warms with it and adds a little OLR of its own, which is why the answer is
 1.15 K rather than 1.21 K. It is still a small warming, because nothing in this column amplifies
-it. There is no water vapour to increase as the column warms. Page 12 adds the
+it. There is no water vapour to increase as the column warms. [Page 12](12-moist-rce.qmd) adds the
 water.
 
 ## climt craft: saving and loading a state
@@ -550,7 +550,7 @@ with `initialise=False`, exactly as the first cell did.
    convecting layer steeper or shallower than g/c_p: the adjustment mixes to a
    single θ, and a single θ is the dry adiabat. What would a rising parcel have
    to be carrying to cool more slowly than g/c_p as it rises? What happens to
-   that when the parcel cools? Page 12 answers it.
+   that when the parcel cools? [Page 12](12-moist-rce.qmd) answers it.
 
 ### Code
 
@@ -579,6 +579,6 @@ with `initialise=False`, exactly as the first cell did.
 
 ## Going deeper
 
-Page 12, still to come, loads a moist equilibrium made the same way, with water
+[Page 12](12-moist-rce.qmd) loads a moist equilibrium made the same way, with water
 vapour supplied by the surface and moist convection added to the stack, and
 asks what latent heat does to the lapse rate this page measured.

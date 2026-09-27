@@ -78,8 +78,10 @@ STEADY_WINDOW_STEPS = 1000    # the averaging window for that drift
 #     slow, ~0.05 K per 30 days. At 5 min a 1000-step window is 3.5 days, and
 #     an instantaneous |TOA| < 0.5 is passed by noise: the dry gate stopped the
 #     spin-up at 194 400 steps with the 30-day mean TOA still -1.7 and falling.
-#   * it never reaches TOA = 0. EmanuelConvectionPython is not fully
-#     energy-conserving, so the column settles with a steady TOA imbalance --
+#   * it never reaches TOA = 0. DryConvectiveAdjustment conserves enthalpy
+#     with a moist heat capacity while the rest of the stack counts dry air's
+#     (+0.97 W/m^2; Emanuel +0.03; tour_page12_measurements.py energy), so the
+#     column settles with a steady TOA imbalance --
 #     about -1.1 W/m^2 over a saturated surface (the stratosphere is in
 #     radiative balance and the slab has stopped moving, so this is not
 #     storage). No |TOA| threshold below that is a convergence test.

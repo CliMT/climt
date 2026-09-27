@@ -122,8 +122,9 @@ def _independence(kind):
 def settle_moist(n_steps=60000, window_steps=30000):
     """Step both shipped moist states on, and compare where they settle.
 
-    The moist column never reaches TOA = 0. EmanuelConvectionPython is not
-    fully energy-conserving, so the column settles with a steady TOA
+    The moist column never reaches TOA = 0. DryConvectiveAdjustment's
+    moist-cp bookkeeping adds ~1 W/m^2 the budget does not count (page 12;
+    Emanuel adds ~0.03), so the column settles with a steady TOA
     imbalance (about -1.1 W/m^2 over the saturated surface; it was +0.3 over
     the old fixed-humidity one). The generator's moist gate stops on flat
     60-day trends, so the files should sit where the column settles; this

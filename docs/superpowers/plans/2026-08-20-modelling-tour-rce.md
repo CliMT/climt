@@ -5123,6 +5123,35 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 *Fill in: surface temperature, lower-tropospheric lapse rate, precipitation and evaporation and their residual, the timestep-sensitivity result, browser wall time for cell 5.*
 
+**Page 12 as written, 2026-09-27** (`scripts/experiments/tour_page12_measurements.py`; cells timed natively with `NUMBA_DISABLE_JIT=1`, browser ≈ 3.5×).
+
+*Step 1 was already done:* `_tour/stepping.py` splats (`AdamsBashforth(*tendency_components)`), so only the `ImplicitTendencyComponent` warning appears; `test_page12_emanuel_inside_adamsbashforth_warns_and_still_works` pins both facts.
+
+*The spec's reveal is false in this configuration.* The lapse rate does not relax to near 6.5 K/km:
+
+| | value |
+|---|---|
+| surface temperature | 285.99 K (file); 285.996 K, 30-day mean; +19.51 K on page 11's dry 266.48 |
+| adjusted (θ-uniform) layer | 968–792 hPa, 9.76 K/km, RH 32–83 % |
+| 792–500 hPa lapse rate | 9.48 K/km (loaded state and 30-day mean); page 11's dry column 9.75 over the same levels |
+| below 500 hPa, mean lapse | 9.07 K/km (30-day), 2×CO₂ 9.02; dominated by the boundary-layer layers, so the page quotes the 792–500 band |
+| moist adiabat on the column's own T | 5.57 K/km at the lowest level, 6.5 at 876 hPa (270.6 K), 9.2 at 534 hPa |
+| saturated parcel, mean 1000–500 hPa | 6.52 K/km from 284 K; 6.19 from 286 K (6.24 from this column's surface) |
+| P / E, 30 days | 2.645 / 2.640 mm/day, quoted as 2.65 / 2.64 (the table below rounds P to 2.64); Emanuel supplies 0.030 of it |
+| P / E, cell 3 (2 days) | 2.62 / 2.59, residual +0.03; 2-day means of P − E scatter by 0.17 (sd) |
+| SH / LH, Bowen | 27.96 / 76.40 W/m², 0.37 (30 days); cell 3: 27.8 / 74.9 |
+| grid-scale condensation heating | 745–370 hPa, up to 2.5 K/day; Emanuel CAPE never positive over 5 days (mean −4 J/kg), mass flux > 0 on 63 % of steps |
+
+Why: the grid-scale condensation does ~99 % of the raining, at the levels that saturate above the dry-adjusted layer. `nogsc` (condensation removed): within ~10 days Emanuel carries all the rain (2.56 mm/day) and 792–589 hPa lapses at 7.2–8.5 K/km, within 0.8 K/km of its own moist adiabat, with 157 % RH at 792 hPa. `nodca` (adjustment removed): Emanuel carries the rain but the column cools steadily (278.9 K after 300 d, not converged).
+
+*The TOA residual is not Emanuel's.* Metering column enthalpy (c_p,dry T + L_v q) per component over 5 days: `DryConvectiveAdjustment` +0.967 W/m², Emanuel +0.026, everything else 0 (boundary layer = SH + LH exactly); TOA −1.104. The adjustment conserves enthalpy with a moist heat capacity (its moist-c_p change is 0.0000), while every other component counts dry c_p. The page says so; `_data/README.md`, the generator comment and the residual-test comment were corrected.
+
+*Sensitivity.* File difference +2.26 K; 30-day mean minus 30-day mean +2.233 K; settled +2.24 K (quoted); page 11's dry +1.15 K. Radiation-only decomposition (file states): forcing +4.69 W/m²; temperatures +8.93 W/m² (3.95 per K); vapour −4.27 (−1.89 per K); with the vapour fixed the warming would be 1.19 K. So the water-vapour feedback is the whole difference.
+
+*Timestep* (60 days from the shipped state, last-30-day means, dt = 2.5 / 5 / 10 / 20 min): Emanuel's rain 0.056 / 0.029 / 0.007 / 0.000 mm/day; Ts 285.978 / 286.007 / 286.043 / 286.065 K (286.0649, so 286.06 on the page); lapse below 500 hPa 9.07 / 9.07 / 9.07 / 9.08; TOA −1.05 / −1.11 / −1.16 / −1.96. Cell 5 (2 days, 10 min vs cell 3's 5 min): Emanuel 0.002 vs 0.029, P 2.75 vs 2.62, Ts 286.02 vs 285.99, largest 2-day-mean ΔT −0.26 K at 268 hPa. Emanuel's cloud-base mass flux does *not* scale as 1/dt (1.34e-3 / 1.22e-3 / 1.02e-3 / 3.6e-4), so the page does not claim a mechanism.
+
+*Cell cost* (43.7 ms/step native, JIT off; ~0.15 s/step browser): cell 0 1.5 s native (~5 s browser); cell 3, 576 steps, 25.3 s (~1.5 min); cell 4, no stepping, 1.4 s (~5 s); cell 5, 288 steps, 12.3 s (~45 s). Code exercises: 1152 steps ~3 min; 2880 steps ~7 min.
+
 **Current, 2026-09-27** (saturated surface, moist trend gate; Task 9 log). Generated with `generate_tour_equilibria.py --moist --moist-2xco2`; the 2×CO₂ state is stamped with the base's `saved_at` 2026-09-27T02:22:56:
 
 | | base | 2×CO₂ |
