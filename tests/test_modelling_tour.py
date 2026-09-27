@@ -2755,10 +2755,16 @@ def test_shipped_equilibrium_is_still_an_equilibrium(states, asset, build):
     budgets_module = _load("budgets")
     imbalance = budgets_module.toa_imbalance(state)
 
-    assert abs(imbalance) < 1.0, (
-        f"{asset}: TOA imbalance {imbalance:+.3f} W/m^2 after 10 steps — the "
-        "shipped equilibrium is stale. Re-run "
-        "scripts/generate_tour_equilibria.py.")
+    # The moist column never reaches TOA = 0: EmanuelConvectionPython is not
+    # fully energy-conserving, so it settles with a steady residual (about
+    # -1.1 W/m^2 over its saturated surface). Its file records the residual
+    # it settled at, as the mean over the gate's last window, and the check
+    # is against that. The dry files carry no such key: they settle at 0.
+    settled = provenance.get("window_mean_toa_w_m2", 0.0)
+    assert abs(imbalance - settled) < 1.0, (
+        f"{asset}: TOA imbalance {imbalance:+.3f} W/m^2 after 10 steps, "
+        f"against the {settled:+.3f} it settled at — the shipped equilibrium "
+        "is stale. Re-run scripts/generate_tour_equilibria.py.")
     assert abs(after - before) < 0.05, (
         f"{asset}: surface temperature drifted {after - before:+.4f} K in 10 "
         "steps — the shipped equilibrium is stale. Re-run "
@@ -2786,6 +2792,37 @@ def test_shipped_equilibrium_provenance_is_complete(states, asset):
                   "toa_imbalance", "surface_imbalance"):
         assert provenance.get(field) is not None, f"{asset} lacks {field}"
     assert "None" not in states.describe(provenance)
+
+
+@pytest.mark.parametrize("asset", ["rce_moist_equilibrium.npz",
+                                   "rce_moist_2xco2_equilibrium.npz"])
+def test_shipped_moist_states_have_a_saturated_surface(states, soundings,
+                                                       asset):
+    """The moist states were made over a surface saturated at its own
+    temperature, the way page 9 teaches -- not over a fixed specific humidity.
+
+    Until 2026-09-27 they were made with surface_specific_humidity fixed at
+    0.015 kg/kg, which at the ~280 K they settled at was 246 % of saturation
+    (Bowen ratio 0.02). ``SurfaceHumidity`` in ``moist_components()`` is what
+    prevents that now; this pins that the shipped files were made with it.
+    """
+    generator = _generator()
+    state, provenance = states.load(
+        str(DATA / asset), generator.moist_components(),
+        grid_state=get_grid(nx=1, ny=1, nz=generator.NZ))
+
+    assert provenance.get("surface_relative_humidity") == 1.0, (
+        f"{asset} was not made with stepping.SurfaceHumidity(1.0)")
+    assert "SurfaceHumidity" in provenance["components"]
+    surface_temperature = float(state["surface_temperature"].values.ravel()[0])
+    surface_pressure = float(state["surface_air_pressure"].values.ravel()[0])
+    q_sat = float(soundings.saturation_specific_humidity(
+        np.array(surface_temperature), np.array(surface_pressure)))
+    q_surface = float(state["surface_specific_humidity"].values.ravel()[0])
+    # Written from the surface temperature one slab update earlier, so equal
+    # to within that step's change, not exactly.
+    assert q_surface / q_sat == pytest.approx(1.0, abs=0.02), (
+        f"{asset}: surface at {100 * q_surface / q_sat:.0f} % RH")
 
 
 def test_shipped_2xco2_state_is_the_shipped_moist_state_perturbed(states):

@@ -35,32 +35,6 @@ gate a real comparison rather than an interpolation exercise.
 - source: `linepyline:earth_hifi`, HITRAN 2024 + MT_CKD 4.3, pseudovoigt,
   dnu = 0.1 cm⁻¹
 
-### `rce_moist_2xco2_equilibrium.npz` — page 12's 2×CO₂, run offline
-
-`rce_moist_equilibrium.npz` with CO₂ doubled to 660 ppm and re-converged under
-the same two gates, same components, same 5 min timestep. Page 12 loads it
-beside the base state rather than running the experiment: it took 73 600 steps
-(≈ 256 simulated days), which at the ~0.19 s a step the moist column costs in
-the browser is nearly four hours. Page 11's dry 2×CO₂ still runs live — 1000
-steps at 12 h, about three minutes.
-
-Its provenance records what it was perturbed from (`perturbed_from`,
-`perturbed_from_saved_at`, the base's surface temperature) and the warming
-(`warming_k`). `test_shipped_2xco2_state_is_the_shipped_moist_state_perturbed`
-checks that stamp against the shipped base, so regenerating the base without
-this file fails a test instead of quietly changing the number page 12 quotes.
-
-**What the warming does and does not mean.** The moist column never
-reaches TOA = 0. `EmanuelConvectionPython` is not fully energy-conserving
-(a known property of the scheme), so the column settles with a steady TOA
-imbalance of about +0.3 W m⁻² that no amount of stepping removes. The
-|TOA| < 0.5 gate stops a spin-up where TOA first dips inside that band, which
-is not where the column settles. Stepped on for 60 000 steps, the base settles
-0.10 K below its file (279.86 K, TOA +0.31) and the 2×CO₂ state 0.07 K above
-its own (281.68 K, TOA +0.35). **Page 12 quotes the settled difference,
-+1.82 K**, not the +1.647 K between the files.
-`scripts/experiments/tour_rce_shipped_remeasure.py settle-moist` reproduces it.
-
 ### Regenerating
 
 The generation step needs the `linepyline` conda env (it owns the HITRAN line
@@ -88,8 +62,9 @@ thousands of in-browser steps spinning up. `_tour/states.py` loads them;
 
 | | dry (page 11) | moist (page 12) |
 |---|---|---|
-| components | Cork LW, SlabSurface, SimpleBoundaryLayer, DryConvectiveAdjustment | + EmanuelConvectionPython, GridScaleCondensation |
+| components | Cork LW, SlabSurface, SimpleBoundaryLayer, DryConvectiveAdjustment | + EmanuelConvectionPython, SurfaceHumidity, GridScaleCondensation |
 | water vapour | none — a CO₂-only atmosphere | evolves, supplied by the surface |
+| surface humidity | 0 | saturated at the surface's own temperature, every step (`stepping.SurfaceHumidity(1.0)`, page 9) |
 | LW table | `earth_low_res_lw` (14 bands) | `earth_low_res_lw` |
 | grid | nz = 28, one column | nz = 28, one column |
 | timestep | 12 h | 5 min (the Emanuel convention) |
@@ -118,6 +93,49 @@ strict form of the drift the residual test below checks, and it is why the
 shipped step counts (dry ≈ 3500 at 12 h) are larger than Task 0's cold-start
 convergence measurement: Task 0 stopped at the first TOA crossing, which lands
 mid-transient while the surface is still settling.
+
+**The moist column has a gate of its own** (`MOIST_GATE` in the generator).
+Two things are different about it. First, it is noisy: episodic convection
+swings the instantaneous TOA by about 0.5 W m⁻², while its late drift is only
+about 0.05 K a month, and 1000 steps at 5 min is 3.5 days. Second, it never
+reaches TOA = 0. `EmanuelConvectionPython` is not fully energy-conserving, so
+the column settles with a steady imbalance of about −1.1 W m⁻² that no amount
+of stepping removes. So the moist gate works on trends over 60-day
+(17 280-step) windows. The mean surface temperature and the mean TOA must each
+match the previous window's, to 0.01 K and 0.1 W m⁻², and the mean TOA must be
+inside ±2 W m⁻². The file records the residual it settled at
+(`window_mean_toa_w_m2`), and the residual test checks the state against that
+rather than against zero.
+
+**Until 2026-09-27 the moist files were made over a fixed surface specific
+humidity of 0.015 kg kg⁻¹.** At the 280 K they settled at, that is 246 % of
+saturation: a surface evaporating 140 W m⁻² from something wetter than water.
+Both were regenerated over a saturated surface. The plan's Task 9 log has the
+before and after.
+
+### `rce_moist_2xco2_equilibrium.npz` — page 12's 2×CO₂, run offline
+
+`rce_moist_equilibrium.npz` with CO₂ doubled to 660 ppm and re-converged under
+the same gate, same components, same 5 min timestep. Page 12 loads it beside
+the base state rather than running the experiment. It took 180 550 steps
+(≈ 627 simulated days), and at the ~0.19 s a step the moist column costs in
+the browser that is about nine and a half hours. Page 11's dry 2×CO₂ still
+runs live: 1000 steps at 12 h, about three minutes.
+
+Its provenance records what it was perturbed from (`perturbed_from`,
+`perturbed_from_saved_at`, the base's surface temperature) and the warming,
+both file to file (`warming_k`) and between the two gates' last-window means
+(`window_mean_warming_k`).
+`test_shipped_2xco2_state_is_the_shipped_moist_state_perturbed` checks that
+stamp against the shipped base. Regenerating the base without this file then
+fails a test instead of quietly changing the number page 12 quotes.
+
+**The warming.** Stepped on for 60 000 steps, the base settles at
+285.99 K (TOA −1.05) and the 2×CO₂ state at 288.23 K (TOA −1.07), within 0.02 K
+of their files. **Page 12 quotes the settled difference, +2.24 K.** The file
+difference, +2.26 K, agrees with it; the old fixed-humidity files did not,
+because the old gate stopped them wherever TOA first crossed ±0.5.
+`scripts/experiments/tour_rce_shipped_remeasure.py settle-moist` reproduces it.
 
 ### Regenerating
 

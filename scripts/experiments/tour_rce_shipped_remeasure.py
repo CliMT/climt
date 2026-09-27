@@ -4,8 +4,10 @@ Task 0 (`tour_rce_measurements.py`, `tour_rce_moist_probe.py`) measured the
 2xCO2 response and start-independence from runs stopped by a TOA-only gate.
 The shipped equilibria use a stricter one -- TOA balance AND a stationary
 surface temperature -- and sit elsewhere: the dry state at 266.48 K rather
-than 266.60 K, the moist state at 279.97 K rather than 286.67 K. So those
-numbers belong to the wrong equilibria. This script takes the configuration,
+than 266.60 K. (The moist state was 279.97 K rather than 286.67 K until
+2026-09-27, when it was regenerated over a surface saturated at its own
+temperature, with a trend gate of its own; see the generator's MOIST_GATE.)
+So those numbers belong to the wrong equilibria. This script takes the configuration,
 the gate and the loop from `scripts/generate_tour_equilibria.py` itself, so
 there is one definition of each, and measures:
 
@@ -62,7 +64,8 @@ def co2_dry():
         gen.CO2_DOUBLING * base["co2_ppm"] * 1e-6
     started = time.time()
     n_steps = gen.run_to_equilibrium(tendencies, steppers, state,
-                                     gen.DRY_DT_HOURS, print_every=500)
+                                     gen.DRY_DT_HOURS, print_every=500,
+                                     **gen.gate_for("dry"))
     after = _surface(state)
     result = dict(before_k=before, after_k=after, warming_k=after - before,
                   n_steps=n_steps, days=n_steps * gen.DRY_DT_HOURS / 24.0,
@@ -93,7 +96,7 @@ def _independence(kind):
     started = time.time()
     n_steps = gen.run_to_equilibrium(
         tendencies + [relaxation], steppers, state, dt_hours,
-        print_every=500 if not moist else 10000)
+        print_every=500 if not moist else 10000, **gen.gate_for(kind))
 
     _, _, shipped, provenance = gen.load_equilibrium(kind)
     difference = np.abs(_profile(state) - _profile(shipped))
@@ -121,11 +124,12 @@ def settle_moist(n_steps=60000, window_steps=30000):
 
     The moist column never reaches TOA = 0. EmanuelConvectionPython is not
     fully energy-conserving, so the column settles with a steady TOA
-    imbalance of about +0.3 W/m^2. The |TOA| < 0.5 gate stops a spin-up
-    wherever TOA first dips inside that band, which is not where it settles.
-    Page 12's 2xCO2 warming is therefore the difference between the two
-    *settled* surface temperatures: the mean over the last ``window_steps``
-    of ``n_steps``, from each shipped file.
+    imbalance (about -1.1 W/m^2 over the saturated surface; it was +0.3 over
+    the old fixed-humidity one). The generator's moist gate stops on flat
+    60-day trends, so the files should sit where the column settles; this
+    checks that, and measures page 12's 2xCO2 warming as the difference
+    between the two *settled* surface temperatures: the mean over the last
+    ``window_steps`` of ``n_steps``, from each shipped file.
     """
     settled = {}
     for label, filename in (("base", "rce_moist_equilibrium.npz"),

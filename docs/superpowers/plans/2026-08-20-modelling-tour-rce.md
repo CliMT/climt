@@ -2912,7 +2912,7 @@ Radiation dominates ~18×; every non-radiative component this tranche adds is ne
 ```
 (`Te = (240/σ)^¼ = 255.06 K`; skin temp `Te/2^¼ = 214.48 K` — the gray tops sit right at it.) The `convergence` run CRASHED on the 6th stack (`12-moist-rce` at 6 h — the blow-up above), so its shard holds these five; the moist stack was measured separately at 5 min:
 
-**3b — Moist stack at dt = 5 min, numba ON (`scripts/experiments/tour_rce_moist_probe.py`):** *(TOA-only gate: all three runs stopped ~7 K warm of the true equilibrium. Superseded by §7.)*
+**3b — Moist stack at dt = 5 min, numba ON (`scripts/experiments/tour_rce_moist_probe.py`):** *(TOA-only gate: all three runs stopped ~7 K warm of the true equilibrium. Superseded by §7.)* **Superseded 2026-09-27 (Task 9 log):** every moist number here was made with `surface_specific_humidity` fixed at 0.015 kg kg⁻¹, which is 150–250 % of saturation at these surface temperatures. The shipped moist states are now made over a surface held saturated at its own temperature (`SurfaceHumidity(1.0)`).
 
 ```
   default start   n_steps=123400 (428 d)  TOA=+0.262  Tsurf=286.67 K  [856 s native, numba on]
@@ -2929,7 +2929,7 @@ Numba is ON here on purpose: step count is a physics quantity (numba-independent
   12-moist-rce @5 min: default 123400 st (286.67 K), warm-steep 118800 st (286.74 K)
               -> surface |dT| 0.064 K; max column |dT| 3.84 K
 ```
-**Reading — the spec author's decision (this is the plan's Step 5 gate, resolved 2026-09-03).** The script prints `PATH-DEPENDENT` because both stacks exceed its 0.5 K whole-column tolerance, but **the spec author has ruled this is not a path dependence and these are accepted as converged runs.** The evidence supports that: in both stacks the **surface** is reproducible to <0.08 K, both starts met the `|TOA|<0.5` gate, and the residual spread is confined to the slow-relaxing upper column (a whole-column energy gate does not pin the stratosphere, whose radiative relaxation time is far longer than the surface's — a benign feature, not a second attractor). So **both equilibria are shippable as-is; Task 9 does not need a stricter convergence gate.** The `PATH-DEPENDENT` string is a tolerance artifact of the measurement script, not a finding. Page 12 may claim start-independence. **But see §7:** these two moist runs were stopped by the TOA-only gate, both about 7 K warm of the shipped state. The claim was re-measured on converged runs and holds. The earlier `independence-moist` = 21 K was separately pure under-resolution (dt=0.25 h × 12000 steps = 125 d, vs the 428 d needed) and is superseded by the 5-min run above.
+**Reading — the spec author's decision (this is the plan's Step 5 gate, resolved 2026-09-03).** The script prints `PATH-DEPENDENT` because both stacks exceed its 0.5 K whole-column tolerance, but **the spec author has ruled this is not a path dependence and these are accepted as converged runs.** The evidence supports that: in both stacks the **surface** is reproducible to <0.08 K, both starts met the `|TOA|<0.5` gate, and the residual spread is confined to the slow-relaxing upper column (a whole-column energy gate does not pin the stratosphere, whose radiative relaxation time is far longer than the surface's — a benign feature, not a second attractor). So **both equilibria are shippable as-is; Task 9 does not need a stricter convergence gate.** The `PATH-DEPENDENT` string is a tolerance artifact of the measurement script, not a finding. Page 12 may claim start-independence. **But see §7:** these two moist runs were stopped by the TOA-only gate, both about 7 K warm of the shipped state. The claim was re-measured on converged runs and holds. The earlier `independence-moist` = 21 K was separately pure under-resolution (dt=0.25 h × 12000 steps = 125 d, vs the 428 d needed) and is superseded by the 5-min run above. All of §4's moist runs used the fixed 0.015 kg kg⁻¹ surface, superseded 2026-09-27 (Task 9 log).
 
 **5 — 2×CO₂ response (`co2`, from equilibrium, double CO₂, re-converge):**
 
@@ -2937,7 +2937,7 @@ Numba is ON here on purpose: step count is a physics quantity (numba-independent
   11-dry-rce  @12 h:  266.60 -> 267.51 K  (+0.913 K) in   175 steps  TOA +0.409
   12-moist-rce @5 min: 286.67 -> 288.85 K  (+2.179 K) in 20000 steps  TOA +0.487
 ```
-**Superseded by §7: both warmings were measured from runs the TOA-only gate stopped early. Do not quote them.** The moist response is ~2.4× the dry — water-vapour feedback via Emanuel + condensation. (Each pair of end-states sits on opposite sides of the 0.5 W/m² gate, so both warmings carry a few-tenths-K convergence-slop; fine for a teaching page, quote as ≈.)
+**Superseded by §7: both warmings were measured from runs the TOA-only gate stopped early. Do not quote them.** The moist one is also a fixed-0.015 surface; see the Task 9 log (2026-09-27). The moist response is ~2.4× the dry — water-vapour feedback via Emanuel + condensation. (Each pair of end-states sits on opposite sides of the 0.5 W/m² gate, so both warmings carry a few-tenths-K convergence-slop; fine for a teaching page, quote as ≈.)
 
 **6 — Supersaturation page 09 quotes (`supersat`, page-09 stack, dt=1 h, 200 steps):**
 
@@ -2945,9 +2945,11 @@ Numba is ON here on purpose: step count is a physics quantity (numba-independent
   with condensation      peak RH 100.0%   precip 2.693 mm/day   SH 48.54  LH 75.42  Bowen 0.644
   without condensation   peak RH 456.7%   precip 0.000 mm/day   SH 79.50  LH 32.33  Bowen 2.459
 ```
-Without a moisture sink the boundary layer drives the column to **457 %** relative humidity; `GridScaleCondensation` holds it at 100 % and rains out 2.69 mm/day. Bowen ratio over the saturated surface is 0.64.
+Without a moisture sink the boundary layer drives the column to **457 %** relative humidity; `GridScaleCondensation` holds it at 100 % and rains out 2.69 mm/day. Bowen ratio over the saturated surface is 0.64. *(This "saturated surface" was the fixed 0.015 kg kg⁻¹. Page 09 re-measured it with `SurfaceHumidity`; see Task 12's log, "Supersaturation (replaces Task 0 §6)".)*
 
 **7 — Re-measured against the shipped states (2026-09-26).** §3–§5 stopped every run at the first time |TOA| < 0.5 W m⁻². The shipped equilibria (Task 9) also require the surface temperature to stop moving, and they sit elsewhere: dry 266.48 K rather than 266.60 K, moist **279.97 K rather than 286.67 K**. The moist warm-start run below shows why. At step 120 000 it crossed TOA +0.49 W m⁻² at 286.1 K while still cooling 0.2 K per window. The TOA-only gate would have stopped it there, which is Task 0's 286.67 K after 123 400 steps. The TOA imbalance oscillates through zero on its way down, and the old gate stopped on a crossing. Every moist number in §3b–§5 was taken at such a crossing.
+
+> **Superseded 2026-09-27: the moist half of this section.** The moist rows below, and the moist reading and table entries after them, describe states made over the fixed 0.015 kg kg⁻¹ surface (246 % RH at 279.97 K). Both moist states were regenerated over a saturated surface with a moist-specific trend gate. The column now settles at 286.0 K, TOA ≈ −1.1 W m⁻² (not +0.3), and its 2×CO₂ warming is +2.24 K (not +1.82 K). See the Task 9 log, 2026-09-27. The dry rows are unaffected.
 
 Re-measured with `scripts/experiments/tour_rce_shipped_remeasure.py`, which takes its configuration, gate and loop from `scripts/generate_tour_equilibria.py`. The moist 2×CO₂ came from `generate_tour_equilibria.py --moist-2xco2`, which ships its result (Task 9 log). Linux, 4 cores, numba on, `NUMBA_NUM_THREADS=1`:
 
@@ -2982,14 +2984,14 @@ Re-measured with `scripts/experiments/tour_rce_shipped_remeasure.py`, which take
 | 09 | peak RH 100 % (with) vs 457 % (without) condensation; Bowen 0.64 over a saturated surface |
 | 10 | — (no time loop) |
 | 11 | dry state dt 12 h / **3500 steps / 266.48 K** (shipped); 2×CO₂ **+1.20 K**, run live for 1000 steps (§7) |
-| 12 | Emanuel dt 5 min; moist state **200 550 steps (≈ 696 d) / 279.97 K** (shipped); 2×CO₂ **+1.82 K** between the settled states (not the +1.65 K between the files), run offline (§7); settles at TOA ≈ +0.3, not 0 (Emanuel is not fully conservative); start-independent to 0.002 K at the surface (§7) |
+| 12 | *Superseded 2026-09-27 (Task 9 log): moist state 295 800 steps / 286.01 K, TOA ≈ −1.1, 2×CO₂ +2.24 K, start-independent to ≈ 0.05 K at the surface.* Was: Emanuel dt 5 min; moist state **200 550 steps (≈ 696 d) / 279.97 K** (shipped); 2×CO₂ **+1.82 K** between the settled states (not the +1.65 K between the files), run offline (§7); settles at TOA ≈ +0.3, not 0 (Emanuel is not fully conservative); start-independent to 0.002 K at the surface (§7) |
 
 **Decisions taken from these numbers:**
 
 - **Slab depth for pages 11 and 12:** **2 m** (unchanged, the shipped value). No lever applied — see below.
 - **`dt` for each page:** 07 gray **12 h**, 07 14-band **12 h**; 08 **12 h**; 09 illustrative loop **1 h** (equilibrium at 6 h); 11 dry **12 h**; 12 moist **5 min** (the Emanuel convention — **not** the 6 h the 200-step stability test wrongly cleared).
-- **Step counts for the two shipped equilibria:** dry (page 11) **3500 steps @ 12 h** (1750 d); moist (page 12) **200 550 steps @ 5 min** (≈ 696 d). These are the shipped values (Task 9 log). This line originally said ≈1650 and ≈123 400, the TOA-only-gate numbers §7 supersedes.
-- **Levers applied, if any, and why:** **None.** Page 12 is never spun up live in the browser — 200 550 steps × 56.8 ms ≈ **3.2 h** in-browser is impossible (this read 123 400 steps ≈ 117 min before §7) — so it **loads a precomputed equilibrium** (Task 9, already the plan's design), generated natively-with-numba in ~14 min (measured, §3b). Because the browser never runs the spin-up, the browser-cell-time levers (thinner slab / faster perturbation / fewer levels) do not apply, and the shipped-state config stays 2 m / 5 min / nz = 28. ~~Task 9 ships both states directly from this convergence, so no stricter gate or re-run is needed.~~ **Superseded:** Task 9 added the surface-stationarity gate and re-ran both states (Task 9 log), and §7 re-measured everything quoted from them. Page 12's 2×CO₂ re-equilibration is 73 600 steps, about 3.9 h in the browser, so it ships as a third state, `rce_moist_2xco2_equilibrium.npz`.
+- **Step counts for the two shipped equilibria:** dry (page 11) **3500 steps @ 12 h** (1750 d); moist (page 12) **200 550 steps @ 5 min** (≈ 696 d), superseded 2026-09-27 by **295 800** (≈ 1027 d, saturated surface, moist trend gate). These are the shipped values (Task 9 log). This line originally said ≈1650 and ≈123 400, the TOA-only-gate numbers §7 supersedes.
+- **Levers applied, if any, and why:** **None.** Page 12 is never spun up live in the browser — 200 550 steps × 56.8 ms ≈ **3.2 h** in-browser is impossible (this read 123 400 steps ≈ 117 min before §7) — so it **loads a precomputed equilibrium** (Task 9, already the plan's design), generated natively-with-numba in ~14 min (measured, §3b). Because the browser never runs the spin-up, the browser-cell-time levers (thinner slab / faster perturbation / fewer levels) do not apply, and the shipped-state config stays 2 m / 5 min / nz = 28. ~~Task 9 ships both states directly from this convergence, so no stricter gate or re-run is needed.~~ **Superseded:** Task 9 added the surface-stationarity gate and re-ran both states (Task 9 log), and §7 re-measured everything quoted from them. Page 12's 2×CO₂ re-equilibration is 73 600 steps, about 3.9 h in the browser, so it ships as a third state, `rce_moist_2xco2_equilibrium.npz`. (Since 2026-09-27 it is 180 550 steps, ≈ 9.5 h.)
 
 ---
 
@@ -3493,6 +3495,38 @@ by the residual test written first:**
 | final TOA imbalance | +0.500 W m⁻² (just inside the gate) |
 | file size | 31.3 kB |
 | native wall clock | ~9 min, Linux, `NUMBA_NUM_THREADS=1` (≈ 7 ms/step) |
+
+**Both moist states regenerated, 2026-09-27: a saturated surface, and a gate the moist column can pass.** The tables above are history. They describe files that no longer ship.
+
+*Why.* `build_state` wrote `surface_specific_humidity = 0.015` once, and nothing updated it. At the 279.97 K the old base settled at, q_sat(Ts, ps) is 6.09 g/kg, so the surface sat at **246 % relative humidity** (220 % in the 2×CO₂ state). It evaporated from something wetter than water: LH 140.6 W m⁻² against SH 2.6, a Bowen ratio of 0.02. Page 09 teaches that a fixed surface q is wrong for exactly this reason, and introduces `stepping.SurfaceHumidity(rh)` to fix it. Page 12 cannot load a state built the way page 09 calls wrong.
+
+*What changed in `scripts/generate_tour_equilibria.py`.*
+1. `moist_components()` now includes `stepping.SurfaceHumidity(1.0)`. `split` keeps list order, so it is the first stepper, ahead of the boundary layer, which is page 09's order. The fixed value and its constant are gone. The residual test, `split` and the provenance all read this one list. Provenance records `surface_relative_humidity = 1.0`, and `test_shipped_moist_states_have_a_saturated_surface` checks both files for it. The dry path is unchanged (surface q = 0).
+2. **The moist column has its own gate, `MOIST_GATE`.** The first regeneration used the old gate and was rejected. That gate was an instantaneous |TOA| < 0.5 plus a 1000-step drift window. It stopped at 194 400 steps (286.221 K, file TOA −0.18), but the 30-day mean TOA was still −1.7 W m⁻² and falling, and ten steps on the file read −1.32, failing the residual test. The saturated column is noisy: episodic convection moves the surface flux ±40 W m⁻² and the instantaneous TOA by ~0.5 W m⁻² (1 sd). Its late drift is slow, ~0.05 K per 30 days, and at 5 min a 1000-step window is only 3.5 days. Stepping that state on a further 150 000 steps showed where the column settles: **Ts 286.00 K, TOA −1.1 W m⁻², steady.** The stratosphere is in radiative balance (−0.02 W m⁻² of LW heating above 150 hPa), and the slab is not storing anything measurable. So −1.1 W m⁻² is the Emanuel scheme's non-conservation, as the +0.3 was for the old column (Task 8 §7), now with the other sign. No |TOA| threshold below that can be a convergence test. The new gate therefore works on *trends* over 60-day (17 280-step) windows. The mean surface temperature and the mean TOA must each match the previous window's, to 0.01 K and 0.1 W m⁻², and the window-mean TOA must be inside ±2 W m⁻². That last condition rules out the turning point near step 28 000, where the surface peaks while TOA is still −25. Replayed on the measured trajectory, the 30-day windows tried first stopped 0.1 K short. The 60-day gate stops 0.01 K from the settled state. The dry gate is unchanged. Provenance records `toa_gate`, `toa_steady_w_m2`, `window_mean_toa_w_m2`, `window_mean_surface_temperature_k`, and, for 2×CO₂, `window_mean_warming_k`.
+3. **The residual test compares against the file's own settled TOA.** It now requires |TOA after 10 steps − `window_mean_toa_w_m2`| < 1.0. Dry files lack the key and are compared against 0, as before. The 0.05 K surface-drift check is unchanged.
+
+*As generated* (Linux, 4 cores, numba on, `NUMBA_NUM_THREADS=1`, ≈ 7 ms/step, generator defaults: `--moist --moist-2xco2`):
+
+| | moist | moist 2×CO₂ |
+|---|---|---|
+| steps | 295 800 (≈ 1027 d) | 180 550 after doubling (≈ 627 d) |
+| native wall clock | 34 min | 21 min |
+| surface temperature (file / last-window mean) | 285.989 / 286.014 K | 288.251 / 288.237 K |
+| TOA imbalance (file / last-window mean) | −1.270 / −1.095 W m⁻² | −1.197 / −1.029 W m⁻² |
+| surface RH | 100 % | 100 % |
+| SH / LH (30-day mean after loading) | 27.9 / 76.3 W m⁻² | 25.3 / 83.2 W m⁻² |
+| Bowen ratio | 0.37 | 0.30 |
+| precipitation / evaporation | 2.64 / 2.64 mm day⁻¹ | 2.88 / 2.88 mm day⁻¹ |
+| lowest-level q | 3.2–3.3 g kg⁻¹ | 3.8–4.1 g kg⁻¹ |
+| warming | | +2.262 K file to file; +2.223 K window mean to window mean |
+| residual test (10 steps) | TOA −0.645, ΔTs −0.0013 K | TOA −1.101, ΔTs −0.0040 K |
+| file size | 31.3 kB | 31.4 kB |
+
+For comparison, the old files measured over 1000 steps under their own fixed-q physics: base 279.965 K, 246 % RH, SH 2.6 / LH 140.6 W m⁻², Bowen 0.018, P 4.82 mm day⁻¹, TOA −0.09, lowest-level q 5.7 g kg⁻¹. The 2×CO₂ state: 281.613 K, 220 %, SH 6.7 / LH 133.1, Bowen 0.050, P 4.60, TOA +0.50, q 6.0 g kg⁻¹.
+
+*Re-measured* (`tour_rce_shipped_remeasure.py`, 2026-09-27): `settle-moist` steps each shipped state on 60 000 steps and averages the last 30 000. The base settles at **285.990 K**, TOA −1.045 (std 0.48), trend −0.026 K per 100 d, which is 0.001 K from its file. The 2×CO₂ state settles at **288.228 K**, TOA −1.066 (std 0.54), trend −0.001 K per 100 d, 0.02 K below its file. **Settled 2×CO₂ warming +2.24 K.** `indep-moist` starts warm and steep (328 K air at 9 K/km, 330 K surface) under the new gate. It stopped at 307 700 steps with Tsurf 286.037 K, against the shipped 285.989 K. The column's maximum |ΔT| is 0.66 K at 3 hPa, and 0.50 K below 200 hPa. Both are single-instant comparisons in a column whose surface wanders ~0.05 K step to step and whose convection is episodic, so the 0.05 K surface difference is at the noise level. **Start-independent to ≈ 0.05 K at the surface.** Task 8 §7's 0.002 K belonged to the smoother fixed-q column.
+
+The saturated column is 6 K warmer than the fixed-q one. The old surface sent about 140 W m⁻² into latent heat, far more than the column could radiate away, and it ended cold and wet near the ground. Its 2×CO₂ response grows from +1.82 K to +2.24 K. That is about 1.9× the dry +1.20 K rather than 1.5×, because the surface now dries and moistens with its own temperature, so a warmer surface evaporates more and the water-vapour feedback is no longer muted. The browser cost of the 2×CO₂ experiment is now 180 550 × ~0.19 s ≈ 9.5 h, so it still ships.
 
 ---
 
@@ -5045,11 +5079,11 @@ If `test_page12_precipitation_balances_evaporation_at_equilibrium` fails with pr
 1. **Headline figure**: the moist equilibrium profile against page 11's dry one, with the dry adiabat and a moist adiabat drawn over both, and the specific humidity profile in a second panel. Captured by `generate.py`.
 2. **The lapse rate, measured**, in the lower troposphere, against 9.8 and 6.5.
 3. **The moisture budget**: precipitation and evaporation printed side by side, with the residual.
-4. **The knob, run offline**: load `rce_moist_2xco2_equilibrium.npz` beside the base state, print its `states.describe` block (660 ppm, 73 600 steps), and compare the two states: the surface warming, the two temperature profiles and the two humidity profiles. Compare the sensitivity with page 11's dry +1.20 K and say why they differ. **The cell does not integrate.** At dt = 5 min the re-equilibration is 73 600 steps, nearly four hours in the browser, so it ships (see `_data/README.md`, and `generate_tour_equilibria.py --moist-2xco2`). The prose above the cell says so, and says that page 11 ran its own doubling live, so the reader knows what they are being handed and why. The short live run a reader *can* afford (say 500 steps from the doubled base, ~1.5 min) shows the warming starting, and is an optional code exercise, not the cell.
+4. **The knob, run offline**: load `rce_moist_2xco2_equilibrium.npz` beside the base state, print its `states.describe` block (660 ppm, 180 550 steps), and compare the two states: the surface warming, the two temperature profiles and the two humidity profiles. Compare the sensitivity with page 11's dry +1.20 K and say why they differ. **The cell does not integrate.** At dt = 5 min the re-equilibration is 180 550 steps, about nine and a half hours in the browser, so it ships (see `_data/README.md`, and `generate_tour_equilibria.py --moist-2xco2`). The prose above the cell says so, and says that page 11 ran its own doubling live, so the reader knows what they are being handed and why. The short live run a reader *can* afford (say 500 steps from the doubled base, ~1.5 min) shows the warming starting, and is an optional code exercise, not the cell.
 
-   **Which number to quote: +1.82 K**, about 1.5× page 11's dry +1.20 K. That is the difference between the two states *as they settle* when stepped on (Task 8 log §7, `tour_rce_shipped_remeasure.py settle-moist`), not the +1.647 K between the files. The files were stopped by the ±0.5 W m⁻² gate on the way to a settled state that is not at TOA = 0.
+   **Which number to quote: +2.24 K**, about 1.9× page 11's dry +1.20 K. It is the difference between the two states *as they settle* when stepped on (`tour_rce_shipped_remeasure.py settle-moist`, Task 9 log 2026-09-27). The files agree with it: +2.262 K file to file, and +2.223 K between the gate's last-window means, which is what the provenance's `window_mean_warming_k` records. The moist gate now stops on flat 60-day trends, so the files sit within about 0.02 K of where the column settles. Quote the settled number and give the file difference as a cross-check. *(Until 2026-09-27 this said +1.82 K. That number came from states made over a fixed, 246 %-saturated surface; see the Task 9 log.)*
 
-   **The page must not claim the moist column balances at the top.** `EmanuelConvectionPython` is not fully energy-conserving (known), so this column settles with TOA ≈ +0.3 W m⁻² and stays there. `budgets.summary` will print that number, so the page says what it is before a reader finds it: the scheme's non-conservation, visible as a residual that does not decay. Contrast it with page 11's dry column, whose residual does decay. The *moisture* budget (cell 3) is a separate claim, and still closes.
+   **The page must not claim the moist column balances at the top.** `EmanuelConvectionPython` is not fully energy-conserving (known). This column settles with TOA ≈ −1.1 W m⁻² and stays there, and the file's own `window_mean_toa_w_m2` records it. `budgets.summary` will print that number, so the page says what it is before a reader finds it: the scheme's non-conservation, visible as a residual that does not decay. The stratosphere is in radiative balance and the slab is not storing anything, so this is not a slow adjustment. Contrast it with page 11's dry column, whose residual does decay. The *moisture* budget (cell 3) is a separate claim, and still closes (P 2.64 vs E 2.64 mm day⁻¹ over 30 days).
 5. **Timestep sensitivity, demonstrated rather than asserted**: run a short perturbation at two timesteps and compare. This is where the page cashes the cheque the warning note writes.
 
 **Prose:**
@@ -5077,7 +5111,7 @@ If `test_page12_precipitation_balances_evaporation_at_equilibrium` fails with pr
 | [Moist RCE](12-moist-rce.qmd) | 12 and beyond | the lapse rate tranche 1 assumed, finally explained |
 ```
 
-**Browser cost check.** Cell 4 no longer integrates. It loads a second shipped state, so it is instant. That decision was taken because the live version would be 73 600 steps × ~0.19 s ≈ 3.9 h. The levers in Task 8 Step 8 would not have saved it: they change the column, so the page would no longer be perturbing the equilibrium it loaded. Cell 5 (timestep sensitivity) is now the expensive one. Keep it to a short perturbation, and **print its expected wall time above the cell**.
+**Browser cost check.** Cell 4 no longer integrates. It loads a second shipped state, so it is instant. That decision was taken because the live version would be 73 600 steps × ~0.19 s ≈ 3.9 h (since 2026-09-27, 180 550 steps ≈ 9.5 h). The levers in Task 8 Step 8 would not have saved it: they change the column, so the page would no longer be perturbing the equilibrium it loaded. Cell 5 (timestep sensitivity) is now the expensive one. Keep it to a short perturbation, and **print its expected wall time above the cell**.
 
 ```bash
 git commit -m "docs(tour): page 12, and the 6.5 K/km that page 1 assumed
@@ -5089,7 +5123,22 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 *Fill in: surface temperature, lower-tropospheric lapse rate, precipitation and evaporation and their residual, the timestep-sensitivity result, browser wall time for cell 5.*
 
-Already measured, 2026-09-26 (`generate_tour_equilibria.py --moist-2xco2`, from the shipped base saved 2026-09-04T04:59:51):
+**Current, 2026-09-27** (saturated surface, moist trend gate; Task 9 log). Generated with `generate_tour_equilibria.py --moist --moist-2xco2`; the 2×CO₂ state is stamped with the base's `saved_at` 2026-09-27T02:22:56:
+
+| | base | 2×CO₂ |
+|---|---|---|
+| CO₂ | 330 ppm | 660 ppm |
+| steps (dt = 5 min) | 295 800 (≈ 1027 d) | 180 550 after doubling (≈ 627 d) |
+| surface temperature (file / last-window mean) | 285.989 / 286.014 K | 288.251 / 288.237 K |
+| TOA imbalance (file / last-window mean) | −1.270 / −1.095 W m⁻² | −1.197 / −1.029 W m⁻² |
+| surface RH | 100 % | 100 % |
+| SH / LH, Bowen ratio | 27.9 / 76.3 W m⁻², 0.37 | 25.3 / 83.2 W m⁻², 0.30 |
+| P / E | 2.64 / 2.64 mm day⁻¹ | 2.88 / 2.88 mm day⁻¹ |
+| file difference | | +2.262 K (window means +2.223 K) |
+| settled, 60 000 steps on (mean of last 30 000) | 285.990 K, TOA −1.045 | 288.228 K, TOA −1.066 |
+| **settled 2×CO₂ warming** | | **+2.24 K** |
+
+*Superseded: the states made over a fixed 0.015 kg kg⁻¹ surface (246 % / 220 % RH).* Already measured, 2026-09-26 (`generate_tour_equilibria.py --moist-2xco2`, from the shipped base saved 2026-09-04T04:59:51):
 
 | | base | 2×CO₂ |
 |---|---|---|
