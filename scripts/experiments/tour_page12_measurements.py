@@ -25,7 +25,9 @@ everything below is a mean, over 30 days unless it says otherwise.
     energy     5 days: the column enthalpy (cp_dry T + Lv q) each component
                adds, W/m^2 -- where the settled TOA residual comes from
     heating    5 days: each stepper's heating by level, where the column is
-               saturated, and Emanuel's CAPE and mass flux
+               saturated, and Emanuel's mass flux (and its misnamed 'CAPE')
+    closure    1 day, JIT off: Emanuel's own parcel buoyancy, its positive
+               area, and the cloud-base closure terms that limit it
     timestep   the shipped state stepped 60 days at 2.5, 5, 10 and 20 min
     nogsc      code exercise 2: GridScaleCondensation removed, 300 days
     nodca      DryConvectiveAdjustment removed, 300 days
@@ -306,8 +308,62 @@ def heating(days=5):
               + " ".join(f"{heat[n][k] / days:12.3f}" for n in names)
               + f"  {condensing[k] / n_steps:.3f}")
     cape, flux = np.array(cape), np.array(flux)
-    print(f"  Emanuel CAPE: mean {cape.mean():.2f}, max {cape.max():.2f} J/kg; "
+    # Not CAPE: the scheme's OUTCAPE is an internal cloud-top sum, in K.
+    print(f"  Emanuel 'CAPE' output: mean {cape.mean():.2f}, max "
+          f"{cape.max():.2f} (K dp/p, not J/kg); "
           f"cloud-base mass flux > 0 on {np.mean(flux > 0):.0%} of steps")
+
+
+def closure(steps=288, minutes=5.0):
+    """Why Emanuel's scheme rains so little: trace its own parcel and its
+    cloud-base closure through ``_convect_functional_np`` (pure_python_v3).
+
+    Needs ``NUMBA_DISABLE_JIT=1``: the locals are read with a profile hook,
+    which sees nothing inside a compiled function.
+    """
+    if os.environ.get("NUMBA_DISABLE_JIT") != "1":
+        print("  needs NUMBA_DISABLE_JIT=1")
+        return
+    tendencies, steppers, state, _ = load()
+    timestep = climt.UnytTimeDelta(minutes=minutes)
+    calls = []
+
+    def hook(frame, event, arg):
+        if (event == "return"
+                and frame.f_code.co_name == "_convect_functional_np"
+                and "DTMA" in frame.f_locals):
+            f = frame.f_locals
+            calls.append(dict(
+                (k, f[k]) for k in ("DTMA", "DTPBL", "CBMF", "DAMPS"))
+                | dict(TVP=f["TVP"].copy(), TV=f["TV"].copy(),
+                       P=f["P"].copy(), PH=f["PH"].copy()))
+
+    sys.setprofile(hook)
+    try:
+        stepping.integrate(tendencies, steppers, state, timestep, steps)
+    finally:
+        sys.setprofile(None)
+    c = _constants()
+    areas = []
+    for call in calls:
+        n = len(call["P"]) - 1
+        buoyancy = call["TVP"][:n] - call["TV"][:n]
+        lifted = call["TVP"][:n] != 0
+        dlnp = np.log(call["PH"][:-1] / call["PH"][1:])[:n]
+        areas.append(c["Rd"] * np.sum(np.clip(buoyancy, 0, None)
+                                      * lifted * dlnp))
+    for key in ("DTMA", "DTPBL", "CBMF", "DAMPS"):
+        v = np.array([call[key] for call in calls], dtype=float)
+        print(f"  {key:6s} mean {v.mean():+.4g}  min {v.min():+.4g}  "
+              f"max {v.max():+.4g}")
+    print(f"  mass flux > 0 on {np.mean([x['CBMF'] > 0 for x in calls]):.0%}"
+          f" of calls; parcel positive area mean {np.mean(areas):.0f} J/kg")
+    last = calls[-1]
+    print("  last call, parcel minus environment virtual temperature (K):")
+    for k in range(len(last["P"]) - 1):
+        if last["TVP"][k] != 0:
+            print(f"    {last['P'][k]:7.1f} hPa  "
+                  f"{last['TVP'][k] - last['TV'][k]:+.2f}")
 
 
 def timestep(days=60):
@@ -430,12 +486,12 @@ def main():
     # The ImplicitTendencyComponent warning, once per AdamsBashforth: the page
     # explains it; here it is noise.
     warnings.filterwarnings("ignore", message="Using an ImplicitTendency")
-    tasks = dict(month=month, energy=energy, heating=heating,
+    tasks = dict(month=month, energy=energy, heating=heating, closure=closure,
                  timestep=timestep, nogsc=nogsc, nodca=nodca,
                  feedback=feedback, adiabat=adiabat, cost=cost)
     names = sys.argv[1:] or ["all"]
     if names == ["all"]:
-        names = [n for n in tasks if n != "cost"]
+        names = [n for n in tasks if n not in ("cost", "closure")]
     for name in names:
         print(f"== {name}", flush=True)
         tasks[name]()

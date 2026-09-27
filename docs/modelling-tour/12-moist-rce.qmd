@@ -77,9 +77,8 @@ simulated days, which would take about thirteen hours in your browser. The file
 beside this page, `_data/rce_moist_equilibrium.npz`, is where it ended.
 
 The timestep is 5 minutes, not page 11's 12 hours, because of Emanuel's scheme.
-climt's own examples all run it at 5 minutes, and a 5-minute timescale is among
-the scheme's parameters: `reference_mass_flux_timescale` defaults to 300 s. The
-last cell on this page shows what changes when you step it at 10 minutes.
+climt's own examples all run it at 5 minutes, and the scheme's internal
+reference timescale is 300 s. The last cell on this page shows what changes when you step it at 10 minutes.
 
 The first cell builds the component list, loads the equilibrium, and prints the
 configuration the file carries. It runs in a few seconds. Two lines are new
@@ -156,7 +155,9 @@ print(f"{'dry surface (p. 11)':20s} "
 The surface is at 285.99 K, 19.51 K warmer than page 11's. The TOA imbalance in
 the file is −1.27 W m⁻², and the column settled at about −1.1 W m⁻², the mean
 over the last 60 days of its spin-up. **This column never balances at the top.**
-Page 11's dry column does: its 30-day mean is +0.01 W m⁻². The budget section
+Page 11's dry column does: stepped on from its file, its TOA imbalance averages
++0.01 W m⁻² over 30 days (`scripts/experiments/tour_page11_measurements.py
+convection`). The budget section
 below shows which component is responsible, and it is not the one you might
 guess.
 
@@ -430,8 +431,18 @@ Three measurements say why. They come from the cells below and from
   through the shaded layer in the right panel.
 - **Almost all the rain is grid-scale.** Of the 2.65 mm day⁻¹ this column
   rains, averaged over 30 days, Emanuel's scheme supplies 0.03 mm day⁻¹. It is
-  active, with a non-zero cloud-base mass flux on 63 % of steps, but its own
-  CAPE diagnostic is never positive over five days (mean −4 J kg⁻¹).
+  not for want of instability. The scheme's own parcel, lifted from the lowest
+  level, is buoyant from 836 hPa to about 180 hPa, by up to 6.1 K at 370 hPa,
+  and its positive area is about 1700 J kg⁻¹. But the scheme decides how much
+  air to lift by looking only at cloud base. To get there, its parcel crosses the
+  stable layer near the ground and enters the dry-adjusted layer up to 0.89 K
+  cooler than the air around it, right at the 0.9 K deficit the scheme tolerates
+  (its `DTMAX`). The closure's measure of cloud-base buoyancy averages −0.27 K,
+  so the mass flux it lifts stays close to zero: 1.1 × 10⁻³ kg m⁻² s⁻¹ on
+  average over a day, and 4.8 × 10⁻³ at most
+  (`tour_page12_measurements.py closure`). (The scheme also outputs an
+  `atmosphere_convective_available_potential_energy`. Despite the name, it is an
+  internal cloud-top sum in kelvin, not CAPE.)
 - **The latent heat is released at the levels that saturate.** The vapour mixed
   up to the top of the adjusted layer condenses just above it, at 745 hPa, and
   in the levels up to 370 hPa that saturate from time to time.
@@ -698,9 +709,10 @@ cross-check, the difference between the two spin-ups' last 60-day means, is
 OLR of the moist column by 4.69 W m⁻², a little more than the dry column's 4.08.
 To get those watts back, the column warms. Warmer temperatures alone would raise
 the OLR by 3.95 W m⁻² per kelvin of surface warming. But the warmer air holds more
-vapour, 24 % more near the ground and 19 to 28 % more through the lower
-troposphere, and the extra vapour on its own lowers the OLR by 1.89 W m⁻² per
-kelvin. Each kelvin of warming buys only the difference, about 2 W m⁻². Had the
+vapour: averaged over 30 days of each state, 24 % more near the ground and 19 to
+28 % more through the lower troposphere (`tour_page12_measurements.py month`;
+the cell's right panel shows the same change file to file). The extra vapour
+on its own lowers the OLR by 1.89 W m⁻² per kelvin. Each kelvin of warming buys only the difference, about 2 W m⁻². Had the
 vapour stayed where it was, the column would have warmed by 1.19 K: almost
 exactly page 11's dry answer. **The water vapour feedback is the whole
 difference between the two sensitivities.**
@@ -708,7 +720,8 @@ difference between the two sensitivities.**
 The lapse rate hardly changes. Averaged over 30 days, the layers below 500 hPa
 lapse at 9.07 K km⁻¹ in the base state and 9.02 in the doubled one
 (`tour_page12_measurements.py month`), so the upper air warms nearly as much as
-the lower: 2.6 K near the ground, 2.3 K at 400 hPa. On Earth the moist adiabat
+the lower: over the same 30-day means, 2.6 K near the ground and 2.3 K at
+424 hPa. On Earth the moist adiabat
 makes the upper troposphere warm more than the surface, which offsets part of
 the water vapour feedback. This column stays close to the dry adiabat for most
 of its depth, so it has almost none of that offset.
@@ -747,8 +760,12 @@ print(f"\n{N_DAYS}-day mean temperature, largest difference: "
 ```
 
 The warning was right about Emanuel's scheme. At 10 minutes it rains
-0.002 mm day⁻¹ over the two days, against 0.029 at 5. Its output depends on the
-step it is called with, which is what sympl says it cannot vouch for. Over
+0.002 mm day⁻¹ over the two days, against 0.029 at 5. sympl's warning is
+generic, and knows nothing of this scheme, but here the step dependence is
+written into the closure. Each call adds 0.01 × its cloud-base buoyancy to the
+mass flux, however long the step, and damps the mass flux by a fraction
+0.1 × dt/300 s. Double the step and the damping per hour is nearly unchanged,
+but the push per hour is halved. Over
 30 days of a 60-day run the scheme's rain goes 0.056, 0.029, 0.007 and
 0.000 mm day⁻¹ at 2.5, 5, 10 and 20 minutes: it roughly halves, or worse, each
 time the step doubles (`tour_page12_measurements.py timestep`).
