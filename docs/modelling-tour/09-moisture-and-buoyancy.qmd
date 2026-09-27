@@ -143,8 +143,8 @@ and 44.1 at 30 minutes. Hourly is where halving the step stops mattering much.
 
 **This cell takes about two minutes in a browser.** That is 720 steps at about
 0.18 s each in Pyodide, measured with the JIT off, the native stand-in for the
-browser. The 14-band radiation costs about 14 times as much per step as page 8's
-gray radiation, and it is nearly all of the cost.
+browser. The 14-band radiation costs about 16 times as much per step as page 8's
+gray column (0.18 s against about 11 ms), and it is nearly all of the cost.
 
 ```{pyodide}
 N_DAYS = 30
@@ -282,8 +282,8 @@ The headline figure shows two more things worth a look. In the left panel, θ
 statically unstable, and nothing on this page removes it. [Page 10](10-dry-convection.qmd) introduces the
 component that does. In the middle panel, the water has not got far. It fills the
 air below about 875 hPa, where the boundary layer's mixing stops, and saturates
-it. Above that the air is still as dry as climt's default state left it. Nothing on this page lifts vapour
-out of the boundary layer. That takes moist convection, which is page 12's
+it. Above that the air is still as dry as climt's default state left it.
+Nothing on this page lifts vapour out of the boundary layer. That takes moist convection, which is page 12's
 subject.
 
 ::: {.callout-note}
@@ -419,7 +419,8 @@ for label, run in continued.items():
 ```
 
 With condensation, the peak relative humidity never exceeds 100 %, and 1.89 mm of
-rain falls a day. Without it, the peak is 219 % after one day and 707 % after ten.
+rain falls a day. Without it, the peak is 707 % after ten days (219 % after the first day, measured
+by `scripts/experiments/tour_page9_measurements.py`).
 It sits at about 836 hPa, near the top of the boundary layer, where the mixing
 carries surface air up into air that is several kelvin colder. That air can hold
 far less water, and without a sink nothing takes the excess out.
@@ -455,8 +456,8 @@ stops. A column that can evaporate but cannot rain has no equilibrium. That is w
    the Bowen ratio falls along a straight line.
 
 3. **The water-vapour greenhouse, supplied.** A moist column converges at 289.4 K
-   and a dry-surface column at 266.6 K. Set `SURFACE_RH = 0.0`, re-run the first
-   two cells, and confirm that the dry column's humidity stays at zero and its
+   and a dry-surface column at 266.6 K. Set `SURFACE_RH = 0.0` in the first cell
+   (it is bound into `moist_column` when that cell runs), re-run the first two cells, and confirm that the dry column's humidity stays at zero and its
    latent flux vanishes. Which of the page's components read `specific_humidity`
    at all? Print each one's `input_properties` to find out.
 
