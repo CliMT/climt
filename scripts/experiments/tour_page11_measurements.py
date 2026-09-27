@@ -27,6 +27,8 @@ mean over the last 30 days (60 steps) as well.
                 equilibrium page 11 draws dashed
     co2         2x and 0.5x CO2 from the shipped state, 1000 steps each, as the
                 page's knob cell runs it
+    settle      the shipped state stepped 10 000 more steps: how much its top
+                level still cools
     order       the craft callout: the adjustment before the boundary layer
     noadjust    code exercise 2: the shipped state with DryConvectiveAdjustment
                 removed, 1000 steps
@@ -199,13 +201,26 @@ def radiative():
     print(f"  OLR, one LW call: RCE {olr(rce):.2f}; RCE surface under RE air "
           f"{olr(hybrid):.2f} W/m^2 (air warming worth "
           f"{olr(rce) - olr(hybrid):+.2f})")
+    # The split: chill the *surface* and hold the air fixed. Chilling the air
+    # instead changes its temperature-dependent k-distribution and makes the
+    # column more transparent (it gives 244.06, more than the whole OLR).
+    sigma = 5.670374419e-8
+    Ts = surface(rce)
+    cold_ground = copy.deepcopy(rce)
+    cold_ground["surface_temperature"].values[:] = 1.0
+    air_only = olr(cold_ground)
+    print(f"  air's own emission to space (surface at 1 K): {air_only:.2f}; "
+          f"surface shining through {olr(rce) - air_only:.2f} W/m^2 = "
+          f"{(olr(rce) - air_only) / (sigma * Ts ** 4):.0%} of sigma Ts^4")
+    warm_ground = copy.deepcopy(rce)
+    warm_ground["surface_temperature"].values[:] = Ts + 1.0
+    direct = olr(warm_ground) - olr(rce)
+    print(f"  surface +1 K, air fixed: OLR {direct:+.2f} W/m^2 = "
+          f"{direct / (4 * sigma * Ts ** 3):.0%} of 4 sigma Ts^3; x 1.30 K = "
+          f"{1.30 * direct:.2f}")
     cold_air = copy.deepcopy(rce)
     cold_air["air_temperature"].values[:] = 1.0
-    sigma = 5.670374419e-8
-    print(f"  RCE surface emission reaching space with the air at 1 K: "
-          f"{olr(cold_air):.2f} W/m^2 of sigma Ts^4 = "
-          f"{sigma * surface(rce) ** 4:.2f} "
-          f"({olr(cold_air) / (sigma * surface(rce) ** 4):.0%})")
+    print(f"  (the wrong split, air at 1 K: {olr(cold_air):.2f} W/m^2)")
 
 
 def _perturbed(factor, n_steps=1000, drop_adjustment=False,
@@ -315,6 +330,18 @@ def order():
           f"; at {where} hPa; lowest thetas now {np.round(th[:5], 2).tolist()}")
 
 
+def settle(n_steps=10000):
+    """How far the shipped state still has to go: 10 000 more steps."""
+    tendencies, steppers, state, _ = gen.load_equilibrium("dry")
+    start = state["air_temperature"].values[:, 0, 0].copy()
+    p = state["air_pressure"].values[:, 0, 0] / 100.0
+    stepping.integrate(tendencies, steppers, state, DT, n_steps)
+    change = state["air_temperature"].values[:, 0, 0] - start
+    print(f"  after {n_steps} more steps, dT by level (K):")
+    for k in range(len(p) - 1, 17, -1):
+        print(f"    {p[k]:7.1f} hPa  {change[k]:+.2f}")
+
+
 def cost(n=20, warmup=3):
     tendencies, steppers, state, _ = gen.load_equilibrium("dry")
     stepping.integrate(tendencies, steppers, state, DT, warmup)
@@ -333,7 +360,8 @@ def cost(n=20, warmup=3):
 
 
 MEASUREMENTS = dict(convection=convection, radiative=radiative, co2=co2,
-                    noadjust=noadjust, order=order, cost=cost)
+                    noadjust=noadjust, order=order, settle=settle,
+                    cost=cost)
 
 
 def main():

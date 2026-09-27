@@ -2919,7 +2919,7 @@ def test_page11_the_shipped_column_is_dry():
         pytest.approx(266.48, abs=0.005)
 
 
-@pytest.mark.slow
+@pytest.mark.slow     # one step, but ~11 s run alone: numba compiling the stack
 def test_page11_convecting_layer_is_dry_adiabatic():
     """Page 11's reveal, and the number tranche 1 assumed away.
 
@@ -3047,28 +3047,57 @@ def test_page11_page7_profile_is_page7s_column_at_equilibrium(monkeypatch):
 
 def test_page11_the_surface_shines_through_the_window(monkeypatch):
     """Physics exercise 1 and the "Against page 7" prose: one longwave call
-    on hybrids of the two states."""
+    on hybrids of the two states.
+
+    The split holds the air -- and so its temperature-dependent absorption --
+    fixed and chills the surface. Chilling the air instead makes the column
+    more transparent, and "the surface alone" then exceeds the whole OLR.
+    """
     with _unyt_backend_restored():
         namespace = _page11_cells(1, monkeypatch)
         state, longwave = namespace["state"], namespace["components"][0]
+        Ts = float(state["surface_temperature"].values.ravel()[0])
 
-        def olr(column):
+        def olr(column, air=None, surface=None):
+            column = copy.deepcopy(column)
+            if air is not None:
+                column["air_temperature"].values[:, 0, 0] = air
+            if surface is not None:
+                column["surface_temperature"].values[:] = surface
             return float(longwave(column)[1][
                 "upwelling_longwave_flux_in_air"].values[-1, 0, 0])
 
-        hybrid = copy.deepcopy(state)
-        hybrid["air_temperature"].values[:, 0, 0] = namespace["PAGE7_T"]
-        cold_air = copy.deepcopy(state)
-        cold_air["air_temperature"].values[:] = 1.0
-        base, warm_air_off, surface_only = (olr(state), olr(hybrid),
-                                            olr(cold_air))
-    sigma_T4 = 5.670374419e-8 * float(
-        state["surface_temperature"].values.ravel()[0]) ** 4
+        base = olr(state)
+        page7_air = olr(state, air=namespace["PAGE7_T"])
+        air_only = olr(state, surface=1.0)
+        direct = olr(state, surface=Ts + 1.0) - base
+        wrong_split = olr(state, air=1.0)
+    sigma = 5.670374419e-8
     assert base == pytest.approx(239.96, abs=0.005)
-    assert warm_air_off == pytest.approx(235.53, abs=0.005)
-    assert base - warm_air_off == pytest.approx(4.43, abs=0.005)
-    assert surface_only == pytest.approx(244.06, abs=0.005)
-    assert surface_only / sigma_T4 == pytest.approx(0.85, abs=0.005)
+    assert page7_air == pytest.approx(235.53, abs=0.005)
+    assert base - page7_air == pytest.approx(4.43, abs=0.005)
+    assert air_only == pytest.approx(27.69, abs=0.005)
+    assert base - air_only == pytest.approx(212.27, abs=0.005)
+    assert (base - air_only) / (sigma * Ts ** 4) == pytest.approx(0.74,
+                                                                  abs=0.005)
+    assert direct == pytest.approx(3.37, abs=0.005)
+    assert direct / (4 * sigma * Ts ** 3) == pytest.approx(0.79, abs=0.005)
+    assert 1.30 * direct == pytest.approx(4.38, abs=0.005)
+    assert wrong_split == pytest.approx(244.06, abs=0.005)
+    assert wrong_split > base, "the artefact the exercise warns about"
+
+
+def _page11_unperturbed_mean(tendencies, steppers, state, provenance):
+    """The knob cell's baseline: the 30-day mean surface temperature of a
+    copy of ``state`` stepped 60 steps unperturbed. ``state`` is untouched."""
+    stepping_module = _load("stepping")
+    timestep = climt.UnytTimeDelta(hours=provenance["dt_hours"])
+    record = stepping_module.Recorder(
+        timestep,
+        surface=lambda s: float(s["surface_temperature"].values.ravel()[0]))
+    stepping_module.integrate(tendencies, steppers, copy.deepcopy(state),
+                              timestep, PAGE11_MONTH_STEPS, after_step=record)
+    return record.mean("surface", days=30)
 
 
 @pytest.mark.slow
@@ -3078,8 +3107,9 @@ def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
     Tranche 1's page 5 could only compute the forcing. This integrates to the
     new equilibrium, as the page's knob cell does -- one 1000-step
     ``integrate`` -- and reads the warming off: the 30-day mean surface
-    temperature minus the shipped one. Measured +1.16 K (the plan's +1.20 was
-    a single sample from a loop that restarts AdamsBashforth every 50 steps).
+    temperature minus the unperturbed column's 30-day mean. Measured +1.15 K
+    (the plan's +1.20 was a single sample from a loop that restarts
+    AdamsBashforth every 50 steps).
     """
     with _unyt_backend_restored():
         tendencies, steppers, state, provenance = _page11_equilibrium()
@@ -3091,7 +3121,8 @@ def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
             return float(longwave(column)[1][
                 "upwelling_longwave_flux_in_air"].values[-1, 0, 0])
 
-        before = float(state["surface_temperature"].values.ravel()[0])
+        before = _page11_unperturbed_mean(tendencies, steppers, state,
+                                          provenance)
         perturbed = copy.deepcopy(state)
         perturbed["mole_fraction_of_carbon_dioxide_in_air"].values[:] *= 2.0
         forcing = olr(state) - olr(perturbed)
@@ -3109,12 +3140,13 @@ def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
 
     final = record.mean("surface", days=30)
     warming = final - before
-    assert 0.70 < warming < 1.62, (
+    assert 0.69 < warming < 1.61, (
         f"2xCO2 dry surface warming {warming:+.2f} K is outside +-40% of the "
-        "measured +1.16 K -- check that the run reached equilibrium")
-    assert warming == pytest.approx(1.16, abs=0.01), "the page quotes +1.16 K"
+        "measured +1.15 K -- check that the run reached equilibrium")
+    assert warming == pytest.approx(1.15, abs=0.005), "the page quotes +1.15 K"
     assert forcing == pytest.approx(4.08, abs=0.005)
-    assert forcing / warming == pytest.approx(3.51, abs=0.02)
+    assert forcing / warming == pytest.approx(3.54, abs=0.005)
+    assert forcing / 3.37 == pytest.approx(1.21, abs=0.005)
     assert abs(imbalance) < 0.5, (
         f"TOA imbalance {imbalance:+.3f} W/m^2 -- the perturbed run has not "
         f"equilibrated in {PAGE11_2XCO2_STEPS} steps, so the warming is a "
@@ -3128,10 +3160,11 @@ def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
 
 @pytest.mark.slow
 def test_page11_halving_co2_is_roughly_symmetric():
-    """Code exercise 1: -1.10 K for halving against +1.16 K for doubling."""
+    """Code exercise 1: -1.10 K for halving against +1.15 K for doubling."""
     with _unyt_backend_restored():
         tendencies, steppers, state, provenance = _page11_equilibrium()
-        before = float(state["surface_temperature"].values.ravel()[0])
+        before = _page11_unperturbed_mean(tendencies, steppers, state,
+                                          provenance)
         state["mole_fraction_of_carbon_dioxide_in_air"].values[:] *= 0.5
         timestep = climt.UnytTimeDelta(hours=provenance["dt_hours"])
         record = _load("stepping").Recorder(

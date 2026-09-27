@@ -4851,16 +4851,18 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 | tropopause | no temperature minimum: T falls to 111.73 K at the lid; lapse < 9 K/km above ~340 hPa, ~1.3 K/km at the top | cell 2 |
 | lowest three layers | 4.9, 2.2, 8.1 K/km — stable; `SimpleBoundaryLayer` diffuses T, not θ | cell 2 |
 | page 7's 14-band column at equilibrium | 10 000 steps at 12 h: T_s 267.78 K, TOA 0.000, top 101.2 K | `radiative` |
-| RCE − page 7 | surface **−1.30 K**; air **+25.4 K** at 695 hPa, **+10.5 K** at the top | cell 2 |
+| RCE − page 7 | surface **−1.30 K**; air **+25.4 K** at 695 hPa, **9–10 K** at the top (cell 2 prints +10.5; the shipped top level still cools 1.17 K in 10 000 more steps) | cell 2; `settle` |
+| OLR split, one LW call | air alone (surface at 1 K) 27.69 W m⁻²; surface shining through 212.27 = 74 % of σT_s⁴; surface +1 K, air fixed: +3.37 W m⁻² K⁻¹ (79 % of 4σT³) | `radiative` |
 | 2×CO₂ instantaneous forcing | 4.08 W m⁻² | cell 3 |
-| 2×CO₂ warming | **+1.16 K** (30-day mean − shipped T_s) in **1000 steps**; within 0.1 K from day 164 | cell 3 |
+| 2×CO₂ warming | **+1.15 K** (30-day mean perturbed − 30-day mean unperturbed) in **1000 steps**; within 0.1 K from day 164; 3.54 W m⁻² K⁻¹ | cell 3 |
 | 0.5×CO₂ | −1.10 K | `co2` |
-| cell 3 wall time | 36.6 s native → **≈ 2.1 min browser** (0.13 s/step) | page harness |
+| cell 3 wall time | 1060 steps (60 unperturbed for the baseline): 36.6–39.7 s native → **≈ 2.2 min browser** (0.13 s/step) | page harness |
+| page 7's column cost | 32.5 ms/step native → 10 000 steps ≈ 19 min browser | — |
 
 **Three findings that differ from this task's text.**
 
-1. *"A much cooler surface, a similar upper atmosphere"* (the reveal) does not hold. Against page 7's converged radiative equilibrium the surface is only 1.30 K cooler, and the air is 25 K warmer mid-troposphere and 10 K warmer at the top. The column is optically thin (85 % of σT_s⁴ reaches space), so warming the air adds only 4.43 W m⁻² of OLR. The page says so, and physics exercise 1 is built around it.
-2. *The 2×CO₂ warming is +1.16 K, not +1.20 K.* The re-measurement ran `run_to_equilibrium`, which calls `integrate` in 50-step chunks and so restarts `AdamsBashforth` every 50 steps, and quoted single samples of a ±0.05 K limit cycle. The page runs one 1000-step `integrate` and quotes a 30-day mean. The test bracket is ±40 % of 1.16 (0.70–1.62).
+1. *"A much cooler surface, a similar upper atmosphere"* (the reveal) does not hold. Against page 7's converged radiative equilibrium the surface is only 1.30 K cooler, and the air is 25 K warmer mid-troposphere and 10 K warmer at the top. The column is optically thin (74 % of σT_s⁴ reaches space), so warming the air adds only 4.43 W m⁻² of OLR, and a surface 1.30 K cooler at 3.37 W m⁻² K⁻¹ removes about the same. (A first draft zeroed the *air* to isolate the surface and got 85 %; that changes the temperature-dependent absorption and gives a surface term, 244.06, larger than the whole OLR. Chill the surface instead.) The page says so, and physics exercise 1 is built around it.
+2. *The 2×CO₂ warming is +1.15 K, not +1.20 K.* The re-measurement ran `run_to_equilibrium`, which calls `integrate` in 50-step chunks and so restarts `AdamsBashforth` every 50 steps, and quoted single samples of a ±0.05 K limit cycle. The page runs one 1000-step `integrate` and compares 30-day means of the perturbed and unperturbed columns. The test bracket is ±40 % of 1.15 (0.69–1.61).
 3. *The convecting layer cannot be found by calling the adjustment on the loaded state.* The file was saved straight after an adjustment, so the call moves nothing by more than ~1e-13 K. The test steps once without the adjustment, then calls it. Code exercise 2 (drop the adjustment, "recover page 7's profile") does not recover it: the boundary layer mixes up to 7 km in an unstable column, and the air stays 3.5–28.5 K warmer than page 7's after 1000 steps.
 
 ---
