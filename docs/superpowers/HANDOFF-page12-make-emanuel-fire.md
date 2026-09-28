@@ -29,3 +29,16 @@ Page 12's reveal is that latent heating relaxes the lapse rate toward the moist 
 - Current shipped numbers, which will all change: moist base 285.99 K; 2×CO₂ 288.25 K; settled warming +2.24 K. Dry: 266.48 K, 2×CO₂ +1.15 to 1.20 K (page 11 quotes +1.15), run live for 1000 steps.
 - `tests/test_modelling_tour.py::test_draw_evolution_builds_the_four_panel_figure` fails in a fresh venv with matplotlib 3.11 (no "non-interactive" warning). The failure predates this work.
 - The container restart on 2026-09-27 stopped five waiters ("measurement job", "timestep/restart/spindown results"). Whatever they were waiting on was never re-run. The page 12 commits (`36c8062`, `590c682`) are in the branch.
+
+## State at context clear (2026-09-28, ~03:10 UTC)
+
+Work had already moved past "raise SOLAR". Commit `fd5dae0` added an opt-in `SimpleBoundaryLayer(diffuse='dry_static_energy')`. It mixes Cp T + g z instead of T, which removes the ~5.5 K/km stable layer near the ground that kept Emanuel's cloud-base buoyancy negative.
+
+**Uncommitted work in progress** (16 files): the SBL component, its tests and caches, `HISTORY.rst`, the SBL user guide, pages 07–09, `rce_dry_equilibrium.npz`, the generator, and the page 7/8/9 measurement scripts. Don't commit it blind. Check each piece against the job logs below first.
+
+**Detached jobs that were running** (reparented to init, so they survive a context clear but not a container restart):
+- `generate_tour_equilibria.py --moist`, logging to `/tmp/claude-0/-home-user-climt/7f238135-7f48-4305-85c5-07b5ccfdb1c7/scratchpad/gen_moist.log`
+- `tour_page8_measurements.py all`, logging to `.../7f238135-.../scratchpad/p8.log` in the same directory
+- `tour_page11_measurements.py all` (its log is somewhere in that same scratchpad)
+
+**First thing to do:** check whether each is still alive with `pgrep -af "generate_tour|tour_page"`. If one is gone, read the end of its log. If the container restarted, re-run it with `NUMBA_NUM_THREADS=1`.
