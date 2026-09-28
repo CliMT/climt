@@ -14,11 +14,12 @@ with ``initialise=False``, exactly as the page does it (through
 Physics runs use numba if it is there; ``cost`` must be run with
 ``NUMBA_DISABLE_JIT=1``, the native stand-in for the browser.
 
-Why 30-day means. At dt = 12 h the equilibrium is a limit cycle, not a fixed
-point: the surface temperature alternates by ~0.03 K from step to step, and the
-top of the convecting layer jumps between about 590 and 370 hPa. A single
-step's value is one sample of that, so everything below is reported as the
-mean over the last 30 days (60 steps) as well.
+Why 30-day means. With the boundary layer diffusing dry static energy the
+shipped equilibrium is a fixed point: the surface temperature does not move in
+its third decimal place from step to step, and the convecting layer runs from
+the lowest level to 370 hPa on every step. Everything below is still reported
+as the mean over the last 30 days (60 steps), which is what the page compares,
+and which stays honest for a perturbed run that has not finished wobbling.
 
     convection  the shipped state stepped 120 steps: where dry adjustment acts,
                 the lapse rate there, the surface temperature
@@ -187,7 +188,7 @@ def radiative():
           f"rate in the lowest layer {lapse_rate(state)[0]:.1f} K/km, "
           f"largest {lapse_rate(state).max():.1f} K/km")
 
-    # Why a 25 K warmer troposphere costs the surface only 1.3 K: one
+    # Why a much warmer troposphere costs the surface so little: one
     # longwave call on hybrids of the two states, temperatures held fixed.
     longwave = climt.CorkLongwaveRadiation(optics="correlated_k",
                                            table=gen.TABLE)
@@ -216,8 +217,8 @@ def radiative():
     warm_ground["surface_temperature"].values[:] = Ts + 1.0
     direct = olr(warm_ground) - olr(rce)
     print(f"  surface +1 K, air fixed: OLR {direct:+.2f} W/m^2 = "
-          f"{direct / (4 * sigma * Ts ** 3):.0%} of 4 sigma Ts^3; x 1.30 K = "
-          f"{1.30 * direct:.2f}")
+          f"{direct / (4 * sigma * Ts ** 3):.0%} of 4 sigma Ts^3; x "
+          f"{surface(state) - Ts:.2f} K = {(surface(state) - Ts) * direct:.2f}")
     cold_air = copy.deepcopy(rce)
     cold_air["air_temperature"].values[:] = 1.0
     print(f"  (the wrong split, air at 1 K: {olr(cold_air):.2f} W/m^2)")

@@ -2954,7 +2954,7 @@ def test_page11_the_shipped_column_is_dry():
     assert np.all(state["surface_specific_humidity"].values == 0.0)
     assert provenance["co2_ppm"] == 330.0
     assert float(state["surface_temperature"].values.ravel()[0]) == \
-        pytest.approx(266.48, abs=0.005)
+        pytest.approx(266.62, abs=0.005)
 
 
 @pytest.mark.slow     # one step, but ~11 s run alone: numba compiling the stack
@@ -3022,7 +3022,7 @@ def test_page11_tropopause_emerges_rather_than_being_prescribed():
         "the upper column should be less steeply lapsing than the convecting "
         "layer below it")
     assert np.all(np.diff(T[3:]) < 0), "no temperature minimum above 970 hPa"
-    assert T[-1] == pytest.approx(111.73, abs=0.005)
+    assert T[-1] == pytest.approx(111.13, abs=0.005)
     upper = np.sqrt(p_hPa[:-1] * p_hPa[1:]) < 340.0
     assert np.all(lapse[upper] < 9.0)
     assert lapse[-1] == pytest.approx(1.3, abs=0.05)
@@ -3031,23 +3031,23 @@ def test_page11_tropopause_emerges_rather_than_being_prescribed():
 def test_page11_headline_cells_print_what_the_page_says(monkeypatch, capsys):
     """Cells 0-2, run as the page runs them, print the numbers its prose
     quotes: the convecting layer, its lapse rate, the boundary layer's
-    stable bottom, and the comparison with page 7's column."""
+    adiabatic bottom, and the comparison with page 7's column."""
     with _unyt_backend_restored():
         namespace = _page11_cells(2, monkeypatch)
     out = capsys.readouterr().out
 
-    for text in ("TOA -0.130, surface +1.384 W/m^2",
-                 "convecting layer   968 to 534 hPa, 11 levels",
+    for text in ("TOA -0.013, surface -0.000 W/m^2",
+                 "convecting layer   1010 to 370 hPa, 17 levels",
                  "lapse rate there   9.76 K/km",
                  "dry adiabat g/Cp   9.76 K/km",
-                 "jump 2.27 K",
-                 "4.9, 2.2, 8.1 K/km",
-                 "top of the model   111.73 K",
-                 "surface           -1.30 K",
-                 "air, largest      +25.41 K at 695 hPa",
-                 "air, top level    +10.53 K"):
+                 "jump 2.88 K",
+                 "9.8, 9.8, 9.8 K/km",
+                 "top of the model   111.13 K",
+                 "surface           -1.16 K",
+                 "air, largest      +23.70 K at 695 hPa",
+                 "air, top level    +9.93 K"):
         assert text in out, f"{text!r} not printed:\n{out}"
-    assert namespace["top"] == 13 and namespace["bottom"] == 3
+    assert namespace["top"] == 16 and namespace["bottom"] == 0
 
 
 @pytest.mark.slow
@@ -3111,17 +3111,17 @@ def test_page11_the_surface_shines_through_the_window(monkeypatch):
         direct = olr(state, surface=Ts + 1.0) - base
         wrong_split = olr(state, air=1.0)
     sigma = 5.670374419e-8
-    assert base == pytest.approx(239.96, abs=0.005)
-    assert page7_air == pytest.approx(235.53, abs=0.005)
-    assert base - page7_air == pytest.approx(4.43, abs=0.005)
-    assert air_only == pytest.approx(27.69, abs=0.005)
-    assert base - air_only == pytest.approx(212.27, abs=0.005)
+    assert base == pytest.approx(240.01, abs=0.005)
+    assert page7_air == pytest.approx(236.02, abs=0.005)
+    assert base - page7_air == pytest.approx(3.99, abs=0.005)
+    assert air_only == pytest.approx(26.95, abs=0.005)
+    assert base - air_only == pytest.approx(213.06, abs=0.005)
     assert (base - air_only) / (sigma * Ts ** 4) == pytest.approx(0.74,
                                                                   abs=0.005)
-    assert direct == pytest.approx(3.37, abs=0.005)
+    assert direct == pytest.approx(3.38, abs=0.005)
     assert direct / (4 * sigma * Ts ** 3) == pytest.approx(0.79, abs=0.005)
-    assert 1.30 * direct == pytest.approx(4.38, abs=0.005)
-    assert wrong_split == pytest.approx(244.06, abs=0.005)
+    assert 1.16 * direct == pytest.approx(3.92, abs=0.005)
+    assert wrong_split == pytest.approx(244.61, abs=0.005)
     assert wrong_split > base, "the artefact the exercise warns about"
 
 
@@ -3145,9 +3145,7 @@ def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
     Tranche 1's page 5 could only compute the forcing. This integrates to the
     new equilibrium, as the page's knob cell does -- one 1000-step
     ``integrate`` -- and reads the warming off: the 30-day mean surface
-    temperature minus the unperturbed column's 30-day mean. Measured +1.15 K
-    (the plan's +1.20 was a single sample from a loop that restarts
-    AdamsBashforth every 50 steps).
+    temperature minus the unperturbed column's 30-day mean. Measured +1.16 K.
     """
     with _unyt_backend_restored():
         tendencies, steppers, state, provenance = _page11_equilibrium()
@@ -3180,11 +3178,11 @@ def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
     warming = final - before
     assert 0.69 < warming < 1.61, (
         f"2xCO2 dry surface warming {warming:+.2f} K is outside +-40% of the "
-        "measured +1.15 K -- check that the run reached equilibrium")
-    assert warming == pytest.approx(1.15, abs=0.005), "the page quotes +1.15 K"
-    assert forcing == pytest.approx(4.08, abs=0.005)
-    assert forcing / warming == pytest.approx(3.54, abs=0.005)
-    assert forcing / 3.37 == pytest.approx(1.21, abs=0.005)
+        "measured +1.16 K -- check that the run reached equilibrium")
+    assert warming == pytest.approx(1.16, abs=0.005), "the page quotes +1.16 K"
+    assert forcing == pytest.approx(4.09, abs=0.005)
+    assert forcing / warming == pytest.approx(3.52, abs=0.005)
+    assert forcing / 3.38 == pytest.approx(1.21, abs=0.005)
     assert abs(imbalance) < 0.5, (
         f"TOA imbalance {imbalance:+.3f} W/m^2 -- the perturbed run has not "
         f"equilibrated in {PAGE11_2XCO2_STEPS} steps, so the warming is a "
@@ -3192,13 +3190,13 @@ def test_page11_co2_doubling_warms_the_surface_by_a_measured_amount():
     assert abs(record.mean("toa", days=30)) < 0.05
     assert abs(record.mean("surface_imbalance", days=30)) < 0.05
     off = np.where(np.abs(record["surface"] - final) > 0.1)[0].max() + 1
-    assert record["days"][off] == pytest.approx(164, abs=0.5)
+    assert record["days"][off] == pytest.approx(120, abs=0.5)
     assert np.all(np.abs(record["toa"][299::100]) < 0.3)
 
 
 @pytest.mark.slow
 def test_page11_halving_co2_is_roughly_symmetric():
-    """Code exercise 1: -1.10 K for halving against +1.15 K for doubling."""
+    """Code exercise 1: -1.12 K for halving against +1.16 K for doubling."""
     with _unyt_backend_restored():
         tendencies, steppers, state, provenance = _page11_equilibrium()
         before = _page11_unperturbed_mean(tendencies, steppers, state,
@@ -3212,14 +3210,14 @@ def test_page11_halving_co2_is_roughly_symmetric():
         _load("stepping").integrate(tendencies, steppers, state, timestep,
                                     PAGE11_2XCO2_STEPS, after_step=record)
     assert record.mean("surface", days=30) - before == pytest.approx(
-        -1.10, abs=0.01)
+        -1.12, abs=0.01)
 
 
 @pytest.mark.slow
 def test_page11_adjustment_last_leaves_every_step_stable():
     """The ordering callout. In the page's order no step ends with theta
     falling anywhere; with the adjustment before the boundary layer, every
-    step does, between about 970 and 880 hPa."""
+    step does, somewhere between 1010 and 424 hPa."""
     with _unyt_backend_restored():
         stepping_module = _load("stepping")
         results = {}
@@ -3238,7 +3236,7 @@ def test_page11_adjustment_last_leaves_every_step_stable():
     assert not any(len(levels) for levels in results["shipped"])
     assert all(len(levels) for levels in results["swapped"])
     where = p_hPa[np.concatenate(results["swapped"])]
-    assert np.all((where > 870) & (where < 970)), where
+    assert np.all((where > 420) & (where < 1015)), where
 
 
 def test_page11_saved_state_round_trips(monkeypatch, tmp_path):
