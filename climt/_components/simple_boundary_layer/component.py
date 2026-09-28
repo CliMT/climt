@@ -93,7 +93,7 @@ def _boundary_layer_kernel(
     new_air_temperature, new_specific_humidity, new_northward_wind,
     new_eastward_wind, north_wind_stress, east_wind_stress, boundary_height,
     applied_sensible_flux, applied_latent_flux,
-    params, num_cols, timestep, flux_mode,
+    params, num_cols, timestep, flux_mode, diffuse_dse,
 ):
     Rd = params.Rd
     Cp = params.Cp
@@ -143,6 +143,20 @@ def _boundary_layer_kernel(
             z[i] = z[i - 1] + (
                 Rd * (1.0 + 0.608 * col_q[i]) * col_T[i] / g
             ) * np.log(col_p_int[1:-1][i - 1] / col_p_int[1:-1][i])
+
+        # Height of each mid level, for dry static energy s = Cp T + g z.
+        z_mid = np.zeros(n + 1)
+        z_mid[0] = (
+            Rd * (1.0 + 0.608 * col_q[0]) * col_T[0] / g
+        ) * np.log(col_ps / col_p[0])
+        for i in range(1, n + 1):
+            z_mid[i] = z_mid[i - 1] + (
+                Rd * (1.0 + 0.608 * col_q_int[i - 1]) * col_T_int[i - 1] / g
+            ) * np.log(col_p[i - 1] / col_p[i])
+        if diffuse_dse:
+            geopotential_T = g * z_mid / Cp
+        else:
+            geopotential_T = np.zeros(n + 1)
 
         wind_int = np.sqrt(col_v_int * col_v_int + col_u_int * col_u_int)
         for i in range(wind_int.shape[0]):
@@ -211,9 +225,9 @@ def _boundary_layer_kernel(
                 )
 
         new_air_temperature[:, col] = _diffuse_profile(
-            col_T, col_p, col_p_int, col_rho, diff, timestep, g,
-            scalar_exchange, source_T,
-        )
+            col_T + geopotential_T, col_p, col_p_int, col_rho, diff,
+            timestep, g, scalar_exchange, source_T,
+        ) - geopotential_T
         new_specific_humidity[:, col] = _diffuse_profile(
             col_q, col_p, col_p_int, col_rho, diff, timestep, g,
             scalar_exchange, source_q,
@@ -228,7 +242,7 @@ def _boundary_layer_kernel(
         )
 
         applied_sensible_flux[col] = Cp * bulk_conductance * (
-            col_Ts - new_air_temperature[0, col]
+            col_Ts - new_air_temperature[0, col] - geopotential_T[0]
         )
         applied_latent_flux[col] = Lv * bulk_conductance * (
             col_qs - new_specific_humidity[0, col]
@@ -311,7 +325,7 @@ class SimpleBoundaryLayer(Stepper):
     def __init__(self, surface_fluxes='bulk', von_karman_constant=0.4,
                  roughness_length=0.0000321, specific_fraction=0.1,
                  reference_pressure=100000, critical_richardson_number=1,
-                 **kwargs):
+                 diffuse='temperature', **kwargs):
         """
         Args:
             surface_fluxes: how surface fluxes enter the lowest model level.
@@ -340,6 +354,12 @@ class SimpleBoundaryLayer(Stepper):
             critical_richardson_number: critical Richardson number Ric that
                 caps the diffusion and sets the boundary-layer top.
         """
+        if diffuse not in ('temperature', 'dry_static_energy'):
+            raise ValueError(
+                "diffuse must be 'temperature' or 'dry_static_energy', got %r"
+                % (diffuse,)
+            )
+        self._diffuse_dse = diffuse == 'dry_static_energy'
         if surface_fluxes not in _FLUX_MODES:
             raise ValueError(
                 "surface_fluxes must be 'bulk', 'external' or None, got %r"
@@ -452,6 +472,7 @@ class SimpleBoundaryLayer(Stepper):
             # coercion, same reason, as sea_ice/component.py.
             float(timestep.total_seconds()),
             self._flux_mode,
+            self._diffuse_dse,
         )
 
         return diagnostics, new_state
