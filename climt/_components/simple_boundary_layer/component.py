@@ -269,7 +269,12 @@ class SimpleBoundaryLayer(Stepper):
     number in its multiplier, making it continuous at ``Ri_a == 0``.
 
     Diffusivities come from a simplified Monin-Obukhov theory with a K-profile
-    capped by a critical Richardson number. How the surface enters the lowest
+    capped by a critical Richardson number. Heat is diffused as dry static
+    energy ``Cp T + g z`` (the surface at ``Cp T_s``), as in Frierson et al.,
+    so a well-mixed boundary layer is dry-adiabatic. ``diffuse='temperature'``
+    restores the old behaviour of diffusing ``T`` itself, which pulls a mixed
+    layer toward isothermal and leaves a stable layer near the ground that
+    only a convective adjustment can undo. How the surface enters the lowest
     model level is set by ``surface_fluxes``:
 
     * ``'bulk'`` (default) -- the component computes the bulk fluxes itself
@@ -325,7 +330,7 @@ class SimpleBoundaryLayer(Stepper):
     def __init__(self, surface_fluxes='bulk', von_karman_constant=0.4,
                  roughness_length=0.0000321, specific_fraction=0.1,
                  reference_pressure=100000, critical_richardson_number=1,
-                 diffuse='temperature', **kwargs):
+                 diffuse='dry_static_energy', **kwargs):
         """
         Args:
             surface_fluxes: how surface fluxes enter the lowest model level.
@@ -353,6 +358,14 @@ class SimpleBoundaryLayer(Stepper):
                 temperature.
             critical_richardson_number: critical Richardson number Ric that
                 caps the diffusion and sets the boundary-layer top.
+            diffuse: the heat variable diffused.
+
+                * ``'dry_static_energy'`` (default): ``Cp T + g z``, with
+                  heights from the hypsometric equation held fixed over the
+                  step. Column enthalpy is conserved as before, and the bulk
+                  sensible flux is ``Cp rho C |v| (T_s - T_0 - g z_0 / Cp)``.
+                * ``'temperature'``: ``T`` itself, the scheme's behaviour
+                  before 2026-09. Kept for reproducing old results.
         """
         if diffuse not in ('temperature', 'dry_static_energy'):
             raise ValueError(

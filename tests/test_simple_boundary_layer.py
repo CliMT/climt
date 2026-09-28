@@ -306,9 +306,10 @@ def test_bulk_mode_cools_column_over_a_cold_surface():
     assert enthalpy_after < enthalpy_before
 
 
-def test_none_mode_conserves_over_a_warm_wet_surface():
+@pytest.mark.parametrize('diffuse', ['dry_static_energy', 'temperature'])
+def test_none_mode_conserves_over_a_warm_wet_surface(diffuse):
     """The regression guard: opting out must restore exact conservation."""
-    component = climt.SimpleBoundaryLayer(surface_fluxes=None)
+    component = climt.SimpleBoundaryLayer(surface_fluxes=None, diffuse=diffuse)
     state = _warm_wet_surface_state(component)
     dp = _layer_mass(state)
     enthalpy_before, water_before = _column_budgets(state, dp)
@@ -318,7 +319,52 @@ def test_none_mode_conserves_over_a_warm_wet_surface():
 
     assert np.isclose(enthalpy_after, enthalpy_before, rtol=1e-12)
     assert np.isclose(water_after, water_before, rtol=1e-12)
-    assert np.asarray(new_state['air_temperature'])[0] == pytest.approx(250.0)
+    if diffuse == 'temperature':
+        # Diffusing T itself leaves an isothermal column isothermal.
+        assert (np.asarray(new_state['air_temperature'])[0]
+                == pytest.approx(250.0))
+
+
+# ------------------------------------------------------- what gets diffused
+
+def test_dry_static_energy_is_the_default():
+    assert climt.SimpleBoundaryLayer()._diffuse_dse
+
+
+def test_invalid_diffuse_raises():
+    with pytest.raises(ValueError, match='diffuse'):
+        climt.SimpleBoundaryLayer(diffuse='potential_vorticity')
+
+
+def _dry_adiabatic_state(component, nz=30):
+    """A dry column on its dry adiabat, surface at the lowest level's
+    potential temperature, so there is no surface flux to speak of."""
+    state = _column_state(component, nz=nz)
+    _, cp, _ = _constants()
+    rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
+    p = np.asarray(state['air_pressure'])
+    ps = np.asarray(state['surface_air_pressure'])
+    np.asarray(state['air_temperature'])[:] = 300.0 * (p / ps) ** (rd / cp)
+    np.asarray(state['specific_humidity'])[:] = 0.0
+    np.asarray(state['eastward_wind'])[:] = 10.0
+    np.asarray(state['northward_wind'])[:] = 0.0
+    return state
+
+
+def test_dry_static_energy_leaves_a_dry_adiabat_alone():
+    """A well-mixed boundary layer is dry-adiabatic, so diffusing dry static
+    energy must not move it; diffusing temperature pulls it isothermal."""
+    changes = {}
+    for diffuse in ('dry_static_energy', 'temperature'):
+        component = climt.SimpleBoundaryLayer(surface_fluxes=None,
+                                              diffuse=diffuse)
+        state = _dry_adiabatic_state(component)
+        before = np.asarray(state['air_temperature']).copy()
+        _, new_state = component(state, timestep=timedelta(hours=1))
+        changes[diffuse] = np.max(np.abs(
+            np.asarray(new_state['air_temperature']) - before))
+    assert changes['dry_static_energy'] < 0.02
+    assert changes['temperature'] > 20 * changes['dry_static_energy']
 
 
 # -------------------------------------------------------- external physics

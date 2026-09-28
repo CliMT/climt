@@ -5,6 +5,15 @@ History
 Unreleased
 ----------
 
+* **Fix (behaviour change)** — ``SimpleBoundaryLayer`` diffuses dry static
+  energy ``Cp T + g z`` instead of temperature, as Frierson, Held &
+  Zurita-Gotor (2006) do. Diffusing ``T`` itself pulled a well-mixed boundary
+  layer toward isothermal rather than dry-adiabatic, leaving a stable layer
+  near the ground. In a moist column that layer held Emanuel convection's
+  cloud-base closure negative, so the scheme barely fired. The bulk sensible
+  flux now uses ``T_s - (T_0 + g z_0 / Cp)``. ``diffuse='temperature'`` keeps
+  the old behaviour.
+
 * **Fix (behaviour change)** — ``GridScaleCondensation``'s
   ``precipitation_amount`` diagnostic is now the ``kg m^-2`` accumulation it
   declares. It was ``-1/1000`` of the true value: the layer thickness was
