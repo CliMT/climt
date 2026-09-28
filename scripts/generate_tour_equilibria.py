@@ -80,9 +80,9 @@ STEADY_WINDOW_STEPS = 1000    # the averaging window for that drift
 #     spin-up at 194 400 steps with the 30-day mean TOA still -1.7 and falling.
 #   * it never reaches TOA = 0. DryConvectiveAdjustment conserves enthalpy
 #     with a moist heat capacity while the rest of the stack counts dry air's
-#     (+0.97 W/m^2; Emanuel +0.03; tour_page12_measurements.py energy), so the
+#     (+0.23 W/m^2; Emanuel +0.15; tour_page12_measurements.py energy), so the
 #     column settles with a steady TOA imbalance --
-#     about -1.1 W/m^2 over a saturated surface (the stratosphere is in
+#     about -0.45 W/m^2 over a saturated surface (the stratosphere is in
 #     radiative balance and the slab has stopped moving, so this is not
 #     storage). No |TOA| threshold below that is a convergence test.
 # So the moist gate is on *trends* over 60-day (17 280-step) windows: the mean
@@ -90,8 +90,10 @@ STEADY_WINDOW_STEPS = 1000    # the averaging window for that drift
 # to 0.01 K and 0.1 W/m^2, and the mean TOA must be inside the +-2 W/m^2 the
 # scheme's residual lives in (which rules out the turning point early in the
 # spin-up, where the surface peaks while TOA is still -25). Replayed on the
-# measured trajectory it stops at ~296 000 steps, 0.01 K from where the column
-# settles; the 30-day windows tried first stopped 0.1 K short.
+# measured trajectory it stopped at ~296 000 steps, 0.01 K from where the
+# column settled; the 30-day windows tried first stopped 0.1 K short. (That was
+# with the boundary layer diffusing temperature. With dry static energy, since
+# 2026-09-28, it stops at 379 050 steps, 0.02 K from where 60 000 more settle.)
 DRY_GATE = dict(window_steps=STEADY_WINDOW_STEPS, surface_steady_k=SURFACE_STEADY_K,
                 toa_limit_w_m2=CONVERGENCE_W_M2, toa_steady_w_m2=None,
                 mean_toa=False)

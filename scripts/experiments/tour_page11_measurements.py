@@ -218,7 +218,8 @@ def radiative():
     direct = olr(warm_ground) - olr(rce)
     print(f"  surface +1 K, air fixed: OLR {direct:+.2f} W/m^2 = "
           f"{direct / (4 * sigma * Ts ** 3):.0%} of 4 sigma Ts^3; x "
-          f"{surface(state) - Ts:.2f} K = {(surface(state) - Ts) * direct:.2f}")
+          f"{surface(state) - Ts:.2f} K = "
+          f"{(surface(state) - Ts) * direct:.2f}")
     cold_air = copy.deepcopy(rce)
     cold_air["air_temperature"].values[:] = 1.0
     print(f"  (the wrong split, air at 1 K: {olr(cold_air):.2f} W/m^2)")

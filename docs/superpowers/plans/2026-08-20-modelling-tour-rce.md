@@ -3431,6 +3431,17 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Log — the two equilibria as generated
 
+**Current, 2026-09-28: regenerated with `SimpleBoundaryLayer` diffusing dry static energy** (its new default, commit fe6d20d; SOLAR = 240 on every page). Linux container, numba on, `NUMBA_NUM_THREADS=1`.
+
+| | dry | moist | moist 2×CO₂ |
+|---|---|---|---|
+| steps (dt) | 3650 (12 h), 1825 d | 379 000 (5 min), ≈ 1316 d | 157 800 after doubling, ≈ 548 d |
+| surface temperature (file) | 266.623 K | 279.795 K | 281.891 K |
+| TOA (file / settled window mean) | −0.013 / −0.030 | −0.440 / −0.446 | −0.252 / −0.245 |
+| settled, 60 000 steps on (`settle-moist`) | | 279.778 K, TOA −0.42, trend −0.008 K/100 d | 281.899 K, TOA −0.28 |
+
+Settled 2×CO₂ warming +2.12 K (file +2.10, window means +2.09). The moist column is 6.2 K colder than the temperature-diffusing one (285.99 K) because Emanuel now does the raining and puts the free troposphere on a moist adiabat. A backup spin-up with `MAX_STEPS` raised was started in case the gate did not pass by the 400 000-step cap; it was not needed.
+
 **Run 2026-09-04, climt 0.31.0, numba ON, reference machine (Apple Silicon).**
 
 | | dry | moist |
@@ -4407,6 +4418,8 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Log — page 9's column as converged
 
+**Current, 2026-09-28 (dry-static-energy boundary layer).** `tour_page9_measurements.py` all subcommands. Converged 1000 d, 30-day means: moist 286.21 K, SH 18.3, LH 89.6 W/m², Bowen 0.20, P 3.10 mm/day, TOA −0.15; dry surface 266.69 K; RH 0.4 283.45 K, Bowen 1.48. Boundary layer holds steady at 12.0 km (moist) and 8.1 km (dry): it mixes the whole troposphere to θ ≈ 282 K, saturated 590–180 hPa, lowest air ≈ 50 % RH. Day 30 (cell): 294.04 K, SH 22.0, LH 102.4, Bowen 0.21, TOA −82; RH 0.4 cell Bowen 0.89. Condensation cell: 3.57 mm/day with, 2876 % peak RH without (273 % day 1) at 589 hPa. Sink-free cold start fails after 11 145 steps (464 d). Condense-first converged: peak 168 %, Ts +1.04 K, Bowen 0.16. Timestep SH: 16.5 / 17.2 / 18.3 / 18.8 at 6 h / 3 h / 1 h / 30 min. Cost 0.119 s/step browser. Page 9 prose rewritten accordingly.
+
 Measured 2026-09-26 with `scripts/experiments/tour_page9_measurements.py` (Linux, 4 cores, numba on for physics, `NUMBA_NUM_THREADS=1`; `cost` with `NUMBA_DISABLE_JIT=1`). Column exactly as the page builds it: `earth_low_res_lw` (default diffusivity), nz 28, 2 m slab, SOLAR 240, `SimpleBoundaryLayer(bulk, z0=1e-3)`, `wind_relaxation` 5 m/s / 24 h, `GridScaleCondensation` last. Every flux is a 30-day mean (converged) or a 10-day mean (the page's 30-day cells).
 
 **Deviation from Step 1's `_page9_column`: the surface humidity.** The plan wrote `surface_specific_humidity = RH * 0.015`, a fixed number that nothing updates. At the 289.4 K this column settles at, 0.015 kg/kg is **131 % of saturation**. The spec's "saturated surface" and the "surface relative humidity" knob are then neither saturated nor a relative humidity. Measured with the fixed 0.015: Ts 289.39 K, SH 31.7, LH 92.8, Bowen **0.34** (surface RH 1.32). The page and tests instead use a new `stepping.SurfaceHumidity(rh)` stepper, first in the stepper list, that sets `q_s = rh * q_sat(Ts, ps)` every step with `soundings.saturation_specific_humidity`, the formula `GridScaleCondensation` condenses to. That is also what `SimplePhysics` does internally. All numbers below use it.
@@ -4873,6 +4886,10 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Log — page 11's equilibrium and its sensitivity
 
+**Current, 2026-09-28 (dry-static-energy boundary layer).** `tour_page11_measurements.py all` + cost. Shipped state 266.62 K; adjusted layer 1010–370 hPa on every one of 60 steps at 9.761 K/km, a fixed point (no cycle); surface–air jump 2.88 K; top 111.13 K. Against page 7: surface −1.16 K, air +23.70 K at 695 hPa, top +9.93 K (settle: another 1.1 K off the top). OLR split: 240.01 total, 26.95 air, 213.06 surface (74 %), +3.38 per K of surface, page 7's air under this surface 236.02, air at 1 K 244.61. 2×CO₂ +1.16 K (forcing 4.09, 3.52 W/m²/K, within 0.1 K from day 120); 0.5×CO₂ −1.12 K. No adjustment: lowest layer 14.3 K/km, BL 8.1 km. Adjustment-first: 60/60 steps unstable between 1010 and 424 hPa, T_s 0.003 K off. Cost ~0.13 s/step browser.
+
+Page 8, same date: 500-day cold starts give jump 5.95 K, SH 30.3 W/m², Ts 333.45 K at 5 m/s (was 7.47 / 34.7 / 332.97); boundary layer steady at 2528 m, no saw-tooth; full table in `tour_page8_measurements.py` output, quoted on the page.
+
 **Run 2026-09-26, climt 0.31.0, Linux.** Every number from `scripts/experiments/tour_page11_measurements.py` (named per row) or the page's own cells; timings with `NUMBA_DISABLE_JIT=1`.
 
 | | value | where |
@@ -5120,6 +5137,30 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ### Log — page 12's equilibrium, budget and sensitivity
+
+**Current, 2026-09-28: the reveal holds.** With `SimpleBoundaryLayer` diffusing dry static energy, Emanuel fires and the free troposphere lies on its moist adiabat. Everything below this entry describes the superseded temperature-diffusing column. (`tour_page12_measurements.py` all subcommands + closure + cost; `tour_rce_shipped_remeasure.py settle-moist`.)
+
+| | value |
+|---|---|
+| surface temperature | 279.79 K (file), 279.793 K 30-day mean; +13.17 K on page 11's 266.62 |
+| adjusted layer | 1010–911 hPa, 9.76 K/km, RH 41–67 % |
+| 911–500 hPa lapse | 8.85 K/km (loaded); page 11's dry 9.76; moist adiabat there 7.2–9.5 |
+| 700–250 hPa | every layer within 0.3 K/km of the moist adiabatic rate on its own T |
+| 792–500 / below 500 hPa, 30 days | 8.99 / 9.17 K/km (2×CO₂ 8.82 / 9.09) |
+| moist adiabat on column T | 6.31 K/km at the lowest level (274.7 K), 6.5 at 968 hPa (271.3 K), 9.36 at 534 hPa |
+| parcels, mean 1000–500 hPa | 280 K 7.15, 284 K 6.52, 286 K 6.19; from this surface 7.23 (240.9 K at 500 vs column 228.1) |
+| parcel from cloud base | from 911 hPa (266.7 K): 230.0 K at 500 hPa, 1.9 K above the column; from 836 hPa, 0.8 K |
+| P / E, 30 days | 2.561 / 2.559 mm/day, Emanuel 2.559; 1-day means of P − E constant at +0.002 |
+| SH / LH | 34.02 / 74.04 W/m², Bowen 0.46 |
+| closure | DTMA +0.47 K, CBMF 0.047 kg m⁻² s⁻¹ on every call; parcel within 0.2 K of the environment 911–370 hPa; positive area 19 J/kg |
+| GSC heating | only 268–221 hPa (saturated), < 0.01 K/day; mid-troposphere RH 9–42 % |
+| energy, 5 days | DCA +0.229, Emanuel +0.151 W/m²; TOA −0.440 |
+| timestep 2.5/5/10/20 min | Emanuel rain 2.564/2.559/2.445/2.353; CBMF 0.050/0.047/0.038/0.030; Ts 279.69/279.79/279.83/280.16; 792–500 lapse 9.00/8.99/8.94/8.83; TOA −0.65/−0.43/−1.05/−0.95 |
+| cell 5 (2 d, 10 vs 5 min) | Emanuel 2.36 vs 2.56, largest ΔT −0.31 K at 836 hPa; 2.5 min: 2.64, Ts within 0.01 K |
+| nogsc, 300 d | Ts 280.07, lapse unchanged; 10 d without GSC: 502 % RH at 221 hPa |
+| nodca, 300 d | 278.67 K, still cooling; lowest layer 15.2 K/km |
+| 2×CO₂ | settled +2.12 K (file +2.10, 30-day +2.10, windows +2.09); forcing 4.61; T alone 4.18/K; q alone −1.99/K; vapour fixed 1.10 K; air warms 2.66 K at the lowest level, 2.83 at 534 hPa |
+| cost | 47.0 ms/step native, ~0.16 s/step browser; cell 3 ~1.6 min, cell 5 ~47 s |
 
 *Fill in: surface temperature, lower-tropospheric lapse rate, precipitation and evaporation and their residual, the timestep-sensitivity result, browser wall time for cell 5.*
 

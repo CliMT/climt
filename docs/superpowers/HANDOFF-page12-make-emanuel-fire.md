@@ -50,3 +50,13 @@ The DSE boundary layer on its own makes Emanuel fire. At SOLAR = 240, Emanuel ca
 A previous session had raised SOLAR to 265 on every page. **Revert that to 240 on every page.** At 265, page 9's moist column (no convection scheme) runs away: 314 K after 1000 days and still rising. Any uncommitted SOLAR = 265 edits in the working tree must go back to 240.
 
 The detached jobs listed above had already exited when this section was written. `pgrep` found none, so read their logs and re-run at 240.
+
+## Done (2026-09-28, later session)
+
+- SOLAR reverted to 240 everywhere (pages 7–9, generator, measurement scripts, tests). Page 7 needed no change.
+- `SimpleBoundaryLayer(diffuse='dry_static_energy')` is the default (commit fe6d20d), with tests, user guide and HISTORY.
+- Regenerated at 240 with the DSE boundary layer: dry 266.62 K (3650 steps); moist 279.79 K (379 000 steps); moist 2×CO₂ 281.89 K (157 800 steps). Settled 2×CO₂ warming +2.12 K.
+- Pages 8, 9, 11 and 12 re-measured and rewritten, figures re-rendered. **Page 12's reveal now holds:** Emanuel does all the raining, and from about 700 to 250 hPa every layer lapses within 0.3 K/km of the moist adiabatic rate at its own temperature. The column sits on the moist adiabat from its cloud base, not from its surface, so its lapse rate is not 6.5.
+- Plan logs (Tasks 9, 12, 14, 15) and `_data/README.md` updated.
+
+Left open: `test_draw_evolution_builds_the_four_panel_figure` (matplotlib 3.11) still fails, as before.

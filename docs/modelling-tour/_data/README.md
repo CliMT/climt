@@ -90,7 +90,7 @@ The surface *flux* imbalance is not usable as a gate — the one-step flux lag
 at equilibrium — so the surface criterion is that the mean surface temperature
 over one 1000-step window equals the mean over the previous one. That is a
 strict form of the drift the residual test below checks, and it is why the
-shipped step counts (dry ≈ 3500 at 12 h) are larger than Task 0's cold-start
+shipped step counts (dry ≈ 3650 at 12 h) are larger than Task 0's cold-start
 convergence measurement: Task 0 stopped at the first TOA crossing, which lands
 mid-transient while the surface is still settling.
 
@@ -98,10 +98,10 @@ mid-transient while the surface is still settling.
 Two things are different about it. First, it is noisy: episodic convection
 swings the instantaneous TOA by about 0.5 W m⁻², while its late drift is only
 about 0.05 K a month, and 1000 steps at 5 min is 3.5 days. Second, it never
-reaches TOA = 0. It settles with a steady imbalance of about −1.1 W m⁻² that no
-amount of stepping removes. Most of it is `DryConvectiveAdjustment`, which
-conserves enthalpy with a moist heat capacity while the rest of the stack
-counts dry air's: +0.97 W m⁻² of the source, against +0.03 from
+reaches TOA = 0. It settles with a steady imbalance of about −0.45 W m⁻² that
+no amount of stepping removes. About half of it is `DryConvectiveAdjustment`,
+which conserves enthalpy with a moist heat capacity while the rest of the stack
+counts dry air's: +0.23 W m⁻² of the source, against +0.15 from
 `EmanuelConvectionPython` (`scripts/experiments/tour_page12_measurements.py
 energy`; page 12 explains it). So the moist gate works on trends over 60-day
 (17 280-step) windows. The mean surface temperature and the mean TOA must each
@@ -116,14 +116,23 @@ saturation: a surface evaporating 140 W m⁻² from something wetter than water.
 Both were regenerated over a saturated surface. The plan's Task 9 log has the
 before and after.
 
+**Since 2026-09-28 all three files are made with `SimpleBoundaryLayer`
+diffusing dry static energy** (its new default; `HISTORY.rst`). Diffusing
+temperature had left a stable layer near the ground that held Emanuel's
+cloud-base closure negative, so grid-scale condensation did the raining and
+the moist column's lapse rate stayed near dry adiabatic. With dry static energy
+Emanuel does all the raining and the column above its boundary layer lies on
+its moist adiabat. The moist column moved from 285.99 K to 279.79 K, and the
+dry one from 266.48 K to 266.62 K.
+
 ### `rce_moist_2xco2_equilibrium.npz` — page 12's 2×CO₂, run offline
 
 `rce_moist_equilibrium.npz` with CO₂ doubled to 660 ppm and re-converged under
 the same gate, same components, same 5 min timestep. Page 12 loads it beside
-the base state rather than running the experiment. It took 180 550 steps
-(≈ 627 simulated days), and at the ~0.19 s a step the moist column costs in
-the browser that is about nine and a half hours. Page 11's dry 2×CO₂ still
-runs live: 1000 steps at 12 h, about three minutes.
+the base state rather than running the experiment. It took 157 800 steps
+(≈ 548 simulated days), and at the ~0.16 s a step the moist column costs in
+the browser that is about seven hours. Page 11's dry 2×CO₂ still runs live:
+1000 steps at 12 h, about two minutes.
 
 Its provenance records what it was perturbed from (`perturbed_from`,
 `perturbed_from_saved_at`, the base's surface temperature) and the warming,
@@ -134,9 +143,9 @@ stamp against the shipped base. Regenerating the base without this file then
 fails a test instead of quietly changing the number page 12 quotes.
 
 **The warming.** Stepped on for 60 000 steps, the base settles at
-285.99 K (TOA −1.05) and the 2×CO₂ state at 288.23 K (TOA −1.07), within 0.02 K
-of their files. **Page 12 quotes the settled difference, +2.24 K.** The file
-difference, +2.26 K, agrees with it; the old fixed-humidity files did not,
+279.78 K (TOA −0.42) and the 2×CO₂ state at 281.90 K (TOA −0.28), within 0.02 K
+of their files. **Page 12 quotes the settled difference, +2.12 K.** The file
+difference, +2.10 K, agrees with it; the old fixed-humidity files did not,
 because the old gate stopped them wherever TOA first crossed ±0.5.
 `scripts/experiments/tour_rce_shipped_remeasure.py settle-moist` reproduces it.
 
