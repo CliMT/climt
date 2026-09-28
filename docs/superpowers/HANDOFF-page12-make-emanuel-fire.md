@@ -42,3 +42,11 @@ Work had already moved past "raise SOLAR". Commit `fd5dae0` added an opt-in `Sim
 - `tour_page11_measurements.py all` (its log is somewhere in that same scratchpad)
 
 **First thing to do:** check whether each is still alive with `pgrep -af "generate_tour|tour_page"`. If one is gone, read the end of its log. If the container restarted, re-run it with `NUMBA_NUM_THREADS=1`.
+
+## Decision (user, 2026-09-28): SOLAR = 240 everywhere, with the DSE boundary layer
+
+The DSE boundary layer on its own makes Emanuel fire. At SOLAR = 240, Emanuel carries all 2.84 mm/day of the rain, and the 792–500 hPa lapse rate is 8.82 K/km against the dry column's 9.76. With the same diffusion, page 9 settles at 286.2 K moist against 266.7 K dry.
+
+A previous session had raised SOLAR to 265 on every page. **Revert that to 240 on every page.** At 265, page 9's moist column (no convection scheme) runs away: 314 K after 1000 days and still rising. Any uncommitted SOLAR = 265 edits in the working tree must go back to 240.
+
+The detached jobs listed above had already exited when this section was written. `pgrep` found none, so read their logs and re-run at 240.
