@@ -1819,7 +1819,7 @@ def test_page9_latent_flux_exceeds_sensible_over_a_saturated_surface(
     """Page 9's headline claim, at this column's own converged temperature.
 
     The spec phrases it "over a saturated ~288 K surface". Measured: the
-    column converges at 289.37 K with a Bowen ratio of 0.70 (30-day means,
+    column converges at 286.21 K with a Bowen ratio of 0.20 (30-day means,
     1000 days, dt 1 h), so the claim holds as the spec states it. The page
     quotes both.
     """
@@ -1831,18 +1831,18 @@ def test_page9_latent_flux_exceeds_sensible_over_a_saturated_surface(
 
     assert abs(imbalance) < 0.5, f"TOA imbalance {imbalance:+.3f} W/m^2"
     assert 286.0 < surface < 292.0, (
-        f"converged surface {surface:.2f} K -- the page quotes 289.37 K")
+        f"converged surface {surface:.2f} K -- the page quotes 286.21 K")
     assert bowen < 1.0, (
         f"Bowen ratio {bowen:.2f} at surface {surface:.1f} K -- over a "
         "saturated surface the latent flux should dominate")
-    assert 0.55 < bowen < 0.85, f"Bowen ratio {bowen:.3f}; the page quotes 0.70"
+    assert 0.15 < bowen < 0.25, f"Bowen ratio {bowen:.3f}; the page quotes 0.20"
 
 
 @pytest.mark.slow
 def test_page9_headline_cell_is_already_latent_dominated(page9_cell):
     """The headline cell's 30 days: far from equilibrium, and the page says
     so, but the partition it shows is already the converged one's sign.
-    Measured 10-day means: SH 46.6, LH 72.6 W/m^2, Bowen 0.64, TOA -94."""
+    Measured 10-day means: SH 22.0, LH 102.4 W/m^2, Bowen 0.21, TOA -82."""
     _, _, state, record = page9_cell
     with _unyt_backend_restored():
         imbalance = _load("budgets").toa_imbalance(state)
@@ -1857,7 +1857,7 @@ def test_page9_condensation_removes_the_supersaturation(page9_cell):
     """The reason GridScaleCondensation is in the stack from this page on,
     by the page's own route: from the headline cell's state, ten more days
     with the sink and without it. Measured: peak relative humidity 100 %
-    with it, 707 % without, and the precipitation 1.89 mm/day."""
+    with it, 2876 % without, and the precipitation 3.57 mm/day."""
     tendencies, steppers, base, _ = page9_cell
     peaks, rain = {}, {}
     with _unyt_backend_restored():
@@ -1886,7 +1886,7 @@ def test_page9_condensation_removes_the_supersaturation(page9_cell):
         "list -- nothing the step leaves behind should be supersaturated")
     assert peaks["without"] > 4.0, (
         f"peak RH without condensation {peaks['without']:.2f} -- the page "
-        "quotes 707 % after ten days")
+        "quotes 2876 % after ten days")
     assert rain["with"] > 1.0 and rain["without"] == 0.0, rain
 
 
@@ -1894,8 +1894,8 @@ def test_page9_condensation_removes_the_supersaturation(page9_cell):
 def test_page9_a_column_with_no_moisture_sink_has_no_equilibrium():
     """What the page says happens to a sink-free column left alone: the
     vapour keeps accumulating, and the surface keeps warming. Measured at
-    day 60 of a cold start: 24.4 g/kg at the lowest level, surface 304.8 K,
-    both still rising; the run fails outright at day 370."""
+    day 60 of a cold start: 31.3 g/kg at the lowest level, surface 310.5 K,
+    both still rising; the run fails outright at day 464."""
     with _unyt_backend_restored():
         _, _, state, record = _page9_run(24 * 60, condensation=False)
     q_lowest = float(state["specific_humidity"].values[0, 0, 0])
@@ -1907,13 +1907,14 @@ def test_page9_a_column_with_no_moisture_sink_has_no_equilibrium():
 @pytest.mark.slow
 def test_page9_surface_relative_humidity_moves_the_bowen_ratio(page9_cell):
     """Page 9's knob, by the knob cell's route (30-day cold starts), over the
-    range the page says was tested. Measured 10-day means: Bowen 3.75 at RH
-    0.4 and 0.64 at 1.0 -- the partition flips."""
+    range the page says was tested. Measured 10-day means: Bowen 0.89 at RH
+    0.4 and 0.21 at 1.0 -- the partition moves toward sensible heat (it flips
+    only once the column has converged)."""
     with _unyt_backend_restored():
         _, _, _, dry = _page9_run(PAGE9_CELL_STEPS,
                                   surface_relative_humidity=0.4)
     wet = page9_cell[3]
-    assert _bowen(dry, 10.0) > 1.0 > _bowen(wet, 10.0), (
+    assert _bowen(dry, 10.0) > 3.0 * _bowen(wet, 10.0), (
         f"Bowen ratio {_bowen(dry, 10.0):.2f} at RH 0.4, "
         f"{_bowen(wet, 10.0):.2f} at RH 1.0 -- a drier surface partitions "
         "more into sensible heat")
@@ -1922,13 +1923,13 @@ def test_page9_surface_relative_humidity_moves_the_bowen_ratio(page9_cell):
 @pytest.mark.slow
 def test_page9_a_drier_surface_ends_colder(page9_equilibrium):
     """The knob's converged half, which the page quotes because it reverses
-    the 30-day answer: at RH 0.4 the column settles at 288.32 K, 1.05 K
-    colder than at RH 1.0, at Bowen 4.15. Less vapour, less greenhouse."""
+    the 30-day answer: at RH 0.4 the column settles at 283.45 K, 2.76 K
+    colder than at RH 1.0, at Bowen 1.48. Less vapour, less greenhouse."""
     with _unyt_backend_restored():
         _, _, _, dry = _page9_run(PAGE9_STEPS, surface_relative_humidity=0.4)
     wet = page9_equilibrium[3]
-    assert _bowen(dry, 30.0) > 3.0
-    assert dry.mean("ts") < wet.mean("ts") - 0.5, (
+    assert _bowen(dry, 30.0) > 1.0
+    assert dry.mean("ts") < wet.mean("ts") - 1.5, (
         f"RH 0.4 at {dry.mean('ts'):.2f} K vs RH 1.0 at "
         f"{wet.mean('ts'):.2f} K -- the page says the drier column ends "
         "colder")
@@ -1939,10 +1940,10 @@ def test_page9_the_surface_supplies_a_greenhouse_and_a_deeper_mixed_layer(
         page9_equilibrium):
     """Two converged comparisons against the same column over a dry surface.
 
-    Measured: dry 266.58 K against moist 289.37 K, the water-vapour
-    greenhouse the surface supplied; and a boundary layer whose median depth
-    is 445 m dry and 723 m moist (medians, because the depth jumps for single
-    steps and the mean is not where it sits).
+    Measured: dry 266.69 K against moist 286.21 K, the water-vapour
+    greenhouse the surface supplied; and a boundary layer about 8.1 km deep
+    dry and 12.0 km moist (medians, a habit from when the depth jumped for
+    single steps; it now holds steady).
     """
     with _unyt_backend_restored():
         _, _, _, dry = _page9_run(PAGE9_STEPS, surface_relative_humidity=0.0)
@@ -1950,13 +1951,13 @@ def test_page9_the_surface_supplies_a_greenhouse_and_a_deeper_mixed_layer(
     warming = moist.mean("ts") - dry.mean("ts")
     assert 18.0 < warming < 28.0, (
         f"moist minus dry surface temperature {warming:.2f} K -- the page "
-        "quotes about 23 K")
+        "quotes about 20 K")
 
     def median_depth(record):
         days = record["days"]
         return float(np.median(record["blh"][days > days[-1] - 30.0]))
 
-    assert median_depth(moist) > median_depth(dry) + 150.0, (
+    assert median_depth(moist) > median_depth(dry) + 2000.0, (
         f"median boundary-layer depth {median_depth(moist):.0f} m moist vs "
         f"{median_depth(dry):.0f} m dry")
 

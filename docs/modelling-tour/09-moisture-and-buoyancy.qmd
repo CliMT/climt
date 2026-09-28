@@ -138,13 +138,13 @@ print("stepper components: ", [type(c).__name__ for c in steppers])
 
 Thirty days from climt's default start, stepped hourly, as on page 8 and for the
 same reason: the turbulent column's fluxes depend on the timestep. Converged, this
-column's sensible heat flux is 49.3 W m⁻² stepped at 6 h, 46.8 at 3 h, 44.7 at 1 h
-and 44.1 at 30 minutes. Hourly is where halving the step stops mattering much.
+column's sensible heat flux is 16.5 W m⁻² stepped at 6 h, 17.2 at 3 h, 18.3 at 1 h
+and 18.8 at 30 minutes. Hourly is where halving the step stops mattering much.
 
-**This cell takes about two minutes in a browser.** That is 720 steps at about
-0.18 s each in Pyodide, measured with the JIT off, the native stand-in for the
-browser. The 14-band radiation costs about 16 times as much per step as page 8's
-gray column (0.18 s against about 11 ms), and it is nearly all of the cost.
+**This cell takes about a minute and a half in a browser.** That is 720 steps at
+about 0.12 s each in Pyodide, measured with the JIT off, the native stand-in for
+the browser. The 14-band radiation costs about 10 times as much per step as page 8's
+gray column (0.12 s against about 12 ms), and it is nearly all of the cost.
 
 ```{pyodide}
 N_DAYS = 30
@@ -165,50 +165,55 @@ print(f"TOA imbalance {record.mean('toa', 10):+.1f} W/m2 "
 ## If the live cell did not run
 
 ![Left: potential temperature θ and virtual potential temperature θ_v over the
-lowest 250 hPa of the column, with the gap between them shaded. The gap is 1.25 K
-at the lowest level and closes with height. Middle: specific humidity, 7.3 g/kg at
-the lowest level and falling with height, lying on its saturation curve all the
-way up to about 875 hPa and zero above that. Right: the sensible and latent heat
+lowest 220 hPa of the column, with the gap between them shaded. The gap is 1.45 K
+at the lowest level and closes with height. θ falls with height from about 289 K
+at the ground to about 287.4 K near 836 hPa. Middle: specific humidity, 8.2 g/kg
+at the lowest level and falling with height, below its saturation curve up to
+about 836 hPa and lying on it above that. Right: the sensible and latent heat
 fluxes over 30 days, with the latent flux above the sensible flux throughout.](_artifacts/09-buoyancy.png)
 
 This is the figure the cell above produces. Live cells need WebAssembly; if your
 browser blocks it, the static version is here.
 :::
 
-Over the last ten days of the run the surface loses 72.6 W m⁻² as latent heat and
-46.6 W m⁻² as sensible heat. The ratio of the two, sensible over latent, is the
-**Bowen ratio**, and here it is 0.64. Most of the heat the turbulence takes from
+Over the last ten days of the run the surface loses 102.4 W m⁻² as latent heat and
+22.0 W m⁻² as sensible heat. The ratio of the two, sensible over latent, is the
+**Bowen ratio**, and here it is 0.21. Most of the heat the turbulence takes from
 this surface leaves as evaporated water. It only becomes heat in the air where
 that water condenses.
 
 Thirty days is not an equilibrium, and the cell says so. The column started with
 air at 290 K all the way up, and at day 30 it is still radiating away that
-initial heat, with a TOA imbalance of −94 W m⁻². Settling takes about 900 days,
+initial heat, with a TOA imbalance of −82 W m⁻². Settling takes about 900 days,
 which would be over an hour in a browser.
 `scripts/experiments/tour_page9_measurements.py` runs that long natively, and
 here is where it ends up:
 
 | | day 30 (the cell; 10-day means) | day 1000 (converged; 30-day means) |
 |---|---|---|
-| surface temperature | 291.14 K | 289.37 K |
-| sensible heat flux | 46.6 W m⁻² | 44.7 W m⁻² |
-| latent heat flux | 72.6 W m⁻² | 63.5 W m⁻² |
-| Bowen ratio | 0.64 | 0.70 |
-| TOA imbalance | −94 W m⁻² | −0.1 W m⁻² |
-| precipitation | 2.44 mm day⁻¹ | 2.19 mm day⁻¹ |
+| surface temperature | 294.04 K | 286.21 K |
+| sensible heat flux | 22.0 W m⁻² | 18.3 W m⁻² |
+| latent heat flux | 102.4 W m⁻² | 89.6 W m⁻² |
+| Bowen ratio | 0.21 | 0.20 |
+| TOA imbalance | −82 W m⁻² | −0.15 W m⁻² |
+| precipitation | 3.53 mm day⁻¹ | 3.10 mm day⁻¹ |
 
-The converged column sits at 289.4 K, close to Earth's mean surface temperature,
-and over its saturated surface the latent flux still exceeds the sensible, with a
-Bowen ratio of 0.70. The precipitation matches the evaporation: 63.5 W m⁻² of
-latent heat is 2.19 mm of water a day, which is what falls. Over a real ocean the
-Bowen ratio is typically 0.1 to 0.2. Part of the difference is that real air over
-the ocean is not saturated: convection and the large-scale circulation carry
-vapour away and bring drier air down, and the humidity difference between the sea
-and the air drives the latent flux. This column has neither, and its lowest air is
-saturated. What it does get right is the direction: over water, evaporation
-carries most of the heat.
+The converged column sits at 286.2 K, about 2 K below Earth's mean surface
+temperature, and over its saturated surface the latent flux far exceeds the
+sensible, with a Bowen ratio of 0.20. The precipitation matches the evaporation:
+89.6 W m⁻² of latent heat is 3.10 mm of water a day, which is what falls. Over a
+real ocean the Bowen ratio is typically 0.1 to 0.2, so this lands at the top of the
+real range, and partly by luck. Real air over the ocean is not saturated:
+convection and the large-scale circulation carry vapour away and bring drier air
+down, and the humidity difference between the sea and the air drives the latent
+flux. This column has neither. What it has instead is a boundary layer that has
+grown about 12 km deep, and does the carrying: it mixes the vapour up into cold
+air that rains it out, and leaves the lowest air at about 50 % relative humidity
+(`scripts/experiments/tour_page9_measurements.py`). What the column gets right
+for the right reason is the direction: over water, evaporation carries most of
+the heat.
 
-The same run with a *dry* surface converges at 266.58 K, about 23 K colder. That
+The same run with a *dry* surface converges at 266.69 K, about 20 K colder. That
 column has no water in it at all, so its radiation sees only CO₂. The difference
 is the greenhouse effect of the vapour the surface supplied, which is the
 quantity page 6 drew from prescribed profiles.
@@ -239,12 +244,10 @@ where the air is wettest.
 (page 8) is written in θ_v, with the coefficient 0.608. That is `R_v/R_d − 1`
 unrounded, and the cell below computes it from sympl's constants. So the moisture
 changes the depth of the mixing. In the converged moist column the boundary layer
-sits at about 720 m most of the time. The same column over a dry surface sits at
-about 445 m, so the moisture raises the top of the mixing by roughly 280 m. These
-are medians: as on page 8, the depth jumps to one or two kilometres for a single
-step now and then, so the mean is not where it sits. (Page 8's layer sat near
-550 m, but that column differs in more than its moisture: its radiation is gray
-and its surface is 44 K warmer.)
+reaches about 12.0 km. The same column over a dry surface reaches about 8.1 km, so
+the moisture raises the top of the mixing by roughly 4 km. (Page 8's layer sat at
+2.5 km, but that column differs in more than its moisture: its radiation is gray
+and its surface is 47 K warmer.)
 
 Here is θ_v, derived from state quantities:
 
@@ -275,16 +278,27 @@ for k in range(6):
 
 The last two columns agree, as they must: θ_v − θ = 0.61 q θ is the definition,
 rearranged. The table makes the size of it visible. At the lowest level, with
-7.3 g kg⁻¹ of vapour, moisture is worth 1.25 K of potential temperature.
+8.2 g kg⁻¹ of vapour, moisture is worth 1.45 K of potential temperature.
 
 The headline figure shows two more things worth a look. In the left panel, θ
-*falls* with height between about 910 and 875 hPa, by about 2 K. That air is
-statically unstable, and nothing on this page removes it. [Page 10](10-dry-convection.qmd) introduces the
-component that does. In the middle panel, the water has not got far. It fills the
-air below about 875 hPa, where the boundary layer's mixing stops, and saturates
-it. Above that the air is still as dry as climt's default state left it.
-Nothing on this page lifts vapour out of the boundary layer. That takes moist convection, which is [page 12](12-moist-rce.qmd)'s
-subject.
+*falls* with height from the ground to about 836 hPa, by about 1.6 K. That air is
+statically unstable. The boundary layer mixes dry static energy, which pulls the
+air toward the dry adiabat, a single θ, but the surface heats the bottom of the
+column faster than the mixing evens it out, and nothing else on this page removes
+it. [Page 10](10-dry-convection.qmd) introduces the component that does. In the
+middle panel, the water has got as far as the boundary layer reaches, about
+745 hPa at day 30. The mixing carries it up into colder air, which it saturates
+from about 836 hPa upward, while the air nearest the ground stays below
+saturation, at about 70 %. Above the boundary layer the air is still as dry as
+climt's default state left it.
+
+Converged, the boundary layer is far deeper, and the vapour goes with it: the air
+is saturated from about 590 to 180 hPa, and θ is within 1 K of 282 K all the way
+from the ground to 180 hPa. A boundary layer 12 km deep is doing the job of
+convection, and doing it crudely: it mixes the whole troposphere toward one θ,
+the dry adiabat, whether the air is rising or not. Lifting vapour through the
+troposphere properly takes moist convection, which is
+[page 12](12-moist-rce.qmd)'s subject.
 
 ::: {.callout-note}
 ## climt craft: deriving a quantity from state, with its units
@@ -331,7 +345,7 @@ model, though, and the first code exercise measures how different.
 `SimpleBoundaryLayer` treats it as an *input*, and nothing else in the browser's
 stack writes it. Set it once to a number and it stays there while the surface
 temperature moves underneath it. For example, 0.015 kg kg⁻¹ is saturated at about
-293 K, but in a column that settles at 289 K it is 131 % of saturation. The
+293 K, but in a column that settles at 286 K it is 162 % of saturation. The
 surface would then be evaporating from something wetter than water.
 `SurfaceHumidity` recomputes it from the surface temperature every step, using the
 same saturation formula `GridScaleCondensation` uses, so "relative humidity 1"
@@ -347,7 +361,7 @@ means the same thing at the surface and in the air.
 0.4 to 1.0. Outside that range is untested.
 :::
 
-The same 30-day cold start, at a drier surface. **About two minutes in a
+The same 30-day cold start, at a drier surface. **About a minute and a half in a
 browser.** The headline run above is the relative humidity 1.0 point.
 
 ```{pyodide}
@@ -376,22 +390,22 @@ for surface_rh in rhs:
     report(f"surface RH {surface_rh:.1f}", knob[surface_rh])
 ```
 
-At relative humidity 0.4 the Bowen ratio is 3.75: the partition flips, and the
-surface sheds most of its heat as sensible heat. The latent flux is proportional
-to the surface's humidity minus the air's, and drying the surface shrinks that
-difference. The heat still has to go somewhere, so the surface warms until the
-sensible flux and the radiation take it. After 30 days the drier surface is about
-2 K warmer. Converged, the two columns differ by less, 288.32 K against 289.37 K,
-with Bowen ratios of 4.15 and 0.70
-(`scripts/experiments/tour_page9_measurements.py`). And the order has reversed:
-converged, the drier surface is 1.05 K *colder*. A drier surface puts less water
+At relative humidity 0.4 the Bowen ratio is 0.89: the sensible flux has grown to
+nearly match the latent. The latent flux is proportional to the surface's humidity
+minus the air's, and drying the surface shrinks that difference. The heat still
+has to go somewhere, so the surface warms until the sensible flux and the
+radiation take it. After 30 days the drier surface is about 3.4 K warmer.
+Converged, the partition has flipped, with Bowen ratios of 1.48 against 0.20, and
+the surfaces sit at 283.45 K against 286.21 K
+(`scripts/experiments/tour_page9_measurements.py`). The order of the temperatures
+has reversed: converged, the drier surface is 2.76 K *colder*. A drier surface puts less water
 vapour into the air, so the column has less greenhouse effect. Once the whole
 column has adjusted, that outweighs the surface's reluctance to evaporate.
 
 ## What condensation removes
 
 Take condensation out of the column the headline cell just made, and step both
-versions ten more days. **About a minute and a half in a browser.**
+versions ten more days. **About a minute in a browser.**
 
 ```{pyodide}
 N_MORE = 24 * 10     # ten days
@@ -418,24 +432,24 @@ for label, run in continued.items():
     report(label, run)
 ```
 
-With condensation, the peak relative humidity never exceeds 100 %, and 1.89 mm of
-rain falls a day. Without it, the peak is 707 % after ten days (219 % after the first day, measured
+With condensation, the peak relative humidity never exceeds 100 %, and 3.57 mm of
+rain falls a day. Without it, the peak is 2876 % after ten days (273 % after the first day, measured
 by `scripts/experiments/tour_page9_measurements.py`).
-It sits at about 836 hPa, near the top of the boundary layer, where the mixing
-carries surface air up into air that is several kelvin colder. That air can hold
+It sits at about 589 hPa, at the top of the boundary layer, now about 4.5 km deep,
+where the mixing carries surface air up into air that is 50 K colder. That air can hold
 far less water, and without a sink nothing takes the excess out.
 
 The fluxes change as well. With no rain to remove it, the vapour builds up near the
 ground, the air above the surface approaches the surface's own humidity, and the
-latent flux falls from 64.8 to 36.0 W m⁻². The Bowen ratio goes from 0.69 to
-2.12.
+latent flux falls from 103.3 to 81.1 W m⁻². The Bowen ratio goes from 0.19 to
+0.47.
 
 Left alone for longer, the sink-free column does not settle at all. Started cold
 without condensation (`scripts/experiments/tour_page9_measurements.py supersat`),
-its lowest level holds 17 g kg⁻¹ of vapour at day 30, 44 at day 100 and 266 at
+its lowest level holds 20 g kg⁻¹ of vapour at day 30, 52 at day 100 and 233 at
 day 360. The vapour is a greenhouse gas, so the surface warms as it accumulates,
-from 298 K at day 30 to 348 K at day 360, and a warmer surface evaporates more.
-After 8881 steps (370 days) the radiation returns non-finite fluxes and the run
+from 302 K at day 30 to 346 K at day 360, and a warmer surface evaporates more.
+After 11 145 steps (464 days) the radiation returns non-finite fluxes and the run
 stops. A column that can evaporate but cannot rain has no equilibrium. That is why
 `GridScaleCondensation` is in the stack on this page and every page after it.
 
@@ -444,9 +458,9 @@ stops. A column that can evaporate but cannot rain has no equilibrium. That is w
 ### Physics
 
 1. **One kelvin of buoyancy.** At what specific humidity does θ_v − θ reach 1 K,
-   for air with θ ≈ 282 K, as in the table above? Work it out by hand, then find
+   for air with θ ≈ 288 K, as in the table above? Work it out by hand, then find
    the level in the headline column where `q` crosses that value. Is it inside the
-   boundary layer or above it? (It is about 5.8 g kg⁻¹.)
+   boundary layer or above it? (It is about 5.7 g kg⁻¹.)
 
 2. **The Bowen ratio as the surface dries.** Before running the knob cell, predict
    how the Bowen ratio moves as the surface relative humidity falls from 1.0 to
@@ -455,8 +469,8 @@ stops. A column that can evaporate but cannot rain has no equilibrium. That is w
    not; the knob section says why.) Then add 0.7 to `SURFACE_RHS` and check whether
    the Bowen ratio falls along a straight line.
 
-3. **The water-vapour greenhouse, supplied.** A moist column converges at 289.4 K
-   and a dry-surface column at 266.6 K. Set `SURFACE_RH = 0.0` in the first cell
+3. **The water-vapour greenhouse, supplied.** A moist column converges at 286.2 K
+   and a dry-surface column at 266.7 K. Set `SURFACE_RH = 0.0` in the first cell
    (it is bound into `moist_column` when that cell runs), re-run the first two cells, and confirm that the dry column's humidity stays at zero and its
    latent flux vanishes. Which of the page's components read `specific_humidity`
    at all? Print each one's `input_properties` to find out.
@@ -466,11 +480,12 @@ stops. A column that can evaporate but cannot rain has no equilibrium. That is w
 1. **Swap the order.** Build the stepper list with `GridScaleCondensation`
    *before* `SimpleBoundaryLayer`, run the headline cell, and compare the peak
    relative humidity the step leaves behind and the Bowen ratio. (Measured on
-   converged 1000-day runs: condensing first leaves the column at about 104 %
-   relative humidity at the end of each step, and up to 128 %, because the mixing
-   comes after the sink. The climate hardly notices. The surface is 0.11 K warmer,
-   and the Bowen ratio is 0.71 against 0.70. The order matters most for what a
-   diagnostic reads at the end of the step.)
+   converged 1000-day runs: condensing first leaves the column at 168 % relative
+   humidity at its peak at the end of each step, because the mixing comes after
+   the sink. The climate notices too, a little: the surface is 1.04 K warmer, and
+   the Bowen ratio is 0.16 against 0.20. One likely reason: the vapour the mixing carries up to
+   supersaturation waits a step before it rains, and while it waits the
+   radiation sees it.)
 
 2. **Relative humidity against height.** Plot `soundings.relative_humidity` for
    both states in the condensation cell against pressure. Where does the
@@ -478,7 +493,7 @@ stops. A column that can evaporate but cannot rain has no equilibrium. That is w
    `boundary_layer_height` diagnostic, in metres, is one clue.
 
 3. **Close the water budget.** Converged, the column rains out exactly what it
-   evaporates: 2.19 mm a day each. Add `evap=budgets.evaporation_rate` to
+   evaporates: 3.10 mm a day each. Add `evap=budgets.evaporation_rate` to
    `recorder()`, re-run the headline cell, and plot evaporation and precipitation
    against time. When they differ, the column's water content is changing. Check
    that with the column's total water, `(q * dp / g).sum()`, where `dp` comes
