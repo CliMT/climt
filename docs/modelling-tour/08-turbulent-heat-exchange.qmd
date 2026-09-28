@@ -124,14 +124,14 @@ at 12 hours, exactly as there. The second adds the boundary layer and steps
 
 Why hourly? The purely radiative column's equilibrium does not depend on the
 timestep: at 12 h and at 1 h it lands on the same 15.15 K. The turbulent column's
-does. Stepped at 12 h its sensible heat flux swings from one step to the next
-and averages 39.6 W m⁻²; at 1 h it averages 34.7; at 30 minutes, 34.2. Only the
-last two agree, so this page steps hourly.
+does. Stepped at 12 h its sensible heat flux settles at 33.4 W m⁻²; at 1 h, at
+30.3; at 30 minutes, at 29.6. Only the last two agree, to about 2 %, so this page
+steps hourly.
 A timestep is part of a model's configuration, and this is how you find out
 whether yours is short enough: halve it and see whether the answer moves.
 
 **This cell takes about two and a half minutes in a browser** — 12 000 steps at
-about 11 ms each in Pyodide (measured with the JIT off, the native stand-in for
+about 12 ms each in Pyodide (measured with the JIT off, the native stand-in for
 the browser). The spinner is expected. The knob cells further down start from
 the equilibrium it finds, and are much quicker.
 
@@ -162,27 +162,29 @@ print(f"TOA imbalance {budgets.toa_imbalance(turbulent):+.3f} W/m2")
 
 ![Left: the radiative-equilibrium column near the surface, with the ground 15.15 K
 warmer than the lowest air layer. Right: the same column with a boundary layer,
-where the jump is down to about 7.5 K. Below: the sensible heat flux over 500 days,
-rising in the first weeks and settling near 35 W m⁻², with an hour-to-hour
-flicker.](_artifacts/08-turbulent.png)
+where the jump is down to about 6 K. Below: the sensible heat flux over 500 days,
+rising in the first weeks and settling on a flat line near
+30 W m⁻².](_artifacts/08-turbulent.png)
 
 This is the figure the cell above produces. Live cells need WebAssembly; if your
 browser blocks it, the static version is here.
 :::
 
-The jump falls from **15.15 K to 7.47 K**. The boundary layer carries
-34.7 W m⁻² of sensible heat from the ground into the air, and that heat no
+The jump falls from **15.15 K to 5.95 K**. The boundary layer carries
+30.3 W m⁻² of sensible heat from the ground into the air, and that heat no
 longer has to leave the surface as radiation. So the surface cools, from 335.53 K
-to 332.97 K. The lowest air warms, and the jump closes from both sides.
+to 333.45 K. The lowest air warms, and the jump closes from both sides.
 
-Look at the flux panel before moving on. The flux does not settle to a line. It
-flickers, by about ±2 W m⁻² from hour to hour. The scheme chooses the depth of the
-boundary layer level by level, as the lowest height where the bulk Richardson
-number exceeds its critical value. At equilibrium the depth sits near 550 m, and
-every six hours or so it jumps to one or two kilometres for a single step, mixes,
-and collapses again. The jump and the flux saw-tooth with it, by about ±0.3 K and
-±2 W m⁻². So every number on this page is a **30-day mean**, which is what
-`record.mean` returns. A single step's value would be one sample of a saw-tooth.
+Look at the flux panel before moving on. Once the column has warmed, the flux
+settles to a flat line. The scheme chooses the depth of the boundary layer level
+by level, as the lowest height where the bulk Richardson number exceeds its
+critical value, and at equilibrium that depth holds at 2.5 km, step after step
+(`scripts/experiments/tour_page8_measurements.py`). It mixes dry static energy,
+`c_p T + g z`, so the air it mixes is pulled toward the dry adiabat rather than
+toward one temperature. Every number on this page is still a **30-day mean**,
+which is what `record.mean` returns. At this equilibrium that is the same as the
+last step's value, but it is the safe habit for a run that has not finished
+settling, and the knob runs below are shorter.
 
 ::: {.callout-note}
 ## climt craft: a Stepper in the loop
@@ -292,10 +294,11 @@ print(f"sensible heat flux {spin.mean('flux'):.1f} W/m2, "
 ::: {.callout-note collapse="true"}
 ## If the live cell did not run
 
-![Left: eastward wind profiles every 20 days over 200 days. The lowest few levels
-decay from 10 m s⁻¹ towards zero while the rest of the column stays at
-10 m s⁻¹. Right: the lowest-level wind, falling from 10 to about 3 m s⁻¹ in a
-day, then creeping to zero.](_artifacts/08-spindown.png)
+![Left: eastward wind profiles every 20 days over 200 days. The levels
+up to about 790 hPa decay from 10 m s⁻¹ towards zero while the rest of the column
+stays at 10 m s⁻¹. Right: the lowest-level wind, falling from 10 to about
+5 m s⁻¹ in a day and to under 1 m s⁻¹ by day 15, bumping back up to about
+2 m s⁻¹ around day 20, then creeping to zero.](_artifacts/08-spindown.png)
 
 The figure the cell above produces.
 :::
@@ -303,8 +306,10 @@ The figure the cell above produces.
 ::: {.callout-important}
 ## Your column stops moving, and it takes its heat flux with it
 
-The lowest-level wind falls from 10 to 3.2 m s⁻¹ in the first day, and to 1.5 by
-day five. Then it creeps: 0.40 m s⁻¹ at day 60, and **0.000** by day 200. Above
+The lowest-level wind falls from 10 to 4.9 m s⁻¹ in the first day, and to 2.1 by
+day five. It rises again for a while, to about 2 m s⁻¹ around day 20, as the
+warming column's boundary layer deepens to about 790 hPa and mixes down some of
+the faster air above it. Then it creeps: 0.39 m s⁻¹ at day 60, and **0.001** by day 200. Above
 the boundary layer the wind does not change at all. There is no drag up there and
 nothing else acting, so it stays at 10 m s⁻¹ forever, cut off from the ground.
 
@@ -316,10 +321,10 @@ survive. Run it to 500 days from 0, 5 or 10 m s⁻¹ and all three end in the sa
 equilibrium, with the same dead-calm surface.
 
 Dead calm is not a small change. The bulk formula makes the heat flux proportional
-to the wind speed at the lowest level, and the heat flux falls from 34.7 to
-**15.0 W m⁻²** while the jump grows back from 7.47 to **10.11 K**. (Those are from
-500-day runs. The cell above stops at 200 days and prints 15.1 and 10.14, with the
-surface still settling.) Even the 15.0 is
+to the wind speed at the lowest level, and the heat flux falls from 30.3 to
+**12.8 W m⁻²** while the jump grows back from 5.95 to **8.94 K**. (Those are from
+500-day runs. The cell above stops at 200 days and prints 12.9 and 8.97, with the
+surface still settling.) Even the 12.8 is
 not physics: the scheme never lets the wind speed it uses fall below 1 m s⁻¹, so
 the flux of a dead-calm column is the flux of that floor.
 
@@ -499,16 +504,16 @@ for wind in winds:
 
 | target wind | lowest-level wind | surface − air jump | sensible heat flux | surface T |
 |---|---|---|---|---|
-| none (dead calm) | 0.00 m s⁻¹ | 10.11 K | 15.0 W m⁻² | 334.50 K |
-| 2 m s⁻¹ | 1.34 m s⁻¹ | 9.33 K | 20.0 W m⁻² | 334.13 K |
-| 5 m s⁻¹ | 2.89 m s⁻¹ | 7.47 K | 34.7 W m⁻² | 332.97 K |
-| 10 m s⁻¹ | 5.12 m s⁻¹ | 6.16 K | 51.2 W m⁻² | 331.56 K |
+| none (dead calm) | 0.00 m s⁻¹ | 8.94 K | 12.8 W m⁻² | 334.74 K |
+| 2 m s⁻¹ | 1.48 m s⁻¹ | 7.85 K | 17.8 W m⁻² | 334.45 K |
+| 5 m s⁻¹ | 3.35 m s⁻¹ | 5.95 K | 30.3 W m⁻² | 333.45 K |
+| 10 m s⁻¹ | 6.15 m s⁻¹ | 4.39 K | 40.5 W m⁻² | 332.72 K |
 
 These are 30-day means after 500-day cold starts, one per row, which is where the
 surface temperatures come from (`scripts/experiments/tour_page8_measurements.py`
 reproduces them). The cell above gives the same jumps and fluxes in a fraction of
 the time. More wind moves more heat, and the jump shrinks, but it does not
-vanish. At 10 m s⁻¹ it is still 6.2 K.
+vanish. At 10 m s⁻¹ it is still 4.4 K.
 
 ## A forcing is not an assignment
 
@@ -534,11 +539,11 @@ for label, run in (("relaxed toward 5 m/s", record),
 ## A forcing is not an assignment
 
 Both runs are "5 m s⁻¹". Relaxing toward 5 m s⁻¹ leaves the lowest level at
-**2.89 m s⁻¹**, because the surface drag is still acting on it and the relaxation
+**3.35 m s⁻¹**, because the surface drag is still acting on it and the relaxation
 only pulls. The assignment pins the lowest level at exactly **5.00**, and so
 overrides the drag at the one level where the exchange happens. It moves
-**45.1 W m⁻²** of heat against the relaxation's 34.7, from the same nominal wind,
-and the jump is 6.13 K rather than 7.47.
+**36.0 W m⁻²** of heat against the relaxation's 30.3, from the same nominal wind,
+and the jump is 5.18 K rather than 5.95.
 
 Neither is *wrong*. They are different physical statements. The relaxation says:
 *something aloft keeps pushing the air toward 5 m s⁻¹, and the ground drags on
@@ -573,12 +578,12 @@ for z0 in sorted(rough):
 ```
 
 From the scheme's smooth-sea default to rough land, the sensible heat flux goes
-26.9 → 34.7 → 50.6 W m⁻² and the jump 8.94 → 7.47 → 4.80 K. Look at the wind column
-too, though: the lowest-level wind *falls* as the surface gets rougher, 3.30 →
-2.89 → 2.04 m s⁻¹. A rougher surface exchanges heat more efficiently, and it also
+23.3 → 30.3 → 43.3 W m⁻² and the jump 7.23 → 5.95 → 3.60 K. Look at the wind column
+too, though: the lowest-level wind *falls* as the surface gets rougher, 3.72 →
+3.35 → 2.56 m s⁻¹. A rougher surface exchanges heat more efficiently, and it also
 drags harder on the wind that does the exchanging. The two knobs are not
 independent. Measured in a dead-calm column instead, the same three roughness
-lengths give only 9.7, 15.0 and 31.1 W m⁻².
+lengths give only 8.6, 12.8 and 25.2 W m⁻².
 
 ## Exercises
 
@@ -588,10 +593,10 @@ lengths give only 9.7, 15.0 and 31.1 W m⁻².
    predict: when the boundary layer is switched on, does the surface warm or cool?
    Explain it from the surface energy budget — what the surface receives and what
    it gets rid of, before and after — and then check against the cell. (It cools,
-   by 2.6 K at 5 m s⁻¹. Why does the *air* above it not warm by more than it does?
+   by 2.1 K at 5 m s⁻¹. Why does the *air* above it not warm by more than it does?
    Print the whole temperature profile of both columns and compare.)
 
-2. **Why the jump does not close.** At 10 m s⁻¹ the jump is still 6.2 K, not zero.
+2. **Why the jump does not close.** At 10 m s⁻¹ the jump is still 4.4 K, not zero.
    What would have to change for it to close entirely? Think about what sets the
    bulk flux — the wind, the exchange coefficient, and the temperature difference
    itself — and what keeps supplying the surface with energy that the air cannot
@@ -600,12 +605,12 @@ lengths give only 9.7, 15.0 and 31.1 W m⁻².
 3. **The relaxation timescale.** The relaxation above uses τ = 24 h. Predict what
    happens at τ = 1 h and at τ = 100 days, then change `timescale_hours` in
    `turbulent_column`'s call to `stepping.wind_relaxation` and check. (Measured on
-   500-day runs: at 100 days the lowest wind is 0.44 m s⁻¹ and the column is all
-   but dead calm — 15.0 W m⁻², as with no forcing at all. At 1 h the run *fails*:
-   after 135 steps the radiation reports non-finite fluxes. The relaxation is a
+   500-day runs: at 100 days the lowest wind is 0.66 m s⁻¹ and the column is all
+   but dead calm — 12.8 W m⁻², as with no forcing at all. At 1 h the run *fails*:
+   after 102 steps the radiation reports non-finite fluxes. The relaxation is a
    stiff term, and at τ equal to the timestep it is outside the region where
    `AdamsBashforth` is stable. At τ = 2 h it runs, and the lowest wind reaches
-   4.07 m s⁻¹, most of the way to a hard reset.)
+   4.16 m s⁻¹, most of the way to a hard reset.)
 
 ### Code
 

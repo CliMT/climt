@@ -1297,9 +1297,9 @@ PAGE8_DT = dict(hours=1)
 # means: 20.0, 34.7, 51.2 W/m^2 and 9.33, 7.47, 6.16 K. The thresholds allow
 # ~25% -- they check the monotone response, not a fit.
 PAGE8_WIND_CASES = [
-    (2.0, 15.0, 10.0),
-    (5.0, 28.0, 8.5),
-    (10.0, 42.0, 7.0),
+    (2.0, 13.5, 9.5),
+    (5.0, 23.0, 7.5),
+    (10.0, 31.0, 5.5),
 ]
 
 
@@ -1405,7 +1405,7 @@ def _page8_restart(page8_equilibrium, wind=PAGE8_WIND, z0=PAGE8_Z0,
 @pytest.mark.slow
 def test_page8_turbulence_shrinks_the_surface_air_discontinuity(
         page8_equilibrium):
-    """Page 8's reveal. Measured 15.15 K -> 7.47 K (30-day mean) at z0=1e-3,
+    """Page 8's reveal. Measured 15.15 K -> 5.95 K (30-day mean) at z0=1e-3,
     5 m/s.
 
     Thresholds sit either side of the measurement with room, so this checks
@@ -1531,7 +1531,7 @@ def test_page8_relaxation_lets_the_drag_win_near_the_ground(
         page8_equilibrium):
     """The comparison that distinguishes a forcing from an assignment.
 
-    Relaxing toward 5 m/s leaves the lowest level near 2.9, because the
+    Relaxing toward 5 m/s leaves the lowest level near 3.4, because the
     surface drag is still acting and the relaxation only pulls. Assigning the
     wind back every step -- the idiom in examples/column_code_with_slab.py --
     pins it at exactly 5.0 and so overrides the drag at the one level where
