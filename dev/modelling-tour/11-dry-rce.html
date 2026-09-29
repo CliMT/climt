@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Dry RCE – climt</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-87bbd0932b66dcf4f61e5012abe16614.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo light-content">
+    <img src="../climt_logo.jpg" alt="climt logo" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">climt</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../get-started/installation.html"> 
+<span class="menu-text">Get Started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../user-guide/introduction.html"> 
+<span class="menu-text">User Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../radiative-transfer/index.html"> 
+<span class="menu-text">Radiative Transfer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../modelling-tour/index.html" aria-current="page"> 
+<span class="menu-text">Modelling Tour</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../experiments/index.html"> 
+<span class="menu-text">Experiments</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/CliMT/climt"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modelling-tour/11-dry-rce.html">Dry RCE</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A Modelling Tour of the Climate System</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/01-emissivity-spectrum.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ε is not a number</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/02-window-measured.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The window, measured</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/03-radiating-level.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Where photons come from</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/04-gray-equilibrium-tested.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Gray equilibrium, tested</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/05-co2-knob.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CO₂ knob</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/06-water-vapour-limit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Water vapour, and the limit</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/07-stepping-a-column.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Stepping a column</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/08-turbulent-heat-exchange.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Turbulent heat exchange</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/09-moisture-and-buoyancy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moisture changes the buoyancy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/10-dry-convection.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dry convection</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/11-dry-rce.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Dry RCE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/12-moist-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moist RCE</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#this-column-is-dry-and-its-numbers-are-not-earths" id="toc-this-column-is-dry-and-its-numbers-are-not-earths" class="nav-link active" data-scroll-target="#this-column-is-dry-and-its-numbers-are-not-earths">This column is dry, and its numbers are not Earth’s</a></li>
+  <li><a href="#you-are-perturbing-a-shipped-equilibrium" id="toc-you-are-perturbing-a-shipped-equilibrium" class="nav-link" data-scroll-target="#you-are-perturbing-a-shipped-equilibrium">You are perturbing a shipped equilibrium</a></li>
+  <li><a href="#the-profile-it-found" id="toc-the-profile-it-found" class="nav-link" data-scroll-target="#the-profile-it-found">The profile it found</a>
+  <ul class="collapse">
+  <li><a href="#against-page-7" id="toc-against-page-7" class="nav-link" data-scroll-target="#against-page-7">Against page 7</a></li>
+  </ul></li>
+  <li><a href="#the-knob-co₂" id="toc-the-knob-co₂" class="nav-link" data-scroll-target="#the-knob-co₂">The knob: CO₂</a></li>
+  <li><a href="#climt-craft-saving-and-loading-a-state" id="toc-climt-craft-saving-and-loading-a-state" class="nav-link" data-scroll-target="#climt-craft-saving-and-loading-a-state">climt craft: saving and loading a state</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a>
+  <ul class="collapse">
+  <li><a href="#physics" id="toc-physics" class="nav-link" data-scroll-target="#physics">Physics</a></li>
+  <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a></li>
+  </ul></li>
+  <li><a href="#going-deeper" id="toc-going-deeper" class="nav-link" data-scroll-target="#going-deeper">Going deeper</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Dry RCE</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+The site's single quarto-live boot include. Every `format: live-html` page
+includes it once, near the top, with a Quarto include shortcode pointing here
+(see modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT
+repeat the literal include shortcode in this comment: Quarto resolves include
+shortcodes at the text level, before HTML comments are stripped, so a literal
+one here would make this file include itself.
+
+This include is deliberately minimal: imports and nothing else. The time
+loops and figures the RCE pages need live in `modelling-tour/_tour/stepping.py`
+and arrive by the `resources:` mechanism, declared only by the pages that use
+them — so pages 01-06 download nothing they do not call. An earlier design put
+those ~200 lines in a second include, whose cell carried `#| edit: false`,
+which quarto-live renders **read-only, not hidden**: every page including it
+opened with four screens of code it never ran.
+
+The climt wheel itself is installed by micropip at document setup via the
+including page's `pyodide: packages:` front-matter block — resolved from PyPI,
+pinned to a released version.
+
+PREVIEWING UNRELEASED CHANGES. To run a page against your working copy rather
+than the released wheel, build the pure wheel and serve it *with CORS headers*
+(plain `python -m http.server` will NOT work, and GitHub release assets do not
+send CORS either), then point the page's front matter at the local URL:
+
+    CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
+    python scripts/serve_wheel.py /tmp/climt_wh 8912
+-->
+<div>
+<div id="pyodide-1" class="exercise-cell">
+
+</div>
+<script type="pyodide-1-contents">
+eyJhdHRyIjp7ImF1dG9ydW4iOnRydWUsImVkaXQiOmZhbHNlLCJldmFsIjp0cnVlfSwiY29kZSI6IiMgVGhlIGNsaW10IHdoZWVsIGlzIGluc3RhbGxlZCBieSBtaWNyb3BpcCBhdCBkb2N1bWVudCBzZXR1cCAoYmVmb3JlIGFueSBjZWxsXG4jIHJ1bnMpIHZpYSB0aGUgYHB5b2RpZGU6IHBhY2thZ2VzOmAgYmxvY2sgaW4gdGhlIHBhZ2UgZnJvbnQgbWF0dGVyLiBJbnN0YWxsaW5nXG4jIGhlcmUgd2l0aCBgYXdhaXQgbWljcm9waXAuaW5zdGFsbCguLi4pYCBpbnN0ZWFkIHdvdWxkIHJhY2U6IHF1YXJ0by1saXZlIGRvZXNcbiMgbm90IGF3YWl0IG9uZSBhdXRvcnVuIGNlbGwncyBhc3luYyB3b3JrIGJlZm9yZSBzdGFydGluZyB0aGUgbmV4dCwgc28gYVxuIyBkb3duc3RyZWFtIGNlbGwgY2FuIHJ1biBiZWZvcmUgdGhlIHdoZWVsIGZpbmlzaGVzIGluc3RhbGxpbmcuIFNvIHRoaXMgY2VsbCBpc1xuIyBzeW5jaHJvbm91cy5cbmltcG9ydCBudW1weSBhcyBucFxuaW1wb3J0IG1hdHBsb3RsaWIucHlwbG90IGFzIHBsdFxuaW1wb3J0IGNsaW10XG5pbXBvcnQgc3ltcGxcblxuIyBFbmQgb24gYSBwbGFpbiBzdGF0ZW1lbnQgKG5vdCBhIGRlZik6IHF1YXJ0by1saXZlIGNhcHR1cmVzIGVhY2ggY2VsbCdzIGZpbmFsXG4jIHZhbHVlIGZvciBkaXNwbGF5LCBhbmQgbWFyc2hhbGxpbmcgYSBiYXJlIGZ1bmN0aW9uIG9iamVjdCB0aHJvdWdoIEpTIGludGVyb3BcbiMgeWllbGRzIGFuIHVuaGFzaGFibGUgSnNQcm94eSB0aGF0IGFib3J0cyB0aGUgY2VsbC5cbnByaW50KFwiY2xpbXRcIiwgY2xpbXQuX192ZXJzaW9uX18sIFwicmVhZHkg4oCUIGhhc19mb3J0cmFuOlwiLCBjbGltdC5oYXNfZm9ydHJhbl9leHRlbnNpb25zKCkpIn0=
+</script>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Where this fits
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Chapter 12 of the notes: radiative-convective equilibrium. Every piece is already on the table. <a href="../modelling-tour/07-stepping-a-column.html">Page 7</a> stepped a column of radiation over a slab ocean, <a href="../modelling-tour/08-turbulent-heat-exchange.html">page 8</a> added the turbulent exchange between the surface and the air, and <a href="../modelling-tour/10-dry-convection.html">page 10</a> introduced the scheme that removes a static instability. This page runs all four together until nothing changes.</p>
+<p>It also closes a loop that <a href="../modelling-tour/01-emissivity-spectrum.html">page 1</a> opened. Every page from 1 to 6 used a sounding someone typed in: a troposphere cooling at 6.5 K km⁻¹ and an isothermal stratosphere at 200 K. Here nobody types in a profile. The column makes its own, and it does not choose 6.5 K km⁻¹.</p>
+</div>
+</div>
+<section id="this-column-is-dry-and-its-numbers-are-not-earths" class="level2">
+<h2 class="anchored" data-anchor-id="this-column-is-dry-and-its-numbers-are-not-earths">This column is dry, and its numbers are not Earth’s</h2>
+<p>The column has no water vapour at all. Its fourteen-band longwave radiation sees 330 ppm of CO₂ and nothing else, so most of the spectrum is window and the column is a poor greenhouse. It settles at a surface temperature of about 267 K, far below Earth’s 288 K. <strong>No number on this page can be compared with the numbers on pages 1 to 6</strong>, which all had water vapour in them. <a href="../modelling-tour/12-moist-rce.html">Page 12</a> puts the water back.</p>
+</section>
+<section id="you-are-perturbing-a-shipped-equilibrium" class="level2">
+<h2 class="anchored" data-anchor-id="you-are-perturbing-a-shipped-equilibrium">You are perturbing a shipped equilibrium</h2>
+<p>This page does not spin its column up. It loads one: a state that <code>scripts/generate_tour_equilibria.py</code> stepped for 3650 steps of 12 hours, 1825 simulated days, and saved beside this page as <code>_data/rce_dry_equilibrium.npz</code>. Doing that here would take about eight minutes of stepping in your browser, and watching a column find its equilibrium was page 7’s subject. This page is about what the equilibrium looks like and how it responds.</p>
+<p>An equilibrium means nothing without the configuration that produced it, so the file carries that configuration with it, and the first cell prints it. The cell builds the component list first, in the open, because the file is only an equilibrium <em>for these components</em>. It runs in a few seconds.</p>
+<div>
+<div id="pyodide-2" class="exercise-cell">
+
+</div>
+<script type="pyodide-2-contents">
+eyJhdHRyIjp7ImF1dG9ydW4iOnRydWUsImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiaW1wb3J0IHN5c1xuc3lzLnBhdGguaW5zZXJ0KDAsIFwiX3RvdXJcIikgICAjIGhlbHBlciBtb2R1bGVzLCBzZXJ2ZWQgYWxvbmdzaWRlIHRoaXMgcGFnZVxuXG5pbXBvcnQgY29weVxuaW1wb3J0IG51bXB5IGFzIG5wXG5pbXBvcnQgbWF0cGxvdGxpYi5weXBsb3QgYXMgcGx0XG5pbXBvcnQgc3ltcGxcbmZyb20gc3ltcGwgaW1wb3J0IGdldF9jb25zdGFudFxuaW1wb3J0IGNsaW10XG5mcm9tIGNsaW10IGltcG9ydCAoZ2V0X2dyaWQsIENvcmtMb25nd2F2ZVJhZGlhdGlvbiwgU2xhYlN1cmZhY2UsXG4gICAgICAgICAgICAgICAgICAgU2ltcGxlQm91bmRhcnlMYXllciwgRHJ5Q29udmVjdGl2ZUFkanVzdG1lbnQsIFVueXRUaW1lRGVsdGEpXG5cbmltcG9ydCBidWRnZXRzXG5pbXBvcnQgc3RhdGVzXG5pbXBvcnQgc3RlcHBpbmdcblxuc3ltcGwuc2V0X2JhY2tlbmQoY2xpbXQuVW55dEJhY2tlbmQoKSlcblxuIyBJbiB0aGUgb3JkZXIgdGhlIHBhZ2UgZGVmZW5kcyBiZWxvdzogcmFkaWF0aW9uLCBzdXJmYWNlLCBib3VuZGFyeSBsYXllcixcbiMgYWRqdXN0bWVudC5cbmNvbXBvbmVudHMgPSBbXG4gICAgQ29ya0xvbmd3YXZlUmFkaWF0aW9uKG9wdGljcz1cImNvcnJlbGF0ZWRfa1wiLCB0YWJsZT1cImVhcnRoX2xvd19yZXNfbHdcIiksXG4gICAgU2xhYlN1cmZhY2UoKSxcbiAgICBTaW1wbGVCb3VuZGFyeUxheWVyKHN1cmZhY2VfZmx1eGVzPVwiYnVsa1wiLCByb3VnaG5lc3NfbGVuZ3RoPTFlLTMpLFxuICAgIERyeUNvbnZlY3RpdmVBZGp1c3RtZW50KCksXG5dXG50ZW5kZW5jeSA9IFtjIGZvciBjIGluIGNvbXBvbmVudHMgaWYgbm90IGhhc2F0dHIoYywgXCJvdXRwdXRfcHJvcGVydGllc1wiKV1cbnN0ZXBwZXIgPSBbYyBmb3IgYyBpbiBjb21wb25lbnRzIGlmIGhhc2F0dHIoYywgXCJvdXRwdXRfcHJvcGVydGllc1wiKV1cblxuc3RhdGUsIHByb3ZlbmFuY2UgPSBzdGF0ZXMubG9hZChcInJjZV9kcnlfZXF1aWxpYnJpdW0ubnB6XCIsIGNvbXBvbmVudHMsXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGdyaWRfc3RhdGU9Z2V0X2dyaWQobng9MSwgbnk9MSwgbno9MjgpKVxuaWYgc3RhdGUgaXMgTm9uZTpcbiAgICByYWlzZSBSdW50aW1lRXJyb3IoXCJyY2VfZHJ5X2VxdWlsaWJyaXVtLm5weiBkaWQgbm90IHJlYWNoIHRoZSBicm93c2VyOyBcIlxuICAgICAgICAgICAgICAgICAgICAgICBcInJlbG9hZCB0aGUgcGFnZVwiKVxuXG4jIFBhZ2UgOCdzIG1vbWVudHVtIHNvdXJjZSwgcmVidWlsdCBvbiB0aGUgbG9hZGVkIHN0YXRlLiBJdCBoYXMgdG8gY29tZSBhZnRlclxuIyB0aGUgc3RhdGUgZXhpc3RzLCBiZWNhdXNlIGl0IHdyaXRlcyBpdHMgdGFyZ2V0IGZpZWxkcyBpbnRvIGl0IC0tIHdoaWNoIGlzXG4jIGFsc28gd2h5IGl0IGlzIG5vdCBpbiBgY29tcG9uZW50c2AgYWJvdmUgYW5kIG5vdCBpbiB0aGUgc2hpcHBlZCBmaWxlJ3NcbiMgY29tcG9uZW50IGxpc3QuIFRoZSBwcm92ZW5hbmNlIHJlY29yZHMgdGhlIHdpbmQgaXQgd2FzIHNwdW4gdXAgYXQ7IHVzZSB0aGVcbiMgc2FtZSBvbmUsIG9yIHlvdSBhcmUgcGVydHVyYmluZyBhIGRpZmZlcmVudCBtb2RlbC5cbiMgaW5pdGlhbGlzZT1GYWxzZTogdGhlIGxvYWRlZCBzdGF0ZSBhbHJlYWR5IGNhcnJpZXMgYSBzcHVuLXVwLCBkcmFnLXNoZWFyZWRcbiMgd2luZCBwcm9maWxlLiBGbGF0dGVuaW5nIGl0IHRvIGEgdW5pZm9ybSA1IG0vcyB3b3VsZCBkaXNjYXJkIHBhcnQgb2YgdGhlXG4jIGVxdWlsaWJyaXVtIHdlIGp1c3QgbG9hZGVkLlxudGVuZGVuY3kuYXBwZW5kKHN0ZXBwaW5nLndpbmRfcmVsYXhhdGlvbihzdGF0ZSwgcHJvdmVuYW5jZVtcIndpbmRfbV9zXCJdLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBwcm92ZW5hbmNlW1wid2luZF90aW1lc2NhbGVfaG91cnNcIl0sXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGluaXRpYWxpc2U9RmFsc2UpKVxuRFQgPSBVbnl0VGltZURlbHRhKGhvdXJzPXByb3ZlbmFuY2VbXCJkdF9ob3Vyc1wiXSlcblxucHJpbnQoc3RhdGVzLmRlc2NyaWJlKHByb3ZlbmFuY2UpKVxucHJpbnQoKVxuZm9yIG5hbWUsIHZhbHVlIGluIGJ1ZGdldHMuc3VtbWFyeShzdGF0ZSkuaXRlbXMoKTpcbiAgICBwcmludChmXCJ7bmFtZToyMHN9IHt2YWx1ZTo5LjJmfVwiKSJ9
+</script>
+</div>
+<p>The TOA imbalance is −0.01 W m⁻², the surface imbalance −0.00 W m⁻², and the surface temperature 266.62 K.</p>
+</section>
+<section id="the-profile-it-found" class="level2">
+<h2 class="anchored" data-anchor-id="the-profile-it-found">The profile it found</h2>
+<p>The next cell draws the equilibrium. θ, the potential temperature, is page 10’s test for which levels the adjustment has mixed: they share one θ, to rounding error. The cell shades them and draws the dry adiabat through them. The dashed grey profile is page 7’s fourteen-band column, which had radiation and a slab and nothing else, stepped on until its TOA imbalance was zero to three decimal places: 10 000 steps of 12 hours. Its temperatures are written into the cell, because recomputing them here would take about twenty minutes. <code>scripts/experiments/tour_page11_measurements.py radiative</code> recomputes them, and so does page 7’s non-grey cell with <code>N_STEPS = 10000</code>.</p>
+<div>
+<div id="pyodide-3" class="exercise-cell">
+
+</div>
+<script type="pyodide-3-contents">
+eyJhdHRyIjp7ImF1dG9ydW4iOnRydWUsImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiUmQgPSBmbG9hdChnZXRfY29uc3RhbnQoXCJnYXNfY29uc3RhbnRfb2ZfZHJ5X2FpclwiLCBcIkova2cvZGVnS1wiKSlcbkNwID0gZmxvYXQoZ2V0X2NvbnN0YW50KFwiaGVhdF9jYXBhY2l0eV9vZl9kcnlfYWlyX2F0X2NvbnN0YW50X3ByZXNzdXJlXCIsXG4gICAgICAgICAgICAgICAgICAgICAgICBcIkova2cvZGVnS1wiKSlcbmcgPSBmbG9hdChnZXRfY29uc3RhbnQoXCJncmF2aXRhdGlvbmFsX2FjY2VsZXJhdGlvblwiLCBcIm0vc14yXCIpKVxuUDAgPSAxLjBlNSAgICAgICAgICAgICAgICAgICAgICAgICMgUGEsIHRoZSByZWZlcmVuY2UgcHJlc3N1cmUgZm9yIHRoZXRhXG5EUllfQURJQUJBVCA9IDFlMyAqIGcgLyBDcCAgICAgICAgIyBLL2ttXG5UUkFOQ0hFXzEgPSA2LjUgICAgICAgICAgICAgICAgICAgIyBLL2ttLCB3aGF0IHBhZ2VzIDEtNiBwcmVzY3JpYmVkXG5cbiMgUGFnZSA3J3MgMTQtYmFuZCBjb2x1bW4gKGVhcnRoX2xvd19yZXNfbHcsIGRpZmZ1c2l2aXR5IDEuNjYsIDIgbSBzbGFiLFxuIyAyNDAgVy9tXjIgYXQgdGhlIHN1cmZhY2UsIG5vIGJvdW5kYXJ5IGxheWVyLCBubyBjb252ZWN0aW9uKSBhZnRlciAxMCAwMDBcbiMgc3RlcHMgb2YgMTIgaCwgVE9BIGltYmFsYW5jZSAwLjAwMCBXL21eMi4gQm90dG9tIGxldmVsIGZpcnN0LlxuUEFHRTdfVCA9IG5wLmFycmF5KFtcbiAgICAyNjAuNiwgMjU1LjUsIDI1MC41LCAyNDUuNiwgMjQxLjAsIDIzNi4zLCAyMzEuNiwgMjI3LjIsIDIyMi44LCAyMTguMSxcbiAgICAyMTMuMywgMjA4LjQsIDIwMy4zLCAxOTguMCwgMTkyLjYsIDE4Ny4xLCAxODEuMywgMTc1LjMsIDE2OS4xLCAxNjIuOSxcbiAgICAxNTYuNCwgMTQ5LjYsIDE0Mi41LCAxMzUuMCwgMTI2LjQsIDExNy41LCAxMTAuMCwgMTAxLjJdKVxuUEFHRTdfU1VSRkFDRSA9IDI2Ny43OFxuXG5cbmRlZiB0aGV0YShzdGF0ZSk6XG4gICAgXCJcIlwiUG90ZW50aWFsIHRlbXBlcmF0dXJlLCBLLCBib3R0b20gbGV2ZWwgZmlyc3QuXCJcIlwiXG4gICAgVCA9IHN0YXRlW1wiYWlyX3RlbXBlcmF0dXJlXCJdLnZhbHVlc1s6LCAwLCAwXVxuICAgIHAgPSBzdGF0ZVtcImFpcl9wcmVzc3VyZVwiXS50b191bml0cyhcIlBhXCIpLnZhbHVlc1s6LCAwLCAwXVxuICAgIHJldHVybiBUICogKFAwIC8gcCkgKiogKFJkIC8gQ3ApXG5cblxuZGVmIGxhcHNlX3JhdGUoc3RhdGUpOlxuICAgIFwiXCJcIi1kVC9keiBpbiBLL2ttIGJldHdlZW4gYWRqYWNlbnQgbGV2ZWxzLCBmcm9tIHRoZSBoeXBzb21ldHJpYyB0aGlja25lc3MuXCJcIlwiXG4gICAgVCA9IHN0YXRlW1wiYWlyX3RlbXBlcmF0dXJlXCJdLnZhbHVlc1s6LCAwLCAwXVxuICAgIHAgPSBzdGF0ZVtcImFpcl9wcmVzc3VyZVwiXS50b191bml0cyhcIlBhXCIpLnZhbHVlc1s6LCAwLCAwXVxuICAgIGR6ID0gKFJkICogMC41ICogKFRbOi0xXSArIFRbMTpdKSAvIGcpICogbnAubG9nKHBbOi0xXSAvIHBbMTpdKVxuICAgIHJldHVybiAtbnAuZGlmZihUKSAvIGR6ICogMTAwMC4wXG5cblxuZGVmIGNvbnZlY3Rpbmcoc3RhdGUpOlxuICAgIFwiXCJcIlBhaXJzIG9mIGFkamFjZW50IGxldmVscyB0aGUgYWRqdXN0bWVudCBoYXMgbWl4ZWQ6IG9uZSB0aGV0YS5cIlwiXCJcbiAgICByZXR1cm4gbnAuYWJzKG5wLmRpZmYodGhldGEoc3RhdGUpKSkgPCAxZS02XG5cblxucF9oUGEgPSBzdGF0ZVtcImFpcl9wcmVzc3VyZVwiXS50b191bml0cyhcIlBhXCIpLnZhbHVlc1s6LCAwLCAwXSAvIDEwMFxucHNfaFBhID0gZmxvYXQoc3RhdGVbXCJzdXJmYWNlX2Fpcl9wcmVzc3VyZVwiXS50b191bml0cyhcIlBhXCIpLnZhbHVlcy5yYXZlbCgpWzBdKSAvIDEwMFxuVCA9IHN0YXRlW1wiYWlyX3RlbXBlcmF0dXJlXCJdLnZhbHVlc1s6LCAwLCAwXVxuVF9zdXJmYWNlID0gZmxvYXQoc3RhdGVbXCJzdXJmYWNlX3RlbXBlcmF0dXJlXCJdLnZhbHVlcy5yYXZlbCgpWzBdKVxubWl4ZWQgPSBjb252ZWN0aW5nKHN0YXRlKVxucGFpcnMgPSBucC53aGVyZShtaXhlZClbMF1cbmJvdHRvbSwgdG9wID0gcGFpcnNbMF0sIHBhaXJzWy0xXSArIDEgICAgICAgICAjIHRoZSBjb252ZWN0aW5nIGxheWVyJ3MgbGV2ZWxzXG50aGV0YV9taXhlZCA9IHRoZXRhKHN0YXRlKVtib3R0b21dXG5sYXBzZSA9IGxhcHNlX3JhdGUoc3RhdGUpXG5wX2JldHdlZW4gPSBucC5zcXJ0KHBfaFBhWzotMV0gKiBwX2hQYVsxOl0pICAgIyB3aGVyZSBlYWNoIGxhcHNlIHJhdGUgbGl2ZXNcblxuZmlnLCAoYXhfVCwgYXhfRykgPSBwbHQuc3VicGxvdHMoMSwgMiwgZmlnc2l6ZT0oMTEsIDUuNiksIHNoYXJleT1UcnVlLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZ3JpZHNwZWNfa3c9ZGljdCh3aWR0aF9yYXRpb3M9WzMsIDJdKSlcbmZvciBheCBpbiAoYXhfVCwgYXhfRyk6XG4gICAgYXguYXhoc3BhbihwX2hQYVtib3R0b21dLCBwX2hQYVt0b3BdLCBjb2xvcj1cIiNmZmYwZDZcIiwgem9yZGVyPTApXG4gICAgYXguZ3JpZChhbHBoYT0wLjMpXG5heF9ULnBsb3QoUEFHRTdfVCwgcF9oUGEsIFwiLS1cIiwgY29sb3I9XCIwLjU1XCIsIGx3PTEuNSxcbiAgICAgICAgICBsYWJlbD1cInBhZ2UgNzogcmFkaWF0aW9uIG9ubHlcIilcbmF4X1QucGxvdChbUEFHRTdfU1VSRkFDRV0sIFtwc19oUGFdLCBcIm9cIiwgbWZjPVwid2hpdGVcIiwgbWVjPVwiMC41NVwiKVxuYWRpYWJhdCA9IHBfaFBhW3BfaFBhID49IDE1MF1cbmF4X1QucGxvdCh0aGV0YV9taXhlZCAqIChhZGlhYmF0IC8gKFAwIC8gMTAwKSkgKiogKFJkIC8gQ3ApLCBhZGlhYmF0LCBcIjpcIixcbiAgICAgICAgICBjb2xvcj1cIiNjOTJhMmFcIiwgbHc9MS41LFxuICAgICAgICAgIGxhYmVsPWZcImRyeSBhZGlhYmF0LCDOuCA9IHt0aGV0YV9taXhlZDouMmZ9IEtcIilcbmF4X1QucGxvdChULCBwX2hQYSwgXCJvLVwiLCBjb2xvcj1cIiMxODY0YWJcIiwgbHc9MiwgbXM9NCxcbiAgICAgICAgICBsYWJlbD1cInRoaXMgcGFnZTogcmFkaWF0aXZlLWNvbnZlY3RpdmVcIilcbmF4X1QucGxvdChbVF9zdXJmYWNlXSwgW3BzX2hQYV0sIFwib1wiLCBjb2xvcj1cIiMxODY0YWJcIilcbmF4X1Quc2V0KHhsYWJlbD1cInRlbXBlcmF0dXJlIChLKVwiLCB5bGFiZWw9XCJwcmVzc3VyZSAoaFBhKVwiLFxuICAgICAgICAgeWxpbT0ocHNfaFBhICsgMTUsIDApLCB4bGltPSg5NSwgMjc1KSxcbiAgICAgICAgIHRpdGxlPVwiVGVtcGVyYXR1cmUgKGRvdHMgYXQgdGhlIGdyb3VuZDogdGhlIHN1cmZhY2UpXCIpXG5heF9ULmxlZ2VuZChsb2M9XCJ1cHBlciByaWdodFwiLCBmb250c2l6ZT04KVxuXG5heF9HLnBsb3QobGFwc2UsIHBfYmV0d2VlbiwgXCJvLVwiLCBjb2xvcj1cIiMxODY0YWJcIiwgbHc9MiwgbXM9NClcbmF4X0cuYXh2bGluZShEUllfQURJQUJBVCwgY29sb3I9XCIjYzkyYTJhXCIsIGxzPVwiOlwiLCBsdz0xLjUsXG4gICAgICAgICAgICAgbGFiZWw9ZlwiZHJ5IGFkaWFiYXQsIHtEUllfQURJQUJBVDouMmZ9IEsva21cIilcbmF4X0cuYXh2bGluZShUUkFOQ0hFXzEsIGNvbG9yPVwiMC4zXCIsIGxzPVwiLS1cIiwgbHc9MSxcbiAgICAgICAgICAgICBsYWJlbD1cInBhZ2VzIDHigJM2LCA2LjUgSy9rbVwiKVxuYXhfRy5zZXQoeGxhYmVsPVwibGFwc2UgcmF0ZSDiiJJkVC9keiAoSy9rbSlcIiwgeGxpbT0oMCwgMTIpLFxuICAgICAgICAgdGl0bGU9XCJMYXBzZSByYXRlXCIpXG5heF9HLmxlZ2VuZChsb2M9XCJ1cHBlciByaWdodFwiLCBmb250c2l6ZT04KVxuYXhfRy50ZXh0KDAuNCwgbnAuc3FydChwX2hQYVtib3R0b21dICogcF9oUGFbdG9wXSksIFwiY29udmVjdGluZ1wiLCBmb250c2l6ZT04LFxuICAgICAgICAgIGNvbG9yPVwiIzhhNWEwMFwiKVxuZmlnLnN1cHRpdGxlKFwiRHJ5IHJhZGlhdGl2ZS1jb252ZWN0aXZlIGVxdWlsaWJyaXVtIChzaGFkZWQ6IHRoZSBjb252ZWN0aW5nIGxheWVyKVwiKVxuZmlnLnRpZ2h0X2xheW91dCgpXG5wbHQuc2hvdygpIn0=
+</script>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>If the live cell did not run
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_artifacts/11-dry-rce.png" class="img-fluid figure-img"></p>
+<figcaption>Two panels against pressure, from the ground to the top of the model, with the layer from 1010 to 370 hPa shaded. Left: the equilibrium temperature. Through the shaded layer, from the lowest level up, it lies on a dotted dry adiabat, θ = 262.96 K. Above it the temperature keeps falling, more and more slowly, to about 111 K at the top. A dashed grey profile, page 7’s radiation-only column, lies to its left everywhere, colder by up to about 24 K near 700 hPa and by about 10 K at the top, while its surface dot sits about 1.2 K to the right of this page’s. Right: the lapse rate, on a vertical dotted line at 9.76 K/km through the shaded layer, falling off above about 370 hPa to about 1.3 K/km at the top. A dashed line marks 6.5 K/km.</figcaption>
+</figure>
+</div>
+<p>This is the figure the cell above produces. Live cells need WebAssembly; if your browser blocks it, the static version is here.</p>
+</div>
+</div>
+</div>
+<p>Read the right panel first. Through the shaded layer the lapse rate is a vertical line at 9.76 K km⁻¹. Nothing on this page set that number. The radiation cools the air aloft and the surface heats the air below, until θ falls with height. The adjustment then mixes the unstable air back to a single θ, and a single θ <em>is</em> the dry adiabat. So wherever the column convects, it sits on g/c_p.&nbsp;The next cell measures it.</p>
+<div>
+<div id="pyodide-4" class="exercise-cell">
+
+</div>
+<script type="pyodide-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoicHJpbnQoZlwiY29udmVjdGluZyBsYXllciAgIHtwX2hQYVtib3R0b21dOi4wZn0gdG8ge3BfaFBhW3RvcF06LjBmfSBoUGEsIFwiXG4gICAgICBmXCJ7dG9wIC0gYm90dG9tICsgMX0gbGV2ZWxzLCB0aGV0YSA9IHt0aGV0YV9taXhlZDouMmZ9IEtcIilcbnByaW50KGZcImxhcHNlIHJhdGUgdGhlcmUgICB7bGFwc2VbbWl4ZWRdLm1lYW4oKTouMmZ9IEsva21cIilcbnByaW50KGZcImRyeSBhZGlhYmF0IGcvQ3AgICB7RFJZX0FESUFCQVQ6LjJmfSBLL2ttXCIpXG5wcmludChmXCJwYWdlcyAxLTYgYXNzdW1lZCAge1RSQU5DSEVfMTouMmZ9IEsva21cIilcbnByaW50KGZcIlxcbnN1cmZhY2Uge1Rfc3VyZmFjZTouMmZ9IEssIGxvd2VzdCBhaXIge1RbMF06LjJmfSBLLCBcIlxuICAgICAgZlwianVtcCB7VF9zdXJmYWNlIC0gVFswXTouMmZ9IEtcIilcbnByaW50KGZcImxhcHNlIHJhdGUgaW4gdGhlIGxvd2VzdCB0aHJlZSBsYXllcnM6IFwiXG4gICAgICBmXCJ7JywgJy5qb2luKGYne3g6LjFmfScgZm9yIHggaW4gbGFwc2VbOjNdKX0gSy9rbVwiKVxucHJpbnQoZlwidG9wIG9mIHRoZSBtb2RlbCAgIHtUWy0xXTouMmZ9IEsgYXQge3BfaFBhWy0xXTouMWZ9IGhQYVwiKVxuXG5kaWZmZXJlbmNlID0gVCAtIFBBR0U3X1RcbmsgPSBpbnQobnAuYXJnbWF4KGRpZmZlcmVuY2UpKVxucHJpbnQoZlwiXFxuYWdhaW5zdCBwYWdlIDcncyByYWRpYXRpb24tb25seSBjb2x1bW46XCIpXG5wcmludChmXCIgIHN1cmZhY2UgICAgICAgICAgIHtUX3N1cmZhY2UgLSBQQUdFN19TVVJGQUNFOisuMmZ9IEtcIilcbnByaW50KGZcIiAgYWlyLCBsYXJnZXN0ICAgICAge2RpZmZlcmVuY2Vba106Ky4yZn0gSyBhdCB7cF9oUGFba106LjBmfSBoUGFcIilcbnByaW50KGZcIiAgYWlyLCB0b3AgbGV2ZWwgICAge2RpZmZlcmVuY2VbLTFdOisuMmZ9IEtcIikifQ==
+</script>
+</div>
+<p>In the shipped state, the layer from 1010 to 370 hPa, the lowest level upward, sits on the dry adiabat, at 9.76 K km⁻¹. That is half as steep again as the 6.5 K km⁻¹ pages 1 to 6 assumed, and Earth’s troposphere is close to 6.5. <a href="../modelling-tour/12-moist-rce.html">Page 12</a> will show where the difference comes from.</p>
+<p>The layer holds still. Over 30 days of stepping at the 12-hour timestep it runs from the lowest level to 370 hPa on every one of the 60 steps, at 9.76 K km⁻¹, and the surface temperature does not move in its third decimal place (<code>scripts/experiments/tour_page11_measurements.py convection</code>). This equilibrium is a fixed point, not a cycle.</p>
+<p><strong>The tropopause emerges.</strong> Above the convecting layer, the lapse rate does not jump to zero at a 200 K floor, as pages 1 to 6 had it. It falls off gradually, to 8.1 K km⁻¹ near 290 hPa and to about 1.3 K km⁻¹ near the model top, and the temperature keeps falling all the way to 111.13 K. There is no temperature minimum. What this column has instead is a level where convection stops and radiation alone sets the profile above. That level is this column’s tropopause, and nothing in the configuration names it.</p>
+<p>The air nearest the ground is on the adiabat too, and that is the boundary layer’s doing as much as the adjustment’s. <code>SimpleBoundaryLayer</code> diffuses dry static energy, <code>c_p T + g z</code>, and a uniform dry static energy <em>is</em> the dry adiabat, so where it mixes it pulls the air toward 9.76 K km⁻¹ as well. (A scheme that diffused temperature itself would pull the layers it mixes toward one temperature, a stable profile, and leave a layer near the ground that only the adjustment could undo.) The ground is 2.88 K warmer than the air above it, against 7.14 K in page 7’s column at equilibrium.</p>
+<section id="against-page-7" class="level3">
+<h3 class="anchored" data-anchor-id="against-page-7">Against page 7</h3>
+<p>Page 7’s column is the same radiation over the same slab, without the boundary layer and the adjustment. At equilibrium its temperature falls at 81.5 K km⁻¹ between its two lowest levels, eight times the dry adiabatic rate, an instability nothing in that column could remove. Adding the two components changed the air far more than the ground. The air warms by up to 23.7 K at 695 hPa, and by about 9 K at the top. (Cell 2 prints +9.93 K there, but the shipped state’s top level has not quite finished its own spin-up: another 10 000 steps cool it by 1.1 K more, and the levels below it by less, <code>tour_page11_measurements.py settle</code>.) The surface cools by only 1.16 K.</p>
+<p>Most of the answer is how transparent this atmosphere is. Chill the surface to 1 K, air unchanged, and the OLR falls from 240.01 to 26.95 W m⁻²: the air’s own contribution. The other 213.06 W m⁻², 74 % of σT_s⁴, is the surface shining through. Warming the air from page 7’s profile to this page’s, surface held fixed, raises the OLR by only 3.99 W m⁻². Warming the surface by 1 K, air held fixed, raises it by 3.38 W m⁻², so a surface 1.16 K cooler gives those watts back (<code>tour_page11_measurements.py radiative</code>). The first physics exercise asks you to follow that through.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>climt craft: ordering components defensibly
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The list is radiation, surface, boundary layer, adjustment. The first two are tendency components. <code>AdamsBashforth</code> evaluates both on the same start-of-step state and adds their tendencies, so their order within the list changes nothing. The two steppers do run in order, after that update, and their order is a choice.</p>
+<ul>
+<li><strong>Surface, then boundary layer.</strong> <code>stepping.integrate</code> runs every stepper after the tendency update, so the boundary layer always sees the surface temperature this step produced. Its fluxes depend on that temperature, so this is the order you want, and the split into two lists enforces it.</li>
+<li><strong>Boundary layer, then adjustment.</strong> The boundary layer heats the lowest air every step, which can make it unstable against the air above. The adjustment runs last, so it removes that instability in the same step. Over 30 days of stepping, not one step ended with θ falling with height anywhere in the column.</li>
+<li><strong>The defensible alternative</strong> is adjustment first. It removes the instability the radiation created and leaves the boundary layer’s heating for the next step. The equilibrium hardly notices: 1000 steps in that order end with a 30-day mean surface temperature 0.003 K from this order’s. What changes is what a single state looks like. In that order every one of the last 60 steps ended with θ falling with height somewhere between 1010 and 424 hPa (<code>tour_page11_measurements.py order</code>), so a profile you plot or save is not one the adjustment has seen. The shipped file was made in this page’s order.</li>
+</ul>
+<p>The wind relaxation sits at the end of the tendency list, and it cannot be declared with the rest. <code>stepping.wind_relaxation</code> writes its target wind and timescale into the state it will act on, so it can only be built once the state exists: after <code>states.load</code>, on the loaded state.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>climt craft: the budgets are the convergence test
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A curve that has stopped visibly moving is not converged. It may be moving more slowly than you can see. Page 7’s fourteen-band column is the example: after 900 steps its TOA was still 4.9 W m⁻² out of balance, and its surface had another 0.7 K to fall.</p>
+<p><code>budgets.toa_imbalance(state)</code> is absorbed sunlight minus OLR. At equilibrium it is zero, because nothing else can leave the planet. <code>budgets.surface_imbalance</code> is the same account for the surface: sunlight plus downwelling longwave, minus upwelling longwave and the turbulent fluxes. The generator called the shipped state converged when two tests passed:</p>
+<ul>
+<li>|TOA imbalance| &lt; 0.5 W m⁻²;</li>
+<li>the mean surface temperature over the last 1000 steps within 0.02 K of the mean over the 1000 before.</li>
+</ul>
+<p>Why a trend and not a tighter imbalance? Because a small imbalance says the column is <em>nearly</em> balanced, not that it has stopped moving, and a column that cannot reach zero at all, like <a href="../modelling-tour/12-moist-rce.html">page 12</a>’s, would never pass a tighter one. The trend test asks the question that matters directly. This column passes both easily: the first cell’s −0.01 and −0.00 W m⁻² hold to the last digit from step to step. The next cell still compares 30-day means rather than single steps, the safe habit for any run that might still wobble.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="the-knob-co₂" class="level2">
+<h2 class="anchored" data-anchor-id="the-knob-co₂">The knob: CO₂</h2>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The knob
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>CO2_FACTOR</code> below: what the CO₂ is multiplied by. <code>N_STEPS</code> is how long to integrate, at the shipped 12-hour timestep.</p>
+</div>
+</div>
+<p><a href="../modelling-tour/05-co2-knob.html">Page 5</a> could compute the <em>forcing</em> from doubling CO₂: how much the OLR drops when the gas is added and nothing else changes. It could not say how much the surface warms, because nothing in it could respond. This column can. The cell doubles CO₂ in a copy of the equilibrium, prints the instantaneous forcing, and steps the copy until it balances again.</p>
+<p><strong>This cell takes a little over two minutes in a browser.</strong> That is 1060 steps, 60 of them for the unperturbed column, at about 0.13 s each, measured with the JIT off, the native stand-in for the browser. It prints a line every 100 steps, all at the end.</p>
+<div>
+<div id="pyodide-5" class="exercise-cell">
+
+</div>
+<script type="pyodide-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiQ08yX0ZBQ1RPUiA9IDIuMCAgICAgICAjIDwtIG11bHRpcGx5IENPMiBieSB0aGlzXG5OX1NURVBTID0gMTAwMCAgICAgICAgICMgNTAwIGRheXMgYXQgMTIgaFxuXG5sb25nd2F2ZSA9IGNvbXBvbmVudHNbMF1cblxuXG5kZWYgb2xyX25vdyhjb2x1bW4pOlxuICAgIFwiXCJcIk9MUiBmcm9tIG9uZSBsb25nd2F2ZSBjYWxsLCB0ZW1wZXJhdHVyZXMgYXMgdGhleSBzdGFuZC5cIlwiXCJcbiAgICByZXR1cm4gZmxvYXQobG9uZ3dhdmUoY29sdW1uKVsxXVtcInVwd2VsbGluZ19sb25nd2F2ZV9mbHV4X2luX2FpclwiXVxuICAgICAgICAgICAgICAgICAudmFsdWVzWy0xLCAwLCAwXSlcblxuXG5wZXJ0dXJiZWQgPSBjb3B5LmRlZXBjb3B5KHN0YXRlKVxucGVydHVyYmVkW1wibW9sZV9mcmFjdGlvbl9vZl9jYXJib25fZGlveGlkZV9pbl9haXJcIl0udmFsdWVzWzpdICo9IENPMl9GQUNUT1JcbmZvcmNpbmcgPSBvbHJfbm93KHN0YXRlKSAtIG9scl9ub3cocGVydHVyYmVkKVxucHJpbnQoZlwiQ08yIHtwcm92ZW5hbmNlWydjbzJfcHBtJ106LjBmfSAtPiBcIlxuICAgICAgZlwie3Byb3ZlbmFuY2VbJ2NvMl9wcG0nXSAqIENPMl9GQUNUT1I6LjBmfSBwcG06IGluc3RhbnRhbmVvdXMgZm9yY2luZyBcIlxuICAgICAgZlwie2ZvcmNpbmc6Ky4yZn0gVy9tXjJcXG5cIilcblxuXG5cbmRlZiBzdXJmYWNlX3RlbXBlcmF0dXJlKGNvbHVtbik6XG4gICAgcmV0dXJuIGZsb2F0KGNvbHVtbltcInN1cmZhY2VfdGVtcGVyYXR1cmVcIl0udmFsdWVzLnJhdmVsKClbMF0pXG5cblxuIyBDb21wYXJlIDMwLWRheSBtZWFucywgbm90IHNpbmdsZSBzdGVwczogNjAgc3RlcHMgb2YgdGhlIHVucGVydHVyYmVkIGNvbHVtblxuIyBmaXJzdCwgdGhlbiB0aGUgcGVydHVyYmVkIG9uZS5cbnVucGVydHVyYmVkID0gY29weS5kZWVwY29weShzdGF0ZSlcbmJhc2VfcmVjb3JkID0gc3RlcHBpbmcuUmVjb3JkZXIoRFQsIHN1cmZhY2U9c3VyZmFjZV90ZW1wZXJhdHVyZSlcbnN0ZXBwaW5nLmludGVncmF0ZSh0ZW5kZW5jeSwgc3RlcHBlciwgdW5wZXJ0dXJiZWQsIERULCA2MCxcbiAgICAgICAgICAgICAgICAgICBhZnRlcl9zdGVwPWJhc2VfcmVjb3JkKVxuXG5yZWNvcmQgPSBzdGVwcGluZy5SZWNvcmRlcihcbiAgICBEVCwgc3VyZmFjZT1zdXJmYWNlX3RlbXBlcmF0dXJlLFxuICAgIHRvYT1idWRnZXRzLnRvYV9pbWJhbGFuY2UsIHN1cmZhY2VfaW1iYWxhbmNlPWJ1ZGdldHMuc3VyZmFjZV9pbWJhbGFuY2UpXG5zdGVwcGluZy5pbnRlZ3JhdGUodGVuZGVuY3ksIHN0ZXBwZXIsIHBlcnR1cmJlZCwgRFQsIE5fU1RFUFMsXG4gICAgICAgICAgICAgICAgICAgYWZ0ZXJfc3RlcD1yZWNvcmQpXG5cbnByaW50KGZcInsnc3RlcCc6PjZ9IHsnZGF5Jzo+Nn0geydUX3MgKEspJzo+OX0geydUT0EgKFcvbV4yKSc6PjEyfVwiKVxuZm9yIHN0ZXAgaW4gcmFuZ2UoMTAwLCBOX1NURVBTICsgMSwgMTAwKTpcbiAgICBwcmludChmXCJ7c3RlcDo2ZH0ge3JlY29yZFsnZGF5cyddW3N0ZXAgLSAxXTo2LjBmfSBcIlxuICAgICAgICAgIGZcIntyZWNvcmRbJ3N1cmZhY2UnXVtzdGVwIC0gMV06OS4zZn0ge3JlY29yZFsndG9hJ11bc3RlcCAtIDFdOisxMi4zZn1cIilcblxuYmVmb3JlLCBhZnRlciA9IGJ1ZGdldHMuc3VtbWFyeShzdGF0ZSksIGJ1ZGdldHMuc3VtbWFyeShwZXJ0dXJiZWQpXG5wcmludChmXCJcXG57Jyc6MjBzfSB7J2JlZm9yZSc6Pjl9IHsnYWZ0ZXInOj45fVwiKVxuZm9yIG5hbWUgaW4gYmVmb3JlOlxuICAgIHByaW50KGZcIntuYW1lOjIwc30ge2JlZm9yZVtuYW1lXTo5LjJmfSB7YWZ0ZXJbbmFtZV06OS4yZn1cIilcblxuYmFzZSA9IGJhc2VfcmVjb3JkLm1lYW4oXCJzdXJmYWNlXCIsIGRheXM9MzApXG5maW5hbCA9IHJlY29yZC5tZWFuKFwic3VyZmFjZVwiLCBkYXlzPTMwKVxud2FybWluZyA9IGZpbmFsIC0gYmFzZVxuZmFyID0gbnAubm9uemVybyhucC5hYnMocmVjb3JkW1wic3VyZmFjZVwiXSAtIGZpbmFsKSA+IDAuMSlbMF1cbnByaW50KGZcIlxcbjMwLWRheSBtZWFuIFRfczoge2Jhc2U6LjNmfSBLIHVucGVydHVyYmVkLCB7ZmluYWw6LjNmfSBLIHBlcnR1cmJlZFwiKVxucHJpbnQoZlwibGFzdCAzMCBkYXlzLCBwZXJ0dXJiZWQ6IFRPQSBcIlxuICAgICAgZlwie3JlY29yZC5tZWFuKCd0b2EnLCBkYXlzPTMwKTorLjNmfSwgc3VyZmFjZSBcIlxuICAgICAgZlwie3JlY29yZC5tZWFuKCdzdXJmYWNlX2ltYmFsYW5jZScsIGRheXM9MzApOisuM2Z9IFcvbV4yXCIpXG5wcmludChmXCJ3YXJtaW5nIHt3YXJtaW5nOisuMmZ9IEsgaW4ge05fU1RFUFN9IHN0ZXBzXCIsIGVuZD1cIlwiKVxuaWYgZmFyLnNpemUgPT0gMDpcbiAgICBwcmludChcIjsgd2l0aGluIDAuMSBLIG9mIGl0IHRocm91Z2hvdXRcIilcbmVsaWYgZmFyWy0xXSArIDEgPCBOX1NURVBTOlxuICAgIHByaW50KGZcIjsgd2l0aGluIDAuMSBLIG9mIGl0IGZyb20gZGF5IHtyZWNvcmRbJ2RheXMnXVtmYXJbLTFdICsgMV06LjBmfVwiKVxuZWxzZTpcbiAgICBwcmludChcIjsgc3RpbGwgbW9yZSB0aGFuIDAuMSBLIGZyb20gaXQgYXQgdGhlIGVuZDogcnVuIGxvbmdlclwiKVxuaWYgYWJzKGZvcmNpbmcpID4gMC4wMTpcbiAgICBwcmludChmXCJyZXNwb25zZToge2ZvcmNpbmcgLyB3YXJtaW5nOi4yZn0gVy9tXjIgb2YgZXh0cmEgT0xSIHBlciBLIG9mIFwiXG4gICAgICAgICAgXCJ3YXJtaW5nXCIpIn0=
+</script>
+</div>
+<p>Doubling CO₂ cuts the OLR by 4.09 W m⁻² at first. The column then warms until the TOA balances again. The surface warms by +1.16 K, comparing 30-day means of the perturbed and unperturbed columns, and it stays within 0.1 K of its new mean from day 120 on. From step 300 on, the TOA imbalance is within 0.3 W m⁻² of zero at every hundredth step. Over the last 30 days the TOA imbalance averages +0.01 W m⁻², and the surface imbalance +0.00 W m⁻². Both budgets close. That is how you know the column has arrived. A curve that looks flat would not tell you.</p>
+<p><strong>+1.16 K per doubling is this column’s climate sensitivity, measured.</strong> Every kelvin of surface warming bought 3.52 W m⁻² of extra OLR. A blackbody surface at 267 K would buy 4σT³ = 4.30 W m⁻² per kelvin, and warm only 0.95 K. This one warms more because much of the surface’s emission is absorbed on the way up. Warm the surface by 1 K with the air held fixed and the OLR rises by only 3.38 W m⁻², 79 % of 4σT³; the surface alone would have to warm by 1.21 K. The air warms with it and adds a little OLR of its own, which is why the answer is 1.16 K rather than 1.21 K. It is still a small warming, because nothing in this column amplifies it. There is no water vapour to increase as the column warms. <a href="../modelling-tour/12-moist-rce.html">Page 12</a> adds the water.</p>
+</section>
+<section id="climt-craft-saving-and-loading-a-state" class="level2">
+<h2 class="anchored" data-anchor-id="climt-craft-saving-and-loading-a-state">climt craft: saving and loading a state</h2>
+<p>The shipped equilibrium arrived through <code>states.save</code> and <code>states.load</code>. You can do the same with the one you just made. The provenance is what makes the file worth having: without it, a reader has a temperature profile and no idea what produced it.</p>
+<div>
+<div id="pyodide-6" class="exercise-cell">
+
+</div>
+<script type="pyodide-6-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiaW1wb3J0IG9zXG5pbXBvcnQgdGVtcGZpbGVcblxuIyBUaGUgc2NyYXRjaCBkaXJlY3Rvcnk6IGluIHRoZSBicm93c2VyIGl0IGlzIFB5b2RpZGUncyBpbi1tZW1vcnkgL3RtcC5cbnBhdGggPSBvcy5wYXRoLmpvaW4odGVtcGZpbGUuZ2V0dGVtcGRpcigpLCBcInJjZV9kcnlfMnhjbzIubnB6XCIpXG5zdGF0ZXMuc2F2ZShwYXRoLCBwZXJ0dXJiZWQsIGRpY3QoXG4gICAgcHJvdmVuYW5jZSxcbiAgICBjbzJfcHBtPXByb3ZlbmFuY2VbXCJjbzJfcHBtXCJdICogQ08yX0ZBQ1RPUixcbiAgICBuX3N0ZXBzPU5fU1RFUFMsXG4gICAgcGVydHVyYmVkX2Zyb209XCJyY2VfZHJ5X2VxdWlsaWJyaXVtLm5welwiLFxuICAgIHRvYV9pbWJhbGFuY2U9YnVkZ2V0cy50b2FfaW1iYWxhbmNlKHBlcnR1cmJlZCksXG4gICAgc3VyZmFjZV9pbWJhbGFuY2U9YnVkZ2V0cy5zdXJmYWNlX2ltYmFsYW5jZShwZXJ0dXJiZWQpLFxuKSlcbnJlbG9hZGVkLCByZWxvYWRlZF9wcm92ZW5hbmNlID0gc3RhdGVzLmxvYWQoXG4gICAgcGF0aCwgY29tcG9uZW50cywgZ3JpZF9zdGF0ZT1nZXRfZ3JpZChueD0xLCBueT0xLCBuej0yOCkpXG5wcmludChzdGF0ZXMuZGVzY3JpYmUocmVsb2FkZWRfcHJvdmVuYW5jZSkpXG5wcmludChcIlxcbmxhcmdlc3QgdGVtcGVyYXR1cmUgZGlmZmVyZW5jZSBhZnRlciB0aGUgcm91bmQgdHJpcDogXCJcbiAgICAgIGZcIntucC5hYnMocmVsb2FkZWRbJ2Fpcl90ZW1wZXJhdHVyZSddLnZhbHVlcyAtIHBlcnR1cmJlZFsnYWlyX3RlbXBlcmF0dXJlJ10udmFsdWVzKS5tYXgoKTouMWV9IEtcIikifQ==
+</script>
+</div>
+<p><code>states.load</code> does not unpickle anything. It builds a fresh state for the components you pass it and copies the saved arrays in, one quantity at a time, checking each one’s dimensions and units against what those components expect. A file saved for a different component list, a different grid or a units convention that has since changed fails at a named quantity, instead of loading into something that looks right and is not an equilibrium.</p>
+<p>Two things do not travel with the file. The components are not in it, so load it with the same list you saved it from. And the wind relaxation is not a component the file knows about, so after loading, rebuild it on the loaded state with <code>initialise=False</code>, exactly as the first cell did.</p>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<section id="physics" class="level3">
+<h3 class="anchored" data-anchor-id="physics">Physics</h3>
+<ol type="1">
+<li><p><strong>A 24 K warmer troposphere for 1.16 K of surface.</strong> Against page 7’s column, the convecting column’s air is warmer by up to 23.7 K and its surface cooler by 1.16 K. Use the <code>olr_now</code> function from the knob cell to find out why so little of the air’s warming reaches the ground. Put page 7’s air, <code>PAGE7_T</code>, over this page’s surface and compute the OLR. Then leave the air alone and set the surface temperature to 1 K: what is left is the air’s own emission, and the rest of <code>olr_now(state)</code> is the surface shining through. Last, warm the surface by 1 K instead. (You should find about 236.0 W m⁻², against 240.01 W m⁻² for <code>olr_now(state)</code>; 26.95 W m⁻² from the air, so 213.06 W m⁻² from the surface, 74 % of σT_s⁴; and 3.38 W m⁻² per kelvin of surface. The air’s warming adds only about 4.0 W m⁻², and a surface 1.16 K cooler removes 1.16 × 3.38 = 3.92 W m⁻², about the same. Why not zero the air instead? Try it: you get 244.61 W m⁻², more than the whole OLR, because this table’s absorption depends on temperature, and 1 K air is far more transparent than the real air. Holding the absorber’s temperature fixed is what makes the split meaningful.)</p></li>
+<li><p><strong>Why 9.76, when Earth is close to 6.5?</strong> Nothing on this page can make the convecting layer steeper or shallower than g/c_p: the adjustment mixes to a single θ, and a single θ is the dry adiabat. What would a rising parcel have to be carrying to cool more slowly than g/c_p as it rises? What happens to that when the parcel cools? <a href="../modelling-tour/12-moist-rce.html">Page 12</a> answers it.</p></li>
+</ol>
+</section>
+<section id="code" class="level3">
+<h3 class="anchored" data-anchor-id="code">Code</h3>
+<ol type="1">
+<li><p><strong>Halve CO₂.</strong> Set <code>CO2_FACTOR = 0.5</code> and re-run the knob cell. The forcing from CO₂ is roughly logarithmic in concentration, so if the response is too, halving should cool the surface by about as much as doubling warmed it. (It cools by 1.12 K, over 30-day means, against +1.16 K for doubling, so the response is close to symmetric in log CO₂.)</p></li>
+<li><p><strong>Take the adjustment out.</strong> Run the knob cell with <code>CO2_FACTOR = 1.0</code>, and with <code>stepper[:-1]</code> in place of <code>stepper</code> in its <code>stepping.integrate</code> call, which drops <code>DryConvectiveAdjustment</code>. Does the column go back to page 7’s profile? (No.&nbsp;The lowest layer turns superadiabatic, 14.3 K km⁻¹, and the ones above it slightly so, but the surface temperature moves by only 0.02 K and the TOA settles again, at −0.01 W m⁻². The air stays 3.7 to 23.5 K warmer than page 7’s, because the boundary layer takes over almost all of the adjustment’s job. In an unstable column its depth, chosen by a bulk Richardson number, reaches 8.1 km, and mixing dry static energy that deep is mixing toward the dry adiabat. Take the boundary layer out as well, with <code>stepper[:0]</code>, and in the same 1000 steps the air ends between 0.3 and 8.5 K warmer than page 7’s instead. Set <code>perturbed["surface_upward_sensible_heat_flux"]</code> to zero before the loop when you do: nothing else updates it, and <code>SlabSurface</code> would go on losing the last value the boundary layer left there, 16.5 W m⁻², for ever. <code>tour_page11_measurements.py noadjust</code> has the numbers.)</p></li>
+</ol>
+</section>
+</section>
+<section id="going-deeper" class="level2">
+<h2 class="anchored" data-anchor-id="going-deeper">Going deeper</h2>
+<p><a href="../modelling-tour/12-moist-rce.html">Page 12</a> loads a moist equilibrium made the same way, with water vapour supplied by the surface and moist convection added to the stack, and asks what latent heat does to the lapse rate this page measured.</p>
+
+
+<!-- -->
+
+<script type="pyodide-data">
+eyJvcHRpb25zIjp7ImVudiI6eyJQTE9UTFlfUkVOREVSRVIiOiJwbG90bHlfbWltZXR5cGUifSwiaW5kZXhVUkwiOiJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvcHlvZGlkZS92MC4yOC4xL2Z1bGwvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsicHlvZGlkZV9odHRwIiwibWljcm9waXAiLCJpcHl0aG9uIiwiY2xpbXQ9PTAuMzEuMCIsInVueXQiXX19
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJweW9kaWRlLTYiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl82ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS02LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzYgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzYsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl81ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS01LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzUgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzUsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl80ID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS00LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtNC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzQgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTMiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl8zID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0zLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzMgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzMsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTIiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF9weW9kaWRlX2VkaXRvcl8yID0ge1xuICBjb25zdCB7IFB5b2RpZGVFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0yLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHB5b2RpZGUtMi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBQeW9kaWRlRXhlcmNpc2VFZGl0b3IoXG4gICAgcHlvZGlkZU9qcy5weW9kaWRlUHJvbWlzZSxcbiAgICBibG9jay5jb2RlLFxuICAgIG9wdGlvbnNcbiAgKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl9weW9kaWRlX3ZhbHVlXzIgPSBweW9kaWRlT2pzLnByb2Nlc3MoX3B5b2RpZGVfZWRpdG9yXzIsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJweW9kaWRlLTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoiX3B5b2RpZGVfdmFsdWVfMSA9IHtcbiAgY29uc3QgeyBoaWdobGlnaHRQeXRob24sIGI2NERlY29kZX0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwicHlvZGlkZS0xLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgLy8gRGVmYXVsdCBldmFsdWF0aW9uIGNvbmZpZ3VyYXRpb25cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oe1xuICAgIGlkOiBcInB5b2RpZGUtMS1jb250ZW50c1wiLFxuICAgIGVjaG86IHRydWUsXG4gICAgb3V0cHV0OiB0cnVlXG4gIH0sIGJsb2NrLmF0dHIpO1xuXG4gIC8vIEV2YWx1YXRlIHRoZSBwcm92aWRlZCBQeXRob24gY29kZVxuICBjb25zdCByZXN1bHQgPSBweW9kaWRlT2pzLnByb2Nlc3Moe2NvZGU6IGJsb2NrLmNvZGUsIG9wdGlvbnN9LCB7fSk7XG5cbiAgLy8gRWFybHkgeWllbGQgd2hpbGUgd2Ugd2FpdCBmb3IgdGhlIGZpcnN0IGV2YWx1YXRpb24gYW5kIHJlbmRlclxuICBpZiAob3B0aW9ucy5vdXRwdXQgJiYgIShcIjFcIiBpbiBweW9kaWRlT2pzLnJlbmRlcmVkT2pzKSkge1xuICAgIGNvbnN0IGNvbnRhaW5lciA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG4gICAgY29uc3Qgc3Bpbm5lciA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG5cbiAgICBpZiAob3B0aW9ucy5lY2hvKSB7XG4gICAgICAvLyBTaG93IG91dHB1dCBhcyBoaWdobGlnaHRlZCBzb3VyY2VcbiAgICAgIGNvbnN0IHByZUVsZW0gPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwicHJlXCIpO1xuICAgICAgY29udGFpbmVyLmNsYXNzTmFtZSA9IFwic291cmNlQ29kZVwiO1xuICAgICAgcHJlRWxlbS5jbGFzc05hbWUgPSBcInNvdXJjZUNvZGUgcHl0aG9uXCI7XG4gICAgICBwcmVFbGVtLmFwcGVuZENoaWxkKGhpZ2hsaWdodFB5dGhvbihibG9jay5jb2RlKSk7XG4gICAgICBzcGlubmVyLmNsYXNzTmFtZSA9IFwic3Bpbm5lci1ncm93IHNwaW5uZXItZ3Jvdy1zbSBtLTIgcG9zaXRpb24tYWJzb2x1dGUgdG9wLTAgZW5kLTBcIjtcbiAgICAgIHByZUVsZW0uYXBwZW5kQ2hpbGQoc3Bpbm5lcik7XG4gICAgICBjb250YWluZXIuYXBwZW5kQ2hpbGQocHJlRWxlbSk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHNwaW5uZXIuY2xhc3NOYW1lID0gXCJzcGlubmVyLWJvcmRlciBzcGlubmVyLWJvcmRlci1zbVwiO1xuICAgICAgY29udGFpbmVyLmFwcGVuZENoaWxkKHNwaW5uZXIpO1xuICAgIH1cblxuICAgIHlpZWxkIGNvbnRhaW5lcjtcbiAgfVxuXG4gIHB5b2RpZGVPanMucmVuZGVyZWRPanNbXCIxXCJdID0gdHJ1ZTtcbiAgeWllbGQgYXdhaXQgcmVzdWx0O1xufVxuIn0seyJjZWxsTmFtZSI6InB5b2RpZGUtcHJlbHVkZSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InB5b2RpZGVPanMgPSB7XG4gIGNvbnN0IHtcbiAgICBQeW9kaWRlRXZhbHVhdG9yLFxuICAgIFB5b2RpZGVFbnZpcm9ubWVudE1hbmFnZXIsXG4gICAgc2V0dXBQeXRob24sXG4gICAgc3RhcnRQeW9kaWRlV29ya2VyLFxuICAgIGI2NERlY29kZSxcbiAgICBjb2xsYXBzZVBhdGgsXG4gIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuXG4gIGNvbnN0IHN0YXR1c0NvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKFwiZXhlcmNpc2UtbG9hZGluZy1zdGF0dXNcIik7XG4gIGNvbnN0IGluZGljYXRvckNvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKFwiZXhlcmNpc2UtbG9hZGluZy1pbmRpY2F0b3JcIik7XG4gIGluZGljYXRvckNvbnRhaW5lci5jbGFzc0xpc3QucmVtb3ZlKFwiZC1ub25lXCIpO1xuXG4gIGxldCBzdGF0dXNUZXh0ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudChcImRpdlwiKVxuICBzdGF0dXNUZXh0LmNsYXNzTGlzdCA9IFwiZXhlcmNpc2UtbG9hZGluZy1kZXRhaWxzXCI7XG4gIHN0YXR1c1RleHQgPSBzdGF0dXNDb250YWluZXIuYXBwZW5kQ2hpbGQoc3RhdHVzVGV4dCk7XG4gIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgSW5pdGlhbGlzZWA7XG5cbiAgLy8gSG9pc3QgaW5kaWNhdG9yIG91dCBmcm9tIGZpbmFsIHNsaWRlIHdoZW4gcnVubmluZyB1bmRlciByZXZlYWxcbiAgY29uc3QgcmV2ZWFsU3RhdHVzID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcihcIi5yZXZlYWwgLmV4ZXJjaXNlLWxvYWRpbmctaW5kaWNhdG9yXCIpO1xuICBpZiAocmV2ZWFsU3RhdHVzKSB7XG4gICAgcmV2ZWFsU3RhdHVzLnJlbW92ZSgpO1xuICAgIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoXCIucmV2ZWFsID4gLnNsaWRlc1wiKS5hcHBlbmRDaGlsZChyZXZlYWxTdGF0dXMpO1xuICB9XG5cbiAgLy8gTWFrZSBhbnkgcmV2ZWFsIHNsaWRlcyB3aXRoIGxpdmUgY2VsbHMgc2Nyb2xsYWJsZVxuICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKFwiLnJldmVhbCAuZXhlcmNpc2UtY2VsbFwiKS5mb3JFYWNoKChlbCkgPT4ge1xuICAgIGVsLmNsb3Nlc3QoJ3NlY3Rpb24uc2xpZGUnKS5jbGFzc0xpc3QuYWRkKFwic2Nyb2xsYWJsZVwiKTtcbiAgfSlcblxuICAvLyBQeW9kaWRlIHN1cHBsZW1lbnRhbCBkYXRhIGFuZCBvcHRpb25zXG4gIGNvbnN0IGRhdGFDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcInB5b2RpZGUtZGF0YVxcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGRhdGEgPSBKU09OLnBhcnNlKGI2NERlY29kZShkYXRhQ29udGVudCkpO1xuXG4gIC8vIEdyYWIgbGlzdCBvZiByZXNvdXJjZXMgdG8gYmUgZG93bmxvYWRlZFxuICBjb25zdCBmaWxlc0NvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwidmZzLWZpbGVcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBmaWxlcyA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKGZpbGVzQ29udGVudCkpO1xuXG4gIGxldCBweW9kaWRlUHJvbWlzZSA9IChhc3luYyAoKSA9PiB7XG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyBQeW9kaWRlYDtcbiAgICBjb25zdCBweW9kaWRlID0gYXdhaXQgc3RhcnRQeW9kaWRlV29ya2VyKGRhdGEub3B0aW9ucyk7XG5cbiAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6IG1pY3JvcGlwYDtcbiAgICBhd2FpdCBweW9kaWRlLmxvYWRQYWNrYWdlKFwibWljcm9waXBcIik7XG4gICAgY29uc3QgbWljcm9waXAgPSBhd2FpdCBweW9kaWRlLnB5aW1wb3J0KFwibWljcm9waXBcIik7XG4gICAgYXdhaXQgZGF0YS5wYWNrYWdlcy5wa2dzLm1hcCgocGtnKSA9PiAoKSA9PiB7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6ICR7cGtnfWA7XG4gICAgICByZXR1cm4gbWljcm9waXAuaW5zdGFsbChwa2cpO1xuICAgIH0pLnJlZHVjZSgoY3VyLCBuZXh0KSA9PiBjdXIudGhlbihuZXh0KSwgUHJvbWlzZS5yZXNvbHZlKCkpO1xuICAgIGF3YWl0IG1pY3JvcGlwLmRlc3Ryb3koKTtcblxuICAgIC8vIERvd25sb2FkIGFuZCBpbnN0YWxsIHJlc291cmNlc1xuICAgIGF3YWl0IGZpbGVzLm1hcCgoZmlsZSkgPT4gYXN5bmMgKCkgPT4ge1xuICAgICAgY29uc3QgbmFtZSA9IGZpbGUuc3Vic3RyaW5nKGZpbGUubGFzdEluZGV4T2YoJy8nKSArIDEpO1xuICAgICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyByZXNvdXJjZTogJHtuYW1lfWA7XG4gICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGZpbGUpO1xuICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENhbid0IGRvd25sb2FkIFxcYCR7ZmlsZX1cXGAuIEVycm9yICR7cmVzcG9uc2Uuc3RhdHVzfTogXCIke3Jlc3BvbnNlLnN0YXR1c1RleHR9XCIuYCk7XG4gICAgICB9XG4gICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuYXJyYXlCdWZmZXIoKTtcblxuICAgICAgLy8gU3RvcmUgVVJMcyBpbiB0aGUgY3dkIHdpdGhvdXQgYW55IHN1YmRpcmVjdG9yeSBzdHJ1Y3R1cmVcbiAgICAgIGlmIChmaWxlLmluY2x1ZGVzKFwiOi8vXCIpKSB7XG4gICAgICAgIGZpbGUgPSBuYW1lO1xuICAgICAgfVxuXG4gICAgICAvLyBDb2xsYXBzZSBoaWdoZXIgZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgZmlsZSA9IGNvbGxhcHNlUGF0aChmaWxlKTtcblxuICAgICAgLy8gQ3JlYXRlIGRpcmVjdG9yeSB0cmVlLCBpZ25vcmluZyBcImRpcmVjdG9yeSBleGlzdHNcIiBWRlMgZXJyb3JzXG4gICAgICBjb25zdCBwYXJ0cyA9IGZpbGUuc3BsaXQoJy8nKS5zbGljZSgwLCAtMSk7XG4gICAgICBsZXQgcGF0aCA9ICcnO1xuICAgICAgd2hpbGUgKHBhcnRzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcGF0aCArPSBwYXJ0cy5zaGlmdCgpICsgJy8nO1xuICAgICAgICB0cnkge1xuICAgICAgICAgIGF3YWl0IHB5b2RpZGUuRlMubWtkaXIocGF0aCk7XG4gICAgICAgIH0gY2F0Y2ggKGUpIHtcbiAgICAgICAgICBpZiAoZS5uYW1lICE9PSBcIkVycm5vRXJyb3JcIikgdGhyb3cgZTtcbiAgICAgICAgICBpZiAoZS5lcnJubyAhPT0gMjApIHtcbiAgICAgICAgICAgIGNvbnN0IGVycm9yVGV4dFB0ciA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5fc3RyZXJyb3IoZS5lcnJubyk7XG4gICAgICAgICAgICBjb25zdCBlcnJvclRleHQgPSBhd2FpdCBweW9kaWRlLl9tb2R1bGUuVVRGOFRvU3RyaW5nKGVycm9yVGV4dFB0cik7XG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYEZpbGVzeXN0ZW0gRXJyb3IgJHtlLmVycm5vfSBcIiR7ZXJyb3JUZXh0fVwiLmApO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyBXcml0ZSB0aGlzIGZpbGUgdG8gdGhlIFZGU1xuICAgICAgdHJ5IHtcbiAgICAgICAgcmV0dXJuIGF3YWl0IHB5b2RpZGUuRlMud3JpdGVGaWxlKGZpbGUsIG5ldyBVaW50OEFycmF5KGRhdGEpKTtcbiAgICAgIH0gY2F0Y2ggKGUpIHtcbiAgICAgICAgaWYgKGUubmFtZSAhPT0gXCJFcnJub0Vycm9yXCIpIHRocm93IGU7XG4gICAgICAgIGNvbnN0IGVycm9yVGV4dFB0ciA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5fc3RyZXJyb3IoZS5lcnJubyk7XG4gICAgICAgIGNvbnN0IGVycm9yVGV4dCA9IGF3YWl0IHB5b2RpZGUuX21vZHVsZS5VVEY4VG9TdHJpbmcoZXJyb3JUZXh0UHRyKTtcbiAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGaWxlc3lzdGVtIEVycm9yICR7ZS5lcnJub30gXCIke2Vycm9yVGV4dH1cIi5gKTtcbiAgICAgIH1cbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgUHlvZGlkZSBlbnZpcm9ubWVudCBzZXR1cGA7XG4gICAgYXdhaXQgc2V0dXBQeXRob24ocHlvZGlkZSk7XG5cbiAgICBzdGF0dXNUZXh0LnJlbW92ZSgpO1xuICAgIGlmIChzdGF0dXNDb250YWluZXIuY2hpbGRyZW4ubGVuZ3RoID09IDApIHtcbiAgICAgIHN0YXR1c0NvbnRhaW5lci5wYXJlbnROb2RlLnJlbW92ZSgpO1xuICAgIH1cbiAgICByZXR1cm4gcHlvZGlkZTtcbiAgfSkoKS5jYXRjaCgoZXJyKSA9PiB7XG4gICAgc3RhdHVzVGV4dC5zdHlsZS5jb2xvciA9IFwidmFyKC0tZXhlcmNpc2UtZWRpdG9yLWhsLWVyLCAjQUQwMDAwKVwiO1xuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBlcnIubWVzc2FnZTtcbiAgICAvL2luZGljYXRvckNvbnRhaW5lci5xdWVyeVNlbGVjdG9yKFwiLnNwaW5uZXItZ3Jvd1wiKS5jbGFzc0xpc3QuYWRkKFwiZC1ub25lXCIpO1xuICAgIHRocm93IGVycjtcbiAgfSk7XG5cbiAgLy8gS2VlcCB0cmFjayBvZiBpbml0aWFsIE9KUyBibG9jayByZW5kZXJcbiAgY29uc3QgcmVuZGVyZWRPanMgPSB7fTtcblxuICBjb25zdCBwcm9jZXNzID0gYXN5bmMgKGNvbnRleHQsIGlucHV0cykgPT4ge1xuICAgIGNvbnN0IHB5b2RpZGUgPSBhd2FpdCBweW9kaWRlUHJvbWlzZTtcbiAgICBjb25zdCBldmFsdWF0b3IgPSBuZXcgUHlvZGlkZUV2YWx1YXRvcihweW9kaWRlLCBjb250ZXh0KTtcbiAgICBhd2FpdCBldmFsdWF0b3IucHJvY2VzcyhpbnB1dHMpO1xuICAgIHJldHVybiBldmFsdWF0b3IuY29udGFpbmVyO1xuICB9XG5cbiAgcmV0dXJuIHtcbiAgICBweW9kaWRlUHJvbWlzZSxcbiAgICByZW5kZXJlZE9qcyxcbiAgICBwcm9jZXNzLFxuICB9O1xufVxuIn1dfQ==
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyJfdG91ci9hc3NldHMucHkiLCJfdG91ci9zdGF0ZXMucHkiLCJfdG91ci9zdGVwcGluZy5weSIsIl90b3VyL2J1ZGdldHMucHkiLCJfZGF0YS9yY2VfZHJ5X2VxdWlsaWJyaXVtLm5weiJd
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../modelling-tour";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Dry RCE"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span><span class="co"> live-html</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> jupyter</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">pyodide:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">    # Installed by micropip at document setup, before any cell runs; pinned to</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">    # the released version this page was written against. See</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    # ../_includes/climt-live-boot.qmd for how to preview an unreleased wheel.</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - "climt==0.31.0"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - "unyt"</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">    # Fetched into the Pyodide filesystem at document setup — the same files</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">    # tests/test_modelling_tour.py imports natively. See page 1 for the</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">    # states.py loads the shipped equilibrium and finds it through assets.py;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">    # stepping.py is the time loop; budgets.py reads the energy budgets.</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/assets.py</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/states.py</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/stepping.py</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">    - _tour/budgets.py</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">    # The shipped dry equilibrium. Staged into the Pyodide filesystem at the</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">    # same relative path it has on disk, which is why _tour/assets.py can find</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">    # it with a plain os.path.isfile in both environments.</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co">    - _data/rce_dry_equilibrium.npz</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>{{&lt; include ../_includes/climt-live-boot.qmd &gt;}}</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="fu">## Where this fits</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>Chapter 12 of the notes: radiative-convective equilibrium. Every piece is already</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>on the table. <span class="co">[</span><span class="ot">Page 7</span><span class="co">](07-stepping-a-column.qmd)</span> stepped a column of radiation</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>over a slab ocean, <span class="co">[</span><span class="ot">page 8</span><span class="co">](08-turbulent-heat-exchange.qmd)</span> added the turbulent</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>exchange between the surface and the air, and <span class="co">[</span><span class="ot">page 10</span><span class="co">](10-dry-convection.qmd)</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>introduced the scheme that removes a static instability. This page runs all four</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>together until nothing changes.</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>It also closes a loop that <span class="co">[</span><span class="ot">page 1</span><span class="co">](01-emissivity-spectrum.qmd)</span> opened. Every</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>page from 1 to 6 used a sounding someone typed in: a troposphere cooling at</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>6.5 K km⁻¹ and an isothermal stratosphere at 200 K. Here nobody types in a</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>profile. The column makes its own, and it does not choose 6.5 K km⁻¹.</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="fu">## This column is dry, and its numbers are not Earth's</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>The column has no water vapour at all. Its fourteen-band longwave radiation sees</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>330 ppm of CO₂ and nothing else, so most of the spectrum is window and the column</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>is a poor greenhouse. It settles at a surface temperature of about 267 K, far</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>below Earth's 288 K. **No number on this page can be compared with the numbers on</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>pages 1 to 6**, which all had water vapour in them. <span class="co">[</span><span class="ot">Page 12</span><span class="co">](12-moist-rce.qmd)</span> puts</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>the water back.</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## You are perturbing a shipped equilibrium</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>This page does not spin its column up. It loads one: a state that</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/generate_tour_equilibria.py`</span> stepped for 3650 steps of 12 hours, 1825</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>simulated days, and saved beside this page as <span class="in">`_data/rce_dry_equilibrium.npz`</span>.</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>Doing that here would take about eight minutes of stepping in your browser, and</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>watching a column find its equilibrium was page 7's subject. This page is about</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>what the equilibrium looks like and how it responds.</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>An equilibrium means nothing without the configuration that produced it, so the</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>file carries that configuration with it, and the first cell prints it. The cell</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>builds the component list first, in the open, because the file is only an</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>equilibrium *for these components*. It runs in a few seconds.</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="co">#| autorun: true</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"_tour"</span>)   <span class="co"># helper modules, served alongside this page</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> copy</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sympl</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympl <span class="im">import</span> get_constant</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> (get_grid, CorkLongwaveRadiation, SlabSurface,</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>                   SimpleBoundaryLayer, DryConvectiveAdjustment, UnytTimeDelta)</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> budgets</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> states</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> stepping</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>sympl.set_backend(climt.UnytBackend())</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a><span class="co"># In the order the page defends below: radiation, surface, boundary layer,</span></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="co"># adjustment.</span></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>components <span class="op">=</span> [</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>    CorkLongwaveRadiation(optics<span class="op">=</span><span class="st">"correlated_k"</span>, table<span class="op">=</span><span class="st">"earth_low_res_lw"</span>),</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>    SlabSurface(),</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>    SimpleBoundaryLayer(surface_fluxes<span class="op">=</span><span class="st">"bulk"</span>, roughness_length<span class="op">=</span><span class="fl">1e-3</span>),</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>    DryConvectiveAdjustment(),</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>tendency <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> components <span class="cf">if</span> <span class="kw">not</span> <span class="bu">hasattr</span>(c, <span class="st">"output_properties"</span>)]</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>stepper <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> components <span class="cf">if</span> <span class="bu">hasattr</span>(c, <span class="st">"output_properties"</span>)]</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>state, provenance <span class="op">=</span> states.load(<span class="st">"rce_dry_equilibrium.npz"</span>, components,</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>                                grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">28</span>))</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> state <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"rce_dry_equilibrium.npz did not reach the browser; "</span></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"reload the page"</span>)</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="co"># Page 8's momentum source, rebuilt on the loaded state. It has to come after</span></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a><span class="co"># the state exists, because it writes its target fields into it -- which is</span></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a><span class="co"># also why it is not in `components` above and not in the shipped file's</span></span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a><span class="co"># component list. The provenance records the wind it was spun up at; use the</span></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a><span class="co"># same one, or you are perturbing a different model.</span></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="co"># initialise=False: the loaded state already carries a spun-up, drag-sheared</span></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="co"># wind profile. Flattening it to a uniform 5 m/s would discard part of the</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="co"># equilibrium we just loaded.</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>tendency.append(stepping.wind_relaxation(state, provenance[<span class="st">"wind_m_s"</span>],</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>                                         provenance[<span class="st">"wind_timescale_hours"</span>],</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>                                         initialise<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>DT <span class="op">=</span> UnytTimeDelta(hours<span class="op">=</span>provenance[<span class="st">"dt_hours"</span>])</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(states.describe(provenance))</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, value <span class="kw">in</span> budgets.summary(state).items():</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:20s}</span><span class="ss"> </span><span class="sc">{</span>value<span class="sc">:9.2f}</span><span class="ss">"</span>)</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>The TOA imbalance is −0.01 W m⁻², the surface imbalance −0.00 W m⁻², and the</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>surface temperature 266.62 K.</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="fu">## The profile it found</span></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>The next cell draws the equilibrium. θ, the potential temperature, is page 10's</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>test for which levels the adjustment has mixed: they share one θ, to rounding</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>error. The cell shades them and draws the dry adiabat through them. The dashed</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>grey profile is page 7's fourteen-band column, which had radiation and a slab and</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>nothing else, stepped on until its TOA imbalance was zero to three decimal places:</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>10 000 steps of 12 hours. Its temperatures are written into the cell, because</span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>recomputing them here would take about twenty minutes.</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/experiments/tour_page11_measurements.py radiative`</span> recomputes them, and</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>so does page 7's non-grey cell with <span class="in">`N_STEPS = 10000`</span>.</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="co">#| autorun: true</span></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>Rd <span class="op">=</span> <span class="bu">float</span>(get_constant(<span class="st">"gas_constant_of_dry_air"</span>, <span class="st">"J/kg/degK"</span>))</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>Cp <span class="op">=</span> <span class="bu">float</span>(get_constant(<span class="st">"heat_capacity_of_dry_air_at_constant_pressure"</span>,</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"J/kg/degK"</span>))</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> <span class="bu">float</span>(get_constant(<span class="st">"gravitational_acceleration"</span>, <span class="st">"m/s^2"</span>))</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>P0 <span class="op">=</span> <span class="fl">1.0e5</span>                        <span class="co"># Pa, the reference pressure for theta</span></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>DRY_ADIABAT <span class="op">=</span> <span class="fl">1e3</span> <span class="op">*</span> g <span class="op">/</span> Cp        <span class="co"># K/km</span></span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>TRANCHE_1 <span class="op">=</span> <span class="fl">6.5</span>                   <span class="co"># K/km, what pages 1-6 prescribed</span></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a><span class="co"># Page 7's 14-band column (earth_low_res_lw, diffusivity 1.66, 2 m slab,</span></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a><span class="co"># 240 W/m^2 at the surface, no boundary layer, no convection) after 10 000</span></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="co"># steps of 12 h, TOA imbalance 0.000 W/m^2. Bottom level first.</span></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>PAGE7_T <span class="op">=</span> np.array([</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>    <span class="fl">260.6</span>, <span class="fl">255.5</span>, <span class="fl">250.5</span>, <span class="fl">245.6</span>, <span class="fl">241.0</span>, <span class="fl">236.3</span>, <span class="fl">231.6</span>, <span class="fl">227.2</span>, <span class="fl">222.8</span>, <span class="fl">218.1</span>,</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>    <span class="fl">213.3</span>, <span class="fl">208.4</span>, <span class="fl">203.3</span>, <span class="fl">198.0</span>, <span class="fl">192.6</span>, <span class="fl">187.1</span>, <span class="fl">181.3</span>, <span class="fl">175.3</span>, <span class="fl">169.1</span>, <span class="fl">162.9</span>,</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>    <span class="fl">156.4</span>, <span class="fl">149.6</span>, <span class="fl">142.5</span>, <span class="fl">135.0</span>, <span class="fl">126.4</span>, <span class="fl">117.5</span>, <span class="fl">110.0</span>, <span class="fl">101.2</span>])</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>PAGE7_SURFACE <span class="op">=</span> <span class="fl">267.78</span></span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> theta(state):</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Potential temperature, K, bottom level first."""</span></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>    T <span class="op">=</span> state[<span class="st">"air_temperature"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> state[<span class="st">"air_pressure"</span>].to_units(<span class="st">"Pa"</span>).values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> T <span class="op">*</span> (P0 <span class="op">/</span> p) <span class="op">**</span> (Rd <span class="op">/</span> Cp)</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lapse_rate(state):</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""-dT/dz in K/km between adjacent levels, from the hypsometric thickness."""</span></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>    T <span class="op">=</span> state[<span class="st">"air_temperature"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> state[<span class="st">"air_pressure"</span>].to_units(<span class="st">"Pa"</span>).values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>    dz <span class="op">=</span> (Rd <span class="op">*</span> <span class="fl">0.5</span> <span class="op">*</span> (T[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> T[<span class="dv">1</span>:]) <span class="op">/</span> g) <span class="op">*</span> np.log(p[:<span class="op">-</span><span class="dv">1</span>] <span class="op">/</span> p[<span class="dv">1</span>:])</span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>np.diff(T) <span class="op">/</span> dz <span class="op">*</span> <span class="fl">1000.0</span></span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> convecting(state):</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Pairs of adjacent levels the adjustment has mixed: one theta."""</span></span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.<span class="bu">abs</span>(np.diff(theta(state))) <span class="op">&lt;</span> <span class="fl">1e-6</span></span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>p_hPa <span class="op">=</span> state[<span class="st">"air_pressure"</span>].to_units(<span class="st">"Pa"</span>).values[:, <span class="dv">0</span>, <span class="dv">0</span>] <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>ps_hPa <span class="op">=</span> <span class="bu">float</span>(state[<span class="st">"surface_air_pressure"</span>].to_units(<span class="st">"Pa"</span>).values.ravel()[<span class="dv">0</span>]) <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> state[<span class="st">"air_temperature"</span>].values[:, <span class="dv">0</span>, <span class="dv">0</span>]</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a>T_surface <span class="op">=</span> <span class="bu">float</span>(state[<span class="st">"surface_temperature"</span>].values.ravel()[<span class="dv">0</span>])</span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>mixed <span class="op">=</span> convecting(state)</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>pairs <span class="op">=</span> np.where(mixed)[<span class="dv">0</span>]</span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>bottom, top <span class="op">=</span> pairs[<span class="dv">0</span>], pairs[<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span>         <span class="co"># the convecting layer's levels</span></span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a>theta_mixed <span class="op">=</span> theta(state)[bottom]</span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>lapse <span class="op">=</span> lapse_rate(state)</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>p_between <span class="op">=</span> np.sqrt(p_hPa[:<span class="op">-</span><span class="dv">1</span>] <span class="op">*</span> p_hPa[<span class="dv">1</span>:])   <span class="co"># where each lapse rate lives</span></span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>fig, (ax_T, ax_G) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">5.6</span>), sharey<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>                                 gridspec_kw<span class="op">=</span><span class="bu">dict</span>(width_ratios<span class="op">=</span>[<span class="dv">3</span>, <span class="dv">2</span>]))</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> (ax_T, ax_G):</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>    ax.axhspan(p_hPa[bottom], p_hPa[top], color<span class="op">=</span><span class="st">"#fff0d6"</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>    ax.grid(alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>ax_T.plot(PAGE7_T, p_hPa, <span class="st">"--"</span>, color<span class="op">=</span><span class="st">"0.55"</span>, lw<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>          label<span class="op">=</span><span class="st">"page 7: radiation only"</span>)</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>ax_T.plot([PAGE7_SURFACE], [ps_hPa], <span class="st">"o"</span>, mfc<span class="op">=</span><span class="st">"white"</span>, mec<span class="op">=</span><span class="st">"0.55"</span>)</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>adiabat <span class="op">=</span> p_hPa[p_hPa <span class="op">&gt;=</span> <span class="dv">150</span>]</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>ax_T.plot(theta_mixed <span class="op">*</span> (adiabat <span class="op">/</span> (P0 <span class="op">/</span> <span class="dv">100</span>)) <span class="op">**</span> (Rd <span class="op">/</span> Cp), adiabat, <span class="st">":"</span>,</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>          color<span class="op">=</span><span class="st">"#c92a2a"</span>, lw<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>          label<span class="op">=</span><span class="ss">f"dry adiabat, θ = </span><span class="sc">{</span>theta_mixed<span class="sc">:.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>ax_T.plot(T, p_hPa, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#1864ab"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>          label<span class="op">=</span><span class="st">"this page: radiative-convective"</span>)</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>ax_T.plot([T_surface], [ps_hPa], <span class="st">"o"</span>, color<span class="op">=</span><span class="st">"#1864ab"</span>)</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>ax_T.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"temperature (K)"</span>, ylabel<span class="op">=</span><span class="st">"pressure (hPa)"</span>,</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>         ylim<span class="op">=</span>(ps_hPa <span class="op">+</span> <span class="dv">15</span>, <span class="dv">0</span>), xlim<span class="op">=</span>(<span class="dv">95</span>, <span class="dv">275</span>),</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>         title<span class="op">=</span><span class="st">"Temperature (dots at the ground: the surface)"</span>)</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>ax_T.legend(loc<span class="op">=</span><span class="st">"upper right"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>ax_G.plot(lapse, p_between, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#1864ab"</span>, lw<span class="op">=</span><span class="dv">2</span>, ms<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>ax_G.axvline(DRY_ADIABAT, color<span class="op">=</span><span class="st">"#c92a2a"</span>, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>             label<span class="op">=</span><span class="ss">f"dry adiabat, </span><span class="sc">{</span>DRY_ADIABAT<span class="sc">:.2f}</span><span class="ss"> K/km"</span>)</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>ax_G.axvline(TRANCHE_1, color<span class="op">=</span><span class="st">"0.3"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>             label<span class="op">=</span><span class="st">"pages 1–6, 6.5 K/km"</span>)</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>ax_G.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"lapse rate −dT/dz (K/km)"</span>, xlim<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">12</span>),</span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a>         title<span class="op">=</span><span class="st">"Lapse rate"</span>)</span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>ax_G.legend(loc<span class="op">=</span><span class="st">"upper right"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>ax_G.text(<span class="fl">0.4</span>, np.sqrt(p_hPa[bottom] <span class="op">*</span> p_hPa[top]), <span class="st">"convecting"</span>, fontsize<span class="op">=</span><span class="dv">8</span>,</span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>          color<span class="op">=</span><span class="st">"#8a5a00"</span>)</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Dry radiative-convective equilibrium (shaded: the convecting layer)"</span>)</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>::: {.callout-note collapse="true"}</span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a><span class="fu">## If the live cell did not run</span></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a>![Two panels against pressure, from the ground to the top of the model, with</span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a>the layer from 1010 to 370 hPa shaded. Left: the equilibrium temperature. Through</span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a>the shaded layer, from the lowest level up, it lies on a dotted dry adiabat,</span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a>θ = 262.96 K. Above it the temperature keeps falling, more and more slowly, to</span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>about 111 K at the top. A dashed grey profile, page 7's radiation-only column,</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>lies to its left everywhere, colder by up to about 24 K near 700 hPa and by about</span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a>10 K at the top, while its surface dot sits about 1.2 K to the right of this</span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a>page's. Right: the lapse rate, on a vertical dotted line at 9.76 K/km through the</span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>shaded layer, falling off above about 370 hPa to about 1.3 K/km at the top. A</span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a>dashed line marks 6.5 K/km.](_artifacts/11-dry-rce.png)</span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a>This is the figure the cell above produces. Live cells need WebAssembly; if your</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>browser blocks it, the static version is here.</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>Read the right panel first. Through the shaded layer the lapse rate is a</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>vertical line at 9.76 K km⁻¹. Nothing on this page set that number. The</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>radiation cools the air aloft and the surface heats the air below, until θ falls</span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>with height. The adjustment then mixes the unstable air back to a single θ, and a</span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>single θ *is* the dry adiabat. So wherever the column convects, it sits on</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>g/c_p. The next cell measures it.</span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"convecting layer   </span><span class="sc">{</span>p_hPa[bottom]<span class="sc">:.0f}</span><span class="ss"> to </span><span class="sc">{</span>p_hPa[top]<span class="sc">:.0f}</span><span class="ss"> hPa, "</span></span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>top <span class="op">-</span> bottom <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> levels, theta = </span><span class="sc">{</span>theta_mixed<span class="sc">:.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"lapse rate there   </span><span class="sc">{</span>lapse[mixed]<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss"> K/km"</span>)</span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"dry adiabat g/Cp   </span><span class="sc">{</span>DRY_ADIABAT<span class="sc">:.2f}</span><span class="ss"> K/km"</span>)</span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"pages 1-6 assumed  </span><span class="sc">{</span>TRANCHE_1<span class="sc">:.2f}</span><span class="ss"> K/km"</span>)</span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">surface </span><span class="sc">{</span>T_surface<span class="sc">:.2f}</span><span class="ss"> K, lowest air </span><span class="sc">{</span>T[<span class="dv">0</span>]<span class="sc">:.2f}</span><span class="ss"> K, "</span></span>
+<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"jump </span><span class="sc">{</span>T_surface <span class="op">-</span> T[<span class="dv">0</span>]<span class="sc">:.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"lapse rate in the lowest three layers: "</span></span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="st">', '</span><span class="sc">.</span>join(<span class="ss">f'</span><span class="sc">{</span>x<span class="sc">:.1f}</span><span class="ss">'</span> <span class="cf">for</span> x <span class="kw">in</span> lapse[:<span class="dv">3</span>])<span class="sc">}</span><span class="ss"> K/km"</span>)</span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"top of the model   </span><span class="sc">{</span>T[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.2f}</span><span class="ss"> K at </span><span class="sc">{</span>p_hPa[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.1f}</span><span class="ss"> hPa"</span>)</span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a>difference <span class="op">=</span> T <span class="op">-</span> PAGE7_T</span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> <span class="bu">int</span>(np.argmax(difference))</span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">against page 7's radiation-only column:"</span>)</span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  surface           </span><span class="sc">{</span>T_surface <span class="op">-</span> PAGE7_SURFACE<span class="sc">:+.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  air, largest      </span><span class="sc">{</span>difference[k]<span class="sc">:+.2f}</span><span class="ss"> K at </span><span class="sc">{</span>p_hPa[k]<span class="sc">:.0f}</span><span class="ss"> hPa"</span>)</span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  air, top level    </span><span class="sc">{</span>difference[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:+.2f}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a>In the shipped state, the layer from 1010 to 370 hPa, the lowest level upward,</span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a>sits on the dry adiabat, at 9.76 K km⁻¹. That is half as steep again as the 6.5 K km⁻¹ pages 1 to 6 assumed,</span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>and Earth's troposphere is close to 6.5. <span class="co">[</span><span class="ot">Page 12</span><span class="co">](12-moist-rce.qmd)</span> will show where the difference</span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a>comes from.</span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a>The layer holds still. Over 30 days of stepping at the 12-hour timestep it</span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>runs from the lowest level to 370 hPa on every one of the 60 steps, at</span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a>9.76 K km⁻¹, and the surface temperature does not move in its third decimal place</span>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>(<span class="in">`scripts/experiments/tour_page11_measurements.py convection`</span>). This equilibrium</span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>is a fixed point, not a cycle.</span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a>**The tropopause emerges.** Above the convecting layer, the lapse rate does not</span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>jump to zero at a 200 K floor, as pages 1 to 6 had it. It falls off gradually,</span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a>to 8.1 K km⁻¹ near 290 hPa and to about 1.3 K km⁻¹ near the model top, and</span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>the temperature keeps falling all the way to 111.13 K. There is no temperature</span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a>minimum. What this column has instead is a level where convection stops and</span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>radiation alone sets the profile above. That level is this column's tropopause,</span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a>and nothing in the configuration names it.</span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a>The air nearest the ground is on the adiabat too, and that is the boundary</span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>layer's doing as much as the adjustment's. <span class="in">`SimpleBoundaryLayer`</span> diffuses dry</span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a>static energy, <span class="in">`c_p T + g z`</span>, and a uniform dry static energy *is* the dry</span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a>adiabat, so where it mixes it pulls the air toward 9.76 K km⁻¹ as well. (A scheme</span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a>that diffused temperature itself would pull the layers it mixes toward one</span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a>temperature, a stable profile, and leave a layer near the ground that only the</span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a>adjustment could undo.) The ground is 2.88 K warmer than the air above it,</span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a>against 7.14 K in page 7's column at equilibrium.</span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a><span class="fu">### Against page 7</span></span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a>Page 7's column is the same radiation over the same slab, without the boundary</span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a>layer and the adjustment. At equilibrium its temperature falls at 81.5 K km⁻¹</span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a>between its two lowest levels, eight times the dry adiabatic rate, an instability</span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a>nothing in that column could remove.</span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a>Adding the two components changed the air far more than the ground. The air</span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>warms by up to 23.7 K at 695 hPa, and by about 9 K at the top. (Cell 2 prints</span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a>+9.93 K there, but the shipped state's top level has not quite finished its own</span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a>spin-up: another 10 000 steps cool it by 1.1 K more, and the levels below it by</span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a>less, <span class="in">`tour_page11_measurements.py settle`</span>.) The surface cools by only 1.16 K.</span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a>Most of the answer is how transparent this atmosphere is. Chill the surface to</span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a>1 K, air unchanged, and the OLR falls from 240.01 to 26.95 W m⁻²: the air's own</span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a>contribution. The other 213.06 W m⁻², 74 % of σT_s⁴, is the surface shining</span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a>through. Warming the air from page 7's profile to this page's, surface held</span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a>fixed, raises the OLR by only 3.99 W m⁻². Warming the surface by 1 K, air held</span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a>fixed, raises it by 3.38 W m⁻², so a surface 1.16 K cooler gives those watts</span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a>back (<span class="in">`tour_page11_measurements.py radiative`</span>). The first physics exercise asks</span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a>you to follow that through.</span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft: ordering components defensibly</span></span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a>The list is radiation, surface, boundary layer, adjustment. The first two are</span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a>tendency components. <span class="in">`AdamsBashforth`</span> evaluates both on the same start-of-step</span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a>state and adds their tendencies, so their order within the list changes nothing.</span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a>The two steppers do run in order, after that update, and their order is a choice.</span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Surface, then boundary layer.** <span class="in">`stepping.integrate`</span> runs every stepper</span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a>  after the tendency update, so the boundary layer always sees the surface</span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a>  temperature this step produced. Its fluxes depend on that temperature, so this</span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a>  is the order you want, and the split into two lists enforces it.</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Boundary layer, then adjustment.** The boundary layer heats the lowest air</span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a>  every step, which can make it unstable against the air above. The adjustment</span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a>  runs last, so it removes that instability in the same step. Over 30 days of</span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a>  stepping, not one step ended with θ falling with height anywhere in the column.</span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**The defensible alternative** is adjustment first. It removes the instability</span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a>  the radiation created and leaves the boundary layer's heating for the next</span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a>  step. The equilibrium hardly notices: 1000 steps in that order end with a</span>
+<span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a>  30-day mean surface temperature 0.003 K from this order's. What changes is</span>
+<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a>  what a single state looks like. In that order every one of the last 60 steps</span>
+<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a>  ended with θ falling with height somewhere between 1010 and 424 hPa</span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`tour_page11_measurements.py order`</span>), so a profile you plot or save is not</span>
+<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a>  one the adjustment has seen. The shipped file was made in this page's order.</span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>The wind relaxation sits at the end of the tendency list, and it cannot be</span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a>declared with the rest. <span class="in">`stepping.wind_relaxation`</span> writes its target wind and</span>
+<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a>timescale into the state it will act on, so it can only be built once the state</span>
+<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a>exists: after <span class="in">`states.load`</span>, on the loaded state.</span>
+<span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft: the budgets are the convergence test</span></span>
+<span id="cb1-359"><a href="#cb1-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a>A curve that has stopped visibly moving is not converged. It may be moving more</span>
+<span id="cb1-361"><a href="#cb1-361" aria-hidden="true" tabindex="-1"></a>slowly than you can see. Page 7's fourteen-band column is the example: after 900</span>
+<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a>steps its TOA was still 4.9 W m⁻² out of balance, and its surface had another</span>
+<span id="cb1-363"><a href="#cb1-363" aria-hidden="true" tabindex="-1"></a>0.7 K to fall.</span>
+<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-365"><a href="#cb1-365" aria-hidden="true" tabindex="-1"></a><span class="in">`budgets.toa_imbalance(state)`</span> is absorbed sunlight minus OLR. At equilibrium it</span>
+<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a>is zero, because nothing else can leave the planet. <span class="in">`budgets.surface_imbalance`</span></span>
+<span id="cb1-367"><a href="#cb1-367" aria-hidden="true" tabindex="-1"></a>is the same account for the surface: sunlight plus downwelling longwave, minus</span>
+<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>upwelling longwave and the turbulent fluxes. The generator called the shipped</span>
+<span id="cb1-369"><a href="#cb1-369" aria-hidden="true" tabindex="-1"></a>state converged when two tests passed:</span>
+<span id="cb1-370"><a href="#cb1-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-371"><a href="#cb1-371" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="pp">|</span>TOA imbalance<span class="pp">|</span> &lt; 0.5 W m⁻²;</span>
+<span id="cb1-372"><a href="#cb1-372" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the mean surface temperature over the last 1000 steps within 0.02 K of the</span>
+<span id="cb1-373"><a href="#cb1-373" aria-hidden="true" tabindex="-1"></a>  mean over the 1000 before.</span>
+<span id="cb1-374"><a href="#cb1-374" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-375"><a href="#cb1-375" aria-hidden="true" tabindex="-1"></a>Why a trend and not a tighter imbalance? Because a small imbalance says the</span>
+<span id="cb1-376"><a href="#cb1-376" aria-hidden="true" tabindex="-1"></a>column is *nearly* balanced, not that it has stopped moving, and a column that</span>
+<span id="cb1-377"><a href="#cb1-377" aria-hidden="true" tabindex="-1"></a>cannot reach zero at all, like <span class="co">[</span><span class="ot">page 12</span><span class="co">](12-moist-rce.qmd)</span>'s, would never pass</span>
+<span id="cb1-378"><a href="#cb1-378" aria-hidden="true" tabindex="-1"></a>a tighter one. The trend test asks the question that matters directly. This</span>
+<span id="cb1-379"><a href="#cb1-379" aria-hidden="true" tabindex="-1"></a>column passes both easily: the first cell's −0.01 and −0.00 W m⁻² hold to the</span>
+<span id="cb1-380"><a href="#cb1-380" aria-hidden="true" tabindex="-1"></a>last digit from step to step. The next cell still compares 30-day means rather</span>
+<span id="cb1-381"><a href="#cb1-381" aria-hidden="true" tabindex="-1"></a>than single steps, the safe habit for any run that might still wobble.</span>
+<span id="cb1-382"><a href="#cb1-382" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-383"><a href="#cb1-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-384"><a href="#cb1-384" aria-hidden="true" tabindex="-1"></a><span class="fu">## The knob: CO₂</span></span>
+<span id="cb1-385"><a href="#cb1-385" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-386"><a href="#cb1-386" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb1-387"><a href="#cb1-387" aria-hidden="true" tabindex="-1"></a><span class="fu">## The knob</span></span>
+<span id="cb1-388"><a href="#cb1-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-389"><a href="#cb1-389" aria-hidden="true" tabindex="-1"></a><span class="in">`CO2_FACTOR`</span> below: what the CO₂ is multiplied by. <span class="in">`N_STEPS`</span> is how long to</span>
+<span id="cb1-390"><a href="#cb1-390" aria-hidden="true" tabindex="-1"></a>integrate, at the shipped 12-hour timestep.</span>
+<span id="cb1-391"><a href="#cb1-391" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-392"><a href="#cb1-392" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-393"><a href="#cb1-393" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Page 5</span><span class="co">](05-co2-knob.qmd)</span> could compute the *forcing* from doubling CO₂: how</span>
+<span id="cb1-394"><a href="#cb1-394" aria-hidden="true" tabindex="-1"></a>much the OLR drops when the gas is added and nothing else changes. It could not</span>
+<span id="cb1-395"><a href="#cb1-395" aria-hidden="true" tabindex="-1"></a>say how much the surface warms, because nothing in it could respond. This column can. The</span>
+<span id="cb1-396"><a href="#cb1-396" aria-hidden="true" tabindex="-1"></a>cell doubles CO₂ in a copy of the equilibrium, prints the instantaneous forcing,</span>
+<span id="cb1-397"><a href="#cb1-397" aria-hidden="true" tabindex="-1"></a>and steps the copy until it balances again.</span>
+<span id="cb1-398"><a href="#cb1-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-399"><a href="#cb1-399" aria-hidden="true" tabindex="-1"></a>**This cell takes a little over two minutes in a browser.** That is 1060 steps,</span>
+<span id="cb1-400"><a href="#cb1-400" aria-hidden="true" tabindex="-1"></a>60 of them for the unperturbed column, at about 0.13 s each, measured with the JIT off, the native stand-in for the</span>
+<span id="cb1-401"><a href="#cb1-401" aria-hidden="true" tabindex="-1"></a>browser. It prints a line every 100 steps, all at the end.</span>
+<span id="cb1-402"><a href="#cb1-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-405"><a href="#cb1-405" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-406"><a href="#cb1-406" aria-hidden="true" tabindex="-1"></a>CO2_FACTOR <span class="op">=</span> <span class="fl">2.0</span>       <span class="co"># &lt;- multiply CO2 by this</span></span>
+<span id="cb1-407"><a href="#cb1-407" aria-hidden="true" tabindex="-1"></a>N_STEPS <span class="op">=</span> <span class="dv">1000</span>         <span class="co"># 500 days at 12 h</span></span>
+<span id="cb1-408"><a href="#cb1-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-409"><a href="#cb1-409" aria-hidden="true" tabindex="-1"></a>longwave <span class="op">=</span> components[<span class="dv">0</span>]</span>
+<span id="cb1-410"><a href="#cb1-410" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-411"><a href="#cb1-411" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-412"><a href="#cb1-412" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> olr_now(column):</span>
+<span id="cb1-413"><a href="#cb1-413" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""OLR from one longwave call, temperatures as they stand."""</span></span>
+<span id="cb1-414"><a href="#cb1-414" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(longwave(column)[<span class="dv">1</span>][<span class="st">"upwelling_longwave_flux_in_air"</span>]</span>
+<span id="cb1-415"><a href="#cb1-415" aria-hidden="true" tabindex="-1"></a>                 .values[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb1-416"><a href="#cb1-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-417"><a href="#cb1-417" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-418"><a href="#cb1-418" aria-hidden="true" tabindex="-1"></a>perturbed <span class="op">=</span> copy.deepcopy(state)</span>
+<span id="cb1-419"><a href="#cb1-419" aria-hidden="true" tabindex="-1"></a>perturbed[<span class="st">"mole_fraction_of_carbon_dioxide_in_air"</span>].values[:] <span class="op">*=</span> CO2_FACTOR</span>
+<span id="cb1-420"><a href="#cb1-420" aria-hidden="true" tabindex="-1"></a>forcing <span class="op">=</span> olr_now(state) <span class="op">-</span> olr_now(perturbed)</span>
+<span id="cb1-421"><a href="#cb1-421" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"CO2 </span><span class="sc">{</span>provenance[<span class="st">'co2_ppm'</span>]<span class="sc">:.0f}</span><span class="ss"> -&gt; "</span></span>
+<span id="cb1-422"><a href="#cb1-422" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>provenance[<span class="st">'co2_ppm'</span>] <span class="op">*</span> CO2_FACTOR<span class="sc">:.0f}</span><span class="ss"> ppm: instantaneous forcing "</span></span>
+<span id="cb1-423"><a href="#cb1-423" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>forcing<span class="sc">:+.2f}</span><span class="ss"> W/m^2</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb1-424"><a href="#cb1-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-425"><a href="#cb1-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-426"><a href="#cb1-426" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-427"><a href="#cb1-427" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> surface_temperature(column):</span>
+<span id="cb1-428"><a href="#cb1-428" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(column[<span class="st">"surface_temperature"</span>].values.ravel()[<span class="dv">0</span>])</span>
+<span id="cb1-429"><a href="#cb1-429" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-430"><a href="#cb1-430" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-431"><a href="#cb1-431" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare 30-day means, not single steps: 60 steps of the unperturbed column</span></span>
+<span id="cb1-432"><a href="#cb1-432" aria-hidden="true" tabindex="-1"></a><span class="co"># first, then the perturbed one.</span></span>
+<span id="cb1-433"><a href="#cb1-433" aria-hidden="true" tabindex="-1"></a>unperturbed <span class="op">=</span> copy.deepcopy(state)</span>
+<span id="cb1-434"><a href="#cb1-434" aria-hidden="true" tabindex="-1"></a>base_record <span class="op">=</span> stepping.Recorder(DT, surface<span class="op">=</span>surface_temperature)</span>
+<span id="cb1-435"><a href="#cb1-435" aria-hidden="true" tabindex="-1"></a>stepping.integrate(tendency, stepper, unperturbed, DT, <span class="dv">60</span>,</span>
+<span id="cb1-436"><a href="#cb1-436" aria-hidden="true" tabindex="-1"></a>                   after_step<span class="op">=</span>base_record)</span>
+<span id="cb1-437"><a href="#cb1-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-438"><a href="#cb1-438" aria-hidden="true" tabindex="-1"></a>record <span class="op">=</span> stepping.Recorder(</span>
+<span id="cb1-439"><a href="#cb1-439" aria-hidden="true" tabindex="-1"></a>    DT, surface<span class="op">=</span>surface_temperature,</span>
+<span id="cb1-440"><a href="#cb1-440" aria-hidden="true" tabindex="-1"></a>    toa<span class="op">=</span>budgets.toa_imbalance, surface_imbalance<span class="op">=</span>budgets.surface_imbalance)</span>
+<span id="cb1-441"><a href="#cb1-441" aria-hidden="true" tabindex="-1"></a>stepping.integrate(tendency, stepper, perturbed, DT, N_STEPS,</span>
+<span id="cb1-442"><a href="#cb1-442" aria-hidden="true" tabindex="-1"></a>                   after_step<span class="op">=</span>record)</span>
+<span id="cb1-443"><a href="#cb1-443" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-444"><a href="#cb1-444" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'step'</span><span class="sc">:&gt;6}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'day'</span><span class="sc">:&gt;6}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'T_s (K)'</span><span class="sc">:&gt;9}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'TOA (W/m^2)'</span><span class="sc">:&gt;12}</span><span class="ss">"</span>)</span>
+<span id="cb1-445"><a href="#cb1-445" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>, N_STEPS <span class="op">+</span> <span class="dv">1</span>, <span class="dv">100</span>):</span>
+<span id="cb1-446"><a href="#cb1-446" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>step<span class="sc">:6d}</span><span class="ss"> </span><span class="sc">{</span>record[<span class="st">'days'</span>][step <span class="op">-</span> <span class="dv">1</span>]<span class="sc">:6.0f}</span><span class="ss"> "</span></span>
+<span id="cb1-447"><a href="#cb1-447" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"</span><span class="sc">{</span>record[<span class="st">'surface'</span>][step <span class="op">-</span> <span class="dv">1</span>]<span class="sc">:9.3f}</span><span class="ss"> </span><span class="sc">{</span>record[<span class="st">'toa'</span>][step <span class="op">-</span> <span class="dv">1</span>]<span class="sc">:+12.3f}</span><span class="ss">"</span>)</span>
+<span id="cb1-448"><a href="#cb1-448" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-449"><a href="#cb1-449" aria-hidden="true" tabindex="-1"></a>before, after <span class="op">=</span> budgets.summary(state), budgets.summary(perturbed)</span>
+<span id="cb1-450"><a href="#cb1-450" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span><span class="st">''</span><span class="sc">:20s}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'before'</span><span class="sc">:&gt;9}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'after'</span><span class="sc">:&gt;9}</span><span class="ss">"</span>)</span>
+<span id="cb1-451"><a href="#cb1-451" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> before:</span>
+<span id="cb1-452"><a href="#cb1-452" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:20s}</span><span class="ss"> </span><span class="sc">{</span>before[name]<span class="sc">:9.2f}</span><span class="ss"> </span><span class="sc">{</span>after[name]<span class="sc">:9.2f}</span><span class="ss">"</span>)</span>
+<span id="cb1-453"><a href="#cb1-453" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-454"><a href="#cb1-454" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> base_record.mean(<span class="st">"surface"</span>, days<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb1-455"><a href="#cb1-455" aria-hidden="true" tabindex="-1"></a>final <span class="op">=</span> record.mean(<span class="st">"surface"</span>, days<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb1-456"><a href="#cb1-456" aria-hidden="true" tabindex="-1"></a>warming <span class="op">=</span> final <span class="op">-</span> base</span>
+<span id="cb1-457"><a href="#cb1-457" aria-hidden="true" tabindex="-1"></a>far <span class="op">=</span> np.nonzero(np.<span class="bu">abs</span>(record[<span class="st">"surface"</span>] <span class="op">-</span> final) <span class="op">&gt;</span> <span class="fl">0.1</span>)[<span class="dv">0</span>]</span>
+<span id="cb1-458"><a href="#cb1-458" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">30-day mean T_s: </span><span class="sc">{</span>base<span class="sc">:.3f}</span><span class="ss"> K unperturbed, </span><span class="sc">{</span>final<span class="sc">:.3f}</span><span class="ss"> K perturbed"</span>)</span>
+<span id="cb1-459"><a href="#cb1-459" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"last 30 days, perturbed: TOA "</span></span>
+<span id="cb1-460"><a href="#cb1-460" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>record<span class="sc">.</span>mean(<span class="st">'toa'</span>, days<span class="op">=</span><span class="dv">30</span>)<span class="sc">:+.3f}</span><span class="ss">, surface "</span></span>
+<span id="cb1-461"><a href="#cb1-461" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>record<span class="sc">.</span>mean(<span class="st">'surface_imbalance'</span>, days<span class="op">=</span><span class="dv">30</span>)<span class="sc">:+.3f}</span><span class="ss"> W/m^2"</span>)</span>
+<span id="cb1-462"><a href="#cb1-462" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"warming </span><span class="sc">{</span>warming<span class="sc">:+.2f}</span><span class="ss"> K in </span><span class="sc">{</span>N_STEPS<span class="sc">}</span><span class="ss"> steps"</span>, end<span class="op">=</span><span class="st">""</span>)</span>
+<span id="cb1-463"><a href="#cb1-463" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> far.size <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb1-464"><a href="#cb1-464" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"; within 0.1 K of it throughout"</span>)</span>
+<span id="cb1-465"><a href="#cb1-465" aria-hidden="true" tabindex="-1"></a><span class="cf">elif</span> far[<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span> <span class="op">&lt;</span> N_STEPS:</span>
+<span id="cb1-466"><a href="#cb1-466" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"; within 0.1 K of it from day </span><span class="sc">{</span>record[<span class="st">'days'</span>][far[<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span>]<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
+<span id="cb1-467"><a href="#cb1-467" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-468"><a href="#cb1-468" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"; still more than 0.1 K from it at the end: run longer"</span>)</span>
+<span id="cb1-469"><a href="#cb1-469" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">abs</span>(forcing) <span class="op">&gt;</span> <span class="fl">0.01</span>:</span>
+<span id="cb1-470"><a href="#cb1-470" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"response: </span><span class="sc">{</span>forcing <span class="op">/</span> warming<span class="sc">:.2f}</span><span class="ss"> W/m^2 of extra OLR per K of "</span></span>
+<span id="cb1-471"><a href="#cb1-471" aria-hidden="true" tabindex="-1"></a>          <span class="st">"warming"</span>)</span>
+<span id="cb1-472"><a href="#cb1-472" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-473"><a href="#cb1-473" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-474"><a href="#cb1-474" aria-hidden="true" tabindex="-1"></a>Doubling CO₂ cuts the OLR by 4.09 W m⁻² at first. The column then warms until the</span>
+<span id="cb1-475"><a href="#cb1-475" aria-hidden="true" tabindex="-1"></a>TOA balances again. The surface warms by +1.16 K, comparing 30-day means of the</span>
+<span id="cb1-476"><a href="#cb1-476" aria-hidden="true" tabindex="-1"></a>perturbed and unperturbed columns, and it stays within 0.1 K of its new mean from day</span>
+<span id="cb1-477"><a href="#cb1-477" aria-hidden="true" tabindex="-1"></a>120 on. From step 300 on, the TOA imbalance is within 0.3 W m⁻² of zero at every</span>
+<span id="cb1-478"><a href="#cb1-478" aria-hidden="true" tabindex="-1"></a>hundredth step. Over the last 30 days the TOA imbalance averages +0.01 W m⁻², and</span>
+<span id="cb1-479"><a href="#cb1-479" aria-hidden="true" tabindex="-1"></a>the surface imbalance +0.00 W m⁻². Both budgets close. That is how you know the column has</span>
+<span id="cb1-480"><a href="#cb1-480" aria-hidden="true" tabindex="-1"></a>arrived. A curve that looks flat would not tell you.</span>
+<span id="cb1-481"><a href="#cb1-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-482"><a href="#cb1-482" aria-hidden="true" tabindex="-1"></a>**+1.16 K per doubling is this column's climate sensitivity, measured.** Every</span>
+<span id="cb1-483"><a href="#cb1-483" aria-hidden="true" tabindex="-1"></a>kelvin of surface warming bought 3.52 W m⁻² of extra OLR. A blackbody surface at</span>
+<span id="cb1-484"><a href="#cb1-484" aria-hidden="true" tabindex="-1"></a>267 K would buy 4σT³ = 4.30 W m⁻² per kelvin, and warm only 0.95 K. This one</span>
+<span id="cb1-485"><a href="#cb1-485" aria-hidden="true" tabindex="-1"></a>warms more because much of the surface's emission is absorbed on the way up. Warm</span>
+<span id="cb1-486"><a href="#cb1-486" aria-hidden="true" tabindex="-1"></a>the surface by 1 K with the air held fixed and the OLR rises by only</span>
+<span id="cb1-487"><a href="#cb1-487" aria-hidden="true" tabindex="-1"></a>3.38 W m⁻², 79 % of 4σT³; the surface alone would have to warm by 1.21 K. The</span>
+<span id="cb1-488"><a href="#cb1-488" aria-hidden="true" tabindex="-1"></a>air warms with it and adds a little OLR of its own, which is why the answer is</span>
+<span id="cb1-489"><a href="#cb1-489" aria-hidden="true" tabindex="-1"></a>1.16 K rather than 1.21 K. It is still a small warming, because nothing in this column amplifies</span>
+<span id="cb1-490"><a href="#cb1-490" aria-hidden="true" tabindex="-1"></a>it. There is no water vapour to increase as the column warms. <span class="co">[</span><span class="ot">Page 12</span><span class="co">](12-moist-rce.qmd)</span> adds the</span>
+<span id="cb1-491"><a href="#cb1-491" aria-hidden="true" tabindex="-1"></a>water.</span>
+<span id="cb1-492"><a href="#cb1-492" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-493"><a href="#cb1-493" aria-hidden="true" tabindex="-1"></a><span class="fu">## climt craft: saving and loading a state</span></span>
+<span id="cb1-494"><a href="#cb1-494" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-495"><a href="#cb1-495" aria-hidden="true" tabindex="-1"></a>The shipped equilibrium arrived through <span class="in">`states.save`</span> and <span class="in">`states.load`</span>. You can</span>
+<span id="cb1-496"><a href="#cb1-496" aria-hidden="true" tabindex="-1"></a>do the same with the one you just made. The provenance is what makes the file</span>
+<span id="cb1-497"><a href="#cb1-497" aria-hidden="true" tabindex="-1"></a>worth having: without it, a reader has a temperature profile and no idea what</span>
+<span id="cb1-498"><a href="#cb1-498" aria-hidden="true" tabindex="-1"></a>produced it.</span>
+<span id="cb1-499"><a href="#cb1-499" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-502"><a href="#cb1-502" aria-hidden="true" tabindex="-1"></a><span class="in">```{pyodide}</span></span>
+<span id="cb1-503"><a href="#cb1-503" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb1-504"><a href="#cb1-504" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tempfile</span>
+<span id="cb1-505"><a href="#cb1-505" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-506"><a href="#cb1-506" aria-hidden="true" tabindex="-1"></a><span class="co"># The scratch directory: in the browser it is Pyodide's in-memory /tmp.</span></span>
+<span id="cb1-507"><a href="#cb1-507" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> os.path.join(tempfile.gettempdir(), <span class="st">"rce_dry_2xco2.npz"</span>)</span>
+<span id="cb1-508"><a href="#cb1-508" aria-hidden="true" tabindex="-1"></a>states.save(path, perturbed, <span class="bu">dict</span>(</span>
+<span id="cb1-509"><a href="#cb1-509" aria-hidden="true" tabindex="-1"></a>    provenance,</span>
+<span id="cb1-510"><a href="#cb1-510" aria-hidden="true" tabindex="-1"></a>    co2_ppm<span class="op">=</span>provenance[<span class="st">"co2_ppm"</span>] <span class="op">*</span> CO2_FACTOR,</span>
+<span id="cb1-511"><a href="#cb1-511" aria-hidden="true" tabindex="-1"></a>    n_steps<span class="op">=</span>N_STEPS,</span>
+<span id="cb1-512"><a href="#cb1-512" aria-hidden="true" tabindex="-1"></a>    perturbed_from<span class="op">=</span><span class="st">"rce_dry_equilibrium.npz"</span>,</span>
+<span id="cb1-513"><a href="#cb1-513" aria-hidden="true" tabindex="-1"></a>    toa_imbalance<span class="op">=</span>budgets.toa_imbalance(perturbed),</span>
+<span id="cb1-514"><a href="#cb1-514" aria-hidden="true" tabindex="-1"></a>    surface_imbalance<span class="op">=</span>budgets.surface_imbalance(perturbed),</span>
+<span id="cb1-515"><a href="#cb1-515" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb1-516"><a href="#cb1-516" aria-hidden="true" tabindex="-1"></a>reloaded, reloaded_provenance <span class="op">=</span> states.load(</span>
+<span id="cb1-517"><a href="#cb1-517" aria-hidden="true" tabindex="-1"></a>    path, components, grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">1</span>, ny<span class="op">=</span><span class="dv">1</span>, nz<span class="op">=</span><span class="dv">28</span>))</span>
+<span id="cb1-518"><a href="#cb1-518" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(states.describe(reloaded_provenance))</span>
+<span id="cb1-519"><a href="#cb1-519" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">largest temperature difference after the round trip: "</span></span>
+<span id="cb1-520"><a href="#cb1-520" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(reloaded[<span class="st">'air_temperature'</span>].values <span class="op">-</span> perturbed[<span class="st">'air_temperature'</span>].values)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1e}</span><span class="ss"> K"</span>)</span>
+<span id="cb1-521"><a href="#cb1-521" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-522"><a href="#cb1-522" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-523"><a href="#cb1-523" aria-hidden="true" tabindex="-1"></a><span class="in">`states.load`</span> does not unpickle anything. It builds a fresh state for the</span>
+<span id="cb1-524"><a href="#cb1-524" aria-hidden="true" tabindex="-1"></a>components you pass it and copies the saved arrays in, one quantity at a time,</span>
+<span id="cb1-525"><a href="#cb1-525" aria-hidden="true" tabindex="-1"></a>checking each one's dimensions and units against what those components expect. A</span>
+<span id="cb1-526"><a href="#cb1-526" aria-hidden="true" tabindex="-1"></a>file saved for a different component list, a different grid or a units</span>
+<span id="cb1-527"><a href="#cb1-527" aria-hidden="true" tabindex="-1"></a>convention that has since changed fails at a named quantity, instead of loading</span>
+<span id="cb1-528"><a href="#cb1-528" aria-hidden="true" tabindex="-1"></a>into something that looks right and is not an equilibrium.</span>
+<span id="cb1-529"><a href="#cb1-529" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-530"><a href="#cb1-530" aria-hidden="true" tabindex="-1"></a>Two things do not travel with the file. The components are not in it, so load</span>
+<span id="cb1-531"><a href="#cb1-531" aria-hidden="true" tabindex="-1"></a>it with the same list you saved it from. And the wind relaxation is not a</span>
+<span id="cb1-532"><a href="#cb1-532" aria-hidden="true" tabindex="-1"></a>component the file knows about, so after loading, rebuild it on the loaded state</span>
+<span id="cb1-533"><a href="#cb1-533" aria-hidden="true" tabindex="-1"></a>with <span class="in">`initialise=False`</span>, exactly as the first cell did.</span>
+<span id="cb1-534"><a href="#cb1-534" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-535"><a href="#cb1-535" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises</span></span>
+<span id="cb1-536"><a href="#cb1-536" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-537"><a href="#cb1-537" aria-hidden="true" tabindex="-1"></a><span class="fu">### Physics</span></span>
+<span id="cb1-538"><a href="#cb1-538" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-539"><a href="#cb1-539" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**A 24 K warmer troposphere for 1.16 K of surface.** Against page 7's column,</span>
+<span id="cb1-540"><a href="#cb1-540" aria-hidden="true" tabindex="-1"></a>   the convecting column's air is warmer by up to 23.7 K and its surface cooler by</span>
+<span id="cb1-541"><a href="#cb1-541" aria-hidden="true" tabindex="-1"></a>   1.16 K. Use the <span class="in">`olr_now`</span> function from the knob cell to find out why so little</span>
+<span id="cb1-542"><a href="#cb1-542" aria-hidden="true" tabindex="-1"></a>   of the air's warming reaches the ground. Put page 7's air, <span class="in">`PAGE7_T`</span>, over this</span>
+<span id="cb1-543"><a href="#cb1-543" aria-hidden="true" tabindex="-1"></a>   page's surface and compute the OLR. Then leave the air alone and set the</span>
+<span id="cb1-544"><a href="#cb1-544" aria-hidden="true" tabindex="-1"></a>   surface temperature to 1 K: what is left is the air's own emission, and the</span>
+<span id="cb1-545"><a href="#cb1-545" aria-hidden="true" tabindex="-1"></a>   rest of <span class="in">`olr_now(state)`</span> is the surface shining through. Last, warm the</span>
+<span id="cb1-546"><a href="#cb1-546" aria-hidden="true" tabindex="-1"></a>   surface by 1 K instead. (You should find about 236.0 W m⁻², against</span>
+<span id="cb1-547"><a href="#cb1-547" aria-hidden="true" tabindex="-1"></a>   240.01 W m⁻² for <span class="in">`olr_now(state)`</span>; 26.95 W m⁻² from the air, so</span>
+<span id="cb1-548"><a href="#cb1-548" aria-hidden="true" tabindex="-1"></a>   213.06 W m⁻² from the surface, 74 % of σT_s⁴; and 3.38 W m⁻² per kelvin of</span>
+<span id="cb1-549"><a href="#cb1-549" aria-hidden="true" tabindex="-1"></a>   surface. The air's warming adds only about 4.0 W m⁻², and a surface 1.16 K</span>
+<span id="cb1-550"><a href="#cb1-550" aria-hidden="true" tabindex="-1"></a>   cooler removes 1.16 × 3.38 = 3.92 W m⁻², about the same. Why not zero the air</span>
+<span id="cb1-551"><a href="#cb1-551" aria-hidden="true" tabindex="-1"></a>   instead? Try it: you get 244.61 W m⁻², more than the whole OLR, because this</span>
+<span id="cb1-552"><a href="#cb1-552" aria-hidden="true" tabindex="-1"></a>   table's absorption depends on temperature, and 1 K air is far more</span>
+<span id="cb1-553"><a href="#cb1-553" aria-hidden="true" tabindex="-1"></a>   transparent than the real air. Holding the absorber's temperature fixed is</span>
+<span id="cb1-554"><a href="#cb1-554" aria-hidden="true" tabindex="-1"></a>   what makes the split meaningful.)</span>
+<span id="cb1-555"><a href="#cb1-555" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-556"><a href="#cb1-556" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Why 9.76, when Earth is close to 6.5?** Nothing on this page can make the</span>
+<span id="cb1-557"><a href="#cb1-557" aria-hidden="true" tabindex="-1"></a>   convecting layer steeper or shallower than g/c_p: the adjustment mixes to a</span>
+<span id="cb1-558"><a href="#cb1-558" aria-hidden="true" tabindex="-1"></a>   single θ, and a single θ is the dry adiabat. What would a rising parcel have</span>
+<span id="cb1-559"><a href="#cb1-559" aria-hidden="true" tabindex="-1"></a>   to be carrying to cool more slowly than g/c_p as it rises? What happens to</span>
+<span id="cb1-560"><a href="#cb1-560" aria-hidden="true" tabindex="-1"></a>   that when the parcel cools? <span class="co">[</span><span class="ot">Page 12</span><span class="co">](12-moist-rce.qmd)</span> answers it.</span>
+<span id="cb1-561"><a href="#cb1-561" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-562"><a href="#cb1-562" aria-hidden="true" tabindex="-1"></a><span class="fu">### Code</span></span>
+<span id="cb1-563"><a href="#cb1-563" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-564"><a href="#cb1-564" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Halve CO₂.** Set <span class="in">`CO2_FACTOR = 0.5`</span> and re-run the knob cell. The forcing</span>
+<span id="cb1-565"><a href="#cb1-565" aria-hidden="true" tabindex="-1"></a>   from CO₂ is roughly logarithmic in concentration, so if the response is too,</span>
+<span id="cb1-566"><a href="#cb1-566" aria-hidden="true" tabindex="-1"></a>   halving should cool the surface by about as much as doubling warmed it.</span>
+<span id="cb1-567"><a href="#cb1-567" aria-hidden="true" tabindex="-1"></a>   (It cools by 1.12 K, over 30-day means, against +1.16 K for doubling, so the</span>
+<span id="cb1-568"><a href="#cb1-568" aria-hidden="true" tabindex="-1"></a>   response is close to symmetric in log CO₂.)</span>
+<span id="cb1-569"><a href="#cb1-569" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-570"><a href="#cb1-570" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Take the adjustment out.** Run the knob cell with <span class="in">`CO2_FACTOR = 1.0`</span>, and</span>
+<span id="cb1-571"><a href="#cb1-571" aria-hidden="true" tabindex="-1"></a>   with <span class="in">`stepper[:-1]`</span> in place of <span class="in">`stepper`</span> in its <span class="in">`stepping.integrate`</span> call,</span>
+<span id="cb1-572"><a href="#cb1-572" aria-hidden="true" tabindex="-1"></a>   which drops <span class="in">`DryConvectiveAdjustment`</span>.</span>
+<span id="cb1-573"><a href="#cb1-573" aria-hidden="true" tabindex="-1"></a>   Does the column go back to page 7's profile? (No. The lowest layer turns</span>
+<span id="cb1-574"><a href="#cb1-574" aria-hidden="true" tabindex="-1"></a>   superadiabatic, 14.3 K km⁻¹, and the ones above it slightly so, but the</span>
+<span id="cb1-575"><a href="#cb1-575" aria-hidden="true" tabindex="-1"></a>   surface temperature moves by only 0.02 K and the TOA settles again, at</span>
+<span id="cb1-576"><a href="#cb1-576" aria-hidden="true" tabindex="-1"></a>   −0.01 W m⁻². The air stays 3.7 to 23.5 K warmer than page 7's, because the</span>
+<span id="cb1-577"><a href="#cb1-577" aria-hidden="true" tabindex="-1"></a>   boundary layer takes over almost all of the adjustment's job. In an unstable</span>
+<span id="cb1-578"><a href="#cb1-578" aria-hidden="true" tabindex="-1"></a>   column its depth, chosen by a bulk Richardson number, reaches 8.1 km, and</span>
+<span id="cb1-579"><a href="#cb1-579" aria-hidden="true" tabindex="-1"></a>   mixing dry static energy that deep is mixing toward the dry adiabat. Take the</span>
+<span id="cb1-580"><a href="#cb1-580" aria-hidden="true" tabindex="-1"></a>   boundary layer out as well, with <span class="in">`stepper[:0]`</span>, and in the same 1000 steps</span>
+<span id="cb1-581"><a href="#cb1-581" aria-hidden="true" tabindex="-1"></a>   the air ends between 0.3 and 8.5 K warmer than page 7's instead. Set</span>
+<span id="cb1-582"><a href="#cb1-582" aria-hidden="true" tabindex="-1"></a>   <span class="in">`perturbed["surface_upward_sensible_heat_flux"]`</span> to zero before the loop</span>
+<span id="cb1-583"><a href="#cb1-583" aria-hidden="true" tabindex="-1"></a>   when you do: nothing else updates</span>
+<span id="cb1-584"><a href="#cb1-584" aria-hidden="true" tabindex="-1"></a>   it, and <span class="in">`SlabSurface`</span> would go on losing the last value the boundary layer</span>
+<span id="cb1-585"><a href="#cb1-585" aria-hidden="true" tabindex="-1"></a>   left there, 16.5 W m⁻², for ever. <span class="in">`tour_page11_measurements.py noadjust`</span> has</span>
+<span id="cb1-586"><a href="#cb1-586" aria-hidden="true" tabindex="-1"></a>   the numbers.)</span>
+<span id="cb1-587"><a href="#cb1-587" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-588"><a href="#cb1-588" aria-hidden="true" tabindex="-1"></a><span class="fu">## Going deeper</span></span>
+<span id="cb1-589"><a href="#cb1-589" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-590"><a href="#cb1-590" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Page 12</span><span class="co">](12-moist-rce.qmd)</span> loads a moist equilibrium made the same way, with water</span>
+<span id="cb1-591"><a href="#cb1-591" aria-hidden="true" tabindex="-1"></a>vapour supplied by the surface and moist convection added to the stack, and</span>
+<span id="cb1-592"><a href="#cb1-592" aria-hidden="true" tabindex="-1"></a>asks what latent heat does to the lapse rate this page measured.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

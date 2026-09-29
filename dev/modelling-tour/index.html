@@ -229,6 +229,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Water vapour, and the limit</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/07-stepping-a-column.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Stepping a column</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/08-turbulent-heat-exchange.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Turbulent heat exchange</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/09-moisture-and-buoyancy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moisture changes the buoyancy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/10-dry-convection.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dry convection</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/11-dry-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dry RCE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/12-moist-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moist RCE</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -322,6 +358,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><a href="../modelling-tour/06-water-vapour-limit.html">Water vapour, and the limit</a></td>
 <td>4 and beyond</td>
 <td>the feedback, drawn; and the runaway limit</td>
+</tr>
+<tr class="odd">
+<td><a href="../modelling-tour/07-stepping-a-column.html">Stepping a column</a></td>
+<td>9, 10</td>
+<td>radiative equilibrium, found rather than assumed</td>
+</tr>
+<tr class="even">
+<td><a href="../modelling-tour/08-turbulent-heat-exchange.html">Turbulent heat exchange</a></td>
+<td>10</td>
+<td>bulk fluxes, and the discontinuity they erode</td>
+</tr>
+<tr class="odd">
+<td><a href="../modelling-tour/09-moisture-and-buoyancy.html">Moisture changes the buoyancy</a></td>
+<td>10</td>
+<td>θ_v, the Bowen ratio, and why a sink is needed</td>
+</tr>
+<tr class="even">
+<td><a href="../modelling-tour/10-dry-convection.html">Dry convection</a></td>
+<td>11</td>
+<td>enthalpy-conserving mixing to a dry adiabat</td>
+</tr>
+<tr class="odd">
+<td><a href="../modelling-tour/11-dry-rce.html">Dry RCE</a></td>
+<td>12</td>
+<td>a 9.76 K/km adiabat, an emergent tropopause, a measured sensitivity</td>
+</tr>
+<tr class="even">
+<td><a href="../modelling-tour/12-moist-rce.html">Moist RCE</a></td>
+<td>12 and beyond</td>
+<td>the moist adiabat, where 6.5 K/km comes from, and a sensitivity twice the dry one</td>
 </tr>
 </tbody>
 </table>
@@ -830,23 +896,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Gray equilibrium, tested</span><span class="co">](04-gray-equilibrium-tested.qmd)</span> <span class="pp">|</span> 8 — Gray Gas radiative equilibrium <span class="pp">|</span> your analytic profile, checked by a radiation code <span class="pp">|</span></span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">The CO₂ knob</span><span class="co">](05-co2-knob.qmd)</span> <span class="pp">|</span> 4 — A deeper look at the zero-dimensional model <span class="pp">|</span> the forcing per doubling, and which bands supply it <span class="pp">|</span></span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Water vapour, and the limit</span><span class="co">](06-water-vapour-limit.qmd)</span> <span class="pp">|</span> 4 and beyond <span class="pp">|</span> the feedback, drawn; and the runaway limit <span class="pp">|</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="fu">## What this tranche does not cover</span></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>Nothing here integrates in time. There are no time-stepping loops, no convection, and</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>no surface fluxes: each page makes a single radiation call, or a sweep of them, on a</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>profile you prescribe. That is deliberate — it keeps the causal chain short enough to</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>see, so that when a number changes you know precisely which line changed it.</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>Radiative-convective equilibrium, moist convection and surface energy balance build on</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>chapters 10–12 of the notes, and belong to a later tranche.</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="fu">## Going deeper</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>The <span class="co">[</span><span class="ot">Radiative Transfer walkthrough</span><span class="co">](../radiative-transfer/index.qmd)</span> treats the same</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>physics at research grade — line-by-line absorption, the k-distribution, correlated-k,</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>gas overlap and the two-stream solver — and shows how the code you are calling here is</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>built.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Stepping a column</span><span class="co">](07-stepping-a-column.qmd)</span> <span class="pp">|</span> 9, 10 <span class="pp">|</span> radiative equilibrium, found rather than assumed <span class="pp">|</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Turbulent heat exchange</span><span class="co">](08-turbulent-heat-exchange.qmd)</span> <span class="pp">|</span> 10 <span class="pp">|</span> bulk fluxes, and the discontinuity they erode <span class="pp">|</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Moisture changes the buoyancy</span><span class="co">](09-moisture-and-buoyancy.qmd)</span> <span class="pp">|</span> 10 <span class="pp">|</span> θ_v, the Bowen ratio, and why a sink is needed <span class="pp">|</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Dry convection</span><span class="co">](10-dry-convection.qmd)</span> <span class="pp">|</span> 11 <span class="pp">|</span> enthalpy-conserving mixing to a dry adiabat <span class="pp">|</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Dry RCE</span><span class="co">](11-dry-rce.qmd)</span> <span class="pp">|</span> 12 <span class="pp">|</span> a 9.76 K/km adiabat, an emergent tropopause, a measured sensitivity <span class="pp">|</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Moist RCE</span><span class="co">](12-moist-rce.qmd)</span> <span class="pp">|</span> 12 and beyond <span class="pp">|</span> the moist adiabat, where 6.5 K/km comes from, and a sensitivity twice the dry one <span class="pp">|</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="fu">## What this tranche does not cover</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>Nothing here integrates in time. There are no time-stepping loops, no convection, and</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>no surface fluxes: each page makes a single radiation call, or a sweep of them, on a</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>profile you prescribe. That is deliberate — it keeps the causal chain short enough to</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>see, so that when a number changes you know precisely which line changed it.</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>Radiative-convective equilibrium, moist convection and surface energy balance build on</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>chapters 10–12 of the notes, and belong to a later tranche.</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## Going deeper</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>The <span class="co">[</span><span class="ot">Radiative Transfer walkthrough</span><span class="co">](../radiative-transfer/index.qmd)</span> treats the same</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>physics at research grade — line-by-line absorption, the k-distribution, correlated-k,</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>gas overlap and the two-stream solver — and shows how the code you are calling here is</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>built.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

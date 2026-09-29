@@ -262,6 +262,42 @@ window.Quarto = {
  <span class="menu-text">Water vapour, and the limit</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/07-stepping-a-column.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Stepping a column</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/08-turbulent-heat-exchange.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Turbulent heat exchange</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/09-moisture-and-buoyancy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moisture changes the buoyancy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/10-dry-convection.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dry convection</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/11-dry-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dry RCE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/12-moist-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moist RCE</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -309,28 +345,32 @@ window.Quarto = {
 
 
 <!--
-Minimal quarto-live boot include for pages that only need climt imported.
-
-Include it once, near the top of any `format: live-html` / `engine: jupyter`
-page, with a Quarto include shortcode pointing at this file (see
-modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT repeat
-the literal include shortcode in this comment: Quarto resolves include
+The site's single quarto-live boot include. Every `format: live-html` page
+includes it once, near the top, with a Quarto include shortcode pointing here
+(see modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT
+repeat the literal include shortcode in this comment: Quarto resolves include
 shortcodes at the text level, before HTML comments are stripped, so a literal
 one here would make this file include itself.
 
-This is the tour's counterpart to climt-live-setup.qmd. That file also defines
-the ~200-line `integrate_with_snapshots` / `integrate_to_equilibrium` helpers
-for the RCE pages, and its cell carries `#| edit: false`, which quarto-live
-renders **read-only, not hidden** — so including it opened every modelling-tour
-page with four screens of RCE code that none of those pages calls. The two
-files deliberately duplicate these few import lines rather than chaining one
-include into the other, so that neither page family can break the other.
+This include is deliberately minimal: imports and nothing else. The time
+loops and figures the RCE pages need live in `modelling-tour/_tour/stepping.py`
+and arrive by the `resources:` mechanism, declared only by the pages that use
+them — so pages 01-06 download nothing they do not call. An earlier design put
+those ~200 lines in a second include, whose cell carried `#| edit: false`,
+which quarto-live renders **read-only, not hidden**: every page including it
+opened with four screens of code it never ran.
 
 The climt wheel itself is installed by micropip at document setup via the
 including page's `pyodide: packages:` front-matter block — resolved from PyPI,
-pinned to a released version. (GitHub release assets cannot be used: they send
-no CORS headers. A CORS-served localhost wheel is the way to preview
-unreleased work.)
+pinned to a released version.
+
+PREVIEWING UNRELEASED CHANGES. To run a page against your working copy rather
+than the released wheel, build the pure wheel and serve it *with CORS headers*
+(plain `python -m http.server` will NOT work, and GitHub release assets do not
+send CORS either), then point the page's front matter at the local URL:
+
+    CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
+    python scripts/serve_wheel.py /tmp/climt_wh 8912
 -->
 <div>
 <div id="pyodide-1" class="exercise-cell">
@@ -477,7 +517,7 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoicHJpbnQoXCJ0ZW5kZW5jaWVz
 <p><strong>Diagnostics</strong> are quantities computed <em>from</em> the current state that were not already in it: fluxes, optical depths, transmittances. They are properties of the state at this instant. Ask two components for the same diagnostic and, if both are correct, they should agree.</p>
 <p>One entry in that list looks like it is on the wrong side: <code>air_temperature_tendency_from_longwave</code> is a diagnostic, and it holds the same numbers as the <code>air_temperature</code> tendency. Both are there on purpose. The tendency is the component’s contribution to be <em>summed</em> with every other component’s; the diagnostic is a labelled copy that survives into the state so you can plot the longwave heating separately after the shortwave and the convection have added theirs. Sum the diagnostics by mistake and you will double-count the radiation.</p>
 <p>A component that returns tendencies is a <code>TendencyComponent</code>; one that returns an updated state directly is a <code>Stepper</code>. Only a <code>Stepper</code> — or a time integrator such as <code>sympl.AdamsBashforth</code> wrapped around your tendency components — advances anything.</p>
-<p><strong>Nothing in this tour ever does.</strong> Every number on these six pages is an instantaneous rate evaluated on a profile we wrote down by hand. When this page says the analytic profile “is an equilibrium”, the evidence is that the tendency is zero, not that anything was stepped until it stopped moving. That is a stronger statement and a much cheaper one: the equilibrium test is a single call, while integrating a non-grey column to equilibrium takes a couple of thousand steps. <a href="../radiative-transfer/09-live-rce.html">The live RCE demo</a> does it the other way, if you want to watch.</p>
+<p><strong>Nothing in this tour ever does.</strong> Every number on these six pages is an instantaneous rate evaluated on a profile we wrote down by hand. When this page says the analytic profile “is an equilibrium”, the evidence is that the tendency is zero, not that anything was stepped until it stopped moving. That is a stronger statement and a much cheaper one: the equilibrium test is a single call, while integrating a non-grey column to equilibrium takes a couple of thousand steps. <a href="../modelling-tour/07-stepping-a-column.html">Page 7</a> does it the other way, if you want to watch — and finds this same profile without being told it.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -1331,8 +1371,8 @@ window._ojs.runtime.interpretFromScriptTags();
 <span id="cb2-310"><a href="#cb2-310" aria-hidden="true" tabindex="-1"></a>is zero, not that anything was stepped until it stopped moving. That is a stronger</span>
 <span id="cb2-311"><a href="#cb2-311" aria-hidden="true" tabindex="-1"></a>statement and a much cheaper one: the equilibrium test is a single call, while</span>
 <span id="cb2-312"><a href="#cb2-312" aria-hidden="true" tabindex="-1"></a>integrating a non-grey column to equilibrium takes a couple of thousand steps.</span>
-<span id="cb2-313"><a href="#cb2-313" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">The live RCE demo</span><span class="co">](../radiative-transfer/09-live-rce.qmd)</span> does it the other way,</span>
-<span id="cb2-314"><a href="#cb2-314" aria-hidden="true" tabindex="-1"></a>if you want to watch.</span>
+<span id="cb2-313"><a href="#cb2-313" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Page 7</span><span class="co">](07-stepping-a-column.qmd)</span> does it the other way, if you want to watch —</span>
+<span id="cb2-314"><a href="#cb2-314" aria-hidden="true" tabindex="-1"></a>and finds this same profile without being told it.</span>
 <span id="cb2-315"><a href="#cb2-315" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb2-316"><a href="#cb2-316" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-317"><a href="#cb2-317" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>

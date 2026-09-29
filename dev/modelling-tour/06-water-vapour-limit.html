@@ -233,6 +233,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Water vapour, and the limit</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/07-stepping-a-column.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Stepping a column</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/08-turbulent-heat-exchange.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Turbulent heat exchange</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/09-moisture-and-buoyancy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moisture changes the buoyancy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/10-dry-convection.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dry convection</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/11-dry-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dry RCE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modelling-tour/12-moist-rce.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Moist RCE</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -281,28 +317,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <!--
-Minimal quarto-live boot include for pages that only need climt imported.
-
-Include it once, near the top of any `format: live-html` / `engine: jupyter`
-page, with a Quarto include shortcode pointing at this file (see
-modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT repeat
-the literal include shortcode in this comment: Quarto resolves include
+The site's single quarto-live boot include. Every `format: live-html` page
+includes it once, near the top, with a Quarto include shortcode pointing here
+(see modelling-tour/01-emissivity-spectrum.qmd for the exact line). Do NOT
+repeat the literal include shortcode in this comment: Quarto resolves include
 shortcodes at the text level, before HTML comments are stripped, so a literal
 one here would make this file include itself.
 
-This is the tour's counterpart to climt-live-setup.qmd. That file also defines
-the ~200-line `integrate_with_snapshots` / `integrate_to_equilibrium` helpers
-for the RCE pages, and its cell carries `#| edit: false`, which quarto-live
-renders **read-only, not hidden** — so including it opened every modelling-tour
-page with four screens of RCE code that none of those pages calls. The two
-files deliberately duplicate these few import lines rather than chaining one
-include into the other, so that neither page family can break the other.
+This include is deliberately minimal: imports and nothing else. The time
+loops and figures the RCE pages need live in `modelling-tour/_tour/stepping.py`
+and arrive by the `resources:` mechanism, declared only by the pages that use
+them — so pages 01-06 download nothing they do not call. An earlier design put
+those ~200 lines in a second include, whose cell carried `#| edit: false`,
+which quarto-live renders **read-only, not hidden**: every page including it
+opened with four screens of code it never ran.
 
 The climt wheel itself is installed by micropip at document setup via the
 including page's `pyodide: packages:` front-matter block — resolved from PyPI,
-pinned to a released version. (GitHub release assets cannot be used: they send
-no CORS headers. A CORS-served localhost wheel is the way to preview
-unreleased work.)
+pinned to a released version.
+
+PREVIEWING UNRELEASED CHANGES. To run a page against your working copy rather
+than the released wheel, build the pure wheel and serve it *with CORS headers*
+(plain `python -m http.server` will NOT work, and GitHub release assets do not
+send CORS either), then point the page's front matter at the local URL:
+
+    CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
+    python scripts/serve_wheel.py /tmp/climt_wh 8912
 -->
 <div>
 <div id="pyodide-1" class="exercise-cell">
