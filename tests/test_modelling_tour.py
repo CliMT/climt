@@ -11,6 +11,7 @@ import copy
 import importlib.util
 import os
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -996,7 +997,10 @@ def test_draw_evolution_builds_the_four_panel_figure(stepping):
 
     plt.close("all")
     try:
-        with pytest.warns(UserWarning, match="non-interactive"):
+        # plt.show() under Agg warns "non-interactive" on older matplotlib
+        # and is silent from 3.11; either is fine, so tolerate, don't require.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*non-interactive")
             stepping.draw_evolution(history, state, SOLAR, title="test")
         figure = plt.gcf()
         # three profile panels, the OLR panel with its twin, and the colorbar
