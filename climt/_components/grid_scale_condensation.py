@@ -23,7 +23,6 @@ class GSCParams(NamedTuple):
     Rd: float
     Rh2O: float
     g: float
-    rhow: float
 
 
 class GridScaleCondensation(Stepper):
@@ -74,14 +73,12 @@ class GridScaleCondensation(Stepper):
         self._Rd = get_constant("gas_constant_of_dry_air", "J/kg/degK")
         self._Rh2O = get_constant("gas_constant_of_vapor_phase", "J/kg/degK")
         self._g = get_constant("gravitational_acceleration", "m/s^2")
-        self._rhow = get_constant("density_of_liquid_phase", "kg/m^3")
         self._params = GSCParams(
             Cpd=float(self._Cpd),
             Lv=float(self._Lv),
             Rd=float(self._Rd),
             Rh2O=float(self._Rh2O),
             g=float(self._g),
-            rhow=float(self._rhow),
         )
 
     def array_call(self, state, timestep):
@@ -127,7 +124,14 @@ def _gsc_kernel_np(T, q, p, p_int, params):
             eps_val = params.Rd / params.Rh2O
             q_sat_k = eps_val * es / (p_col[k] - (1.0 - eps_val) * es)
 
-            if q_col[k] > q_sat_k:
+            # High in the column the Bolton denominator
+            # p - (1 - eps) * es can go negative (at p ~ 20 Pa a warm T
+            # gives es > p), which makes q_sat_k negative. A dry layer
+            # then satisfies q > q_sat_k, condensed_q comes out negative,
+            # and the component *creates* vapour and cools the layer --
+            # a mass and energy violation reported as negative
+            # precipitation. Saturation is only physical where q_sat > 0.
+            if q_sat_k > 0.0 and q_col[k] > q_sat_k:
                 dqsat_dT = params.Lv * q_sat_k / (params.Rh2O * T_col[k] ** 2)
                 condensed_q = (q_col[k] - q_sat_k) / (
                     1.0 + params.Lv / params.Cpd * dqsat_dT
@@ -136,8 +140,13 @@ def _gsc_kernel_np(T, q, p, p_int, params):
                 new_q[k, i] = q_col[k] - condensed_q
                 new_T[k, i] = T_col[k] + params.Lv / params.Cpd * condensed_q
 
-                dp = p_int_col[k + 1] - p_int_col[k]
-                mass = dp / (params.g * params.rhow)
+                # Interface pressures are bottom-first, so the layer
+                # thickness in pressure is p_int[k] - p_int[k + 1] > 0.
+                # dp / g is the layer mass per unit area in kg m^-2, which
+                # makes col_precip an accumulation in kg m^-2 (== mm of
+                # liquid water), matching the declared diagnostic units.
+                dp = p_int_col[k] - p_int_col[k + 1]
+                mass = dp / params.g
                 col_precip += condensed_q * mass
 
         precip[i] = col_precip

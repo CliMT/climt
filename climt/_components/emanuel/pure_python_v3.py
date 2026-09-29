@@ -162,7 +162,12 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
         cbmf = state.get("cloud_base_mass_flux", np.zeros(ncol)).copy()
         ntra = 0
         tra = np.zeros((nlev, 1))
-        delt = timestep.total_seconds()
+        # A plain float, not the unyt_quantity UnytTimeDelta.total_seconds()
+        # returns: numba strips the units on the way in, but Pyodide has no
+        # numba, and the pure-Python kernel then subtracts a seconds-valued
+        # DTMA term from the dimensionless CBMF in _numpy_vectorized_convect.
+        # Same coercion, same reason, as sea_ice/component.py.
+        delt = float(timestep.total_seconds())
         tra_vector = np.broadcast_to(tra[:, :, np.newaxis], (nlev, 1, ncol))
         results = _numpy_vectorized_convect(
             t,

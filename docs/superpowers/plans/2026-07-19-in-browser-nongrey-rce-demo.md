@@ -4,9 +4,18 @@
 >
 > - Done: the pure-Python wheel (Phase A, built and published to PyPI by
 >   `release_climt.yml`); the quarto-live spike (`docs/_spikes/quarto-live-smoke.qmd`);
->   the shared boot include (`docs/_includes/climt-live-setup.qmd`); and the flagship
->   page `docs/radiative-transfer/09-live-rce.qmd`, with its native twin in `_live/rce_helpers.py`
->   and the test in `tests/test_live_rce_demo.py`.
+>   the shared boot include; and the flagship live-RCE page with its native twin and
+>   test. The flagship page has since been retired into the *Modelling Tour*
+>   (`docs/modelling-tour/`, plan `2026-08-20-modelling-tour-rce.md`) by commit
+>   `a7c2e8c`, so the paths the tasks below create are gone. Where the work went:
+>
+>   | This plan creates | Now |
+>   | --- | --- |
+>   | `docs/radiative-transfer/09-live-rce.qmd` | the `docs/modelling-tour/` pages |
+>   | `docs/_includes/climt-live-setup.qmd` | `docs/_includes/climt-live-boot.qmd` (the site's single boot include) |
+>   | `docs/radiative-transfer/_live/rce_helpers.py` (`integrate_to_equilibrium`) | `docs/modelling-tour/_tour/stepping.py` (`integrate`), with `_tour/budgets.py` deciding what "equilibrium" means |
+>   | `docs/radiative-transfer/_live/serve_wheel.py` | `scripts/serve_wheel.py` |
+>   | `tests/test_live_rce_demo.py` | `tests/test_modelling_tour.py` |
 > - **Hosting changed from this plan:** GitHub release assets send no CORS headers, so
 >   micropip cannot fetch them from a browser. Task 10 Step 1's release-asset URL was
 >   abandoned. Pages install a pinned `climt` from PyPI through the front-matter
@@ -16,18 +25,15 @@
 >   appendix page) and Task 15 (end-to-end browser check + `docs/_spikes/weight-budget.md`).
 >   The modelling tour (`docs/modelling-tour/`, plan 2026-08-12) has since reused
 >   the boot include in practice. That may reshape or replace Task 14.
-> - Unconfirmed: whether `animate_to_equilibrium` on 09-live-rce redraws frame by
->   frame or only shows the final frame. Automation could not tell. Check it by eye in
->   a real browser. If only the final frame appears, render each frame to a PNG and swap
->   an `<img>` src instead.
 >
 > Hard-won gotchas (carried over from the retired `HANDOFF-in-browser-rce-demo.md`):
 > never end a `{pyodide}` cell on a `def` or a Python object such as a sympl state.
 > quarto-live hashes the cell's final value, and a JsProxy is unhashable, so end on
 > `print(...)`. In the RCE loop, apply `state.update(new_state)` *before*
 > `state.update(diagnostics)`. Otherwise the LW fluxes that SlabSurface needs get
-> clobbered and the surface heats without bound. For local preview with an unreleased
-> wheel, `_live/serve_wheel.py` serves it with CORS headers.
+> clobbered and the surface heats without bound (`stepping.integrate` now enforces
+> this order, guarded by a test in `tests/test_modelling_tour.py`). For local preview
+> with an unreleased wheel, `scripts/serve_wheel.py` serves it with CORS headers.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

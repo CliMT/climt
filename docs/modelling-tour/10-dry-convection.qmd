@@ -1,0 +1,422 @@
+---
+title: "Dry convection"
+format: live-html
+engine: jupyter
+pyodide:
+  packages:
+    # Installed by micropip at document setup, before any cell runs; pinned to
+    # the released version this page was written against. See
+    # ../_includes/climt-live-boot.qmd for how to preview an unreleased wheel.
+    - "climt==0.31.0"
+    - "unyt"
+  resources:
+    # Fetched into the Pyodide filesystem at document setup — the same files
+    # tests/test_modelling_tour.py imports natively. See page 1 for the
+    # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
+    # budgets.py holds the column enthalpy this page checks; it imports
+    # stepping for one constant, so stepping.py has to be here too. Nothing on
+    # this page steps a column in time.
+    - _tour/stepping.py
+    - _tour/budgets.py
+---
+
+{{< include ../_includes/climt-live-boot.qmd >}}
+
+::: {.callout-tip}
+## Where this fits
+
+Chapter 11 of the notes. [Page 9](09-moisture-and-buoyancy.qmd) ended on a column
+with a layer in which θ fell with height, and nothing in that column's stack could
+remove it. This page introduces the component that does: `DryConvectiveAdjustment`.
+
+Pages 7, 8 and 9 each stepped a column for weeks and read off where it settled.
+This page has no time loop. Whether a column is statically stable is a property
+of its profile at one instant, so the page prescribes an unstable profile, calls
+the scheme once, and compares the two profiles. A convergence history would add
+nothing but noise. Every cell here runs in well under a second.
+:::
+
+## An unstable column
+
+Twenty-eight levels, dry, with a temperature that falls at 14 K km⁻¹ through the
+lowest eight layers and at 6.5 K km⁻¹ above them. Below 200 K the profile is held
+at 200 K, a crude stratosphere.
+
+A constant lapse rate Γ has an exact form in pressure. Hydrostatic balance and the
+ideal gas law give dT/dp = RΓT/(gp), and that integrates to
+
+$$
+T(p) = T_s \left(\frac{p}{p_s}\right)^{R_d\Gamma/g}.
+$$
+
+The cell builds the profile that way, so each Γ is the lapse rate the column
+really has, and there is no height coordinate to get wrong.
+
+```{pyodide}
+#| autorun: true
+import sys
+sys.path.insert(0, "_tour")   # helper modules, served alongside this page
+
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+import sympl
+from sympl import get_constant
+import climt
+from climt import (get_default_state, get_grid, DryConvectiveAdjustment,
+                   UnytTimeDelta)
+
+import budgets
+
+sympl.set_backend(climt.UnytBackend())
+
+NZ = 28
+T_SURFACE = 300.0          # K, the lowest air, extrapolated to the ground
+UNSTABLE_LEVELS = 8        # how many layers start superadiabatic. The knob.
+GAMMA_UNSTABLE = 14e-3     # K/m, their lapse rate. Also the knob.
+GAMMA = 6.5e-3             # K/m, the lapse rate above them
+T_MIN = 200.0              # K, the floor: a crude stratosphere
+DT = UnytTimeDelta(hours=1)
+
+Rd = get_constant("gas_constant_of_dry_air", "J/kg/degK")
+Cp = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK")
+g = get_constant("gravitational_acceleration", "m/s^2")
+P0 = 1.0e5                 # Pa, the reference pressure for theta
+
+
+def superadiabatic_column(unstable_levels=UNSTABLE_LEVELS,
+                          gamma_unstable=GAMMA_UNSTABLE):
+    """A dry column, superadiabatic in its lowest ``unstable_levels`` layers."""
+    adjustment = DryConvectiveAdjustment()
+    state = get_default_state([adjustment],
+                              grid_state=get_grid(nx=1, ny=1, nz=NZ))
+    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+    ps = float(state["surface_air_pressure"].to_units("Pa").values.ravel()[0])
+
+    T = T_SURFACE * (p / ps) ** (Rd * gamma_unstable / g)
+    top = unstable_levels - 1                   # continuous across the join
+    T[unstable_levels:] = T[top] * (p[unstable_levels:] / p[top]) ** (Rd * GAMMA / g)
+    state["air_temperature"].values[:, 0, 0] = np.maximum(T, T_MIN)
+    state["specific_humidity"].values[:] = 0.0  # dry
+    return adjustment, state
+
+
+def potential_temperature(state):
+    """theta = T (P0 / p)^(Rd/Cp), K, bottom first."""
+    p = state["air_pressure"].to_units("Pa").values[:, 0, 0]
+    T = state["air_temperature"].to_units("degK").values[:, 0, 0]
+    return T * (P0 / p) ** (Rd / Cp)
+
+
+adjustment, before = superadiabatic_column()
+p_hPa = before["air_pressure"].to_units("Pa").values[:, 0, 0] / 100
+T0 = before["air_temperature"].values[:, 0, 0]
+theta0 = potential_temperature(before)
+print(f"dry adiabatic lapse rate g/Cp = {1e3 * g / Cp:.2f} K/km\n")
+print(f"{'level':>5} {'p (hPa)':>8} {'T (K)':>8} {'theta (K)':>10}")
+for k in range(12):
+    print(f"{k:5d} {p_hPa[k]:8.1f} {T0[k]:8.2f} {theta0[k]:10.2f}")
+```
+
+The dry adiabatic lapse rate is g/c_p = 9.76 K km⁻¹, and the lowest eight layers
+cool faster than that. Their θ falls with height, from 298.78 K at the lowest level
+to 291.83 K at 836 hPa. Above that, θ rises again. A parcel nudged upward from the
+lowest level keeps its θ, arrives among air with a lower θ, and is lighter than
+that air, so it keeps rising.
+
+## One call
+
+```{pyodide}
+diagnostics, new_state = adjustment(before, DT)
+print("adjustment returned", type(diagnostics).__name__, "and",
+      type(new_state).__name__, "with keys", sorted(new_state))
+
+after = copy.deepcopy(before)
+after.update(new_state)
+T1 = after["air_temperature"].values[:, 0, 0]
+theta1 = potential_temperature(after)
+adjusted = np.abs(T1 - T0) > 1e-6
+mixed = theta1[adjusted].mean()
+P_TOP = 500                        # hPa, the top of the plotted region
+shown = p_hPa >= P_TOP
+
+fig, axes = plt.subplots(1, 4, figsize=(12, 4.6), sharey=True)
+panels = ((T0, None, "T before"), (T1, T0, "T after"),
+          (theta0, None, "θ before"), (theta1, theta0, "θ after"))
+for ax, (value, ghost, title) in zip(axes, panels):
+    ax.axhspan(p_hPa[0] + 5, p_hPa[UNSTABLE_LEVELS - 1], color="#ffe3e3",
+               zorder=0)
+    if ghost is not None:
+        ax.plot(ghost, p_hPa, "-", color="0.7", lw=1.5, label="before")
+    ax.plot(value, p_hPa, "o-", color="#1864ab" if ghost is not None
+            else "#c92a2a", lw=2, ms=4, label="after" if ghost is not None
+            else None)
+    ax.set_title(title)
+    ax.grid(alpha=0.3)
+axes[0].set(ylabel="pressure (hPa)", yscale="log", ylim=(p_hPa[0] + 5, P_TOP),
+            xlabel="T (K)", xlim=(T0[shown].min() - 3, T0[shown].max() + 3))
+axes[1].set(xlabel="T (K)")
+axes[2].set(xlabel="θ (K)")
+axes[3].set(xlabel="θ (K)")
+axes[1].plot(mixed * (p_hPa[shown] * 100 / P0) ** (Rd / Cp), p_hPa[shown], "--",
+             color="#1864ab", lw=1, label=f"dry adiabat, θ = {mixed:.2f} K")
+axes[1].sharex(axes[0])
+axes[3].sharex(axes[2])
+axes[2].set_xlim(theta0[shown].min() - 2, theta0[shown].max() + 2)
+axes[0].set_yticks([1000, 900, 800, 700, 600, 500])
+axes[0].set_yticklabels(["1000", "900", "800", "700", "600", "500"])
+axes[0].minorticks_off()
+for ax in axes[1::2]:
+    ax.legend(fontsize=8, loc="upper left")
+axes[0].text(0.04, 0.03, "shaded: initially\nsuperadiabatic", fontsize=8,
+             transform=axes[0].transAxes, color="#862e2e")
+fig.suptitle("One call to DryConvectiveAdjustment")
+fig.tight_layout()
+plt.show()
+
+print(f"levels adjusted: {adjusted.sum()}, up to {p_hPa[adjusted][-1]:.0f} hPa")
+print(f"theta across them: {theta1[adjusted].min():.4f} to "
+      f"{theta1[adjusted].max():.4f} K (spread "
+      f"{theta1[adjusted].max() - theta1[adjusted].min():.1e} K)")
+print(f"largest temperature change: {np.abs(T1 - T0).max():.2f} K")
+```
+
+::: {.callout-note collapse="true"}
+## If the live cell did not run
+
+![Four panels on log pressure from the ground to 500 hPa, with the lowest eight
+layers shaded. T before: temperature falls steeply through the shaded layers and
+less steeply above. T after: the lowest layer is about 4 K colder and the layers
+near 840 hPa up to about 3 K warmer, and the adjusted profile lies on a dashed dry
+adiabat up to 745 hPa. θ before: θ falls with height through the shaded layers, from about
+298.8 K to 291.8 K, and rises above them. θ after: a vertical line at 294.80 K from
+the ground to 745 hPa, joining the unchanged profile above.](_artifacts/10-dry-convection.png)
+
+This is the figure the cell above produces. Live cells need WebAssembly; if your
+browser blocks it, the static version is here.
+:::
+
+The θ panels carry the lesson. Before the call, θ fell with height through the
+shaded layers. After it, the lowest ten layers share one θ, 294.80 K, and the
+spread across them is about 6 × 10⁻¹⁴ K, which is rounding error. The adjusted
+layer is **neutral**: a parcel moved anywhere within it finds air of its own θ,
+and has no reason to keep going. Above it, θ still rises with height, and the air
+is stable.
+
+In temperature, the same change looks less tidy. The lowest level cools by
+3.99 K, and the layers near 840 hPa warm by up to 2.82 K. The lowest air has
+given heat to the air above it, which is what convection does. The adjusted
+profile falls at exactly the dry adiabatic lapse rate, along the dashed line.
+
+Ten layers were adjusted, not eight: the mixing reached into the stable air above
+the unstable layers. The scheme works down the column from the top. Starting at
+each level, it looks upward and mixes up to the highest level whose θ is below
+the plain average of θ from the starting level up to and including it. Level 6
+mixes with level 7 first. Each level from 5 down to 1 then mixes everything up to
+level 8. Last, level 0 takes in level 9 as well. Which
+layers the scheme mixes follows from this rule, and the rule is not the only
+reasonable one: the first physics exercise finds a nine-layer answer that would
+also be stable. The knob below shows how far the mixing reaches for other
+profiles.
+
+::: {.callout-note}
+## Why θ and not T
+
+A column is stable when θ increases with height, whatever T is doing. T nearly
+always falls with height in the troposphere, and that alone says nothing about
+stability. What matters is whether it falls faster than a rising parcel cools.
+A dry parcel cools at g/c_p, 9.76 K km⁻¹, as it expands, and θ is the temperature
+with that expansion taken out. Air whose θ falls with height is cooling faster
+than a parcel would, and it is unstable. Air whose θ is constant is on a dry
+adiabat, and it is neutral.
+
+Compare the two left panels with the two right ones. Nothing in the T panels
+marks where the instability was or where it has gone. The θ panels show it at a
+glance.
+:::
+
+::: {.callout-note}
+## climt craft: calling a Stepper directly
+
+Pages 7 to 9 met two kinds of component. A `TendencyComponent`, such as the
+radiation, returns tendencies: rates of change, which `AdamsBashforth` multiplied
+by a timestep. A `Stepper` returns a new state.
+
+`DryConvectiveAdjustment` is a `Stepper`, and here it is called on its own:
+
+```python
+diagnostics, new_state = adjustment(state, DT)
+```
+
+The call takes the state and a timestep, and returns a pair: a dictionary of
+diagnostics (empty for this scheme) and a dictionary holding the new values of the
+variables the scheme changed, `air_temperature` and `specific_humidity`. There
+are no tendencies anywhere and no `AdamsBashforth`. The call does not change the
+state it was given. `after.update(new_state)` writes the new values into a copy,
+which is why `before` is still there to plot.
+
+The timestep is part of every `Stepper`'s signature, so it has to be passed, but
+this scheme ignores it. Adjustment is instantaneous: it removes all of the
+instability in one call, whatever `DT` is. On [page 11](11-dry-rce.qmd), and on
+[page 12](12-moist-rce.qmd), the timestep does matter, because it sets how often the radiation can
+make the column unstable again between calls.
+:::
+
+## Enthalpy is conserved to machine precision
+
+Mixing may move heat, but it may not create it. For dry air the heat content of
+the column is its enthalpy, c_p T per kilogram, summed over the column's mass:
+
+$$
+H = \sum_k c_p T_k \frac{\Delta p_k}{g}.
+$$
+
+`budgets.column_enthalpy` computes that sum (with a latent heat term, which is
+zero here). If the scheme is right, H is the same before and after the call.
+Checking that is how you find out whether you understood what the scheme is meant
+to do.
+
+```{pyodide}
+H_before = budgets.column_enthalpy(before)
+H_after = budgets.column_enthalpy(after)
+print(f"column enthalpy before  {H_before:.10e} J/m^2")
+print(f"column enthalpy after   {H_after:.10e} J/m^2")
+print(f"relative change         {(H_after - H_before) / H_before:.1e}")
+```
+
+The relative change is zero, or a few parts in 10¹⁶ if the arithmetic happens to
+round differently. That is machine precision: the scheme moves heat and creates
+none. It is not an accident of this profile. The scheme computes the mixed θ from
+the enthalpy of the layers it mixes, so it conserves enthalpy by construction.
+`tests/test_conservation.py::TestDryConvectionConservation` asserts the same
+thing on a different column, with moisture in it, and existed before this page
+did.
+
+The θ panels also say how the scheme could have got this wrong. Averaging θ over
+the adjusted layers, or averaging T, gives a different answer. Both are
+"mixing". Only the enthalpy-weighted mean conserves energy, and that is the mean
+the scheme gives the mixed layers. It does not use that mean to decide *which*
+layers to mix. For that it takes a plain average of θ over the levels, one vote
+per level, whatever the level's mass. That choice cannot break conservation, but
+it can change how deep the mixing reaches, and on this profile it does. The
+first physics exercise shows how.
+
+## The knob: depth and strength of the instability
+
+::: {.callout-warning}
+## The knob
+
+`UNSTABLE_LEVELS_SWEEP` and `GAMMA_SWEEP` below: how many layers start
+superadiabatic, and their lapse rate in K/km. Tested for 4 to 12 layers and 10 to
+20 K/km. A lapse rate below 9.76 K/km is stable, and nothing is adjusted.
+:::
+
+```{pyodide}
+UNSTABLE_LEVELS_SWEEP = (4, 8, 12)
+GAMMA_SWEEP = (10, 14, 20)         # K/km
+
+fig, axes = plt.subplots(1, len(UNSTABLE_LEVELS_SWEEP), figsize=(12, 4.6),
+                         sharey=True)
+colours = ("#fab005", "#e8590c", "#862e2e")
+print(f"{'layers':>6} {'gamma':>6} {'adjusted':>9} {'unstable top':>13} "
+      f"{'adjusted top':>13} {'theta':>8} {'max |dT|':>9}")
+for ax, levels in zip(np.atleast_1d(axes), UNSTABLE_LEVELS_SWEEP):
+    for colour, gamma in zip(colours, GAMMA_SWEEP):
+        scheme, here = superadiabatic_column(levels, gamma * 1e-3)
+        start_T = here["air_temperature"].values[:, 0, 0].copy()
+        start = potential_temperature(here)
+        here.update(scheme(here, DT)[1])
+        end = potential_temperature(here)
+        moved = np.abs(here["air_temperature"].values[:, 0, 0] - start_T) > 1e-6
+        ax.plot(start, p_hPa, "-", color=colour, lw=1, alpha=0.5)
+        ax.plot(end, p_hPa, "-", color=colour, lw=2, label=f"{gamma} K/km")
+        top = f"{p_hPa[moved][-1]:.0f} hPa" if moved.any() else "none"
+        print(f"{levels:6d} {gamma:6d} {moved.sum():9d} "
+              f"{p_hPa[levels - 1]:9.0f} hPa {top:>13} "
+              f"{end[0]:8.2f} {np.abs(here['air_temperature'].values[:, 0, 0] - start_T).max():9.2f}")
+    ax.axhline(p_hPa[levels - 1], color="0.4", ls=":", lw=1)
+    ax.set(title=f"{levels} layers superadiabatic", xlabel="θ (K)",
+           xlim=(265, 320))
+    ax.grid(alpha=0.3)
+first = np.atleast_1d(axes)[0]
+first.set(ylabel="pressure (hPa)", yscale="log", ylim=(p_hPa[0] + 5, 300))
+first.set_yticks([1000, 900, 800, 700, 600, 500, 400, 300])
+first.set_yticklabels(["1000", "900", "800", "700", "600", "500", "400", "300"])
+first.minorticks_off()
+first.legend(fontsize=8, title="thin: before\nthick: after", title_fontsize=8)
+fig.suptitle("How far the adjusted layer reaches (dotted: top of the initial "
+             "instability)")
+fig.tight_layout()
+plt.show()
+```
+
+The stronger the instability, the further the adjustment reaches past it:
+
+| unstable layers | 10 K km⁻¹ | 14 K km⁻¹ | 20 K km⁻¹ |
+|---|---|---|---|
+| 4 (up to 968 hPa) | 4 layers, to 968 hPa | 5, to 942 hPa | 5, to 942 hPa |
+| 8 (up to 836 hPa) | 8, to 836 hPa | 10, to 745 hPa | 11, to 695 hPa |
+| 12 (up to 643 hPa) | 12, to 643 hPa | 14, to 534 hPa | 17, to 370 hPa |
+
+At 10 K km⁻¹ the column is only just superadiabatic, 0.24 K km⁻¹ past the dry
+adiabat, and the adjustment stays inside the unstable layers. It barely changes
+anything: 0.46 K at most, even with twelve layers. At 20 K km⁻¹ over twelve layers
+the mixed θ is 275.59 K, the lowest level cools by 23.12 K, and the mixing
+reaches 370 hPa. That is an extreme column, and no real one gets there: convection
+removes instability as fast as the surface and the radiation create it, so the
+instability never builds up. On [page 11](11-dry-rce.qmd), and on [page 12](12-moist-rce.qmd), the
+scheme is called every step, and each call has only a small instability to
+remove.
+
+## Exercises
+
+### Physics
+
+1. **Predict the mixed θ.** Before running the scheme, compute the mixed θ from the
+   first cell's profile alone. Conserving enthalpy over layers `0` to `n − 1` gives
+   θ_mix = Σ T_k Δp_k / Σ (p_k/P0)^(R/c_p) Δp_k. Start with n = 8, the initially
+   unstable layers. Is θ_mix colder than θ at level 8? If not, the mixed layer is
+   still unstable against the air above it, and it has to grow. (Over eight layers
+   it is 295.06 K, warmer than level 8's 293.33 K. Over nine it is 294.75 K,
+   already colder than level 9's 295.06 K, so nine layers would be enough. The
+   scheme mixes ten, at 294.80 K, because it decides how far to mix with a plain
+   average of θ that ignores each layer's mass. When it reaches level 0, levels 1
+   to 8 have already been mixed to 294.65 K. Level 0 is at 298.78 K, and it is the
+   thinnest layer in the column, about 6 hPa against about 49 hPa for level 9.
+   Counted as one vote in ten, it lifts the plain average over levels 0 to 9 to
+   295.11 K, just above level 9's 295.06 K, so level 9 is taken in. Weighted by
+   mass, as the mixed value itself is, the average is 294.80 K. Both answers leave
+   a neutral layer under stable air.)
+
+2. **An instability deeper than the troposphere.** Set `UNSTABLE_LEVELS = 24` and
+   run the first two cells. How far up does the adjustment reach, and what stops
+   it? Print θ above the adjusted layer. (It stops at 318 hPa. The 14 K km⁻¹
+   profile reaches the 200 K floor at 370 hPa, and above that the column is
+   isothermal, so its θ rises steeply with height. Mixing cannot carry the mixed θ
+   past air that warm. Try `UNSTABLE_LEVELS = 20` and `28` as well: the answer does
+   not change, because the floor, not the knob, sets the depth.)
+
+### Code
+
+1. **Write the conservation check yourself.** Compute Σ c_p T Δp / g from
+   `air_temperature` and `air_pressure_on_interface_levels`, before and after, and
+   compare with `budgets.column_enthalpy`. Mind the order of the interfaces: index
+   0 is the bottom, so Δp is `p_int[:-1] - p_int[1:]`. Then check a wrong answer:
+   replace the adjusted layers' T with their plain mean, and see how much enthalpy
+   that creates or destroys.
+
+2. **Add moisture.** Set `specific_humidity` to 0.01 kg/kg everywhere in
+   `superadiabatic_column` and re-run. The scheme uses a moisture-dependent heat
+   capacity and gas constant. What changes, and by how much? (Enthalpy is still
+   conserved, because the humidity is uniform. The adjusted layer's dry θ is no
+   longer uniform: its spread is 0.06 K at 10 g/kg and 0.12 K at 20 g/kg, because
+   the scheme makes a moist θ uniform, not the dry one. The lowest level ends
+   0.03 K colder than in the dry column.)
+
+## Going deeper
+
+[Page 11](11-dry-rce.qmd) puts this scheme together with the radiation, the slab
+surface and the boundary layer, and runs the dry column to equilibrium. With
+convection in the stack, the column settles onto the dry adiabat this page drew,
+at 9.76 K km⁻¹, from just above the ground to about 500 hPa, rather than the
+6.5 K km⁻¹ that pages 1 to 6 assumed.

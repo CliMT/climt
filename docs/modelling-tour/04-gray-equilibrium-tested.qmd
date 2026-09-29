@@ -302,8 +302,8 @@ says the analytic profile "is an equilibrium", the evidence is that the tendency
 is zero, not that anything was stepped until it stopped moving. That is a stronger
 statement and a much cheaper one: the equilibrium test is a single call, while
 integrating a non-grey column to equilibrium takes a couple of thousand steps.
-[The live RCE demo](../radiative-transfer/09-live-rce.qmd) does it the other way,
-if you want to watch.
+[Page 7](07-stepping-a-column.qmd) does it the other way, if you want to watch —
+and finds this same profile without being told it.
 :::
 
 ::: {.callout-note}

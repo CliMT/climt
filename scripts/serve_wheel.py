@@ -5,12 +5,12 @@ the Quarto preview server, so the wheel host must send
 `Access-Control-Allow-Origin`. Python's plain `http.server` does not, so use
 this instead:
 
-    python docs/radiative-transfer/_live/serve_wheel.py <dir-with-the-wheel> [port]
+    python scripts/serve_wheel.py <dir-with-the-wheel> [port]
 
 e.g., after building the pure wheel into /tmp/climt_wh:
 
     CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
-    python docs/radiative-transfer/_live/serve_wheel.py /tmp/climt_wh 8912
+    python scripts/serve_wheel.py /tmp/climt_wh 8912
 
 Leave it running, then `quarto preview` the docs. The page front matter's
 `pyodide: packages:` URL points at http://127.0.0.1:8912/climt-...whl.

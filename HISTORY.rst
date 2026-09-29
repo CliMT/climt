@@ -2,6 +2,56 @@
 History
 =======
 
+Unreleased
+----------
+
+* **Fix (behaviour change)** — ``SimpleBoundaryLayer`` diffuses dry static
+  energy ``Cp T + g z`` instead of temperature, as Frierson, Held &
+  Zurita-Gotor (2006) do. Diffusing ``T`` itself pulled a well-mixed boundary
+  layer toward isothermal rather than dry-adiabatic, leaving a stable layer
+  near the ground. In a moist column that layer held Emanuel convection's
+  cloud-base closure negative, so the scheme barely fired. The bulk sensible
+  flux now uses ``T_s - (T_0 + g z_0 / Cp)``. ``diffuse='temperature'`` keeps
+  the old behaviour.
+
+* **Fix (behaviour change)** — ``GridScaleCondensation``'s
+  ``precipitation_amount`` diagnostic is now the ``kg m^-2`` accumulation it
+  declares. It was ``-1/1000`` of the true value: the layer thickness was
+  taken as ``p_int[k + 1] - p_int[k]`` although climt's interface pressures
+  are bottom-first (so every layer contributed with the wrong sign), and the
+  result was additionally divided by the density of liquid water, turning a
+  mass per unit area into a depth in metres. Anyone reading that diagnostic
+  saw a negative number a thousand times too small; the mm/day rate derived
+  from it was wrong by the same factor.
+
+* **Fix** — ``GridScaleCondensation`` no longer condenses in a layer whose
+  saturation specific humidity is non-positive. Near the model lid (20 Pa by
+  default) the Bolton denominator ``p - (1 - eps) * es`` can go negative for a
+  warm layer, which made ``q_sat`` negative; a bone-dry layer then read as
+  supersaturated and the component *created* water vapour and cooled the
+  layer, reporting it as negative precipitation. A dry column now reports
+  exactly ``0.0`` and is left untouched.
+
+* **Fix** — ``SimpleBoundaryLayer`` and ``EmanuelConvectionPython`` coerce the
+  timestep to a plain ``float`` before entering their numba kernels. Under
+  sympl's ``UnytBackend``, ``UnytTimeDelta.total_seconds()`` returns a
+  ``unyt_quantity`` in seconds; numba strips the units on the way in, but with
+  the JIT disabled — which is every Pyodide/in-browser run, since Pyodide has
+  no numba at all — the units survived into arithmetic with dimensionless
+  quantities and the components died with ``unyt.UnitOperationError``. Both
+  now run in the browser.
+
+* **Fix** — ``CorkLongwaveRadiation`` raises when its longwave result is not
+  finite, instead of returning NaN. A blown-up column now says so at the point
+  it blows up, rather than silently producing an empty figure several steps
+  later.
+
+* **Docs** — the in-browser *Modelling Tour* pages gain their time-integration
+  helpers in ``docs/modelling-tour/_tour/`` (``stepping``, ``budgets``,
+  ``states``, ``assets``, ``tables``), all exercised natively by
+  ``tests/test_modelling_tour.py``. The standalone live-RCE walkthrough
+  (``docs/radiative-transfer/09-live-rce.qmd``) is retired into that tour.
+
 v.0.31.0
 --------
 

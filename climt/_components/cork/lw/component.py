@@ -310,6 +310,27 @@ class CorkLongwaveRadiation(TendencyComponent):
         else:
             up_band, down_band, up_broad, down_broad = lw_result
 
+        # A non-finite result here is almost always an unstable time
+        # integration upstream: the temperature profile blew up, and the
+        # two-stream solve carried it into the fluxes. Returning NaN
+        # tendencies makes that a blank figure in the browser and a silent
+        # wrong answer everywhere else, so name it instead. The check is two
+        # array reductions on already-computed arrays -- negligible against
+        # the transport solve it follows.
+        if not (np.all(np.isfinite(up_broad)) and np.all(np.isfinite(down_broad))):
+            culprit = ("air_temperature"
+                       if not np.all(np.isfinite(T_flat))
+                       else "surface_temperature"
+                       if not np.all(np.isfinite(T_surf_flat))
+                       else "the longwave transport solve")
+            raise ValueError(
+                "CorkLongwaveRadiation produced non-finite longwave fluxes; "
+                f"{culprit} is non-finite on input or became so. The usual "
+                "cause is a time step past this configuration's stability "
+                "limit -- halve it and re-run. (If you are calling the "
+                "component directly on a prescribed profile, check that "
+                "profile for NaN or inf.)")
+
         net_flux = up_broad - down_broad
         heating_rate = compute_heating_rate(net_flux, p_int_flat, g, cpd)
 

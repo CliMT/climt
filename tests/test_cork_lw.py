@@ -252,3 +252,29 @@ def test_shipped_earth_hifi_lw_is_co2_adjustable():
 
     assert olr_hi < olr_lo, f"CO2 quadrupling should trap more: lo={olr_lo}, hi={olr_hi}"
     assert not np.isnan(olr_lo) and not np.isnan(olr_hi)
+
+
+def test_nonfinite_input_raises_instead_of_returning_nan():
+    """A blown-up column must produce a message, not a blank figure.
+
+    The modelling-tour pages invite readers to raise the timestep until the
+    integration goes unstable. When it does, the temperature goes non-finite,
+    the two-stream solve propagates that into the fluxes, and the component
+    used to return NaN tendencies with only a numpy RuntimeWarning. Under
+    Pyodide a warning is invisible and the figure just comes out empty.
+    """
+    import climt
+    import sympl
+
+    sympl.set_backend(climt.UnytBackend())
+    try:
+        longwave = climt.CorkLongwaveRadiation(
+            optics="correlated_k", table="earth_low_res_lw")
+        state = climt.get_default_state(
+            [longwave], grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+        state["air_temperature"].values[10, 0, 0] = np.nan
+
+        with pytest.raises(ValueError, match="non-finite"):
+            longwave(state)
+    finally:
+        sympl.set_backend(sympl.DataArrayBackend())
