@@ -1,0 +1,15 @@
+#
+# Pathnames for compilers and global options for naming files
+#
+FORTCOMP        = gfortran -c -fcheck=all -fbacktrace -g
+LINK            = gfortran -fcheck=all -fbacktrace -g
+OMPARG          = -fopenmp
+LIBLINK         = ar rvu
+INCCDF_PATH     = /usr/include
+LIBCDF_PATH     = /usr/lib
+LIBCDF_NAME     = netcdff
+FLAGS_ODEPACK   = -w
+
+LIBSUFFIX       = a
+
+.SUFFIXES: $(SUFFIXES) .f90

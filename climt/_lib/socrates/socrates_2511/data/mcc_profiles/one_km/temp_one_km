@@ -1,0 +1,91 @@
+#! /bin/sh
+#
+Csamson2cdl -o iso_200.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/iso_200.o3
+Csamson2cdl -o iso_200.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/iso_200.pstar
+Csamson2cdl -o iso_200.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/iso_200.q
+Csamson2cdl -o iso_200.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/iso_200.t
+Csamson2cdl -o iso_200.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/iso_200.tstar
+#
+Csamson2cdl -o iso_250.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/iso_250.o3
+Csamson2cdl -o iso_250.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/iso_250.pstar
+Csamson2cdl -o iso_250.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/iso_250.q
+Csamson2cdl -o iso_250.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/iso_250.t
+Csamson2cdl -o iso_250.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/iso_250.tstar
+#
+Csamson2cdl -o iso_300.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/iso_300.o3
+Csamson2cdl -o iso_300.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/iso_300.pstar
+Csamson2cdl -o iso_300.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/iso_300.q
+Csamson2cdl -o iso_300.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/iso_300.t
+Csamson2cdl -o iso_300.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/iso_300.tstar
+#
+#
+Csamson2cdl -o mls.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/mls.o3
+Csamson2cdl -o mls.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/mls.pstar
+Csamson2cdl -o mls.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/mls.q
+Csamson2cdl -o mls.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/mls.t
+Csamson2cdl -o mls.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/mls.tstar
+#
+Csamson2cdl -o mlw.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/mlw.o3
+Csamson2cdl -o mlw.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/mlw.pstar
+Csamson2cdl -o mlw.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/mlw.q
+Csamson2cdl -o mlw.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/mlw.t
+Csamson2cdl -o mlw.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/mlw.tstar
+#
+Csamson2cdl -o sas.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/sas.o3
+Csamson2cdl -o sas.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/sas.pstar
+Csamson2cdl -o sas.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/sas.q
+Csamson2cdl -o sas.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/sas.t
+Csamson2cdl -o sas.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/sas.tstar
+#
+Csamson2cdl -o saw.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/saw.o3
+Csamson2cdl -o saw.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/saw.pstar
+Csamson2cdl -o saw.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/saw.q
+Csamson2cdl -o saw.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/saw.t
+Csamson2cdl -o saw.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/saw.tstar
+#
+Csamson2cdl -o tro.o3 -u None -L "MMR OF OZONE" -n o3 \
+   ../../mcc_profiles/one_km/tro.o3
+Csamson2cdl -o tro.pstar -u Pa -L "SURFACE PRESSURE" -n pstar \
+   ../../mcc_profiles/one_km/tro.pstar
+Csamson2cdl -o tro.q -u None -L "MMR OF WATER VAPOUR" -n q \
+   ../../mcc_profiles/one_km/tro.q
+Csamson2cdl -o tro.t -u K -L "TEMPERATURE" -n t \
+   ../../mcc_profiles/one_km/tro.t
+Csamson2cdl -o tro.tstar -u K -L "SURFACE TEMPERATURE" -n tstar \
+   ../../mcc_profiles/one_km/tro.tstar
+#

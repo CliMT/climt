@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+cp $RAD_DATA/continua/caviar_s296 .
+cp $RAD_DATA/continua/caviar_s260 .
+cp $RAD_DATA/continua/mt_ckd3p2_s296 .
+cp $RAD_DATA/continua/mt_ckd3p2_s260 .
+
+# Convert data from Jon Elsey into Socrates continuum format
+# and create data files for plotting comparisons with CAVIAR
+convert_elsey_shine
+
+diff -q elsey_shine_s260 ../../data/continua/elsey_shine_s260 || ierr=1
+diff -q elsey_shine_s296 ../../data/continua/elsey_shine_s296 || ierr=1
+
+python continuum_plot.py
+
+if [ $ierr -gt 0 ] ; then
+    exit 1
+else
+    rm -f elsey_shine_s296 elsey_shine_s260
+    rm -f elsey_shine_s296_plot elsey_shine_s260_plot
+    rm -f caviar_s296_plot caviar_s260_plot
+    rm -f caviar_s296 caviar_s260
+    rm -f mt_ckd3p2_s296_plot mt_ckd3p2_s260_plot
+    rm -f mt_ckd3p2_s296 mt_ckd3p2_s260
+    echo OK
+    exit 0
+fi

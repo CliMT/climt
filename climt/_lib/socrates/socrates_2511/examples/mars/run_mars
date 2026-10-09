@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Make the mars spectral file
+# ---------------------------
+#
+# This directory contains scripts that are in development and should be
+# considered more as a guide to generating spectral files rather than
+# finished products.
+# 
+# The following scripts require input data files downloaded from hitran.org.
+# Modify the sbatch commands in the following files if required and run them
+# sequentially to generate the line-by-line cross-section netcdf files:
+# ./mk_co2_lbl_sw_276_jm_mars
+# ./mk_h2o_lbl_sw_276_jm_mars
+# ./mk_so2_lbl_sw_276_jm_mars
+#
+# Run the following scripts to generate the spectral files using the
+# pre-calculated line-by-line cross-section files:
+# ./mk_sp_sw_276_jm_mars
+# ./mk_sp_sw_42_jm_mars
+
+# Make the atmospheric profile input files
+# ----------------------------------------
+rm -f mars.*
+./mk_mars_atm
+
+# Calculate the SW 276-band fluxes
+# --------------------------------
+Cl_run_cdf -N planet.nml -B mars -s sp_sw_276_jm_mars -R 1 276 -ch 276 -S +R -g 2 -u -r -a -C 5
+fmove mars mars_276
+
+# Calculate the SW 42-band fluxes
+# --------------------------------
+Cl_run_cdf -N planet.nml -B mars -s sp_sw_42_jm_mars -R 1 42 -ch 42 -S +R -g 2 -u -r -a -C 5
+fmove mars mars_42
+
+exit 0

@@ -1,0 +1,251 @@
+*BLOCK: TYPE =    0: SUBTYPE =    0: VERSION =    2
+Summary of spectral data.
+Number of spectral bands =    10
+Total number of gaseous absorbers =     3
+Maximum number of k-terms in a band =    19
+Total number of generalised continua =     3
+Maximum number of continuum k-terms in a band =     4
+List of indexing numbers and absorbers.
+Index       Absorber(identifier and name)
+    1           6       Methane             
+    2          13       Nitrogen            
+    3          23       Hydrogen            
+Listing of continuum indexing numbers and gases.
+Index     Gas 1(index and name)              Gas 2(index and name)
+    1         2     Nitrogen                     1     Methane             
+    2         2     Nitrogen                     2     Nitrogen            
+    3         2     Nitrogen                     3     Hydrogen            
+*END
+*BLOCK: TYPE =    1: SUBTYPE =    0: VERSION =    0
+Specification of spectral intervals
+Limits of spectral intervals (wavelengths in m.)
+Band        Lower limit         Upper limit
+    1        1.000000000E-04     1.000000000E-02
+    2        4.000000000E-05     1.000000000E-04
+    3        2.000000000E-05     4.000000000E-05
+    4        1.000000000E-05     2.000000000E-05
+    5        9.090909091E-06     1.000000000E-05
+    6        8.333333333E-06     9.090909091E-06
+    7        7.692307692E-06     8.333333333E-06
+    8        7.142857143E-06     7.692307692E-06
+    9        6.250000000E-06     7.142857143E-06
+   10        5.000000000E-06     6.250000000E-06
+*END
+*BLOCK: TYPE =    4: SUBTYPE =    0: VERSION =    0
+Gaseous absorbers in each interval
+(The number is the indexing number of the species as set out
+ in the summary block 0.)
+A zero indicates that there in no gaseous absorption in the interval.
+Band        Number of active absorbers followed by indexing numbers
+    1           1
+         1
+    2           1
+         1
+    3           0
+    4           0
+    5           1
+         1
+    6           1
+         1
+    7           1
+         1
+    8           1
+         1
+    9           1
+         1
+   10           1
+         1
+*END
+*BLOCK: TYPE =    5: SUBTYPE =    0: version =    1
+Exponential sum fiting coefficients: (exponents: m2/kg)
+Band        Gas, Number of k-terms, Scaling type and scaling function,
+             followed by reference pressure and temperature,
+                   k-terms, weights and scaling parameters.
+    1           1           6           2           9
+          54          16
+    3.145180954E-05    9.269315444E-01
+    6.945527328E-04    6.138162793E-02
+    3.886222576E-03    1.003663961E-02
+    2.344939940E-02    1.510790126E-03
+    1.481901814E-01    1.238990967E-04
+    9.505816334E-01    1.549879521E-05
+    2           1           1           2           9
+          54          16
+    3.252354790E-06    1.000000000E+00
+    5           1           7           2           9
+          54          16
+    1.769407122E-05    8.615277822E-01
+    5.546548808E-04    9.363257715E-02
+    2.092742442E-03    3.760921639E-02
+    1.044110178E-02    5.855676506E-03
+    5.000206914E-02    1.084559004E-03
+    2.329593739E-01    2.328010795E-04
+    9.854847657E-01    5.738762260E-05
+    6           1          12           2           9
+          54          16
+    1.438790958E-03    8.173162382E-02
+    3.585852268E-03    2.896887963E-01
+    8.819102333E-03    3.589943430E-01
+    2.187557743E-02    1.705031217E-01
+    5.826581755E-02    6.085353280E-02
+    1.552782594E-01    2.310678810E-02
+    4.067516040E-01    8.455095375E-03
+    1.077716441E+00    2.981742369E-03
+    2.911623681E+00    1.623616075E-03
+    7.992501111E+00    1.243177699E-03
+    1.973102213E+01    6.489510236E-04
+    4.649672481E+01    1.692116794E-04
+    7           1          19           2           9
+          54          16
+    5.814999502E-03    1.505696223E-01
+    1.283381776E-02    2.196564875E-01
+    3.547155085E-02    1.656161221E-01
+    9.212773608E-02    1.485222168E-01
+    2.266245625E-01    1.652036259E-01
+    5.817509012E-01    8.502989390E-02
+    1.495895729E+00    3.935747844E-02
+    3.923272373E+00    1.392430203E-02
+    1.026553792E+01    5.496247983E-03
+    2.697984371E+01    2.455896356E-03
+    7.268719375E+01    1.061669430E-03
+    1.870922493E+02    8.995888152E-04
+    4.959688879E+02    6.831628340E-04
+    1.240548194E+03    5.402247900E-04
+    3.140090481E+03    3.166949959E-04
+    8.602566221E+03    2.532887025E-04
+    2.247145333E+04    1.874618631E-04
+    5.616188363E+04    1.554156434E-04
+    1.357618245E+05    7.059951418E-05
+    8           1          19           2           9
+          54          16
+    5.442446516E-03    4.290958058E-02
+    1.440745042E-02    8.668404894E-02
+    3.913866884E-02    9.064686703E-02
+    1.053352595E-01    9.578953304E-02
+    2.746417149E-01    3.511275069E-01
+    6.893961075E-01    1.636474032E-01
+    1.862362772E+00    8.969053414E-02
+    4.986574848E+00    4.522171865E-02
+    1.309609045E+01    1.761740266E-02
+    3.396949879E+01    6.558035460E-03
+    9.687527960E+01    2.184584369E-03
+    2.605544953E+02    1.621153780E-03
+    7.220755946E+02    1.421839253E-03
+    1.927731881E+03    1.157201312E-03
+    4.834143359E+03    8.883926497E-04
+    1.350836076E+04    8.639964406E-04
+    3.650591184E+04    8.743727603E-04
+    9.341562358E+04    6.928151717E-04
+    2.290812703E+05    4.030137381E-04
+    9           1           6           2           9
+          54          16
+    8.144049267E-03    7.730001012E-01
+    5.802317457E-02    1.940840425E-01
+    5.067403502E-01    2.707743628E-02
+    5.031852714E+00    4.335103211E-03
+    4.698692771E+01    1.242380253E-03
+    3.155983253E+02    2.609365462E-04
+   10           1           7           2           9
+          54          16
+    4.345637976E-05    4.301392535E-01
+    3.886232599E-03    3.186855949E-01
+    1.718431210E-02    2.081425003E-01
+    1.492313926E-01    3.611347621E-02
+    1.209759854E+00    5.104007332E-03
+    1.279605220E+01    1.452268992E-03
+    8.230184639E+01    3.628988048E-04
+*END
+*BLOCK: TYPE =    6: SUBTYPE =    0: version =    1
+Thermal source function.
+Type of data: table     
+Number of data points =   300: Reference temperature =  1.732050808E+01
+*END
+*BLOCK: TYPE =    8: SUBTYPE =    0: VERSION =    0
+Continuum absorbers in each interval
+(The number is the indexing number of each type as set out
+ in the module rad_pcf.)
+A zero indicates that there is no continuum absorption in the interval.
+Band         Number of active continua followed by indexing numbers
+    1           0
+    2           0
+    3           0
+    4           0
+    5           0
+    6           0
+    7           0
+    8           0
+    9           0
+   10           0
+Indexing numbers of gases for continua:
+     Index of water =     0
+*END
+*BLOCK: TYPE =   18: SUBTYPE =    0: VERSION =    0
+Generalised continua in each interval
+(The number is the indexing number of the continuum as set out
+ in the summary block 0.)
+A zero indicates that there in no generalised continuum absorption in the interval.
+Band        Number of active continua, flag for continuum being major absorber,
+            followed by indexing numbers
+    1           3           F
+         2    1    3
+    2           3           F
+         1    2    3
+    3           3           F
+         1    3    2
+    4           2           F
+         3    1
+    5           1           F
+         3
+    6           1           F
+         3
+    7           0           F
+    8           0           F
+    9           0           F
+   10           1           F
+         2
+*END
+*BLOCK: TYPE =   19: SUBTYPE =    0: version =    0
+Exponential sum fiting continuum coefficients: (exponents: m5/kg2)
+Number of temperatures in look-up table =    16
+Band        Continuum, number of k-terms, overlap treatment, 
+            followed by, k-terms and weights.
+    1           2           1           0
+    5.001484114E-04    1.000000000E+00
+    1           1           1           0
+    3.038170286E-03    1.000000000E+00
+    1           3           1           0
+    3.334243027E-03    1.000000000E+00
+    2           1           1           0
+    1.641350446E-03    1.000000000E+00
+    2           2           4           0
+    3.832813025E-06    2.728013308E-01
+    1.302997437E-05    3.200817303E-01
+    4.248064591E-05    2.377781813E-01
+    1.566230053E-04    1.693387577E-01
+    2           3           1           0
+    1.688560435E-03    1.000000000E+00
+    3           1           3           0
+    9.882776505E-05    1.691458235E-01
+    2.725850428E-04    3.332121225E-01
+    7.319888350E-04    4.976420540E-01
+    3           3           3           0
+    1.752338690E-03    3.553272809E-01
+    5.396755778E-03    2.763572712E-01
+    1.718399435E-02    3.683154479E-01
+    3           2           2           0
+    6.159856184E-08    8.700840153E-01
+    1.482719303E-06    1.299159847E-01
+    4           3           3           0
+    1.056110900E-03    7.895758396E-02
+    4.484217755E-03    4.525962247E-01
+    2.027272231E-02    4.684461913E-01
+    4           1           2           0
+    1.193370390E-05    4.778589524E-01
+    4.174329309E-05    5.221410476E-01
+    5           3           1           0
+    5.537702666E-05    1.000000000E+00
+    6           3           1           0
+    6.771435027E-06    1.000000000E+00
+   10           2           1           0
+    1.300121783E-09    1.000000000E+00
+*END

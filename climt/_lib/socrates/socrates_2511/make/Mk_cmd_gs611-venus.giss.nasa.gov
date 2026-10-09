@@ -1,0 +1,15 @@
+#
+# Pathnames for compilers and global options for naming files
+#
+FORTCOMP        = gfortran -O2 -c
+LINK            = gfortran -O2
+LIBLINK         = ar rvu
+INCCDF_PATH     = /opt/netcdf/gcc-4.9.2/usr/lib64/gfortran/modules
+LIBCDF_PATH     = /opt/netcdf/gcc-4.9.2/usr/lib64
+LIBCDF_NAME     = netcdff -lnetcdf
+OMPARG          = -fopenmp
+
+LIBSUFFIX       = a
+
+.SUFFIXES: $(SUFFIXES) .f90
+

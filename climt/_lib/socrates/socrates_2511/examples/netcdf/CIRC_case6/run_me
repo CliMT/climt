@@ -1,0 +1,118 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+# LW
+cp case6.surflw case6.surf
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/hadgem1/sp_lw_hadgem1_3 -R 1 9 -I -g 5 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove case6 case6_lw_hadgem1_3
+rm cdl_case6_lw_hadgem1_3* 2> /dev/null
+Ccdf2cdl -a case6_lw_hadgem1_3 > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 -I -g 4 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove case6 case6_lw_ga7
+rm cdl_case6_lw_ga7* 2> /dev/null
+Ccdf2cdl -a case6_lw_ga7 > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 -I -g 4 -c -C 5
+fmove case6 case6_lw_ga7_clr
+rm cdl_case6_lw_ga7_clr* 2> /dev/null
+Ccdf2cdl -a case6_lw_ga7_clr > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 -I -g 4 -c -C 3 -K 1 -d 5 -i 11
+fmove case6 case6_lw_ga7_cld3
+rm cdl_case6_lw_ga7_cld3* 2> /dev/null
+Ccdf2cdl -a case6_lw_ga7_cld3 > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7_ref/sp_lw_300_jm2 -R 1 300 -I -g 2 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove case6 case6_lw_300_jm2
+rm cdl_case6_lw_300_jm2* 2> /dev/null
+Ccdf2cdl -a case6_lw_300_jm2 > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ses2/ses_lw_jm1_1 -R 1 8 -I -g 7 -c -C 2 -K 1 -d 5 -i 8 -z 2
+fmove case6 ses_lw_jm1_1
+rm cdl_ses_lw_jm1_1* 2> /dev/null
+Ccdf2cdl -a ses_lw_jm1_1 > /dev/null
+
+# SW
+cp case6.surfsw_hadgem case6.surf
+cp case6.op_soot_hadgem case6.op_soot
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/hadgem1/sp_sw_hadgem1_3r -R 1 6 -S +R -g 5 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove case6 case6_sw_hadgem1_3r
+rm cdl_case6_sw_hadgem1_3r* 2> /dev/null
+Ccdf2cdl -a case6_sw_hadgem1_3r > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove case6 case6_sw_ga7
+rm cdl_case6_sw_ga7* 2> /dev/null
+Ccdf2cdl -a case6_sw_ga7 > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -a +A -C 5
+fmove case6 case6_sw_ga7_clr
+rm cdl_case6_sw_ga7_clr* 2> /dev/null
+Ccdf2cdl -a case6_sw_ga7_clr > /dev/null
+
+cp case6.surfsw_260 case6.surf
+cp case6.op_soot_260 case6.op_soot
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7_ref/sp_sw_260_jm2 -R 1 260 -S +R -g 2 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove case6 case6_sw_260_jm2
+rm cdl_case6_sw_260_jm2* 2> /dev/null
+Ccdf2cdl -a case6_sw_260_jm2 > /dev/null
+
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7_ref/sp_sw_260_jm2 -R 1 260 -S +R -g 4 -c -r -a +A -C 5 -ch 260
+fmove case6 case6_sw_260_jm2_clr
+rm cdl_case6_sw_260_jm2_clr* 2> /dev/null
+Ccdf2cdl -a case6_sw_260_jm2_clr > /dev/null
+
+cp case6.surfsw_ses case6.surf
+cp case6.op_soot_ses case6.op_soot
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ses2/ses_sw_jm1_1 -R 1 9 -S +R -g 7 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+fmove case6 ses_sw_jm1_1
+rm cdl_ses_sw_jm1_1* 2> /dev/null
+Ccdf2cdl -a ses_sw_jm1_1 > /dev/null
+
+# Test against known good output
+diff -q ref_case6_lw_hadgem1_3.hrts cdl_case6_lw_hadgem1_3.hrts || ierr=1
+diff -q ref_case6_lw_ga7.hrts cdl_case6_lw_ga7.hrts || ierr=1
+diff -q ref_case6_lw_ga7_clr.hrts cdl_case6_lw_ga7_clr.hrts || ierr=1
+diff -q ref_case6_lw_ga7_cld3.hrts cdl_case6_lw_ga7_cld3.hrts || ierr=1
+diff -q ref_case6_lw_300_jm2.hrts cdl_case6_lw_300_jm2.hrts || ierr=1
+diff -q ref_ses_lw_jm1_1.hrts cdl_ses_lw_jm1_1.hrts || ierr=1
+diff -q ref_case6_sw_hadgem1_3r.hrts cdl_case6_sw_hadgem1_3r.hrts || ierr=1
+diff -q ref_ses_sw_jm1_1.hrts cdl_ses_sw_jm1_1.hrts || ierr=1
+diff -q ref_case6_sw_ga7.hrts cdl_case6_sw_ga7.hrts || ierr=1
+diff -q ref_case6_sw_ga7_clr.aflx cdl_case6_sw_ga7_clr.aflx || ierr=1
+diff -q ref_case6_sw_260_jm2.hrts cdl_case6_sw_260_jm2.hrts || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  resrm ses_sw_jm1_1
+  resrm ses_lw_jm1_1
+  resrm cdl_ses_sw_jm1_1
+  resrm cdl_ses_lw_jm1_1
+  resrm case6_sw_hadgem1_3r
+  resrm case6_lw_hadgem1_3
+  resrm cdl_case6_sw_hadgem1_3r
+  resrm cdl_case6_lw_hadgem1_3
+  resrm case6_sw_ga7
+  resrm case6_sw_ga7_clr
+  resrm case6_lw_ga7
+  resrm case6_lw_ga7_clr
+  resrm case6_lw_ga7_cld3
+  resrm cdl_case6_sw_ga7
+  resrm cdl_case6_sw_ga7_clr
+  resrm cdl_case6_lw_ga7
+  resrm cdl_case6_lw_ga7_clr
+  resrm cdl_case6_lw_ga7_cld3
+  resrm case6_sw_260_jm2
+  resrm case6_sw_260_jm2_clr
+  resrm case6_lw_300_jm2
+  resrm cdl_case6_sw_260_jm2
+  resrm cdl_case6_sw_260_jm2_clr
+  resrm cdl_case6_lw_300_jm2
+  rm case6.surf case6.op_soot
+  echo OK
+  exit 0
+fi

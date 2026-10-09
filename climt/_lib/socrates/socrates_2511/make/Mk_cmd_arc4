@@ -1,0 +1,15 @@
+#
+# Pathnames for compilers and global options for naming files
+#
+FORTCOMP        = ifort -O -c
+LINK            = ifort -O
+LIBLINK         = ar rvu
+INCCDF_PATH     = /apps/developers/libraries/netcdf/4.6.3/1/intel-19.0.4-openmpi-3.1.4/include
+LIBCDF_PATH     = /apps/developers/libraries/netcdf/4.6.3/1/intel-19.0.4-openmpi-3.1.4/lib
+LIBCDF_NAME     = netcdff
+OMPARG          = -qopenmp
+
+LIBSUFFIX       = a
+
+.SUFFIXES: $(SUFFIXES) .f90
+

@@ -1,0 +1,374 @@
+#!/bin/bash
+
+# This script creates the 9 band LW spectral file sp_lw_ga9
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+
+if [ ! $LW_DATA ] ; then
+  LW_DATA=.
+fi
+
+HITRAN_DIR="$RAD_DATA/gases"
+HITRAN_H2O="$HITRAN_DIR/01_hit12.par"
+if [ ! -s $HITRAN_H2O ] ; then
+    wget -nc http://www.cfa.harvard.edu/hitran/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/01_hit12.zip
+    unzip 01_hit12.zip -d $HITRAN_DIR
+    rm -f 01_hit12.zip
+fi
+
+cp $RAD_DATA/spectra/ga7/sp_lw_ga7 .
+cp $RAD_DATA/spectra/ga7/sp_lw_ga7_k .
+specfile="sp_lw_ga7"
+pt_file="$RAD_DATA/gases/pt_ses_new"
+ref_pt_file="$RAD_DATA/gases/ref_pt"
+procs=24
+
+# H2O
+if [ ! -s $LW_DATA/h2o_lbl_lwf.nc ] ; then
+  echo 'H2O lines and foreign continuum'
+  rm -f h2o_l300_l*
+  Ccorr_k -F $pt_file -D $HITRAN_H2O \
+    -R 1 150 -c 2500.0 -i 0.2 -l 1 1.0e2 -b 1.0e-3  \
+    -s $RAD_DATA/spectra/ga7_ref/sp_lw_300_jm2 +p -lk \
+    -k -x $RAD_DATA/continua/caviar_frn \
+    -o h2o_l300_l -m h2o_l300_lm -L $LW_DATA/h2o_lbl_lwf.nc \
+    -np $procs \
+     > h2o_l300_log
+fi
+if [ ! -s $LW_DATA/h2o_lbl_nirf.nc ] ; then
+  echo 'H2O NIR lines and foreign continuum'
+  rm -f h2o_nir300_l*
+  Ccorr_k -F $pt_file -D $HITRAN_H2O \
+    -R 151 300 -c 2500.0 -i 0.2 -l 1 1.0e2 -b 3.0e-3  \
+    -s $RAD_DATA/spectra/ga7_ref/sp_lw_300_jm2 +p -lk \
+    -k -x $RAD_DATA/continua/caviar_frn \
+    -o h2o_nir300_l -m h2o_nir300_lm -L $LW_DATA/h2o_lbl_nirf.nc \
+    -np $procs \
+     > h2o_nir300_log
+fi
+echo 'Self-broadened continuum'
+if [ ! -s h2o_l9_s ] ; then
+  echo 'H2O self-broadened continuum'
+  rm -f h2o_l9_s*
+  Ccorr_k -C 17 2.5e-1 2.5e2 -F $pt_file -D $HITRAN_H2O \
+    -P 7 -R 2 8 -c 2500.0 -i 0.2 \
+    -e $RAD_DATA/continua/elsey_shine_s296 $RAD_DATA/continua/elsey_shine_s260 \
+    -k -s $specfile +p -q -r $ref_pt_file \
+    -o h2o_l9_s -m h2o_l9_sm -L $LW_DATA/h2o_lbl_lwf.nc \
+    -np $procs \
+     > h2o_l9_slog
+fi
+if [ ! -s h2o_nir9_s ] ; then
+  echo 'H2O near-IR self-broadened continuum'
+  rm -f h2o_nir9_s*
+  Ccorr_k -C 33 1.0e-4 1.0e4 -F $pt_file -D $HITRAN_H2O \
+    -P 7 -R 9 9 -c 2500.0 -i 0.2 \
+    -e $RAD_DATA/continua/elsey_shine_s296 $RAD_DATA/continua/elsey_shine_s260 \
+    -k -s $specfile +p -q -r $ref_pt_file \
+    -o h2o_nir9_s -m h2o_nir9_sm -L $LW_DATA/h2o_lbl_nirf.nc \
+    -np $procs \
+     > h2o_nir9_slog
+fi
+
+# Aerosols
+rm -f *.avg
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a soluble_9.avg $RAD_DATA/aerosol/soluble.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a dustlike_9.avg $RAD_DATA/aerosol/dustlike.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a oceanic_9.avg $RAD_DATA/aerosol/oceanic.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a soot_9.avg $RAD_DATA/aerosol/soot.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a sulphuric_9.avg $RAD_DATA/aerosol/sulphuric.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a accumsulp_9.avg $RAD_DATA/aerosol/accumsulp.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a aitkensulp_9.avg $RAD_DATA/aerosol/aitkensulp.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a freshsoot_bond_9.avg $RAD_DATA/aerosol/freshsoot_bond.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a agedsoot_bond_9.avg $RAD_DATA/aerosol/agedsoot_bond.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a seasaltfilm_9.avg $RAD_DATA/aerosol/seasaltfilm.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a seasaltjet_9.avg $RAD_DATA/aerosol/seasaltjet.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a dust_div1_9.avg $RAD_DATA/aerosol/dust_div1.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a dust_div2_9.avg $RAD_DATA/aerosol/dust_div2.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a dust_div3_9.avg $RAD_DATA/aerosol/dust_div3.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a dust_div4_9.avg $RAD_DATA/aerosol/dust_div4.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a dust_div5_9.avg $RAD_DATA/aerosol/dust_div5.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a dust_div6_9.avg $RAD_DATA/aerosol/dust_div6.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a freshbiomass_bond_9.avg $RAD_DATA/aerosol/freshbiomass_bond.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a agedbiomass_bond_9.avg $RAD_DATA/aerosol/agedbiomass_bond.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a biogenic_9.avg $RAD_DATA/aerosol/biogenic.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a freshocff_9.avg $RAD_DATA/aerosol/freshocff.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a agedocff_9.avg $RAD_DATA/aerosol/agedocff.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a nitrate_9.avg $RAD_DATA/aerosol/nitrate.mon
+Cscatter_average -s $specfile -P 1 -w -p 250 \
+  -a delta_9.avg $RAD_DATA/aerosol/delta.mon
+Cscatter_average -s $specfile -P 1 -w -p 290 \
+  -a twobindust_1_9.avg $RAD_DATA/aerosol/twobindust_1.mon
+Cscatter_average -s $specfile -P 1 -w -p 290 \
+  -a twobindust_2_9.avg $RAD_DATA/aerosol/twobindust_2.mon
+
+
+# AODs
+rm -f *.aod
+./make_sp_aod_wavel
+
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a soluble.aod $RAD_DATA/aerosol/soluble.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dustlike.aod $RAD_DATA/aerosol/dustlike.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a oceanic.aod $RAD_DATA/aerosol/oceanic.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a soot.aod $RAD_DATA/aerosol/soot.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a sulphuric.aod $RAD_DATA/aerosol/sulphuric.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a accumsulp.aod $RAD_DATA/aerosol/accumsulp.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a aitkensulp.aod $RAD_DATA/aerosol/aitkensulp.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a seasaltfilm.aod $RAD_DATA/aerosol/seasaltfilm.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a seasaltjet.aod $RAD_DATA/aerosol/seasaltjet.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div1.aod $RAD_DATA/aerosol/dust_div1.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div2.aod $RAD_DATA/aerosol/dust_div2.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div3.aod $RAD_DATA/aerosol/dust_div3.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div4.aod $RAD_DATA/aerosol/dust_div4.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div5.aod $RAD_DATA/aerosol/dust_div5.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div6.aod $RAD_DATA/aerosol/dust_div6.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a biogenic.aod $RAD_DATA/aerosol/biogenic.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a freshocff.aod $RAD_DATA/aerosol/freshocff.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a agedocff.aod $RAD_DATA/aerosol/agedocff.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a nitrate.aod $RAD_DATA/aerosol/nitrate.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a delta.aod $RAD_DATA/aerosol/delta.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a twobindust_1.aod $RAD_DATA/aerosol/twobindust_1.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a twobindust_2.aod $RAD_DATA/aerosol/twobindust_2.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a freshsoot_bond.aod $RAD_DATA/aerosol/freshsoot_bond.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a agedsoot_bond.aod $RAD_DATA/aerosol/agedsoot_bond.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a freshbiomass_bond.aod $RAD_DATA/aerosol/freshbiomass_bond.mon
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a agedbiomass_bond.aod $RAD_DATA/aerosol/agedbiomass_bond.mon
+
+
+# Construct spectral file
+mv sp_lw_ga9 sp_lw_ga9_old 2> /dev/null
+mv sp_lw_ga9_k sp_lw_ga9_old_k 2> /dev/null
+prep_spec << EOF
+sp_lw_ga7
+n
+sp_lw_ga9
+9
+y
+h2o_l9_s
+12
+9
+r
+12
+10
+r
+11
+soluble_9.avg
+y
+11
+dustlike_9.avg
+y
+11
+oceanic_9.avg
+y
+11
+soot_9.avg
+y
+11
+sulphuric_9.avg
+y
+11
+accumsulp_9.avg
+y
+11
+aitkensulp_9.avg
+y
+11
+freshsoot_bond_9.avg
+y
+11
+agedsoot_bond_9.avg
+y
+11
+seasaltfilm_9.avg
+y
+11
+seasaltjet_9.avg
+y
+11
+dust_div1_9.avg
+y
+11
+dust_div2_9.avg
+y
+11
+dust_div3_9.avg
+y
+11
+dust_div4_9.avg
+y
+11
+dust_div5_9.avg
+y
+11
+dust_div6_9.avg
+y
+11
+freshbiomass_bond_9.avg
+y
+11
+agedbiomass_bond_9.avg
+y
+11
+biogenic_9.avg
+y
+11
+freshocff_9.avg
+y
+11
+agedocff_9.avg
+y
+11
+nitrate_9.avg
+y
+11
+delta_9.avg
+y
+11
+twobindust_1_9.avg
+y
+11
+twobindust_2_9.avg
+y
+15
+y
+soluble.aod
+15
+y
+dustlike.aod
+15
+y
+oceanic.aod
+15
+y
+soot.aod
+15
+y
+sulphuric.aod
+15
+y
+accumsulp.aod
+15
+y
+aitkensulp.aod
+15
+y
+freshsoot_bond.aod
+15
+y
+agedsoot_bond.aod
+15
+y
+seasaltfilm.aod
+15
+y
+seasaltjet.aod
+15
+y
+dust_div1.aod
+15
+y
+dust_div2.aod
+15
+y
+dust_div3.aod
+15
+y
+dust_div4.aod
+15
+y
+dust_div5.aod
+15
+y
+dust_div6.aod
+15
+y
+freshbiomass_bond.aod
+15
+y
+agedbiomass_bond.aod
+15
+y
+biogenic.aod
+15
+y
+freshocff.aod
+15
+y
+agedocff.aod
+15
+y
+delta.aod
+15
+y
+nitrate.aod
+15
+y
+twobindust_1.aod
+15
+y
+twobindust_2.aod
+-1
+EOF
+
+rm *.avg
+rm *.aod
+rm sp_aod_wavel
+rm sp_lw_ga7
+rm sp_lw_ga7_k
+
+exit 0

@@ -1,0 +1,111 @@
+! *****************************COPYRIGHT*******************************
+! (C) Crown copyright Met Office. All rights reserved.
+! For further details please refer to the file COPYRIGHT.txt
+! which you should have received as part of this distribution.
+! *****************************COPYRIGHT*******************************
+!
+!     ------------------------------------------------------------------
+!     Module to declare the local variables for the call to DISORT.
+!     ------------------------------------------------------------------
+!
+!     Optical properties of the column:
+      REAL  (RealK)
+     &    dtauc(nd_layer)
+!           Optical depths
+     &  , ssalb(nd_layer)
+!           Albedos of single scattering
+     &  , pmom(0: nd_phase_term, nd_layer)
+!           Phase functions
+!
+!     Infra-red variables:
+      LOGICAL
+     &    noplnk
+!           Logical to select the solar case
+      REAL  (RealK)
+     &    wvnmlo
+!           Low wavenumber (cm-1)
+     &  , wvnmhi
+!           High wavenumber (cm-1)
+     &  , temper(0: nd_layer)
+!           Temperatures at the edges of layers
+!
+!     Sampling depths in the column:
+      LOGICAL
+     &    usrtau
+!           Flag to use optical depths supplied by the user
+      REAL  (RealK)
+     &    utau(nd_viewing_level)
+!           Optical depths at which to sample radiances
+!
+!     Viewing angles:
+      LOGICAL
+     &    usrang
+!           Logical to use explicitly specified viewing angles
+      INTEGER
+     &    numu
+!           Number of polar vieing angles
+     &  , nphi
+!           Number of azimuthal viewing angles
+     &  , pointer(nd_direction)
+!           Pointer for searching through directions
+      REAL  (RealK)
+     &    umu(nd_direction)
+!           Cosines of polar viewing angles
+     &  , umu_temp(nd_direction)
+!           Temporary array used for ordering
+     &  , phi(nd_direction)
+!           Azimuthhal viewing angles
+!
+!     Boundary conditions:
+      INTEGER
+     &    ibcnd
+!           Options for boundary conditions
+      REAL  (RealK)
+     &    fisot
+!           Isotropic incident radiance
+     &  , ttemp
+!           Temperature of the top boundary
+     &  , temis
+!           Emissivity of the top boundary
+     &  , hl(0: nd_phase_term)
+!           The bidirectional reflectivity of the surface
+      LOGICAL
+     &    lamber
+!           Flag for Lambertian surface conditions
+!
+!     Algorithmic control of DISORT:
+      INTEGER
+     &    nstr
+!           Number of streams
+      REAL  (RealK)
+     &    accur
+!           Relative accuracy
+      CHARACTER
+     &    header*127
+!           Character header
+      LOGICAL
+     &    prnt(7)
+!           Printing flags
+!
+!     Output variables:
+      REAL  (RealK)
+     &    rfldir(nd_viewing_level)
+!           Direct flux (without rescaling)
+     &  , rfldn(nd_viewing_level)
+!           Diffuse downward flux
+     &  , flup(nd_viewing_level)
+!           Diffuse upward flux
+     &  , dfdt(nd_viewing_level)
+!           Divergence of the net flux
+     &  , uavg(nd_viewing_level)
+!           Mean intensity
+     &  , uu(nd_direction, nd_viewing_level, nd_direction)
+!           Radiances
+     &  , u0u(nd_direction, nd_viewing_level)
+!           Azimuthally averaged intensities
+     &  , albmed(nd_direction)
+!           Not used
+     &  , trnmed(nd_direction)
+!           Not used
+!
+!     ------------------------------------------------------------------

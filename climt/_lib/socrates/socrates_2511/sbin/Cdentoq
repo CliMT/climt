@@ -1,0 +1,22 @@
+#! /bin/bash
+#
+# Script to run the program to convert water vapour density to
+# specific humidity.
+#
+touch $LOCK_FILE
+while [ $# -gt 0 ]
+do case $1 in
+      -t) TEMPERATURE_FILE=$2 ; shift 2 ;;
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -*) echo "Invalid option."; exit -1 ;;
+       *) INFILE=$1 ; shift ;;
+   esac
+done
+cat > /tmp/dtq.$$ << EOF
+$INFILE
+$TEMPERATURE_FILE
+$OUTFILE
+EOF
+dentoq < /tmp/dtq.$$ > /dev/null
+rm -f /tmp/dtq.$$
+rm -f $LOCK_FILE

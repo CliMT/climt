@@ -818,6 +818,16 @@ default_values = {
         "units": "kg m^-2",
         "domain": "atmosphere",
     },
+    "cloud_liquid_water_mixing_ratio": {
+        "value": 0.0,
+        "units": "kg/kg",
+        "domain": "atmosphere",
+    },
+    "cloud_ice_mixing_ratio": {
+        "value": 0.0,
+        "units": "kg/kg",
+        "domain": "atmosphere",
+    },
     "cloud_ice_particle_size": {
         "value": 20.0,
         "units": "micrometer",
@@ -1064,6 +1074,13 @@ def get_init_diagnostic(name, grid_state):
             default_values[name[:-20]]["units"],
             dtype=default_values[name[:-20]].get("dtype", None),
             domain=default_values[name[:-20]]["domain"] + "_interface",
+        )
+    elif name.startswith("mole_fraction_of_") and name.endswith("_in_air"):
+        return ConstantDefaultValue(
+            name,
+            0.0,
+            "dimensionless",
+            domain="atmosphere",
         )
     # If it isn't, check if there is a diagnostic defined in some library of DiagnosticComponent
     # classes (probably a list stored here) that can calculate the quantity,

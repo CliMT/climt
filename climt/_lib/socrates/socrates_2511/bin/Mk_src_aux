@@ -1,0 +1,100 @@
+SOURCE90_AUX =	aerosol_profile_pcf.f90 \
+		aerosol_representation_pcf.f90 \
+                astro_constants_mod.f90 \
+                def_orbit.f90 \
+		filter_function.f90 \
+		method_merge_pcf.f90 \
+		runes_nc_nml_mod.f90 \
+                orbprm_mod.f90 \
+		qsat_wat.f90 \
+		qsat_alg_pcf.f90 \
+		rand_gauss.f90 \
+		set_moist_aerosol_properties.f90 \
+		socrates_cloud_abs_diag.f90 \
+		socrates_cloud_ext_diag.f90 \
+		socrates_cloud_gen.f90 \
+		socrates_cloud_level_diag.f90 \
+		socrates_horizon_1d.f90 \
+		socrates_horizon_2d.f90 \
+		socrates_illuminate.f90 \
+		socrates_runes.f90 \
+		socrates_bones.f90 \
+		socrates_set_control.f90 \
+		socrates_set_spectrum.f90 \
+		socrates_set_dimen.f90 \
+		socrates_set_atm.f90 \
+		socrates_set_bound.f90 \
+		socrates_set_cld.f90 \
+		socrates_set_cld_dim.f90 \
+		socrates_set_cld_mcica.f90 \
+		socrates_set_aer.f90 \
+		socrates_set_diag.f90 \
+		solang_mod.f90 \
+		solpos_mod.f90 \
+		write_samson.f90
+
+SOURCE90_CDF =	read_cdf.f90 \
+		write_cdf.f90 \
+		read_nc.f90 \
+		write_nc.f90
+
+SOURCE77_AUX =	angular_control.f \
+		assign_horiz_cdl.f \
+		assign_input_novert_cdl.f \
+		assign_input_vert_cdl.f \
+		assign_input_opt_cdl.f \
+		assign_input_ss_cdl.f \
+		assign_surface_char_cdl.f \
+		assign_viewing_geom_cdl.f \
+		calc_cdl_stride.f \
+		calc_volume_fraction.f \
+		extinction_profile.f \
+		find_dimen_cdl.f \
+		find_var_cdl.f \
+		fnc_density.f \
+		input_aerosol_cdl.f \
+		input_cloud_cdl.f \
+		interpolate_p_mod.f \
+		l_find_component.f \
+		merge_pressure.f \
+		mono_rad_ss.f \
+		name_length.f \
+		output_flux_cdl.f \
+		output_horiz_cdl.f \
+		output_opt_profile_cdl.f \
+		output_photolysis_cdl.f \
+		output_radiance_cdl.f \
+		output_surf_cdl.f \
+		output_vert_cdl.f \
+		output_view_cdl.f \
+		planck_cumul.f \
+		planck_ss_source.f \
+		qsat.f \
+		qsat_gg.f \
+		qsat_gg_ice.f \
+		read_averaged_scatter.f \
+		read_cdl.f \
+		read_raw_profile.f \
+		read_samson_p_field.f \
+		read_genln2_flux.f \
+		seaalbedo.f \
+		seaalbedo_driver.f \
+		set_state.f \
+		sort_raw_profile.f \
+		split_cdl_line.f \
+		write_profile.f \
+		write_cdl.f \
+		write_cdl_field.f
+
+SOURCE77_CDF =	angular_control_cdf.f \
+		assign_input_novert_cdf.f \
+		assign_input_vert_cdf.f \
+		assign_input_opt_cdf.f \
+		assign_surface_char_cdf.f \
+		assign_viewing_geom_cdf.f \
+		input_aerosol_cdf.f \
+		input_cloud_cdf.f \
+		output_flux_cdf.f \
+		output_photolysis_cdf.f \
+		output_radiance_cdf.f \
+		output_vert_cdf.f

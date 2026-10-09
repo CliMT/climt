@@ -1,0 +1,42 @@
+# Environment variables for Mars spectral files
+
+# Met Office
+ARCHIVE_DATA=${SOCRATES_DATA_DIR}
+
+# UoE
+# ARCHIVE_DATA="/data/jm606/socrates"
+
+# SW_DATA and LW_DATA must be writable if generating lbl cross-section files
+SW_DATA="${ARCHIVE_DATA}/jm_mars_hr_data"
+LW_DATA="${ARCHIVE_DATA}/jm_mars_hr_data"
+
+SOLFILE="sun"
+SOLSPEC="${RAD_DATA}/solar/${SOLFILE}"
+
+COL_MASS_K_CO2="1.0e+05"
+COL_MASS_K_H2O="1.0e+03"
+COL_MASS_K_SO2="3.0e-2"
+
+COL_H2OC="1.0e+03"
+COL_CO2C="1.0e6"
+
+GAS_DATA_DIR="${RAD_DATA}/gases"
+
+CONT_H2O_S260="${RAD_DATA}/continua/elsey_shine_s260"
+CONT_H2O_S296="${RAD_DATA}/continua/elsey_shine_s296"
+CONT_CO2_CO2="${RAD_DATA}/continua/CO2-CO2_2018.cia"
+HITRAN_UV_SO2="$GAS_DATA_DIR/SO2_UV08.xsc"
+
+PT_FILE="pt793"
+SO2_PT_FILE="$RAD_DATA/gases/pt_so2_uv"
+REF_PT_FILE="$RAD_DATA/gases/ref_pt_mars"
+CONT_PT_FILE="$RAD_DATA/continua/pt_cont_100_400"
+
+CO2_LBL_SW="$SW_DATA/co2_sblbl_sw_${PT_FILE}_gf0.9-1.0.nc"
+SO2_LBL_SW="$SW_DATA/so2_lbl_sw_${PT_FILE}.nc"
+H2O_LBL_VIS="$SW_DATA/h2o_lbl_vis_${PT_FILE}.nc"
+H2O_LBL_SWF="$SW_DATA/h2o_lbl_swf_${PT_FILE}.nc"
+
+CO2_LBL_LW="$LW_DATA/co2_sblbl_lw_${PT_FILE}_gf0.9-1.0.nc"
+SO2_LBL_LW="$LW_DATA/so2_lbl_lw_${PT_FILE}.nc"
+H2O_LBL_LWF="$LW_DATA/h2o_lbl_lwf_${PT_FILE}.nc"

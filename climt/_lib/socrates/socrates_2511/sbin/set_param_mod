@@ -1,0 +1,15 @@
+#! /bin/bash
+#
+# Script to set values of parameters consistent with configured code.
+#
+# Argument to script is name of file.
+
+FILE=$RAD_BIN/$1
+
+sed -n -e '/::/p' $FILE | grep -i Parameter \
+    | grep -v "&" | grep -v "npd_pathway" | cut -d : -f 3 \
+    | tr "[:lower:]" "[:upper:]" | grep = | sed -e 's/ *//g' >> /tmp/param.$$
+
+chmod a+x /tmp/param.$$
+. /tmp/param.$$
+rm -f /tmp/param.$$

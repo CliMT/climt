@@ -1,0 +1,29 @@
+#! /bin/bash
+#
+#  Script to run the program converting mass densities to mixing ratios.
+#
+touch $LOCK_FILE
+set -- `getopt q:t:o: $*`
+while [ "$1" != "--" ]
+do case $1 in
+      -q) HUMIDITY_FILE=$2 ;;
+      -t) TEMPERATURE_FILE=$2 ;;
+      -o) OUTFILE=$2 ;;
+   esac
+   shift 2
+done
+shift
+cat > /tmp/dtm.$$ << EOF
+$1
+$TEMPERATURE_FILE
+$HUMIDITY_FILE
+$OUTFILE
+EOF
+ftype=`dd bs=3 count=1 if="$1" 2> /dev/null`
+if [ $ftype = "CDF" ]
+   then dentomix_cdf < /tmp/dtm.$$ > /dev/null
+else
+   dentomix < /tmp/dtm.$$ > /dev/null
+fi
+rm -f /tmp/dtm.$$
+rm -f $LOCK_FILE

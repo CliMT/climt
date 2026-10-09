@@ -1,0 +1,125 @@
+#! /bin/bash
+# Script to set-up and make the radiation code
+
+here=`pwd`
+host=`uname -n`
+
+if [ ${host:0:4} == "dali" ]; then
+  host="dali"
+elif [ "${host:7:4}" == "arc4" ]; then
+  host="arc4"
+elif [ "${host:0:5}" == "cazld" ]; then
+  host="cazld"
+fi
+
+SRC_LIST="general modules_gen aux scatter correlated_k"
+SRC_LIST=${SRC_LIST}" modules_core radiance_core"
+SRC_LIST=${SRC_LIST}" illumination interface_core"
+SRC_LIST=${SRC_LIST}" nlte"
+SRC_LIST=${SRC_LIST}" cosp_control"
+SRC_LIST=${SRC_LIST}" cosp_github/src"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator/MISR_simulator"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator/MODIS_simulator"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator/actsim"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator/icarus"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator/parasol"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator/quickbeam"
+SRC_LIST=${SRC_LIST}" cosp_github/src/simulator/rttov"
+SRC_LIST=${SRC_LIST}" cosp_github/model-interface"
+SRC_LIST=${SRC_LIST}" cosp_github/subsample_and_optics_example/optics"
+SRC_LIST=${SRC_LIST}" cosp_github/subsample_and_optics_example/optics/quickbeam_optics"
+SRC_LIST=${SRC_LIST}" cosp_github/subsample_and_optics_example/subcol"
+SRC_LIST=${SRC_LIST}" cosp_github/subsample_and_optics_example/subcol/rng"
+SRC_LIST=${SRC_LIST}" cosp_github/driver/src/"
+SRC_LIST=${SRC_LIST}" flexchem"
+SRC_LIST=${SRC_LIST}" odepack"
+
+echo 'Building the radiation code in bin/ and utilities in sbin/'
+date
+
+# Build the C utilities in sbin
+cd sbin
+make
+cd $here
+
+# Create the bin directory and copy across files
+mkdir -p bin
+
+cd make
+for FILE in *
+do
+  if [ $FILE -nt $here/bin/$FILE ]
+    then
+      cp $FILE $here/bin/$FILE
+  fi
+done
+cd $here
+
+for SRCDIR in $SRC_LIST
+do
+  cd src/$SRCDIR
+  FILE_LIST=`ls *.f* 2> /dev/null`
+  for FILE in $FILE_LIST
+  do
+    if [ $FILE -nt $here/bin/$FILE ]
+      then
+        cp $FILE $here/bin/$FILE
+    fi
+  done
+  FILE_LIST=`ls *.F90 2> /dev/null`
+  for FILE in $FILE_LIST
+  do
+    ppfile=$here/bin/${FILE%F90}f90
+    if [ $FILE -nt $ppfile ]
+      then
+        cp $FILE $ppfile
+    fi
+  done
+  cd $here
+done
+
+# Build the source code in bin
+cd bin
+./mkdep
+case "$1" in
+  "azure_gfortran12" | "azure_gfortran12_debug" | "azure_ifort19" | \
+  "monsoon3_gfortran12" | \
+  "ash_ifx2025")
+    diff -q set_prog_env_$1 set_prog_env || \
+        (cp set_prog_env_$1 set_prog_env; make clean)
+    diff -q Mk_cmd_$1 Mk_cmd || (cp Mk_cmd_$1 Mk_cmd; make clean)
+    shift
+    ;;
+
+  *)
+    if [ -r set_prog_env_$host ]
+      then
+        diff -q set_prog_env_$host set_prog_env || \
+            (cp set_prog_env_$host set_prog_env; make clean)
+    fi
+    if [ -r Mk_cmd_$host ]
+      then
+          diff -q Mk_cmd_$host Mk_cmd || \
+              (cp Mk_cmd_$host Mk_cmd; make clean)
+    fi
+    if [ ! -r set_prog_env ]
+      then
+        grep "LIBCDF_PATH" Mk_cmd | \
+          sed 's/ *LIBCDF_PATH *= */LIBCDF_PATH=/' > set_prog_env
+        echo 'export LD_LIBRARY_PATH=$LIBCDF_PATH:$LD_LIBRARY_PATH' \
+          >> set_prog_env
+    fi
+    ;;
+esac
+. ./set_prog_env
+make $1 && echo "All compiled OK"
+cd $here
+
+echo "Setting path to distribution in set_rad_env"
+sed "s#???#${here}#" sbin/set_rad_env_tmp > set_rad_env
+cat bin/set_prog_env >> set_rad_env
+
+date
+
+exit 0

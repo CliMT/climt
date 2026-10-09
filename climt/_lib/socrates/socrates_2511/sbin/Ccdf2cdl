@@ -1,0 +1,47 @@
+#! /bin/bash
+#
+# Script to run netCDF to CDL conversion
+#
+touch $LOCK_FILE
+INPUT=''
+OUTFILE=''
+BASE=''
+#
+# Process options
+#
+while [ $# -gt 0 ]
+do case $1 in
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -a) BASE=$2 ; shift 2 ;;
+      -i) INPUT=$2 ; shift 2 ;;
+      -*) echo "Invalid option" ; exit 1 ;;
+      *) INPUT=$1 ; shift ;;
+   esac
+done
+
+if [ "$BASE" ]
+   then for FILE in ${BASE}.* 
+   do 
+cat > /tmp/cdf2cdl.$$ << EOF
+$FILE
+cdl_$FILE
+EOF
+cdf2cdl  < /tmp/cdf2cdl.$$ > /dev/null && echo "Written cdl_$FILE"
+rm -f /tmp/cdf2cdl.$$
+   done
+
+else
+
+if [ ! "$OUTFILE" ]
+   then OUTFILE="cdl_${INPUT}"
+fi
+cat > /tmp/cdf2cdl.$$ << EOF
+$INPUT
+$OUTFILE
+EOF
+cdf2cdl  < /tmp/cdf2cdl.$$ > /dev/null && echo "Written $OUTFILE"
+rm -f /tmp/cdf2cdl.$$
+
+fi
+
+rm -f $LOCK_FILE

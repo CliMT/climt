@@ -1,0 +1,6 @@
+module purge
+module load latex/2024
+module load csc/2025.3.20 gcc/12.2.0 mpich/4.2.3 nccmp/1.9.1.0
+module load ifort/19.0_64
+export NETCDFF_ROOT=/data/users/james.hocking/lib/netcdf-fortran-4.6.1/build/ifort19
+export SOCRATES_DATA_DIR=/data/users/apprad/socrates

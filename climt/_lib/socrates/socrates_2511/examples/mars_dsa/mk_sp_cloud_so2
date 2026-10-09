@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# This script adds cloud parametrisations and so2 to the mars spectral files
+# eg:
+# ./mk_sp_cloud_so2 dsa_mars 17 42
+# ./mk_sp_cloud_so2 dsa_mars 350 280 _hr
+#
+# ./mk_sp_cloud_so2 dsa_pm 16 46
+# ./mk_sp_cloud_so2 dsa_pm 350 280 _hr
+
+solfile='sun'
+sp_name=$1
+blw=$2
+bsw=$3
+hr=$4
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+solspec=$RAD_DATA/solar/${solfile}
+sw_specfile=sp_sw_${bsw}_${sp_name}_${solfile}
+lw_specfile=sp_lw_${blw}_${sp_name}
+
+mkdir -p ${sp_name}${hr}
+
+cd ${sp_name}${hr}
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_lw_${sp_name}/${lw_specfile}
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_lw_${sp_name}/${lw_specfile}_k
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_sw_${sp_name}/${sw_specfile}
+wget -nc https://portal.nccs.nasa.gov/GISS_modelE/ROCKE-3D/spectral_files/sp_sw_${sp_name}/${sw_specfile}_k
+cd ..
+
+./mk_so2_sp_lw_${blw}_${sp_name}
+./mk_so2_sp_sw_${bsw}_${sp_name}
+
+cd ${sp_name}${hr}
+
+echo 'Creating mcica_data file'
+rm -f mcica_data
+cp $RAD_DATA/spectra/ga7/mcica_data mcica_data_ga7
+assign_subcols << EOF
+${sw_specfile}_so2
+10
+${lw_specfile}_so2
+6
+mcica_data_ga7
+64
+EOF
+
+rm mcica_data_ga7
+
+cd ..
+
+exit 0

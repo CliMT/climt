@@ -1,0 +1,43 @@
+#
+# Full list of c-k programs
+#
+TARGET_CK: corr_k tune_weights convert_elsey_shine dat2xsc xsc2xsc \
+	   qtxt2parsum lblcat
+
+corr_k: corr_k.o cklib.$(LIBSUFFIX)
+	$(LINK) $(OMPARG) -L$(LIBCDF_PATH) -o corr_k corr_k.o \
+	   cklib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+tune_weights: tune_weights.o radlib.$(LIBSUFFIX) cklib.$(LIBSUFFIX)
+	$(LINK) -o tune_weights tune_weights.o cklib.$(LIBSUFFIX)
+
+ser2xsc: ser2xsc.o cklib.$(LIBSUFFIX)
+	$(LINK) -o ser2xsc ser2xsc.o cklib.$(LIBSUFFIX)
+
+ser2uvxsc: ser2uvxsc.o cklib.$(LIBSUFFIX)
+	$(LINK) -o ser2uvxsc ser2uvxsc.o cklib.$(LIBSUFFIX)
+
+bdm2xsc: bdm2xsc.o cklib.$(LIBSUFFIX)
+	$(LINK) -o bdm2xsc bdm2xsc.o cklib.$(LIBSUFFIX)
+
+jpl2xsc: jpl2xsc.o cklib.$(LIBSUFFIX)
+	$(LINK) -o jpl2xsc jpl2xsc.o cklib.$(LIBSUFFIX)
+
+convert_elsey_shine: convert_elsey_shine.o cklib.$(LIBSUFFIX)
+	$(LINK) -o convert_elsey_shine convert_elsey_shine.o cklib.$(LIBSUFFIX)
+
+dat2xsc: dat2xsc.o cklib.$(LIBSUFFIX)
+	$(LINK) -o dat2xsc dat2xsc.o cklib.$(LIBSUFFIX)
+
+xsc2xsc: xsc2xsc.o cklib.$(LIBSUFFIX)
+	$(LINK) -o xsc2xsc xsc2xsc.o cklib.$(LIBSUFFIX)
+
+ft2qy: ft2qy.o cklib.$(LIBSUFFIX)
+	$(LINK) -o ft2qy ft2qy.o cklib.$(LIBSUFFIX)
+
+qtxt2parsum: qtxt2parsum.o cklib.$(LIBSUFFIX)
+	$(LINK) -o qtxt2parsum qtxt2parsum.o cklib.$(LIBSUFFIX)
+
+lblcat: lblcat.o cklib.$(LIBSUFFIX)
+	$(LINK) -L$(LIBCDF_PATH) -o lblcat lblcat.o \
+	   cklib.$(LIBSUFFIX) -l$(LIBCDF_NAME)

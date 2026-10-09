@@ -1,0 +1,30 @@
+netcdf mls.pstar{                                                               
+
+dimensions:
+    lat            =   1;
+    lon            =   1;
+    plev           =   1;
+
+
+variables:
+    float lat(lat);                                                           
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                         
+    float lon(lon);                                                           
+             lon:units = "degree";                                            
+             lon:title = "LONGITUDE";                                        
+    float plev(plev);                                                         
+             plev:units = "Pa";                                               
+             plev:title = "PRESSURE";                                        
+
+    float pstar(plev,lon,lat);                                                 
+             pstar:units = "Pa";                                              
+             pstar:title = "SURFACE PRESSURE";                                               
+
+data:                                                                           
+              lat =   .000000E+00;
+              lon =   .000000E+00;
+             plev =   .101300E+06;
+            pstar =   .101300E+06;
+
+}                                                                               

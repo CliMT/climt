@@ -18,9 +18,11 @@ from .rrtmg import RRTMGLongwave, RRTMGShortwave
 from .sea_ice import SeaIce
 from .second_best import SecondBEST
 from .simple_boundary_layer import SimpleBoundaryLayer
+from .socrates import SocratesLongwave, SocratesShortwave
 from .simple_physics import SimplePhysics
 from .slab_surface import SlabSurface
 from .surface_ice import IceSheet
+from .simcloud import SimCloud, SimCloudCondensation
 
 __all__ = (
     Frierson06LongwaveOpticalDepth,
@@ -31,6 +33,8 @@ __all__ = (
     SimplePhysics,
     RRTMGLongwave,
     RRTMGShortwave,
+    SocratesLongwave,
+    SocratesShortwave,
     EmanuelConvection,
     EmanuelConvectionPython,
     SlabSurface,
@@ -47,4 +51,6 @@ __all__ = (
     LandIce,
     DataOcean,
     SimpleBoundaryLayer,
+    SimCloud,
+    SimCloudCondensation,
 )

@@ -1,0 +1,11 @@
+#! /bin/bash
+#
+# Script to remove all files of results with a given base name.
+#
+for suffix in uflx dflx sflx nflx vflx hrts radn cfi cff aflx
+do
+   if [ -f $1.$suffix ]
+      then rm -f $1.$suffix
+   fi
+done
+rm -f $1.ph_rate*

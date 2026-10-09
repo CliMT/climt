@@ -1,0 +1,21 @@
+#! /bin/bash
+#
+# Script to run the conversion from humidity mxing ratio 
+# to specific humidity.
+#
+touch $LOCK_FILE
+set -- `getopt o: $*`
+while [ $1 != "--" ]
+do case $1 in
+      -o) OUTFILE=$2 ; shift 2 ;;
+      -*) echo "Invalid option." ; exit 1 ;;
+   esac
+done
+shift
+cat > /tmp/hmr.$$ << EOF
+$1
+$OUTFILE
+EOF
+hmrsph < /tmp/hmr.$$ > /dev/null
+rm -f /tmp/hmr.$$
+rm -f $LOCK_FILE

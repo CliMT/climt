@@ -1,0 +1,905 @@
+adjust_ir_radiance.o: adjust_ir_radiance.f90 def_atm.o def_control.o def_out.o def_planck.o \
+	def_spectrum.o parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o yomhook.o
+adjust_path.o: adjust_path.f90 hitran_cnst.o realtype_rd.o
+adt_mitchell.o: adt_mitchell.f90 def_std_io_icf.o error_pcf.o rad_ccf.o realtype_rd.o \
+	shape_particle_pcf.o
+adt_mitchell96.o: adt_mitchell96.f90 def_std_io_icf.o error_pcf.o rad_ccf.o realtype_rd.o \
+	shape_particle_pcf.o
+aerosol_model_pcf.o: aerosol_model_pcf.f90 dimensions_spec_ucf.o rad_pcf.o realtype_rd.o
+aerosol_profile_pcf.o: aerosol_profile_pcf.f90 dimensions_spec_ucf.o realtype_rd.o
+aerosol_representation_pcf.o: aerosol_representation_pcf.f90 
+aggregate_cloud.o: aggregate_cloud.f90 ereport_mod.o errormessagelength_mod.o parkind1.o \
+	rad_pcf.o realtype_rd.o yomhook.o
+array_lib.o: array_lib.f90 cosp_kinds.o
+assign_subcols.o: assign_subcols.f90 def_mcica.o def_spectrum.o rad_pcf.o realtype_rd.o
+astro_constants_mod.o: astro_constants_mod.f90 rad_ccf.o realtype_rd.o
+augment_channel_mod.o: augment_channel_mod.f90 def_bound.o def_control.o def_out.o def_spectrum.o \
+	def_spherical_geometry.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+augment_radiance.o: augment_radiance.f90 augment_channel_mod.o calc_photolysis_incr_mod.o \
+	def_atm.o def_bound.o def_control.o def_out.o def_qy.o def_spectrum.o \
+	def_spherical_geometry.o finalise_photol_incr_mod.o parkind1.o \
+	rad_pcf.o realtype_rd.o yomhook.o
+augment_tiled_radiance.o: augment_tiled_radiance.f90 def_control.o def_out.o def_spectrum.o \
+	ereport_mod.o errormessagelength_mod.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+band_solver.o: band_solver.f90 parkind1.o realtype_rd.o yomhook.o
+bdm2xsc.o: bdm2xsc.f90 def_hitran_record.o realtype_rd.o
+bi_interp.o: bi_interp.f90 realtype_rd.o
+bna_factor_ccf.o: bna_factor_ccf.f90 realtype_rd.o
+build_sph_matrix.o: build_sph_matrix.f90 calc_surf_rad.o calc_top_rad.o eig_sys.o \
+	layer_part_integ.o parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	set_dirn_weights.o set_level_weights.o yomhook.o
+calc_actinic_flux_mod.o: calc_actinic_flux_mod.f90 def_control.o def_spherical_geometry.o realtype_rd.o
+calc_brdf.o: calc_brdf.f90 eval_uplm.o parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	yomhook.o
+calc_cg_coeff.o: calc_cg_coeff.f90 parkind1.o realtype_rd.o yomhook.o
+calc_contrib_func.o: calc_contrib_func.f90 def_ss_prop.o diffusivity_factor.o parkind1.o rad_ccf.o \
+	realtype_rd.o yomhook.o
+calc_flux_ipa.o: calc_flux_ipa.f90 copy_clr_full.o def_bound.o def_control.o \
+	def_spherical_geometry.o def_ss_prop.o parkind1.o rad_pcf.o \
+	realtype_rd.o two_stream.o yomhook.o
+calc_gauss_weight_90.o: calc_gauss_weight_90.f90 ereport_mod.o errormessagelength_mod.o \
+	legendre_weight.o rad_pcf.o realtype_rd.o
+calc_horizon_angles.o: calc_horizon_angles.f90 rad_ccf.o realtype_rd.o socrates_horizon_2d.o
+calc_photolysis_incr_mod.o: calc_photolysis_incr_mod.f90 def_qy.o def_spectrum.o parkind1.o realtype_rd.o \
+	yomhook.o
+calc_radiance_ipa.o: calc_radiance_ipa.f90 def_ss_prop.o parkind1.o rad_pcf.o realtype_rd.o \
+	sph_solver.o yomhook.o
+calc_surf_rad.o: calc_surf_rad.f90 parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o yomhook.o
+calc_top_rad.o: calc_top_rad.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+calc_uplm_sol.o: calc_uplm_sol.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+calc_uplm_zero.o: calc_uplm_zero.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+cdf2cdl.o: cdf2cdl.f90 def_std_io_icf.o filenamelength_mod.o realtype_rd.o
+cdf2samson.o: cdf2samson.f90 def_std_io_icf.o realtype_rd.o
+cdl2cdf.o: cdl2cdf.f90 def_std_io_icf.o filenamelength_mod.o realtype_rd.o
+cdl2samson.o: cdl2samson.f90 def_std_io_icf.o realtype_rd.o
+cg_kappa_ms.o: cg_kappa_ms.f90 parkind1.o realtype_rd.o yomhook.o
+change_block_0.o: change_block_0.f90 def_spectrum.o def_std_io_icf.o
+check_phf_term.o: check_phf_term.f90 ereport_mod.o errormessagelength_mod.o parkind1.o rad_pcf.o \
+	yomhook.o
+circumsolar_fraction.o: circumsolar_fraction.f90 legendre_mod.o realtype_rd.o
+ck_fit_pcf.o: ck_fit_pcf.f90 
+ck_parm_acf.o: ck_parm_acf.f90 realtype_rd.o
+ckd_extern_data.o: ckd_extern_data.f90 realtype_rd.o
+cloud_fit_90.o: cloud_fit_90.f90 cloud_fitting.o def_std_io_icf.o file_type_pcf.o \
+	polynomialroots.o rad_pcf.o realtype_rd.o
+cloud_fit_parm_acf.o: cloud_fit_parm_acf.f90 realtype_rd.o
+cloud_fitting.o: cloud_fitting.f90 def_std_io_icf.o polynomialroots.o rad_pcf.o realtype_rd.o
+cloud_maxcs_split.o: cloud_maxcs_split.f90 ereport_mod.o errormessagelength_mod.o parkind1.o \
+	rad_pcf.o realtype_rd.o shell_sort.o yomhook.o
+column_solver.o: column_solver.f90 band_solver.o def_bound.o def_control.o \
+	def_spherical_geometry.o ereport_mod.o errormessagelength_mod.o \
+	parkind1.o rad_pcf.o realtype_rd.o set_matrix_pentadiagonal.o \
+	solar_source.o solver_homogen_direct.o solver_no_scat.o \
+	spherical_solar_source.o yomhook.o
+conjugate_gradient_90.o: conjugate_gradient_90.f90 def_std_io_icf.o dimensions_pp_ucf.o \
+	dimensions_spec_ucf.o rad_pcf.o realtype_rd.o scale_parameters_acf.o
+conjugate_gradient_cloud_90.o: conjugate_gradient_cloud_90.f90 cloud_fit_parm_acf.o cloud_fitting.o \
+	def_std_io_icf.o error_pcf.o realtype_rd.o
+convert_elsey_shine.o: convert_elsey_shine.f90 hitran_cnst.o realtype_rd.o
+coord_transforms.o: coord_transforms.f90 realtype_rd.o
+copy_clr_full.o: copy_clr_full.f90 def_control.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+copy_clr_sol.o: copy_clr_sol.f90 parkind1.o realtype_rd.o yomhook.o
+corr_k.o: corr_k.f90 ck_fit_pcf.o def_hitran_record.o def_inst_flt.o def_solarspec.o \
+	def_spectrum.o def_std_io_icf.o dimensions_pp_ucf.o \
+	dimensions_spec_ucf.o hitran_cnst.o rad_pcf.o realtype_rd.o
+corr_k_single.o: corr_k_single.f90 ck_fit_pcf.o ck_parm_acf.o def_hitran_record.o \
+	def_inst_flt.o def_solarspec.o def_std_io_icf.o ereport_mod.o \
+	errormessagelength_mod.o gas_list_pcf.o h2o_continuum.o hitran_cnst.o \
+	interp1d.o line_prof_corr_mod.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	spline_evaluate.o weighting_pcf.o
+cosp.o: cosp.f90 MISR_simulator.o cosp_atlid_interface.o cosp_calipso_interface.o \
+	cosp_cloudsat_interface.o cosp_config.o cosp_grLidar532_interface.o \
+	cosp_isccp_interface.o cosp_kinds.o cosp_misr_interface.o \
+	cosp_modis_interface.o cosp_parasol_interface.o cosp_rttovSTUB.o \
+	cosp_rttov_interfaceSTUB.o cosp_stats.o icarus.o lidar_simulator.o \
+	modis_simulator.o parasol.o quickbeam.o
+cosp2_io.o: cosp2_io.f90 cosp.o cosp_config.o cosp_kinds.o
+cosp_atlid_interface.o: cosp_atlid_interface.f90 cosp_kinds.o
+cosp_calipso_interface.o: cosp_calipso_interface.f90 cosp_kinds.o lidar_simulator.o
+cosp_cloudsat_interface.o: cosp_cloudsat_interface.f90 cosp_kinds.o quickbeam.o
+cosp_config.o: cosp_config.f90 cosp_kinds.o
+cosp_constants.o: cosp_constants.f90 cosp_kinds.o
+cosp_constants_mod.o: cosp_constants_mod.f90 cosp_config.o cosp_input_mod.o cosp_kinds.o \
+	quickbeam_optics.o
+cosp_def_diag.o: cosp_def_diag.f90 realtype_rd.o
+cosp_diagnostics_mod.o: cosp_diagnostics_mod.f90 cosp_kinds.o realtype_rd.o
+cosp_driver.o: cosp_driver.f90 cosp.o cosp2_io.o cosp_def_diag.o cosp_input_mod.o \
+	cosp_kinds.o cosp_mod.o realtype_rd.o
+cosp_errorHandling.o: cosp_errorHandling.f90 cosp_kinds.o
+cosp_grLidar532_interface.o: cosp_grLidar532_interface.f90 cosp_kinds.o
+cosp_input_mod.o: cosp_input_mod.f90 cosp_kinds.o errormessagelength_mod.o
+cosp_isccp_interface.o: cosp_isccp_interface.f90 cosp_kinds.o icarus.o
+cosp_kinds.o: cosp_kinds.f90 
+cosp_misr_interface.o: cosp_misr_interface.f90 cosp_kinds.o
+cosp_mod.o: cosp_mod.f90 cosp.o cosp_config.o cosp_constants_mod.o cosp_def_diag.o \
+	cosp_diagnostics_mod.o cosp_input_mod.o cosp_kinds.o \
+	cosp_radiation_mod.o cosp_types_mod.o ereport_mod.o \
+	errormessagelength_mod.o quickbeam_optics.o rad_pcf.o realtype_rd.o
+cosp_modis_interface.o: cosp_modis_interface.f90 cosp_config.o cosp_kinds.o modis_simulator.o
+cosp_optics.o: cosp_optics.f90 cosp_constants.o cosp_kinds.o modis_simulator.o
+cosp_parasol_interface.o: cosp_parasol_interface.f90 cosp_kinds.o
+cosp_radiation_mod.o: cosp_radiation_mod.f90 cosp.o cosp_config.o cosp_constants_mod.o \
+	cosp_input_mod.o cosp_kinds.o cosp_optics.o cosp_stats.o \
+	cosp_types_mod.o ereport_mod.o errormessagelength_mod.o \
+	quickbeam_optics.o
+cosp_rttov_interfaceSTUB.o: cosp_rttov_interfaceSTUB.f90 cosp_kinds.o
+cosp_rttovSTUB.o: cosp_rttovSTUB.f90 cosp_config.o cosp_constants.o cosp_kinds.o
+cosp_stats.o: cosp_stats.f90 cosp_config.o cosp_constants.o cosp_kinds.o
+cosp_types_mod.o: cosp_types_mod.f90 cosp.o cosp_config.o cosp_kinds.o parkind1.o yomhook.o
+cosp_utils.o: cosp_utils.f90 cosp_config.o cosp_kinds.o
+d_planck_90.o: d_planck_90.f90 rad_ccf.o realtype_rd.o
+dat2xsc.o: dat2xsc.f90 def_hitran_record.o def_std_io_icf.o realtype_rd.o
+db_interp_ss_mono.o: db_interp_ss_mono.f90 def_db_ss_mono.o def_std_io_icf.o error_pcf.o \
+	realtype_rd.o spline_evaluate.o
+db_read_single_wavelength.o: db_read_single_wavelength.f90 def_db_ss_mono.o def_sct_db.o def_std_io_icf.o \
+	dimensions_pp_ucf.o error_pcf.o rad_ccf.o realtype_rd.o
+db_scatter_integral.o: db_scatter_integral.f90 def_db_crystal_geometry.o def_db_ss_mono.o \
+	def_size_dist.o def_std_io_icf.o error_pcf.o prec_integral_tcf.o \
+	rad_ccf.o realtype_rd.o scatter_algorithm_pcf.o shape_particle_pcf.o
+db_type_ucf.o: db_type_ucf.f90 
+decompose_phf_90.o: decompose_phf_90.f90 def_std_io_icf.o error_pcf.o realtype_rd.o
+def_aer.o: def_aer.f90 def_dimen.o def_spectrum.o realtype_rd.o
+def_atm.o: def_atm.f90 def_dimen.o def_spectrum.o realtype_rd.o
+def_bound.o: def_bound.f90 def_dimen.o def_spectrum.o realtype_rd.o
+def_cld.o: def_cld.f90 def_dimen.o def_spectrum.o realtype_rd.o
+def_control.o: def_control.f90 def_spectrum.o filenamelength_mod.o gas_list_pcf.o \
+	missing_data_mod.o realtype_rd.o
+def_data_in_icf.o: def_data_in_icf.f90 
+def_db_crystal_geometry.o: def_db_crystal_geometry.f90 realtype_rd.o
+def_db_ss_mono.o: def_db_ss_mono.f90 realtype_rd.o
+def_dimen.o: def_dimen.f90 
+def_hitran_record.o: def_hitran_record.f90 realtype_rd.o
+def_inst_flt.o: def_inst_flt.f90 realtype_rd.o
+def_mcica.o: def_mcica.f90 def_spectrum.o ereport_mod.o parkind1.o realtype_rd.o yomhook.o
+def_orbit.o: def_orbit.f90 realtype_rd.o
+def_out.o: def_out.f90 def_control.o def_dimen.o def_spectrum.o realtype_rd.o
+def_planck.o: def_planck.f90 def_dimen.o realtype_rd.o
+def_qy.o: def_qy.f90 realtype_rd.o
+def_refract.o: def_refract.f90 realtype_rd.o
+def_s_scat_prop.o: def_s_scat_prop.f90 realtype_rd.o
+def_sct_db.o: def_sct_db.f90 realtypefx_rd.o
+def_size_dist.o: def_size_dist.f90 realtype_rd.o
+def_solarspec.o: def_solarspec.f90 rad_ccf.o realtype_rd.o
+def_spectrum.o: def_spectrum.f90 missing_data_mod.o realtype_rd.o
+def_spherical_geometry.o: def_spherical_geometry.f90 def_dimen.o realtype_rd.o
+def_ss_prop.o: def_ss_prop.f90 def_dimen.o realtype_rd.o
+def_std_io_icf.o: def_std_io_icf.f90 
+diff_albedo_basis.o: diff_albedo_basis.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+diff_planck_source_mod.o: diff_planck_source_mod.f90 def_atm.o def_bound.o def_control.o def_dimen.o \
+	def_planck.o def_spectrum.o parkind1.o planck_flux_band_mod.o \
+	rad_ccf.o rad_pcf.o realtype_rd.o yomhook.o
+diffusivity_factor.o: diffusivity_factor.f90 realtype_rd.o
+dimensions_cdf_ucf.o: dimensions_cdf_ucf.f90 
+dimensions_cdl_ucf.o: dimensions_cdl_ucf.f90 
+dimensions_field_cdf_ucf.o: dimensions_field_cdf_ucf.f90 def_std_io_icf.o error_pcf.o
+dimensions_field_ucf.o: dimensions_field_ucf.f90 
+dimensions_fixed_pcf.o: dimensions_fixed_pcf.f90 
+dimensions_pp_ucf.o: dimensions_pp_ucf.f90 
+dimensions_spec_ucf.o: dimensions_spec_ucf.f90 
+distribution_pcf.o: distribution_pcf.f90 
+eig_sys.o: eig_sys.f90 eigenvalue_tri.o parkind1.o realtype_rd.o yomhook.o
+eigenvalue_tri.o: eigenvalue_tri.f90 ereport_mod.o errormessagelength_mod.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+ereport_mod.o: ereport_mod.f90 
+error_pcf.o: error_pcf.f90 
+errormessagelength_mod.o: errormessagelength_mod.f90 filenamelength_mod.o
+eval_uplm.o: eval_uplm.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+exponent_fit_90.o: exponent_fit_90.f90 ck_parm_acf.o def_std_io_icf.o error_pcf.o realtype_rd.o
+file_manager.o: file_manager.f90 ereport_mod.o errormessagelength_mod.o
+file_type_pcf.o: file_type_pcf.f90 
+filenamelength_mod.o: filenamelength_mod.f90 
+filter_function.o: filter_function.f90 def_inst_flt.o error_pcf.o realtype_rd.o spline_fit.o
+finalise_photol_incr_mod.o: finalise_photol_incr_mod.f90 def_atm.o def_control.o def_spectrum.o \
+	gas_list_pcf.o parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+fit_parabola_90.o: fit_parabola_90.f90 realtype_rd.o
+flexchem_driver.o: flexchem_driver.f90 flexchem_input_mod.o flexchem_kinds_mod.o \
+	flexchem_kinetics_mod.o flexchem_mod.o flexchem_test_mod.o \
+	realtype_rd.o
+flexchem_input_mod.o: flexchem_input_mod.f90 flexchem_kinds_mod.o flexchem_mod.o
+flexchem_kinds_mod.o: flexchem_kinds_mod.f90 
+flexchem_kinetics_mod.o: flexchem_kinetics_mod.f90 flexchem_kinds_mod.o flexchem_mod.o
+flexchem_mod.o: flexchem_mod.f90 flexchem_kinds_mod.o
+flexchem_test_mod.o: flexchem_test_mod.f90 flexchem_kinds_mod.o flexchem_mod.o
+ft2qy.o: ft2qy.f90 realtype_rd.o
+func_scale_90.o: func_scale_90.f90 rad_pcf.o realtype_rd.o
+func_scale_derivative_90.o: func_scale_derivative_90.f90 rad_pcf.o realtype_rd.o
+gas_list_pcf.o: gas_list_pcf.f90 realtype_rd.o
+gas_optical_properties.o: gas_optical_properties.f90 parkind1.o realtype_rd.o yomhook.o
+gauss_angle.o: gauss_angle.f90 gaussian_weight_pcf.o monochromatic_ir_radiance.o parkind1.o \
+	rad_ccf.o realtype_rd.o yomhook.o
+gaussian_weight_pcf.o: gaussian_weight_pcf.f90 realtype_rd.o
+get_db_wavelengths.o: get_db_wavelengths.f90 def_sct_db.o def_std_io_icf.o error_pcf.o realtype_rd.o
+get_free_unit.o: get_free_unit.f90 ereport_mod.o rad_pcf.o
+get_refract_index.o: get_refract_index.f90 def_std_io_icf.o error_pcf.o realtype_rd.o spline_fit.o
+get_wavelengths.o: get_wavelengths.f90 def_std_io_icf.o error_pcf.o realtype_rd.o
+grey_opt_prop.o: grey_opt_prop.f90 circumsolar_fraction.o def_control.o def_out.o def_ss_prop.o \
+	ereport_mod.o errormessagelength_mod.o opt_prop_aerosol.o \
+	opt_prop_ice_cloud.o opt_prop_inhom_corr_cairns.o \
+	opt_prop_ukca_aerosol.o opt_prop_water_cloud.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+h2o_continuum.o: h2o_continuum.f90 ckd_extern_data.o gas_list_pcf.o hitran_cnst.o rad_ccf.o \
+	realtype_rd.o spline_evaluate.o spline_fit.o
+hemi_sph_integ.o: hemi_sph_integ.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+hitran_cnst.o: hitran_cnst.f90 realtype_rd.o
+icarus.o: icarus.f90 cosp_config.o cosp_constants.o cosp_kinds.o cosp_stats.o
+ice_db_read_geometry.o: ice_db_read_geometry.f90 db_type_ucf.o def_db_crystal_geometry.o \
+	def_std_io_icf.o error_pcf.o realtype_rd.o spline_fit.o
+ice_scatter.o: ice_scatter.f90 calc_gauss_weight_90.o def_db_crystal_geometry.o \
+	def_db_ss_mono.o def_sct_db.o def_size_dist.o def_std_io_icf.o \
+	dimensions_pp_ucf.o dimensions_spec_ucf.o distribution_pcf.o \
+	error_pcf.o file_type_pcf.o measure_particle_pcf.o parm_integ_acf.o \
+	prec_integral_tcf.o rad_ccf.o realtype_rd.o scatter_algorithm_pcf.o \
+	scatter_pp_pcf.o shape_particle_pcf.o
+ice_size.o: ice_size.f90 def_atm.o def_cld.o def_std_io_icf.o dimensions_cdl_ucf.o \
+	dimensions_field_ucf.o error_pcf.o realtype_rd.o
+icedb2bin.o: icedb2bin.f90 def_sct_db.o def_std_io_icf.o error_pcf.o rad_ccf.o \
+	realtype_rd.o
+increment_rad_cf.o: increment_rad_cf.f90 parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o yomhook.o
+input_head_pcf.o: input_head_pcf.f90 rad_pcf.o realtype_rd.o
+inter_k.o: inter_k.f90 parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+inter_pt.o: inter_pt.f90 parkind1.o realtype_rd.o yomhook.o
+inter_pt_lookup.o: inter_pt_lookup.f90 gas_list_pcf.o parkind1.o rad_ccf.o realtype_rd.o \
+	yomhook.o
+inter_t_lookup.o: inter_t_lookup.f90 parkind1.o realtype_rd.o yomhook.o
+interp1d.o: interp1d.f90 realtype_rd.o
+interp_mode_pcf.o: interp_mode_pcf.f90 
+interpolate_p_mod.o: interpolate_p_mod.f90 ereport_mod.o rad_pcf.o realtype_rd.o spline_evaluate.o \
+	spline_fit.o
+ir_source.o: ir_source.f90 parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+jpl2xsc.o: jpl2xsc.f90 def_hitran_record.o realtype_rd.o
+l_run_cdf.o: l_run_cdf.f90 def_aer.o def_atm.o def_bound.o def_cld.o def_control.o \
+	def_dimen.o def_mcica.o def_out.o def_spectrum.o def_std_io_icf.o \
+	dimensions_cdf_ucf.o dimensions_field_cdf_ucf.o \
+	dimensions_fixed_pcf.o dimensions_spec_ucf.o ereport_mod.o \
+	errormessagelength_mod.o file_manager.o gas_list_pcf.o \
+	input_head_pcf.o nlte_heating_mod.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	socrates_set_cld_mcica.o socrates_set_spectrum.o \
+	sw_nlte_heating_mod.o
+l_run_cdl.o: l_run_cdl.f90 def_aer.o def_atm.o def_bound.o def_cld.o def_control.o \
+	def_dimen.o def_mcica.o def_out.o def_spectrum.o def_std_io_icf.o \
+	dimensions_cdl_ucf.o dimensions_field_ucf.o dimensions_fixed_pcf.o \
+	dimensions_spec_ucf.o ereport_mod.o errormessagelength_mod.o \
+	gas_list_pcf.o input_head_pcf.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	socrates_set_cld_mcica.o socrates_set_spectrum.o
+layer_part_integ.o: layer_part_integ.f90 parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o yomhook.o
+lblcat.o: lblcat.f90 realtype_rd.o
+legendre_mod.o: legendre_mod.f90 realtype_rd.o
+legendre_weight.o: legendre_weight.f90 realtype_rd.o
+lidar_simulator.o: lidar_simulator.f90 cosp_config.o cosp_kinds.o cosp_stats.o
+line_prof_corr_mod.o: line_prof_corr_mod.f90 realtype_rd.o
+line_search_90.o: line_search_90.f90 def_std_io_icf.o rad_pcf.o realtype_rd.o \
+	scale_parameters_acf.o
+line_search_cloud_90.o: line_search_cloud_90.f90 cloud_fit_parm_acf.o cloud_fitting.o def_std_io_icf.o \
+	error_pcf.o realtype_rd.o
+make_block_0.o: make_block_0.f90 def_spectrum.o def_std_io_icf.o dimensions_pp_ucf.o \
+	dimensions_spec_ucf.o gas_list_pcf.o rad_pcf.o realtype_rd.o
+make_block_1.o: make_block_1.f90 def_spectrum.o def_std_io_icf.o error_pcf.o realtype_rd.o
+make_block_10.o: make_block_10.f90 def_spectrum.o def_std_io_icf.o file_type_pcf.o rad_pcf.o \
+	realtype_rd.o
+make_block_11.o: make_block_11.f90 def_spectrum.o def_std_io_icf.o file_type_pcf.o rad_pcf.o \
+	realtype_rd.o scatter_pp_pcf.o aerosol_component.finc
+make_block_12.o: make_block_12.f90 def_spectrum.o def_std_io_icf.o file_type_pcf.o rad_pcf.o \
+	realtype_rd.o
+make_block_14.o: make_block_14.f90 def_spectrum.o def_std_io_icf.o error_pcf.o realtype_rd.o
+make_block_15.o: make_block_15.f90 def_spectrum.o rad_pcf.o realtype_rd.o
+make_block_17.o: make_block_17.f90 def_inst_flt.o def_refract.o def_solarspec.o def_spectrum.o \
+	missing_data_mod.o rad_pcf.o realtype_rd.o
+make_block_18.o: make_block_18.f90 def_spectrum.o
+make_block_19.o: make_block_19.f90 def_spectrum.o file_type_pcf.o rad_pcf.o realtype_rd.o
+make_block_2.o: make_block_2.f90 def_inst_flt.o def_solarspec.o def_spectrum.o \
+	dimensions_pp_ucf.o rad_pcf.o realtype_rd.o
+make_block_20.o: make_block_20.f90 def_spectrum.o def_std_io_icf.o gas_list_pcf.o rad_pcf.o \
+	realtype_rd.o
+make_block_2_1.o: make_block_2_1.f90 def_inst_flt.o def_solarspec.o def_spectrum.o rad_pcf.o \
+	realtype_rd.o spline_evaluate.o
+make_block_3.o: make_block_3.f90 def_refract.o def_solarspec.o def_spectrum.o def_std_io_icf.o \
+	dimensions_pp_ucf.o gas_list_pcf.o rad_pcf.o realtype_rd.o
+make_block_3_1.o: make_block_3_1.f90 def_refract.o def_solarspec.o def_spectrum.o rad_pcf.o \
+	realtype_rd.o
+make_block_4.o: make_block_4.f90 def_spectrum.o def_std_io_icf.o error_pcf.o gas_list_pcf.o \
+	realtype_rd.o
+make_block_5.o: make_block_5.f90 def_spectrum.o file_type_pcf.o rad_pcf.o realtype_rd.o
+make_block_6.o: make_block_6.f90 def_spectrum.o dimensions_spec_ucf.o rad_pcf.o realtype_rd.o
+make_block_8.o: make_block_8.f90 def_spectrum.o def_std_io_icf.o dimensions_spec_ucf.o \
+	rad_pcf.o realtype_rd.o
+make_block_9.o: make_block_9.f90 def_spectrum.o file_type_pcf.o rad_pcf.o realtype_rd.o
+make_filter.o: make_filter.f90 def_inst_flt.o realtype_rd.o
+map_heap_func.o: map_heap_func.f90 realtype_rd.o
+map_shell.o: map_shell.f90 realtype_rd.o
+map_sub_bands_mod.o: map_sub_bands_mod.f90 def_spectrum.o realtype_rd.o
+math_lib.o: math_lib.f90 array_lib.o cosp_errorHandling.o cosp_kinds.o mrgrnk.o
+max_size_acf.o: max_size_acf.f90 realtype_rd.o
+mcica_column.o: mcica_column.f90 calc_actinic_flux_mod.o column_solver.o def_bound.o def_cld.o \
+	def_control.o def_spherical_geometry.o def_ss_prop.o ir_source.o \
+	parkind1.o rad_pcf.o realtype_rd.o set_n_source_coeff.o two_coeff.o \
+	two_coeff_fast_lw.o yomhook.o
+mcica_sample.o: mcica_sample.f90 circumsolar_fraction.o def_atm.o def_bound.o def_cld.o \
+	def_control.o def_dimen.o def_planck.o def_spherical_geometry.o \
+	def_ss_prop.o ereport_mod.o errormessagelength_mod.o \
+	monochromatic_radiance.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+measure_particle_pcf.o: measure_particle_pcf.f90 
+method_merge_pcf.o: method_merge_pcf.f90 
+method_weight_pcf.o: method_weight_pcf.f90 
+MISR_simulator.o: MISR_simulator.f90 cosp_config.o cosp_kinds.o cosp_stats.o
+missing_data_mod.o: missing_data_mod.f90 
+mix_app_scat.o: mix_app_scat.f90 parkind1.o realtype_rd.o yomhook.o
+mix_column.o: mix_column.f90 column_solver.o def_bound.o def_control.o \
+	def_spherical_geometry.o def_ss_prop.o ereport_mod.o \
+	errormessagelength_mod.o ir_source.o mix_app_scat.o \
+	mixed_solar_source.o parkind1.o rad_pcf.o realtype_rd.o \
+	set_n_source_coeff.o solver_mix_direct.o solver_mix_direct_hogan.o \
+	two_coeff.o two_coeff_cloud.o yomhook.o
+mixed_solar_source.o: mixed_solar_source.f90 def_bound.o def_control.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+mo_rng.o: mo_rng.f90 cosp_kinds.o
+modis_simulator.o: modis_simulator.f90 cosp_config.o cosp_kinds.o cosp_stats.o
+monochromatic_gas_flux.o: monochromatic_gas_flux.f90 parkind1.o rad_pcf.o realtype_rd.o vectlib_mod.o \
+	yomhook.o
+monochromatic_ir_radiance.o: monochromatic_ir_radiance.f90 parkind1.o realtype_rd.o yomhook.o
+monochromatic_radiance.o: monochromatic_radiance.f90 calc_contrib_func.o def_atm.o def_bound.o def_cld.o \
+	def_control.o def_planck.o def_spherical_geometry.o def_ss_prop.o \
+	gauss_angle.o monochromatic_radiance_sph.o \
+	monochromatic_radiance_tseq.o parkind1.o rad_pcf.o realtype_rd.o \
+	rescale_tau_csr.o rescale_tau_omega.o single_scattering.o \
+	single_scattering_all.o spherical_trans_coeff.o yomhook.o
+monochromatic_radiance_sph.o: monochromatic_radiance_sph.f90 calc_radiance_ipa.o copy_clr_full.o \
+	copy_clr_sol.o def_control.o def_ss_prop.o ereport_mod.o \
+	errormessagelength_mod.o parkind1.o rad_pcf.o realtype_rd.o \
+	sph_solver.o yomhook.o
+monochromatic_radiance_tseq.o: monochromatic_radiance_tseq.f90 calc_actinic_flux_mod.o calc_flux_ipa.o \
+	copy_clr_full.o def_bound.o def_cld.o def_control.o \
+	def_spherical_geometry.o def_ss_prop.o mcica_column.o mix_column.o \
+	parkind1.o rad_pcf.o realtype_rd.o triple_column.o two_stream.o \
+	yomhook.o
+mrgrnk.o: mrgrnk.f90 cosp_kinds.o
+nlte_heating_data_mod.o: nlte_heating_data_mod.f90 realtype_rd.o
+nlte_heating_mod.o: nlte_heating_mod.f90 interpolate_p_mod.o nlte_heating_data_mod.o realtype_rd.o
+number_particle_90.o: number_particle_90.f90 def_size_dist.o distribution_pcf.o error_pcf.o \
+	max_size_acf.o rad_ccf.o realtype_rd.o spline_evaluate.o
+offset_residual_trans_acf.o: offset_residual_trans_acf.f90 realtype_rd.o
+open_average_90.o: open_average_90.f90 def_std_io_icf.o error_pcf.o realtype_rd.o
+open_file_out_90.o: open_file_out_90.f90 def_std_io_icf.o error_pcf.o
+opt_prop_aerosol.o: opt_prop_aerosol.f90 ereport_mod.o errormessagelength_mod.o parkind1.o \
+	prsc_opt_prop.o rad_pcf.o realtype_rd.o yomhook.o
+opt_prop_baran_mod.o: opt_prop_baran_mod.f90 realtype_rd.o
+opt_prop_fu_phf_mod.o: opt_prop_fu_phf_mod.f90 realtype_rd.o
+opt_prop_ice_cloud.o: opt_prop_ice_cloud.f90 ereport_mod.o errormessagelength_mod.o \
+	opt_prop_baran_mod.o opt_prop_fu_phf_mod.o opt_prop_pade_2_mod.o \
+	parkind1.o prsc_opt_prop.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	yomhook.o
+opt_prop_inhom_corr_cairns.o: opt_prop_inhom_corr_cairns.f90 parkind1.o realtype_rd.o yomhook.o
+opt_prop_pade_2_mod.o: opt_prop_pade_2_mod.f90 realtype_rd.o
+opt_prop_ukca_aerosol.o: opt_prop_ukca_aerosol.f90 parkind1.o realtype_rd.o yomhook.o
+opt_prop_water_cloud.o: opt_prop_water_cloud.f90 ereport_mod.o errormessagelength_mod.o \
+	opt_prop_pade_2_mod.o parkind1.o prsc_opt_prop.o rad_ccf.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+optics_lib.o: optics_lib.f90 cosp_errorHandling.o cosp_kinds.o
+optimal_k.o: optimal_k.f90 ck_parm_acf.o def_std_io_icf.o error_pcf.o realtype_rd.o
+orb_elem.o: orb_elem.f90 coord_transforms.o realtype_rd.o
+orbprm_mod.o: orbprm_mod.f90 astro_constants_mod.o parkind1.o rad_ccf.o realtype_rd.o \
+	yomhook.o
+out_spectrum.o: out_spectrum.f90 def_spectrum.o def_std_io_icf.o gas_list_pcf.o \
+	missing_data_mod.o rad_pcf.o
+overlap_coupled.o: overlap_coupled.f90 parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+parasol.o: parasol.f90 cosp_config.o cosp_constants.o cosp_kinds.o
+parkind1.o: parkind1.f90 
+parm_integ_acf.o: parm_integ_acf.f90 realtype_rd.o
+particle_size_90.o: particle_size_90.f90 def_size_dist.o def_std_io_icf.o distribution_pcf.o \
+	error_pcf.o measure_particle_pcf.o realtype_rd.o shape_particle_pcf.o \
+	spline_fit.o
+phoenix2sol.o: phoenix2sol.f90 def_solarspec.o rad_ccf.o realtype_rd.o
+planck_90.o: planck_90.f90 rad_ccf.o realtype_rd.o
+planck_flux_band_mod.o: planck_flux_band_mod.f90 def_spectrum.o interp1d.o realtype_rd.o
+polynomialroots.o: polynomialroots.f90 
+prec_integral_tcf.o: prec_integral_tcf.f90 realtype_rd.o
+prec_scops.o: prec_scops.f90 cosp_config.o cosp_kinds.o
+prep_spec.o: prep_spec.f90 def_solarspec.o def_spectrum.o dimensions_pp_ucf.o \
+	dimensions_spec_ucf.o gas_list_pcf.o rad_pcf.o realtype_rd.o
+proj_area_particle.o: proj_area_particle.f90 def_db_crystal_geometry.o def_std_io_icf.o error_pcf.o \
+	measure_particle_pcf.o rad_ccf.o realtype_rd.o shape_particle_pcf.o \
+	spline_evaluate.o
+prsc_gather_spline.o: prsc_gather_spline.f90 rad_pcf.o realtype_rd.o spline_evaluate.o spline_fit.o
+prsc_opt_prop.o: prsc_opt_prop.f90 prsc_gather_spline.o realtype_rd.o
+qsat_alg_pcf.o: qsat_alg_pcf.f90 
+qsat_gill.o: qsat_gill.f90 realtype_rd.o
+qsat_wat.o: qsat_wat.f90 gas_list_pcf.o parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+qtxt2parsum.o: qtxt2parsum.f90 hitran_cnst.o realtype_rd.o
+quickbeam.o: quickbeam.f90 cosp_config.o cosp_kinds.o cosp_stats.o
+quickbeam_optics.o: quickbeam_optics.f90 array_lib.o cosp_config.o cosp_constants.o \
+	cosp_errorHandling.o cosp_kinds.o math_lib.o optics_lib.o quickbeam.o
+quicksort.o: quicksort.f90 ereport_mod.o errormessagelength_mod.o rad_pcf.o realtype_rd.o
+rad_ccf.o: rad_ccf.f90 gas_list_pcf.o realtype_rd.o
+rad_pcf.o: rad_pcf.f90 
+rad_weight_90.o: rad_weight_90.f90 def_solarspec.o realtype_rd.o weighting_pcf.o
+radiance_calc.o: radiance_calc.f90 adjust_ir_radiance.o aggregate_cloud.o calc_brdf.o \
+	calc_cg_coeff.o calc_uplm_sol.o calc_uplm_zero.o check_phf_term.o \
+	cloud_maxcs_split.o def_aer.o def_atm.o def_bound.o def_cld.o \
+	def_control.o def_dimen.o def_out.o def_planck.o def_qy.o \
+	def_spectrum.o def_spherical_geometry.o def_ss_prop.o \
+	diff_albedo_basis.o diff_planck_source_mod.o ereport_mod.o \
+	errormessagelength_mod.o gas_list_pcf.o grey_opt_prop.o inter_k.o \
+	inter_pt.o inter_pt_lookup.o inter_t_lookup.o overlap_coupled.o \
+	parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o rescale_continuum.o \
+	rescale_phase_fnc.o scale_absorb.o ses_rescale_contm.o \
+	set_cloud_geometry.o set_cloud_pointer.o set_rad_layer.o \
+	set_truncation.o sol_scat_cos.o solve_band_k_eqv_scl.o \
+	solve_band_random_overlap.o solve_band_random_overlap_resort_rebin.o \
+	solve_band_ses.o solve_band_without_gas.o spherical_path.o sum_k.o \
+	yomhook.o
+rand_gauss.o: rand_gauss.f90 realtype_rd.o
+rayleigh_jeans_tail.o: rayleigh_jeans_tail.f90 def_solarspec.o rad_ccf.o realtype_rd.o
+rayleigh_scatter.o: rayleigh_scatter.f90 gas_list_pcf.o rad_ccf.o realtype_rd.o refract_re_ccf.o
+rayleigh_scatter_h2he.o: rayleigh_scatter_h2he.f90 interp1d.o rad_ccf.o realtype_rd.o
+read_cdf.o: read_cdf.f90 def_std_io_icf.o error_pcf.o realtype_rd.o cdf_struc.finc
+read_hitran.o: read_hitran.f90 def_hitran_record.o gas_list_pcf.o hitran_cnst.o realtype_rd.o
+read_instrument_response_90.o: read_instrument_response_90.f90 def_inst_flt.o def_std_io_icf.o error_pcf.o \
+	realtype_rd.o unit_list_pcf.o
+read_nc.o: read_nc.f90 realtype_rd.o
+read_pt_line_90.o: read_pt_line_90.f90 def_std_io_icf.o error_pcf.o realtype_rd.o
+read_ref_pt_90.o: read_ref_pt_90.f90 def_std_io_icf.o dimensions_pp_ucf.o dimensions_spec_ucf.o \
+	error_pcf.o gas_list_pcf.o realtype_rd.o
+read_scatter_block_90.o: read_scatter_block_90.f90 def_s_scat_prop.o def_std_io_icf.o error_pcf.o \
+	file_type_pcf.o realtype_rd.o scatter_pp_pcf.o
+read_schema_spectrum_90.o: read_schema_spectrum_90.f90 def_std_io_icf.o dimensions_spec_ucf.o error_pcf.o \
+	gas_list_pcf.o realtype_rd.o
+read_solar_spectrum.o: read_solar_spectrum.f90 def_solarspec.o def_std_io_icf.o rad_ccf.o rad_pcf.o \
+	realtype_rd.o
+read_spectrum.o: read_spectrum.f90 def_spectrum.o dimensions_spec_ucf.o ereport_mod.o \
+	errormessagelength_mod.o file_manager.o gas_list_pcf.o rad_pcf.o \
+	realtype_rd.o
+realtype_rd.o: realtype_rd.f90 
+realtypefx_rd.o: realtypefx_rd.f90 
+rebin_esft_terms.o: rebin_esft_terms.f90 realtype_rd.o
+reduce_casim_ice.o: reduce_casim_ice.f90 file_type_pcf.o rad_ccf.o realtype_rd.o \
+	scatter_algorithm_pcf.o scatter_pp_pcf.o
+refract_re_ccf.o: refract_re_ccf.f90 gas_list_pcf.o realtype_rd.o
+remove_negative_cont_90.o: remove_negative_cont_90.f90 def_std_io_icf.o rad_pcf.o realtype_rd.o
+remove_negative_gas_90.o: remove_negative_gas_90.f90 def_std_io_icf.o dimensions_spec_ucf.o rad_pcf.o \
+	realtype_rd.o
+rescale_continuum.o: rescale_continuum.f90 def_control.o parkind1.o rad_ccf.o rad_pcf.o \
+	realtype_rd.o vectlib_mod.o yomhook.o
+rescale_phase_fnc.o: rescale_phase_fnc.f90 parkind1.o realtype_rd.o yomhook.o
+rescale_tau_csr.o: rescale_tau_csr.f90 realtype_rd.o
+rescale_tau_omega.o: rescale_tau_omega.f90 parkind1.o realtype_rd.o yomhook.o
+residual_gradient_90.o: residual_gradient_90.f90 offset_residual_trans_acf.o rad_pcf.o realtype_rd.o \
+	type_residual_pcf.o
+residual_trans_90.o: residual_trans_90.f90 offset_residual_trans_acf.o realtype_rd.o \
+	type_residual_pcf.o
+runes_driver.o: runes_driver.f90 realtype_rd.o socrates_runes.o socrates_set_spectrum.o
+runes_nc.o: runes_nc.f90 ereport_mod.o errormessagelength_mod.o rad_pcf.o realtype_rd.o \
+	runes_nc_nml_mod.o socrates_runes.o socrates_set_spectrum.o
+runes_nc_nml_mod.o: runes_nc_nml_mod.f90 realtype_rd.o
+scale_absorb.o: scale_absorb.f90 ereport_mod.o errormessagelength_mod.o parkind1.o rad_pcf.o \
+	realtype_rd.o scale_wenyi.o vectlib_mod.o yomhook.o
+scale_ck_fit_90.o: scale_ck_fit_90.f90 def_std_io_icf.o rad_pcf.o realtype_rd.o
+scale_parameters_acf.o: scale_parameters_acf.f90 realtype_rd.o
+scale_wenyi.o: scale_wenyi.f90 realtype_rd.o
+scatter_90.o: scatter_90.f90 calc_gauss_weight_90.o def_size_dist.o def_std_io_icf.o \
+	dimensions_pp_ucf.o dimensions_spec_ucf.o distribution_pcf.o \
+	file_type_pcf.o parm_integ_acf.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	scatter_algorithm_pcf.o scatter_pp_pcf.o shape_particle_pcf.o \
+	spline_fit.o
+scatter_algorithm_pcf.o: scatter_algorithm_pcf.f90 
+scatter_average_90.o: scatter_average_90.f90 def_inst_flt.o def_s_scat_prop.o def_solarspec.o \
+	def_spectrum.o def_std_io_icf.o dimensions_pp_ucf.o \
+	dimensions_spec_ucf.o error_pcf.o file_type_pcf.o method_weight_pcf.o \
+	realtype_rd.o scatter_pp_pcf.o
+scatter_integral_90.o: scatter_integral_90.f90 def_db_crystal_geometry.o def_size_dist.o \
+	def_std_io_icf.o error_pcf.o prec_integral_tcf.o rad_ccf.o \
+	realtype_rd.o scatter_algorithm_pcf.o shape_particle_pcf.o
+scatter_pp_pcf.o: scatter_pp_pcf.f90 
+scops.o: scops.f90 cosp_errorHandling.o cosp_kinds.o mo_rng.o
+select_weight_ck_90.o: select_weight_ck_90.f90 def_solarspec.o def_std_io_icf.o error_pcf.o \
+	realtype_rd.o weighting_pcf.o
+select_weight_scatter_90.o: select_weight_scatter_90.f90 def_solarspec.o def_std_io_icf.o \
+	dimensions_pp_ucf.o error_pcf.o method_weight_pcf.o realtype_rd.o \
+	weighting_pcf.o
+ser2uvxsc.o: ser2uvxsc.f90 def_hitran_record.o realtype_rd.o
+ser2xsc.o: ser2xsc.f90 def_hitran_record.o realtype_rd.o
+ses_rescale_contm.o: ses_rescale_contm.f90 parkind1.o rad_ccf.o rad_pcf.o realtype_rd.o yomhook.o
+set_cloud_geometry.o: set_cloud_geometry.f90 parkind1.o realtype_rd.o yomhook.o
+set_cloud_pointer.o: set_cloud_pointer.f90 ereport_mod.o errormessagelength_mod.o parkind1.o \
+	rad_pcf.o yomhook.o
+set_condition_ck_90.o: set_condition_ck_90.f90 ck_fit_pcf.o def_std_io_icf.o gas_list_pcf.o \
+	line_prof_corr_mod.o rad_pcf.o realtype_rd.o type_residual_pcf.o
+set_dirn_weights.o: set_dirn_weights.f90 ereport_mod.o errormessagelength_mod.o parkind1.o \
+	rad_ccf.o rad_pcf.o realtype_rd.o yomhook.o
+set_extern_ckd_frn_data.o: set_extern_ckd_frn_data.f90 ckd_extern_data.o def_std_io_icf.o error_pcf.o \
+	realtype_rd.o
+set_extern_ckd_self_data.o: set_extern_ckd_self_data.f90 ckd_extern_data.o def_std_io_icf.o error_pcf.o \
+	realtype_rd.o
+set_g_point_90.o: set_g_point_90.f90 ck_fit_pcf.o ck_parm_acf.o def_std_io_icf.o error_pcf.o \
+	realtype_rd.o
+set_interactive.o: set_interactive.f90 
+set_level_weights.o: set_level_weights.f90 parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+set_matrix_pentadiagonal.o: set_matrix_pentadiagonal.f90 parkind1.o realtype_rd.o yomhook.o
+set_moist_aerosol_properties.o: set_moist_aerosol_properties.f90 ereport_mod.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+set_n_cloud_parameter.o: set_n_cloud_parameter.f90 parkind1.o rad_pcf.o yomhook.o
+set_n_source_coeff.o: set_n_source_coeff.f90 parkind1.o rad_pcf.o yomhook.o
+set_rad_layer.o: set_rad_layer.f90 ereport_mod.o errormessagelength_mod.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+set_truncation.o: set_truncation.f90 ereport_mod.o errormessagelength_mod.o parkind1.o rad_pcf.o \
+	yomhook.o
+shape_particle_pcf.o: shape_particle_pcf.f90 
+shell_sort.o: shell_sort.f90 parkind1.o realtype_rd.o yomhook.o
+single_scat_sol.o: single_scat_sol.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+single_scattering.o: single_scattering.f90 parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+single_scattering_all.o: single_scattering_all.f90 def_ss_prop.o parkind1.o realtype_rd.o \
+	single_scattering.o yomhook.o
+size_integral_90.o: size_integral_90.f90 def_db_crystal_geometry.o def_size_dist.o \
+	def_std_io_icf.o error_pcf.o prec_integral_tcf.o rad_ccf.o \
+	realtype_rd.o shape_particle_pcf.o
+socrates_bones.o: socrates_bones.f90 rad_ccf.o realtype_rd.o
+socrates_cloud_abs_diag.o: socrates_cloud_abs_diag.f90 def_atm.o def_cld.o def_control.o def_dimen.o \
+	def_spectrum.o ereport_mod.o errormessagelength_mod.o \
+	opt_prop_baran_mod.o opt_prop_fu_phf_mod.o opt_prop_pade_2_mod.o \
+	planck_flux_band_mod.o rad_pcf.o realtype_rd.o set_cloud_geometry.o
+socrates_cloud_ext_diag.o: socrates_cloud_ext_diag.f90 def_atm.o def_cld.o def_control.o def_dimen.o \
+	def_spectrum.o ereport_mod.o errormessagelength_mod.o \
+	opt_prop_baran_mod.o opt_prop_fu_phf_mod.o opt_prop_pade_2_mod.o \
+	rad_pcf.o realtype_rd.o set_cloud_geometry.o
+socrates_cloud_gen.o: socrates_cloud_gen.f90 ereport_mod.o parkind1.o realtype_rd.o yomhook.o
+socrates_cloud_level_diag.o: socrates_cloud_level_diag.f90 def_atm.o def_cld.o def_control.o def_dimen.o \
+	ereport_mod.o errormessagelength_mod.o rad_pcf.o realtype_rd.o
+socrates_def_diag.o: socrates_def_diag.f90 gas_list_pcf.o realtype_rd.o
+socrates_horizon_1d.o: socrates_horizon_1d.f90 rad_ccf.o realtype_rd.o
+socrates_horizon_2d.o: socrates_horizon_2d.f90 rad_ccf.o realtype_rd.o socrates_horizon_1d.o
+socrates_illuminate.o: socrates_illuminate.f90 def_orbit.o realtype_rd.o solang_mod.o solinc_mod.o \
+	solpos_mod.o
+socrates_runes.o: socrates_runes.f90 def_aer.o def_atm.o def_bound.o def_cld.o def_control.o \
+	def_dimen.o def_mcica.o def_out.o def_spectrum.o ereport_mod.o \
+	errormessagelength_mod.o rad_pcf.o realtype_rd.o socrates_def_diag.o \
+	socrates_set_aer.o socrates_set_atm.o socrates_set_bound.o \
+	socrates_set_cld.o socrates_set_cld_dim.o socrates_set_cld_mcica.o \
+	socrates_set_control.o socrates_set_diag.o socrates_set_dimen.o \
+	socrates_set_spectrum.o
+socrates_set_aer.o: socrates_set_aer.f90 def_aer.o def_control.o def_dimen.o def_spectrum.o \
+	rad_pcf.o realtype_rd.o
+socrates_set_atm.o: socrates_set_atm.f90 def_atm.o def_control.o def_dimen.o def_spectrum.o \
+	gas_list_pcf.o realtype_rd.o
+socrates_set_bound.o: socrates_set_bound.f90 def_bound.o def_control.o def_dimen.o def_spectrum.o \
+	rad_pcf.o realtype_rd.o
+socrates_set_cld.o: socrates_set_cld.f90 def_atm.o def_cld.o def_control.o def_dimen.o \
+	def_spectrum.o ereport_mod.o errormessagelength_mod.o rad_pcf.o \
+	realtype_rd.o
+socrates_set_cld_dim.o: socrates_set_cld_dim.f90 def_atm.o def_cld.o def_control.o def_dimen.o \
+	def_spectrum.o ereport_mod.o errormessagelength_mod.o rad_ccf.o \
+	rad_pcf.o realtype_rd.o
+socrates_set_cld_mcica.o: socrates_set_cld_mcica.f90 def_atm.o def_cld.o def_control.o def_dimen.o \
+	def_mcica.o def_spectrum.o ereport_mod.o errormessagelength_mod.o \
+	rad_pcf.o realtype_rd.o socrates_cloud_gen.o
+socrates_set_control.o: socrates_set_control.f90 def_control.o def_mcica.o def_spectrum.o \
+	ereport_mod.o errormessagelength_mod.o gas_list_pcf.o \
+	missing_data_mod.o rad_pcf.o realtype_rd.o socrates_def_diag.o \
+	socrates_set_spectrum.o
+socrates_set_diag.o: socrates_set_diag.f90 def_aer.o def_atm.o def_bound.o def_cld.o def_control.o \
+	def_dimen.o def_mcica.o def_out.o def_spectrum.o rad_pcf.o \
+	realtype_rd.o socrates_cloud_abs_diag.o socrates_cloud_ext_diag.o \
+	socrates_cloud_level_diag.o socrates_def_diag.o
+socrates_set_dimen.o: socrates_set_dimen.f90 def_control.o def_dimen.o def_mcica.o ereport_mod.o \
+	errormessagelength_mod.o rad_pcf.o
+socrates_set_spectrum.o: socrates_set_spectrum.f90 def_mcica.o def_spectrum.o ereport_mod.o \
+	errormessagelength_mod.o gas_list_pcf.o map_sub_bands_mod.o \
+	missing_data_mod.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+socrates_set_topography.o: socrates_set_topography.f90 ereport_mod.o errormessagelength_mod.o \
+	missing_data_mod.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+sol_scat_cos.o: sol_scat_cos.f90 parkind1.o realtype_rd.o yomhook.o
+solang_mod.o: solang_mod.f90 def_orbit.o parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+solar_coefficient_basic.o: solar_coefficient_basic.f90 def_control.o ereport_mod.o \
+	errormessagelength_mod.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+solar_intensity.o: solar_intensity.f90 def_solarspec.o rad_ccf.o realtype_rd.o
+solar_intensity_90.o: solar_intensity_90.f90 def_solarspec.o dimensions_pp_ucf.o rad_ccf.o \
+	realtype_rd.o
+solar_source.o: solar_source.f90 def_bound.o def_control.o parkind1.o rad_pcf.o realtype_rd.o \
+	yomhook.o
+solinc_mod.o: solinc_mod.f90 parkind1.o rad_ccf.o realtype_rd.o yomhook.o
+solpos_mod.o: solpos_mod.f90 def_orbit.o orbprm_mod.o parkind1.o rad_ccf.o realtype_rd.o \
+	yomhook.o
+solve_band_k_eqv_scl.o: solve_band_k_eqv_scl.f90 augment_radiance.o augment_tiled_radiance.o def_atm.o \
+	def_bound.o def_cld.o def_control.o def_dimen.o def_out.o \
+	def_planck.o def_qy.o def_spectrum.o def_spherical_geometry.o \
+	def_ss_prop.o diffusivity_factor.o mcica_sample.o \
+	monochromatic_gas_flux.o monochromatic_radiance.o parkind1.o \
+	rad_pcf.o realtype_rd.o vectlib_mod.o yomhook.o
+solve_band_random_overlap.o: solve_band_random_overlap.f90 augment_radiance.o augment_tiled_radiance.o \
+	def_atm.o def_bound.o def_cld.o def_control.o def_dimen.o def_out.o \
+	def_planck.o def_qy.o def_spectrum.o def_spherical_geometry.o \
+	def_ss_prop.o gas_optical_properties.o mcica_sample.o \
+	monochromatic_radiance.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+solve_band_random_overlap_resort_rebin.o: solve_band_random_overlap_resort_rebin.f90 augment_radiance.o \
+	augment_tiled_radiance.o calc_gauss_weight_90.o def_atm.o def_bound.o \
+	def_cld.o def_control.o def_dimen.o def_out.o def_planck.o def_qy.o \
+	def_spectrum.o def_spherical_geometry.o def_ss_prop.o \
+	monochromatic_radiance.o parkind1.o quicksort.o rad_pcf.o \
+	realtype_rd.o rebin_esft_terms.o yomhook.o
+solve_band_ses.o: solve_band_ses.f90 augment_radiance.o augment_tiled_radiance.o def_atm.o \
+	def_bound.o def_cld.o def_control.o def_dimen.o def_out.o \
+	def_planck.o def_qy.o def_spectrum.o def_spherical_geometry.o \
+	def_ss_prop.o mcica_sample.o monochromatic_radiance.o parkind1.o \
+	rad_pcf.o realtype_rd.o yomhook.o
+solve_band_without_gas.o: solve_band_without_gas.f90 augment_radiance.o augment_tiled_radiance.o \
+	def_atm.o def_bound.o def_cld.o def_control.o def_dimen.o def_out.o \
+	def_planck.o def_qy.o def_spectrum.o def_spherical_geometry.o \
+	def_ss_prop.o monochromatic_radiance.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+solver_homogen_direct.o: solver_homogen_direct.f90 parkind1.o realtype_rd.o yomhook.o
+solver_mix_direct.o: solver_mix_direct.f90 parkind1.o realtype_rd.o yomhook.o
+solver_mix_direct_hogan.o: solver_mix_direct_hogan.f90 parkind1.o realtype_rd.o yomhook.o
+solver_no_scat.o: solver_no_scat.f90 parkind1.o realtype_rd.o yomhook.o
+solver_triple.o: solver_triple.f90 parkind1.o realtype_rd.o yomhook.o
+solver_triple_app_scat.o: solver_triple_app_scat.f90 parkind1.o realtype_rd.o yomhook.o
+solver_triple_hogan.o: solver_triple_hogan.f90 parkind1.o realtype_rd.o yomhook.o
+sph_matrix_solver.o: sph_matrix_solver.f90 parkind1.o realtype_rd.o yomhook.o
+sph_solver.o: sph_solver.f90 build_sph_matrix.o cg_kappa_ms.o eval_uplm.o hemi_sph_integ.o \
+	increment_rad_cf.o parkind1.o rad_pcf.o realtype_rd.o \
+	single_scat_sol.o sph_matrix_solver.o yomhook.o
+spherical_path.o: spherical_path.f90 def_atm.o def_bound.o def_dimen.o def_spherical_geometry.o \
+	parkind1.o realtype_rd.o yomhook.o
+spherical_solar_source.o: spherical_solar_source.f90 def_bound.o def_spherical_geometry.o parkind1.o \
+	rad_pcf.o realtype_rd.o yomhook.o
+spherical_trans_coeff.o: spherical_trans_coeff.f90 def_spherical_geometry.o def_ss_prop.o parkind1.o \
+	realtype_rd.o vectlib_mod.o yomhook.o
+spline_evaluate.o: spline_evaluate.f90 rad_pcf.o realtype_rd.o
+spline_fit.o: spline_fit.f90 realtype_rd.o
+sum_k.o: sum_k.f90 ereport_mod.o errormessagelength_mod.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+sum_unity.o: sum_unity.f90 dimensions_spec_ucf.o realtype_rd.o
+sw_nlte_heating_mod.o: sw_nlte_heating_mod.f90 interpolate_p_mod.o nlte_heating_data_mod.o \
+	realtype_rd.o
+terminate_scale_90.o: terminate_scale_90.f90 def_std_io_icf.o rad_pcf.o realtype_rd.o
+tidy_90.o: tidy_90.f90 def_spectrum.o def_std_io_icf.o error_pcf.o gas_list_pcf.o \
+	rad_pcf.o realtype_rd.o
+trans_k_dist.o: trans_k_dist.f90 realtype_rd.o
+trans_source_coeff.o: trans_source_coeff.f90 def_control.o parkind1.o rad_pcf.o realtype_rd.o \
+	vectlib_mod.o yomhook.o
+trapezoid_90.o: trapezoid_90.f90 realtype_rd.o
+triple_column.o: triple_column.f90 column_solver.o def_bound.o def_control.o \
+	def_spherical_geometry.o def_ss_prop.o ereport_mod.o \
+	errormessagelength_mod.o ir_source.o parkind1.o rad_pcf.o \
+	realtype_rd.o set_n_source_coeff.o solver_triple.o \
+	solver_triple_app_scat.o solver_triple_hogan.o triple_solar_source.o \
+	two_coeff_region.o two_coeff_region_fast_lw.o yomhook.o
+triple_solar_source.o: triple_solar_source.f90 def_bound.o def_control.o parkind1.o rad_pcf.o \
+	realtype_rd.o yomhook.o
+tune_weights.o: tune_weights.f90 def_atm.o def_spectrum.o def_std_io_icf.o \
+	dimensions_cdl_ucf.o dimensions_field_ucf.o gas_list_pcf.o rad_ccf.o \
+	rad_pcf.o realtype_rd.o
+two_coeff.o: two_coeff.f90 def_control.o parkind1.o rad_pcf.o realtype_rd.o \
+	solar_coefficient_basic.o trans_source_coeff.o two_coeff_basic.o \
+	vectlib_mod.o yomhook.o
+two_coeff_basic.o: two_coeff_basic.f90 diffusivity_factor.o ereport_mod.o \
+	errormessagelength_mod.o parkind1.o rad_pcf.o realtype_rd.o yomhook.o
+two_coeff_cloud.o: two_coeff_cloud.f90 def_control.o def_spherical_geometry.o parkind1.o \
+	rad_pcf.o realtype_rd.o two_coeff.o yomhook.o
+two_coeff_fast_lw.o: two_coeff_fast_lw.f90 parkind1.o rad_pcf.o realtype_rd.o vectlib_mod.o \
+	yomhook.o
+two_coeff_region.o: two_coeff_region.f90 def_control.o def_spherical_geometry.o parkind1.o \
+	rad_pcf.o realtype_rd.o two_coeff.o yomhook.o
+two_coeff_region_fast_lw.o: two_coeff_region_fast_lw.f90 ereport_mod.o errormessagelength_mod.o parkind1.o \
+	rad_pcf.o realtype_rd.o two_coeff_fast_lw.o yomhook.o
+two_stream.o: two_stream.f90 column_solver.o def_bound.o def_control.o \
+	def_spherical_geometry.o ir_source.o parkind1.o rad_pcf.o \
+	realtype_rd.o two_coeff.o two_coeff_fast_lw.o yomhook.o
+type_residual_pcf.o: type_residual_pcf.f90 
+unit_list_pcf.o: unit_list_pcf.f90 
+vectlib_mod.o: vectlib_mod.f90 parkind1.o realtype_rd.o yomhook.o
+voigt_profile.o: voigt_profile.f90 realtype_rd.o
+volume_particle.o: volume_particle.f90 def_db_crystal_geometry.o def_std_io_icf.o error_pcf.o \
+	measure_particle_pcf.o rad_ccf.o realtype_rd.o shape_particle_pcf.o \
+	spline_evaluate.o
+weighting_pcf.o: weighting_pcf.f90 
+weightings_90.o: weightings_90.f90 def_inst_flt.o def_solarspec.o def_std_io_icf.o \
+	dimensions_pp_ucf.o dimensions_spec_ucf.o error_pcf.o realtype_rd.o
+weightings_single_90.o: weightings_single_90.f90 def_inst_flt.o def_solarspec.o def_std_io_icf.o \
+	dimensions_pp_ucf.o error_pcf.o realtype_rd.o spline_evaluate.o
+write_average_90.o: write_average_90.f90 def_s_scat_prop.o file_type_pcf.o realtype_rd.o \
+	scatter_pp_pcf.o
+write_cdf.o: write_cdf.f90 def_std_io_icf.o error_pcf.o realtype_rd.o cdf_struc.finc
+write_fit_90.o: write_fit_90.f90 file_type_pcf.o rad_pcf.o realtype_rd.o
+write_nc.o: write_nc.f90 realtype_rd.o
+write_samson.o: write_samson.f90 def_std_io_icf.o error_pcf.o realtype_rd.o cdf_struc.finc
+write_solar_spectrum.o: write_solar_spectrum.f90 def_solarspec.o def_std_io_icf.o rad_pcf.o
+xsc2xsc.o: xsc2xsc.f90 def_hitran_record.o def_std_io_icf.o realtype_rd.o
+yomhook.o: yomhook.f90 parkind1.o
+adt_integral.o: adt_integral.f bna_factor_ccf.o realtype_rd.o
+angular_control.o: angular_control.f def_std_io_icf.o gas_list_pcf.o input_head_pcf.o rad_ccf.o \
+	rad_pcf.o realtype_rd.o cdl_struc.finc
+angular_control_cdf.o: angular_control_cdf.f def_std_io_icf.o gas_list_pcf.o input_head_pcf.o \
+	rad_ccf.o rad_pcf.o realtype_rd.o cdl_struc.finc
+assign_horiz_cdl.o: assign_horiz_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+assign_input_novert_cdf.o: assign_input_novert_cdf.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_input_novert_cdl.o: assign_input_novert_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_input_opt_cdf.o: assign_input_opt_cdf.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_input_opt_cdl.o: assign_input_opt_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_input_ss_cdl.o: assign_input_ss_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_input_vert_cdf.o: assign_input_vert_cdf.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_input_vert_cdl.o: assign_input_vert_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_surface_char_cdf.o: assign_surface_char_cdf.f def_std_io_icf.o rad_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_surface_char_cdl.o: assign_surface_char_cdl.f def_std_io_icf.o rad_pcf.o realtype_rd.o \
+	cdl_struc.finc
+assign_viewing_geom_cdf.o: assign_viewing_geom_cdf.f def_std_io_icf.o error_pcf.o rad_ccf.o \
+	realtype_rd.o cdl_struc.finc
+assign_viewing_geom_cdl.o: assign_viewing_geom_cdl.f def_std_io_icf.o error_pcf.o rad_ccf.o \
+	realtype_rd.o cdl_struc.finc
+back_substitute.o: back_substitute.f realtype_rd.o
+calc_cdl_stride.o: calc_cdl_stride.f realtype_rd.o
+calc_planck_tbl.o: calc_planck_tbl.f def_std_io_icf.o dimensions_pp_ucf.o dimensions_spec_ucf.o \
+	rad_pcf.o realtype_rd.o
+calc_thermal_coeff.o: calc_thermal_coeff.f def_std_io_icf.o dimensions_pp_ucf.o \
+	dimensions_spec_ucf.o rad_pcf.o realtype_rd.o
+calc_volume_fraction.o: calc_volume_fraction.f realtype_rd.o
+dentomix.o: dentomix.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o gas_list_pcf.o rad_ccf.o realtype_rd.o
+dentomix_cdf.o: dentomix_cdf.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o gas_list_pcf.o rad_ccf.o realtype_rd.o
+dentoq.o: dentoq.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o gas_list_pcf.o rad_ccf.o realtype_rd.o
+dewtoq.o: dewtoq.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o qsat_alg_pcf.o realtype_rd.o batch_error_main.finc
+disort_interface.o: disort_interface.f def_std_io_icf.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	set_rad_layer.o call_disort.finc dec_disort.finc
+extinction_profile.o: extinction_profile.f aerosol_representation_pcf.o realtype_rd.o
+find_dimen_cdl.o: find_dimen_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+find_var_cdl.o: find_var_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+fnc_density.o: fnc_density.f gas_list_pcf.o rad_ccf.o realtype_rd.o
+format_size.o: format_size.f def_data_in_icf.o def_std_io_icf.o dimensions_pp_ucf.o \
+	error_pcf.o realtype_rd.o
+fval.o: fval.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o interpolate_p_mod.o realtype_rd.o batch_error_main.finc
+gamma_fnc.o: gamma_fnc.f def_std_io_icf.o error_pcf.o realtype_rd.o
+gen_horiz_cdl.o: gen_horiz_cdl.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o realtype_rd.o batch_error_main.finc
+gen_null.o: gen_null.f def_data_in_icf.o def_std_io_icf.o dimensions_cdl_ucf.o \
+	dimensions_field_ucf.o gas_list_pcf.o input_head_pcf.o rad_pcf.o \
+	realtype_rd.o shell_sort.o batch_error_main.finc
+gen_surf_cdl.o: gen_surf_cdl.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	dimensions_spec_ucf.o error_pcf.o realtype_rd.o batch_error_main.finc
+gen_view_cdl.o: gen_view_cdl.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o realtype_rd.o batch_error_main.finc
+genln2cdf.o: genln2cdf.f def_std_io_icf.o dimensions_cdl_ucf.o error_pcf.o realtype_rd.o
+grow_particles.o: grow_particles.f def_std_io_icf.o rad_pcf.o realtype_rd.o
+hmrsph.o: hmrsph.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o realtype_rd.o
+inc_field.o: inc_field.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o realtype_rd.o
+inner_bracket.o: inner_bracket.f def_std_io_icf.o rad_pcf.o realtype_rd.o
+input_aerosol_cdf.o: input_aerosol_cdf.f def_std_io_icf.o gas_list_pcf.o input_head_pcf.o \
+	rad_pcf.o realtype_rd.o
+input_aerosol_cdl.o: input_aerosol_cdl.f def_std_io_icf.o gas_list_pcf.o input_head_pcf.o \
+	rad_pcf.o realtype_rd.o
+input_cloud_cdf.o: input_cloud_cdf.f def_std_io_icf.o gas_list_pcf.o input_head_pcf.o rad_pcf.o \
+	realtype_rd.o
+input_cloud_cdl.o: input_cloud_cdl.f def_std_io_icf.o gas_list_pcf.o input_head_pcf.o rad_pcf.o \
+	realtype_rd.o
+integrate_spline.o: integrate_spline.f def_std_io_icf.o rad_pcf.o realtype_rd.o
+interp.o: interp.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o filenamelength_mod.o interpolate_p_mod.o realtype_rd.o \
+	batch_error_main.finc
+interp_cdf.o: interp_cdf.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o filenamelength_mod.o interpolate_p_mod.o realtype_rd.o \
+	batch_error_main.finc
+l_find_component.o: l_find_component.f dimensions_spec_ucf.o realtype_rd.o
+lock_code.o: lock_code.f def_std_io_icf.o realtype_rd.o
+make_block_6_1.o: make_block_6_1.f def_std_io_icf.o dimensions_spec_ucf.o rad_ccf.o rad_pcf.o \
+	realtype_rd.o
+make_block_6_2.o: make_block_6_2.f def_inst_flt.o def_std_io_icf.o dimensions_spec_ucf.o \
+	rad_ccf.o rad_pcf.o realtype_rd.o
+merge.o: merge.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o interpolate_p_mod.o method_merge_pcf.o realtype_rd.o \
+	batch_error_main.finc
+merge_pressure.o: merge_pressure.f def_std_io_icf.o dimensions_field_ucf.o error_pcf.o \
+	realtype_rd.o
+mid_point.o: mid_point.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o realtype_rd.o
+mie_scatter.o: mie_scatter.f def_std_io_icf.o error_pcf.o realtype_rd.o
+mono_rad_ss.o: mono_rad_ss.f calc_brdf.o calc_cg_coeff.o calc_uplm_sol.o calc_uplm_zero.o \
+	def_bound.o def_control.o def_spherical_geometry.o def_std_io_icf.o \
+	gauss_angle.o rad_ccf.o rad_pcf.o realtype_rd.o rescale_phase_fnc.o \
+	rescale_tau_omega.o set_rad_layer.o set_truncation.o sol_scat_cos.o \
+	sph_solver.o two_stream.o
+name_length.o: name_length.f realtype_rd.o
+nettohr.o: nettohr.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o rad_ccf.o realtype_rd.o
+non_blank.o: non_blank.f 
+open_file_in.o: open_file_in.f def_std_io_icf.o error_pcf.o realtype_rd.o
+open_file_out.o: open_file_out.f def_std_io_icf.o error_pcf.o realtype_rd.o
+opkda1.o: opkda1.f 
+opkda2.o: opkda2.f 
+opkdmain.o: opkdmain.f 
+output_flux_cdf.o: output_flux_cdf.f def_control.o def_spectrum.o def_std_io_icf.o \
+	gas_list_pcf.o input_head_pcf.o rad_pcf.o realtype_rd.o \
+	cdl_struc.finc
+output_flux_cdl.o: output_flux_cdl.f def_control.o def_spectrum.o def_std_io_icf.o \
+	gas_list_pcf.o input_head_pcf.o rad_pcf.o realtype_rd.o \
+	cdl_struc.finc
+output_horiz_cdl.o: output_horiz_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+output_opt_profile_cdl.o: output_opt_profile_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	cdl_struc.finc
+output_photolysis_cdf.o: output_photolysis_cdf.f gas_list_pcf.o input_head_pcf.o rad_pcf.o \
+	realtype_rd.o cdl_struc.finc
+output_photolysis_cdl.o: output_photolysis_cdl.f gas_list_pcf.o input_head_pcf.o rad_pcf.o \
+	realtype_rd.o cdl_struc.finc
+output_radiance_cdf.o: output_radiance_cdf.f gas_list_pcf.o input_head_pcf.o rad_ccf.o rad_pcf.o \
+	realtype_rd.o cdl_struc.finc
+output_radiance_cdl.o: output_radiance_cdl.f gas_list_pcf.o input_head_pcf.o rad_ccf.o rad_pcf.o \
+	realtype_rd.o cdl_struc.finc
+output_surf_cdl.o: output_surf_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+output_vert_cdf.o: output_vert_cdf.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+output_vert_cdl.o: output_vert_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+output_view_cdl.o: output_view_cdl.f def_std_io_icf.o error_pcf.o realtype_rd.o cdl_struc.finc
+phgt.o: phgt.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o interpolate_p_mod.o realtype_rd.o batch_error_main.finc
+planck.o: planck.f rad_ccf.o realtype_rd.o
+planck_cumul.o: planck_cumul.f realtype_rd.o
+planck_ss_source.o: planck_ss_source.f def_std_io_icf.o rad_ccf.o rad_pcf.o realtype_rd.o
+point_bracket.o: point_bracket.f realtype_rd.o
+prep_opt_profile.o: prep_opt_profile.f def_std_io_icf.o dimensions_cdl_ucf.o \
+	dimensions_field_ucf.o dimensions_spec_ucf.o error_pcf.o \
+	realtype_rd.o shell_sort.o
+qsat.o: qsat.f realtype_rd.o
+qsat_gg.o: qsat_gg.f realtype_rd.o
+qsat_gg_ice.o: qsat_gg_ice.f realtype_rd.o
+raw_input.o: raw_input.f def_data_in_icf.o def_std_io_icf.o dimensions_cdl_ucf.o \
+	dimensions_field_ucf.o dimensions_spec_ucf.o error_pcf.o \
+	gas_list_pcf.o input_head_pcf.o realtype_rd.o
+rayleigh_scatter_air.o: rayleigh_scatter_air.f rad_ccf.o realtype_rd.o
+read_averaged_scatter.o: read_averaged_scatter.f def_std_io_icf.o error_pcf.o file_type_pcf.o \
+	realtype_rd.o scatter_pp_pcf.o
+read_cdl.o: read_cdl.f def_std_io_icf.o error_pcf.o filenamelength_mod.o realtype_rd.o \
+	cdl_struc.finc
+read_genln2_flux.o: read_genln2_flux.f error_pcf.o realtype_rd.o
+read_line.o: read_line.f def_std_io_icf.o error_pcf.o realtype_rd.o
+read_raw_profile.o: read_raw_profile.f def_data_in_icf.o def_std_io_icf.o dimensions_field_ucf.o \
+	dimensions_spec_ucf.o gas_list_pcf.o input_head_pcf.o rad_pcf.o \
+	realtype_rd.o
+read_samson_p_field.o: read_samson_p_field.f error_pcf.o realtype_rd.o
+read_word.o: read_word.f def_std_io_icf.o error_pcf.o realtype_rd.o
+refractive_index.o: refractive_index.f def_std_io_icf.o error_pcf.o realtype_rd.o \
+	spline_evaluate.o
+remove_blank.o: remove_blank.f realtype_rd.o
+remove_weak_cont.o: remove_weak_cont.f def_std_io_icf.o dimensions_spec_ucf.o rad_pcf.o \
+	realtype_rd.o batch_error_main.finc
+run_disort.o: run_disort.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	dimensions_fixed_pcf.o dimensions_spec_ucf.o gas_list_pcf.o \
+	input_head_pcf.o rad_pcf.o realtype_rd.o
+run_mono.o: run_mono.f def_bound.o def_control.o def_std_io_icf.o dimensions_cdl_ucf.o \
+	dimensions_field_ucf.o dimensions_fixed_pcf.o dimensions_spec_ucf.o \
+	gas_list_pcf.o input_head_pcf.o rad_pcf.o realtype_rd.o
+samson2cdf.o: samson2cdf.f def_std_io_icf.o dimensions_cdl_ucf.o error_pcf.o realtype_rd.o
+samson2cdl.o: samson2cdl.f def_std_io_icf.o dimensions_cdl_ucf.o error_pcf.o realtype_rd.o
+scale_field.o: scale_field.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o realtype_rd.o
+seaalbedo.o: seaalbedo.f realtype_rd.o spline_evaluate.o spline_fit.o
+seaalbedo_driver.o: seaalbedo_driver.f dimensions_spec_ucf.o realtype_rd.o seaalbedo.f
+set_sra_profile.o: set_sra_profile.f aerosol_model_pcf.o aerosol_profile_pcf.o \
+	aerosol_representation_pcf.o def_std_io_icf.o dimensions_cdl_ucf.o \
+	dimensions_field_ucf.o dimensions_spec_ucf.o gas_list_pcf.o \
+	input_head_pcf.o rad_ccf.o rad_pcf.o realtype_rd.o \
+	aerosol_component.finc batch_error_main.finc
+set_state.o: set_state.f def_std_io_icf.o dimensions_field_ucf.o error_pcf.o \
+	input_head_pcf.o realtype_rd.o
+simpsons_rule.o: simpsons_rule.f 
+sort_raw_profile.o: sort_raw_profile.f def_std_io_icf.o dimensions_field_ucf.o error_pcf.o \
+	input_head_pcf.o realtype_rd.o shell_sort.o
+split_cdl_line.o: split_cdl_line.f error_pcf.o realtype_rd.o
+svd_decompose.o: svd_decompose.f def_std_io_icf.o rad_pcf.o realtype_rd.o
+trapezoid.o: trapezoid.f realtype_rd.o
+vert_int.o: vert_int.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o rad_ccf.o realtype_rd.o
+wadd.o: wadd.f def_std_io_icf.o dimensions_cdl_ucf.o dimensions_field_ucf.o \
+	error_pcf.o realtype_rd.o
+write_cdl.o: write_cdl.f def_std_io_icf.o error_pcf.o filenamelength_mod.o realtype_rd.o \
+	cdl_struc.finc
+write_cdl_field.o: write_cdl_field.f realtype_rd.o
+write_profile.o: write_profile.f def_std_io_icf.o dimensions_field_ucf.o gas_list_pcf.o \
+	input_head_pcf.o rad_pcf.o realtype_rd.o cdl_struc.finc

@@ -1,0 +1,33 @@
+.TH Ccdf2cdl 1 "1-9-2006"
+.SH NAME
+Ccdf2cdl \- Convert netCDF input files to CDL
+.SH USAGE
+Ccdf2cdl [\fB\-o\fR \fIoutput\-file\fR] \fIinput\-file\fR
+
+Ccdf2cdl \fB\-a\fR \fIbasename\fR
+
+.SH DESCRIPTION
+A script to convert netCDF input files (used by l_run_cdf) into a CDL format that can be read by l_run_cdl.
+
+There are two modes of operation as outlined above. Either a single file can be converted, or all files with a given basename.
+
+.SH OPTIONS
+
+.LP
+
+.TP
+\fB\-o\fR \fIoutput\-file\fR 
+The file name for the output CDL file. If not given the output file will be called cdl_\fIinput\-file\fR. Files will not be overwritten if they already exist.
+
+.TP
+\fB\-a\fR \fIbasename\fR
+All files \fIbasename\fR.* will be converted to CDL with output file names cdl_\fIbasename\fR.*. In this mode of operation any \fIinput\-file\fR or \fIoutput\-file\fR names given will be ignored.
+
+.SH SEE ALSO
+\fBCcdl2cdf\fR(1), \fBncgen\fR(1), \fBncdump\fR(1)
+
+.SH BUGS
+Please report bugs to "james.manners@metoffice.gov.uk".
+
+.SH AUTHOR
+James Manners, Met. Office, Exeter, UK

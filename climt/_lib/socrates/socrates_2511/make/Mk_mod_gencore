@@ -1,0 +1,23 @@
+MODULES_GENCORE = def_aer.f90 \
+		def_atm.f90 \
+		def_bound.f90 \
+		def_cld.f90 \
+		def_control.f90 \
+		def_dimen.f90 \
+		def_mcica.f90 \
+		def_out.f90 \
+		def_spectrum.f90 \
+		diffusivity_factor.f90 \
+		dimensions_spec_ucf.f90 \
+		ereport_mod.f90 \
+		errormessagelength_mod.f90 \
+		file_manager.f90 \
+		filenamelength_mod.f90 \
+		gas_list_pcf.f90 \
+		missing_data_mod.f90 \
+		parkind1.f90 \
+		rad_ccf.f90 \
+		rad_pcf.f90 \
+		realtype_rd.f90 \
+		vectlib_mod.f90 \
+		yomhook.f90

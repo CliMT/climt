@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+cp case6.szen case6_orig.szen
+cp case6.surfsw_hadgem case6.surf
+cp case6.op_soot_hadgem case6.op_soot
+echo -n "Calculating zenith angles: "
+for szen in {75..89}
+do
+    echo -n " $szen"
+    python create_szen.py $szen > /dev/null
+    Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -a +A -C 5 -sg
+    fmove case6 "case6_sw_sg_ga7_$szen"
+    Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -a +A -C 5
+    fmove case6 "case6_sw_ga7_$szen"
+done
+for szen in {90..98}
+do
+    echo -n " $szen"
+    python create_szen.py $szen > /dev/null
+    Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -a +A -C 5 -sg
+    fmove case6 "case6_sw_sg_ga7_$szen"
+done
+echo
+
+# Test against known good output
+resrm cdl_case6_sw_sg_ga7_90
+Ccdf2cdl -a case6_sw_sg_ga7_90 > /dev/null
+diff cdl_case6_sw_sg_ga7_90.hrts cdl_case6_90_ref.hrts || ierr=1
+resrm cdl_case6_sw_sg_ga7_85
+Ccdf2cdl -a case6_sw_sg_ga7_85 > /dev/null
+diff cdl_case6_sw_sg_ga7_85.hrts cdl_case6_85_ref.hrts || ierr=1
+resrm cdl_case6_sw_sg_ga7_95
+Ccdf2cdl -a case6_sw_sg_ga7_95 > /dev/null
+diff cdl_case6_sw_sg_ga7_95.hrts cdl_case6_95_ref.hrts || ierr=1
+
+# Uncomment this line to plot results
+# python plot_szen.py
+
+if [ $ierr -gt 0 ] ; then
+    mv case6_orig.szen case6.szen
+    exit 1
+else
+    for szen in {75..89}
+    do
+	resrm case6_sw_sg_ga7_$szen
+	resrm case6_sw_ga7_$szen
+    done
+    for szen in {90..98}
+    do
+	resrm case6_sw_sg_ga7_$szen
+    done
+    resrm cdl_case6_sw_sg_ga7_85
+    resrm cdl_case6_sw_sg_ga7_90
+    resrm cdl_case6_sw_sg_ga7_95
+    mv case6_orig.szen case6.szen
+    rm case6.surf case6.op_soot
+    echo OK
+    exit 0
+fi

@@ -1,0 +1,25 @@
+netcdf rc3.sazim{                                    
+
+dimensions:
+    lat         =   1;
+    lon         =   1;
+
+
+variables:
+    float lon(lon); 
+             lon:units = "degree"; 
+             lon:title = "LONGITUDE";
+    float lat(lat) ;                                                       
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                      
+
+    float azim(lat,lon);                                                  
+             azim:units = "degree";                                         
+             azim:title = "AZIMUTHAL ANGLE";                                                  
+
+data:                                                                           
+            lat   =   .000000E+01;
+            lon   =   .000000E+01;
+            azim  =   .000000E+00;
+
+}                                                                               

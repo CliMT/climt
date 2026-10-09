@@ -1,0 +1,30 @@
+.TH calc_horizon_angles 1 "18-1-2024"
+.SH NAME
+calc_horizon_angles \- Calculate ancillary horizon angles on LFRic grid
+.SH USAGE
+calc_horizon_angles [\fB\-x\fR] \fIorog\-ugrid\-ancil\-file\fR
+
+.SH DESCRIPTION
+A utility to add horizon angle and aspect fields to an orography ancillary file for standard LFRic cubed-sphere or local area models on a UGRID mesh.
+
+The supplied netCDF orography ancillary is read to provide unfiltered surface altitude, longitudes and latitudes of faces and nodes and face-node connectivity variables. The face-node connectivity is used to construct a simple 2D grid for local area models or six separate 2D grids for each panel of a cubed-sphere.
+
+For the case of a cubed-sphere the 2D grids for each panel are extended into a halo using interpolated data from surrounding panels.
+
+The horizon angles and aspects are then calculated for 16 directions aligned with the 2D grid as described in \fBManners et. al. (2012) Radiative transfer over resolved topographic features for high-resolution weather prediction\fR, DOI:10.1002/qj.956
+
+Horizon angles and aspects on the 2D grid (for each panel in the case of the cubed-sphere) are mapped back to the original mesh and written to the orography ancillary file.
+
+.SH OPTIONS
+
+.LP
+
+.TP
+\fB\-x\fR 
+Output extra diagnostic variables to the netCDF orography ancillary file. These include separate fields for the horizon angles and aspects on the 2D grids as well as surface altitude, latitude and longitude on the 2D grids including the halos before and after interpolation for the cubed-sphere panels.
+
+.SH BUGS
+Please report bugs to "james.manners@metoffice.gov.uk".
+
+.SH AUTHOR
+James Manners, Met. Office, Exeter, UK

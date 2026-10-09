@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Demonstrates the use of the raw_input program to convert column data into
+# input files (CDL) for the ES code.
+
+# Initialise error status (to test for output differences)
+ierr=0
+rm -f rfm_mls_1* 2>/dev/null
+
+raw_input <<EOF >/dev/null
+atm_profile
+rfm_mls
+n
+EOF
+
+diff -q rfm_mls_1.ocs rfm_mls.ocs || ierr=1
+diff -q rfm_mls_1.so2 rfm_mls.so2 || ierr=1
+diff -q rfm_mls_1.cfc11 rfm_mls.cfc11 || ierr=1
+diff -q rfm_mls_1.cfc12 rfm_mls.cfc12 || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f rfm_mls_1* 2>/dev/null
+  echo OK
+  exit 0
+fi

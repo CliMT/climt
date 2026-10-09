@@ -1,0 +1,72 @@
+# Environment variables for TRAPPIST-1e (THAI) spectral files
+
+export THAI_DIR="$(pwd)"
+export PROJECT_ROOT="$(dirname "$(dirname "$THAI_DIR")")"
+
+# SOCRATES core directories
+export RAD_DIR="${PROJECT_ROOT}/climt_socrates/_lib/socrates_2511"
+export RAD_DATA="${RAD_DIR}/data"
+export RAD_BIN="${RAD_DIR}/bin"
+export RAD_SCRIPT="${RAD_DIR}/sbin"
+
+GAS_DATA_DIR="${RAD_DATA}/gases"
+
+# Add SOCRATES binaries to path
+export PATH="${RAD_BIN}:${RAD_SCRIPT}:$PATH"
+
+# Shared Library Path for NetCDF
+export LD_LIBRARY_PATH="/home/data/miniconda3/lib:${LD_LIBRARY_PATH}"
+
+export LOCK_FILE="${THAI_DIR}/socrates.lock"
+
+export ARCHIVE_DATA="${THAI_DIR}/pipeline_out"
+export SW_DATA="${ARCHIVE_DATA}"
+export LW_DATA="${ARCHIVE_DATA}"
+
+# Stellar spectrum (BT-Settl Trappist-1)
+export SOLFILE="trappist1"
+export SOLSPEC="${RAD_DATA}/solar/${SOLFILE}"
+
+# Column masses 
+export COL_H2O="1.1e+03"
+export COL_CO2="1.0e+05" 
+export COL_N2="1.0e+05"  
+
+# CIA pathlengths
+export CIA_H2O_H2O="1.1e+03"
+export CIA_CO2_CO2="1.0e+06"
+export CIA_N2_N2="1.0e+06"
+
+export HITRAN_DIR="${PROJECT_ROOT}/climt_socrates/hitran_files"
+export HITRAN_CO2="${HITRAN_DIR}/co2_hitran.par"
+export HITRAN_H2O="${HITRAN_DIR}/h2o_hitran.par"
+export HITRAN_N2="${HITRAN_DIR}/n2_hitran.par"
+export CONT_CO2_CO2="${RAD_DIR}/data/continua/CO2-CO2_2018.cia"
+export CONT_N2_N2="${HITRAN_DIR}/N2-N2_2021.cia"
+export CONT_H2O_FRN="${RAD_DATA}/continua/caviar_frn"
+export CONT_H2O_S260="${RAD_DATA}/continua/elsey_shine_s260"
+export CONT_H2O_S296="${RAD_DATA}/continua/elsey_shine_s296"
+
+# P/T grids and reference points 
+export PT_FILE="${RAD_DATA}/gases/pt793"
+export REF_PT_FILE="${THAI_DIR}/ref_pt_trappist1e"
+export CONT_PT_FILE="${THAI_DIR}/pt_cia_1bar"
+
+# Output filenames for lbl files
+export H2O_LBL_VIS="${SW_DATA}/h2o_lbl_vis.nc"
+export H2O_LBL_SWF="${SW_DATA}/h2o_lbl_swf.nc"
+export H2O_LBL_LWF="${LW_DATA}/h2o_lbl_lwf.nc"
+
+export CO2_LBL_SW="${SW_DATA}/co2_lbl_sw.nc"
+export CO2_LBL_LW="${LW_DATA}/co2_lbl_lw.nc"
+
+export N2_LBL_SW="${SW_DATA}/n2_lbl_sw.nc"
+export N2_LBL_LW="${LW_DATA}/n2_lbl_lw.nc"
+
+# Output filenames for continuum/CIA lbl files
+export H2O_H2O_LBL_SW="${SW_DATA}/h2o-h2o_lbl_swf.nc"
+export H2O_H2O_LBL_LW="${LW_DATA}/h2o-h2o_lbl_lwf.nc"
+export CO2_CO2_LBL_SW="${SW_DATA}/co2-co2_lbl_sw.nc"
+export CO2_CO2_LBL_LW="${LW_DATA}/co2-co2_lbl_lw.nc"
+export N2_N2_LBL_SW="${SW_DATA}/n2-n2_lbl_sw.nc"
+export N2_N2_LBL_LW="${LW_DATA}/n2-n2_lbl_lw.nc"

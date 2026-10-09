@@ -40,6 +40,8 @@ from climt import (
     RRTMGLongwave,
     RRTMGShortwave,
     SeaIce,
+    SocratesLongwave,
+    SocratesShortwave,
     SimplePhysics,
     SlabSurface,
     UnytTimeDelta,
@@ -528,6 +530,16 @@ class TestRRTMGShortwaveMCICA(ComponentBaseColumn, ComponentBase3D):
             cloud_liquid_water_properties="radius_independent_absorption",
         )
         assert "must be set to 'radius_dependent_absorption'" in caplog.text
+
+
+class TestSocratesLongwave(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return SocratesLongwave()
+
+
+class TestSocratesShortwave(ComponentBaseColumn, ComponentBase3D):
+    def get_component_instance(self):
+        return SocratesShortwave()
 
 
 class TestSlabSurface(ComponentBaseColumn, ComponentBase3D):

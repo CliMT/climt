@@ -1,0 +1,63 @@
+#! /bin/bash
+#
+# Script to run an example of the radiation code
+#
+# Clear out files from previous runs:
+resrm x_cl
+rm -f x_cl.tl x_cl.op_water x_cl.co2 x_input_level_list 2>/dev/null
+rm -f xcla1 xcla2 x_cl.o3 xcl1 xcl2 x_cl.clfr 2>/dev/null
+rm -f x_cl.pstar x_cl.tstar x_cl.q x_cl.t x_cl.o2 2>/dev/null
+#
+# Process the input data
+#
+# The program raw_input takes a file containing columns of data and
+# writes them out in CDL-files
+#
+echo "Running raw_input..."
+raw_input > /dev/null << EOF
+input_prsc
+XX
+n
+EOF
+# Here we want all the output to be in files with the same base-name.
+csbn XX_1 x_cl
+csbn XX_2 x_cl
+csbn XX_3 x_cl
+# The file of pressures is irrelevant.
+rm x_cl.p
+# Now generate some single scattering data using the Mie code.
+echo "Running Cscatter... please wait..."
+Cscatter -w $RAD_DATA/cloud/wl_cloud -r $RAD_DATA/cloud/refract_water \
+    -l -g 1.0 5.e-7 1.2 -n 1.0e10 -o xcl1 -P 51 -t 2 -M
+echo "Running Cscatter... please wait..."
+Cscatter -w $RAD_DATA/cloud/wl_cloud -r $RAD_DATA/cloud/refract_water \
+    -l -g 1.0 8.e-7 1.15 -n 1.0e10 -o xcl2 -P 51 -t 2 -M
+# Average across spectral bands.
+echo "Running Cscatter_average..."
+Cscatter_average -s sp_cksa \
+   -S $RAD_DATA/solar/labs_neckel_70d -w -a xcla1 -P 51 xcl1
+echo "Running Cscatter_average..."
+Cscatter_average -s sp_cksa \
+   -S $RAD_DATA/solar/labs_neckel_70d -w -a xcla2 -P 51 xcl2
+# Make these data into a CDL-file
+cat > x_input_level_list << EOF
+7.0e4 xcla1
+8.0e4 xcla2
+EOF
+echo "Running prep_opt_profile..."
+prep_opt_profile > /dev/null << EOF
+x_input_level_list
+0 0
+x_cl.op_water
+EOF
+# Run the code.
+echo "Running Cl_run_cdl..."
+Cl_run_cdl -s sp_cksa -R 1 6 -S -g 1 1 -r -G 5 0 -C 3 \
+   -B x_cl -d 0 +F -H -K 1 +R +S 3 3 0 0 \
+&& echo "All done."
+diff -q x_cl_ref.hrts x_cl.hrts || exit 1
+resrm x_cl
+rm x_cl.tl x_cl.op_water x_cl.co2 x_input_level_list xcla1 xcla2
+rm x_cl.pstar x_cl.tstar x_cl.q x_cl.t x_cl.o2 x_cl.o3 xcl1 xcl2 x_cl.clfr
+echo OK
+exit 0

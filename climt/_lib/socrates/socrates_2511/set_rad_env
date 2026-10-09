@@ -1,0 +1,25 @@
+#! /bin/bash
+#
+#  Initialization script for radiation code
+#
+RAD_DIR=/home/giri/Documents/climt-dev/climt/climt/_lib/socrates/socrates_2511
+RAD_BIN=${RAD_DIR}/bin
+RAD_DATA=${RAD_DIR}/data
+RAD_SCRIPT=${RAD_DIR}/sbin
+LOCK_FILE="radiation_code.lock"
+PATH=$RAD_BIN:$RAD_SCRIPT:$PATH
+MANPATH=$RAD_DIR/man:$MANPATH
+PYTHONPATH=$RAD_DIR/python:$PYTHONPATH
+#
+export RAD_DIR
+export RAD_BIN
+export RAD_DATA 
+export RAD_SCRIPT
+export LOCK_FILE
+export PATH
+export MANPATH
+export PYTHONPATH
+#
+ulimit -s unlimited
+LIBCDF_PATH=/usr/lib/x86_64-linux-gnu
+export LD_LIBRARY_PATH=$LIBCDF_PATH:$LD_LIBRARY_PATH

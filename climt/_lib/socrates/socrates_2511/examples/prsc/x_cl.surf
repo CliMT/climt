@@ -1,0 +1,30 @@
+netcdf /temp/hc0300/haddb/cnvtest/YYY.surf{                                     
+
+dimensions:
+    lat            =   1 ;
+    lon            =   1 ;
+    basis          =   1 ;
+
+
+variables:
+    float lon(lon) ; 
+             lon:units = "None" ; 
+             lon:title = "LONGITUDE" ;
+    float lat(lat) ;                                                       
+             lat:units = "None" ;                                            
+             lat:title = "GRID POINT" ;                                      
+    int basis(basis) ;                                                        
+             basis:units = "None" ;                                            
+             basis:title = "BASIS FUNCTION" ;                                  
+
+    float alb(basis,lat,lon) ;                                               
+             alb:units = "None" ;                                           
+             alb:title = "ALBEDO WEIGHTS" ;                                                  
+
+data:                                                                           
+            lat   =   .10000E+01 ;
+            lon   =   .10000E+01 ;
+            basis =   1 ;
+              alb =   .34567E-01;
+
+}                                                                               

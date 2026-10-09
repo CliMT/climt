@@ -1,0 +1,14 @@
+#! /bin/bash
+#
+# Script to convert netCDF to CDL on standard output
+#
+cat > /tmp/cdfdump.$$ << EOF
+$1
+/tmp/cdfout.$$
+EOF
+cdf2cdl < /tmp/cdfdump.$$ > /dev/null
+cat /tmp/cdfout.$$
+rm -f /tmp/cdf2cdl.$$
+rm -f /tmp/cdfout.$$
+
+exit 0

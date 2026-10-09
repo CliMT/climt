@@ -1,0 +1,18 @@
+ODEPACK - A Systematized Collection of ODE Solvers
+
+The routines in this directory were written at the Lawrence Livermore National Laboratory (LLNL). All are in the public domain and are freely available.
+For more details see https://computing.llnl.gov/projects/odepack
+
+ODEPACK is a collection of Fortran solvers for the initial value problem for ordinary differential equation systems.
+It consists of nine solvers, namely a basic solver called LSODE and eight variants of it -- LSODES, LSODA, LSODAR, LSODPK, LSODKR, LSODI, LSOIBT, and LSODIS.
+The collection is suitable for both stiff and nonstiff systems.
+It includes solvers for systems given in explicit form, dy/dt = f(t,y), and also solvers for systems given in linearly implicit form, A(t,y) dy/dt = g(t,y).
+Two of the solvers use general sparse matrix solvers for the linear systems that arise.
+Two others use iterative (preconditioned Krylov) methods instead of direct methods for these linear systems.
+The most recent addition is LSODIS, which solves implicit problems with general sparse treatment of all matrices involved.
+
+The ODEPACK solvers are written in standard Fortran 77, with a few exceptions, and with minimal machine dependencies.
+There are separate double and single precision versions of ODEPACK.
+The actual solver names are those given above with a prefix of D- or S- for the double or single precision version, respectively, i.e. DLSODE/SLSODE, etc.
+Each solver consists of a main driver subroutine having the same name as the solver and some number of subordinate routines.
+For each solver, there is also a demonstration program, which solves one or two simple problems in a somewhat self-checking manner.

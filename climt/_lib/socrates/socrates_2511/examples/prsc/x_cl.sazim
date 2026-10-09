@@ -1,0 +1,25 @@
+netcdf /temp/hc0300/haddb/cnvtest/YYY.sazim{                                    
+
+dimensions:
+    lat         =   1 ;
+    lon         =   1 ;
+
+
+variables:
+    float lon(lon) ; 
+             lon:units = "None" ; 
+             lon:title = "LONGITUDE" ;
+    float lat(lat) ;                                                       
+             lat:units = "None" ;                                            
+             lat:title = "LATITUDE" ;                                      
+
+    float azi(lat,lon) ;                                                  
+             azi:units = "Degrees" ;                                         
+             azi:title = "AZIMUTHAL ANGLE" ;                                                  
+
+data:                                                                           
+            lon   =   .10000E+01 ;
+            lat   =   .10000E+01 ;
+            azi   =   .30000E+02 ;
+
+}                                                                               

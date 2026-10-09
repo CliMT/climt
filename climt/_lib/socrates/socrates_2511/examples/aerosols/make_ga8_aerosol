@@ -1,0 +1,691 @@
+#!/bin/bash
+# ------------------------------------------------------------------
+# Author: 
+#
+#   Ben Johnson, Jan 2017
+#
+# Purpose:
+#
+#   This script creates spectral files with all aerosol species
+#   optical properties (block 11), with the modifications suggested by BTJ
+#   Jan 2017. Compared to GA7 CLASSIC these are:
+#
+#   (i)	Change soot species refractive index to make it consistent with BC in 
+#       GLOMAP GA7.1 (Bond & Bergstrom 2006)
+#
+#  (ii)	Change soot species size distribution to make it consistent with freshly
+#       emitted size distribution for FF BC in GLOMAP-mode (diameter reduced 
+#       from 80nm to 60nm, stdev reduced from 2.0 to 1.59).
+#
+# (iii)	Reduce soot density from current value of 1.9g/cm3 to value of 1.5g/cm3 
+#       in GLOMAP-mode. 
+#
+#  (iv)	Re-compute biomass burning aerosol refractive index based on the BC:OC
+#       mass ratio already assumed in CLASSIC but using the refractive index of
+#       Bond & Bergstrom (2006) and density  of 1.5 g/cm3 for the BC component
+#       as in GLOMAP-mode GA7.1. 
+#
+# (v)  All blocks made with GA7 spectral file waveband limits (compared to GA6 
+#      and earlier the only change is that SW bands 2 and 3 are no longer
+#      identical but have been split into 0.32 - 0.505, 0.32 - 0.69 um.
+#
+# Method:
+#
+#   The script uses Cscatter, Cscatter_average and prep_spec in turn
+#   to calculate the optical properties and generate a spectral file
+#   with these in the format expected for block 11.
+#
+# Output:
+#
+#   Shortwave and longwave spectral files are generated
+#
+#     sp_sw_ga8
+#     sp_lw_ga8
+
+# Inputs:
+#
+#  Requires 3 new files with refractive index for soot, fresh biomass and aged
+#  biomass aerosol:
+#     
+#    refract_soot_bond
+#    refract_biomass_fresh_GA8
+#    refract_biomass_aged_GA8
+#
+# ------------------------------------------------------------------
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+# ------------------------------------------------------------------
+# Create files with mono-chromatic optical properties using Cscatter
+# ------------------------------------------------------------------
+./run_scatter
+
+# -------------------------------------------------------------------------
+# Create files with band-averaged optical properties using Cscatter_average
+# -------------------------------------------------------------------------
+
+rm -f *.avg 2> /dev/null
+sw_specfile=$RAD_DATA/spectra/ga7/sp_sw_ga7
+lw_specfile=$RAD_DATA/spectra/ga7/sp_lw_ga7
+
+# For SW file
+echo "Scatter average soluble (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a soluble_6.avg soluble.mon
+
+echo "Scatter average dust-like (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a dustlike_6.avg dustlike.mon
+
+echo "Scatter average oceanic (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a oceanic_6.avg oceanic.mon
+
+echo "Scatter average soot (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a soot_6.avg soot.mon
+
+echo "Scatter average sulphuric (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a sulphuric_6.avg sulphuric.mon
+
+echo "Scatter average accum sulphate (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a accumsulp_6.avg accumsulp.mon
+
+echo "Scatter average aitken sulphate (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a aitkensulp_6.avg aitkensulp.mon
+
+echo "Scatter average sea salt film (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a seasaltfilm_6.avg seasaltfilm.mon
+
+echo "Scatter average sea salt jet (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a seasaltjet_6.avg seasaltjet.mon
+
+echo "Scatter average dust div1 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a dust_div1_6.avg dust_div1.mon
+
+echo "Scatter average dust div2 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a dust_div2_6.avg dust_div2.mon
+
+echo "Scatter average dust div3 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a dust_div3_6.avg dust_div3.mon
+
+echo "Scatter average dust div4 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a dust_div4_6.avg dust_div4.mon
+
+echo "Scatter average dust div5 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a dust_div5_6.avg dust_div5.mon
+
+echo "Scatter average dust div6 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a dust_div6_6.avg dust_div6.mon
+
+echo "Scatter average biogenic (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a biogenic_6.avg biogenic.mon
+
+echo "Scatter average fresh ocff (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a freshocff_6.avg freshocff.mon
+
+echo "Scatter average aged ocff (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a agedocff_6.avg agedocff.mon
+
+echo "Scatter average nitrate (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a nitrate_6.avg nitrate.mon
+
+echo "Scatter average delta (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a delta_6.avg delta.mon
+
+echo "Scatter average two bin dust div1 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a twobindust_1_6.avg twobindust_1.mon
+
+echo "Scatter average two bin dust div2 (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a twobindust_2_6.avg twobindust_2.mon
+
+echo "Scatter average fresh soot (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a freshsoot_bond_6.avg freshsoot_bond.mon
+
+echo "Scatter average aged soot (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a agedsoot_bond_6.avg agedsoot_bond.mon
+
+echo "Scatter average fresh biomass (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a freshbiomass_bond_6.avg freshbiomass_bond.mon
+
+echo "Scatter average aged biomass (SW)"
+Cscatter_average -s $sw_specfile -P 1 -w -S $RAD_DATA/solar/lean_12 \
+  -a agedbiomass_bond_6.avg agedbiomass_bond.mon
+
+
+# For LW file
+echo "Scatter average soluble (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a soluble_9.avg soluble.mon
+
+echo "Scatter average dust-like (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a dustlike_9.avg dustlike.mon
+
+echo "Scatter average oceanic (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a oceanic_9.avg oceanic.mon
+
+echo "Scatter average soot (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a soot_9.avg soot.mon
+
+echo "Scatter average sulphuric (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a sulphuric_9.avg sulphuric.mon
+
+echo "Scatter average accum sulphate (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a accumsulp_9.avg accumsulp.mon
+
+echo "Scatter average aitken sulphate (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a aitkensulp_9.avg aitkensulp.mon
+
+echo "Scatter average sea salt film (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a seasaltfilm_9.avg seasaltfilm.mon
+
+echo "Scatter average sea salt jet (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a seasaltjet_9.avg seasaltjet.mon
+
+echo "Scatter average dust div1 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a dust_div1_9.avg dust_div1.mon
+
+echo "Scatter average dust div2 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a dust_div2_9.avg dust_div2.mon
+
+echo "Scatter average dust div3 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a dust_div3_9.avg dust_div3.mon
+
+echo "Scatter average dust div4 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a dust_div4_9.avg dust_div4.mon
+
+echo "Scatter average dust div5 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a dust_div5_9.avg dust_div5.mon
+
+echo "Scatter average dust div6 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a dust_div6_9.avg dust_div6.mon
+
+echo "Scatter average biogenic (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a biogenic_9.avg biogenic.mon
+
+echo "Scatter average fresh ocff (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a freshocff_9.avg freshocff.mon
+
+echo "Scatter average aged ocff (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a agedocff_9.avg agedocff.mon
+
+echo "Scatter average nitrate (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a nitrate_9.avg nitrate.mon
+
+echo "Scatter average delta (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a delta_9.avg delta.mon
+
+echo "Scatter average two bin dust div1 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 290 \
+  -a twobindust_1_9.avg twobindust_1.mon
+
+echo "Scatter average two bin dust div2 (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 290 \
+  -a twobindust_2_9.avg twobindust_2.mon
+
+echo "Scatter average fresh soot (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a freshsoot_bond_9.avg freshsoot_bond.mon
+
+echo "Scatter average aged soot (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a agedsoot_bond_9.avg agedsoot_bond.mon
+
+echo "Scatter average fresh biomass (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a freshbiomass_bond_9.avg freshbiomass_bond.mon
+
+echo "Scatter average aged biomass (LW)"
+Cscatter_average -s $lw_specfile -P 1 -w -p 250 \
+  -a agedbiomass_bond_9.avg agedbiomass_bond.mon
+
+
+# AODs for LW file
+rm -f *.aod
+echo 'Creating sp_aod_wavel...'
+./make_sp_aod_wavel > make_sp_aod_wavel_log
+
+echo "AODs for soluble"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a soluble.aod soluble.mon
+
+echo "AODs for dust-like"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dustlike.aod dustlike.mon
+
+echo "AODs for oceanic"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a oceanic.aod oceanic.mon
+
+echo "AODs for soot"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a soot.aod soot.mon
+
+echo "AODs for sulphuric"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a sulphuric.aod sulphuric.mon
+
+echo "AODs for accum sulphate"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a accumsulp.aod accumsulp.mon
+
+echo "AODs for aitken sulphate"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a aitkensulp.aod aitkensulp.mon
+
+echo "AODs for sea salt film"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a seasaltfilm.aod seasaltfilm.mon
+
+echo "AODs for sea salt jet"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a seasaltjet.aod seasaltjet.mon
+
+echo "AODs for dust div1"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div1.aod dust_div1.mon
+
+echo "AODs for dust div2"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div2.aod dust_div2.mon
+
+echo "AODs for dust div3"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div3.aod dust_div3.mon
+
+echo "AODs for dust div4"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div4.aod dust_div4.mon
+
+echo "AODs for dust div5"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div5.aod dust_div5.mon
+
+echo "AODs for dust div6"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a dust_div6.aod dust_div6.mon
+
+echo "AODs for biogenic"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a biogenic.aod biogenic.mon
+
+echo "AODs for fresh ocff"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a freshocff.aod freshocff.mon
+
+echo "AODs for aged ocff"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a agedocff.aod agedocff.mon
+
+echo "AODs for nitrate"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a nitrate.aod nitrate.mon
+
+echo "AODs for delta"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a delta.aod delta.mon
+
+echo "AODs for two bin dust div1"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a twobindust_1.aod twobindust_1.mon
+
+echo "AODs for two bin dust div2"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a twobindust_2.aod twobindust_2.mon
+
+echo "AODs for fresh soot"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a freshsoot_bond.aod freshsoot_bond.mon
+
+echo "AODs for aged soot"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a agedsoot_bond.aod agedsoot_bond.mon
+
+echo "AODs for fresh biomass"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a freshbiomass_bond.aod freshbiomass_bond.mon
+
+echo "AODs for aged biomass"
+Cscatter_average -s sp_aod_wavel -P 1 -w -u \
+  -a agedbiomass_bond.aod agedbiomass_bond.mon
+
+
+# ------------------------------------------------------------------
+# Construct SW spectral file
+# ------------------------------------------------------------------
+
+rm -f sp_sw_ga8 sp_sw_ga8_k
+echo 'Creating sp_sw_ga8...'
+prep_spec << EOF > prep_sp_sw_ga8_log
+../../data/spectra/ga7/sp_sw_ga7
+n
+sp_sw_ga8
+11
+soluble_6.avg
+y
+11
+dustlike_6.avg
+y
+11
+oceanic_6.avg
+y
+11
+soot_6.avg
+y
+11
+sulphuric_6.avg
+y
+11
+accumsulp_6.avg
+y
+11
+aitkensulp_6.avg
+y
+11
+freshsoot_bond_6.avg
+y
+11
+agedsoot_bond_6.avg
+y
+11
+seasaltfilm_6.avg
+y
+11
+seasaltjet_6.avg
+y
+11
+dust_div1_6.avg
+y
+11
+dust_div2_6.avg
+y
+11
+dust_div3_6.avg
+y
+11
+dust_div4_6.avg
+y
+11
+dust_div5_6.avg
+y
+11
+dust_div6_6.avg
+y
+11
+freshbiomass_bond_6.avg
+y
+11
+agedbiomass_bond_6.avg
+y
+11
+biogenic_6.avg
+y
+11
+freshocff_6.avg
+y
+11
+agedocff_6.avg
+y
+11
+delta_6.avg
+y
+11
+nitrate_6.avg
+y
+11
+twobindust_1_6.avg
+y
+11
+twobindust_2_6.avg
+y
+-1
+EOF
+
+# ------------------------------------------------------------------
+# Construct LW spectral file
+# ------------------------------------------------------------------
+
+rm -f sp_lw_ga8 sp_lw_ga8_k
+echo 'Creating sp_lw_ga8...'
+prep_spec <<EOF > prep_sp_lw_ga8_log
+../../data/spectra/ga7/sp_lw_ga7
+n
+sp_lw_ga8
+11
+soluble_9.avg
+y
+11
+dustlike_9.avg
+y
+11
+oceanic_9.avg
+y
+11
+soot_9.avg
+y
+11
+sulphuric_9.avg
+y
+11
+accumsulp_9.avg
+y
+11
+aitkensulp_9.avg
+y
+11
+freshsoot_bond_9.avg
+y
+11
+agedsoot_bond_9.avg
+y
+11
+seasaltfilm_9.avg
+y
+11
+seasaltjet_9.avg
+y
+11
+dust_div1_9.avg
+y
+11
+dust_div2_9.avg
+y
+11
+dust_div3_9.avg
+y
+11
+dust_div4_9.avg
+y
+11
+dust_div5_9.avg
+y
+11
+dust_div6_9.avg
+y
+11
+freshbiomass_bond_9.avg
+y
+11
+agedbiomass_bond_9.avg
+y
+11
+biogenic_9.avg
+y
+11
+freshocff_9.avg
+y
+11
+agedocff_9.avg
+y
+11
+delta_9.avg
+y
+11
+nitrate_9.avg
+y
+11
+twobindust_1_9.avg
+y
+11
+twobindust_2_9.avg
+y
+15
+y
+soluble.aod
+15
+y
+dustlike.aod
+15
+y
+oceanic.aod
+15
+y
+soot.aod
+15
+y
+sulphuric.aod
+15
+y
+accumsulp.aod
+15
+y
+aitkensulp.aod
+15
+y
+freshsoot_bond.aod
+15
+y
+agedsoot_bond.aod
+15
+y
+seasaltfilm.aod
+15
+y
+seasaltjet.aod
+15
+y
+dust_div1.aod
+15
+y
+dust_div2.aod
+15
+y
+dust_div3.aod
+15
+y
+dust_div4.aod
+15
+y
+dust_div5.aod
+15
+y
+dust_div6.aod
+15
+y
+freshbiomass_bond.aod
+15
+y
+agedbiomass_bond.aod
+15
+y
+biogenic.aod
+15
+y
+freshocff.aod
+15
+y
+agedocff.aod
+15
+y
+delta.aod
+15
+y
+nitrate.aod
+15
+y
+twobindust_1.aod
+15
+y
+twobindust_2.aod
+-1
+EOF
+
+# -----------------------------------------------------------------
+
+# Compare final spectral files to KGO
+(diff -q sp_sw_ga8_ifort19 sp_sw_ga8 && \
+ echo 'Matched ifort19 SW output') || \
+(diff -q sp_sw_ga8_gfortran12 sp_sw_ga8 && \
+ echo 'Matched gfortran12 SW output') || \
+(diff -q sp_sw_ga8_gfortran12_debug sp_sw_ga8 && \
+ echo 'Matched gfortran12_debug SW output') || \
+(diff -q sp_sw_ga8_gfortran5 sp_sw_ga8 && \
+ echo 'Matched gfortran5 SW output') || \
+(diff -q sp_sw_ga8_gfortran14 sp_sw_ga8 && \
+ echo 'Matched gfortran14 SW output') || \
+(diff -q sp_sw_ga8_ifx2025 sp_sw_ga8 && \
+ echo 'Matched ifx2025 SW output') || ierr=1
+
+(diff -q sp_lw_ga8_ifort19 sp_lw_ga8 && \
+ echo 'Matched ifort19 LW output') || \
+(diff -q sp_lw_ga8_gfortran12 sp_lw_ga8 && \
+ echo 'Matched gfortran12 LW output') || \
+(diff -q sp_lw_ga8_gfortran12_debug sp_lw_ga8 && \
+ echo 'Matched gfortran12_debug LW output') || \
+(diff -q sp_lw_ga8_gfortran5 sp_lw_ga8 && \
+ echo 'Matched gfortran5 LW output') || \
+(diff -q sp_lw_ga8_gfortran14 sp_lw_ga8 && \
+ echo 'Matched gfortran14 LW output') || \
+(diff -q sp_lw_ga8_ifx2025 sp_lw_ga8 && \
+ echo 'Matched ifx2025 LW output') || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+    exit 1
+else
+    rm -f sp_sw_ga8 sp_sw_ga8_k sp_lw_ga8 sp_lw_ga8_k sp_aod_wavel
+    rm -f make_sp_aod_wavel_log prep_sp_sw_ga8_log prep_sp_lw_ga8_log
+    rm -f *.mon *.avg *.aod
+    echo OK
+    exit 0
+fi

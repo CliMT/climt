@@ -1,0 +1,233 @@
+.TH Ccorr_k 1 "05-06-2013"
+.SH NAME
+Ccorr_k \- Generate gaseous absorption and water vapour continuum data
+.SH USAGE
+Ccorr_k \fB\-D\fR \fIhitran\-par\-file\fR | \fB\-BD\fR \fIbespoke\-par\-file\fR | \fB\-X\fR \fIhitran\-xsc\-file\fR |
+        \fB\-UVX\fR \fIuvxsc\-file\fR | \fB\-CIA\fR \fIhitran\-cia\-file\fR
+        \fB\-s\fR \fIspectral\-file\fR [\fB\-I\fR \fIinstrument\-file\fR]
+        \fB\-R\fR \fIfirst\-band\fR \fIlast\-band\fR \fB\-F\fR \fIpt\-file\fR  [\fB\-r\fR \fIref\-pt\-file\fR]
+        \fB\-lo\fR \fIgas\fR | \fB\-l\fR \fIgas\fR \fImax\-path\fR |
+        \fB\-ct\fR \fIgas1\fR \fIgas2\fR \fImax\-path\fR [\fB\-cw\fR \fIgas\fR \fImax\-path\fR]
+        \fB\-n\fR \fIk_terms\fR \fB| \-t\fR \fItol\fR \fB| \-b\fR \fItol\fR
+        \fB\-p|\-q|\-d|-p2|\-q2|\-d2|-lk\fR
+        [\fB\-k\fR] [\fB\-x\fR \fIfilename\fR] \fB\-i\fR \fIincrement\fR
+        [\fB\-c\fR \fIwavenumber\fR] [\fB\-lp\fR \fIline-profile\fR] [\fB\-sb\fR \fIfilename\fR]
+        [\fB\-f\fR \fIfilename\fR] [\fB\-e\fR \fIname1\fR \fIname2\fR] [\fB\-C\fR \fIn1\fR \fIn2\fR \fIn3\fR] [\fB\-P\fR \fIn1\fR]
+        \fB\+S\fR \fIfilename\fR \fB| \+p | \+d | \-u\fR
+        \fB\-o\fR \fIfilename\fR \fB\-m\fR \fIfilename\fR \fB\-L\fR \fIfilename\fR
+        [\fB\-lm\fR \fIfilename\fR | \fB\-lw\fR \fIfilename\fR | \fB\-sm\fR \fIfilename\fR]
+        [\fB\-np\fR \fIomp_threads\fR] [\fB\-T\fR \fIcommand\-file\fR]
+
+.SH DESCRIPTION
+This program calculates correlated-k coefficients for prescribed
+spectral bands using data from HITRAN .par (line absorption) files
+or .xsc (cross-section) files. It will also calculate water vapour
+continuum absorption across the band.
+
+.SH OPTIONS
+
+.LP
+
+.TP
+\fB\-D\fR \fIhitran\-par\-file\fR
+Pathname of HITRAN line database. This is a .par file and may be in either 100 or 160 character format.
+
+.TP
+\fB\-BD\fR \fIbespoke\-par\-file\fR
+Pathname of HITRAN line database. This is a .bpar file in hitran_bespoke_frmt from src/correlated_k/def_hitran_record.f90.
+
+.TP
+\fB\-X\fR \fIhitran\-xsc\-file\fR
+Pathname of HITRAN cross-section database. This is a .xsc file.
+
+.TP
+\fB\-UVX\fR \fIuvxsc\-file\fR
+Pathname of UV cross-section database. This is a .uvxsc file (a bespoke extension to the .xsc format to accommodate large wavenumbers).
+
+.TP
+\fB\-CIA\fR \fIhitran\-cia\-file\fR
+Pathname of HITRAN collision-induced absorption database. This is a .cia file.
+
+.TP
+\fB\-s\fR \fIspectral\-file\fR 
+Pathname of the spectral file (used to provide the spectral bands - will not be overwritten)
+
+.TP
+\fB\-I\fR \fIinstrument\-file\fR 
+Pathname of the instrumental response function (optional)
+
+.TP
+\fB\-R\fR \fIfirst\-band\fR \fIlast\-band\fR
+The range of spectral bands to be used.
+
+.TP
+\fB\-F\fR \fIpt\-file\fR
+Pathname of file containing pressures and temperatures at which to calculate coefficients. Data in the file should be preceded by the directive "*PTVAL" (all comments before this directive will be ignored). Each line should start with a pressure value (Pa) followed by a list of temperatures (K) to consider at this pressure, separated with spaces. The last line of data should be followed by an "*END" directive.
+
+.TP
+\fB\-r\fR \fIref\-pt\-file\fR
+Pathname of file containing the reference conditions for scaling. Each line of data should follow the format: *REF \fIfirst\-band\fR \fIlast\-band\fR \fIgas\fR \fIpressure\fR \fItemperature\fR. There should be as many lines as required to cover the full range of bands for which the gas is included. The type number (identifier) of the gas is specified so that reference conditions for all gases may be given in the same file. Pressure and temperature are in Pa and K respectively.
+
+Note: The mapping to g-space for line absorption data no longer uses the reference conditions. They will only be used as the reference conditions for scaling when using a scaling function (when using a look-up table for scaling the reference conditions need not be supplied). 
+
+.TP
+\fB\-lo\fR \fIgas\fR
+Generate line absorption data. \fIgas\fR is the type number (identifier) of the gas to be considered. This option can be used in place of -l (see below) where only the line-by-line cross-sections are to be generated (i.e. no correlated-k fit type is selected and no k-terms generated). In this case, the max-path is not required.
+
+.TP
+\fB\-l\fR \fIgas\fR \fImax\-path\fR
+Generate line absorption data. \fIgas\fR is the type number (identifier) of the gas to be considered. \fImax\-path\fR is the maximum absorptive pathlength (kg/m2) for the gas. This is used in a number of ways: transmission errors are only considered for path-lengths up to this value; used to decide whether the absorption is small enough to be considered as grey; used (along with the maximum pressure) to order the k-terms in g-space depending on the approximate height where optical depth equals 1.
+
+.TP
+\fB\-ct\fR \fIgas1\fR \fIgas2\fR \fImax\-path\fR
+Generate generalised continuum absorption data. \fIgas1\fR and \fIgas2\fR are the type numbers (identifiers) of the gases to be considered. \fImax\-path\fR is the maximum absorptive pathlength (kg2/m5) for the gas pair. This is used in a number of ways: transmission errors are only considered for path-lengths up to this value; used to decide whether the absorption is small enough to be considered as grey. If \fIgas1\fR and \fIgas2\fR correspond to either the foreign- or self-broadened water vapour continuum the paths to the CKD data can be provided with \fB\-f\fR or \fB\-e\fR, respectively.
+
+.TP
+\fB\-cw\fR \fIgas\fR \fImax\-path\fR
+In the calculation of generalised continuum transmissions, use the transmission of \fIgas\fR with maximum absorptive pathlength \fImax\-path\fR as weighting. Line-by-line absorption coefficients are calculated at the (effective) pressure specified in pt\-file.
+
+.TP
+\fB\-n\fR \fIk_terms\fR
+The correlated-k fit should use the number of k-terms specified.
+
+.TP
+\fB\-t\fR \fItol\fR
+Calculate as many k-terms as needed in order to reach a tolerance of \fItol\fR. The value of \fItol\fR represents the maximum RMS error in the transmission for a range of amounts of absorber which cover the key region of the curve of growth (default path lengths set in ck_parm_acf.f90).
+
+.TP
+\fB\-b\fR \fItol\fR
+Calculate k-terms in a number of bins accordng to the pressure where absorption coefficient scaling peaks. This should reduce the error in the correlated-k assumption (that the ordering in g-space is independent of height). The value of \fItol\fR represents the maximum transmission error for the first bin. The number of bins depends on the range of scaling behaviours. This method is likely to give improved results where the error tolerance is small.
+
+.TP
+\fB\-p\fR
+Power law scaling function (optional)
+
+.TP
+\fB\-q\fR
+Power law scaling for p; quadratic scaling for T (optional)
+
+.TP
+\fB\-d\fR
+Power law for p; quadratic for T with implicit Doppler correction (optional)
+
+.TP
+\fB\-p2\fR
+Double power law scaling function. Two power laws will be used for the pressure scaling with a break point that leads to the smallest transmission error. A different power law temperature scaling will then be used on either side of the break point. 
+
+.TP
+\fB\-q2\fR
+Double power law scaling for p; quadratic scaling for T (optional)
+
+.TP
+\fB\-d2\fR
+Double power law for p; quadratic for T with implicit Doppler correction (optional)
+
+.TP
+\fB\-lk\fR
+A look-up table will be used for the pressure/temperature scaling.
+
+.TP
+\fB\-k\fR
+Adjust for use with the CKD continuum (optional). Note the CKD continuum model should be used only with a line cut-off of 2500 m-1 (\fB\-c\fR 2500.0): the line absorption within the cut-off is reduced by its value at the cut-off, and this absorption is assigned to the continuum. This prescription keeps the continuum contributions free of discontinuities.
+
+.TP
+\fB\-x\fR \fIfilename\fR
+Include the foreign continuum with the lines (optional): \fIfilename\fR = pathname of file containing the foreign-broadened CKD data. Although the foreign broadened continuum depends on (p-e), e/p is generally small in regions of interest, so for fast application in a GCM we can effectively treat the foreign continuum as depending on the amount of water vapour with a pressure scaling, which means that it may be counted along with line data.
+
+.TP
+\fB\-i\fR \fIincrement\fR
+Frequency increment for integration in m-1.
+
+.TP
+\fB\-c\fR \fIwavenumber\fR
+Line cut-off in m-1. Note the CKD continuum model should be used only with a line cut-off of 2500 m-1.
+
+.TP
+\fB\-lp\fR \fIline-profile\fR
+Line profile to be used. The following corrections to the Voigt profile is supported:
+.RS
+.TP
+.B 1
+No correction applied to Voigt profile (default).
+.TP
+.B 2
+Corrections to CO2 line profiles from Perrin & Hartmann (1989).
+.RE
+
+.TP
+\fB\-sb\fR \fIfilename\fR
+Include self-broadening with number fractions of the gas specified in \fIfilename\fR. Data in the file should be preceded by the directive "*BEGIN_DATA", with each line specifying a new gas fraction in ascending order. The last line of data should be followed by an "*END" directive. An example is located in data/gases/gas_fractions.
+
+.TP
+\fB\-f\fR \fIfilename\fR
+Generate foreign-broadened continuum data: \fIfilename\fR = pathname of file containing the foreign-broadened CKD data: can be original CKD text format or a netCDF file in the MT_CKD format used for HITRAN.
+
+.TP
+\fB\-e\fR \fIname1\fR \fIname2\fR
+Generate self-broadened continuum data: \fIname1\fR = pathname of file containing the self-broadened CKD data at 296K, \fIname2\fR = pathname of file containing the self-broadened CKD data at 260K (if using the original CKD text format) or the netCDF file containing the temperature exponent for the MT_CKD HITRAN format. Note, when using the netCDF MT_CKD HITRAN format file, the same file should be given for both.
+
+.TP
+\fB\-C\fR \fIn1\fR \fIn2\fR \fIn3\fR
+n1 = number of pathlengths for continuum absorption, n2 = minimum pathlength for continuum absorption, n3 = maximum pathlength for continuum absorption.
+
+.TP
+\fB\-P\fR \fIn1\fR
+n1 = number of partial pressures for continuum absorption
+
+.TP
+\fB\+S\fR \fIfilename\fR
+Solar Weighting: Pathname of file containing solar spectrum
+
+.TP
+\fB\+p\fR
+Planckian Weighting
+
+.TP
+\fB\+d\fR
+Differential Planckian Weighting
+
+.TP
+\fB\-u\fR
+Uniform Weighting
+
+.TP
+\fB\-o\fR \fIfilename\fR
+Pathname of output file. A netCDF file called \fIfilename\fR.nc will also be generated holding the correlated-k terms for each pressure/temperature.
+
+.TP
+\fB\-m\fR \fIfilename\fR
+Pathname of monitoring file.
+
+.TP
+\fB\-L\fR \fIfilename\fR
+Pathname of LbL data file. This is a netCDF file containing the absorption coefficients at line-by-line resolution for each pressure/temperature pair. If the file does not exist it will be generated using data from the HITRAN database file. If the file alrady exists the data will be used directly for the correlated-k fits. Care should be taken to ensure that an existing file matches the wavenumber resolution and pressure/temperature pairs specified on the command line.
+
+.TP
+\fB\-lm\fR \fIfilename\fR
+Use mapping from wavenumber- to g-space and k-term weights specified in the netCDF file \fIfilename\fR.
+
+.TP
+\fB\-lw\fR \fIfilename\fR
+Use k-term weights specified in the netCDF file \fIfilename\fR.
+
+.TP
+\fB\-sm\fR \fIfilename\fR
+Save mapping from wavenumber- to g-space and corresponding k-term weights to the netCDF file \fIfilename\fR.
+
+.TP
+\fB\-np\fR \fIomp_threads\fR
+Number of OpenMP threads. Defaults to 1.
+
+.TP
+\fB\-T\fR \fIcommand\-file\fR
+Dry Run (optional). Save the file with the input values for the corr_k routine.
+
+
+.SH SEE ALSO
+\fBCcdl2cdf\fR(1), \fBCcdf2cdl\fR(1), \fBCl_run_cdf\fR(1)), \fBCl_run_cdl\fR(1), \fBCinterp\fR(1), \fBCscatter\fR(1)
+
+.SH BUGS
+Please report bugs to "james.manners@metoffice.gov.uk".
+
+.SH AUTHOR
+Original code by James Manners, John M. Edwards and Mark Ringer, Met. Office, Exeter, UK

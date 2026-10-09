@@ -1,0 +1,101 @@
+.TH Cscatter_average 1 "9-6-2014"
+.SH NAME
+Cscatter_average \- Average scattering properties across bands
+.SH USAGE
+Cscatter_average \fB\-s\fR \fIspectral\-file\fR [\fB\-i\fR \fIinstrument\-file\fR]
+                 \fB\-S\fR \fIsolar\-file\fR \fB| \-p\fR \fItemperature\fR \fB| \-d\fR \fItemperature\fR \fB| -u\fR
+                 \fB\-P\fR \fImoments\fR \fB\-w|\-t\fR
+                 \fB\-a\fR \fIfilename\fR \fB|\fR \fB\-f\fR \fIfit\fR \fIfit\-file\fR \fImon\-file\fR \fIdensity\fR
+                 [\fB\-v\fR] [\fB\-x\fR \fIcommand\-file\fR] \fIinput\-file\fR
+
+.SH DESCRIPTION
+This program reads a file of monochromatic single-scattering
+data and averages them across the bands specified in a spectral
+file. The averaged values may be written to
+a file or fitted using a recognized parametrization.
+
+
+.SH OPTIONS
+
+.LP
+
+.TP
+\fB\-s\fR \fIspectral\-file\fR 
+Pathname of the spectral file (used to provide the spectral bands).
+
+.TP
+\fB\-S\fR \fIsolar\-file\fR 
+Weight using the solar spectrum in the given file (standard solar spectra are provided in $RAD_DATA/solar/).
+
+.TP
+\fB\-p\fR \fItemperature\fR 
+Planckian weighting at the given temperature.
+
+.TP
+\fB\-d\fR \fItemperature\fR 
+Differential planckian weighting at the given temperature.
+
+.TP
+\fB\-u\fR
+Uniform weighting.
+
+.TP
+\fB\-P\fR \fImoments\fR
+The number of moments of the phase function to be calculated.
+
+.TP
+\fB\-w\fR
+Method of "thin averaging". The best method for optically thin clouds: a simple weighted mean.
+
+.TP
+\fB\-t\fR
+Method of "thick averaging". The best method for optically thick clouds: the reflection coefficient of an infinite cloud is calculated and weighted, and the total extinction is weighted as opposed to the individual coefficients (see Edwards & Slingo 1996).
+
+.TP
+\fB\-I\fR \fIinstrument\-file\fR 
+Pathname of the instrumental response function (optional).
+
+.TP
+\fB\-a\fR \fIfilename\fR 
+Write the averaged optical properties to the given file.
+
+.TP
+\fB\-f\fR \fIfit\fR \fIfit\-file\fR \fImon\-file\fR \fIdensity\fR
+Parametrize the optical properties as a function of effective radius. For droplets the following values of \fIfit\fR are available:
+
+ 1 Slingo & Schrecker
+ 2 Ackerman & Stephens
+ 5 Pade approximation of the second order (third order for the extinction)
+ 6 Slingo & Schrecker extended to higher moments of the phase function
+ 7 Pade approximation of the second order (third order for the extinction) extended to higher moments of the phase function
+
+For ice crystals the following values of \fIfit\fR are available:
+
+ 1 Slingo & Schrecker
+ 6 ADT-based scheme for ice crystals (anomalous diffraction theory)
+ 7 ADT-based scheme for ice crystals using 10th order polynomials
+ 11 Slingo & Schrecker extended to higher moments of the phase function
+ 12 Parametrization like Fu's extended to higher moments of the phase function
+
+Output filenames are given for the parametrized fit (\fIfit\-file\fR) and monitoring information (\fImon\-file\fR). A density for the particles is given in kg/m^3.
+
+.TP
+\fB\-v\fR
+Show verbose output from the Fortran routine (optional).
+
+.TP
+\fB\-x\fR \fIcommand\-file\fR
+Retain input to scatter_average_90 in a named file.
+
+.TP
+\fIinput\-file\fR
+Input file containing the monochromatic single-scattering data as output by the \fBscatter\fR routine (see \fBCscatter\fR(1)).
+
+.SH SEE ALSO
+\fBCscatter\fR(1), \fBCcorr_k\fR(1), \fBCl_run_cdf\fR(1), \fBCl_run_cdl\fR(1), \fBCinterp\fR(1), \fBCcdl2cdf\fR(1), \fBCcdf2cdl\fR(1)
+
+.SH BUGS
+Please report bugs to "james.manners@metoffice.gov.uk".
+
+.SH AUTHOR
+Original code by John M. Edwards, now supported by James Manners, Met. Office, Exeter, UK

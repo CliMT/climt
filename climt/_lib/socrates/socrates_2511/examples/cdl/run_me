@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# Run the scripts for manipulating CDL atmospheric profiles
+#
+# Path to the test data
+BASE1_DIR=$RAD_DIR/examples/aer_cmp
+BASE1=laer27
+BASE2_DIR=$RAD_DIR/examples/aer_cmp
+BASE2=aer27_lbl
+BASE3_DIR=$RAD_DIR/examples/netcdf/7460_28
+BASE3=7460_28
+
+rm -f test_* $BASE1.* $BASE2.* $BASE3.*
+cpbn $BASE1_DIR/$BASE1 $BASE1
+cpbn $BASE2_DIR/$BASE2 $BASE2
+
+Cdentoq $BASE1.o3 -t $BASE1.t -o test_dentoq
+Cdentomix $BASE1.o3 -q $BASE1.q -t $BASE1.t -o test_dentomix
+Chmrsph $BASE1.q -o test_hmrsph
+Cvert_int $BASE1.o3 -o test_vert_int
+Cnettohr $BASE2.nflx -o test_nettohr
+Cwadd -w $BASE2 1 -w $BASE2 1 -o test_wadd
+Cfval $BASE1.o3 -p 500 -lnn > test_fval
+Cscale_field -R 0.0,1.0e4:2.0 -o test_scale_field \
+             -n "o3" -u "None" -L "Stratospheric ozone x2" $BASE1.o3
+
+gen_null <<EOF > /dev/null
+PA
+1
+1000
+1
+1
+0
+0
+test_gen_null
+EOF
+
+Ccdf2cdl -o $BASE3.iwm $BASE3_DIR/$BASE3.iwm > /dev/null
+Ccdf2cdl -o $BASE3.t $BASE3_DIR/$BASE3.t > /dev/null
+ice_size <<EOF > /dev/null
+$BASE3
+Mitch_dge
+EOF
+
+# Test output against KGO
+ierr=0
+
+diff -q ref_dentoq test_dentoq || ierr=1
+diff -q ref_dentomix test_dentomix || ierr=1
+diff -q ref_hmrsph test_hmrsph || ierr=1
+diff -q ref_vert_int test_vert_int || ierr=1
+diff -q ref_nettohr test_nettohr || ierr=1
+diff -q ref_wadd test_wadd.hrts || ierr=1
+diff -q ref_fval test_fval || ierr=1
+diff -q ref_gen_null test_gen_null || ierr=1
+diff -q ref_ice_size $BASE3.ire || ierr=1
+diff -q ref_scale_field test_scale_field || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  rm -f test_* $BASE1.* $BASE2.* $BASE3.*
+  echo OK
+  exit 0
+fi

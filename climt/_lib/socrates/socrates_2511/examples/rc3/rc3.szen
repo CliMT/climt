@@ -1,0 +1,25 @@
+netcdf rc3.szen{                                    
+
+dimensions:
+    lat         =   1;
+    lon         =   1;
+
+
+variables:
+    float lon(lon); 
+             lon:units = "degree"; 
+             lon:title = "LONGITUDE";
+    float lat(lat);                                                       
+             lat:units = "degree";                                            
+             lat:title = "LATITUDE";                                      
+
+    float zen(lat,lon);                                                  
+             zen:units = "degree";                                         
+             zen:title = "ZENITH ANGLE";                                                  
+
+data:                                                                           
+            lat   =   .000000E+01;
+            lon   =   .000000E+01;
+            zen   =   .600000E+02;
+
+}                                                                               

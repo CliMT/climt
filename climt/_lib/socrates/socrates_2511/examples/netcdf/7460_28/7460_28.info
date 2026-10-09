@@ -1,0 +1,48 @@
+This is output from Rad.pro Created on
+15/08/2006   18:08:37.000
+ 
+ Time of LEM simulation         =       15904.0
+ Input file name = ~frma/clouds/data/run7460.dg0028
+ Data used was 3-d
+ Output base name               = 7460_28
+ McClatchey profile             = $RAD_DIR/data/mcc_profiles/one_km/tro
+ Critical value for cloud qi+ql > 1.0e-06
+ Smoothing distance at top (Pa) =      0
+ Solar Zenith Angle             =  30
+ Solar Constant                 = 1365.0
+ Number of x coulmns in dataset = 130
+ First x column of calculations =  40
+ Final x column of calculations =  40
+ 
+ Number of y coulmns in dataset = 130
+ First y column of calculations = 105
+ Final y column of calculations = 124
+ The convection parameter       =  0.050
+ 
+Other useful information:
+ 
+The temp dir used was 7460_28569
+McClatchey fluxes and heating rates are in 7460_28569
+The standard is maximum random overlap & solver = 11
+Not included snow and graupel in radn
+Not included rain in radn 
+
+IPA mean:
+---------
+             Direct Flux   Diffuse Down    Flux Up
+TOA SW:          1182.13      0.00000      405.104
+Surface SW:      261.093      260.061      31.2693
+
+                Net Down     Flux Down     Flux Up
+TOA LW:         -258.512  2.97312e-09      258.512
+Surface LW:     -32.0405      447.493      479.534
+
+Single column:
+--------------
+             Direct Flux   Diffuse Down    Flux Up
+TOA SW:          1182.13      0.00000      379.933
+Surface SW:      287.016      247.233      32.0549
+
+                Net Down     Flux Down     Flux Up
+TOA LW:         -259.396  2.97312e-09      259.396
+Surface LW:     -33.4955      446.033      479.528

@@ -1,0 +1,75 @@
+This directory contains scripts to create spectral files that extend into the
+far and extreme ultraviolet to calculate photolysis and photoionisation rates.
+
+The data is from the following sources.
+
+Absorption cross-sections from Eric Hebrard (private communication)
+meaned to 1nm resolution from multiple sources:
+
+CH4.dat   6 - 151 nm
+CO2.dat   1 - 299 nm
+CO.dat    7 - 163 nm
+H2.dat    5 - 116 nm
+N2O.dat   7 - 249 nm
+NO2.dat   7 - 723 nm
+O3.dat  186 - 821 nm
+OH.dat    5 - 612 nm
+
+
+Absorption cross-sections and quantum yields from Fennelly & Torr (1992)
+with data below 5nm from Henke (1993):
+
+N.dat    0.04 - 102.7 nm
+N2.dat   0.04 - 102.7 nm
+O.dat    0.04 - 102.7 nm
+
+N2_1.qy
+N2_2.qy
+N2_3.qy
+
+O_1.qy
+O_2.qy
+O_3.qy
+O_4.qy
+O_5.qy
+
+
+Photoelectron enhancement factors from Soloman and Qian (2005):
+
+N2_1.pe
+N2_2.pe
+N2_3.pe
+
+O_1.pe
+O_2.pe
+O_3.pe
+
+O2_2.pe
+O2_6.pe
+O2_7.pe
+
+
+O2 cross-section data merged from the following datafiles recommended in JPL
+Publication 15-10 (and downloaded from http://satellite.mpic.de/spectral_atlas):
+
+O2_Henke(1993)_0.04-121.5nm.dat :                   0.04 -   4.48 nm
+Fennelly and Torr (1992):                           4.53 - 102.70 nm
+O2_MatsunagaWatanabe(1967)_298K_58.0-107.7nm.txt: 103.10 - 107.70 nm
+O2_WatanabeMarmo(1956)_298K_85-110nm.txt:         107.93 - 108.64 nm
+O2_OgawaOgawa(1975)_298K_108-160nm(X).txt:        108.75 - 114.95 nm
+O2_Lu(2010)_303.7K_115-180nm.txt:                 115.00 - 179.20 nm
+O2_Yoshino(1992)_300K_179.2-180.2nm(12-0).txt:    179.21 - 
+... O2_Yoshino(1992) files (11-0):(2-0) ...
+O2_Yoshino(1992)_300K_199.8-202.6nm(1-0).txt:            - 202.58 nm
+Eric Hebrard 1nm meaned data (seO2MT.dat):        203.00 - 204.00 nm
+O2_JPL-2010(2011)_298K_205-245nm(rec).txt:        205.00 - 240.00 nm
+O2_Fally(2000)_287-289K_240-294nm.txt:            240.89 - 294.03 nm
+
+SO2 quantum yields: SO2_1.qy
+taken from Katagiri et al (1997) DOI:10.1016/S0022-2860(97)00199-3
+(approximate values derived from their figure 3a)
+
+Example atmospheric profiles up to 120km are taken from glatm2.dat
+(references therein). The tropical profile from this data is reformatted
+in glatm.raw and supplemented with data for atomic O and N from the
+NASA MSIS model (details in the file convert_msis).

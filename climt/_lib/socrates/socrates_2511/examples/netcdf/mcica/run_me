@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# Initialise error status (to test for output differences)
+ierr=0
+
+rm -f mcica_data
+$RAD_BIN/assign_subcols << EOF > /dev/null
+$RAD_DATA/spectra/ga3_0/sp_sw_ga3_0
+10
+$RAD_DATA/spectra/ga3_0/sp_lw_ga3_0
+6
+$RAD_DATA/spectra/ga3_0/mcica_data
+64
+EOF
+
+diff -q -b mcica_data $RAD_DATA/spectra/ga3_0/mcica_data || ierr=1
+if [ $ierr -gt 0 ] ; then
+  echo "Output from assign_subcols does not match, test failed"
+  exit 1
+else
+  rm -f mcica_data
+fi
+
+cp 5118_142.surflw 5118_142.surf
+Cl_run_cdf -B 5118_142 -s $RAD_DATA/spectra/ga3_0/sp_lw_ga3_0 -R 1 9 -I -t 12 +R -v 13 -g 5 -c -C 10 -K 1 -d 1 -i 1 -m 0.75 +m 2 -dp 10000
+fmove 5118_142 lw_avg
+
+Cl_run_cdf -B 5118_142 -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 -I +R -g 4 -c -C 10 -K 1 -d 5 -i 8 -m 0.75 +m 2 -dp 10000
+fmove 5118_142 lw_ga7
+
+cp 5118_142.surfsw 5118_142.surf
+Cl_run_cdf -B 5118_142 -s $RAD_DATA/spectra/ga3_0/sp_sw_ga3_0 -R 1 6 -S -t 2 +R -v 13 -g 5 -r -C 10 -K 1 -d 3 -i 3 -m 0.75 +m 2 -dp 10000
+fmove 5118_142 sw_avg
+# test no-scaling in mcica 
+Cl_run_cdf -B 5118_142 -s $RAD_DATA/spectra/ga3_0/sp_sw_ga3_0 -R 1 6 -S -t 2 +R -v 13 -g 5 -r -C 10 -K 1 -d 3 -i 3 -m 0.75 +m 2 -dp 10000 -ds 0
+fmove 5118_142 sw_ds0_avg
+# test PFS (phase function scaling) in mcica
+Cl_run_cdf -B 5118_142 -s $RAD_DATA/spectra/ga3_0/sp_sw_ga3_0 -R 1 6 -S -t 2 +R -v 13 -g 5 -r -C 10 -K 1 -d 3 -i 3 -m 0.75 +m 2 -dp 10000 -ds 2 -ha 2.5
+fmove 5118_142 sw_ds2_avg
+
+Cl_run_cdf -B 5118_142 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -r -C 10 -K 1 -d 5 -i 8 -m 0.75 +m 2 -dp 10000
+fmove 5118_142 sw_ga7
+
+rm -f cdl_lw*
+rm -f cdl_sw*
+
+Ccdf2cdl -a lw_avg > /dev/null
+diff -q ref_lw_avg.hrts cdl_lw_avg.hrts || ierr=1
+
+Ccdf2cdl -a lw_ga7 > /dev/null
+diff -q ref_lw_ga7.hrts cdl_lw_ga7.hrts || ierr=1
+
+Ccdf2cdl -a sw_avg > /dev/null
+diff -q ref_sw_avg.hrts cdl_sw_avg.hrts || ierr=1
+
+Ccdf2cdl -a sw_ga7 > /dev/null
+diff -q ref_sw_ga7.hrts cdl_sw_ga7.hrts || ierr=1
+
+Ccdf2cdl -a sw_ds0_avg > /dev/null
+diff -q ref_sw_ds0_avg.hrts cdl_sw_ds0_avg.hrts || ierr=1
+
+Ccdf2cdl -a sw_ds2_avg > /dev/null
+diff -q ref_sw_ds2_avg.hrts cdl_sw_ds2_avg.hrts || ierr=1
+
+if [ $ierr -gt 0 ] ; then
+  exit 1
+else
+  resrm lw_ga7
+  resrm sw_ga7
+  resrm lw_avg
+  resrm sw_avg
+  resrm sw_ds0_avg
+  resrm sw_ds2_avg
+  resrm cdl_lw_ga7
+  resrm cdl_sw_ga7
+  resrm cdl_lw_avg
+  resrm cdl_sw_avg
+  resrm cdl_sw_ds0_avg
+  resrm cdl_sw_ds2_avg
+  echo OK
+  exit 0
+fi

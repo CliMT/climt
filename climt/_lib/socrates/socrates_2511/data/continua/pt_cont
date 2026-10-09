@@ -1,0 +1,4 @@
+Temperatures at which to tabulate generalised continuum absorption.
+*PTVAL
+1.0D+05 1.5D+02 1.6D+02 1.7D+02 1.8D+02 1.9D+02 2.0D+02 2.1D+02 2.2D+02 2.3D+02 2.4D+02 2.5D+02 2.6D+02 2.7D+02 2.8D+02 2.9D+02 3.0D+02 3.1D+02 3.2D+02 3.3D+02 3.4D+02 3.5D+02
+*END 

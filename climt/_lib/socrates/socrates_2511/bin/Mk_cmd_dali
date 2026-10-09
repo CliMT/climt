@@ -1,0 +1,14 @@
+#
+# Pathnames for compilers and global options for naming files
+#
+FORTCOMP        = ifort -O -c
+LINK            = ifort -O
+LIBLINK         = ar rvu
+INCCDF_PATH     = /usr/local/other/netcdf/3.6.2_intel-14.0.3.174/include
+LIBCDF_PATH     = /usr/local/other/netcdf/3.6.2_intel-14.0.3.174/lib
+LIBCDF_NAME     = netcdf
+
+LIBSUFFIX       = a
+
+.SUFFIXES: $(SUFFIXES) .f90
+
