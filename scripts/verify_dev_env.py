@@ -136,7 +136,11 @@ def main(argv):
             print("{:<22} {}  {}".format(check["name"], _status(check), check["detail"]))
         try:
             import climt
-            climt.show_versions()
+            if hasattr(climt, "show_versions"):
+                climt.show_versions()
+            else:
+                print("climt.show_versions unavailable in climt {} at {}".format(
+                    getattr(climt, "__version__", "unknown"), climt.__file__))
         except Exception as exc:
             print("climt.show_versions() failed: {!r}".format(exc))
 

@@ -60,7 +60,7 @@ def test_bootstrap_dry_run_runs_nothing_and_names_each_step(tmp_path):
     assert "create" not in calls and "run" not in calls
 
 
-def test_bootstrap_dry_run_installs_dycore_without_deps(tmp_path):
+def test_bootstrap_dry_run_links_dycore_with_a_pth_file(tmp_path):
     fake, _ = _fake_conda(tmp_path)
     dycore = tmp_path / "gfs"
     dycore.mkdir()
@@ -68,7 +68,10 @@ def test_bootstrap_dry_run_installs_dycore_without_deps(tmp_path):
                GFS_DYCORE_DIR=str(dycore))
     result = subprocess.run(["bash", str(BOOTSTRAP), "--dry-run"], env=env,
                             capture_output=True, text=True)
-    assert "--no-deps -e {}".format(dycore) in result.stdout
+    line = next(l for l in result.stdout.splitlines()
+                if "gfs_dynamical_core.pth" in l)
+    assert str(dycore.resolve()) in line
+    assert "pip" not in line
 
 
 def _load_verify():
@@ -107,7 +110,7 @@ def test_verify_marks_a_failing_optional_check_as_missing_optional(monkeypatch, 
     assert module.main(["--strict"]) == 1
 
 
-def test_bootstrap_continues_to_verify_when_the_dycore_install_fails(tmp_path):
+def test_bootstrap_continues_to_verify_when_the_dycore_link_fails(tmp_path):
     # Run a copy of the script from a scratch repository so the lock file it
     # writes lands in tmp_path, not in this checkout.
     repo = tmp_path / "repo"
@@ -121,7 +124,7 @@ def test_bootstrap_continues_to_verify_when_the_dycore_install_fails(tmp_path):
     fake.write_text(
         "#!/bin/bash\n"
         'echo "$@" >> "{log}"\n'
-        'case "$*" in *--no-deps*) exit 1 ;; esac\n'
+        'case "$*" in *sysconfig*) exit 1 ;; esac\n'
         'if [ "$1" = "env" ] && [ "$2" = "list" ]; then\n'
         '  printf "# conda environments:\\nbase  /x/base\\n"\n'
         "fi\n".format(log=log))
@@ -133,9 +136,24 @@ def test_bootstrap_continues_to_verify_when_the_dycore_install_fails(tmp_path):
     result = subprocess.run(["bash", str(script)], env=env,
                             capture_output=True, text=True)
     assert result.returncode == 0
-    assert "gfs_dynamical_core install failed; continuing" in result.stderr
+    assert "gfs_dynamical_core link failed; continuing" in result.stderr
     calls = log.read_text().splitlines()
-    dycore_call = next(i for i, c in enumerate(calls) if "--no-deps" in c)
+    dycore_call = next(i for i, c in enumerate(calls) if "sysconfig" in c)
     later = calls[dycore_call + 1:]
     assert any("pip freeze" in c for c in later)
     assert any("verify_dev_env.py" in c for c in later)
+
+
+def test_verify_reports_missing_show_versions_without_raising(monkeypatch, capsys):
+    import types
+    module = _load_verify()
+    monkeypatch.setattr(module, "run_checks", lambda: [])
+    fake = types.ModuleType("climt")
+    fake.__version__ = "9.9.9"
+    fake.__file__ = "/somewhere/climt/__init__.py"
+    monkeypatch.setitem(sys.modules, "climt", fake)
+    assert module.main([]) == 0
+    out = capsys.readouterr().out
+    assert ("climt.show_versions unavailable in climt 9.9.9 at "
+            "/somewhere/climt/__init__.py") in out
+    assert "failed" not in out
