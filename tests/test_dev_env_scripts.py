@@ -144,6 +144,39 @@ def test_bootstrap_continues_to_verify_when_the_dycore_link_fails(tmp_path):
     assert any("verify_dev_env.py" in c for c in later)
 
 
+def test_bootstrap_links_dycore_when_conda_run_adds_a_trailing_blank_line(tmp_path):
+    # Real `conda run` prints a blank line after the command's output; the
+    # site-packages path must still be found.
+    repo = tmp_path / "repo"
+    (repo / "scripts").mkdir(parents=True)
+    (repo / "envs").mkdir()
+    script = repo / "scripts" / "bootstrap_dev_env.sh"
+    script.write_text(BOOTSTRAP.read_text())
+    (repo / "envs" / "climt-dev.in").write_text("numpy\n")
+    purelib = tmp_path / "site-packages"
+    purelib.mkdir()
+    log = tmp_path / "conda_calls.log"
+    fake = tmp_path / "conda"
+    fake.write_text(
+        "#!/bin/bash\n"
+        'echo "$@" >> "{log}"\n'
+        'case "$*" in *sysconfig*) printf "%s\\n\\n" "{purelib}"; exit 0 ;; esac\n'
+        'if [ "$1" = "env" ] && [ "$2" = "list" ]; then\n'
+        '  printf "# conda environments:\\nbase  /x/base\\n"\n'
+        "fi\n".format(log=log, purelib=purelib))
+    fake.chmod(0o755)
+    dycore = tmp_path / "gfs"
+    dycore.mkdir()
+    env = dict(os.environ, CONDA_EXE=str(fake), CLIMT_DIR=str(REPO),
+               GFS_DYCORE_DIR=str(dycore))
+    result = subprocess.run(["bash", str(script)], env=env,
+                            capture_output=True, text=True)
+    assert result.returncode == 0
+    assert "link failed" not in result.stderr
+    pth = purelib / "gfs_dynamical_core.pth"
+    assert pth.read_text() == str(dycore.resolve()) + "\n"
+
+
 def test_verify_reports_missing_show_versions_without_raising(monkeypatch, capsys):
     import types
     module = _load_verify()

@@ -86,7 +86,8 @@ link_dycore() {
         return 0
     fi
     purelib="$("$CONDA" run -n "$ENV_NAME" python -c \
-        'import sysconfig; print(sysconfig.get_paths()["purelib"])' | tail -n 1)" || return 1
+        'import sysconfig; print(sysconfig.get_paths()["purelib"])' \
+        | awk 'NF { last = $0 } END { print last }')" || return 1
     [ -n "$purelib" ] && [ -d "$purelib" ] || return 1
     printf '%s\n' "$dycore" > "$purelib/gfs_dynamical_core.pth"
 }
