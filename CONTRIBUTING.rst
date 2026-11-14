@@ -99,9 +99,20 @@ Ready to contribute? Here's how to set up `climt` for local development.
     $ python scripts/verify_dev_env.py
 
    ``GFS_DYCORE_DIR`` is optional; when set, that ``gfs_dynamical_core`` checkout is
-   installed with ``pip install --no-deps -e``. The script refuses to touch an existing
-   ``climt-dev`` environment unless you pass ``--recreate``. Pass ``--relock`` to
-   resolve ``envs/climt-dev.in`` afresh and rewrite ``envs/climt-dev.lock.txt``.
+   put on the environment's path with a ``gfs_dynamical_core.pth`` file. Nothing is
+   built, so build the checkout's compiled core beforehand, or the verification script
+   reports it as ``MISSING (optional)``. ``pip check`` then lists the dycore's own
+   ``jax``/``flax``/``s2fft`` pins as conflicts; that is expected. The dycore is never
+   written to the lock file.
+
+   On macOS, the script sets ``SDKROOT`` from ``xcrun --show-sdk-path`` when it is
+   unset, so Homebrew ``gcc`` can build the Fortran extensions. If that build fails
+   anyway, the script installs climt in pure-Python mode.
+
+   The script refuses to touch an existing ``climt-dev`` environment unless you pass
+   ``--recreate``. Pass ``--relock`` to resolve ``envs/climt-dev.in`` afresh and
+   rewrite ``envs/climt-dev.lock.txt``. If the environment already exists, you need
+   ``--recreate --relock``.
 
    When reporting a bug, paste the output of ``python -c "import climt; climt.show_versions()"``
    into the issue.

@@ -27,9 +27,9 @@
 ## Review Focus
 
 - **A reported package is not installed** (e.g. no zarr): `show_versions()` returns `None` for it and prints `not installed`, and does not raise. Pinned by Task 1.
-- **A reported package is installed but broken on import** (e.g. scipy with unloadable Fortran extensions, JAX with `jax-metal`): `show_versions()` still returns, because it never imports it. Pinned by Task 1's subprocess test.
+- **A reported package is installed but broken on import** (e.g. scipy with unloadable Fortran extensions, JAX with `jax-metal`): `show_versions()` still returns, because it never imports it. Pinned by Task 1's subprocess test for packages `import climt` does not already load (scipy is loaded by climt via pint, so for scipy this holds by construction, not by test). A compiled climt extension that raises a non-ImportError (numpy ABI mismatch, climt#174) is reported, not raised: pinned by `test_show_versions_survives_a_broken_compiled_extension`.
 - **`climt-dev` already exists** when the bootstrap runs: the script stops with a message naming `--recreate` and exit status 2; it does not reinstall over or delete it. Pinned by Task 2.
-- **No Fortran toolchain** (`gfortran` missing or the build fails): the bootstrap falls back to `CLIMT_PURE_PYTHON=1 pip install -e`, and the verification script prints the Fortran row as `MISSING (optional)` and still exits 0 without `--strict`. Pinned by Task 2.
+- **No Fortran toolchain** (`gfortran` missing or the build fails): the bootstrap falls back to `CLIMT_PURE_PYTHON=1 pip install -e`, and the verification script prints the Fortran row as `MISSING (optional)` and still exits 0 without `--strict`. Verify half pinned by Task 2; the bootstrap fallback by `test_bootstrap_falls_back_to_pure_python_when_the_compiled_build_fails` (added at final review).
 - **`GFS_DYCORE_DIR` unset or not a directory:** the dycore step is skipped with a one-line notice; verification prints the dycore row as `MISSING (optional)`. Pinned by Task 2.
 
 ## File Structure

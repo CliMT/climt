@@ -102,9 +102,12 @@ fi
 # 7. Write the lock file.
 if [ "$WRITE_LOCK" -eq 1 ]; then
     if [ "$DRY_RUN" -eq 1 ]; then
-        echo "DRY-RUN: $CONDA run -n $ENV_NAME python -m pip freeze --exclude-editable > $LOCK"
+        echo "DRY-RUN: $CONDA run -n $ENV_NAME python -m pip freeze --exclude-editable | (drop gfs_dynamical_core) > $LOCK"
     else
-        "$CONDA" run -n "$ENV_NAME" python -m pip freeze --exclude-editable > "$LOCK.tmp"
+        # The .pth-linked dycore shows up as a regular install via its egg-info;
+        # it is not on PyPI and must never be pinned.
+        "$CONDA" run -n "$ENV_NAME" python -m pip freeze --exclude-editable \
+            | awk 'tolower($0) !~ /^gfs[-_.]dynamical[-_.]core([^a-z0-9_.-]|$)/' > "$LOCK.tmp"
         mv "$LOCK.tmp" "$LOCK"
     fi
 fi

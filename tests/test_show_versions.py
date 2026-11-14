@@ -50,3 +50,17 @@ def test_show_versions_does_not_import_reported_packages():
     result = subprocess.run(
         [sys.executable, "-c", code], capture_output=True, text=True, check=True)
     assert result.stdout.strip().splitlines()[-1] == "IMPORTED:"
+
+
+def test_show_versions_survives_a_broken_compiled_extension(monkeypatch):
+    # climt issue #174: a numpy ABI mismatch surfaces as ValueError on first
+    # import of a compiled extension, not ImportError.
+    def broken():
+        raise ValueError("numpy.dtype size changed, may indicate binary incompatibility")
+
+    monkeypatch.setattr(climt, "has_fortran_extensions", broken)
+    out = io.StringIO()
+    info = climt.show_versions(file=out)
+    assert info["fortran_extensions"] is False
+    line = next(l for l in out.getvalue().splitlines() if l.startswith("fortran_extensions:"))
+    assert "ValueError" in line and "dtype size changed" in line

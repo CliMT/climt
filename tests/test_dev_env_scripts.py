@@ -190,3 +190,58 @@ def test_verify_reports_missing_show_versions_without_raising(monkeypatch, capsy
     assert ("climt.show_versions unavailable in climt 9.9.9 at "
             "/somewhere/climt/__init__.py") in out
     assert "failed" not in out
+
+
+def _scratch_bootstrap(tmp_path, fake_body):
+    """Copy the bootstrap into a scratch repo and run it against a fake conda.
+
+    `fake_body` is bash run after the call is logged; it sees the call in "$*".
+    Returns (result, calls, lock_path).
+    """
+    repo = tmp_path / "repo"
+    (repo / "scripts").mkdir(parents=True)
+    (repo / "envs").mkdir()
+    script = repo / "scripts" / "bootstrap_dev_env.sh"
+    script.write_text(BOOTSTRAP.read_text())
+    (repo / "envs" / "climt-dev.in").write_text("numpy\n")
+    log = tmp_path / "conda_calls.log"
+    fake = tmp_path / "conda"
+    fake.write_text(
+        "#!/bin/bash\n"
+        'echo "PURE=${{CLIMT_PURE_PYTHON:-}} $*" >> "{log}"\n'
+        'if [ "$1" = "env" ] && [ "$2" = "list" ]; then\n'
+        '  printf "# conda environments:\\nbase  /x/base\\n"\n'
+        "fi\n".format(log=log) + fake_body)
+    fake.chmod(0o755)
+    dycore = tmp_path / "gfs"
+    dycore.mkdir()
+    env = dict(os.environ, CONDA_EXE=str(fake), CLIMT_DIR=str(REPO),
+               GFS_DYCORE_DIR=str(dycore))
+    result = subprocess.run(["bash", str(script)], env=env,
+                            capture_output=True, text=True)
+    return result, log.read_text().splitlines(), repo / "envs" / "climt-dev.lock.txt"
+
+
+def test_lock_never_pins_the_path_linked_dycore(tmp_path):
+    # The .pth link makes pip see the dycore checkout's egg-info as an installed,
+    # non-editable package; the lock must not pin it.
+    result, _, lock = _scratch_bootstrap(
+        tmp_path,
+        'case "$*" in *"pip freeze"*) '
+        'printf "numpy==2.0.0\\ngfs_dynamical_core==0.3.0\\ngfs-dynamical-core==0.3.0\\n" ;; esac\n')
+    assert result.returncode == 0, result.stderr
+    lines = lock.read_text().splitlines()
+    assert "numpy==2.0.0" in lines
+    assert not [l for l in lines if l.lower().replace("-", "_").startswith("gfs_dynamical_core")]
+
+
+def test_bootstrap_falls_back_to_pure_python_when_the_compiled_build_fails(tmp_path):
+    result, calls, _ = _scratch_bootstrap(
+        tmp_path,
+        'case "$*" in *"pip install -e"*) '
+        '[ "${CLIMT_PURE_PYTHON:-}" = "1" ] || exit 1 ;; esac\n')
+    assert result.returncode == 0, result.stderr
+    assert "compiled build failed; falling back to pure Python" in result.stdout
+    installs = [c for c in calls if "pip install -e" in c]
+    assert len(installs) == 2
+    assert installs[0].startswith("PURE= ") and installs[1].startswith("PURE=1 ")

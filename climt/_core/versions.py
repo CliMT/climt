@@ -24,11 +24,19 @@ def show_versions(file=None):
     """
     import climt
 
+    # A broken compiled extension can raise more than ImportError (e.g. the
+    # ValueError of a numpy ABI mismatch, climt#174); report it, don't raise it.
+    fortran_error = None
+    try:
+        fortran = bool(climt.has_fortran_extensions())
+    except Exception as err:
+        fortran, fortran_error = False, err
+
     info = {
         "climt": climt.__version__,
         "python": platform.python_version(),
         "platform": platform.platform(),
-        "fortran_extensions": bool(climt.has_fortran_extensions()),
+        "fortran_extensions": fortran,
     }
     for name in REPORTED_PACKAGES:
         info[name] = _installed_version(name)
@@ -36,5 +44,8 @@ def show_versions(file=None):
     if file is None:
         file = sys.stdout
     for key, value in info.items():
-        print("{}: {}".format(key, "not installed" if value is None else value), file=file)
+        text = "not installed" if value is None else str(value)
+        if key == "fortran_extensions" and fortran_error is not None:
+            text += " ({!r})".format(fortran_error)
+        print("{}: {}".format(key, text), file=file)
     return info
