@@ -90,11 +90,21 @@ Ready to contribute? Here's how to set up `climt` for local development.
 
     $ git clone git@github.com:your_name_here/climt.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Create the ``climt-dev`` conda environment, which installs your local copy in
+   editable mode together with the pinned numba and JAX stack::
 
-    $ mkvirtualenv climt
     $ cd climt/
-    $ python setup.py develop
+    $ GFS_DYCORE_DIR=/path/to/gfs_dynamical_core scripts/bootstrap_dev_env.sh
+    $ conda activate climt-dev
+    $ python scripts/verify_dev_env.py
+
+   ``GFS_DYCORE_DIR`` is optional; when set, that ``gfs_dynamical_core`` checkout is
+   installed with ``pip install --no-deps -e``. The script refuses to touch an existing
+   ``climt-dev`` environment unless you pass ``--recreate``. Pass ``--relock`` to
+   resolve ``envs/climt-dev.in`` afresh and rewrite ``envs/climt-dev.lock.txt``.
+
+   When reporting a bug, paste the output of ``python -c "import climt; climt.show_versions()"``
+   into the issue.
 
 4. Create a branch for local development::
 
