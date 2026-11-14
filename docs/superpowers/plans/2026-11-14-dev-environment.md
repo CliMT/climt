@@ -14,7 +14,8 @@
 
 - Environment name: `climt-dev`. Python: `3.11`.
 - Pinned JAX stack, verbatim: `jax==0.10.1`, `jaxlib==0.10.1`, `s2fft==1.4.0`, `flax==0.12.7`, `optax==0.2.8`. `jax-metal` must not be installed.
-- `gfs_dynamical_core` is installed with `pip install --no-deps -e` (its metadata pins `jax==0.5.3`).
+- `gfs_dynamical_core` is linked into the environment with a `.pth` file naming its checkout — never `pip install`ed: its metadata pins `jax==0.5.3`, and installing it rebuilds its Fortran core with a compiler setup that fails on this machine. (Amended 2026-11-14 after Task 3's first run.)
+- On macOS the bootstrap exports `SDKROOT=$(xcrun --show-sdk-path)` when `SDKROOT` is unset, so Homebrew gcc finds the system headers during climt's build. (Amended 2026-11-14.)
 - Do not modify or remove the existing conda environments `climt` and `gfs_dycore_develop`.
 - Do not change `setup.py`, `pyproject.toml`, `tox.ini`, `requirements_dev.txt` or anything under `.github/`.
 - `show_versions()` must not import any package it reports.
@@ -196,7 +197,7 @@ Bootstrap behaviour, in order:
 3. `conda create -n <name> -y python=3.11 pip`.
 4. Install requirements: with `--relock`, or when `envs/climt-dev.lock.txt` does not exist, `pip install -r envs/climt-dev.in`; otherwise `pip install -r envs/climt-dev.lock.txt`. All pip calls go through `conda run -n <name> python -m pip`.
 5. Install climt: `pip install -e "$CLIMT_DIR"`. If that fails, print `compiled build failed; falling back to pure Python` and run `CLIMT_PURE_PYTHON=1 pip install -e "$CLIMT_DIR"`.
-6. If `GFS_DYCORE_DIR` is set and is a directory: `pip install --no-deps -e "$GFS_DYCORE_DIR"`; otherwise print `GFS_DYCORE_DIR not set or not a directory; skipping gfs_dynamical_core`.
+6. If `GFS_DYCORE_DIR` is set and is a directory: write `gfs_dynamical_core.pth`, containing that directory's absolute path, into the new environment's site-packages (no build, no dependency resolution); otherwise print `GFS_DYCORE_DIR not set or not a directory; skipping gfs_dynamical_core`. A failure here prints `gfs_dynamical_core link failed; continuing` and does not stop the script.
 7. With `--relock`, or when the lock did not exist: write `pip freeze --exclude-editable` to `envs/climt-dev.lock.txt`.
 8. Run `scripts/verify_dev_env.py` in the new environment and exit with its status.
 

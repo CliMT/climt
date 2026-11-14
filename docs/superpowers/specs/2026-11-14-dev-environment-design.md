@@ -63,7 +63,16 @@ NumPy binary incompatibility) also have no one-line way to report versions.
 - JAX stack pinned to the combination already proven with the dycore in
   `gfs_dycore_develop`: `jax==0.10.1`, `jaxlib==0.10.1`, `s2fft==1.4.0`,
   `flax==0.12.7`, `optax==0.2.8`. `gfs_dynamical_core`'s own metadata pins
-  `jax==0.5.3`, so it is installed with `--no-deps`.
+  `jax==0.5.3`, and a pip install of it rebuilds its Fortran core, so it is
+  linked in with a `.pth` file that names its checkout and uses whatever
+  is already built there.
+- On macOS the bootstrap sets `SDKROOT` from `xcrun` when it is unset:
+  Homebrew gcc 15 otherwise fails to find `stdlib.h` while compiling
+  climt's extensions.
+- The verification script tolerates a climt on the import path that
+  predates `show_versions()` and says so, since the environment's editable
+  install points at the main checkout, which only gains the function when
+  this branch is merged.
 - climt is installed editable from `CLIMT_DIR` (default: the repo that holds
   the script). On the maintainer's machine it is run with
   `CLIMT_DIR=~/github/climt` so the environment does not point into a
