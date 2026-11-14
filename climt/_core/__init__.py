@@ -25,6 +25,7 @@ from .util import (
     mass_to_volume_mixing_ratio,
     numpy_version_of,
 )
+from .versions import show_versions
 
 __all__ = (
     "mass_to_volume_mixing_ratio",
@@ -53,4 +54,5 @@ __all__ = (
     "UnytBackend",
     "UnytStateContainer",
     "UnytTimeDelta",
+    "show_versions",
 )

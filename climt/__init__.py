@@ -45,6 +45,7 @@ from ._core import (
     mass_to_volume_mixing_ratio,
     numpy_version_of,
     set_constants_from_dict,
+    show_versions,
 )
 
 
@@ -95,6 +96,7 @@ __all__ = (
     LandIce,
     DataOcean,
     SimpleBoundaryLayer,
+    show_versions,
 )
 
 
