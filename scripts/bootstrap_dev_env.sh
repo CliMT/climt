@@ -75,7 +75,9 @@ fi
 
 # 6. Install gfs_dynamical_core without its (stale) pinned dependencies.
 if [ -n "${GFS_DYCORE_DIR:-}" ] && [ -d "$GFS_DYCORE_DIR" ]; then
-    pip_in_env install --no-deps -e "$GFS_DYCORE_DIR"
+    if ! pip_in_env install --no-deps -e "$GFS_DYCORE_DIR"; then
+        echo "gfs_dynamical_core install failed; continuing" >&2
+    fi
 else
     echo "GFS_DYCORE_DIR not set or not a directory; skipping gfs_dynamical_core"
 fi

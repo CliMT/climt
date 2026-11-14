@@ -105,3 +105,37 @@ def test_verify_marks_a_failing_optional_check_as_missing_optional(monkeypatch, 
     assert module.main([]) == 0
     assert "MISSING (optional)" in capsys.readouterr().out
     assert module.main(["--strict"]) == 1
+
+
+def test_bootstrap_continues_to_verify_when_the_dycore_install_fails(tmp_path):
+    # Run a copy of the script from a scratch repository so the lock file it
+    # writes lands in tmp_path, not in this checkout.
+    repo = tmp_path / "repo"
+    (repo / "scripts").mkdir(parents=True)
+    (repo / "envs").mkdir()
+    script = repo / "scripts" / "bootstrap_dev_env.sh"
+    script.write_text(BOOTSTRAP.read_text())
+    (repo / "envs" / "climt-dev.in").write_text("numpy\n")
+    log = tmp_path / "conda_calls.log"
+    fake = tmp_path / "conda"
+    fake.write_text(
+        "#!/bin/bash\n"
+        'echo "$@" >> "{log}"\n'
+        'case "$*" in *--no-deps*) exit 1 ;; esac\n'
+        'if [ "$1" = "env" ] && [ "$2" = "list" ]; then\n'
+        '  printf "# conda environments:\\nbase  /x/base\\n"\n'
+        "fi\n".format(log=log))
+    fake.chmod(0o755)
+    dycore = tmp_path / "gfs"
+    dycore.mkdir()
+    env = dict(os.environ, CONDA_EXE=str(fake), CLIMT_DIR=str(REPO),
+               GFS_DYCORE_DIR=str(dycore))
+    result = subprocess.run(["bash", str(script)], env=env,
+                            capture_output=True, text=True)
+    assert result.returncode == 0
+    assert "gfs_dynamical_core install failed; continuing" in result.stderr
+    calls = log.read_text().splitlines()
+    dycore_call = next(i for i, c in enumerate(calls) if "--no-deps" in c)
+    later = calls[dycore_call + 1:]
+    assert any("pip freeze" in c for c in later)
+    assert any("verify_dev_env.py" in c for c in later)
