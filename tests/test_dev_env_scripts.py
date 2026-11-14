@@ -232,7 +232,8 @@ def test_lock_never_pins_the_path_linked_dycore(tmp_path):
     assert result.returncode == 0, result.stderr
     lines = lock.read_text().splitlines()
     assert "numpy==2.0.0" in lines
-    assert not [l for l in lines if l.lower().replace("-", "_").startswith("gfs_dynamical_core")]
+    assert not [line for line in lines
+                if line.lower().replace("-", "_").startswith("gfs_dynamical_core")]
 
 
 def test_bootstrap_falls_back_to_pure_python_when_the_compiled_build_fails(tmp_path):

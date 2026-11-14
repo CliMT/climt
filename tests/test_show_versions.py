@@ -62,5 +62,6 @@ def test_show_versions_survives_a_broken_compiled_extension(monkeypatch):
     out = io.StringIO()
     info = climt.show_versions(file=out)
     assert info["fortran_extensions"] is False
-    line = next(l for l in out.getvalue().splitlines() if l.startswith("fortran_extensions:"))
+    line = next(text for text in out.getvalue().splitlines()
+                if text.startswith("fortran_extensions:"))
     assert "ValueError" in line and "dtype size changed" in line
