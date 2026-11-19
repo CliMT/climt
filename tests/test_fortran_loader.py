@@ -1,3 +1,4 @@
+import importlib.machinery
 import sys
 
 import pytest
@@ -129,3 +130,29 @@ def test_non_import_error_in_package_is_broken(monkeypatch, tmp_path):
     assert "RuntimeError: bad dylib" in status["detail"]
     assert fortran.load_extension("_dcmip") is None
     assert "pip install --force-reinstall climt-fortran" in str(fortran.unavailable_error("X"))
+
+
+def test_extensions_come_only_from_the_imported_package(monkeypatch, tmp_path):
+    # setuptools' editable-install finder sits on sys.meta_path and maps any
+    # climt_fortran.<child> to the checkout, whatever the parent's __path__ is.
+    # Modules the imported package lacks must not be filled in from elsewhere,
+    # or they would bypass its INTERFACE_VERSION check.
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    for name in fortran.MODULES:
+        (elsewhere / (name + ".py")).write_text("LOADED = True\n")
+
+    class ElsewhereFinder:
+        @classmethod
+        def find_spec(cls, fullname, path=None, target=None):
+            if fullname.rpartition(".")[0] == "climt_fortran":
+                return importlib.machinery.PathFinder.find_spec(fullname, [str(elsewhere)])
+            return None
+
+    monkeypatch.setattr(sys, "meta_path", sys.meta_path + [ElsewhereFinder])
+    package_root = tmp_path / "package"
+    package_root.mkdir()
+    install_fake(monkeypatch, package_root, present=("_dcmip",))
+    status = fortran.fortran_status()
+    assert status["state"] == "broken"
+    assert status["modules"] == {name: name == "_dcmip" for name in fortran.MODULES}

@@ -4,7 +4,7 @@ The compiled Fortran/Cython extensions live in the separate ``climt-fortran``
 distribution. This module is the only place the core imports them from.
 """
 import importlib
-import importlib.util
+import importlib.machinery
 
 EXPECTED_INTERFACE_VERSION = 1
 MODULES = ("_dcmip", "_emanuel_convection", "_rrtmg_lw", "_rrtmg_sw", "_simple_physics")
@@ -54,12 +54,17 @@ def _load():
             _PACKAGE, interface, EXPECTED_INTERFACE_VERSION)
         _cache = result
         return result
+    # Look for the extensions only inside the package just imported, whose
+    # interface version was checked. importlib.util.find_spec would also ask
+    # every finder on sys.meta_path, and setuptools' editable-install finder
+    # resolves climt_fortran.<name> to its checkout whatever __path__ says.
+    search_path = getattr(package, "__path__", None)
     failures = []
     found_any = False
     for name in MODULES:
         full = "%s.%s" % (_PACKAGE, name)
         try:
-            spec = importlib.util.find_spec(full)
+            spec = None if search_path is None else importlib.machinery.PathFinder.find_spec(full, list(search_path))
         except Exception as error:
             failures.append("%s: %s" % (name, error))
             continue
