@@ -39,6 +39,7 @@ Homepage = "https://github.com/CliMT/climt"
 
 [tool.setuptools]
 zip-safe = false
+include-package-data = false
 
 [tool.setuptools.packages.find]
 include = ["climt", "climt.*"]
@@ -52,4 +53,6 @@ climt = [
     "_data/land_mask/*.nc",
     "_data/data_ocean/*.nc",
     "_data/topography/*.nc",
+    "_data/cork/parmentier/*.npz",
+    "_data/cork/stellar_spectra/*.npz",
 ]

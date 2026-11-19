@@ -86,6 +86,12 @@ def test_wheel_keeps_every_data_file(built_wheel):
         "climt/_data/land_mask/earth_landmask_2deg.nc",
         "climt/_data/data_ocean/earth_sst_climatology_1deg.nc",
         "climt/_data/topography/earth_topography_2deg.nc",
+        "climt/_data/cork/parmentier/freedman2014.npz",
+        "climt/_data/cork/parmentier/solar_composition.npz",
+        "climt/_data/cork/stellar_spectra/sun.npz",
+        "climt/_data/cork/stellar_spectra/trappist1.npz",
         "climt/_core/fortran.py",
     ):
         assert any(n.endswith(needle) for n in names), needle
+    # offline build inputs and dev notes stay out of the wheel
+    assert not [n for n in names if "climt/_data/" in n and n.endswith((".cia", ".md"))]
