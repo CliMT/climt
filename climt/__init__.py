@@ -42,6 +42,7 @@ from ._core import (
     get_grid,
     get_interface_values,
     list_available_constants,
+    list_components,
     load_atmospheric_properties,
     reset_atmospheric_properties,
     mass_to_volume_mixing_ratio,
@@ -100,6 +101,7 @@ __all__ = (
     DataOcean,
     SimpleBoundaryLayer,
     show_versions,
+    list_components,
 )
 
 

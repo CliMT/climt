@@ -65,3 +65,9 @@ def test_show_versions_survives_a_broken_compiled_extension(monkeypatch):
     line = next(text for text in out.getvalue().splitlines()
                 if text.startswith("fortran_extensions:"))
     assert "ValueError" in line and "dtype size changed" in line
+
+
+def test_show_versions_reports_the_fortran_companion():
+    assert "climt-fortran" in REPORTED_PACKAGES
+    info = climt.show_versions(file=io.StringIO())
+    assert "climt-fortran" in info

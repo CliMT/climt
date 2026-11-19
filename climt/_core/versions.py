@@ -6,6 +6,7 @@ from importlib.metadata import PackageNotFoundError, version
 REPORTED_PACKAGES = (
     "sympl", "numpy", "scipy", "xarray", "unyt", "pint", "numba", "jax", "jaxlib",
     "netCDF4", "zarr", "pyzmq", "panel", "holoviews", "gfs_dynamical_core",
+    "climt-fortran",
 )
 
 

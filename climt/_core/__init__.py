@@ -26,6 +26,7 @@ from .util import (
     mass_to_volume_mixing_ratio,
     numpy_version_of,
 )
+from .registry import list_components
 from .versions import show_versions
 
 __all__ = (
@@ -57,5 +58,6 @@ __all__ = (
     "UnytBackend",
     "UnytStateContainer",
     "UnytTimeDelta",
+    "list_components",
     "show_versions",
 )
