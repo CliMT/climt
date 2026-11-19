@@ -1,0 +1,109 @@
+import sys
+
+import pytest
+
+from climt._core import fortran
+
+ABI_MESSAGE = "numpy.core.multiarray failed to import"
+
+
+@pytest.fixture(autouse=True)
+def isolated(monkeypatch):
+    for name in [n for n in sys.modules if n == "climt_fortran" or n.startswith("climt_fortran.")]:
+        monkeypatch.delitem(sys.modules, name)
+    fortran._reset_cache()
+    yield
+    for name in [n for n in sys.modules if n == "climt_fortran" or n.startswith("climt_fortran.")]:
+        sys.modules.pop(name, None)
+    fortran._reset_cache()
+
+
+def install_fake(monkeypatch, tmp_path, interface=1, present=fortran.MODULES, failing=()):
+    package = tmp_path / "climt_fortran"
+    package.mkdir()
+    lines = ['__version__ = "9.9.9"']
+    if interface is not None:
+        lines.append("INTERFACE_VERSION = %d" % interface)
+    (package / "__init__.py").write_text("\n".join(lines) + "\n")
+    for name in present:
+        (package / (name + ".py")).write_text("LOADED = True\n")
+    for name in failing:
+        (package / (name + ".py")).write_text("raise ImportError(%r)\n" % ABI_MESSAGE)
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+
+def test_missing(monkeypatch):
+    monkeypatch.setitem(sys.modules, "climt_fortran", None)
+    status = fortran.fortran_status()
+    assert status["state"] == "missing" and status["installed"] is False
+    assert status["version"] is None and status["interface_version"] is None
+    assert status["modules"] == {name: False for name in fortran.MODULES}
+    assert fortran.load_extension("_rrtmg_lw") is None
+    message = str(fortran.unavailable_error("RRTMGLongwave", "CorkLongwaveRadiation"))
+    assert "RRTMGLongwave" in message and "pip install climt-fortran" in message
+    assert message.rstrip().endswith("Use CorkLongwaveRadiation instead.")
+
+
+def test_available(monkeypatch, tmp_path):
+    install_fake(monkeypatch, tmp_path)
+    status = fortran.fortran_status()
+    assert status == {
+        "state": "available", "installed": True, "version": "9.9.9",
+        "interface_version": 1, "detail": "",
+        "modules": {name: True for name in fortran.MODULES},
+    }
+    assert fortran.load_extension("_dcmip").LOADED is True
+
+
+def test_stub(monkeypatch, tmp_path):
+    install_fake(monkeypatch, tmp_path, present=())
+    assert fortran.fortran_status()["state"] == "stub"
+    message = str(fortran.unavailable_error("SimplePhysics"))
+    assert "pip install --no-binary climt-fortran climt-fortran" in message
+    assert "gfortran" in message and "instead" not in message
+
+
+@pytest.mark.parametrize("interface", [2, 0, None])
+def test_interface_mismatch(monkeypatch, tmp_path, interface):
+    install_fake(monkeypatch, tmp_path, interface=interface)
+    status = fortran.fortran_status()
+    assert status["state"] == "interface_mismatch"
+    assert not any(status["modules"].values())
+    assert fortran.load_extension("_rrtmg_sw") is None
+    assert "pip install -U climt climt-fortran" in str(fortran.unavailable_error("RRTMGShortwave"))
+
+
+def test_broken_binary_is_reported_not_raised(monkeypatch, tmp_path):
+    present = tuple(n for n in fortran.MODULES if n != "_rrtmg_lw")
+    install_fake(monkeypatch, tmp_path, present=present, failing=("_rrtmg_lw",))
+    status = fortran.fortran_status()
+    assert status["state"] == "broken"
+    assert status["modules"]["_rrtmg_lw"] is False and status["modules"]["_dcmip"] is True
+    assert "_rrtmg_lw" in status["detail"] and ABI_MESSAGE in status["detail"]
+    assert fortran.load_extension("_rrtmg_lw") is None
+    assert fortran.load_extension("_dcmip") is not None
+    message = str(fortran.unavailable_error("RRTMGLongwave"))
+    assert ABI_MESSAGE in message and "pip install --force-reinstall climt-fortran" in message
+
+
+def test_partly_built_companion_is_broken(monkeypatch, tmp_path):
+    install_fake(monkeypatch, tmp_path, present=("_dcmip",))
+    status = fortran.fortran_status()
+    assert status["state"] == "broken"
+    assert "_rrtmg_sw" in status["detail"]
+
+
+def test_error_type_and_unknown_name(monkeypatch):
+    monkeypatch.setitem(sys.modules, "climt_fortran", None)
+    assert isinstance(fortran.unavailable_error("X"), ImportError)
+    with pytest.raises(ValueError):
+        fortran.load_extension("_not_a_module")
+
+
+def test_results_are_cached(monkeypatch, tmp_path):
+    install_fake(monkeypatch, tmp_path)
+    assert fortran.fortran_status()["state"] == "available"
+    monkeypatch.setitem(sys.modules, "climt_fortran", None)
+    assert fortran.fortran_status()["state"] == "available"      # cached
+    fortran._reset_cache()
+    assert fortran.fortran_status()["state"] == "missing"
