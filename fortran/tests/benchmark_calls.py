@@ -2,7 +2,8 @@
 
 Each call's arguments are recorded from the climt component that makes it
 (see ``generate_cython_reference.record_call``), with one column; the
-component's set-up calls are replayed once, then only the call itself is timed.
+component's set-up calls are replayed once, then one untimed warm-up call is
+made, then only the call itself is timed.
 
 Every array argument is restored from a pristine copy before each call,
 outside the timed region, so every timed call sees the same inputs (Emanuel's
@@ -15,7 +16,13 @@ recorded as the minimum, per call, over 5 separate runs of ``time_calls``
 (``NUMBA_NUM_THREADS=1``, ``n=2000``, ``repeats=5``; ``--runs 5 --save``),
 because single runs varied by up to ~40% run to run on the SW calls.
 
-Run: ``NUMBA_NUM_THREADS=1 python fortran/tests/benchmark_calls.py [--save path.json]``.
+Gate protocol: a new module is compared against ``cython_timings.json`` with
+the same statistic, the per-call minimum over 5 runs (``--runs 5``, the
+default, with ``NUMBA_NUM_THREADS=1``), i.e. ``time_calls_min_of_runs()``; it
+passes if each call is at most 1.10x its baseline. The baseline is a minimum of
+minimums, so it is biased low: false failures are more likely than false passes.
+
+Run: ``NUMBA_NUM_THREADS=1 python fortran/tests/benchmark_calls.py [--runs N] [--save path.json]``.
 """
 
 import argparse
@@ -39,12 +46,12 @@ MODULES = {
 }
 
 
-def time_calls(n=2000, repeats=5):
-    """Best per-call time, in microseconds, of each call in ``CALLS`` at one column."""
+def time_calls(n=2000, repeats=5, calls=None):
+    """Best per-call time, in microseconds, of each call (default ``CALLS``) at one column."""
     import importlib
 
     timings = {}
-    for name in CALLS:
+    for name in calls or CALLS:
         module = importlib.import_module("climt_fortran." + MODULES[name])
         init_calls, (function, inputs, _) = record_call(name, num_columns=1)
         for init_function, init_inputs, _ in init_calls:
@@ -53,6 +60,7 @@ def time_calls(n=2000, repeats=5):
         pristine = [a.item() if a.ndim == 0 else a for a in inputs.values()]
         args = [a.copy(order="K") if isinstance(a, np.ndarray) else a for a in pristine]
         resets = [(a, p) for a, p in zip(args, pristine) if isinstance(a, np.ndarray)]
+        call(*args)  # warm-up, untimed
         best = float("inf")
         for _ in range(repeats):
             total = 0
@@ -67,17 +75,31 @@ def time_calls(n=2000, repeats=5):
     return timings
 
 
+def time_calls_min_of_runs(runs=5, n=2000, repeats=5, calls=None, on_run=None):
+    """Per-call minimum, in microseconds, over ``runs`` separate runs of ``time_calls``.
+
+    This is the gate statistic. ``on_run(index, timings)`` is called after each run.
+    """
+    results = []
+    for index in range(runs):
+        results.append(time_calls(n, repeats, calls))
+        if on_run is not None:
+            on_run(index, results[-1])
+    return {name: min(run[name] for run in results) for name in results[0]}
+
+
+def print_run(index, timings):
+    print("run %d: %s" % (index + 1, ", ".join("%s %.1f" % item for item in timings.items())))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--save", help="write the timings as JSON to this path")
     parser.add_argument("-n", type=int, default=2000, help="calls per repeat")
     parser.add_argument("--repeats", type=int, default=5)
-    parser.add_argument("--runs", type=int, default=1, help="separate runs of time_calls; the minimum per call is kept")
+    parser.add_argument("--runs", type=int, default=5, help="separate runs of time_calls; the minimum per call is kept")
     options = parser.parse_args()
-    runs = [time_calls(options.n, options.repeats) for _ in range(options.runs)]
-    for index, run in enumerate(runs):
-        print("run %d: %s" % (index + 1, ", ".join("%s %.1f" % item for item in run.items())))
-    timings = {name: min(run[name] for run in runs) for name in CALLS}
+    timings = time_calls_min_of_runs(options.runs, options.n, options.repeats, on_run=print_run)
     for name, microseconds in timings.items():
         print("%-16s %10.1f us" % (name, microseconds))
     if options.save:
