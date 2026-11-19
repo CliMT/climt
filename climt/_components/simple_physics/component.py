@@ -189,7 +189,22 @@ class SimplePhysics(Stepper):
                 for name, units in _CONSTANT_UNITS.items()
             }
         )
+        # (params, ncol, per_column(params, ncol)) from the last call.
+        self._column_params = None
         super(SimplePhysics, self).__init__(**kwargs)
+
+    def _per_column_params(self, ncol):
+        """``per_column(self._params, ncol)``, rebuilt only when ncol changes.
+
+        Building it costs more than the kernel at one column, so it is
+        cached. The params are fixed at construction; the identity check
+        only guards against ``_params`` being replaced.
+        """
+        cached = self._column_params
+        if cached is None or cached[0] is not self._params or cached[1] != ncol:
+            cached = (self._params, ncol, per_column(self._params, ncol))
+            self._column_params = cached
+        return cached[2]
 
     @ensure_contiguous_state
     def array_call(self, state, timestep):
@@ -230,7 +245,7 @@ class SimplePhysics(Stepper):
             state["surface_specific_humidity"],
             state["latitude"],
             timestep.total_seconds(),
-            per_column(self._params, ncol),
+            self._per_column_params(ncol),
             self._flags,
         )
         latent_heat_flux[latent_heat_flux < 0] = 0

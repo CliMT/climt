@@ -276,3 +276,32 @@ def test_constants_read_once(monkeypatch):
         "climt._components.simple_physics.component.get_constant",
         lambda *a, **k: pytest.fail("get_constant called in array_call"))
     run_component(component, component_inputs("default"))
+
+
+def test_per_column_parameters_built_once_per_column_count(monkeypatch):
+    from climt._components.simple_physics import component as sp_component
+    calls = []
+
+    def counting_per_column(params, ncol):
+        calls.append(ncol)
+        return per_column(params, ncol)
+
+    monkeypatch.setattr(sp_component, "per_column", counting_per_column)
+    component = SimplePhysics()
+    raw = component_inputs("default")
+    ncol = raw["air_temperature"].shape[1]
+    first = run_component(component, raw)
+    again = run_component(component, raw)
+    assert calls == [ncol]
+    for name in first:
+        np.testing.assert_array_equal(again[name], first[name], err_msg=name)
+
+    # A different column count rebuilds them, and so does going back.
+    one = {k: np.ascontiguousarray(v[..., :1]) for k, v in raw.items()}
+    single = run_component(component, one)
+    assert calls == [ncol, 1]
+    for name in first:
+        np.testing.assert_allclose(single[name], first[name][..., :1],
+                                   rtol=1e-14, atol=0, err_msg=name)
+    run_component(component, raw)
+    assert calls == [ncol, 1, ncol]
