@@ -5,10 +5,7 @@ from sympl import (
 )
 import numpy as np
 
-from ..._core.fortran import load_extension, unavailable_error
-
-_dcmip = load_extension("_dcmip")
-_FORTRAN_AVAILABLE = _dcmip is not None
+from .kernels import baroclinic_wave_ics, tropical_cyclone_ics
 
 
 class DcmipInitialConditions(DiagnosticComponent):
@@ -96,9 +93,6 @@ class DcmipInitialConditions(DiagnosticComponent):
                 Whether a perturbation must be added. Only applies
                 to the baroclinic wave test.
         """
-        if not _FORTRAN_AVAILABLE:
-            raise unavailable_error("DcmipInitialConditions")
-
         if condition_type not in ["baroclinic_wave", "tropical_cyclone"]:
             raise ValueError("type_of_output has to be one \
                              of 'baroclinic_wave' or 'tropical_cyclone'")
@@ -124,20 +118,16 @@ class DcmipInitialConditions(DiagnosticComponent):
         )
 
         if self._condition_type == "baroclinic_wave":
-            u, v, t, q, p_surface, phi_surface = _dcmip.get_baroclinic_wave_ics(
+            u, v, t, q, p_surface, phi_surface = baroclinic_wave_ics(
                 state["air_pressure"],
                 longitude,
                 latitude,
                 perturb=self._add_perturbation,
-                moist_sim=self._moist,
+                moist=self._moist,
             )
         elif self._condition_type == "tropical_cyclone":
-            u, v, t, q, p_surface, phi_surface = _dcmip.get_tropical_cyclone_ics(
-                state["air_pressure"],
-                longitude,
-                latitude,
-                perturb=self._add_perturbation,
-                moist_sim=self._moist,
+            u, v, t, q, p_surface, phi_surface = tropical_cyclone_ics(
+                state["air_pressure"], longitude, latitude
             )
 
         diagnostics["eastward_wind"][:] = u
