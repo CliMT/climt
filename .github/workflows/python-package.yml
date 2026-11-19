@@ -16,6 +16,9 @@ jobs:
             matrix:
                 os: [ubuntu-latest, macos-latest]
                 python-version: ["3.10", "3.11", "3.12"]
+                # full: real climt-fortran extensions (tox env py<ver>);
+                # pure: climt-fortran stub, no binaries (tox env py<ver>-pure).
+                mode: [full, pure]
         steps:
             - uses: actions/checkout@v4
             - name: Set up Python ${{ matrix.python-version }}
@@ -31,12 +34,15 @@ jobs:
             - name: Lint with flake8
               run: |
                   # stop the build if there are Python syntax errors or undefined names
-                  flake8 climt --config=tox.ini
+                  flake8 climt fortran/climt_fortran --config=tox.ini
             - name: Build climt
               run: |
-                  # Create tox environment string (e.g., 3.9 -> py39)
+                  # Create tox environment string (e.g., 3.11 -> py311, or py311-pure)
                   py_ver="${{ matrix.python-version }}"
                   tox_env="py${py_ver//./}"
+                  if [ "${{ matrix.mode }}" == "pure" ]; then
+                    tox_env="${tox_env}-pure"
+                  fi
 
                   if [ "$RUNNER_OS" == "Linux" ]; then
                     gfortran --version

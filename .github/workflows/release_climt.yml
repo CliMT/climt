@@ -1,100 +1,16 @@
-name: Publish in GitHub Package Registry
+name: Publish climt to PyPI
 
+# climt is pure Python: one sdist and one py3-none-any wheel. The compiled
+# extensions are released separately as climt-fortran
+# (release_climt_fortran.yml, tags fortran-v*).
 on:
     release:
         types: [published]
 
 jobs:
-    build_wheels:
-        name: Build wheels on ${{ matrix.os }}
-        # Prereleases (e.g. the in-browser docs demo wheel) must not build the
-        # platform wheels or publish to PyPI. Only build-pure-wheel runs for them.
-        if: ${{ !github.event.release.prerelease }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-            # Build every platform even if one fails, so a single toolchain
-            # breakage does not hide the state of the others.
-            fail-fast: false
-            matrix:
-                # macos-15 is pinned deliberately, NOT macos-latest. The runner
-                # image's Homebrew gcc is built for the runner's own macOS
-                # version, and delocate vendors libgfortran/libgomp/libquadmath
-                # into the wheel — so the wheel cannot declare a deployment
-                # target older than the runner. On macos-latest (now macOS 26)
-                # that failed the 0.30.0 release:
-                #   DelocationError: Library dependencies do not satisfy target
-                #   MacOS version 15.0: libgfortran.5.dylib has a minimum
-                #   target of 26.0
-                # Raising MACOSX_DEPLOYMENT_TARGET to match would drop every
-                # user below that macOS version, so pin the runner instead.
-                # Bumping this pin raises climt's minimum supported macOS.
-                os: [ubuntu-latest, macos-15]
-
-        steps:
-            - uses: actions/checkout@v4
-
-            # Used to host cibuildwheel
-            - uses: actions/setup-python@v5
-
-            - name: Set up QEMU
-              if: runner.os == 'Linux'
-              uses: docker/setup-qemu-action@v3
-              with:
-                  platforms: all
-
-            - name: Install cibuildwheel
-              run: python -m pip install cibuildwheel==3.3.1
-
-            - name: Build on Linux
-              env:
-                  CIBW_BUILD: cp310-* cp311-* cp312-*
-                  CIBW_SKIP: "*-musllinux_*"
-                  CIBW_ARCHS_LINUX: "x86_64"
-                  CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
-              if: ${{ runner.os == 'Linux' }}
-              run: python -m cibuildwheel --output-dir dist
-
-            - name: Build on macOS
-              env:
-                  CIBW_BUILD: cp310-* cp311-* cp312-*
-                  CIBW_ARCHS_MACOS: "arm64"
-                  CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin MACOSX_DEPLOYMENT_TARGET=15.0"
-              if: ${{ runner.os == 'macOS' }}
-              run: python -m cibuildwheel --output-dir dist
-
-            - name: Store the distribution packages
-              uses: actions/upload-artifact@v4
-              with:
-                  name: python-package-distributions-${{ matrix.os }}
-                  path: dist/
-    publish-to-pypi:
-        name: Publishing to PyPI
-        if: ${{ !github.event.release.prerelease }}
-        needs:
-            - build_wheels
-            - build-pure-wheel
-        runs-on: ubuntu-latest
-        environment:
-            name: pypi
-            url: https://pypi.org/p/climt # Replace <package-name> with your PyPI project name
-        permissions:
-            id-token: write # IMPORTANT: mandatory for trusted publishing
-        steps:
-            - name: Download all the dists
-              uses: actions/download-artifact@v4
-              with:
-                  pattern: python-package-distributions-*
-                  merge-multiple: true
-                  path: dist/
-            - name: Publish wheels to PyPI
-              uses: pypa/gh-action-pypi-publish@release/v1
-        #   # - name: upload wheels
-        #   #   env:
-        #   #     TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-        #   #     TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-        #   #   run: twine upload wheelhouse/* --verbose
-    build-pure-wheel:
-        name: Build pure-Python wheel
+    build:
+        name: Build sdist and pure-Python wheel
+        if: ${{ startsWith(github.event.release.tag_name, 'v') }}
         runs-on: ubuntu-latest
         permissions:
             contents: write
@@ -103,25 +19,41 @@ jobs:
             - uses: actions/setup-python@v5
               with:
                   python-version: "3.11"
-            - name: Build pure-Python wheel
-              env:
-                  CLIMT_PURE_PYTHON: "1"
+            - name: Build sdist and wheel
               run: |
                   python -m pip install --upgrade pip build
-                  python -m build --wheel
-                  ls dist/*-py3-none-any.whl
-            - name: Attach to release
+                  python -m build
+            - name: Check distributions
+              run: |
+                  ls dist/
+                  test "$(ls dist/*-py3-none-any.whl | wc -l)" -eq 1
+                  test "$(ls dist/*.tar.gz | wc -l)" -eq 1
+            # The in-browser docs demo installs this wheel from the release.
+            - name: Attach wheel to release
               uses: softprops/action-gh-release@v2
               with:
                   files: dist/*-py3-none-any.whl
-
-            # Hand the pure wheel to publish-to-pypi. The name must match that
-            # job's `python-package-distributions-*` download pattern, so the
-            # py3-none-any wheel is uploaded to PyPI alongside the platform
-            # wheels. Without this the pure wheel only ever reached the GitHub
-            # release, whose assets are CORS-blocked and so unusable by micropip.
-            - name: Store the pure wheel for PyPI
+            - name: Store the distribution packages
               uses: actions/upload-artifact@v4
               with:
-                  name: python-package-distributions-pure
-                  path: dist/*-py3-none-any.whl
+                  name: python-package-distributions
+                  path: dist/
+    publish-to-pypi:
+        name: Publishing to PyPI
+        if: ${{ !github.event.release.prerelease }}
+        needs:
+            - build
+        runs-on: ubuntu-latest
+        environment:
+            name: pypi
+            url: https://pypi.org/p/climt
+        permissions:
+            id-token: write # IMPORTANT: mandatory for trusted publishing
+        steps:
+            - name: Download the dists
+              uses: actions/download-artifact@v4
+              with:
+                  name: python-package-distributions
+                  path: dist/
+            - name: Publish to PyPI
+              uses: pypa/gh-action-pypi-publish@release/v1

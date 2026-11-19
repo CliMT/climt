@@ -1,0 +1,119 @@
+name: Publish climt-fortran to PyPI
+
+# climt-fortran (fortran/) holds climt's compiled extensions. A release ships
+# platform wheels, a py3-none-any stub wheel (no binaries, for platforms
+# without a platform wheel) and an sdist. publish needs every build job, so a
+# version is never published with a stub but without its binaries.
+on:
+    release:
+        types: [published]
+
+jobs:
+    build_wheels:
+        name: Build wheels on ${{ matrix.os }}
+        if: ${{ startsWith(github.event.release.tag_name, 'fortran-v') }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            # Build every platform even if one fails, so a single toolchain
+            # breakage does not hide the state of the others.
+            fail-fast: false
+            matrix:
+                # macos-15 is pinned deliberately, NOT macos-latest. The runner
+                # image's Homebrew gcc is built for the runner's own macOS
+                # version, and delocate vendors libgfortran/libgomp/libquadmath
+                # into the wheel — so the wheel cannot declare a deployment
+                # target older than the runner. On macos-latest (now macOS 26)
+                # that failed the 0.30.0 release:
+                #   DelocationError: Library dependencies do not satisfy target
+                #   MacOS version 15.0: libgfortran.5.dylib has a minimum
+                #   target of 26.0
+                # Raising MACOSX_DEPLOYMENT_TARGET to match would drop every
+                # user below that macOS version, so pin the runner instead.
+                # Bumping this pin raises climt's minimum supported macOS.
+                os: [ubuntu-latest, macos-15]
+
+        steps:
+            - uses: actions/checkout@v4
+
+            # Used to host cibuildwheel
+            - uses: actions/setup-python@v5
+
+            - name: Set up QEMU
+              if: runner.os == 'Linux'
+              uses: docker/setup-qemu-action@v3
+              with:
+                  platforms: all
+
+            - name: Install cibuildwheel
+              run: python -m pip install cibuildwheel==3.3.1
+
+            - name: Build on Linux
+              env:
+                  CIBW_BUILD: cp310-* cp311-* cp312-*
+                  CIBW_SKIP: "*-musllinux_*"
+                  CIBW_ARCHS_LINUX: "x86_64"
+                  CIBW_ENVIRONMENT: "CC=gcc FC=gfortran CLIMT_ARCH=Linux"
+                  CIBW_TEST_REQUIRES: pytest
+                  CIBW_TEST_COMMAND: "CLIMT_REQUIRE_FORTRAN=1 pytest {package}/tests -k 'not stub_wheel'"
+              if: ${{ runner.os == 'Linux' }}
+              run: python -m cibuildwheel fortran --output-dir dist
+
+            - name: Build on macOS
+              env:
+                  CIBW_BUILD: cp310-* cp311-* cp312-*
+                  CIBW_ARCHS_MACOS: "arm64"
+                  CIBW_ENVIRONMENT: "CLIMT_ARCH=Darwin MACOSX_DEPLOYMENT_TARGET=15.0"
+                  CIBW_TEST_REQUIRES: pytest
+                  CIBW_TEST_COMMAND: "CLIMT_REQUIRE_FORTRAN=1 pytest {package}/tests -k 'not stub_wheel'"
+              if: ${{ runner.os == 'macOS' }}
+              run: python -m cibuildwheel fortran --output-dir dist
+
+            - name: Store the distribution packages
+              uses: actions/upload-artifact@v4
+              with:
+                  name: python-package-distributions-${{ matrix.os }}
+                  path: dist/
+
+    build_stub_and_sdist:
+        name: Build stub wheel and sdist
+        if: ${{ startsWith(github.event.release.tag_name, 'fortran-v') }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+            - name: Build stub wheel and sdist
+              run: |
+                  python -m pip install --upgrade pip build
+                  CLIMT_FORTRAN_STUB=1 python -m build --wheel fortran
+                  python -m build --sdist fortran
+            - name: Check distributions
+              run: |
+                  ls fortran/dist/
+                  test "$(ls fortran/dist/climt_fortran-*-py3-none-any.whl | wc -l)" -eq 1
+            - name: Store the distribution packages
+              uses: actions/upload-artifact@v4
+              with:
+                  name: python-package-distributions-stub-sdist
+                  path: fortran/dist/
+
+    publish:
+        name: Publishing to PyPI
+        if: ${{ !github.event.release.prerelease }}
+        needs: [build_wheels, build_stub_and_sdist]
+        runs-on: ubuntu-latest
+        environment:
+            name: pypi
+            url: https://pypi.org/p/climt-fortran
+        permissions:
+            id-token: write # IMPORTANT: mandatory for trusted publishing
+        steps:
+            - name: Download all the dists
+              uses: actions/download-artifact@v4
+              with:
+                  pattern: python-package-distributions-*
+                  merge-multiple: true
+                  path: dist/
+            - name: Publish to PyPI
+              uses: pypa/gh-action-pypi-publish@release/v1
