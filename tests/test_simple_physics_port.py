@@ -265,9 +265,39 @@ def test_runs_without_climt_fortran():
         "print('ok')\n"
     )
     result = subprocess.run([sys.executable, "-c", code],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, timeout=600)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip().endswith("ok")
+
+
+_NO_JIT_RUN = """
+import numpy as np
+import sympl
+import climt
+
+sympl.set_backend(climt.UnytBackend())
+component = climt.SimplePhysics()
+state = climt.get_default_state(
+    [component], grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+diagnostics, new_state = component(state, climt.UnytTimeDelta(minutes=10))
+print(float(np.asarray(new_state['air_temperature']).ravel()[0]))
+"""
+
+
+def test_component_runs_with_the_jit_disabled():
+    """Runs the Pyodide-shaped path: no numba JIT, UnytBackend, one step.
+
+    numba reads NUMBA_DISABLE_JIT at import time, so this has to happen in a
+    fresh interpreter.
+    """
+    result = subprocess.run(
+        [sys.executable, "-c", _NO_JIT_RUN],
+        env={**os.environ, "NUMBA_DISABLE_JIT": "1"},
+        capture_output=True, text=True, timeout=600)
+    assert result.returncode == 0, (
+        "SimplePhysics failed with the JIT disabled -- it will fail the same "
+        "way in Pyodide, which has no numba at all:\n" + result.stderr)
+    assert np.isfinite(float(result.stdout.strip().splitlines()[-1]))
 
 
 def test_constants_read_once(monkeypatch):

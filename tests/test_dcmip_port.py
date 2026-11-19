@@ -14,7 +14,6 @@ import numpy as np
 import pytest
 
 from climt import DcmipInitialConditions
-from climt._components.dcmip import kernels  # noqa: F401,E501
 
 FIXTURES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "fixtures", "fortran_reference")
@@ -53,6 +52,37 @@ def test_runs_without_climt_fortran():
         "print('ok')\n"
     )
     result = subprocess.run([sys.executable, "-c", code],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, timeout=600)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip().endswith("ok")
+
+
+_NO_JIT_RUN = """
+import numpy as np
+import sympl
+import climt
+
+sympl.set_backend(climt.UnytBackend())
+component = climt.DcmipInitialConditions()
+state = climt.get_default_state(
+    [component], grid_state=climt.get_grid(nx=4, ny=2, nz=10))
+diagnostics = component(state)
+print(float(np.asarray(diagnostics['air_temperature']).ravel()[0]))
+"""
+
+
+def test_component_runs_with_the_jit_disabled():
+    """Runs the Pyodide-shaped path: no numba JIT, UnytBackend, one call.
+
+    numba reads NUMBA_DISABLE_JIT at import time, so this has to happen in a
+    fresh interpreter.
+    """
+    result = subprocess.run(
+        [sys.executable, "-c", _NO_JIT_RUN],
+        env={**os.environ, "NUMBA_DISABLE_JIT": "1"},
+        capture_output=True, text=True, timeout=600)
+    assert result.returncode == 0, (
+        "DcmipInitialConditions failed with the JIT disabled -- it will fail "
+        "the same way in Pyodide, which has no numba at all:\n"
+        + result.stderr)
+    assert np.isfinite(float(result.stdout.strip().splitlines()[-1]))
