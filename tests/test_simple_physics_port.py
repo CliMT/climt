@@ -9,12 +9,16 @@ same inputs, with parameters built the way the component builds them.
 import inspect
 import json
 import os
+import subprocess
+import sys
+from datetime import timedelta
 
 import numpy as np
 import pytest
 from sympl import get_constant
 
 import climt
+from climt import SimplePhysics
 from climt._components.simple_physics import kernel as sp_kernel
 from climt._components.simple_physics.kernel import (
     SimplePhysicsFlags, SimplePhysicsParams, simple_physics_kernel)
@@ -191,3 +195,84 @@ def test_kernel_picks_variant_by_column_count(monkeypatch, ncol, expected):
                           np.ones((nlev + 1, ncol)), col1, col1, col1, col1,
                           600.0, per_column(params, ncol), flags)
     assert called == [expected]
+
+
+# --- The SimplePhysics component on the kernel ---------------------------
+
+def component_inputs(case):
+    """The raw dict the reference passed to ``SimplePhysics.array_call``."""
+    data = _load_npz()
+    prefix = "{}/in/".format(case)
+    return {key[len(prefix):]: np.array(data[key]) for key in data.files
+            if key.startswith(prefix)}
+
+
+def component_timestep(case):
+    return timedelta(seconds=CASES[case]["timestep_seconds"])
+
+
+def run_component(component, raw, case="default"):
+    diagnostics, new_state = component.array_call(raw, component_timestep(case))
+    out = dict(new_state)
+    out.update(diagnostics)
+    return out
+
+
+@pytest.mark.parametrize("case", SIMPLE_PHYSICS_CASES)
+def test_component_matches_fortran(case):
+    component = SimplePhysics(**CASES[case]["kwargs"])
+    out = run_component(component, component_inputs(case), case)
+    for name, expected in fixture_outputs(case).items():
+        np.testing.assert_allclose(out[name], expected, rtol=1e-10,
+                                   atol=1e-12, err_msg=name)
+
+
+def test_alternating_instances_keep_their_parameters():
+    a = SimplePhysics()
+    b = SimplePhysics(base_momentum_drag_coefficient=0.0014)
+    raw = component_inputs("default")
+    first = run_component(a, raw)
+    other = run_component(b, raw)
+    again = run_component(a, raw)
+    assert any(not np.array_equal(first[k], other[k]) for k in first)
+    for name in first:
+        np.testing.assert_allclose(again[name], first[name], rtol=0, atol=0,
+                                   err_msg=name)
+
+
+def test_non_contiguous_input_matches():
+    raw = component_inputs("default")
+    fortran_ordered = {
+        k: (np.asfortranarray(v) if v.ndim == 2 else v)
+        for k, v in raw.items()}
+    assert not fortran_ordered["air_temperature"].flags["C_CONTIGUOUS"]
+    expected = run_component(SimplePhysics(), raw)
+    actual = run_component(SimplePhysics(), fortran_ordered)
+    for name in expected:
+        np.testing.assert_allclose(actual[name], expected[name], rtol=0,
+                                   atol=0, err_msg=name)
+
+
+def test_runs_without_climt_fortran():
+    code = (
+        "import sys\n"
+        "sys.modules['climt_fortran'] = None\n"
+        "from datetime import timedelta\n"
+        "import climt\n"
+        "component = climt.SimplePhysics()\n"
+        "state = climt.get_default_state([component])\n"
+        "component(state, timedelta(minutes=10))\n"
+        "print('ok')\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip().endswith("ok")
+
+
+def test_constants_read_once(monkeypatch):
+    component = SimplePhysics()
+    monkeypatch.setattr(
+        "climt._components.simple_physics.component.get_constant",
+        lambda *a, **k: pytest.fail("get_constant called in array_call"))
+    run_component(component, component_inputs("default"))

@@ -1,10 +1,20 @@
 from ..._core import ensure_contiguous_state
 from sympl import Stepper, get_constant
 
-from ..._core.fortran import load_extension, unavailable_error
+from ..._core.parameters import per_column
+from .kernel import SimplePhysicsFlags, SimplePhysicsParams, simple_physics_kernel
 
-phys = load_extension("_simple_physics")
-_FORTRAN_AVAILABLE = phys is not None
+# Physical constants read once in __init__: params field -> units.
+_CONSTANT_UNITS = {
+    "gravitational_acceleration": "m/s^2",
+    "heat_capacity_of_dry_air_at_constant_pressure": "J/kg/degK",
+    "gas_constant_of_dry_air": "J/kg/degK",
+    "gas_constant_of_vapor_phase": "J/kg/degK",
+    "latent_heat_of_condensation": "J/kg",
+    "planetary_radius": "m",
+    "planetary_rotation_rate": "s^-1",
+    "density_of_liquid_water": "kg/m^3",
+}
 
 
 class SimplePhysics(Stepper):
@@ -16,6 +26,8 @@ class SimplePhysics(Stepper):
     journal = {Journal of Advances in Modeling Earth Systems}
 
     """
+
+    per_column_parameters = SimplePhysicsParams._fields
 
     input_properties = {
         "air_temperature": {
@@ -155,61 +167,29 @@ class SimplePhysics(Stepper):
             maximum_momentum_drag_coefficient (float):
                 This drag coefficient is used for surface wind speeds exceeding :math:`20 m/s`.
         """
-        if not _FORTRAN_AVAILABLE:
-            raise unavailable_error("SimplePhysics")
-
-        self._cyclone = simulate_cyclone
-        self._lsc = large_scale_condensation
-        self._pbl = boundary_layer
-        self._surface_flux = surface_fluxes
-        self._use_ext_ts = use_external_surface_temperature
-        self._use_ext_qsurf = use_external_surface_specific_humidity
-
-        phys.init_simple_physics(
-            self._cyclone,
-            self._lsc,
-            self._pbl,
-            self._surface_flux,
-            self._use_ext_ts,
-            self._use_ext_qsurf,
+        self._flags = SimplePhysicsFlags(
+            simulate_cyclone=bool(simulate_cyclone),
+            large_scale_condensation=bool(large_scale_condensation),
+            boundary_layer=bool(boundary_layer),
+            surface_fluxes=bool(surface_fluxes),
+            use_external_surface_temperature=bool(use_external_surface_temperature),
+            use_external_surface_specific_humidity=bool(
+                use_external_surface_specific_humidity
+            ),
         )
-
-        self._Ct = drag_coefficient_heat_fluxes
-        self._pbl_top = top_of_boundary_layer
-        self._delta_pbl = boundary_layer_influence_height
-        self._Cd0 = base_momentum_drag_coefficient
-        self._Cd1 = wind_dependent_momentum_drag_coefficient
-        self._Cm = maximum_momentum_drag_coefficient
-        self._set_fortran_constants()
+        self._params = SimplePhysicsParams(
+            top_of_boundary_layer=top_of_boundary_layer,
+            boundary_layer_influence_height=boundary_layer_influence_height,
+            drag_coefficient_heat_fluxes=drag_coefficient_heat_fluxes,
+            base_momentum_drag_coefficient=base_momentum_drag_coefficient,
+            wind_dependent_momentum_drag_coefficient=wind_dependent_momentum_drag_coefficient,
+            maximum_momentum_drag_coefficient=maximum_momentum_drag_coefficient,
+            **{
+                name: get_constant(name, units)
+                for name, units in _CONSTANT_UNITS.items()
+            }
+        )
         super(SimplePhysics, self).__init__(**kwargs)
-
-    def _set_fortran_constants(self):
-        self._g = get_constant("gravitational_acceleration", "m/s^2")
-        self._Cpd = get_constant(
-            "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"
-        )
-        self._Rair = get_constant("gas_constant_of_dry_air", "J/kg/degK")
-        self._Rcond = get_constant("gas_constant_of_vapor_phase", "J/kg/degK")
-        self._radius = get_constant("planetary_radius", "m")
-        self._Omega = get_constant("planetary_rotation_rate", "s^-1")
-        self._Lv = get_constant("latent_heat_of_condensation", "J/kg")
-        self._rho_condensible = get_constant("density_of_liquid_water", "kg/m^3")
-        phys.set_physical_constants(
-            self._g,
-            self._Cpd,
-            self._Rair,
-            self._Lv,
-            self._Rcond,
-            self._radius,
-            self._Omega,
-            self._rho_condensible,
-            self._pbl_top,
-            self._delta_pbl,
-            self._Ct,
-            self._Cd0,
-            self._Cd1,
-            self._Cm,
-        )
 
     @ensure_contiguous_state
     def array_call(self, state, timestep):
@@ -229,7 +209,7 @@ class SimplePhysics(Stepper):
             * The updated model state.
             * diagnostics for Simple Physics
         """
-        self._set_fortran_constants()
+        ncol = state["air_temperature"].shape[1]
         (
             t_out,
             u_out,
@@ -238,18 +218,20 @@ class SimplePhysics(Stepper):
             precip_out,
             sensible_heat_flux,
             latent_heat_flux,
-        ) = phys.get_new_state(
+        ) = simple_physics_kernel(
             state["eastward_wind"],
             state["northward_wind"],
             state["air_temperature"],
+            state["specific_humidity"],
             state["air_pressure"],
             state["air_pressure_on_interface_levels"],
-            state["specific_humidity"],
             state["surface_air_pressure"],
             state["surface_temperature"],
             state["surface_specific_humidity"],
             state["latitude"],
             timestep.total_seconds(),
+            per_column(self._params, ncol),
+            self._flags,
         )
         latent_heat_flux[latent_heat_flux < 0] = 0
         new_state = {
