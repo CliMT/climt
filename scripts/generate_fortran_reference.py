@@ -7,7 +7,12 @@ DcmipInitialConditions run numba, re-running this script would compare the
 port with itself and would NOT reproduce a Fortran reference; do not
 regenerate the fixtures after that point.
 
-The script refuses to run unless ``fortran_status()['state'] == 'available'``.
+The script refuses to run unless both components are still Fortran-backed:
+the pre-port component modules hold the loaded extension (``phys`` in
+``simple_physics/component.py``, ``_dcmip`` in ``dcmip/component.py``). From
+the numba port on (after commit b7c3302e) it always refuses; to add a case,
+check out b7c3302e or earlier, with climt-fortran installed, and run it there.
+It also refuses unless ``fortran_status()['state'] == 'available'``.
 
 Writes, under ``tests/fixtures/fortran_reference/``:
 
@@ -156,7 +161,32 @@ def generate_dcmip():
     return arrays, cases
 
 
+def check_fortran_backed():
+    """Exit unless SimplePhysics and DcmipInitialConditions call the Fortran.
+
+    ``fortran_status()`` alone no longer tells: after the numba port it
+    reports ``available`` without ``_simple_physics`` or ``_dcmip``, and the
+    components then run numba, so the "reference" would be the port itself.
+    """
+    from climt._components.dcmip import component as dcmip_component
+    from climt._components.simple_physics import component as sp_component
+    numba_backed = [
+        name for name, module, attribute in (
+            ("SimplePhysics", sp_component, "phys"),
+            ("DcmipInitialConditions", dcmip_component, "_dcmip"))
+        if getattr(module, attribute, None) is None]
+    if numba_backed:
+        sys.exit(
+            "{} not Fortran-backed in this checkout (numba port), so the "
+            "output would not be a Fortran reference. Regenerate the "
+            "fixtures from a pre-port commit (b7c3302e or earlier) with "
+            "climt-fortran installed.".format(
+                " and ".join(numba_backed)
+                + (" are" if len(numba_backed) > 1 else " is")))
+
+
 def main():
+    check_fortran_backed()
     state = fortran_status()["state"]
     if state != "available":
         sys.exit("Fortran extensions not available (state={!r}); the "
