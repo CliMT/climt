@@ -19,7 +19,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      # Pinned: Quarto 1.11.9 fails rendering the {{< embed >}} of
+      # examples/cork_vs_rrtmg.ipynb ("AlreadyExists: File exists" on its
+      # symlink into _site); 1.10.18 rendered the same pages cleanly.
       - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.10.18
       - name: Install climt + docs deps
         run: |
           pip install "griffe<2.0" quartodoc pyyaml jupyter matplotlib numpy \
