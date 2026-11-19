@@ -217,6 +217,9 @@ def _scratch_bootstrap(tmp_path, fake_body):
     dycore.mkdir()
     env = dict(os.environ, CONDA_EXE=str(fake), CLIMT_DIR=str(REPO),
                GFS_DYCORE_DIR=str(dycore))
+    # tox's pure environments export CLIMT_FORTRAN_STUB=1; test the script as a
+    # developer runs it, without that leaking into every install it makes.
+    env.pop("CLIMT_FORTRAN_STUB", None)
     result = subprocess.run(["bash", str(script)], env=env,
                             capture_output=True, text=True)
     return result, log.read_text().splitlines(), repo / "envs" / "climt-dev.lock.txt"
