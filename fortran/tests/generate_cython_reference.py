@@ -164,7 +164,7 @@ def generate(path=DEFAULT_PATH):
         for arg, value in outputs.items():
             arrays["%s/out/%s" % (name, arg)] = value
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    np.savez(path, **arrays)
+    np.savez_compressed(path, **arrays)
     print("Wrote %s with calls: %s" % (path, ", ".join(CALLS)))
 
 
