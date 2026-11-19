@@ -17,7 +17,25 @@ NumPy ABI change. The companion is released before any core release that needs i
 * push commit to github
 * publish a GitHub release tagged fortran-vX.Y.Z (runs release_climt_fortran.yml)
 
-One-time setup
---------------
-* reserve climt-fortran on PyPI
-* add a PyPI trusted publisher for the workflow release_climt_fortran.yml
+One-time setup (before the first climt-fortran release)
+-------------------------------------------------------
+PyPI has no separate step for reserving a name. A pending trusted publisher
+holds the name, and the first successful upload from the workflow creates the
+project.
+* sign in to pypi.org with an account that should own climt-fortran
+* go to Your account > Publishing > Add a new pending publisher > GitHub, and
+  enter:
+    PyPI project name: climt-fortran
+    Owner:             CliMT
+    Repository name:   climt
+    Workflow name:     release_climt_fortran.yml
+    Environment name:  pypi
+* check that the climt project on PyPI (Manage > Publishing) has a trusted
+  publisher for release_climt.yml with environment pypi; add it the same way
+  if not
+* both workflows publish from the GitHub environment "pypi". GitHub creates it
+  on first use; to require approval before each upload, add required reviewers
+  under the repository's Settings > Environments > pypi
+* publish the first companion release (tag fortran-v1.0.0) and check that
+  https://pypi.org/project/climt-fortran/ lists the sdist and every platform
+  wheel before releasing a climt version that requires it
