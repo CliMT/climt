@@ -7,17 +7,15 @@ compiled extensions, which needs no compilers, Cython or numpy.
 """
 
 import atexit
-import glob
 import os
-import platform
-import re
 import shutil
-import subprocess
+import sys
 import tempfile
 
 from setuptools import Extension, setup
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 STUB = os.environ.get("CLIMT_FORTRAN_STUB") == "1"
 
 with open(os.path.join(HERE, "README.rst")) as readme_file:
@@ -52,47 +50,6 @@ def fresh_build_base():
     return path
 
 
-# Find first gcc directory
-def find_homebrew_gcc():
-    # Check both standard Homebrew locations
-    paths = ["/opt/homebrew/Cellar/gcc*", "/usr/local/Cellar/gcc*"]
-    candidates = []
-    for path in paths:
-        candidates.extend(glob.glob(path))
-
-    if candidates:
-        # Prefer the newest version if multiple are found
-        candidates.sort(reverse=True)
-        print(f"Found Homebrew GCC candidates: {candidates}")
-        return candidates[0]
-
-    print("Warning: Could not find Homebrew GCC in standard locations.")
-    return None
-
-
-# Platform specific settings
-def guess_compiler_name(env_name):
-
-    search_string = ""
-    if env_name == "FC":
-        search_string = r"gfortran-\d+$"
-    if env_name == "CC":
-        search_string = r"gcc-\d+$"
-
-    gcc_dir = find_homebrew_gcc()
-    if gcc_dir:
-        # Search deeply in the found gcc directory for bin/
-        for root, dirs, files in os.walk(gcc_dir):
-            if not root.endswith("/bin"):  # Optimization: Only look in bin directories
-                continue
-
-            for line in files:
-                if re.match(search_string, line):
-                    print(f"Guessing {env_name} = {line} from {root}")
-                    os.environ[env_name] = os.path.join(root, line)
-                    return  # Stop after finding one
-
-
 def compiled_build():
     """setup() arguments for the real build: the five extensions and the commands that build _lib first."""
     import numpy as np
@@ -103,95 +60,14 @@ def compiled_build():
     except ImportError:
         from wheel.bdist_wheel import bdist_wheel as native_bdist_wheel
 
-    operating_system = platform.system()
+    from _build_config import build_config, build_static_libraries
 
-    libraries = ["m", "gfortran"]
-    default_link_args = []
-    default_compile_args = []
-
-    if operating_system == "Linux":
-        libraries = ["m", "gfortran", "rt"]
-        default_link_args = ["-lgfortran", "-lm"]
-
-    compiled_path = os.path.join(HERE, "_lib")
-    lib_path_list = [os.path.join(compiled_path, operating_system + "/")]
-    inc_path = os.path.join(compiled_path, "include")
-    include_dirs = [np.get_include(), inc_path]
-
-    # Attempt to guess compilers on Darwin if not set
-    if operating_system == "Darwin":
-        if "FC" not in os.environ:
-            guess_compiler_name("FC")
-        if "CC" not in os.environ:
-            guess_compiler_name("CC")
-
-    if "FC" not in os.environ:
-        os.environ["FC"] = "gfortran"
-        os.environ["F77"] = "gfortran"
-
-    if "CC" not in os.environ:
-        os.environ["CC"] = "gcc"
-
-    if "CLIMT_OPT_FLAGS" not in os.environ:
-        os.environ["CLIMT_OPT_FLAGS"] = "-O3"
-
-    if operating_system == "Windows":
-        os.environ["CC"] = "gcc.exe"
-        os.environ["FC"] = "gfortran.exe"
-        os.environ["AR"] = "gcc-ar.exe"
-        libraries = []
-        default_link_args = ["-l:libgfortran.a", "-l:libquadmath.a", "-l:libm.a"]
-        default_compile_args = ["-DMS_WIN64"]
-
-    os.environ["FFLAGS"] = "-fPIC -fno-range-check " + os.environ["CLIMT_OPT_FLAGS"]
-    os.environ["CFLAGS"] = "-fPIC " + os.environ["CLIMT_OPT_FLAGS"]
-
-    if operating_system == "Darwin":
-        gcc_dir = find_homebrew_gcc()
-        if gcc_dir:
-            # Find libgfortran.a so the extensions can link against it
-            for root, dirs, files in os.walk(gcc_dir):
-                if "lib" not in root:
-                    continue  # Optimization
-                for line in files:
-                    if re.match(r"libgfortran\.a", line):
-                        # Avoid i386 libs on 64bit systems
-                        if "i386" not in root:
-                            if root not in lib_path_list:
-                                lib_path_list.append(root)
-
-        if "MACOSX_DEPLOYMENT_TARGET" not in os.environ:
-            os.environ["FFLAGS"] += " -mmacosx-version-min=10.9"
-            os.environ["CFLAGS"] += " -mmacosx-version-min=10.9"
-        default_link_args = []
-        os.environ["LDSHARED"] = os.environ["CC"] + " -bundle -undefined dynamic_lookup"
-
-    print("Compilers: ", os.environ.get("CC"), os.environ.get("FC"))
-    print("LDSHARED: ", os.environ.get("LDSHARED"))
-    print("FFLAGS: ", os.environ.get("FFLAGS"))
-    print("Lib Paths: ", lib_path_list)
-
-    def build_libraries():
-        """Build the static Fortran libraries in _lib with make."""
-        curr_dir = os.getcwd()
-        os.chdir(compiled_path)
-        os.environ["PWD"] = compiled_path
-
-        cmd = ["make", "CLIMT_ARCH=" + operating_system]
-        print(f"Building libraries in {compiled_path}")
-        print(f"Command: {cmd}")
-
-        ret = subprocess.call(cmd)
-
-        os.chdir(curr_dir)
-        os.environ["PWD"] = curr_dir
-
-        if ret != 0:
-            raise RuntimeError(f"Library build failed with exit code {ret}")
+    config = build_config()
+    include_dirs = [np.get_include()] + config["include_dirs"]
 
     class climt_build_ext(native_build_ext):
         def run(self):
-            build_libraries()
+            build_static_libraries()
             native_build_ext.run(self)
 
     class climt_bdist_wheel(native_bdist_wheel):
@@ -205,11 +81,11 @@ def compiled_build():
         return Extension(
             "climt_fortran." + name,
             sources=["climt_fortran/" + name + ".pyx"],
-            libraries=libraries,
+            libraries=config["libraries"],
             include_dirs=include_dirs,
-            extra_compile_args=default_compile_args + openmp_flags,
-            library_dirs=lib_path_list,
-            extra_link_args=[os.path.join(lib_path_list[0], library)] + openmp_flags + default_link_args,
+            extra_compile_args=config["extra_compile_args"] + openmp_flags,
+            library_dirs=config["library_dirs"],
+            extra_link_args=[os.path.join(config["lib_dir"], library)] + openmp_flags + config["extra_link_args"],
         )
 
     ext_modules = [
