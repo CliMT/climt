@@ -60,7 +60,7 @@ def test_stub(monkeypatch, tmp_path):
     install_fake(monkeypatch, tmp_path, present=())
     assert fortran.fortran_status()["state"] == "stub"
     message = str(fortran.unavailable_error("SimplePhysics"))
-    assert "pip install --no-binary climt-fortran climt-fortran" in message
+    assert "pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran" in message
     assert "gfortran" in message and "instead" not in message
 
 

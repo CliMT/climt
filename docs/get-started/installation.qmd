@@ -59,17 +59,28 @@ EmanuelConvection               ImplicitTendencyComponent  True                 
 RRTMGLongwave                   TendencyComponent          True                 climt
 SimplePhysics                   Stepper                    True                 climt
 ...
+climt-fortran: available, version 1.0.0
 numba: installed
 ```
+
+The `climt-fortran:` line says whether the companion is `available`,
+`missing`, a `stub` without binaries, `broken` (with the reason it failed
+to load) or an `interface_mismatch` with this version of climt.
+`climt.show_versions()` reports the same reason on its
+`fortran_extensions` line.
 
 If an installed binary is faulty (for example it fails to load against
 your NumPy), remove it with `pip uninstall climt-fortran`; climt keeps
 working without the Fortran components. To build the binaries from
-source instead (needs gfortran and a C compiler):
+source instead (needs gfortran and a C compiler), replacing the stub or a
+faulty binary:
 
 ``` console
-$ pip install --no-binary climt-fortran climt-fortran
+$ pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran
 ```
+
+`--force-reinstall` is needed because pip otherwise considers the installed
+stub or binary to satisfy the requirement and does nothing.
 
 Some pure-Python components run much faster with numba, which is an
 optional extra:
@@ -125,12 +136,21 @@ Once you have a copy of the source, you can install it with:
 
 ``` console
 $ pip install -r requirements_dev.txt
-$ pip install ./fortran    # optional: builds the Fortran components
+$ pip install ./fortran    # builds the Fortran components
 $ pip install -e .
 ```
 
-Skip `pip install ./fortran` to use the published `climt-fortran`
-instead. These commands may require the use of `sudo`.
+Until `climt-fortran` 1.0.0 is published on PyPI, `pip install ./fortran`
+is required before `pip install -e .`, which otherwise fails because pip
+cannot find a `climt-fortran` to satisfy climt's dependency. Without a
+Fortran toolchain, install the stub instead:
+
+``` console
+$ CLIMT_FORTRAN_STUB=1 pip install ./fortran
+```
+
+Once `climt-fortran` is on PyPI you may skip this step and let pip install
+the published package. These commands may require the use of `sudo`.
 
 ### Dependencies for source installations
 

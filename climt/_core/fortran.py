@@ -106,22 +106,32 @@ def load_extension(name: str):
 
 
 def unavailable_error(component: str, alternative: str | None = None) -> FortranUnavailableError:
-    """Build (do not raise) the error for a component whose extension is missing."""
+    """Build (do not raise) the error for a component whose extension is missing.
+
+    The message states why the extension is unavailable, gives the command
+    that fixes it on its own indented line and, if ``alternative`` is given,
+    ends with "Use <alternative> instead."
+    """
     result = _load()
     state = result["state"]
+    detail = result["detail"].rstrip(". ")
     if state == "missing":
-        body = "The climt-fortran package is not installed. Install it with: pip install climt-fortran"
+        reason = "The climt-fortran package is not installed. Install it with:"
+        command = "pip install climt-fortran"
     elif state == "stub":
-        body = ("The installed climt-fortran package contains no compiled extensions. "
-                "Build it from source (needs gfortran and a C compiler) with: "
-                "pip install --no-binary climt-fortran climt-fortran")
+        reason = ("The installed climt-fortran package contains no compiled extensions. "
+                  "Build it from source (needs gfortran and a C compiler) with:")
+        command = "pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran"
     elif state == "interface_mismatch":
-        body = ("The installed climt-fortran package does not match this version of climt (%s). "
-                "Upgrade both with: pip install -U climt climt-fortran" % result["detail"])
+        reason = ("The installed climt-fortran package does not match this version of climt (%s). "
+                  "Upgrade both with:" % detail)
+        command = "pip install -U climt climt-fortran"
     else:
-        body = ("The installed climt-fortran package failed to load: %s. "
-                "Reinstall it with: pip install --force-reinstall climt-fortran" % result["detail"])
-    message = "%s needs a compiled Fortran extension that is unavailable. %s" % (component, body)
+        reason = "The installed climt-fortran package failed to load%s. Reinstall it with:" % (
+            " (%s)" % detail if detail else "")
+        command = "pip install --force-reinstall climt-fortran"
+    lines = ["%s needs a compiled Fortran extension that is unavailable. %s" % (component, reason),
+             "", "    " + command]
     if alternative is not None:
-        message += " Use %s instead." % alternative
-    return FortranUnavailableError(message)
+        lines += ["", "Use %s instead." % alternative]
+    return FortranUnavailableError("\n".join(lines))

@@ -2,7 +2,10 @@ import io
 import subprocess
 import sys
 
+import pytest
+
 import climt
+from climt._core import fortran
 from climt._core.versions import REPORTED_PACKAGES
 
 
@@ -52,9 +55,43 @@ def test_show_versions_does_not_import_reported_packages():
     assert result.stdout.strip().splitlines()[-1] == "IMPORTED:"
 
 
-def test_show_versions_survives_a_broken_compiled_extension(monkeypatch):
+@pytest.fixture
+def fake_broken_companion(monkeypatch, tmp_path):
+    """A climt_fortran package on a tmp sys.path whose _rrtmg_lw raises the
+    ValueError of a numpy ABI mismatch (climt#174) on import."""
+    def forget():
+        for name in [n for n in sys.modules if n == "climt_fortran" or n.startswith("climt_fortran.")]:
+            sys.modules.pop(name, None)
+        fortran._reset_cache()
+
+    for name in [n for n in sys.modules if n == "climt_fortran" or n.startswith("climt_fortran.")]:
+        monkeypatch.delitem(sys.modules, name)
+    fortran._reset_cache()
+    package = tmp_path / "climt_fortran"
+    package.mkdir()
+    (package / "__init__.py").write_text('__version__ = "9.9.9"\nINTERFACE_VERSION = 1\n')
+    for name in fortran.MODULES:
+        (package / (name + ".py")).write_text("LOADED = True\n")
+    (package / "_rrtmg_lw.py").write_text('raise ValueError("numpy.dtype size changed")\n')
+    monkeypatch.syspath_prepend(str(tmp_path))
+    yield
+    forget()
+
+
+def test_show_versions_survives_a_broken_compiled_extension(fake_broken_companion):
     # climt issue #174: a numpy ABI mismatch surfaces as ValueError on first
-    # import of a compiled extension, not ImportError.
+    # import of a compiled extension, not ImportError. The loader swallows it;
+    # show_versions must still print the reason.
+    out = io.StringIO()
+    info = climt.show_versions(file=out)
+    assert info["fortran_extensions"] is False
+    line = next(text for text in out.getvalue().splitlines()
+                if text.startswith("fortran_extensions:"))
+    assert line.startswith("fortran_extensions: False (broken: ")
+    assert "_rrtmg_lw" in line and "ValueError" in line and "numpy.dtype size changed" in line
+
+
+def test_show_versions_survives_an_exception_from_has_fortran_extensions(monkeypatch):
     def broken():
         raise ValueError("numpy.dtype size changed, may indicate binary incompatibility")
 
@@ -65,6 +102,16 @@ def test_show_versions_survives_a_broken_compiled_extension(monkeypatch):
     line = next(text for text in out.getvalue().splitlines()
                 if text.startswith("fortran_extensions:"))
     assert "ValueError" in line and "dtype size changed" in line
+
+
+def test_available_companion_keeps_the_line_short(monkeypatch):
+    import climt._core.fortran as loader
+    status = dict(loader.fortran_status(), state="available", detail="")
+    monkeypatch.setattr(loader, "fortran_status", lambda: status)
+    monkeypatch.setattr(climt, "has_fortran_extensions", lambda: True)
+    out = io.StringIO()
+    climt.show_versions(file=out)
+    assert "fortran_extensions: True" in out.getvalue().splitlines()
 
 
 def test_show_versions_reports_the_fortran_companion():

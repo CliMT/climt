@@ -14,6 +14,13 @@ Unreleased
   (an ``ImportError``) naming the fix. numba is an optional extra,
   ``pip install "climt[numba]"``. Python 3.10 or newer is declared, and
   ``setup.py`` is removed in favour of ``pyproject.toml``.
+  ``climt.has_fortran_extensions()`` now returns ``True`` only when all five
+  extension modules load; it used to check only ``_simple_physics``. The
+  ``CLIMT_PURE_PYTHON`` build variable is still accepted but does nothing,
+  since every climt build is now pure Python. For a development install,
+  ``pip install ./fortran`` (or ``CLIMT_FORTRAN_STUB=1 pip install ./fortran``
+  without a Fortran toolchain) must come before ``pip install -e .`` until
+  ``climt-fortran`` 1.0.0 is published on PyPI.
 
 * **Fix (behaviour change)** — ``SimpleBoundaryLayer`` diffuses dry static
   energy ``Cp T + g z`` instead of temperature, as Frierson, Held &

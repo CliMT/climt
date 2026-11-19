@@ -58,3 +58,25 @@ def test_repr_is_a_table_with_a_numba_line():
     assert lines[0].split()[:4] == ["name", "kind", "available", "requires"]
     assert any(line.startswith("RRTMGLongwave") for line in lines)
     assert lines[-1].startswith("numba: ")
+
+
+def test_repr_says_why_climt_fortran_is_unusable(monkeypatch):
+    status = dict(fortran.fortran_status(), state="broken", installed=True, version="1.2.3",
+                  detail="_rrtmg_lw: ValueError: numpy.dtype size changed",
+                  modules=dict({m: True for m in fortran.MODULES}, _rrtmg_lw=False))
+    monkeypatch.setattr(registry, "fortran_status", lambda: status)
+    components = climt.list_components()
+    assert by_name(components)["RRTMGLongwave"].requires == "climt-fortran"
+    lines = repr(components).splitlines()
+    assert lines[-1].startswith("numba: ")
+    assert lines[-2] == ("climt-fortran: broken, version 1.2.3 "
+                         "(_rrtmg_lw: ValueError: numpy.dtype size changed)")
+
+
+def test_repr_fortran_line_for_a_missing_companion_and_long_details(monkeypatch):
+    missing = dict(fortran.fortran_status(), state="missing", installed=False, version=None, detail="")
+    assert registry._fortran_line(missing) == "climt-fortran: missing"
+    long = dict(missing, state="broken", installed=True, version="1.0.0", detail="x" * 500)
+    line = registry._fortran_line(long)
+    assert line.startswith("climt-fortran: broken, version 1.0.0 (") and line.endswith("...)")
+    assert len(line) < 260

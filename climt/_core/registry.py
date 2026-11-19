@@ -29,14 +29,35 @@ class ComponentInfo(NamedTuple):
     source: str
 
 
+_DETAIL_LIMIT = 200
+
+
+def _fortran_line(status):
+    """One line on the climt-fortran companion: state, version if installed, and
+    the loader's reason (truncated to _DETAIL_LIMIT characters) if it gave one."""
+    line = "climt-fortran: " + status["state"]
+    if status["installed"] and status["version"]:
+        line += ", version " + str(status["version"])
+    detail = " ".join(str(status["detail"]).split())
+    if len(detail) > _DETAIL_LIMIT:
+        detail = detail[:_DETAIL_LIMIT - 3] + "..."
+    if detail:
+        line += " (" + detail + ")"
+    return line
+
+
 class ComponentList(list):
     """A list of ComponentInfo. repr() is an aligned text table followed by one
-    line about numba."""
+    line about climt-fortran and a final line about numba."""
+
+    #: fortran_status() as seen by list_components(); None means ask at repr time.
+    fortran = None
 
     def __repr__(self):
         rows = [_COLUMNS] + [tuple(str(field) for field in info) for info in self]
         widths = [max(len(row[i]) for row in rows) for i in range(len(_COLUMNS))]
         lines = ["  ".join(cell.ljust(width) for cell, width in zip(row, widths)).rstrip() for row in rows]
+        lines.append(_fortran_line(self.fortran if self.fortran is not None else fortran_status()))
         if HAS_NUMBA:
             lines.append("numba: installed")
         else:
@@ -60,12 +81,15 @@ def list_components():
     """Return a ComponentList of climt's components and any registered through entry points.
 
     Fortran-backed components are marked unavailable, with requires="climt-fortran",
-    when their extension cannot be loaded. Entry points are listed, not loaded.
+    when their extension cannot be loaded; repr() then says why on its
+    "climt-fortran:" line. Entry points are listed, not loaded.
     """
     from .. import _components
 
-    modules = fortran_status()["modules"]
+    status = fortran_status()
+    modules = status["modules"]
     result = ComponentList()
+    result.fortran = status
     for cls in sorted(_components.__all__, key=lambda c: c.__name__):
         name = cls.__name__
         available = modules.get(FORTRAN_BACKED[name], False) if name in FORTRAN_BACKED else True
