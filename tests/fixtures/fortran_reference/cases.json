@@ -1,0 +1,92 @@
+{
+  "dcmip": {
+    "bw_dry": {
+      "kwargs": {
+        "moist": false
+      }
+    },
+    "bw_moist": {
+      "kwargs": {
+        "moist": true
+      }
+    },
+    "bw_unperturbed": {
+      "kwargs": {
+        "add_perturbation": false,
+        "moist": false
+      }
+    },
+    "tc": {
+      "kwargs": {
+        "condition_type": "tropical_cyclone",
+        "moist": true
+      }
+    }
+  },
+  "simple_physics": {
+    "cold_surface": {
+      "kwargs": {},
+      "timestep_seconds": 600.0
+    },
+    "cyclone": {
+      "kwargs": {
+        "simulate_cyclone": true,
+        "use_external_surface_temperature": false
+      },
+      "timestep_seconds": 600.0
+    },
+    "default": {
+      "kwargs": {},
+      "timestep_seconds": 600.0
+    },
+    "drag_params": {
+      "kwargs": {
+        "base_momentum_drag_coefficient": 0.00105,
+        "boundary_layer_influence_height": 30000.0,
+        "drag_coefficient_heat_fluxes": 0.00165,
+        "maximum_momentum_drag_coefficient": 0.003,
+        "top_of_boundary_layer": 127500.0,
+        "wind_dependent_momentum_drag_coefficient": 9.749999999999998e-05
+      },
+      "timestep_seconds": 600.0
+    },
+    "external_qsurf": {
+      "kwargs": {
+        "use_external_surface_specific_humidity": true
+      },
+      "timestep_seconds": 600.0
+    },
+    "fluxes_off": {
+      "kwargs": {
+        "surface_fluxes": false
+      },
+      "timestep_seconds": 600.0
+    },
+    "internal_sst": {
+      "kwargs": {
+        "use_external_surface_temperature": false
+      },
+      "timestep_seconds": 600.0
+    },
+    "lsc_off": {
+      "kwargs": {
+        "large_scale_condensation": false
+      },
+      "timestep_seconds": 600.0
+    },
+    "lsc_supersaturated": {
+      "kwargs": {},
+      "timestep_seconds": 600.0
+    },
+    "pbl_off": {
+      "kwargs": {
+        "boundary_layer": false
+      },
+      "timestep_seconds": 600.0
+    },
+    "strong_wind": {
+      "kwargs": {},
+      "timestep_seconds": 600.0
+    }
+  }
+}
