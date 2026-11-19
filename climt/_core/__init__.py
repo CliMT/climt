@@ -11,6 +11,7 @@ from .condensibles import (
     get_condensible_params,
 )
 from .exceptions import ConstantNotFoundError
+from .fortran import FortranUnavailableError, fortran_status
 from .constants import list_available_constants, set_constants_from_dict
 
 from .initialization import get_default_state, get_grid
@@ -25,6 +26,8 @@ from .util import (
     mass_to_volume_mixing_ratio,
     numpy_version_of,
 )
+from .registry import list_components
+from .versions import show_versions
 
 __all__ = (
     "mass_to_volume_mixing_ratio",
@@ -38,6 +41,8 @@ __all__ = (
     "load_atmospheric_properties",
     "reset_atmospheric_properties",
     "ConstantNotFoundError",
+    "FortranUnavailableError",
+    "fortran_status",
     "bolton_q_sat",
     "bolton_dqsat_dT",
     "calculate_q_sat",
@@ -53,4 +58,6 @@ __all__ = (
     "UnytBackend",
     "UnytStateContainer",
     "UnytTimeDelta",
+    "list_components",
+    "show_versions",
 )

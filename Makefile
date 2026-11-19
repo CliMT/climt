@@ -43,11 +43,11 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-cython: ## remove Cython generated files
-	find . -name '*.so' -exec rm -f {} +
-	cd climt/_components; find . -name '*.c' -exec rm -f {} +; cd ../..
+	find fortran/climt_fortran -name '*.so' -exec rm -f {} +
+	find fortran/climt_fortran -name '*.c' -exec rm -f {} +
 
 clean-libs: ## remove compiled libraries in _lib
-	cd climt/_lib; make clean; make clean_libs; cd ../..
+	cd fortran/_lib; make clean; make clean_libs; cd ../..
 
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
@@ -73,28 +73,23 @@ coverage: ## check code coverage quickly with the default Python
 		coverage html
 		$(BROWSER) htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/climt.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ climt
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	$(BROWSER) docs/_build/html/index.html
+docs: ## build the Quarto site, including the quartodoc API reference
+	cd docs && quartodoc build
+	quarto render docs/
+	$(BROWSER) docs/_site/index.html
 
-servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+servedocs: ## preview the Quarto site, re-rendering on change
+	cd docs && quartodoc build
+	quarto preview docs/
 
-release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+release: dist ## build a release (publishing is done by the release workflows)
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python -m build
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	pip install .
 
 # ONLY='<glob>' narrows both targets to matching artifacts; a full sweep re-runs
 # the 200-day RCE integrations and takes over an hour. e.g.

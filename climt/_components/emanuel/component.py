@@ -8,12 +8,10 @@ from sympl import (
 
 from ..._core import bolton_q_sat, ensure_contiguous_state
 
-_FORTRAN_AVAILABLE = False
-try:
-    from . import _emanuel_convection
-    _FORTRAN_AVAILABLE = True
-except ImportError:
-    _emanuel_convection = None
+from ..._core.fortran import load_extension, unavailable_error
+
+_emanuel_convection = load_extension("_emanuel_convection")
+_FORTRAN_AVAILABLE = _emanuel_convection is not None
 
 
 class EmanuelConvection(ImplicitTendencyComponent):
@@ -188,11 +186,7 @@ class EmanuelConvection(ImplicitTendencyComponent):
 
         """
         if not _FORTRAN_AVAILABLE:
-            raise ImportError(
-                "EmanuelConvection (Fortran) requires compiled Fortran "
-                "extensions, which are not available in this (pure-Python) "
-                "install of climt. Use EmanuelConvectionPython instead."
-            )
+            raise unavailable_error("EmanuelConvection", "EmanuelConvectionPython")
 
         if (
             convective_momentum_transfer_coefficient < 0

@@ -306,9 +306,10 @@ def test_bulk_mode_cools_column_over_a_cold_surface():
     assert enthalpy_after < enthalpy_before
 
 
-def test_none_mode_conserves_over_a_warm_wet_surface():
+@pytest.mark.parametrize('diffuse', ['dry_static_energy', 'temperature'])
+def test_none_mode_conserves_over_a_warm_wet_surface(diffuse):
     """The regression guard: opting out must restore exact conservation."""
-    component = climt.SimpleBoundaryLayer(surface_fluxes=None)
+    component = climt.SimpleBoundaryLayer(surface_fluxes=None, diffuse=diffuse)
     state = _warm_wet_surface_state(component)
     dp = _layer_mass(state)
     enthalpy_before, water_before = _column_budgets(state, dp)
@@ -318,7 +319,52 @@ def test_none_mode_conserves_over_a_warm_wet_surface():
 
     assert np.isclose(enthalpy_after, enthalpy_before, rtol=1e-12)
     assert np.isclose(water_after, water_before, rtol=1e-12)
-    assert np.asarray(new_state['air_temperature'])[0] == pytest.approx(250.0)
+    if diffuse == 'temperature':
+        # Diffusing T itself leaves an isothermal column isothermal.
+        assert (np.asarray(new_state['air_temperature'])[0]
+                == pytest.approx(250.0))
+
+
+# ------------------------------------------------------- what gets diffused
+
+def test_dry_static_energy_is_the_default():
+    assert climt.SimpleBoundaryLayer()._diffuse_dse
+
+
+def test_invalid_diffuse_raises():
+    with pytest.raises(ValueError, match='diffuse'):
+        climt.SimpleBoundaryLayer(diffuse='potential_vorticity')
+
+
+def _dry_adiabatic_state(component, nz=30):
+    """A dry column on its dry adiabat, surface at the lowest level's
+    potential temperature, so there is no surface flux to speak of."""
+    state = _column_state(component, nz=nz)
+    _, cp, _ = _constants()
+    rd = get_constant('gas_constant_of_dry_air', 'J kg^-1 K^-1')
+    p = np.asarray(state['air_pressure'])
+    ps = np.asarray(state['surface_air_pressure'])
+    np.asarray(state['air_temperature'])[:] = 300.0 * (p / ps) ** (rd / cp)
+    np.asarray(state['specific_humidity'])[:] = 0.0
+    np.asarray(state['eastward_wind'])[:] = 10.0
+    np.asarray(state['northward_wind'])[:] = 0.0
+    return state
+
+
+def test_dry_static_energy_leaves_a_dry_adiabat_alone():
+    """A well-mixed boundary layer is dry-adiabatic, so diffusing dry static
+    energy must not move it; diffusing temperature pulls it isothermal."""
+    changes = {}
+    for diffuse in ('dry_static_energy', 'temperature'):
+        component = climt.SimpleBoundaryLayer(surface_fluxes=None,
+                                              diffuse=diffuse)
+        state = _dry_adiabatic_state(component)
+        before = np.asarray(state['air_temperature']).copy()
+        _, new_state = component(state, timestep=timedelta(hours=1))
+        changes[diffuse] = np.max(np.abs(
+            np.asarray(new_state['air_temperature']) - before))
+    assert changes['dry_static_energy'] < 0.02
+    assert changes['temperature'] > 20 * changes['dry_static_energy']
 
 
 # -------------------------------------------------------- external physics
@@ -573,3 +619,93 @@ def test_none_mode_multi_column_conserves_every_column():
         after = _per_column_budgets(new_state, dp, name)
         assert np.allclose(after, expected, rtol=1e-12), name
         assert np.all(np.isfinite(np.asarray(new_state[name]))), name
+
+
+# ------------------------------------------------- the no-numba / browser path
+
+def test_boundary_layer_kernel_is_handed_a_plain_float_timestep():
+    """Guards the Pyodide path: the kernel must never receive a unyt quantity.
+
+    ``timestep.total_seconds()`` is a plain float for ``datetime.timedelta``
+    but a ``unyt_quantity`` in seconds for ``climt.UnytTimeDelta``, which is
+    the timestep type the UnytBackend requires. numba strips those units on
+    the way into the kernel; the pure-Python path does not, and the units then
+    collide inside ``_diffuse_profile``, where a dimensionless tridiagonal
+    diagonal is added to a seconds-carrying exchange coefficient.
+
+    ``NUMBA_DISABLE_JIT=1`` reproduces the real failure, but CI runs with the
+    JIT on, where the bug is invisible. Asserting on the source is the only
+    way to keep it from coming back in routine CI.
+    """
+    # A fast canary; the real path is exercised by
+    # test_component_runs_with_the_jit_disabled below.
+    import inspect
+    from climt._components.simple_boundary_layer import component as sbl
+
+    source = inspect.getsource(sbl.SimpleBoundaryLayer.array_call)
+    assert "float(timestep.total_seconds())" in source, (
+        "array_call must coerce the timestep to a plain float before calling "
+        "_boundary_layer_kernel: UnytTimeDelta.total_seconds() returns a "
+        "unyt_quantity in seconds, and without numba to strip the units it "
+        "collides with the dimensionless tridiagonal diagonal in "
+        "_diffuse_profile. See sea_ice/component.py for the same coercion.")
+
+
+def test_bulk_fluxes_run_under_the_unyt_backend():
+    """The component runs with the timestep type the modelling-tour pages use.
+
+    Restores the default backend afterwards: ``sympl.set_backend`` is global,
+    and the rest of this file builds states expecting DataArrays.
+    """
+    import sympl
+
+    sympl.set_backend(climt.UnytBackend())
+    try:
+        component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+        state = climt.get_default_state(
+            [component], grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+        diagnostics, new_state = component(state, climt.UnytTimeDelta(hours=1))
+    finally:
+        sympl.set_backend(sympl.DataArrayBackend())
+
+    assert np.all(np.isfinite(new_state["air_temperature"].values))
+    assert np.all(np.isfinite(
+        diagnostics["surface_upward_sensible_heat_flux"].values))
+
+
+_NO_NUMBA_REPRO = """
+import numpy as np
+import sympl
+import climt
+
+sympl.set_backend(climt.UnytBackend())
+component = climt.SimpleBoundaryLayer(surface_fluxes='bulk')
+state = climt.get_default_state(
+    [component], grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+diagnostics, new_state = component(state, climt.UnytTimeDelta(hours=1))
+print(float(
+    np.asarray(diagnostics['surface_upward_sensible_heat_flux']).ravel()[0]))
+"""
+
+
+def test_component_runs_with_the_jit_disabled():
+    """Runs the real Pyodide-shaped path: no numba, UnytBackend, one step.
+
+    numba reads NUMBA_DISABLE_JIT at import time, so this has to happen in a
+    fresh interpreter. Without the float() coercion in array_call the child
+    dies with unyt's UnitOperationError, which is exactly what a reader sees
+    in the browser.
+    """
+    import os
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-c", _NO_NUMBA_REPRO],
+        env={**os.environ, "NUMBA_DISABLE_JIT": "1"},
+        capture_output=True, text=True)
+
+    assert result.returncode == 0, (
+        "SimpleBoundaryLayer failed with the JIT disabled -- it will fail the "
+        "same way in Pyodide, which has no numba at all:\n" + result.stderr)
+    assert np.isfinite(float(result.stdout.strip().splitlines()[-1]))

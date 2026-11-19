@@ -6,7 +6,7 @@ pyodide:
   packages:
     # Installed by micropip at document setup, before any cell runs; pinned to
     # the released version this page was written against. See
-    # radiative-transfer/09-live-rce.qmd for how to preview an unreleased wheel.
+    # ../_includes/climt-live-boot.qmd for how to preview an unreleased wheel.
     - "climt==0.31.0"
     # A transitive dependency of climt, named explicitly because these pages
     # rely on it: unyt is pure Python, so micropip installs it from PyPI with
@@ -23,6 +23,10 @@ pyodide:
     # inline, so nothing on this page is unguarded by a test.
     - _tour/soundings.py
     - _tour/spectra.py
+    # tables.py imports assets.py, which owns the path resolution both it and
+    # the equilibrium-state loader need. Staged the same way, or the import
+    # fails in the browser while passing every native test.
+    - _tour/assets.py
     - _tour/tables.py
     # The 56-band spectrum table, ~5 MB. Too large for the wheel, so it ships as
     # a site asset and arrives by exactly the same mechanism as the helpers

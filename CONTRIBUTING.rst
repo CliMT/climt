@@ -90,11 +90,42 @@ Ready to contribute? Here's how to set up `climt` for local development.
 
     $ git clone git@github.com:your_name_here/climt.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Create the ``climt-dev`` conda environment, which installs your local copy in
+   editable mode together with the pinned numba and JAX stack::
 
-    $ mkvirtualenv climt
     $ cd climt/
-    $ python setup.py develop
+    $ GFS_DYCORE_DIR=/path/to/gfs_dynamical_core scripts/bootstrap_dev_env.sh
+    $ conda activate climt-dev
+    $ python scripts/verify_dev_env.py
+
+   ``GFS_DYCORE_DIR`` is optional; when set, that ``gfs_dynamical_core`` checkout is
+   put on the environment's path with a ``gfs_dynamical_core.pth`` file. Nothing is
+   built, so build the checkout's compiled core beforehand, or the verification script
+   reports it as ``MISSING (optional)``. ``pip check`` then lists the dycore's own
+   ``jax``/``flax``/``s2fft`` pins as conflicts; that is expected. The dycore is never
+   written to the lock file.
+
+   On macOS, the script sets ``SDKROOT`` from ``xcrun --show-sdk-path`` when it is
+   unset, so Homebrew ``gcc`` can build the Fortran extensions. If that build fails
+   anyway, the script installs the ``climt-fortran`` stub instead.
+
+   To set up an environment of your own instead, install the Fortran companion in
+   ``fortran/`` and then climt, both in editable mode::
+
+    $ export SDKROOT="$(xcrun --show-sdk-path)"   # macOS with Homebrew gcc only
+    $ pip install -e ./fortran
+    $ pip install -e .
+
+   Without a Fortran toolchain, install the stub instead of the first ``pip``
+   command: ``CLIMT_FORTRAN_STUB=1 pip install ./fortran``.
+
+   The script refuses to touch an existing ``climt-dev`` environment unless you pass
+   ``--recreate``. Pass ``--relock`` to resolve ``envs/climt-dev.in`` afresh and
+   rewrite ``envs/climt-dev.lock.txt``. If the environment already exists, you need
+   ``--recreate --relock``.
+
+   When reporting a bug, paste the output of ``python -c "import climt; climt.show_versions()"``
+   into the issue.
 
 4. Create a branch for local development::
 
@@ -105,8 +136,9 @@ Ready to contribute? Here's how to set up `climt` for local development.
 5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
 
     $ flake8 climt tests
-    $ python setup.py test or py.test
-    $ tox
+    $ pytest
+    $ tox -e py311        # with the Fortran binaries
+    $ tox -e py311-pure   # with the climt-fortran stub
 
    To get flake8 and tox, just pip install them into your virtualenv.
 

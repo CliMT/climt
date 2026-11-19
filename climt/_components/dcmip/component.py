@@ -5,12 +5,10 @@ from sympl import (
 )
 import numpy as np
 
-_FORTRAN_AVAILABLE = False
-try:
-    from . import _dcmip
-    _FORTRAN_AVAILABLE = True
-except ImportError:
-    _dcmip = None
+from ..._core.fortran import load_extension, unavailable_error
+
+_dcmip = load_extension("_dcmip")
+_FORTRAN_AVAILABLE = _dcmip is not None
 
 
 class DcmipInitialConditions(DiagnosticComponent):
@@ -99,11 +97,7 @@ class DcmipInitialConditions(DiagnosticComponent):
                 to the baroclinic wave test.
         """
         if not _FORTRAN_AVAILABLE:
-            raise ImportError(
-                "DcmipInitialConditions requires compiled Fortran extensions, "
-                "which are not available in this (pure-Python) install of "
-                "climt."
-            )
+            raise unavailable_error("DcmipInitialConditions")
 
         if condition_type not in ["baroclinic_wave", "tropical_cyclone"]:
             raise ValueError("type_of_output has to be one \

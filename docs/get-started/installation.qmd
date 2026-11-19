@@ -30,34 +30,71 @@ prefix the above command with `sudo`. On Mac, it is recommended to use
 the [anaconda](https://www.continuum.io/downloads) python distribution to
 make installation simpler.
 
-### Which wheel you get
+### What `pip install climt` installs
 
-climt ships two kinds of wheel, and pip picks the more specific one that
-fits your platform:
+climt itself is pure Python. It brings in a companion package,
+`climt-fortran`, which carries the Fortran-backed components (RRTMG,
+the Fortran Emanuel convection scheme, SimplePhysics and the DCMIP
+initial conditions):
 
-- **Compiled wheels** — Linux (x86_64) and macOS (Apple silicon), for
-  CPython 3.10–3.12. These include the Fortran-backed components
-  (RRTMG, Emanuel convection, the GFS-derived dynamics helpers and so
-  on), so everything works.
-- **A pure-Python wheel** (`py3-none-any`) — everywhere else, including
-  **Windows**, Intel Macs, Linux on ARM, and newer Python versions. It
-  carries no compiled extensions, so components that need Fortran raise
-  a clear error when you try to use them. Everything else works,
+- on **Linux (x86-64)** and **macOS on Apple silicon (macOS 15 or
+  newer)**, for CPython 3.10–3.12, `climt-fortran` is a compiled wheel
+  and everything works;
+- **everywhere else** it is an empty stub. Components that need Fortran
+  raise a clear error when you try to use them; everything else works,
   including the CORK correlated-k radiation scheme.
 
 To check at runtime:
 
 ``` python
 import climt
-climt.has_fortran_extensions()   # False on the pure-Python wheel
+climt.has_fortran_extensions()   # False with the stub
+climt.list_components()
+```
+
+``` text
+name                            kind                       available  requires  source
+CorkLongwaveRadiation           TendencyComponent          True                 climt
+EmanuelConvection               ImplicitTendencyComponent  True                 climt
+RRTMGLongwave                   TendencyComponent          True                 climt
+SimplePhysics                   Stepper                    True                 climt
+...
+climt-fortran: available, version 1.0.0
+numba: installed
+```
+
+The `climt-fortran:` line says whether the companion is `available`,
+`missing`, a `stub` without binaries, `broken` (with the reason it failed
+to load) or an `interface_mismatch` with this version of climt.
+`climt.show_versions()` reports the same reason on its
+`fortran_extensions` line.
+
+If an installed binary is faulty (for example it fails to load against
+your NumPy), remove it with `pip uninstall climt-fortran`; climt keeps
+working without the Fortran components. To build the binaries from
+source instead (needs gfortran and a C compiler), replacing the stub or a
+faulty binary:
+
+``` console
+$ pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran
+```
+
+`--force-reinstall` is needed because pip otherwise considers the installed
+stub or binary to satisfy the requirement and does nothing.
+
+Some pure-Python components run much faster with numba, which is an
+optional extra:
+
+``` console
+$ pip install "climt[numba]"
 ```
 
 ::: {.callout-note}
 ## Windows is not tested
 
-climt no longer builds or tests Windows binaries. Windows users get the
-pure-Python wheel above, which installs without a compiler but has no
-Fortran components. Building from source on Windows may still work but
+climt no longer builds or tests Windows binaries. On Windows
+`climt-fortran` installs as the empty stub, so climt installs without a
+compiler but has no Fortran components. Building from source on Windows may still work but
 is unsupported — if you need the compiled components there, the
 [Windows Subsystem for Linux](https://learn.microsoft.com/windows/wsl/)
 is the recommended route.
@@ -99,10 +136,21 @@ Once you have a copy of the source, you can install it with:
 
 ``` console
 $ pip install -r requirements_dev.txt
-$ python setup.py install
+$ pip install ./fortran    # builds the Fortran components
+$ pip install -e .
 ```
 
-Both commands may require the use of `sudo`.
+Until `climt-fortran` 1.0.0 is published on PyPI, `pip install ./fortran`
+is required before `pip install -e .`, which otherwise fails because pip
+cannot find a `climt-fortran` to satisfy climt's dependency. Without a
+Fortran toolchain, install the stub instead:
+
+``` console
+$ CLIMT_FORTRAN_STUB=1 pip install ./fortran
+```
+
+Once `climt-fortran` is on PyPI you may skip this step and let pip install
+the published package. These commands may require the use of `sudo`.
 
 ### Dependencies for source installations
 

@@ -21,12 +21,10 @@ from ..rrtmg_common import (
 )
 import logging
 
-_FORTRAN_AVAILABLE = False
-try:
-    from . import _rrtmg_sw
-    _FORTRAN_AVAILABLE = True
-except ImportError:
-    _rrtmg_sw = None
+from ...._core.fortran import load_extension, unavailable_error
+
+_rrtmg_sw = load_extension("_rrtmg_sw")
+_FORTRAN_AVAILABLE = _rrtmg_sw is not None
 
 
 class RRTMGShortwave(TendencyComponent):
@@ -315,10 +313,7 @@ class RRTMGShortwave(TendencyComponent):
              http://journals.ametsoc.org/doi/abs/10.1175/1520-0442(1996)009%3C2058%3AAAPOTS%3E2.0.CO%3B2
         """
         if not _FORTRAN_AVAILABLE:
-            raise ImportError(
-                "RRTMGShortwave requires compiled Fortran extensions, which are "
-                "not available in this (pure-Python) install of climt."
-            )
+            raise unavailable_error("RRTMGShortwave", "CorkShortwaveRadiation")
 
         self._mcica = mcica
 

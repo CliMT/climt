@@ -76,9 +76,10 @@ the repo instead:
 **Open / outstanding**
 
 - `2026-06-16-cork-table-optimizer.md` — not started (1/22 target files exist).
-- `2026-05-18-climt-docs-feature.md` — not started (3/17).
-- `2026-07-19-in-browser-nongrey-rce-demo.md` — in progress; current branch
-  `feature/pyodide-cork-prep` is this work (25/41).
+- `2026-05-18-climt-docs-feature.md` — retired 2026-09-26, never started; the
+  quartodoc API reference (`docs/api/`) covers its ground. Plan removed from the tree.
+- `2026-07-19-in-browser-nongrey-rce-demo.md` — Tasks 1–11 done and merged;
+  Tasks 12–15 open (see the plan's status banner, 2026-09-26).
 - `2026-07-22-boundary-layer-and-jit-tridiagonal.md` — Tasks 1–3 done
   (`_core/tridiagonal.py` + `simple_boundary_layer/` exist), **Tasks 4–5 not done**:
   `scipy` is still imported in `_core/snow_ice_column.py` and

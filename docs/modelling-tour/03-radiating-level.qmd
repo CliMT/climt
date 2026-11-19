@@ -19,6 +19,10 @@ pyodide:
     # mechanism and docs/_quarto.yml `project: resources:` for why they ship.
     - _tour/soundings.py
     - _tour/spectra.py
+    # tables.py imports assets.py, which owns the path resolution both it and
+    # the equilibrium-state loader need. Staged the same way, or the import
+    # fails in the browser while passing every native test.
+    - _tour/assets.py
     - _tour/tables.py
     # The 56-band spectrum table page 1 downloaded; your browser has it cached.
     - _data/earth_spectrum_lw.npz

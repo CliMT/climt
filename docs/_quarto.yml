@@ -105,7 +105,6 @@ website:
         - radiative-transfer/06-picket-fence.qmd
         - radiative-transfer/07-two-stream.qmd
         - radiative-transfer/08-multiplanet.qmd
-        - radiative-transfer/09-live-rce.qmd
         - section: "Appendices"
           contents:
             - radiative-transfer/table-generation.qmd
@@ -120,14 +119,20 @@ website:
         - modelling-tour/04-gray-equilibrium-tested.qmd
         - modelling-tour/05-co2-knob.qmd
         - modelling-tour/06-water-vapour-limit.qmd
+        - modelling-tour/07-stepping-a-column.qmd
+        - modelling-tour/08-turbulent-heat-exchange.qmd
+        - modelling-tour/09-moisture-and-buoyancy.qmd
+        - modelling-tour/10-dry-convection.qmd
+        - modelling-tour/11-dry-rce.qmd
+        - modelling-tour/12-moist-rce.qmd
 
 # HTML appearance, declared at the *top level* rather than under `format: html:`
-# on purpose. The Modelling Tour pages and radiative-transfer/09-live-rce.qmd set
-# `format: live-html` -- a separate format contributed by the r-wasm/live
-# extension -- and Quarto merges a `format: html:` block only into documents whose
-# format is literally `html`. Those pages therefore rendered against bare `cosmo`
-# with no climt.scss, visibly out of step with the rest of the site. Top-level
-# keys are merged into every format the project produces, `live-html` included.
+# on purpose. The Modelling Tour pages set `format: live-html` -- a separate
+# format contributed by the r-wasm/live extension -- and Quarto merges a
+# `format: html:` block only into documents whose format is literally `html`.
+# Those pages therefore rendered against bare `cosmo` with no climt.scss,
+# visibly out of step with the rest of the site. Top-level keys are merged into
+# every format the project produces, `live-html` included.
 theme:
   - cosmo
   - climt.scss

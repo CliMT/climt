@@ -1,6 +1,32 @@
+import os
+
 import pytest
 import sympl
 from sympl._core.backend import DataArrayBackend
+
+from climt import FortranUnavailableError
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Report a FortranUnavailableError as a skip, not a failure.
+
+    Covers the setup phase (components built in fixtures) and the call phase
+    (components built in the test body). With CLIMT_REQUIRE_FORTRAN=1 the
+    error is left alone, so a job that is meant to have the climt-fortran
+    binaries cannot pass by skipping everything that needs them.
+    """
+    outcome = yield
+    report = outcome.get_result()
+    if (
+        call.when in ("setup", "call")
+        and call.excinfo is not None
+        and call.excinfo.errisinstance(FortranUnavailableError)
+        and os.environ.get("CLIMT_REQUIRE_FORTRAN") != "1"
+    ):
+        path, lineno, _ = item.reportinfo()
+        report.outcome = "skipped"
+        report.longrepr = (str(path), (lineno or 0) + 1, "Skipped: " + str(call.excinfo.value))
 
 
 @pytest.fixture(autouse=True)

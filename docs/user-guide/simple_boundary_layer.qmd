@@ -86,7 +86,7 @@ $$
 depends on the unknown, so it is taken implicitly: with
 $\beta = g\,\rho_s\,C\,|\mathbf{v}|\,\Delta t / \Delta p_0$ the tridiagonal
 system gains $\beta$ on its first diagonal entry and $\beta X_s$ on its first
-right-hand-side entry. $X_s$ is $T_s$ for temperature, $q_s$ for humidity, and
+right-hand-side entry. $X_s$ is $T_s$ for heat (see [What is diffused](#what-is-diffused)), $q_s$ for humidity, and
 $0$ for both wind components (no-slip) — which is what turns the wind-stress
 calculation into actual drag on the flow. $\rho_s$ is the density at the first
 interface and $|\mathbf{v}|$ the interface wind speed, subject to the same
@@ -97,7 +97,7 @@ solve actually delivered, evaluated with the *post-solve* layer-0 value. With
 $\kappa = \rho_s\,C\,|\mathbf{v}|$,
 
 $$
-\mathrm{SH} = c_p\,\kappa\,(T_s - T_0^{\text{new}}),
+\mathrm{SH} = c_p\,\kappa\,(T_s - T_0^{\text{new}} - g z_0 / c_p),
 \quad
 \mathrm{LH} = L_v\,\kappa\,(q_s - q_0^{\text{new}}),
 \quad
@@ -161,6 +161,26 @@ loop, after the surface component and with a `state.update(...)` in between,
 has no lag. Both patterns are legitimate — pick one knowingly.
 :::
 
+### What is diffused
+
+Heat is diffused as dry static energy, $s = c_p T + g z$, following
+@frierson2006gray, with $z$ the height of each mid level from the hypsometric
+equation, held fixed over the step, and the surface at $s_s = c_p T_s$. The
+$g z_0/c_p$ in SH above is the lowest level's height, written as a temperature.
+Diffusing $s$ drives a well-mixed layer toward uniform $s$, which is the dry
+adiabat: $\mathrm{d}T/\mathrm{d}z = -g/c_p$.
+
+`diffuse='temperature'` diffuses $T$ itself, which is what the scheme did before
+2026-09. It pulls a mixed layer toward *uniform temperature*, which is stable, so
+a column with this scheme and a convective adjustment ends up with a stable layer
+near the ground that the two keep fighting over. In a moist column that layer is
+enough to keep a convection scheme's cloud-base closure negative, so the scheme
+barely fires. The option is there to reproduce old results.
+
+Holding $z$ fixed over the step means $\sum_k g z_k\,\Delta p_k$ does not
+change, so conserving $\sum_k s_k\,\Delta p_k$ conserves column enthalpy
+exactly, as before.
+
 ### Implicit diffusion and conservation
 
 The four profiles are advanced with a backward-Euler implicit diffusion, solved
@@ -173,7 +193,7 @@ surface:
 $$
 \sum_k \phi_k^{\text{(new)}}\,\Delta p_k - \sum_k \phi_k\,\Delta p_k
 = g\,\Delta t\,F_{\text{surf}}(\phi),
-\qquad \phi \in \{T,\ q,\ u,\ v\}.
+\qquad \phi \in \{s,\ q,\ u,\ v\}.
 $$
 
 With `surface_fluxes=None` the right-hand side is zero and the scheme
@@ -201,6 +221,7 @@ round-off.
 | `specific_fraction` | `0.1` | surface-layer fraction $f_b$ of the boundary-layer depth |
 | `reference_pressure` | `100000` Pa | reference pressure $P_0$ for potential temperature |
 | `critical_richardson_number` | `1` | critical Richardson number $Ri_c$ |
+| `diffuse` | `'dry_static_energy'` | the heat variable diffused: `'dry_static_energy'` or `'temperature'` — see [What is diffused](#what-is-diffused) |
 
 ## Usage
 

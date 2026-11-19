@@ -19,12 +19,10 @@ from ..rrtmg_common import (
 )
 import logging
 
-_FORTRAN_AVAILABLE = False
-try:
-    from . import _rrtmg_lw
-    _FORTRAN_AVAILABLE = True
-except ImportError:
-    _rrtmg_lw = None
+from ...._core.fortran import load_extension, unavailable_error
+
+_rrtmg_lw = load_extension("_rrtmg_lw")
+_FORTRAN_AVAILABLE = _rrtmg_lw is not None
 
 
 class RRTMGLongwave(TendencyComponent):
@@ -251,10 +249,7 @@ class RRTMGLongwave(TendencyComponent):
 
         """
         if not _FORTRAN_AVAILABLE:
-            raise ImportError(
-                "RRTMGLongwave requires compiled Fortran extensions, which are "
-                "not available in this (pure-Python) install of climt."
-            )
+            raise unavailable_error("RRTMGLongwave", "CorkLongwaveRadiation")
 
         self.input_properties = RRTMGLongwave.input_properties.copy()
         if calculate_change_up_flux:

@@ -1,5 +1,40 @@
 # In-Browser Non-Grey Radiative Equilibrium Demo — Implementation Plan
 
+> **Status (2026-09-26): Tasks 1–11 complete; Tasks 12–15 open.**
+>
+> - Done: the pure-Python wheel (Phase A, built and published to PyPI by
+>   `release_climt.yml`); the quarto-live spike (`docs/_spikes/quarto-live-smoke.qmd`);
+>   the shared boot include; and the flagship live-RCE page with its native twin and
+>   test. The flagship page has since been retired into the *Modelling Tour*
+>   (`docs/modelling-tour/`, plan `2026-08-20-modelling-tour-rce.md`) by commit
+>   `a7c2e8c`, so the paths the tasks below create are gone. Where the work went:
+>
+>   | This plan creates | Now |
+>   | --- | --- |
+>   | `docs/radiative-transfer/09-live-rce.qmd` | the `docs/modelling-tour/` pages |
+>   | `docs/_includes/climt-live-setup.qmd` | `docs/_includes/climt-live-boot.qmd` (the site's single boot include) |
+>   | `docs/radiative-transfer/_live/rce_helpers.py` (`integrate_to_equilibrium`) | `docs/modelling-tour/_tour/stepping.py` (`integrate`), with `_tour/budgets.py` deciding what "equilibrium" means |
+>   | `docs/radiative-transfer/_live/serve_wheel.py` | `scripts/serve_wheel.py` |
+>   | `tests/test_live_rce_demo.py` | `tests/test_modelling_tour.py` |
+> - **Hosting changed from this plan:** GitHub release assets send no CORS headers, so
+>   micropip cannot fetch them from a browser. Task 10 Step 1's release-asset URL was
+>   abandoned. Pages install a pinned `climt` from PyPI through the front-matter
+>   `pyodide: packages:` list. They do not `await micropip.install(...)` in a cell,
+>   which races quarto-live's autorun.
+> - Open: Task 12 (Ch.1 live cells), Task 13 (Ch.6 live cells), Task 14 (template
+>   appendix page) and Task 15 (end-to-end browser check + `docs/_spikes/weight-budget.md`).
+>   The modelling tour (`docs/modelling-tour/`, plan 2026-08-12) has since reused
+>   the boot include in practice. That may reshape or replace Task 14.
+>
+> Hard-won gotchas (carried over from the retired `HANDOFF-in-browser-rce-demo.md`):
+> never end a `{pyodide}` cell on a `def` or a Python object such as a sympl state.
+> quarto-live hashes the cell's final value, and a JsProxy is unhashable, so end on
+> `print(...)`. In the RCE loop, apply `state.update(new_state)` *before*
+> `state.update(diagnostics)`. Otherwise the LW fluxes that SlabSurface needs get
+> clobbered and the surface heats without bound (`stepping.integrate` now enforces
+> this order, guarded by a test in `tests/test_modelling_tour.py`). For local preview
+> with an unreleased wheel, `scripts/serve_wheel.py` serves it with CORS headers.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make climt install and run in the browser (Pyodide), and turn the website's Radiative Transfer theory track into editable, in-browser-runnable code — centred on a flagship page where gray vs non-grey radiative equilibrium is the *same* CORK component with a different k-table.
@@ -32,7 +67,7 @@
 **Interfaces:**
 - Produces: a buildable `climt-*-py3-none-any.whl` under `CLIMT_PURE_PYTHON=1` that contains all subpackages and the CORK data files; consumed by Tasks 5, 6, 8 and Phase B.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_pure_wheel_build.py
@@ -63,12 +98,12 @@ def test_pure_wheel_builds_and_contains_subpackages_and_data(tmp_path):
     assert any(n.endswith("climt/_data/ozone_profile.npy") for n in names)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `conda activate climt && pytest tests/test_pure_wheel_build.py -v`
 Expected: FAIL — today `packages=["climt"]` omits subpackages, and there is no `CLIMT_PURE_PYTHON` path (Cython/compiler code runs).
 
-- [ ] **Step 3: Add the pure-python guard and `find_packages` to setup.py**
+- [x] **Step 3: Add the pure-python guard and `find_packages` to setup.py**
 
 Add the import and flag near the top of `setup.py` (after the stdlib imports, before the Cython block):
 
@@ -136,13 +171,13 @@ with:
 
 Keep `package_data` unchanged (its CORK paths are already correct).
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `conda activate climt && pytest tests/test_pure_wheel_build.py -v`
 Expected: PASS. Also confirm the non-pure build still lists extensions:
 Run: `python -c "import os; os.environ.pop('CLIMT_PURE_PYTHON', None); print('ok')"`
 
-- [ ] **Step 5: Fresh-venv smoke check (manual, recorded in commit body)**
+- [x] **Step 5: Fresh-venv smoke check (manual, recorded in commit body)**
 
 ```bash
 python -m venv /tmp/climt_pure && . /tmp/climt_pure/bin/activate
@@ -154,7 +189,7 @@ deactivate
 ```
 Expected: `import OK` (scipy still present here; scipy removal is Tasks 3–6).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add setup.py tests/test_pure_wheel_build.py
@@ -177,7 +212,7 @@ git commit -m "build: find_packages + CLIMT_PURE_PYTHON pure-wheel path"
 **Interfaces:**
 - Produces: `climt.has_fortran_extensions() -> bool`; each Fortran component raises `ImportError` at instantiation when its extension is absent, with no import-time warning.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_fortran_degradation.py
@@ -194,12 +229,12 @@ def test_no_import_warning(recwarn):
     assert not [w for w in recwarn if "compiled" in str(w.message).lower()]
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `conda activate climt && pytest tests/test_fortran_degradation.py -v`
 Expected: FAIL — `has_fortran_extensions` does not exist.
 
-- [ ] **Step 3: Rewrite each Fortran component's import guard**
+- [x] **Step 3: Rewrite each Fortran component's import guard**
 
 For `simple_physics/component.py`, replace the current try/except (which warns and prints) with:
 
@@ -230,7 +265,7 @@ target and class name, and remove the `logging.warning(...)`/`print(error)` line
 - `rrtmg/sw/component.py`: `from . import _rrtmg_sw`; guard in `RRTMGShortwave.__init__`.
 - `dcmip/component.py`: `from . import _dcmip`; guard in `DcmipInitialConditions.__init__`.
 
-- [ ] **Step 4: Add `has_fortran_extensions()` to `climt/__init__.py`**
+- [x] **Step 4: Add `has_fortran_extensions()` to `climt/__init__.py`**
 
 Add (near the bottom, before `__version__`):
 
@@ -244,12 +279,12 @@ def has_fortran_extensions():
         return False
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `conda activate climt && pytest tests/test_fortran_degradation.py -v`
 Expected: PASS (in the dev env with Fortran built, `has_fortran_extensions()` returns True; the warning assertion passes because warnings were removed).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_components/*/component.py climt/__init__.py tests/test_fortran_degradation.py
@@ -267,12 +302,12 @@ git commit -m "feat: silent Fortran degradation + has_fortran_extensions()"
 **Interfaces:**
 - Produces: `climt/_core/initialization.py` no longer imports scipy at module load.
 
-- [ ] **Step 1: Find the CubicSpline usage**
+- [x] **Step 1: Find the CubicSpline usage**
 
 Run: `conda activate climt && grep -n "CubicSpline" climt/_core/initialization.py`
 Expected: the top-level import (line 5) and one call site (ozone-profile interpolation onto model levels).
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```python
 # tests/test_initialization.py  (append)
@@ -287,12 +322,12 @@ def test_initialization_does_not_import_scipy():
         "initialization.py must not import scipy"
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `conda activate climt && pytest tests/test_initialization.py::test_initialization_does_not_import_scipy -v`
 Expected: FAIL — scipy imported at module top.
 
-- [ ] **Step 4: Replace CubicSpline with np.interp**
+- [x] **Step 4: Replace CubicSpline with np.interp**
 
 Remove `from scipy.interpolate import CubicSpline`. At the call site, replace the
 spline evaluation with linear interpolation. The reference ozone profile is
@@ -311,12 +346,12 @@ coarse (30 points), so `np.interp` is sufficient:
 `np.interp(target_pressure, reference_pressure[::-1], reference_ozone[::-1])`.
 Confirm ordering at the call site and pick the correct form.
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `conda activate climt && pytest tests/test_initialization.py -v`
 Expected: PASS (new no-scipy test and existing initialization tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add climt/_core/initialization.py tests/test_initialization.py
@@ -337,7 +372,7 @@ git commit -m "refactor: ozone init uses np.interp, drops scipy CubicSpline"
 **Interfaces:**
 - Produces: `solve_tridiagonal(a_lower, a_diag, a_upper, rhs) -> x` where all band arrays have length `n` (`a_lower[0]` and `a_upper[n-1]` are unused), solving the tridiagonal system `A x = rhs`. Consumed by `IceSheet.calculate_new_ice_temperature`.
 
-- [ ] **Step 1: Write the failing solver test**
+- [x] **Step 1: Write the failing solver test**
 
 ```python
 # tests/test_tridiagonal.py
@@ -366,12 +401,12 @@ def test_matches_numpy_solve_on_random_systems():
         np.testing.assert_allclose(x, np.linalg.solve(_dense(a_lower, a_diag, a_upper), rhs), rtol=1e-10)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `conda activate climt && pytest tests/test_tridiagonal.py -v`
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement the Thomas algorithm**
+- [x] **Step 3: Implement the Thomas algorithm**
 
 ```python
 # climt/_core/tridiagonal.py
@@ -405,12 +440,12 @@ def solve_tridiagonal(a_lower, a_diag, a_upper, rhs):
 
 Add to `climt/_core/__init__.py`: `from .tridiagonal import solve_tridiagonal` and include it in that module's `__all__` if one is defined.
 
-- [ ] **Step 4: Run solver test to verify it passes**
+- [x] **Step 4: Run solver test to verify it passes**
 
 Run: `conda activate climt && pytest tests/test_tridiagonal.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Write an IceSheet characterization test (golden, pre-refactor)**
+- [x] **Step 5: Write an IceSheet characterization test (golden, pre-refactor)**
 
 ```python
 # tests/test_surface_ice_tdma.py
@@ -451,7 +486,7 @@ np.save('tests/_golden/icesheet_snow_ice_temperature.npy', _run_once())
 adjust the seed state until `calculate_new_ice_temperature` is exercised, then
 regenerate the golden.)
 
-- [ ] **Step 6: Rewrite `calculate_new_ice_temperature` to use `solve_tridiagonal`**
+- [x] **Step 6: Rewrite `calculate_new_ice_temperature` to use `solve_tridiagonal`**
 
 Remove the scipy imports (`from scipy import sparse`, `from scipy.sparse.linalg import spsolve`).
 Replace the matrix build/solve (current lines ~431–459) with band arrays. The
@@ -491,17 +526,17 @@ current `spdiags([a_sub, dp, a_sup], [-1,0,1], n, n)` maps to bands as
         return solve_tridiagonal(lower, diag, upper, rhs)
 ```
 
-- [ ] **Step 7: Run tests to verify they pass**
+- [x] **Step 7: Run tests to verify they pass**
 
 Run: `conda activate climt && pytest tests/test_tridiagonal.py tests/test_surface_ice_tdma.py -v`
 Expected: PASS — the golden IceSheet output is reproduced bit-close by the TDMA path.
 
-- [ ] **Step 8: Confirm scipy is gone from surface_ice**
+- [x] **Step 8: Confirm scipy is gone from surface_ice**
 
 Run: `conda activate climt && grep -n scipy climt/_components/surface_ice.py`
 Expected: no matches (delete the commented `# from scipy...` line too).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add climt/_core/tridiagonal.py climt/_core/__init__.py climt/_components/surface_ice.py tests/test_tridiagonal.py tests/test_surface_ice_tdma.py tests/_golden/
@@ -522,7 +557,7 @@ git commit -m "refactor: IceSheet uses pure-numpy TDMA solver, drops scipy.spars
 **Interfaces:**
 - Produces: `load_k_table(name)` resolves a `.npz` table without importing scipy; the three demo tables exist as `.npz`. Consumed by Phase B cells and Task 6.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_correlated_k_npz.py
@@ -539,12 +574,12 @@ def test_npz_table_loads_without_scipy(monkeypatch):
         assert np.asarray(table["k_coefficients"]).ndim >= 5
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `conda activate climt && pytest tests/test_correlated_k_npz.py -v`
 Expected: FAIL — those `.npz` files do not exist yet; `load_k_table` prefers `.nc` (scipy).
 
-- [ ] **Step 3: Write the `.nc`→`.npz` converter**
+- [x] **Step 3: Write the `.nc`→`.npz` converter**
 
 ```python
 # scripts/convert_ck_table_to_npz.py
@@ -578,7 +613,7 @@ python scripts/convert_ck_table_to_npz.py \
   climt/_data/cork/correlated_k/earth_low_res_sw.nc
 ```
 
-- [ ] **Step 4: Make `load_k_table` resolve `.npz` first and give a clear scipy error**
+- [x] **Step 4: Make `load_k_table` resolve `.npz` first and give a clear scipy error**
 
 In `load_k_table`, change the shipped-table resolution to prefer `.npz`, and in
 `_load_netcdf_table` raise a clear error if scipy is unavailable. Replace the
@@ -611,17 +646,17 @@ And at the top of `_load_netcdf_table`:
         ) from exc
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `conda activate climt && pytest tests/test_correlated_k_npz.py -v`
 Expected: PASS.
 
-- [ ] **Step 6: Verify the CORK components still run from the .npz tables**
+- [x] **Step 6: Verify the CORK components still run from the .npz tables**
 
 Run: `conda activate climt && pytest tests/test_grey_limit.py tests/test_cork_lw.py -v`
 Expected: PASS (grey-limit test still ties CORK single-band to GrayLongwave).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add climt/_components/cork/optics/correlated_k.py scripts/convert_ck_table_to_npz.py climt/_data/cork/correlated_k/*.npz tests/test_correlated_k_npz.py
@@ -639,7 +674,7 @@ git commit -m "feat: scipy-free .npz CORK table reader; ship demo tables as .npz
 **Interfaces:**
 - Produces: `import climt` (+ constructing the demo components) imports no scipy.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_no_scipy_import.py
@@ -662,21 +697,21 @@ def test_import_climt_does_not_import_scipy():
     subprocess.run([sys.executable, "-c", code], check=True)
 ```
 
-- [ ] **Step 2: Run test to verify it fails or passes**
+- [x] **Step 2: Run test to verify it fails or passes**
 
 Run: `conda activate climt && pytest tests/test_no_scipy_import.py -v`
 Expected: After Tasks 3–5 this may already PASS; if it FAILS, the failure message lists the offending scipy submodule — trace and remove that import.
 
-- [ ] **Step 3: Remove scipy from requirements**
+- [x] **Step 3: Remove scipy from requirements**
 
 In `setup.py`, delete `"scipy>=0.18.1",` from the `requirements` list.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `conda activate climt && pytest tests/test_no_scipy_import.py -v`
 Expected: PASS — `no-scipy OK`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add setup.py tests/test_no_scipy_import.py
@@ -694,7 +729,7 @@ git commit -m "build: drop scipy from install_requires; guard scipy-free import"
 **Interfaces:**
 - Produces: `climt.CorkLongwaveRadiation`, `climt.CorkShortwaveRadiation`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_cork_toplevel_export.py
@@ -706,22 +741,22 @@ def test_cork_is_top_level():
     assert hasattr(climt, "CorkShortwaveRadiation")
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `conda activate climt && pytest tests/test_cork_toplevel_export.py -v`
 Expected: FAIL — not exported at top level.
 
-- [ ] **Step 3: Add the imports and `__all__` entries**
+- [x] **Step 3: Add the imports and `__all__` entries**
 
 In `climt/__init__.py`, add `CorkLongwaveRadiation, CorkShortwaveRadiation` to the
 `from ._components import (...)` block, and add both names to the `__all__` tuple.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `conda activate climt && pytest tests/test_cork_toplevel_export.py -v`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add climt/__init__.py tests/test_cork_toplevel_export.py
@@ -739,12 +774,12 @@ git commit -m "feat: re-export CorkLongwaveRadiation/CorkShortwaveRadiation at t
 **Interfaces:**
 - Produces: on tagged release, a `climt-*-py3-none-any.whl` is built and attached to the GitHub release. This is the asset Phase B installs by URL.
 
-- [ ] **Step 1: Read the current release workflow**
+- [x] **Step 1: Read the current release workflow**
 
 Run: `sed -n '1,200p' .github/workflows/release_climt.yml`
 Identify the release trigger and how platform wheels are uploaded.
 
-- [ ] **Step 2: Add a pure-wheel job**
+- [x] **Step 2: Add a pure-wheel job**
 
 Add a job that runs on `ubuntu-latest`, checks out, sets up Python, then:
 
@@ -771,12 +806,12 @@ Add a job that runs on `ubuntu-latest`, checks out, sets up Python, then:
 Match the auth/trigger conventions already used in the file (e.g. reuse the
 existing `on: release` trigger and any `GITHUB_TOKEN` permissions block).
 
-- [ ] **Step 3: Validate the workflow YAML**
+- [x] **Step 3: Validate the workflow YAML**
 
 Run: `python -c "import yaml,sys; yaml.safe_load(open('.github/workflows/release_climt.yml')); print('yaml OK')"`
 Expected: `yaml OK`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .github/workflows/release_climt.yml
@@ -796,12 +831,12 @@ git commit -m "ci: build and attach py3-none-any pure wheel on release"
 **Interfaces:**
 - Produces: a verified answer to "can quarto-live micropip-install a wheel from a URL, import climt, and render matplotlib?" — gate for Tasks 10–15. If it fails, switch to the hand-rolled Pyodide include fallback (documented in the spec) and note it here.
 
-- [ ] **Step 1: Install the quarto-live extension**
+- [x] **Step 1: Install the quarto-live extension**
 
 Run: `cd docs && quarto add r-wasm/quarto-live` (accept prompts).
 Expected: `_extensions/r-wasm/live/` created.
 
-- [ ] **Step 2: Write a minimal live page that installs climt from a URL**
+- [x] **Step 2: Write a minimal live page that installs climt from a URL**
 
 ```markdown
 ---
@@ -830,18 +865,18 @@ Until Task 10 produces a real release URL, host the Task-1 wheel temporarily:
 either `python -m http.server` in the wheelhouse and use `http://localhost:8000/...`,
 or upload a pre-release asset. Record which was used.
 
-- [ ] **Step 3: Render and open**
+- [x] **Step 3: Render and open**
 
 Run: `cd docs && quarto preview _spikes/quarto-live-smoke.qmd`
 Expected: page loads; both cells run; version prints; plot renders. Manually confirm in a browser.
 
-- [ ] **Step 4: Record the outcome and decide**
+- [x] **Step 4: Record the outcome and decide**
 
 Write findings (load time, wheel size felt, any failures) into the commit body.
 If quarto-live cannot install from a URL or render matplotlib, STOP and switch to
 the hand-rolled Pyodide + CodeMirror include; note the decision here before proceeding.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/_extensions docs/_quarto.yml docs/_spikes/quarto-live-smoke.qmd
@@ -861,7 +896,7 @@ git commit -m "spike: quarto-live Pyodide runtime validated for climt wheel"
 - Consumes: the pure wheel from Task 1/Task 8.
 - Produces: an includable Quarto snippet that boots Pyodide, installs the pinned wheel, and defines `integrate_to_equilibrium(...)`. The wheel URL/tag is defined once here.
 
-- [ ] **Step 1: Publish the wheel as a GitHub release asset**
+- [x] **Step 1: Publish the wheel as a GitHub release asset**
 
 Build (Task 1 path) and attach to a release (or pre-release) tag, e.g. `web-demo-v0.20.0`:
 
@@ -873,7 +908,7 @@ gh release create web-demo-v0.20.0 dist/climt-0.20.0-py3-none-any.whl \
 ```
 Record the exact asset URL.
 
-- [ ] **Step 2: Write the shared boot include**
+- [x] **Step 2: Write the shared boot include**
 
 ```markdown
 <!-- docs/_includes/climt-live-setup.qmd -->
@@ -908,18 +943,18 @@ def integrate_to_equilibrium(tendency_components, stepper_components, state,
 ```
 ```
 
-- [ ] **Step 3: Keep the helper in sync with a native module**
+- [x] **Step 3: Keep the helper in sync with a native module**
 
 Copy the same `integrate_to_equilibrium` body into
 `docs/radiative-transfer/_live/rce_helpers.py` (plain importable module) so Task 11
 can unit-test the exact loop. Add a comment in both files pointing at each other.
 
-- [ ] **Step 4: Verify the include renders and installs the real wheel**
+- [x] **Step 4: Verify the include renders and installs the real wheel**
 
 Point the Task 9 smoke page's URL at the real release asset; `quarto preview` and
 confirm install + `integrate_to_equilibrium` is defined (`print(integrate_to_equilibrium)`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/_includes/climt-live-setup.qmd docs/_quarto.yml docs/radiative-transfer/_live/rce_helpers.py
@@ -939,7 +974,7 @@ git commit -m "feat: shared quarto-live boot include + release-hosted climt whee
 - Consumes: `integrate_to_equilibrium` (Task 10), CORK `.npz` tables (Task 5).
 - Produces: the flagship page and a native test asserting the non-grey column develops a stratosphere the gray column lacks.
 
-- [ ] **Step 1: Write the failing native science test**
+- [x] **Step 1: Write the failing native science test**
 
 ```python
 # tests/test_live_rce_demo.py
@@ -980,19 +1015,19 @@ or adjust the import to load the module by file path. Confirm the assertion's
 sign against a quick manual run and tune `n_steps`/`nz`/tolerance so it is a
 robust, non-flaky check of the real physics.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `conda activate climt && pytest tests/test_live_rce_demo.py -v`
 Expected: FAIL — helper module import or the assertion (until parameters are tuned).
 
-- [ ] **Step 3: Make it pass (tune parameters, confirm the science)**
+- [x] **Step 3: Make it pass (tune parameters, confirm the science)**
 
 Adjust `n_steps`, `timestep`, `nz`, and the stratosphere metric until the test
 robustly passes and reflects real equilibrium (temperatures stable to <0.1 K
 over the last 10% of steps). This is systematic verification of the physics the
 page will show; do not weaken the assertion to force a pass.
 
-- [ ] **Step 4: Write the flagship page**
+- [x] **Step 4: Write the flagship page**
 
 ```markdown
 ---
@@ -1046,13 +1081,13 @@ Add a per-band flux / OLR cell (Cell C) and an editable CO₂ cell (Cell D) —
 Cell D sets the CO₂ VMR in the state before integrating and re-plots. Keep the
 default `n_steps` at the tuned value with a comment on increasing it.
 
-- [ ] **Step 5: Add to the sidebar and render**
+- [x] **Step 5: Add to the sidebar and render**
 
 In `docs/_quarto.yml`, add `radiative-transfer/09-live-rce.qmd` after `08-multiplanet.qmd`.
 Run: `cd docs && quarto render radiative-transfer/09-live-rce.qmd`
 Expected: renders without error. Manually preview and confirm both plots draw and the non-grey curve shows a stratosphere.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/radiative-transfer/09-live-rce.qmd docs/radiative-transfer/_live/__init__.py docs/radiative-transfer/__init__.py docs/_quarto.yml tests/test_live_rce_demo.py

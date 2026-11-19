@@ -79,3 +79,50 @@ def test_emanuel_v3_parity(ncol, moisture_type):
             rtol=1e-3,
             err_msg=f"Diagnostic parity failed for '{key}' (ncol={ncol}, type={moisture_type})",
         )
+
+
+_NO_NUMBA_REPRO = """
+import numpy as np
+import sympl
+import climt
+
+sympl.set_backend(climt.UnytBackend())
+component = climt.EmanuelConvectionPython()
+state = climt.get_default_state(
+    [component], grid_state=climt.get_grid(nx=1, ny=1, nz=28))
+shape = np.asarray(state['air_temperature']).shape
+state['air_temperature'][:] = np.linspace(
+    300.0, 200.0, shape[0]).reshape(shape)
+humidity = np.zeros(shape)
+humidity[:10] = 0.015
+state['specific_humidity'][:] = humidity
+tendencies, diagnostics = component(state, climt.UnytTimeDelta(hours=1))
+print(float(np.asarray(tendencies['air_temperature']).ravel()[0]))
+"""
+
+
+def test_component_runs_with_the_jit_disabled():
+    """Runs the real Pyodide-shaped path: no numba, UnytBackend, one step.
+
+    numba reads NUMBA_DISABLE_JIT at import time, so this has to happen in a
+    fresh interpreter. The column is deliberately warm, moist and unstable:
+    a stable column returns from the kernel before it reaches the cloud-base
+    mass-flux update, which is where the units collide. Without the float()
+    coercion of the timestep in ``array_call`` the child dies with unyt's
+    UnitOperationError on ``(1.0 - DAMPS) * CBMF``, which is exactly what a
+    reader sees in the browser.
+    """
+    import os
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-c", _NO_NUMBA_REPRO],
+        env={**os.environ, "NUMBA_DISABLE_JIT": "1"},
+        capture_output=True, text=True)
+
+    assert result.returncode == 0, (
+        "EmanuelConvectionPython failed with the JIT disabled -- it will fail "
+        "the same way in Pyodide, which has no numba at all:\n"
+        + result.stderr)
+    assert np.isfinite(float(result.stdout.strip().splitlines()[-1]))
