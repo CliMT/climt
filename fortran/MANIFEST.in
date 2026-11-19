@@ -1,0 +1,17 @@
+include README.rst
+recursive-include climt_fortran *.py *.pyx
+recursive-include _lib *
+
+prune _lib/lib
+prune _lib/share
+prune _lib/include
+prune _lib/bin
+prune _lib/Open*
+prune _lib/fftw*
+prune _lib/shtns*
+exclude _lib/.configured*
+exclude _lib/log
+
+recursive-exclude _lib *.mod *.o *.a *.c
+recursive-exclude climt_fortran *.c *.so *.pyd
+recursive-exclude * __pycache__ *.pyc

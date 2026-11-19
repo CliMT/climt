@@ -29,12 +29,14 @@ from ._components import (
 )
 from ._core import (
     ConstantNotFoundError,
+    FortranUnavailableError,
     UnytBackend,
     UnytStateContainer,
     UnytTimeDelta,
     bolton_dqsat_dT,
     bolton_q_sat,
     calculate_q_sat,
+    fortran_status,
     get_constant_checked,
     get_default_state,
     get_grid,
@@ -65,6 +67,7 @@ __all__ = (
     set_constants_from_dict,
     get_constant_checked,
     ConstantNotFoundError,
+    FortranUnavailableError,
 
     bolton_q_sat,
     bolton_dqsat_dT,
@@ -101,12 +104,8 @@ __all__ = (
 
 
 def has_fortran_extensions():
-    """Return True if compiled Fortran extensions are available."""
-    try:
-        from climt._components.simple_physics import _simple_physics  # noqa: F401
-        return True
-    except ImportError:
-        return False
+    """Return True if every compiled Fortran extension from climt-fortran loaded."""
+    return fortran_status()["state"] == "available"
 
 
 __version__ = "0.31.0"

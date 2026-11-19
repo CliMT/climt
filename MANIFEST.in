@@ -5,20 +5,9 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
-recursive-include climt/_lib *
 recursive-include climt/_data * *.npy
 recursive-include tests *.py
-recursive-include climt *.py *.so *.dylib *.pyd
-
-prune climt/_lib/lib
-prune climt/_lib/share
-prune climt/_lib/include
-prune climt/_lib/bin
-prune climt/_lib/Open*
-prune climt/_lib/fftw*
-prune climt/_lib/shtns*
-exclude climt/_lib/.configured*
-exclude climt/_lib/log
+recursive-include climt *.py
 
 recursive-exclude climt *.pyc *.mod *.o *.c *.a
 recursive-exclude * __pycache__

@@ -43,11 +43,11 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-cython: ## remove Cython generated files
-	find . -name '*.so' -exec rm -f {} +
-	cd climt/_components; find . -name '*.c' -exec rm -f {} +; cd ../..
+	find fortran/climt_fortran -name '*.so' -exec rm -f {} +
+	find fortran/climt_fortran -name '*.c' -exec rm -f {} +
 
 clean-libs: ## remove compiled libraries in _lib
-	cd climt/_lib; make clean; make clean_libs; cd ../..
+	cd fortran/_lib; make clean; make clean_libs; cd ../..
 
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
