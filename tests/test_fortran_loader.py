@@ -107,3 +107,25 @@ def test_results_are_cached(monkeypatch, tmp_path):
     assert fortran.fortran_status()["state"] == "available"      # cached
     fortran._reset_cache()
     assert fortran.fortran_status()["state"] == "missing"
+
+
+def test_non_import_error_in_extension_is_broken(monkeypatch, tmp_path):
+    present = tuple(n for n in fortran.MODULES if n != "_rrtmg_sw")
+    install_fake(monkeypatch, tmp_path, present=present)
+    (tmp_path / "climt_fortran" / "_rrtmg_sw.py").write_text('raise ValueError("numpy.dtype size changed")\n')
+    status = fortran.fortran_status()
+    assert status["state"] == "broken"
+    assert "numpy.dtype size changed" in status["detail"]
+    assert fortran.load_extension("_rrtmg_sw") is None
+    assert "numpy.dtype size changed" in str(fortran.unavailable_error("RRTMGShortwave"))
+
+
+def test_non_import_error_in_package_is_broken(monkeypatch, tmp_path):
+    install_fake(monkeypatch, tmp_path)
+    (tmp_path / "climt_fortran" / "__init__.py").write_text('raise RuntimeError("bad dylib")\n')
+    status = fortran.fortran_status()
+    assert status["state"] == "broken" and status["installed"] is True
+    assert not any(status["modules"].values())
+    assert "RuntimeError: bad dylib" in status["detail"]
+    assert fortran.load_extension("_dcmip") is None
+    assert "pip install --force-reinstall climt-fortran" in str(fortran.unavailable_error("X"))

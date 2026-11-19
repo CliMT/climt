@@ -38,6 +38,12 @@ def _load():
     except ImportError:
         _cache = result
         return result
+    except Exception as error:
+        result["installed"] = True
+        result["state"] = "broken"
+        result["detail"] = "%s: %s: %s" % (_PACKAGE, type(error).__name__, error)
+        _cache = result
+        return result
     result["installed"] = True
     result["version"] = getattr(package, "__version__", None)
     interface = getattr(package, "INTERFACE_VERSION", None)
@@ -54,7 +60,7 @@ def _load():
         full = "%s.%s" % (_PACKAGE, name)
         try:
             spec = importlib.util.find_spec(full)
-        except (ImportError, ValueError) as error:
+        except Exception as error:
             failures.append("%s: %s" % (name, error))
             continue
         if spec is None:
@@ -64,8 +70,8 @@ def _load():
         try:
             result["loaded"][name] = importlib.import_module(full)
             result["modules"][name] = True
-        except ImportError as error:
-            failures.append("%s: %s" % (name, error))
+        except Exception as error:
+            failures.append("%s: %s: %s" % (name, type(error).__name__, error))
     if not found_any:
         result["state"] = "stub"
         result["detail"] = "%s contains no compiled extensions" % _PACKAGE
