@@ -7,13 +7,23 @@ Unreleased
 
 * **Numba ports** — ``SimplePhysics`` and ``DcmipInitialConditions`` now run
   on numba and no longer need ``climt-fortran``, so they also work in Pyodide.
-  ``SimplePhysics`` reads its constants once at construction instead of on
-  every call, and its kernel takes per-column parameter arrays. Two small
-  behaviour changes: the Fortran's "Using internal values" message, printed
-  on every ``SimplePhysics`` call with internal SST, is gone; and
-  ``DcmipInitialConditions`` reads ``add_perturbation`` as a truth value.
-  The wrapper used to test ``perturb is True``, so ``add_perturbation=1`` or
-  ``numpy.True_`` silently gave no perturbation.
+  ``SimplePhysics``'s kernel takes per-column parameter arrays. Four
+  behaviour changes. ``SimplePhysics`` reads its constants once at
+  construction instead of on every call, so a constant changed afterwards
+  (with ``climt.set_constants_from_dict`` or ``sympl.set_constant``) does
+  not reach an existing ``SimplePhysics``; construct a new one after
+  changing constants. The Fortran's "Using internal values" message, printed
+  on every ``SimplePhysics`` call with internal SST, is gone.
+  ``DcmipInitialConditions`` reads ``add_perturbation`` as a truth value:
+  the wrapper used to test ``perturb is True``, so ``add_perturbation=1`` or
+  ``numpy.True_`` silently gave no perturbation. With
+  ``surface_fluxes=False`` and ``boundary_layer=True``, the boundary-layer
+  diffusivities Km and Ke are now zero, so the boundary layer does no
+  diffusion; the Fortran read uninitialised memory there.
+  Known issue: ``SimplePhysics(simulate_cyclone=True,
+  use_external_surface_temperature=False)`` evaluates the SST formula with
+  latitude in degrees, so that internal SST is meaningless. This is inherited
+  from the Fortran, predates the port and is not fixed here.
 
 * **Packaging** — climt is now a pure-Python package. The compiled extensions
   (RRTMG, Fortran Emanuel convection, SimplePhysics, DCMIP initial conditions)

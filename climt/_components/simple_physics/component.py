@@ -25,6 +25,10 @@ class SimplePhysics(Stepper):
     title = {Idealized tropical cyclone simulations of intermediate complexity: a test case for {AGCMs}}
     journal = {Journal of Advances in Modeling Earth Systems}
 
+    Physical constants are read once, at construction: after changing a
+    constant (``climt.set_constants_from_dict``, ``sympl.set_constant``),
+    construct a new ``SimplePhysics`` for the change to take effect.
+
     """
 
     per_column_parameters = SimplePhysicsParams._fields
