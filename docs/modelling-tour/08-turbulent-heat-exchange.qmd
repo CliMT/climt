@@ -244,8 +244,8 @@ one you want depends on what else is in the column:
 The trap is pairing `'bulk'` with a component that *also* applies surface fluxes.
 Both then heat the lowest layer, and the surface loses the heat twice, with no
 error message. climt's classic case is `SimplePhysics(surface_fluxes=True)`, which
-computes and applies its own. It is a compiled component and does not run in this
-browser, but the trap is real wherever it does. A code exercise below has you
+computes and applies its own. This tour does not use it, but the trap is real
+wherever it runs. A code exercise below has you
 watch the flux entries move between inputs and diagnostics as the mode changes.
 :::
 

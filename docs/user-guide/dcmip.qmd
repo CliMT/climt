@@ -20,12 +20,6 @@ It currently exposes two of the standard DCMIP test cases:
 - **Tropical cyclone** (`condition_type="tropical_cyclone"`) — an axisymmetric
   warm-core vortex in a moist tropical environment.
 
-::: {.callout-note}
-`DcmipInitialConditions` wraps a compiled extension providing the DCMIP
-reference routines, and must be built (as part of the normal `climt`
-installation) before it can be constructed.
-:::
-
 ## Usage pattern
 
 Because it produces a *diagnostic* state from the grid, `DcmipInitialConditions`
