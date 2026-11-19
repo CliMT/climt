@@ -7,7 +7,7 @@ import importlib
 import importlib.machinery
 
 EXPECTED_INTERFACE_VERSION = 1
-MODULES = ("_dcmip", "_emanuel_convection", "_rrtmg_lw", "_rrtmg_sw", "_simple_physics")
+MODULES = ("_emanuel_convection", "_rrtmg_lw", "_rrtmg_sw")
 
 _PACKAGE = "climt_fortran"
 _cache = None

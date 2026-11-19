@@ -10,11 +10,9 @@ from .fortran import fortran_status
 ENTRY_POINT_GROUP = "climt.components"
 
 FORTRAN_BACKED = {
-    "DcmipInitialConditions": "_dcmip",
     "EmanuelConvection": "_emanuel_convection",
     "RRTMGLongwave": "_rrtmg_lw",
     "RRTMGShortwave": "_rrtmg_sw",
-    "SimplePhysics": "_simple_physics",
 }
 
 _KINDS = ("Stepper", "TendencyComponent", "ImplicitTendencyComponent", "DiagnosticComponent")

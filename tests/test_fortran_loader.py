@@ -53,7 +53,7 @@ def test_available(monkeypatch, tmp_path):
         "interface_version": 1, "detail": "",
         "modules": {name: True for name in fortran.MODULES},
     }
-    assert fortran.load_extension("_dcmip").LOADED is True
+    assert fortran.load_extension("_emanuel_convection").LOADED is True
 
 
 def test_stub(monkeypatch, tmp_path):
@@ -79,16 +79,16 @@ def test_broken_binary_is_reported_not_raised(monkeypatch, tmp_path):
     install_fake(monkeypatch, tmp_path, present=present, failing=("_rrtmg_lw",))
     status = fortran.fortran_status()
     assert status["state"] == "broken"
-    assert status["modules"]["_rrtmg_lw"] is False and status["modules"]["_dcmip"] is True
+    assert status["modules"]["_rrtmg_lw"] is False and status["modules"]["_emanuel_convection"] is True
     assert "_rrtmg_lw" in status["detail"] and ABI_MESSAGE in status["detail"]
     assert fortran.load_extension("_rrtmg_lw") is None
-    assert fortran.load_extension("_dcmip") is not None
+    assert fortran.load_extension("_emanuel_convection") is not None
     message = str(fortran.unavailable_error("RRTMGLongwave"))
     assert ABI_MESSAGE in message and "pip install --force-reinstall climt-fortran" in message
 
 
 def test_partly_built_companion_is_broken(monkeypatch, tmp_path):
-    install_fake(monkeypatch, tmp_path, present=("_dcmip",))
+    install_fake(monkeypatch, tmp_path, present=("_emanuel_convection",))
     status = fortran.fortran_status()
     assert status["state"] == "broken"
     assert "_rrtmg_sw" in status["detail"]
@@ -128,7 +128,7 @@ def test_non_import_error_in_package_is_broken(monkeypatch, tmp_path):
     assert status["state"] == "broken" and status["installed"] is True
     assert not any(status["modules"].values())
     assert "RuntimeError: bad dylib" in status["detail"]
-    assert fortran.load_extension("_dcmip") is None
+    assert fortran.load_extension("_emanuel_convection") is None
     assert "pip install --force-reinstall climt-fortran" in str(fortran.unavailable_error("X"))
 
 
@@ -152,7 +152,11 @@ def test_extensions_come_only_from_the_imported_package(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "meta_path", sys.meta_path + [ElsewhereFinder])
     package_root = tmp_path / "package"
     package_root.mkdir()
-    install_fake(monkeypatch, package_root, present=("_dcmip",))
+    install_fake(monkeypatch, package_root, present=("_emanuel_convection",))
     status = fortran.fortran_status()
     assert status["state"] == "broken"
-    assert status["modules"] == {name: name == "_dcmip" for name in fortran.MODULES}
+    assert status["modules"] == {name: name == "_emanuel_convection" for name in fortran.MODULES}
+
+
+def test_ported_modules_are_not_loaded():
+    assert "_simple_physics" not in fortran.MODULES and "_dcmip" not in fortran.MODULES

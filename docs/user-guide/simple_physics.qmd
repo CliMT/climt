@@ -25,12 +25,6 @@ complete minimal physics suite or contribute just one process alongside other
 [`Stepper`](component_types.qmd): it applies its parameterisations over a
 timestep and returns the updated state plus flux diagnostics.
 
-::: {.callout-note}
-`SimplePhysics` wraps a compiled (Fortran) extension. It must be built (as part
-of the normal `climt` installation) before it can be constructed; a source
-checkout without the compiled extensions cannot import it.
-:::
-
 ## Configuration
 
 The three parameterisations, and several behavioural options, are controlled by

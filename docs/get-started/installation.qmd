@@ -33,9 +33,8 @@ make installation simpler.
 ### What `pip install climt` installs
 
 climt itself is pure Python. It brings in a companion package,
-`climt-fortran`, which carries the Fortran-backed components (RRTMG,
-the Fortran Emanuel convection scheme, SimplePhysics and the DCMIP
-initial conditions):
+`climt-fortran`, which carries the Fortran-backed components (RRTMG
+and the Fortran Emanuel convection scheme):
 
 - on **Linux (x86-64)** and **macOS on Apple silicon (macOS 15 or
   newer)**, for CPython 3.10–3.12, `climt-fortran` is a compiled wheel

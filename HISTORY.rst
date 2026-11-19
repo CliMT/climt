@@ -5,6 +5,16 @@ History
 Unreleased
 ----------
 
+* **Numba ports** — ``SimplePhysics`` and ``DcmipInitialConditions`` now run
+  on numba and no longer need ``climt-fortran``, so they also work in Pyodide.
+  ``SimplePhysics`` reads its constants once at construction instead of on
+  every call, and its kernel takes per-column parameter arrays. Two small
+  behaviour changes: the Fortran's "Using internal values" message, printed
+  on every ``SimplePhysics`` call with internal SST, is gone; and
+  ``DcmipInitialConditions`` reads ``add_perturbation`` as a truth value.
+  The wrapper used to test ``perturb is True``, so ``add_perturbation=1`` or
+  ``numpy.True_`` silently gave no perturbation.
+
 * **Packaging** — climt is now a pure-Python package. The compiled extensions
   (RRTMG, Fortran Emanuel convection, SimplePhysics, DCMIP initial conditions)
   moved to the companion package ``climt-fortran``, which pip installs
@@ -14,7 +24,7 @@ Unreleased
   (an ``ImportError``) naming the fix. numba is an optional extra,
   ``pip install "climt[numba]"``. Python 3.10 or newer is declared, and
   ``setup.py`` is removed in favour of ``pyproject.toml``.
-  ``climt.has_fortran_extensions()`` now returns ``True`` only when all five
+  ``climt.has_fortran_extensions()`` now returns ``True`` only when all the
   extension modules load; it used to check only ``_simple_physics``. The
   ``CLIMT_PURE_PYTHON`` build variable is still accepted but does nothing,
   since every climt build is now pure Python. For a development install,

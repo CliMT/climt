@@ -78,9 +78,9 @@ should work on most systems. From version 0.9.2 onwards, this command will
 install binary wheels, eliminating the requirement of a compiler on your
 system.
 
-climt itself is pure Python; the Fortran-backed components (RRTMG, SimplePhysics and
-others) come from the companion package ``climt-fortran``, which pip installs
-automatically. Run ``climt.list_components()`` to see which components are available
+climt itself is pure Python; the Fortran-backed components (RRTMG and the Fortran
+Emanuel convection scheme) come from the companion package ``climt-fortran``, which pip
+installs automatically. Run ``climt.list_components()`` to see which components are available
 on your system.
 
 Detailed instructions for Mac and Linux systems are available in the `documentation`_.
