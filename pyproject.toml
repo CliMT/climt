@@ -1,3 +1,55 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "climt"
+version = "0.31.0"
+description = "CliMT is a Toolkit for building Earth system models in Python."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = {text = "BSD license"}
+authors = [{name = "Rodrigo Caballero", email = "rodrigo.caballero@misu.su.se"}]
+keywords = ["climt"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy>=1.16.0",
+    "pint>=0.7.0",
+    "unyt",
+    "xarray>=0.8.0",
+    "sympl>=0.5.0",
+    "importlib_resources",
+    'climt-fortran>=1.0,<2; sys_platform != "emscripten"',
+]
+
+[project.optional-dependencies]
+numba = ["numba>=0.59.0"]
+
+[project.urls]
+Homepage = "https://github.com/CliMT/climt"
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+include = ["climt", "climt.*"]
+
+[tool.setuptools.package-data]
+climt = [
+    "_data/ozone_profile.npy",
+    "_data/atmospheric_properties/*.toml",
+    "_data/cork/correlated_k/*.nc",
+    "_data/cork/correlated_k/*.npz",
+    "_data/land_mask/*.nc",
+    "_data/data_ocean/*.nc",
+    "_data/topography/*.nc",
+]

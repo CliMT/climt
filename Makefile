@@ -82,17 +82,14 @@ servedocs: ## preview the Quarto site, re-rendering on change
 	cd docs && quartodoc build
 	quarto preview docs/
 
-release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+release: dist ## build a release (publishing is done by the release workflows)
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python -m build
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	pip install .
 
 # ONLY='<glob>' narrows both targets to matching artifacts; a full sweep re-runs
 # the 200-day RCE integrations and takes over an hour. e.g.
