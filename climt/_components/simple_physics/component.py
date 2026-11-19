@@ -120,7 +120,10 @@ class SimplePhysics(Stepper):
             simulate_cyclone (bool):
                 Option indicating whether the package must
                 simulate a tropical cyclone. This was the original test case this
-                physics package was used for.
+                physics package was used for. With an internal surface
+                temperature, True gives the constant SST of the tropical
+                cyclone test (302.15 K); False gives the latitude-dependent
+                SST of the moist baroclinic wave test.
                 Default value is False.
 
             large_scale_condensation (bool):

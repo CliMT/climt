@@ -20,10 +20,14 @@ Unreleased
   ``surface_fluxes=False`` and ``boundary_layer=True``, the boundary-layer
   diffusivities Km and Ke are now zero, so the boundary layer does no
   diffusion; the Fortran read uninitialised memory there.
-  Known issue: ``SimplePhysics(simulate_cyclone=True,
-  use_external_surface_temperature=False)`` evaluates the SST formula with
-  latitude in degrees, so that internal SST is meaningless. This is inherited
-  from the Fortran, predates the port and is not fixed here.
+  The internal SST (``use_external_surface_temperature=False``) is fixed. Two
+  bugs inherited from the Fortran made it wrong. ``simulate_cyclone`` was
+  inverted: ``True`` gave the latitude-dependent SST of the moist baroclinic
+  wave, and ``False`` gave the constant 302.15 K of the tropical cyclone test.
+  The latitude-dependent formula also received latitude in degrees, though it
+  is written for radians. Now ``simulate_cyclone=True`` gives the constant
+  302.15 K, and ``False`` gives the latitude-dependent SST, computed in
+  radians. Results with an external SST (the default) are unchanged.
 
 * **Packaging** — climt is now a pure-Python package. The compiled extensions
   (RRTMG, Fortran Emanuel convection, SimplePhysics, DCMIP initial conditions)

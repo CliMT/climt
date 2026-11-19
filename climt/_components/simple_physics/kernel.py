@@ -52,6 +52,9 @@ class SimplePhysicsFlags(NamedTuple):
 _f32 = np.float32
 _PI = float(_f32(4.0) * np.arctan(_f32(1.0)))
 _SST_TC = 302.15       # SST for the tropical cyclone test (K)
+# Latitude arrives in degrees; the conversion is not in the Fortran, so it
+# uses the exact float64 pi (as numpy.deg2rad does).
+_DEG_TO_RAD = np.pi / 180.0
 _T0 = 273.16           # control temperature for qsat (K)
 _E0 = 610.78           # saturation vapour pressure at T0 (Pa)
 _V20 = 20.0            # wind speed above which Cd = Cm (m s-1)
@@ -151,21 +154,24 @@ def _simple_physics_columns(u, v, t, q, p, p_int, ps, ts, qs, lat, dt,
         dlnpint = np.log(ps[i]) - np.log(pint[kb])
         za = rair / gravit * tc[kb] * (1.0 + zvir * qc[kb]) * 0.5 * dlnpint
 
-        # Surface temperature. lat is used as the Fortran receives it.
+        # Surface temperature: external; the constant SST of the tropical
+        # cyclone test (5-1); or the latitude-dependent SST of the moist
+        # baroclinic wave (test 4-3), whose formula takes radians.
         if flags.use_external_surface_temperature:
             tsurf = ts[i]
         elif flags.simulate_cyclone:
-            sinlat = np.sin(lat[i])
-            coslat = np.cos(lat[i])
+            tsurf = _SST_TC
+        else:
+            latr = lat[i] * _DEG_TO_RAD
+            sinlat = np.sin(latr)
+            coslat = np.cos(latr)
             tsurf = (
                 (_T00 + _PI * _U0 / rair * 1.5 * np.sin(_ETAV) * (np.cos(_ETAV)) ** 0.5 *
                  ((-2.0 * sinlat ** 6 * (coslat ** 2 + 1.0 / 3.0) + 10.0 / 63.0) *
                   _U0 * (np.cos(_ETAV)) ** 1.5 +
                   (8.0 / 5.0 * coslat ** 3 * (sinlat ** 2 + 2.0 / 3.0) - _PI / 4.0) *
                   a * omega * 0.5)) /
-                (1.0 + zvir * _Q0 * np.exp(-(lat[i] / _LATW) ** 4)))
-        else:
-            tsurf = _SST_TC
+                (1.0 + zvir * _Q0 * np.exp(-(latr / _LATW) ** 4)))
 
         # Large-scale condensation.
         precl = 0.0
@@ -316,7 +322,7 @@ def simple_physics_kernel(u, v, t, q, p, p_int, ps, ts, qs, lat, dt, params,
         p_int: Air pressure on interface levels (Pa), shape (nlev+1, ncol).
         ps, ts, qs, lat: Arrays of shape (ncol,): surface air pressure (Pa),
             surface temperature (K), surface specific humidity (kg kg-1) and
-            latitude in degrees, as the component receives it.
+            latitude (degrees_north).
         dt (float): Timestep (s).
         params (SimplePhysicsParams): Fields are arrays of shape (ncol,);
             see :func:`climt._core.parameters.per_column`.

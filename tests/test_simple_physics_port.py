@@ -335,3 +335,38 @@ def test_per_column_parameters_built_once_per_column_count(monkeypatch):
                                    rtol=1e-14, atol=0, err_msg=name)
     run_component(component, raw)
     assert calls == [ncol, 1, ncol]
+
+
+# --- Internal surface temperature ------------------------------------------
+
+def _run_with_latitude(case, latitude):
+    component = SimplePhysics(**CASES[case]["kwargs"])
+    raw = component_inputs(case)
+    raw["latitude"] = np.asarray(latitude, dtype=np.float64)
+    return run_component(component, raw, case)
+
+
+def test_cyclone_sst_does_not_depend_on_latitude():
+    # Test 5-1 uses a constant SST of 302.15 K.
+    raw = component_inputs("cyclone")
+    ncol = raw["latitude"].shape[0]
+    a = _run_with_latitude("cyclone", np.zeros(ncol))
+    b = _run_with_latitude("cyclone", np.full(ncol, 45.0))
+    for name in a:
+        np.testing.assert_array_equal(a[name], b[name], err_msg=name)
+
+
+def test_internal_sst_depends_on_latitude():
+    # Without the cyclone flag, the internal SST is the latitude-dependent
+    # SST of the moist baroclinic wave (test 4-3), symmetric about the
+    # equator.
+    raw = component_inputs("internal_sst")
+    ncol = raw["latitude"].shape[0]
+    equator = _run_with_latitude("internal_sst", np.zeros(ncol))
+    north = _run_with_latitude("internal_sst", np.full(ncol, 60.0))
+    south = _run_with_latitude("internal_sst", np.full(ncol, -60.0))
+    flux = "surface_upward_sensible_heat_flux"
+    assert np.all(equator[flux] > north[flux])
+    for name in north:
+        np.testing.assert_allclose(north[name], south[name], rtol=1e-14,
+                                   atol=0, err_msg=name)

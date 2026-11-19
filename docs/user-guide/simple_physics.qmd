@@ -52,7 +52,7 @@ climt.SimplePhysics(simulate_cyclone=False,
 
 | Argument | Default | Description |
 |----------|---------|-------------|
-| `simulate_cyclone` | `False` | Configure for the original tropical-cyclone test case. |
+| `simulate_cyclone` | `False` | Configure for the original tropical-cyclone test case. With an internal SST, `True` gives a constant 302.15 K and `False` the latitude-dependent SST of the moist baroclinic wave test. |
 | `large_scale_condensation` | `True` | Add moistening/heating tendencies from large-scale condensation. |
 | `boundary_layer` | `True` | Apply the simple boundary-layer diffusion. Keep `True` unless another boundary-layer component is used. |
 | `surface_fluxes` | `True` | Compute surface fluxes. Keep `True` unless the fluxes come from another component. |

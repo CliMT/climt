@@ -71,6 +71,22 @@ SIMPLE_PHYSICS_CASES = {
     "cold_surface": {},
 }
 
+# The wrapped Fortran had two SST bugs, fixed in the numba port: the
+# simulate_cyclone flag was inverted (True selected the moist baroclinic wave
+# SST of DCMIP test 4-3, Fortran ``test=1``; False selected the constant
+# cyclone SST of test 5-1, ``test=0``), and latitude went in degrees to a
+# formula written for radians. For the two cases that use the internal SST,
+# the Fortran is called so that it computes the corrected result: the flag
+# swapped, and latitude converted to radians. Latitude enters the Fortran
+# only through that SST formula. The fixture inputs and ``cases.json`` keep
+# the user-facing kwargs and the latitude in degrees.
+FORTRAN_CALL_OVERRIDES = {
+    "internal_sst": {"kwargs": {"simulate_cyclone": True},
+                     "latitude_in_radians": True},
+    "cyclone": {"kwargs": {"simulate_cyclone": False},
+                "latitude_in_radians": True},
+}
+
 DCMIP_CASES = {
     "bw_dry": {"moist": False},
     "bw_moist": {"moist": True},
@@ -132,9 +148,13 @@ def generate_simple_physics(rng):
     assert base["air_pressure"][0, 0] > base["air_pressure"][-1, 0]
     arrays, cases = {}, {}
     for case, kwargs in SIMPLE_PHYSICS_CASES.items():
-        component = climt.SimplePhysics(**kwargs)
+        override = FORTRAN_CALL_OVERRIDES.get(case, {})
+        component = climt.SimplePhysics(
+            **dict(kwargs, **override.get("kwargs", {})))
         state = simple_physics_state(base, case, rng)
         inputs = {k: v.copy() for k, v in state.items()}
+        if override.get("latitude_in_radians"):
+            state["latitude"] = np.deg2rad(state["latitude"])
         diagnostics, new_state = component.array_call(
             state, timedelta(seconds=TIMESTEP_SECONDS))
         for k, v in inputs.items():
