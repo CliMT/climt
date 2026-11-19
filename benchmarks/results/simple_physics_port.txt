@@ -1,0 +1,7 @@
+SimplePhysics, 1 column x 28 levels, 2000 calls, best of 5
+Fortran (get_new_state):    10.65 us/call
+numba (kernel):              6.51 us/call
+ratio numba / Fortran:       0.61 (bound 1.5)
+machine: macOS-27.0.1-arm64-arm-64bit (arm64)
+numba: 0.68.1, NUMBA_NUM_THREADS=1
+commit: b7c3302e
