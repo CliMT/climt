@@ -236,6 +236,19 @@ def test_lock_never_pins_the_path_linked_dycore(tmp_path):
                 if line.lower().replace("-", "_").startswith("gfs_dynamical_core")]
 
 
+def test_lock_never_pins_a_locally_installed_climt_fortran(tmp_path):
+    # The stub fallback installs ./fortran non-editable, so pip freeze reports
+    # it with a local file URL; the lock must not pin it under any spelling.
+    result, _, lock = _scratch_bootstrap(
+        tmp_path,
+        'case "$*" in *"pip freeze"*) '
+        'printf "numpy==2.0.0\\nclimt-fortran @ file:///x/climt/fortran\\n'
+        'climt_fortran==1.0.0\\nClimt.Fortran==1.0.0\\nclimt-fortranish==0.1\\n" ;; esac\n')
+    assert result.returncode == 0, result.stderr
+    lines = lock.read_text().splitlines()
+    assert lines == ["numpy==2.0.0", "climt-fortranish==0.1"]
+
+
 def test_bootstrap_installs_the_fortran_stub_when_the_fortran_build_fails(tmp_path):
     result, calls, _ = _scratch_bootstrap(
         tmp_path,

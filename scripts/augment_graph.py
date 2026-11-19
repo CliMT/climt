@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 GRAPH = ROOT / "graphify-out" / "graph.json"
-PYX_GLOB = "climt/_components/**/*.pyx"
+PYX_GLOB = "fortran/climt_fortran/*.pyx"
 ARCH_DOC = "docs/PLUG_AND_PLAY_ARCHITECTURE.md"
 
 DEF_RE = re.compile(r"^def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", re.MULTILINE)

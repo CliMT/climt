@@ -20,7 +20,7 @@ ENTRY_POINTS = {
 def test_metadata():
     assert climt_fortran.INTERFACE_VERSION == 1
     assert climt_fortran.MODULES == EXPECTED
-    assert climt_fortran.__version__ == importlib.metadata.version("climt-fortran") == "1.0.0"
+    assert climt_fortran.__version__ == importlib.metadata.version("climt-fortran")
 
 
 def test_available_reports_every_module_without_importing():
@@ -49,7 +49,7 @@ def test_stub_wheel_has_no_binaries(tmp_path):
     env = dict(os.environ, CLIMT_FORTRAN_STUB="1")
     subprocess.run([sys.executable, "-m", "pip", "wheel", str(project), "--no-deps", "-w", str(tmp_path)],
                    env=env, check=True)
-    wheels = glob.glob(str(tmp_path / "climt_fortran-1.0.0-py3-none-any.whl"))
+    wheels = glob.glob(str(tmp_path / "climt_fortran-*-py3-none-any.whl"))
     assert len(wheels) == 1
     names = zipfile.ZipFile(wheels[0]).namelist()
     assert "climt_fortran/__init__.py" in names
