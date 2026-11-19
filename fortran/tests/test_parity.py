@@ -1,0 +1,186 @@
+"""The cffi modules reproduce the Cython reference outputs, exactly and as fast.
+
+Each case replays a call recorded from climt by ``generate_cython_reference.py``:
+the component's set-up calls, then the call itself with the same arguments.
+"""
+
+import importlib
+import importlib.util
+import inspect
+import json
+import os
+import sys
+
+import numpy as np
+import pytest
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+from benchmark_calls import MODULES, time_calls_min_of_runs  # noqa: E402
+
+REQUIRED = os.environ.get("CLIMT_REQUIRE_FORTRAN") == "1"
+FIXTURES = os.path.join(HERE, "fixtures")
+REFERENCE = np.load(os.path.join(FIXTURES, "cython_reference.npz"))
+with open(os.path.join(FIXTURES, "cython_timings.json")) as timings_file:
+    CYTHON_TIMINGS = json.load(timings_file)
+SPEED_TOLERANCE = 1.10
+
+
+def _value(array):
+    """A recorded argument: scalars (0-d arrays) as Python scalars, arrays as fresh copies."""
+    return array.item() if array.ndim == 0 else array.copy()
+
+
+def _arguments(prefix):
+    """The recorded arguments under ``prefix``, in call order."""
+    return {key[len(prefix):]: _value(REFERENCE[key]) for key in REFERENCE.files if key.startswith(prefix)}
+
+
+def reference_inputs(call):
+    """Arguments of the recorded call, by name, in call order."""
+    return _arguments(call + "/in/")
+
+
+def reference_outputs(call):
+    """Array arguments of the recorded call after it, by name."""
+    return _arguments(call + "/out/")
+
+
+def cffi_module(call):
+    """Import the module behind ``call``; skip (or fail, if required) unless its _cffi module is built."""
+    name = "climt_fortran." + MODULES[call]
+    if importlib.util.find_spec(name + "_cffi") is None:
+        if REQUIRED:
+            pytest.fail(name + "_cffi does not exist")
+        pytest.skip(name + "_cffi is not built")
+    return importlib.import_module(name)
+
+
+def replay_set_up(call, module):
+    """Make the set-up calls the component made before ``call``."""
+    for function in REFERENCE[call + "/init_order"]:
+        getattr(module, function)(*_arguments("%s/init/%s/" % (call, function)).values())
+
+
+def run_call(call, inputs):
+    """Replay the set-up calls, then call the module positionally, as climt does.
+
+    Returns the array arguments after the call, by name.
+    """
+    module = cffi_module(call)
+    replay_set_up(call, module)
+    function = getattr(module, REFERENCE[call + "/function"].item())
+    assert list(inspect.signature(function).parameters)[:len(inputs)] == list(inputs)
+    function(*inputs.values())
+    return {name: value for name, value in inputs.items() if isinstance(value, np.ndarray)}
+
+
+@pytest.mark.parametrize("call", ["emanuel"])
+def test_matches_cython_reference(call):
+    outputs = run_call(call, reference_inputs(call))
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+def test_reference_exercises_convection():
+    # Guard against a vacuous parity check: some recorded columns convect
+    # (and some do not, so state left over from one column would show).
+    outputs = reference_outputs("emanuel")
+    assert set(outputs["conv_state"]) == {0, 1}
+    assert np.any(outputs["dtemp"] != 0) and np.any(outputs["precip"] > 0)
+
+
+def test_emanuel_rejects_float32():
+    inputs = reference_inputs("emanuel")
+    inputs["temp"] = inputs["temp"].astype(np.float32)
+    with pytest.raises(TypeError, match="float64"):
+        run_call("emanuel", inputs)
+
+
+def test_emanuel_transposed_input_matches():
+    # Inputs are read correctly, and outputs filled in place, when the
+    # caller's arrays are not C-contiguous.
+    inputs = {name: np.asfortranarray(value) if isinstance(value, np.ndarray) else value
+              for name, value in reference_inputs("emanuel").items()}
+    assert not inputs["temp"].flags.c_contiguous and not inputs["dtemp"].flags.c_contiguous
+    outputs = run_call("emanuel", inputs)
+    for name, expected in reference_outputs("emanuel").items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+def test_emanuel_fills_strided_outputs():
+    # Outputs (and inputs) that are strided views of larger arrays.
+    def strided(value):
+        view = np.zeros(value.shape + (2,), value.dtype)[..., 0]
+        view[...] = value
+        return view
+
+    inputs = {name: strided(value) if isinstance(value, np.ndarray) else value
+              for name, value in reference_inputs("emanuel").items()}
+    assert not inputs["precip"].flags.c_contiguous and not inputs["dtemp"].flags.c_contiguous
+    outputs = run_call("emanuel", inputs)
+    for name, expected in reference_outputs("emanuel").items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+def test_emanuel_requires_initialisation(monkeypatch):
+    module = cffi_module("emanuel")
+    monkeypatch.setattr(module, "_initialised", False)
+    with pytest.raises(ValueError, match="not initialised"):
+        module.convect(*reference_inputs("emanuel").values())
+
+
+def test_emanuel_callable_from_numba():
+    numba = pytest.importorskip("numba")
+    from numba.core.typing import cffi_utils
+
+    module = cffi_module("emanuel")
+    compiled = importlib.import_module("climt_fortran._emanuel_convection_cffi")
+    cffi_utils.register_module(compiled)
+    ffi, lib = compiled.ffi, compiled.lib
+
+    @numba.njit
+    def convect(nlevs, max_conv_lev, num_tracers, dt, temp, q, qs, u, v, pmid, pint,
+                conv_state, precip, vel, tscale, qscale, cbmf, cape, dtemp, dq, du, dv):
+        ints = np.array([nlevs, max_conv_lev, num_tracers], dtype=np.int32)
+        timestep = np.array([dt])
+        tracers = np.zeros(1)
+        dtracers = np.zeros(1)
+        for col in range(temp.shape[0]):
+            # Fortran may write to its inputs: give it copies, as the wrapper does.
+            column = [temp[col].copy(), q[col].copy(), qs[col].copy(), u[col].copy(),
+                      v[col].copy(), pmid[col].copy(), pint[col].copy()]
+            lib.emanuel_convection(
+                ffi.from_buffer(column[0]), ffi.from_buffer(column[1]), ffi.from_buffer(column[2]),
+                ffi.from_buffer(column[3]), ffi.from_buffer(column[4]), ffi.from_buffer(column[5]),
+                ffi.from_buffer(column[6]),
+                ffi.from_buffer(ints[0:1]), ffi.from_buffer(ints[1:2]), ffi.from_buffer(ints[2:3]),
+                ffi.from_buffer(timestep), ffi.from_buffer(conv_state[col:col + 1]),
+                ffi.from_buffer(dtemp[col]), ffi.from_buffer(dq[col]), ffi.from_buffer(du[col]),
+                ffi.from_buffer(dv[col]), ffi.from_buffer(precip[col:col + 1]),
+                ffi.from_buffer(vel[col:col + 1]), ffi.from_buffer(tscale[col:col + 1]),
+                ffi.from_buffer(qscale[col:col + 1]), ffi.from_buffer(cbmf[col:col + 1]),
+                ffi.from_buffer(cape[col:col + 1]), ffi.from_buffer(tracers), ffi.from_buffer(dtracers))
+
+    inputs = reference_inputs("emanuel")
+    replay_set_up("emanuel", module)
+    assert inputs["num_tracers"] == 0
+    convect(*[value for name, value in inputs.items() if name != "ncols"])
+    for name, expected in reference_outputs("emanuel").items():
+        np.testing.assert_array_equal(inputs[name], expected, err_msg=name)
+
+
+def test_emanuel_not_slower_than_cython():
+    import numba
+
+    cffi_module("emanuel")
+    threads = numba.get_num_threads()
+    numba.set_num_threads(1)  # the gate protocol of benchmark_calls
+    try:
+        microseconds = time_calls_min_of_runs(runs=5, calls=["emanuel"])["emanuel"]
+    finally:
+        numba.set_num_threads(threads)
+    limit = SPEED_TOLERANCE * CYTHON_TIMINGS["emanuel"]
+    assert microseconds <= limit, "emanuel: %.1f us > %.1f us (%.2f x Cython)" % (
+        microseconds, limit, SPEED_TOLERANCE)

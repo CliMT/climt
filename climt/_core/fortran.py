@@ -1,7 +1,12 @@
 """Loader for the optional ``climt_fortran`` companion package.
 
-The compiled Fortran/Cython extensions live in the separate ``climt-fortran``
+The compiled Fortran extensions live in the separate ``climt-fortran``
 distribution. This module is the only place the core imports them from.
+
+Each module ``climt_fortran._<name>`` counts as installed when its compiled
+code is present: the cffi module ``_<name>_cffi`` that a Python wrapper
+``_<name>`` calls, or ``_<name>`` itself as an extension module (Cython, in
+climt-fortran 1.x). A wrapper alone, as in a stub install, does not count.
 """
 import importlib
 import importlib.machinery
@@ -21,6 +26,15 @@ def _reset_cache() -> None:
     """Forget cached import results. For tests."""
     global _cache
     _cache = None
+
+
+def _compiled_code_found(full, search_path) -> bool:
+    """Whether the compiled code behind module ``full`` is in ``search_path``."""
+    finder = importlib.machinery.PathFinder
+    if finder.find_spec(full + "_cffi", search_path) is not None:
+        return True
+    spec = finder.find_spec(full, search_path)
+    return spec is not None and str(spec.origin).endswith(tuple(importlib.machinery.EXTENSION_SUFFIXES))
 
 
 def _load():
@@ -64,12 +78,12 @@ def _load():
     for name in MODULES:
         full = "%s.%s" % (_PACKAGE, name)
         try:
-            spec = None if search_path is None else importlib.machinery.PathFinder.find_spec(full, list(search_path))
+            found = search_path is not None and _compiled_code_found(full, list(search_path))
         except Exception as error:
             failures.append("%s: %s" % (name, error))
             continue
-        if spec is None:
-            failures.append("%s: module not found" % name)
+        if not found:
+            failures.append("%s: compiled module not found" % name)
             continue
         found_any = True
         try:

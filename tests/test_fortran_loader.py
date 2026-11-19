@@ -19,17 +19,22 @@ def isolated(monkeypatch):
     fortran._reset_cache()
 
 
-def install_fake(monkeypatch, tmp_path, interface=1, present=fortran.MODULES, failing=()):
+def install_fake(monkeypatch, tmp_path, interface=1, present=fortran.MODULES, failing=(), wrappers_only=()):
+    """A fake climt_fortran package on sys.path. Each module in ``present`` or
+    ``failing`` gets a wrapper ``<name>.py`` and a stand-in ``<name>_cffi.py``
+    for its compiled module; ``wrappers_only`` modules get the wrapper only."""
     package = tmp_path / "climt_fortran"
     package.mkdir()
     lines = ['__version__ = "9.9.9"']
     if interface is not None:
         lines.append("INTERFACE_VERSION = %d" % interface)
     (package / "__init__.py").write_text("\n".join(lines) + "\n")
-    for name in present:
+    for name in present + wrappers_only:
         (package / (name + ".py")).write_text("LOADED = True\n")
     for name in failing:
         (package / (name + ".py")).write_text("raise ImportError(%r)\n" % ABI_MESSAGE)
+    for name in present + failing:
+        (package / (name + "_cffi.py")).write_text("")
     monkeypatch.syspath_prepend(str(tmp_path))
 
 
@@ -56,9 +61,14 @@ def test_available(monkeypatch, tmp_path):
     assert fortran.load_extension("_emanuel_convection").LOADED is True
 
 
-def test_stub(monkeypatch, tmp_path):
-    install_fake(monkeypatch, tmp_path, present=())
-    assert fortran.fortran_status()["state"] == "stub"
+@pytest.mark.parametrize("wrappers_only", [(), fortran.MODULES])
+def test_stub(monkeypatch, tmp_path, wrappers_only):
+    # A stub of climt-fortran 2 ships the Python wrappers without their
+    # compiled _cffi modules: still a stub, not broken.
+    install_fake(monkeypatch, tmp_path, present=(), wrappers_only=wrappers_only)
+    status = fortran.fortran_status()
+    assert status["state"] == "stub"
+    assert status["detail"] == "climt_fortran contains no compiled extensions"
     message = str(fortran.unavailable_error("SimplePhysics"))
     assert "pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran" in message
     assert "gfortran" in message and "instead" not in message
@@ -94,6 +104,30 @@ def test_partly_built_companion_is_broken(monkeypatch, tmp_path):
     assert "_rrtmg_sw" in status["detail"]
 
 
+def test_wrapper_without_compiled_module_is_not_loaded(monkeypatch, tmp_path):
+    present = tuple(n for n in fortran.MODULES if n != "_rrtmg_sw")
+    install_fake(monkeypatch, tmp_path, present=present, wrappers_only=("_rrtmg_sw",))
+    status = fortran.fortran_status()
+    assert status["state"] == "broken"
+    assert status["modules"]["_rrtmg_sw"] is False
+    assert "_rrtmg_sw: compiled module not found" in status["detail"]
+    assert fortran.load_extension("_rrtmg_sw") is None
+
+
+def test_extension_module_counts_as_compiled(monkeypatch, tmp_path):
+    # climt-fortran 1.x (and 2.x builds part-way through the move to cffi)
+    # has Cython extension modules _<name>.<suffix> and no _cffi modules.
+    install_fake(monkeypatch, tmp_path, present=())
+    package = tmp_path / "climt_fortran"
+    for name in fortran.MODULES:
+        (package / (name + importlib.machinery.EXTENSION_SUFFIXES[0])).write_bytes(b"not a binary")
+    status = fortran.fortran_status()
+    # Found, so imported; the fake binary then fails to load.
+    assert status["state"] == "broken"
+    assert "compiled module not found" not in status["detail"]
+    assert all(name in status["detail"] for name in fortran.MODULES)
+
+
 def test_error_type_and_unknown_name(monkeypatch):
     monkeypatch.setitem(sys.modules, "climt_fortran", None)
     assert isinstance(fortran.unavailable_error("X"), ImportError)
@@ -111,8 +145,7 @@ def test_results_are_cached(monkeypatch, tmp_path):
 
 
 def test_non_import_error_in_extension_is_broken(monkeypatch, tmp_path):
-    present = tuple(n for n in fortran.MODULES if n != "_rrtmg_sw")
-    install_fake(monkeypatch, tmp_path, present=present)
+    install_fake(monkeypatch, tmp_path)
     (tmp_path / "climt_fortran" / "_rrtmg_sw.py").write_text('raise ValueError("numpy.dtype size changed")\n')
     status = fortran.fortran_status()
     assert status["state"] == "broken"
@@ -141,6 +174,7 @@ def test_extensions_come_only_from_the_imported_package(monkeypatch, tmp_path):
     elsewhere.mkdir()
     for name in fortran.MODULES:
         (elsewhere / (name + ".py")).write_text("LOADED = True\n")
+        (elsewhere / (name + "_cffi.py")).write_text("")
 
     class ElsewhereFinder:
         @classmethod

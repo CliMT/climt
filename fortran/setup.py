@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 """Build script for climt-fortran, the compiled extensions used by climt.
 
+The compiled modules are Cython extensions and, for the libraries already
+moved over, cffi modules (``climt_fortran/_cffi_build.py``).
+
 Set ``CLIMT_FORTRAN_STUB=1`` to build a stub: a pure-Python wheel with no
-compiled extensions, which needs no compilers, Cython or numpy.
+compiled extensions, which needs no compilers, Cython, cffi or numpy.
 """
 
 import atexit
@@ -51,7 +54,8 @@ def fresh_build_base():
 
 
 def compiled_build():
-    """setup() arguments for the real build: the five extensions and the commands that build _lib first."""
+    """setup() arguments for the real build: the Cython extensions, the cffi
+    modules, and the commands that build _lib first."""
     import numpy as np
     from Cython.Build.Distutils import build_ext as native_build_ext
 
@@ -90,15 +94,18 @@ def compiled_build():
 
     ext_modules = [
         fortran_extension("_simple_physics", "libsimple_physics.a"),
-        fortran_extension("_emanuel_convection", "libemanuel.a"),
         fortran_extension("_rrtmg_lw", "librrtmg_lw.a", openmp=True),
         fortran_extension("_rrtmg_sw", "librrtmg_sw.a", openmp=True),
         fortran_extension("_dcmip", "libdcmip.a"),
     ]
 
     return dict(
-        install_requires=["numpy>=1.16.0"],
+        # numba: Emanuel's column loop calls Fortran from njit code (speed).
+        install_requires=["numpy>=1.16.0", "cffi>=1.17", "numba>=0.59.0"],
         ext_modules=ext_modules,
+        # Each entry builds climt_fortran._<name>_cffi. cffi wraps the
+        # build_ext below, so _lib is still built first.
+        cffi_modules=["climt_fortran/_cffi_build.py:emanuel_ffi"],
         cmdclass={
             "build_ext": climt_build_ext,
             "bdist_wheel": climt_bdist_wheel,

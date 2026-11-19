@@ -72,6 +72,7 @@ def fake_broken_companion(monkeypatch, tmp_path):
     (package / "__init__.py").write_text('__version__ = "9.9.9"\nINTERFACE_VERSION = 1\n')
     for name in fortran.MODULES:
         (package / (name + ".py")).write_text("LOADED = True\n")
+        (package / (name + "_cffi.py")).write_text("")
     (package / "_rrtmg_lw.py").write_text('raise ValueError("numpy.dtype size changed")\n')
     monkeypatch.syspath_prepend(str(tmp_path))
     yield
