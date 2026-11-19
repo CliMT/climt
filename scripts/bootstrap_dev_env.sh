@@ -67,15 +67,16 @@ else
     pip_in_env install -r "$LOCK"
 fi
 
-# 5. Install climt, falling back to the pure-Python build.
+# 5. Install climt-fortran (falling back to its stub), then climt.
 # Homebrew gcc needs the macOS SDK to find the C headers.
 if [ "$(uname -s)" = "Darwin" ] && [ -z "${SDKROOT:-}" ] && command -v xcrun >/dev/null 2>&1; then
     SDKROOT="$(xcrun --show-sdk-path 2>/dev/null)" && export SDKROOT || unset SDKROOT
 fi
-if ! pip_in_env install -e "$CLIMT_DIR"; then
-    echo "compiled build failed; falling back to pure Python"
-    run env CLIMT_PURE_PYTHON=1 "$CONDA" run -n "$ENV_NAME" python -m pip install -e "$CLIMT_DIR"
+if ! pip_in_env install -e "$CLIMT_DIR/fortran"; then
+    echo "climt-fortran build failed; installing the climt-fortran stub"
+    run env CLIMT_FORTRAN_STUB=1 "$CONDA" run -n "$ENV_NAME" python -m pip install "$CLIMT_DIR/fortran"
 fi
+pip_in_env install -e "$CLIMT_DIR"
 
 # 6. Put gfs_dynamical_core on the path with a .pth file (no build, no deps).
 link_dycore() {

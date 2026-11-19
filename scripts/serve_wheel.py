@@ -9,7 +9,7 @@ this instead:
 
 e.g., after building the pure wheel into /tmp/climt_wh:
 
-    CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
+    python -m pip wheel . --no-deps -w /tmp/climt_wh
     python scripts/serve_wheel.py /tmp/climt_wh 8912
 
 Leave it running, then `quarto preview` the docs. The page front matter's

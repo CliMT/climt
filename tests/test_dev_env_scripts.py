@@ -208,7 +208,7 @@ def _scratch_bootstrap(tmp_path, fake_body):
     fake = tmp_path / "conda"
     fake.write_text(
         "#!/bin/bash\n"
-        'echo "PURE=${{CLIMT_PURE_PYTHON:-}} $*" >> "{log}"\n'
+        'echo "STUB=${{CLIMT_FORTRAN_STUB:-}} $*" >> "{log}"\n'
         'if [ "$1" = "env" ] && [ "$2" = "list" ]; then\n'
         '  printf "# conda environments:\\nbase  /x/base\\n"\n'
         "fi\n".format(log=log) + fake_body)
@@ -236,13 +236,25 @@ def test_lock_never_pins_the_path_linked_dycore(tmp_path):
                 if line.lower().replace("-", "_").startswith("gfs_dynamical_core")]
 
 
-def test_bootstrap_falls_back_to_pure_python_when_the_compiled_build_fails(tmp_path):
+def test_bootstrap_installs_the_fortran_stub_when_the_fortran_build_fails(tmp_path):
     result, calls, _ = _scratch_bootstrap(
         tmp_path,
-        'case "$*" in *"pip install -e"*) '
-        '[ "${CLIMT_PURE_PYTHON:-}" = "1" ] || exit 1 ;; esac\n')
+        'case "$*" in *"pip install -e"*fortran*) exit 1 ;; esac\n')
     assert result.returncode == 0, result.stderr
-    assert "compiled build failed; falling back to pure Python" in result.stdout
+    assert "climt-fortran build failed; installing the climt-fortran stub" in result.stdout
+    installs = [c for c in calls if "pip install" in c and "-r" not in c.split()]
+    fortran = str(REPO / "fortran")
+    assert installs == [
+        "STUB= run -n climt-dev python -m pip install -e " + fortran,
+        "STUB=1 run -n climt-dev python -m pip install " + fortran,
+        "STUB= run -n climt-dev python -m pip install -e " + str(REPO),
+    ]
+    assert not any("CLIMT_PURE_PYTHON" in c for c in calls)
+
+
+def test_bootstrap_installs_fortran_editable_before_climt(tmp_path):
+    result, calls, _ = _scratch_bootstrap(tmp_path, "")
+    assert result.returncode == 0, result.stderr
     installs = [c for c in calls if "pip install -e" in c]
-    assert len(installs) == 2
-    assert installs[0].startswith("PURE= ") and installs[1].startswith("PURE=1 ")
+    assert [c.split()[-1] for c in installs] == [str(REPO / "fortran"), str(REPO)]
+    assert all(c.startswith("STUB= ") for c in installs)

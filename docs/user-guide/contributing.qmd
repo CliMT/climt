@@ -88,15 +88,19 @@ development.
     $ git clone git@github.com:your_name_here/climt.git
     ```
 
-3.  Install your local copy into a virtualenv. Assuming you have
-    virtualenvwrapper installed, this is how you set up your fork for
-    local development:
+3.  Install your local copy into a virtualenv. Install the Fortran
+    companion in `fortran/` and then climt, both in editable mode:
 
     ``` shell
     $ mkvirtualenv climt
     $ cd climt/
-    $ python setup.py develop
+    $ export SDKROOT="$(xcrun --show-sdk-path)"   # macOS with Homebrew gcc only
+    $ pip install -e ./fortran
+    $ pip install -e .
     ```
+
+    Without a Fortran toolchain, install the stub instead of the first
+    `pip` command: `CLIMT_FORTRAN_STUB=1 pip install ./fortran`.
 
 4.  Create a branch for local development:
 
@@ -112,8 +116,9 @@ development.
 
     ``` shell
     $ flake8 climt tests
-    $ python setup.py test or py.test
-    $ tox
+    $ pytest
+    $ tox -e py311        # with the Fortran binaries
+    $ tox -e py311-pure   # with the climt-fortran stub
     ```
 
     To get flake8 and tox, just pip install them into your virtualenv.

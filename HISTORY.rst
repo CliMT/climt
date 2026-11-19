@@ -5,6 +5,16 @@ History
 Unreleased
 ----------
 
+* **Packaging** — climt is now a pure-Python package. The compiled extensions
+  (RRTMG, Fortran Emanuel convection, SimplePhysics, DCMIP initial conditions)
+  moved to the companion package ``climt-fortran``, which pip installs
+  automatically; on platforms without binaries it installs as an empty stub.
+  ``climt.list_components()`` reports which components are available and why
+  not, and using an unavailable one raises ``climt.FortranUnavailableError``
+  (an ``ImportError``) naming the fix. numba is an optional extra,
+  ``pip install "climt[numba]"``. Python 3.10 or newer is declared, and
+  ``setup.py`` is removed in favour of ``pyproject.toml``.
+
 * **Fix (behaviour change)** — ``SimpleBoundaryLayer`` diffuses dry static
   energy ``Cp T + g z`` instead of temperature, as Frierson, Held &
   Zurita-Gotor (2006) do. Diffusing ``T`` itself pulled a well-mixed boundary

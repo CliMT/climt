@@ -23,7 +23,7 @@ than the released wheel, build the pure wheel and serve it *with CORS headers*
 (plain `python -m http.server` will NOT work, and GitHub release assets do not
 send CORS either), then point the page's front matter at the local URL:
 
-    CLIMT_PURE_PYTHON=1 python -m pip wheel . --no-deps -w /tmp/climt_wh
+    python -m pip wheel . --no-deps -w /tmp/climt_wh
     python scripts/serve_wheel.py /tmp/climt_wh 8912
 -->
 

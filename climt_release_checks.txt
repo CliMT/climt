@@ -1,5 +1,23 @@
+Core release (climt)
+--------------------
 * ensure HISTORY is up to date
 * run bumpversion
-* create sdist and run twine check on it to ensure things are ok
+* build the sdist and wheel: python -m build
+* run twine check dist/* to ensure things are ok
 * push commit to github
-* manually tag new version
+* publish a GitHub release tagged vX.Y.Z (runs release_climt.yml)
+
+Companion release (climt-fortran)
+---------------------------------
+Only when the Fortran or Cython sources, the supported Python versions or the
+NumPy ABI change. The companion is released before any core release that needs it.
+* edit the version in fortran/setup.py and fortran/climt_fortran/__init__.py
+* if a function the core calls changed, bump INTERFACE_VERSION and the core's
+  climt-fortran requirement range in pyproject.toml
+* push commit to github
+* publish a GitHub release tagged fortran-vX.Y.Z (runs release_climt_fortran.yml)
+
+One-time setup
+--------------
+* reserve climt-fortran on PyPI
+* add a PyPI trusted publisher for the workflow release_climt_fortran.yml

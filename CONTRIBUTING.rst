@@ -107,7 +107,17 @@ Ready to contribute? Here's how to set up `climt` for local development.
 
    On macOS, the script sets ``SDKROOT`` from ``xcrun --show-sdk-path`` when it is
    unset, so Homebrew ``gcc`` can build the Fortran extensions. If that build fails
-   anyway, the script installs climt in pure-Python mode.
+   anyway, the script installs the ``climt-fortran`` stub instead.
+
+   To set up an environment of your own instead, install the Fortran companion in
+   ``fortran/`` and then climt, both in editable mode::
+
+    $ export SDKROOT="$(xcrun --show-sdk-path)"   # macOS with Homebrew gcc only
+    $ pip install -e ./fortran
+    $ pip install -e .
+
+   Without a Fortran toolchain, install the stub instead of the first ``pip``
+   command: ``CLIMT_FORTRAN_STUB=1 pip install ./fortran``.
 
    The script refuses to touch an existing ``climt-dev`` environment unless you pass
    ``--recreate``. Pass ``--relock`` to resolve ``envs/climt-dev.in`` afresh and
@@ -126,8 +136,9 @@ Ready to contribute? Here's how to set up `climt` for local development.
 5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
 
     $ flake8 climt tests
-    $ python setup.py test or py.test
-    $ tox
+    $ pytest
+    $ tox -e py311        # with the Fortran binaries
+    $ tox -e py311-pure   # with the climt-fortran stub
 
    To get flake8 and tox, just pip install them into your virtualenv.
 
