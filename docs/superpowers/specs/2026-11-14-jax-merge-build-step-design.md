@@ -2,6 +2,15 @@
 
 Date: 2026-11-14. Size: project. Branch: `feature/jax-merge-build-step`.
 
+> **Amended 2026-11-19.** The build step (`compile_component`,
+> `compile_tendencies`) and the worked example moved to `feature/scm-build`,
+> where they are designed for numba first, with Steppers, time stepping and
+> per-column parameters (`docs/superpowers/specs/2026-11-19-scm-build-design.md`
+> on that branch). This design now covers the merge, JAX isolation, the parity
+> policy and the compile-time budget. The sections below on the build step and
+> the example are kept as the record of the original intent and are not
+> implemented on this branch.
+
 ## Intent
 
 The `jax-research` branch holds two differentiable kernels that work: the
