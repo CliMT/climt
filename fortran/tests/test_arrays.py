@@ -3,36 +3,9 @@ import numpy as np
 import pytest
 
 from climt_fortran._arrays import (
-    as_double_pointer, as_double_scalar_pointer, as_int_pointer, check_array, copy_back_outputs, input_pointer, output_pointer)
+    as_double_scalar_pointer, as_int_pointer, check_array, contiguous_arguments, copy_back_outputs)
 
 ffi = cffi.FFI()
-
-
-def test_double_pointer_reads_the_array():
-    array = np.arange(6.0).reshape(2, 3)
-    pointer = as_double_pointer(ffi, array)
-    assert [pointer[i] for i in range(6)] == list(range(6))
-    pointer[4] = -1.0
-    assert array[1, 1] == -1.0
-
-
-@pytest.mark.parametrize("bad", [np.zeros(3, np.float32), np.zeros(3, ">f8"), [0.0, 1.0]])
-def test_double_pointer_rejects_other_types(bad):
-    with pytest.raises(TypeError, match="float64"):
-        as_double_pointer(ffi, bad)
-
-
-@pytest.mark.parametrize("bad", [np.zeros((3, 2)).T, np.zeros(6)[::2]])
-def test_double_pointer_rejects_non_contiguous(bad):
-    with pytest.raises(ValueError, match="C-contiguous"):
-        as_double_pointer(ffi, bad)
-
-
-def test_double_pointer_rejects_read_only():
-    array = np.zeros(3)
-    array.flags.writeable = False
-    with pytest.raises(ValueError, match="read-only"):
-        as_double_pointer(ffi, array)
 
 
 def test_scalar_pointers():
@@ -52,6 +25,7 @@ def test_check_array_accepts_any_layout():
 
 @pytest.mark.parametrize("bad, error, message", [
     (np.zeros((3, 2), np.float32), TypeError, "x: expected a float64 array, got float32"),
+    (np.zeros((3, 2), ">f8"), TypeError, "x: expected a float64 array, got >f8"),
     ([0.0, 1.0], TypeError, "x: expected a float64 array, got list"),
     (None, TypeError, "x: expected a float64 array, got NoneType"),
     (np.zeros((2, 3)), ValueError, r"x: expected shape \(3, 2\), got \(2, 3\)"),
@@ -69,39 +43,35 @@ def test_check_array_output_must_be_writeable():
         check_array("x", array, np.dtype(np.float64), (3, 2), output=True)
 
 
-def test_input_pointer_copies_only_non_contiguous_arrays():
-    array = np.arange(6.0).reshape(3, 2)
-    assert input_pointer(ffi, "x", array, (3, 2))[3] == 3.0
-    pointer = input_pointer(ffi, "x", array, (3, 2))
-    pointer[0] = -1.0
-    assert array[0, 0] == -1.0  # contiguous: the array itself
-    transposed = np.arange(6.0).reshape(2, 3).T
-    pointer = input_pointer(ffi, "x", transposed, (3, 2))
-    assert [pointer[i] for i in range(6)] == list(transposed.ravel())
-    with pytest.raises(TypeError, match="x: expected a float64"):
-        input_pointer(ffi, "x", array.astype(np.float32), (3, 2))
-    with pytest.raises(ValueError, match="x: expected shape"):
-        input_pointer(ffi, "x", array, (2, 3))
+def _read_only(array):
+    array.flags.writeable = False
+    return array
 
 
-def test_output_pointer_writes_back_non_contiguous_arrays():
-    contiguous, strided = np.zeros((3, 2)), np.zeros((3, 4))[:, ::2]
+def test_contiguous_arguments_copies_only_when_needed():
+    values = np.arange(6.0).reshape(3, 2)
+    contiguous = values.copy()
+    transposed = np.asfortranarray(values)
+    strided = np.zeros((3, 4))[:, ::2]
+    strided[...] = values
+    read_only = _read_only(values.copy())
     copy_back = []
-    pointers = [output_pointer(ffi, name, array, (3, 2), copy_back)
-                for name, array in (("a", contiguous), ("b", strided))]
-    assert len(copy_back) == 1 and copy_back[0][0] is strided
-    for pointer in pointers:
-        for i in range(6):
-            pointer[i] = i
-    assert not strided.any()
+    arrays = [contiguous, transposed, read_only, strided]
+    specs = [("a", (3, 2), False), ("b", (3, 2), False), ("c", (3, 2), False), ("d", (3, 2), True)]
+    result = contiguous_arguments(arrays, specs, copy_back)
+    assert result[0] is contiguous
+    for array in result:
+        assert array.flags.c_contiguous and array.flags.writeable
+        np.testing.assert_array_equal(array, values)
+    assert len(copy_back) == 1 and copy_back[0][0] is strided  # outputs only
+    result[3][...] = -1.0
     copy_back_outputs(copy_back)
-    expected = np.arange(6.0).reshape(3, 2)
-    np.testing.assert_array_equal(contiguous, expected)
-    np.testing.assert_array_equal(strided, expected)
+    assert np.all(strided == -1.0)
 
 
-def test_output_pointer_rejects_read_only():
-    for array in (np.zeros((3, 2)), np.zeros((3, 4))[:, ::2]):
-        array.flags.writeable = False
-        with pytest.raises(ValueError, match="read-only"):
-            output_pointer(ffi, "x", array, (3, 2), [])
+def test_contiguous_arguments_checks_every_array():
+    good = ("a", (3, 2), False)
+    with pytest.raises(TypeError, match="b: expected a float64"):
+        contiguous_arguments([np.zeros((3, 2)), np.zeros((3, 2), np.float32)], [good, ("b", (3, 2), False)], [])
+    with pytest.raises(ValueError, match="b: array is read-only"):
+        contiguous_arguments([np.zeros((3, 2)), _read_only(np.zeros((3, 2)))], [good, ("b", (3, 2), True)], [])

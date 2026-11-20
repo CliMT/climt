@@ -1,37 +1,17 @@
-"""Check numpy arrays and turn them, and Python scalars, into the pointers the
-Fortran routines take.
+"""Check numpy arrays and turn Python scalars into the pointers the Fortran
+routines take.
 
 Shared by the cffi wrappers. ``check_array`` validates an argument's dtype,
-shape and writability. ``as_double_pointer`` checks before handing out
-a pointer, so a wrong dtype or layout raises instead of letting Fortran read
-the wrong memory. It never copies: callers make arrays C-contiguous first, as
-the ``.pyx`` files did.
-
-``input_pointer`` and ``output_pointer`` do both for one float64 argument of
-a known shape, in any memory layout: an array that is not C-contiguous is
-passed to Fortran as a contiguous copy, and an output copy is written back
-by ``copy_back_outputs`` after the call. They are the per-argument step of a
-plain-Python wrapper and run tens of times per call, so the common case is
-checked inline, and ``check_array`` (with its messages) runs only when that
-check fails.
+shape and writability, so a wrong dtype or shape raises, naming the argument,
+instead of letting Fortran read the wrong memory. ``contiguous_arguments``
+checks a call's arrays and makes C-contiguous writeable copies of those that
+are not, for the numba kernels that pass them to Fortran;
+``copy_back_outputs`` writes the output copies back after the call.
 """
 
 import numpy as np
 
 _FLOAT64 = np.dtype(np.float64)
-
-
-def as_double_pointer(ffi, array):
-    """cffi double* to a C-contiguous float64 array. Raises TypeError naming the
-    dtype if not float64, ValueError if not C-contiguous (callers make arrays
-    contiguous first, as the .pyx did)."""
-    if not isinstance(array, np.ndarray) or array.dtype != np.float64:
-        found = array.dtype if isinstance(array, np.ndarray) else type(array).__name__
-        raise TypeError("expected a float64 array, got %s" % found)
-    if not array.flags.c_contiguous:
-        raise ValueError("expected a C-contiguous array")
-    # require_writable: Fortran may write through any pointer it is given.
-    return ffi.from_buffer("double[]", array, require_writable=True)
 
 
 def as_int_pointer(ffi, value):
@@ -56,29 +36,22 @@ def check_array(name, array, dtype, shape=None, output=False):
         raise ValueError("%s: array is read-only" % name)
 
 
-def input_pointer(ffi, name, array, shape):
-    """double* to input ``array``, checked to be float64 of ``shape``: the
-    array itself if C-contiguous, else a C-contiguous copy."""
-    if type(array) is not np.ndarray or array.dtype != _FLOAT64 or array.shape != shape:
-        check_array(name, array, _FLOAT64, shape)  # raises, or accepts an ndarray subclass
-    if not array.flags.c_contiguous:
-        array = np.ascontiguousarray(array)
-    # Writable (the third argument): Fortran may write through any pointer.
-    return ffi.from_buffer("double[]", array, True)
-
-
-def output_pointer(ffi, name, array, shape, copy_back):
-    """double* to output ``array``, checked to be writeable float64 of
-    ``shape``: the array itself if C-contiguous, else a C-contiguous copy,
+def contiguous_arguments(arrays, specs, copy_back):
+    """``arrays`` checked against ``specs`` (a ``(name, shape, output)`` each,
+    see ``check_array``), as C-contiguous, aligned, writeable arrays: each
+    array that is not one is replaced by such a copy, and output copies are
     recorded in the list ``copy_back`` for ``copy_back_outputs``."""
-    if type(array) is not np.ndarray or array.dtype != _FLOAT64 or array.shape != shape:
-        check_array(name, array, _FLOAT64, shape, output=True)
-    if not array.flags.c_contiguous:
-        check_array(name, array, _FLOAT64, shape, output=True)  # writeable, before copying
-        buffer = np.ascontiguousarray(array)  # keeps the caller's values
-        copy_back.append((array, buffer))
-        array = buffer
-    return ffi.from_buffer("double[]", array, True)
+    result = []
+    for array, (name, shape, output) in zip(arrays, specs, strict=True):
+        check_array(name, array, _FLOAT64, shape, output)
+        flags = array.flags
+        if not (flags.c_contiguous and flags.aligned and flags.writeable):
+            copy = np.array(array, order="C")  # keeps the caller's values
+            if output:
+                copy_back.append((array, copy))
+            array = copy
+        result.append(array)
+    return result
 
 
 def copy_back_outputs(copy_back):

@@ -15,8 +15,11 @@ site-packages was read-only).
 """
 
 import llvmlite.binding
+import numba
 from numba import types
 from numba.core.typing import cffi_utils
+
+_KERNELS = {}
 
 
 def external_function(module, name):
@@ -32,3 +35,29 @@ def external_function(module, name):
     symbol = "%s_%s" % (module.__name__.replace(".", "_"), name)
     llvmlite.binding.add_symbol(symbol, cffi_utils.get_pointer(function))
     return types.ExternalFunction(symbol, cffi_utils.make_function_type(function).sig)
+
+
+def compiled_kernel(function, signature):
+    """``function`` compiled by numba for ``signature`` only, on first use.
+
+    Cached on disk, with the GIL released. Called with arguments of other
+    types (an array of another dtype, layout or ndim, a read-only array,
+    None), the result raises TypeError before running anything, and nothing
+    is recompiled. Later calls return the same compiled function.
+    """
+    try:
+        return _KERNELS[function]
+    except KeyError:
+        kernel = _KERNELS[function] = numba.njit(signature, cache=True, nogil=True)(function)
+        return kernel
+
+
+@numba.njit(cache=True)
+def keep_alive(array):
+    """Do nothing with ``array``, so that it is still in use here.
+
+    numba frees an array created in a kernel right after its last use, and a
+    pointer from ``ffi.from_buffer`` does not keep it alive: call this after a
+    Fortran call given a pointer into such an array.
+    """
+    return array.size >= 0

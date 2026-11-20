@@ -244,13 +244,33 @@ def test_rrtmg_lw_rejects_float32(call, name):
         run_call(call, inputs)
 
 
-@pytest.mark.parametrize("call", LW_CALLS)
-@pytest.mark.parametrize("name", ["surf_emissivity", "cloud_tau", "downward_longwave_flux"])
+def _lw_array_cases():
+    return [(call, name) for call in LW_CALLS
+            for name, value in reference_inputs(call).items() if isinstance(value, np.ndarray)]
+
+
+@pytest.mark.parametrize("call, name", _lw_array_cases())
 def test_rrtmg_lw_rejects_wrong_shape(call, name):
+    # Every array, C-contiguous and float64 but one row short: the compiled
+    # kernel must refuse it before Fortran runs.
     inputs = reference_inputs(call)
     inputs[name] = inputs[name][:-1]
+    assert inputs[name].flags.c_contiguous
     with pytest.raises(ValueError, match="%s: expected shape" % name):
         run_call(call, inputs)
+
+
+@pytest.mark.parametrize("call", LW_CALLS)
+def test_rrtmg_lw_read_only_inputs_match(call):
+    # Read-only C-contiguous inputs are copied, as strided ones are.
+    inputs = reference_inputs(call)
+    for name, value in inputs.items():
+        if isinstance(value, np.ndarray) and name not in LW_OUTPUTS:
+            value.flags.writeable = False
+    assert not inputs["layer_pressure"].flags.writeable and inputs["layer_pressure"].flags.c_contiguous
+    outputs = run_call(call, inputs)
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
 
 
 @pytest.mark.parametrize("call", LW_CALLS)
@@ -281,12 +301,12 @@ def test_rrtmg_lw_change_up_flux(call):
 def test_rrtmg_lw_initialise_checks_every_flag_first():
     module = cffi_module("rrtmg_lw")
     replay_set_up("rrtmg_lw", module)
-    before = module._cloud_overlap_method[0]
+    before = module._flags[module._CLOUD_OVERLAP_METHOD]
     with pytest.raises(TypeError):
         module.initialise_rrtm_radiation(1004.64, before + 1, 0, 2, 1, 1.5)
     with pytest.raises(OverflowError):
         module.initialise_rrtm_radiation_mcica(1004.64, before + 1, permute_seed=2**31)
-    assert module._cloud_overlap_method[0] == before
+    assert module._flags[module._CLOUD_OVERLAP_METHOD] == before
 
 
 def test_rrtmg_lw_keeps_flags_rewritten_by_fortran():
@@ -299,7 +319,7 @@ def test_rrtmg_lw_keeps_flags_rewritten_by_fortran():
     try:
         module.initialise_rrtm_radiation(**arguments)
         module.rrtm_calculate_longwave_fluxes(*reference_inputs("rrtmg_lw").values())
-        assert module._cloud_overlap_method[0] == 2
+        assert module._flags[module._CLOUD_OVERLAP_METHOD] == 2
     finally:
         replay_set_up("rrtmg_lw", module)
 

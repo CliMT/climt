@@ -14,7 +14,14 @@ repeat's per-call time is the sum of its ``n`` single-call times over ``n``;
 ``fixtures/cython_timings.json`` is the speed gate for the cffi modules. It was
 recorded as the minimum, per call, over 5 separate runs of ``time_calls``
 (``NUMBA_NUM_THREADS=1``, ``n=2000``, ``repeats=5``; ``--runs 5 --save``),
-because single runs varied by up to ~40% run to run on the SW calls.
+because single runs varied by up to ~40% run to run on the SW calls. It is
+the Cython build of the five ``.pyx`` modules at commit 73e8688c (same
+flags, same ``_lib``), timed with those modules in place of the installed
+ones. Timings drift with the machine's state (a first baseline was 1.6 times
+the current one a day later), so a gate result means something only if the
+baseline was recorded in the same machine state: re-record it from that
+build alongside timing a new module, rather than comparing against an old
+file.
 
 Gate protocol: a new module is compared against ``cython_timings.json`` with
 the same statistic, the per-call minimum over 5 runs (``--runs 5``, the
