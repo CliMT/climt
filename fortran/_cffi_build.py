@@ -2,10 +2,11 @@
 
 Run by setuptools through ``cffi_modules`` in ``setup.py`` (API, out-of-line
 mode). A build-time file only: it lives in ``fortran/`` next to
-``_build_config.py``, outside the installed package. Each ``*_ffi`` object below compiles ``climt_fortran._<name>_cffi``,
-a small extension linked against the static library ``_lib/<system>/lib*.a``.
-The prototypes are those of the routines' ``bind(c)`` names; every argument is
-passed by pointer, as Fortran expects.
+``_build_config.py``, outside the installed package. Each ``*_ffi`` object
+below compiles ``climt_fortran._<name>_cffi``, a small extension linked
+against the static library ``_lib/<system>/lib*.a``. The prototypes are those
+of the routines' ``bind(c)`` names; every argument is passed by pointer, as
+Fortran expects.
 """
 
 import os
@@ -71,3 +72,63 @@ void emanuel_convection(
 """
 
 emanuel_ffi = _ffi("_emanuel_convection_cffi", EMANUEL_PROTOTYPES, "libemanuel.a")
+
+RRTMG_LW_PROTOTYPES = """
+void rrtmg_set_constants(
+    double *pi, double *grav, double *planck, double *boltz,
+    double *clight, double *avogadro, double *loschmidt,
+    double *gas_const, double *stef_boltz, double *secs_per_day);
+
+void rrtmg_lw_ini_wrapper(double *cp_d_air);
+
+void mcica_subcol_lw_wrapper(
+    int32_t *col_lon, int32_t *num_cols, int32_t *num_layers,
+    int32_t *cld_overlap_method, int32_t *permute_seed,
+    int32_t *random_number_generator, double *layer_pressure,
+    double *cloud_fraction, double *cloud_ice_path, double *cloud_liq_path,
+    double *cloud_ice_eff_size, double *cloud_droplet_eff_radius,
+    double *cloud_tau,
+    double *cloud_fraction_mcica, double *cloud_ice_path_mcica,
+    double *cloud_liq_path_mcica, double *cloud_ice_eff_size_mcica,
+    double *cloud_droplet_eff_radius_mcica, double *cloud_tau_mcica);
+
+void rrtmg_lw_mcica_wrapper(
+    int32_t *num_cols, int32_t *num_layers,
+    int32_t *cld_overlap_method, int32_t *calculate_change_up_flux,
+    double *layer_pressure, double *interface_pressure,
+    double *layer_temp, double *interface_temp, double *surface_temp,
+    double *h2o_vmr, double *o3_vmr, double *co2_vmr,
+    double *ch4_vmr, double *n2o_vmr, double *o2_vmr,
+    double *cfc11_vmr, double *cfc12_vmr, double *cfc22_vmr,
+    double *ccl4_vmr, double *surf_emissivity,
+    int32_t *cloud_props_flag, int32_t *ice_props_flag,
+    int32_t *liq_droplet_flag, double *cloud_fraction_mcica,
+    double *cloud_tau_mcica, double *cloud_ice_path_mcica,
+    double *cloud_liq_path_mcica, double *cloud_ice_eff_size_mcica,
+    double *cloud_droplet_eff_radius_mcica, double *aerosol_tau,
+    double *upward_longwave_flux, double *downward_longwave_flux,
+    double *longwave_heating_rate, double *up_lw_flux_clearsky,
+    double *down_lw_flux_clearsky, double *lw_heating_rate_clearsky,
+    double *duflx_dt, double *duflxc_dt);
+
+void rrtmg_lw_nomcica_wrapper(
+    int32_t *num_cols, int32_t *num_layers,
+    int32_t *cld_overlap_method, int32_t *calculate_change_up_flux,
+    double *layer_pressure, double *interface_pressure,
+    double *layer_temp, double *interface_temp, double *surface_temp,
+    double *h2o_vmr, double *o3_vmr, double *co2_vmr,
+    double *ch4_vmr, double *n2o_vmr, double *o2_vmr,
+    double *cfc11_vmr, double *cfc12_vmr, double *cfc22_vmr,
+    double *ccl4_vmr, double *surf_emissivity,
+    int32_t *cloud_props_flag, int32_t *ice_props_flag,
+    int32_t *liq_droplet_flag, double *cloud_fraction,
+    double *cloud_tau, double *cloud_ice_path,
+    double *cloud_liq_path, double *cloud_ice_eff_size,
+    double *cloud_droplet_eff_radius, double *aerosol_tau,
+    double *upward_longwave_flux, double *downward_longwave_flux,
+    double *longwave_heating_rate, double *up_lw_flux_clearsky,
+    double *down_lw_flux_clearsky, double *lw_heating_rate_clearsky,
+    double *duflx_dt, double *duflxc_dt);
+"""
+
+rrtmg_lw_ffi = _ffi("_rrtmg_lw_cffi", RRTMG_LW_PROTOTYPES, "librrtmg_lw.a", extra_flags=["-fopenmp"])

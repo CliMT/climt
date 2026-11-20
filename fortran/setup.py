@@ -94,7 +94,6 @@ def compiled_build():
 
     ext_modules = [
         fortran_extension("_simple_physics", "libsimple_physics.a"),
-        fortran_extension("_rrtmg_lw", "librrtmg_lw.a", openmp=True),
         fortran_extension("_rrtmg_sw", "librrtmg_sw.a", openmp=True),
         fortran_extension("_dcmip", "libdcmip.a"),
     ]
@@ -105,7 +104,7 @@ def compiled_build():
         ext_modules=ext_modules,
         # Each entry builds climt_fortran._<name>_cffi. cffi wraps the
         # build_ext below, so _lib is still built first.
-        cffi_modules=["_cffi_build.py:emanuel_ffi"],
+        cffi_modules=["_cffi_build.py:emanuel_ffi", "_cffi_build.py:rrtmg_lw_ffi"],
         cmdclass={
             "build_ext": climt_build_ext,
             "bdist_wheel": climt_bdist_wheel,

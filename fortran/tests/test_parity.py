@@ -76,7 +76,7 @@ def run_call(call, inputs):
     return {name: value for name, value in inputs.items() if isinstance(value, np.ndarray)}
 
 
-@pytest.mark.parametrize("call", ["emanuel"])
+@pytest.mark.parametrize("call", ["emanuel", "rrtmg_lw", "rrtmg_lw_mcica"])
 def test_matches_cython_reference(call):
     outputs = run_call(call, reference_inputs(call))
     for name, expected in reference_outputs(call).items():
@@ -184,3 +184,137 @@ def test_emanuel_not_slower_than_cython():
     limit = SPEED_TOLERANCE * CYTHON_TIMINGS["emanuel"]
     assert microseconds <= limit, "emanuel: %.1f us > %.1f us (%.2f x Cython)" % (
         microseconds, limit, SPEED_TOLERANCE)
+
+
+LW_CALLS = ["rrtmg_lw", "rrtmg_lw_mcica"]
+# The LW arguments RRTMG writes to: fluxes, heating rates, McICA sub-columns.
+LW_OUTPUTS = ("upward_longwave_flux", "downward_longwave_flux", "longwave_heating_rate",
+              "up_lw_flux_clearsky", "down_lw_flux_clearsky", "lw_heating_rate_clearsky",
+              "cloud_fraction_mcica", "cloud_tau_mcica", "cloud_ice_path_mcica",
+              "cloud_liq_path_mcica", "cloud_ice_eff_size_mcica", "cloud_droplet_eff_radius_mcica")
+
+
+def _strided(value):
+    """A strided (not C-contiguous) view holding ``value``."""
+    view = np.zeros(value.shape + (2,), value.dtype)[..., 0]
+    view[...] = value
+    return view
+
+
+def test_reference_exercises_longwave():
+    # Guard against a vacuous parity check: fluxes are filled, and the McICA
+    # case has clouds in its sub-columns.
+    for call in LW_CALLS:
+        outputs = reference_outputs(call)
+        assert np.all(outputs["upward_longwave_flux"] > 0), call
+        assert np.any(outputs["longwave_heating_rate"] != 0), call
+    assert np.any(reference_outputs("rrtmg_lw_mcica")["cloud_fraction_mcica"] > 0)
+
+
+@pytest.mark.parametrize("call", LW_CALLS)
+def test_rrtmg_lw_fills_non_contiguous_output(call):
+    inputs = reference_inputs(call)
+    for name in LW_OUTPUTS:
+        if name in inputs:
+            inputs[name] = _strided(inputs[name])
+    assert not inputs["upward_longwave_flux"].flags.c_contiguous
+    outputs = run_call(call, inputs)
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+@pytest.mark.parametrize("call", LW_CALLS)
+def test_rrtmg_lw_transposed_input_matches(call):
+    # Every array argument in Fortran order: inputs are read correctly, and
+    # outputs filled in place.
+    inputs = {name: np.asfortranarray(value) if isinstance(value, np.ndarray) else value
+              for name, value in reference_inputs(call).items()}
+    assert not inputs["layer_pressure"].flags.c_contiguous
+    outputs = run_call(call, inputs)
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+@pytest.mark.parametrize("call", LW_CALLS)
+@pytest.mark.parametrize("name", ["layer_temp", "upward_longwave_flux", "aerosol_tau"])
+def test_rrtmg_lw_rejects_float32(call, name):
+    inputs = reference_inputs(call)
+    inputs[name] = inputs[name].astype(np.float32)
+    with pytest.raises(TypeError, match="%s: expected a float64" % name):
+        run_call(call, inputs)
+
+
+@pytest.mark.parametrize("call", LW_CALLS)
+@pytest.mark.parametrize("name", ["surf_emissivity", "cloud_tau", "downward_longwave_flux"])
+def test_rrtmg_lw_rejects_wrong_shape(call, name):
+    inputs = reference_inputs(call)
+    inputs[name] = inputs[name][:-1]
+    with pytest.raises(ValueError, match="%s: expected shape" % name):
+        run_call(call, inputs)
+
+
+@pytest.mark.parametrize("call", LW_CALLS)
+def test_rrtmg_lw_change_up_flux(call):
+    # With calculate_change_up_flux set, duflx_dt and duflxc_dt
+    # ((num_layers + 1, num_cols)) are required, and filled in place.
+    module = cffi_module(call)
+    inputs = reference_inputs(call)
+    init = REFERENCE[call + "/init_order"][-1]
+    arguments = _arguments("%s/init/%s/" % (call, init))
+    arguments["calculate_change_up_flux"] = 1
+    function = getattr(module, REFERENCE[call + "/function"].item())
+    shape = inputs["upward_longwave_flux"].shape
+    duflx_dt, duflxc_dt = _strided(np.zeros(shape)), np.zeros(shape)
+    replay_set_up(call, module)
+    try:
+        getattr(module, init)(**arguments)
+        with pytest.raises(TypeError, match="duflx_dt: expected a float64 array, got NoneType"):
+            function(*inputs.values())
+        function(*inputs.values(), duflx_dt=duflx_dt, duflxc_dt=duflxc_dt)
+    finally:
+        replay_set_up(call, module)
+    assert np.all(duflx_dt > 0) and np.all(duflxc_dt > 0)
+    expected = reference_outputs(call)["upward_longwave_flux"]
+    np.testing.assert_array_equal(inputs["upward_longwave_flux"], expected)
+
+
+def test_rrtmg_lw_initialise_checks_every_flag_first():
+    module = cffi_module("rrtmg_lw")
+    replay_set_up("rrtmg_lw", module)
+    before = module._cloud_overlap_method[0]
+    with pytest.raises(TypeError):
+        module.initialise_rrtm_radiation(1004.64, before + 1, 0, 2, 1, 1.5)
+    with pytest.raises(OverflowError):
+        module.initialise_rrtm_radiation_mcica(1004.64, before + 1, permute_seed=2**31)
+    assert module._cloud_overlap_method[0] == before
+
+
+def test_rrtmg_lw_keeps_flags_rewritten_by_fortran():
+    # RRTMG replaces an out-of-range cloud overlap method by 2, through the
+    # pointer it is given; as in 1.0, later calls see 2.
+    module = cffi_module("rrtmg_lw")
+    replay_set_up("rrtmg_lw", module)
+    arguments = _arguments("rrtmg_lw/init/initialise_rrtm_radiation/")
+    arguments["cloud_overlap_method"] = 7
+    try:
+        module.initialise_rrtm_radiation(**arguments)
+        module.rrtm_calculate_longwave_fluxes(*reference_inputs("rrtmg_lw").values())
+        assert module._cloud_overlap_method[0] == 2
+    finally:
+        replay_set_up("rrtmg_lw", module)
+
+
+def test_rrtmg_lw_not_slower_than_cython():
+    import numba
+
+    cffi_module("rrtmg_lw")
+    threads = numba.get_num_threads()
+    numba.set_num_threads(1)  # the gate protocol of benchmark_calls
+    try:
+        timings = time_calls_min_of_runs(runs=5, calls=LW_CALLS)
+    finally:
+        numba.set_num_threads(threads)
+    for call in LW_CALLS:
+        limit = SPEED_TOLERANCE * CYTHON_TIMINGS[call]
+        assert timings[call] <= limit, "%s: %.1f us > %.1f us (%.2f x Cython)" % (
+            call, timings[call], limit, SPEED_TOLERANCE)
