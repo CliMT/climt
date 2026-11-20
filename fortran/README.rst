@@ -21,6 +21,13 @@ above raise ``climt.FortranUnavailableError`` explaining how to install it.
 
 ``climt.has_fortran_extensions()`` tells you whether the extensions loaded.
 
+The first time climt uses Emanuel convection or RRTMG after climt-fortran is
+installed or upgraded, numba compiles the small wrappers that call the
+Fortran code, which takes a few seconds; a line such as ``climt-fortran:
+compiling the RRTMG longwave wrapper (this happens once after install; later
+runs load it from cache)`` on stderr says so. numba caches the result, so
+later runs start straight away.
+
 Building from source
 --------------------
 

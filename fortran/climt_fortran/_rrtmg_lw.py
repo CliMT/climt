@@ -21,8 +21,8 @@ runs; the call then checks every argument in Python, raising with its name,
 and passes C-contiguous copies, writing outputs back. Converting the ~35
 arguments to cffi pointers in Python instead made the calls about 1.10 times
 slower than the Cython version. The first call in a process with a cold
-numba cache compiles its kernel (about 0.7 s and 0.4 s for the two calls);
-later processes load it from the cache.
+numba cache compiles its kernel (about 0.7 s and 0.4 s for the two calls),
+saying so on stderr; later processes load it from the cache.
 
 The kernels run with the GIL released, both Fortran calls of the McICA call
 included (1.0 held the GIL for the sub-column generator). The Fortran module
@@ -38,7 +38,7 @@ from numba import types
 
 from . import _rrtmg_lw_cffi as _compiled
 from ._arrays import as_double_scalar_pointer, contiguous_arguments, copy_back_outputs
-from ._numba_cffi import compiled_kernel, external_function, keep_alive
+from ._numba_cffi import announce_compiles, compiled_kernel, external_function, keep_alive
 
 ffi, lib = _compiled.ffi, _compiled.lib
 _mcica_subcol = external_function(_compiled, "mcica_subcol_lw_wrapper")
@@ -439,3 +439,7 @@ def _mcica_kernel(rrtm_iplon, num_cols, num_layers, flags, layer_pressure, inter
     _rrtmg_lw_mcica(*before, *clouds, *after)
     keep_alive(sizes)
     return True
+
+
+announce_compiles(_nomcica_kernel, "the RRTMG longwave wrapper")
+announce_compiles(_mcica_kernel, "the RRTMG longwave McICA wrapper")

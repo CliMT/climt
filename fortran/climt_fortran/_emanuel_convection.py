@@ -11,6 +11,8 @@ the 24 arguments to cffi pointers in Python instead made a one-column call
 about 1.5 times slower than the Cython version. Each new combination of
 array layouts passed to ``convect`` (e.g. a C-contiguous vs a strided output)
 triggers a fresh numba specialisation, costing about 2.3 s the first time.
+The first of these compiles in a process is announced on stderr (see
+``_numba_cffi.announce_compiles``); one loaded from numba's cache is not.
 """
 
 import operator
@@ -20,7 +22,7 @@ import numpy as np
 
 from . import _emanuel_convection_cffi as _compiled
 from ._arrays import as_double_scalar_pointer, as_int_pointer, check_array
-from ._numba_cffi import external_function
+from ._numba_cffi import announce_compiles, compile_may_follow, external_function
 
 ffi, lib = _compiled.ffi, _compiled.lib
 _emanuel_convection = external_function(_compiled, "emanuel_convection")
@@ -128,6 +130,7 @@ def convect(
     else:
         check_array("tracers", tracers, _FLOAT64)
         tracers = np.ascontiguousarray(np.broadcast_to(tracers, (ncols, num_tracers, nlevs)))
+    compile_may_follow(_convect_columns)
     _convect_columns(
         nlevs, ncols, max_conv_lev, num_tracers, dt, temp, q, qs, u, v, pmid, pint,
         conv_state, precip, downdraft_vel_scale, downdraft_temp_scale, downdraft_q_scale,
@@ -205,3 +208,9 @@ def _convect_columns(
         dq[col] = tendencies[1]
         du[col] = tendencies[2]
         dv[col] = tendencies[3]
+
+
+announce_compiles(
+    _convect_columns, "the Emanuel convection wrapper",
+    "this happens once after install, and again for each new combination of array "
+    "layouts given to convect; later runs load it from cache")
