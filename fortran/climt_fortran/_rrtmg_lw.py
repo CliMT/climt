@@ -23,6 +23,11 @@ arguments to cffi pointers in Python instead made the calls about 1.10 times
 slower than the Cython version. The first call in a process with a cold
 numba cache compiles its kernel (about 0.7 s and 0.4 s for the two calls);
 later processes load it from the cache.
+
+The kernels run with the GIL released, both Fortran calls of the McICA call
+included (1.0 held the GIL for the sub-column generator). The Fortran module
+state is not protected against concurrent Python threads, as with 1.0's
+``with nogil`` main call: do not call this module from two threads at once.
 """
 
 import operator
@@ -32,7 +37,7 @@ import numpy as np
 from numba import types
 
 from . import _rrtmg_lw_cffi as _compiled
-from ._arrays import as_double_scalar_pointer, as_int_pointer, contiguous_arguments, copy_back_outputs
+from ._arrays import as_double_scalar_pointer, contiguous_arguments, copy_back_outputs
 from ._numba_cffi import compiled_kernel, external_function, keep_alive
 
 ffi, lib = _compiled.ffi, _compiled.lib
@@ -104,8 +109,12 @@ _MCICA_SIGNATURE = _signature(3, _MCICA_ARRAYS)  # rrtm_iplon, num_cols, num_lay
 
 
 def _int32(value):
-    """``value`` as an int; TypeError unless an integer, OverflowError unless it fits int32_t."""
-    return as_int_pointer(ffi, value)[0]
+    """``value`` as an int; TypeError unless an integer, OverflowError unless it fits int32_t
+    (the kernels and Fortran store it in one)."""
+    value = operator.index(value)
+    if not -2**31 <= value < 2**31:
+        raise OverflowError("%d does not fit in an int32_t" % value)
+    return value
 
 
 def initialise_rrtm_radiation_mcica(cp_d_air,
@@ -208,7 +217,7 @@ def rrtm_calculate_longwave_fluxes(
     1.0). ``duflx_dt`` and ``duflxc_dt`` (``(L + 1, C)``) are required, and
     filled, if ``calculate_change_up_flux`` was set; otherwise they are ignored.
     """
-    num_cols, num_layers = operator.index(num_cols), operator.index(num_layers)
+    num_cols, num_layers = _int32(num_cols), _int32(num_layers)
     if _flags[_CALCULATE_CHANGE_UP_FLUX] == 0:
         # As in 1.0: RRTMG does not write them, so small placeholders do.
         duflx_dt = duflxc_dt = np.zeros((num_cols, 1))
@@ -269,8 +278,8 @@ def rrtm_calculate_longwave_fluxes_mcica(
     ``upward_longwave_flux`` .. ``lw_heating_rate_clearsky`` from them.
     ``duflx_dt`` and ``duflxc_dt`` are as in ``rrtm_calculate_longwave_fluxes``.
     """
-    rrtm_iplon = operator.index(rrtm_iplon)
-    num_cols, num_layers = operator.index(num_cols), operator.index(num_layers)
+    rrtm_iplon = _int32(rrtm_iplon)
+    num_cols, num_layers = _int32(num_cols), _int32(num_layers)
     if _flags[_CALCULATE_CHANGE_UP_FLUX] == 0:
         duflx_dt = duflxc_dt = np.zeros((num_cols, 1))
     _call(_mcica_kernel, _MCICA_SIGNATURE, (rrtm_iplon, num_cols, num_layers, _flags),
@@ -288,7 +297,8 @@ def rrtm_calculate_longwave_fluxes_mcica(
 # The kernels take the arrays in the order of the Python calls (the
 # _*_ARRAYS tables) and pass them to Fortran in its order. Integers go to
 # Fortran through a small int32 array; the flags through _flags itself, so
-# Fortran's rewrites stick.
+# Fortran's rewrites stick. Each kernel gathers the arrays of _COMMON into
+# one tuple, ``common``, and passes it on with ``*common``.
 
 @numba.njit(cache=True)
 def _shapes_ok(num_cols, num_layers, flags, layer_pressure, interface_pressure, layer_temp,
@@ -318,25 +328,19 @@ def _shapes_ok(num_cols, num_layers, flags, layer_pressure, interface_pressure, 
             and duflx_dt.shape == change and duflxc_dt.shape == change)
 
 
-def _nomcica_kernel(num_cols, num_layers, flags, layer_pressure, interface_pressure, layer_temp,
-                    interface_temp, surface_temp, h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr,
-                    o2_vmr, cfc11_vmr, cfc12_vmr, cfc22_vmr, ccl4_vmr, surf_emissivity,
-                    cloud_fraction, aerosol_tau, upward_longwave_flux, downward_longwave_flux,
-                    longwave_heating_rate, up_lw_flux_clearsky, down_lw_flux_clearsky,
-                    lw_heating_rate_clearsky, cloud_tau, cloud_ice_path, cloud_liq_path,
-                    cloud_ice_eff_size, cloud_droplet_eff_radius, duflx_dt, duflxc_dt):
-    if not _shapes_ok(num_cols, num_layers, flags, layer_pressure, interface_pressure, layer_temp,
-                      interface_temp, surface_temp, h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr,
-                      o2_vmr, cfc11_vmr, cfc12_vmr, cfc22_vmr, ccl4_vmr, surf_emissivity,
-                      cloud_fraction, aerosol_tau, upward_longwave_flux, downward_longwave_flux,
-                      longwave_heating_rate, up_lw_flux_clearsky, down_lw_flux_clearsky,
-                      lw_heating_rate_clearsky, cloud_tau, cloud_ice_path, cloud_liq_path,
-                      cloud_ice_eff_size, cloud_droplet_eff_radius, duflx_dt, duflxc_dt):
-        return False
-    sizes = np.empty(2, np.int32)
-    sizes[0] = num_cols
-    sizes[1] = num_layers
-    _rrtmg_lw_nomcica(
+@numba.njit(cache=True)
+def _flux_pointers(sizes, flags, layer_pressure, interface_pressure, layer_temp, interface_temp,
+                   surface_temp, h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr, o2_vmr, cfc11_vmr,
+                   cfc12_vmr, cfc22_vmr, ccl4_vmr, surf_emissivity, cloud_fraction, aerosol_tau,
+                   upward_longwave_flux, downward_longwave_flux, longwave_heating_rate,
+                   up_lw_flux_clearsky, down_lw_flux_clearsky, lw_heating_rate_clearsky,
+                   cloud_tau, cloud_ice_path, cloud_liq_path, cloud_ice_eff_size,
+                   cloud_droplet_eff_radius, duflx_dt, duflxc_dt):
+    """Pointers for ``rrtmg_lw_[no]mcica_wrapper`` as ``(before, after)``: the
+    arguments before and after its six cloud arrays (which differ between the
+    two). ``sizes`` holds num_cols then num_layers. The caller keeps ``sizes``
+    alive past the Fortran call."""
+    before = (
         ffi.from_buffer(sizes[0:]), ffi.from_buffer(sizes[1:]),
         ffi.from_buffer(flags[_CLOUD_OVERLAP_METHOD:]), ffi.from_buffer(flags[_CALCULATE_CHANGE_UP_FLUX:]),
         ffi.from_buffer(layer_pressure), ffi.from_buffer(interface_pressure),
@@ -346,15 +350,48 @@ def _nomcica_kernel(num_cols, num_layers, flags, layer_pressure, interface_press
         ffi.from_buffer(cfc11_vmr), ffi.from_buffer(cfc12_vmr), ffi.from_buffer(cfc22_vmr),
         ffi.from_buffer(ccl4_vmr), ffi.from_buffer(surf_emissivity),
         ffi.from_buffer(flags[_CLOUD_PROPS_FLAG:]), ffi.from_buffer(flags[_ICE_PROPS_FLAG:]),
-        ffi.from_buffer(flags[_LIQ_DROPLET_FLAG:]),
-        ffi.from_buffer(cloud_fraction), ffi.from_buffer(cloud_tau), ffi.from_buffer(cloud_ice_path),
-        ffi.from_buffer(cloud_liq_path), ffi.from_buffer(cloud_ice_eff_size),
-        ffi.from_buffer(cloud_droplet_eff_radius), ffi.from_buffer(aerosol_tau),
+        ffi.from_buffer(flags[_LIQ_DROPLET_FLAG:]))
+    after = (
+        ffi.from_buffer(aerosol_tau),
         ffi.from_buffer(upward_longwave_flux), ffi.from_buffer(downward_longwave_flux),
         ffi.from_buffer(longwave_heating_rate), ffi.from_buffer(up_lw_flux_clearsky),
         ffi.from_buffer(down_lw_flux_clearsky), ffi.from_buffer(lw_heating_rate_clearsky),
         ffi.from_buffer(duflx_dt), ffi.from_buffer(duflxc_dt))
-    return keep_alive(sizes)
+    return before, after
+
+
+@numba.njit(cache=True)
+def _cloud_pointers(fraction, tau, ice_path, liq_path, ice_eff_size, droplet_eff_radius):
+    """Pointers to six cloud arrays, in the order of ``rrtmg_lw_[no]mcica_wrapper``."""
+    return (ffi.from_buffer(fraction), ffi.from_buffer(tau), ffi.from_buffer(ice_path),
+            ffi.from_buffer(liq_path), ffi.from_buffer(ice_eff_size),
+            ffi.from_buffer(droplet_eff_radius))
+
+
+def _nomcica_kernel(num_cols, num_layers, flags, layer_pressure, interface_pressure, layer_temp,
+                    interface_temp, surface_temp, h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr,
+                    o2_vmr, cfc11_vmr, cfc12_vmr, cfc22_vmr, ccl4_vmr, surf_emissivity,
+                    cloud_fraction, aerosol_tau, upward_longwave_flux, downward_longwave_flux,
+                    longwave_heating_rate, up_lw_flux_clearsky, down_lw_flux_clearsky,
+                    lw_heating_rate_clearsky, cloud_tau, cloud_ice_path, cloud_liq_path,
+                    cloud_ice_eff_size, cloud_droplet_eff_radius, duflx_dt, duflxc_dt):
+    common = (layer_pressure, interface_pressure, layer_temp, interface_temp, surface_temp,
+              h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr, o2_vmr, cfc11_vmr, cfc12_vmr,
+              cfc22_vmr, ccl4_vmr, surf_emissivity, cloud_fraction, aerosol_tau,
+              upward_longwave_flux, downward_longwave_flux, longwave_heating_rate,
+              up_lw_flux_clearsky, down_lw_flux_clearsky, lw_heating_rate_clearsky, cloud_tau,
+              cloud_ice_path, cloud_liq_path, cloud_ice_eff_size, cloud_droplet_eff_radius)
+    if not _shapes_ok(num_cols, num_layers, flags, *common, duflx_dt, duflxc_dt):
+        return False
+    sizes = np.empty(2, np.int32)
+    sizes[0] = num_cols
+    sizes[1] = num_layers
+    before, after = _flux_pointers(sizes, flags, *common, duflx_dt, duflxc_dt)
+    clouds = _cloud_pointers(cloud_fraction, cloud_tau, cloud_ice_path, cloud_liq_path,
+                             cloud_ice_eff_size, cloud_droplet_eff_radius)
+    _rrtmg_lw_nomcica(*before, *clouds, *after)
+    keep_alive(sizes)
+    return True
 
 
 def _mcica_kernel(rrtm_iplon, num_cols, num_layers, flags, layer_pressure, interface_pressure,
@@ -366,15 +403,15 @@ def _mcica_kernel(rrtm_iplon, num_cols, num_layers, flags, layer_pressure, inter
                   cloud_ice_eff_size, cloud_droplet_eff_radius, cloud_fraction_mcica,
                   cloud_tau_mcica, cloud_ice_path_mcica, cloud_liq_path_mcica,
                   cloud_ice_eff_size_mcica, cloud_droplet_eff_radius_mcica, duflx_dt, duflxc_dt):
+    common = (layer_pressure, interface_pressure, layer_temp, interface_temp, surface_temp,
+              h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr, o2_vmr, cfc11_vmr, cfc12_vmr,
+              cfc22_vmr, ccl4_vmr, surf_emissivity, cloud_fraction, aerosol_tau,
+              upward_longwave_flux, downward_longwave_flux, longwave_heating_rate,
+              up_lw_flux_clearsky, down_lw_flux_clearsky, lw_heating_rate_clearsky, cloud_tau,
+              cloud_ice_path, cloud_liq_path, cloud_ice_eff_size, cloud_droplet_eff_radius)
     g_points = (num_layers, num_cols, NUM_G_POINTS)
     layers = (num_layers, num_cols)
-    if not (_shapes_ok(num_cols, num_layers, flags, layer_pressure, interface_pressure, layer_temp,
-                       interface_temp, surface_temp, h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr,
-                       o2_vmr, cfc11_vmr, cfc12_vmr, cfc22_vmr, ccl4_vmr, surf_emissivity,
-                       cloud_fraction, aerosol_tau, upward_longwave_flux, downward_longwave_flux,
-                       longwave_heating_rate, up_lw_flux_clearsky, down_lw_flux_clearsky,
-                       lw_heating_rate_clearsky, cloud_tau, cloud_ice_path, cloud_liq_path,
-                       cloud_ice_eff_size, cloud_droplet_eff_radius, duflx_dt, duflxc_dt)
+    if not (_shapes_ok(num_cols, num_layers, flags, *common, duflx_dt, duflxc_dt)
             and cloud_fraction_mcica.shape == g_points and cloud_tau_mcica.shape == g_points
             and cloud_ice_path_mcica.shape == g_points and cloud_liq_path_mcica.shape == g_points
             and cloud_ice_eff_size_mcica.shape == layers
@@ -395,23 +432,10 @@ def _mcica_kernel(rrtm_iplon, num_cols, num_layers, flags, layer_pressure, inter
         ffi.from_buffer(cloud_fraction_mcica), ffi.from_buffer(cloud_ice_path_mcica),
         ffi.from_buffer(cloud_liq_path_mcica), ffi.from_buffer(cloud_ice_eff_size_mcica),
         ffi.from_buffer(cloud_droplet_eff_radius_mcica), ffi.from_buffer(cloud_tau_mcica))
-    _rrtmg_lw_mcica(
-        ffi.from_buffer(sizes[1:]), ffi.from_buffer(sizes[2:]),
-        ffi.from_buffer(flags[_CLOUD_OVERLAP_METHOD:]), ffi.from_buffer(flags[_CALCULATE_CHANGE_UP_FLUX:]),
-        ffi.from_buffer(layer_pressure), ffi.from_buffer(interface_pressure),
-        ffi.from_buffer(layer_temp), ffi.from_buffer(interface_temp), ffi.from_buffer(surface_temp),
-        ffi.from_buffer(h2o_vmr), ffi.from_buffer(o3_vmr), ffi.from_buffer(co2_vmr),
-        ffi.from_buffer(ch4_vmr), ffi.from_buffer(n2o_vmr), ffi.from_buffer(o2_vmr),
-        ffi.from_buffer(cfc11_vmr), ffi.from_buffer(cfc12_vmr), ffi.from_buffer(cfc22_vmr),
-        ffi.from_buffer(ccl4_vmr), ffi.from_buffer(surf_emissivity),
-        ffi.from_buffer(flags[_CLOUD_PROPS_FLAG:]), ffi.from_buffer(flags[_ICE_PROPS_FLAG:]),
-        ffi.from_buffer(flags[_LIQ_DROPLET_FLAG:]),
-        ffi.from_buffer(cloud_fraction_mcica), ffi.from_buffer(cloud_tau_mcica),
-        ffi.from_buffer(cloud_ice_path_mcica), ffi.from_buffer(cloud_liq_path_mcica),
-        ffi.from_buffer(cloud_ice_eff_size_mcica), ffi.from_buffer(cloud_droplet_eff_radius_mcica),
-        ffi.from_buffer(aerosol_tau),
-        ffi.from_buffer(upward_longwave_flux), ffi.from_buffer(downward_longwave_flux),
-        ffi.from_buffer(longwave_heating_rate), ffi.from_buffer(up_lw_flux_clearsky),
-        ffi.from_buffer(down_lw_flux_clearsky), ffi.from_buffer(lw_heating_rate_clearsky),
-        ffi.from_buffer(duflx_dt), ffi.from_buffer(duflxc_dt))
-    return keep_alive(sizes)
+    before, after = _flux_pointers(sizes[1:], flags, *common, duflx_dt, duflxc_dt)
+    clouds = _cloud_pointers(cloud_fraction_mcica, cloud_tau_mcica, cloud_ice_path_mcica,
+                             cloud_liq_path_mcica, cloud_ice_eff_size_mcica,
+                             cloud_droplet_eff_radius_mcica)
+    _rrtmg_lw_mcica(*before, *clouds, *after)
+    keep_alive(sizes)
+    return True

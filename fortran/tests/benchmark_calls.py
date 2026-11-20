@@ -3,7 +3,10 @@
 Each call's arguments are recorded from the climt component that makes it
 (see ``generate_cython_reference.record_call``), with one column; the
 component's set-up calls are replayed once, then one untimed warm-up call is
-made, then only the call itself is timed.
+made, then only the call itself is timed. The helpers run with one numba
+thread, whatever ``NUMBA_NUM_THREADS`` says, restoring the previous count
+afterwards: the climt_fortran kernels are not parallel, but recording the
+arguments runs climt components whose kernels are.
 
 Every array argument is restored from a pristine copy before each call,
 outside the timed region, so every timed call sees the same inputs (Emanuel's
@@ -16,8 +19,9 @@ of the five ``.pyx`` modules at commit 73e8688c (same flags, same ``_lib``),
 timed with those modules in place of the installed ones:
 
 * ``<call>``: Cython per-call time, all five calls, the minimum over 5 runs
-  of ``time_calls`` (``NUMBA_NUM_THREADS=1``, ``n=2000``, ``repeats=5``).
-  Single runs varied by up to ~40% on the SW calls, hence the minimum.
+  of ``time_calls`` (one numba thread, ``n=2000``, ``repeats=5``, with the
+  warm-up call of ``_best_time``). Single runs varied by up to ~40% on the
+  SW calls, hence the minimum.
 * ``<call>/bare`` and ``<call>/ratio_to_bare``, for ``BARE_CALLS``: the bare
   Fortran time (``bare_call``: the same routines called through cffi with
   pointers built once) and Cython time / bare time, both minimums over the
@@ -28,17 +32,18 @@ timed with those modules in place of the installed ones:
 Absolute times drift with the machine's state: an earlier baseline was 1.6
 times this one a day later. So the gate is a ratio: a module passes if, for
 each call, its time over the bare time, both from the same runs
-(``time_calls_and_bare_min_of_runs``, 5 runs, ``NUMBA_NUM_THREADS=1``), is at
+(``time_calls_and_bare_min_of_runs``, 5 runs), is at
 most 1.10 times ``<call>/ratio_to_bare``. The bare call does the same Fortran
 work, so the ratio measures the wrapper's overhead and moves little with the
 machine's speed. If the Fortran sources or compiler flags change, re-record
 the file from that build: import its modules into ``sys.modules`` as
 ``climt_fortran._<name>``, then run ``main()`` with ``--save``.
 
-Run: ``NUMBA_NUM_THREADS=1 python fortran/tests/benchmark_calls.py [--runs N] [--save path.json]``.
+Run: ``python fortran/tests/benchmark_calls.py [--runs N] [--save path.json]``.
 """
 
 import argparse
+import contextlib
 import json
 import os
 import sys
@@ -61,6 +66,31 @@ MODULES = {
 BARE_CALLS = ("emanuel", "rrtmg_lw", "rrtmg_lw_mcica")
 
 
+@contextlib.contextmanager
+def _one_numba_thread():
+    """Run the block with one numba thread, then restore the previous count."""
+    import numba
+
+    threads = numba.get_num_threads()
+    numba.set_num_threads(1)
+    try:
+        yield
+    finally:
+        numba.set_num_threads(threads)
+
+
+def _set_up(name):
+    """Replay, through its module, the set-up calls the component made before
+    call ``name``; return ``(function, inputs)`` of the recorded call."""
+    import importlib
+
+    module = importlib.import_module("climt_fortran." + MODULES[name])
+    init_calls, (function, inputs, _) = record_call(name, num_columns=1)
+    for init_function, init_inputs, _ in init_calls:
+        getattr(module, init_function)(*init_inputs.values())
+    return getattr(module, function), inputs
+
+
 def _best_time(call, resets, n, repeats):
     """Best per-call time of ``call()`` in microseconds: one untimed warm-up
     call, then ``repeats`` repeats of ``n`` calls, each preceded (untimed) by
@@ -81,19 +111,14 @@ def _best_time(call, resets, n, repeats):
 
 def time_calls(n=2000, repeats=5, calls=None):
     """Best per-call time, in microseconds, of each call (default ``CALLS``) at one column."""
-    import importlib
-
     timings = {}
-    for name in calls or CALLS:
-        module = importlib.import_module("climt_fortran." + MODULES[name])
-        init_calls, (function, inputs, _) = record_call(name, num_columns=1)
-        for init_function, init_inputs, _ in init_calls:
-            getattr(module, init_function)(*init_inputs.values())
-        function = getattr(module, function)
-        pristine = [a.item() if a.ndim == 0 else a for a in inputs.values()]
-        args = [a.copy(order="K") if isinstance(a, np.ndarray) else a for a in pristine]
-        resets = [(a, p) for a, p in zip(args, pristine) if isinstance(a, np.ndarray)]
-        timings[name] = _best_time(lambda: function(*args), resets, n, repeats)
+    with _one_numba_thread():
+        for name in CALLS if calls is None else calls:
+            function, inputs = _set_up(name)
+            pristine = [a.item() if a.ndim == 0 else a for a in inputs.values()]
+            args = [a.copy(order="K") if isinstance(a, np.ndarray) else a for a in pristine]
+            resets = [(a, p) for a, p in zip(args, pristine) if isinstance(a, np.ndarray)]
+            timings[name] = _best_time(lambda: function(*args), resets, n, repeats)
     return timings
 
 
@@ -106,7 +131,10 @@ def bare_call(name):
     maps each recorded array argument's name to its copy.
 
     The Fortran set-up is replayed through the cffi module too (a Cython
-    module has its own copy of the Fortran state).
+    module has its own copy of the Fortran state). It bypasses the wrapper
+    module (whose flags it does not touch) and leaves the Fortran state as
+    the bare set-up made it: callers that go on to use the wrapper replay
+    its set-up afterwards, as ``time_bare_calls`` does.
     """
     import importlib
 
@@ -190,8 +218,14 @@ def bare_call(name):
 
 def time_bare_calls(n=2000, repeats=5, calls=BARE_CALLS):
     """Best per-call time, in microseconds, of the bare Fortran calls behind
-    each call, with the protocol of ``time_calls``."""
-    return {name: _best_time(*bare_call(name)[:2], n, repeats) for name in calls}
+    each call, with the protocol of ``time_calls``. Afterwards each call's
+    wrapper set-up is replayed, so the Fortran state is the wrapper's again."""
+    timings = {}
+    with _one_numba_thread():
+        for name in calls:
+            timings[name] = _best_time(*bare_call(name)[:2], n, repeats)
+            _set_up(name)
+    return timings
 
 
 def time_calls_min_of_runs(runs=5, n=2000, repeats=5, calls=None, on_run=None):

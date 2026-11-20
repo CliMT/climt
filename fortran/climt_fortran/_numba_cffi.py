@@ -43,12 +43,19 @@ def compiled_kernel(function, signature):
     Cached on disk, with the GIL released. Called with arguments of other
     types (an array of another dtype, layout or ndim, a read-only array,
     None), the result raises TypeError before running anything, and nothing
-    is recompiled. Later calls return the same compiled function.
+    is recompiled. Later calls with the same function and signature return
+    the same compiled function (an equal but distinct signature object
+    compiles again, from numba's disk cache).
     """
+    # Keyed on the signature object's id: hashing a numba signature of ~40
+    # arguments takes ~6 us, as long as some calls. The entry holds the
+    # signature, so its id is not reused while the entry exists.
+    key = (function, id(signature))
     try:
-        return _KERNELS[function]
+        return _KERNELS[key][1]
     except KeyError:
-        kernel = _KERNELS[function] = numba.njit(signature, cache=True, nogil=True)(function)
+        kernel = numba.njit(signature, cache=True, nogil=True)(function)
+        _KERNELS[key] = (signature, kernel)
         return kernel
 
 
