@@ -17,7 +17,8 @@ import pytest
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
-from benchmark_calls import MODULES, time_calls_min_of_runs  # noqa: E402
+from benchmark_calls import BARE_CALLS, MODULES, bare_call, time_calls_and_bare_min_of_runs  # noqa: E402
+from generate_cython_reference import record_call  # noqa: E402
 
 REQUIRED = os.environ.get("CLIMT_REQUIRE_FORTRAN") == "1"
 FIXTURES = os.path.join(HERE, "fixtures")
@@ -171,19 +172,35 @@ def test_emanuel_callable_from_numba():
         np.testing.assert_array_equal(inputs[name], expected, err_msg=name)
 
 
-def test_emanuel_not_slower_than_cython():
+def _assert_not_slower_than_cython(calls):
+    """The speed gate: for each call, (wrapper time / bare Fortran time), both
+    timed in this run, is at most SPEED_TOLERANCE times the Cython module's
+    ratio recorded in cython_timings.json. A ratio to a bare call of the same
+    Fortran routines does not drift with the machine's state as absolute
+    times do (see benchmark_calls)."""
     import numba
 
-    cffi_module("emanuel")
+    for call in calls:
+        cffi_module(call)
     threads = numba.get_num_threads()
     numba.set_num_threads(1)  # the gate protocol of benchmark_calls
     try:
-        microseconds = time_calls_min_of_runs(runs=5, calls=["emanuel"])["emanuel"]
+        wrapper, bare = time_calls_and_bare_min_of_runs(runs=5, calls=calls)
     finally:
         numba.set_num_threads(threads)
-    limit = SPEED_TOLERANCE * CYTHON_TIMINGS["emanuel"]
-    assert microseconds <= limit, "emanuel: %.1f us > %.1f us (%.2f x Cython)" % (
-        microseconds, limit, SPEED_TOLERANCE)
+    failures = []
+    for call in calls:
+        ratio, cython_ratio = wrapper[call] / bare[call], CYTHON_TIMINGS[call + "/ratio_to_bare"]
+        if ratio > SPEED_TOLERANCE * cython_ratio:
+            failures.append(
+                "%s: wrapper %.2f us / bare %.2f us = %.3f > %.2f x %.3f (Cython / bare when recorded, "
+                "bare then %.2f us)" % (call, wrapper[call], bare[call], ratio, SPEED_TOLERANCE, cython_ratio,
+                                        CYTHON_TIMINGS[call + "/bare"]))
+    assert not failures, "; ".join(failures)
+
+
+def test_emanuel_not_slower_than_cython():
+    _assert_not_slower_than_cython(["emanuel"])
 
 
 LW_CALLS = ["rrtmg_lw", "rrtmg_lw_mcica"]
@@ -325,16 +342,24 @@ def test_rrtmg_lw_keeps_flags_rewritten_by_fortran():
 
 
 def test_rrtmg_lw_not_slower_than_cython():
-    import numba
+    _assert_not_slower_than_cython(LW_CALLS)
 
-    cffi_module("rrtmg_lw")
-    threads = numba.get_num_threads()
-    numba.set_num_threads(1)  # the gate protocol of benchmark_calls
-    try:
-        timings = time_calls_min_of_runs(runs=5, calls=LW_CALLS)
-    finally:
-        numba.set_num_threads(threads)
-    for call in LW_CALLS:
-        limit = SPEED_TOLERANCE * CYTHON_TIMINGS[call]
-        assert timings[call] <= limit, "%s: %.1f us > %.1f us (%.2f x Cython)" % (
-            call, timings[call], limit, SPEED_TOLERANCE)
+
+@pytest.mark.parametrize("call", BARE_CALLS)
+def test_bare_call_does_the_wrappers_work(call):
+    # The speed gate's yardstick: the bare Fortran calls fill the same outputs,
+    # bit for bit, as the wrapper given the same recorded column.
+    module = cffi_module(call)
+    init_calls, (function, inputs, _) = record_call(call, num_columns=1)
+    run_bare, _, bare = bare_call(call)
+    run_bare()
+    for init_function, init_inputs, _ in init_calls:
+        getattr(module, init_function)(*[value.item() for value in init_inputs.values()])
+    arguments = [value.item() if value.ndim == 0 else value.copy() for value in inputs.values()]
+    getattr(module, function)(*arguments)
+    wrapper = {name: value for name, value in zip(inputs, arguments) if isinstance(value, np.ndarray)}
+    assert set(wrapper) == set(bare)
+    for name in wrapper:
+        np.testing.assert_array_equal(bare[name], wrapper[name], err_msg=name)
+    if call != "emanuel":
+        assert np.all(wrapper["upward_longwave_flux"] > 0)

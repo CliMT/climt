@@ -3,5 +3,11 @@
   "rrtmg_lw": 42.854822999999996,
   "rrtmg_lw_mcica": 81.292949,
   "rrtmg_sw": 120.24299099999999,
-  "rrtmg_sw_mcica": 155.373208
+  "rrtmg_sw_mcica": 155.373208,
+  "emanuel/bare": 7.867466500000001,
+  "emanuel/ratio_to_bare": 1.564693475339234,
+  "rrtmg_lw/bare": 39.8784845,
+  "rrtmg_lw/ratio_to_bare": 1.0690717697659748,
+  "rrtmg_lw_mcica/bare": 77.9216085,
+  "rrtmg_lw_mcica/ratio_to_bare": 1.0532629277025254
 }
