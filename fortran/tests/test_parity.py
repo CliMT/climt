@@ -178,16 +178,9 @@ def _assert_not_slower_than_cython(calls):
     ratio recorded in cython_timings.json. A ratio to a bare call of the same
     Fortran routines does not drift with the machine's state as absolute
     times do (see benchmark_calls)."""
-    import numba
-
     for call in calls:
         cffi_module(call)
-    threads = numba.get_num_threads()
-    numba.set_num_threads(1)  # the gate protocol of benchmark_calls
-    try:
-        wrapper, bare = time_calls_and_bare_min_of_runs(runs=5, calls=calls)
-    finally:
-        numba.set_num_threads(threads)
+    wrapper, bare = time_calls_and_bare_min_of_runs(runs=5, calls=calls)
     failures = []
     for call in calls:
         ratio, cython_ratio = wrapper[call] / bare[call], CYTHON_TIMINGS[call + "/ratio_to_bare"]
@@ -275,6 +268,40 @@ def test_rrtmg_lw_rejects_wrong_shape(call, name):
     assert inputs[name].flags.c_contiguous
     with pytest.raises(ValueError, match="%s: expected shape" % name):
         run_call(call, inputs)
+
+
+def _lw_trailing_axis_cases():
+    return [(call, name) for call in LW_CALLS
+            for name, value in reference_inputs(call).items()
+            if isinstance(value, np.ndarray) and value.ndim > 1]
+
+
+@pytest.mark.parametrize("call, name", _lw_trailing_axis_cases())
+def test_rrtmg_lw_rejects_wrong_trailing_axis(call, name):
+    # One short on the last axis (e.g. 15 of 16 bands of cloud_tau, 139 of
+    # 140 g-points of cloud_tau_mcica), C-contiguous: refused before Fortran
+    # writes anything.
+    inputs = reference_inputs(call)
+    inputs[name] = np.ascontiguousarray(inputs[name][..., :-1])
+    flux = "downward_longwave_flux" if name == "upward_longwave_flux" else "upward_longwave_flux"
+    inputs[flux][...] = -1
+    with pytest.raises(ValueError, match="%s: expected shape" % name):
+        run_call(call, inputs)
+    assert np.all(inputs[flux] == -1)
+
+
+@pytest.mark.parametrize("call, name, value", [
+    (call, name, value) for call in LW_CALLS
+    for name, value in [("num_cols", 2**32 + 1), ("num_layers", -2**31 - 1), ("rrtm_iplon", 2**31)]
+    if call == "rrtmg_lw_mcica" or name != "rrtm_iplon"])
+def test_rrtmg_lw_rejects_integers_outside_int32(call, name, value):
+    # 1.0 converted them to int32_t, raising OverflowError; they must not wrap.
+    inputs = reference_inputs(call)
+    inputs[name] = value
+    inputs["upward_longwave_flux"][...] = -1
+    with pytest.raises(OverflowError):
+        run_call(call, inputs)
+    assert np.all(inputs["upward_longwave_flux"] == -1)
 
 
 @pytest.mark.parametrize("call", LW_CALLS)
