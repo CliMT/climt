@@ -306,6 +306,25 @@ def test_rrtmg_lw_rejects_integers_outside_int32(call, name, value):
     assert np.all(inputs["upward_longwave_flux"] == -1)
 
 
+@pytest.mark.parametrize("call, name, value", [
+    (call, name, value) for call in LW_CALLS for name in ("rrtm_iplon", "num_cols", "num_layers")
+    for value in (2**31 - 1, -2**31) if call == "rrtmg_lw_mcica" or name != "rrtm_iplon"])
+def test_rrtmg_lw_accepts_int32_limits(call, name, value):
+    # The int32_t limits themselves pass the conversion. The array sizes then
+    # disagree with the arrays: a ValueError naming the first array (or, for
+    # a negative num_cols, numpy's, from the duflx_dt placeholders, as in
+    # 1.0). Fortran does not use rrtm_iplon.
+    inputs = reference_inputs(call)
+    inputs[name] = value
+    if name in ("num_cols", "num_layers"):
+        with pytest.raises(ValueError, match="layer_pressure: expected shape|negative dimensions"):
+            run_call(call, inputs)
+    else:
+        outputs = run_call(call, inputs)
+        for output, expected in reference_outputs(call).items():
+            np.testing.assert_array_equal(outputs[output], expected, err_msg=output)
+
+
 @pytest.mark.parametrize("call", LW_CALLS)
 def test_rrtmg_lw_read_only_inputs_match(call):
     # Read-only C-contiguous inputs are copied, as strided ones are.

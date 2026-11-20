@@ -37,8 +37,8 @@ import numpy as np
 from numba import types
 
 from . import _rrtmg_lw_cffi as _compiled
-from ._arrays import as_double_scalar_pointer, contiguous_arguments, copy_back_outputs
-from ._numba_cffi import announce_compiles, compiled_kernel, external_function, keep_alive
+from ._arrays import as_double_scalar_pointer
+from ._numba_cffi import announce_compiles, external_function, keep_alive, run_kernel
 
 ffi, lib = _compiled.ffi, _compiled.lib
 _mcica_subcol = external_function(_compiled, "mcica_subcol_lw_wrapper")
@@ -82,6 +82,9 @@ _SUB_COLUMNS = (
 _CHANGE_UP_FLUX = (("duflx_dt", "change", True), ("duflxc_dt", "change", True))
 _NOMCICA_ARRAYS = _COMMON + _CHANGE_UP_FLUX
 _MCICA_ARRAYS = _COMMON + _SUB_COLUMNS + _CHANGE_UP_FLUX
+# The array arguments of a public function, by name, from its locals().
+_nomcica_arrays = operator.itemgetter(*[name for name, _, _ in _NOMCICA_ARRAYS])
+_mcica_arrays = operator.itemgetter(*[name for name, _, _ in _MCICA_ARRAYS])
 _NDIM = {"layers": 2, "interfaces": 2, "columns": 1, "bands": 2, "aerosol": 3, "cloud_tau": 3,
          "g_points": 3, "change": 2}
 
@@ -153,29 +156,6 @@ def set_constants(pi, grav, planck, boltz, clight, avogadro, loschmidt, gas_cons
         pi, grav, planck, boltz, clight, avogadro, loschmidt, gas_const, stef_boltz, secs_per_day)])
 
 
-def _call(kernel, signature, leading, arrays, table, num_cols, num_layers):
-    """Run the kernel compiled for ``signature`` on ``(*leading, *arrays)``.
-
-    If it does not take the arguments (TypeError from numba's dispatch, or
-    False: a wrong shape), check every array against ``table`` (an
-    ``_*_ARRAYS`` tuple), raising with the name of the bad one, and run it on
-    C-contiguous writeable copies, writing outputs back.
-    """
-    kernel = compiled_kernel(kernel, signature)
-    try:
-        if kernel(*leading, *arrays):
-            return
-    except TypeError:
-        pass
-    shapes = _shapes(num_cols, num_layers)
-    copy_back = []
-    arrays = contiguous_arguments(
-        arrays, [(name, shapes[kind], output) for name, kind, output in table], copy_back)
-    if not kernel(*leading, *arrays):
-        raise RuntimeError("the arguments passed the checks but not the kernel's")
-    copy_back_outputs(copy_back)
-
-
 def rrtm_calculate_longwave_fluxes(
         num_cols,
         num_layers,
@@ -221,14 +201,8 @@ def rrtm_calculate_longwave_fluxes(
     if _flags[_CALCULATE_CHANGE_UP_FLUX] == 0:
         # As in 1.0: RRTMG does not write them, so small placeholders do.
         duflx_dt = duflxc_dt = np.zeros((num_cols, 1))
-    _call(_nomcica_kernel, _NOMCICA_SIGNATURE, (num_cols, num_layers, _flags),
-          (layer_pressure, interface_pressure, layer_temp, interface_temp, surface_temp,
-           h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr, o2_vmr, cfc11_vmr, cfc12_vmr, cfc22_vmr,
-           ccl4_vmr, surf_emissivity, cloud_fraction, aerosol_tau, upward_longwave_flux,
-           downward_longwave_flux, longwave_heating_rate, up_lw_flux_clearsky,
-           down_lw_flux_clearsky, lw_heating_rate_clearsky, cloud_tau, cloud_ice_path,
-           cloud_liq_path, cloud_ice_eff_size, cloud_droplet_eff_radius, duflx_dt, duflxc_dt),
-          _NOMCICA_ARRAYS, num_cols, num_layers)
+    run_kernel(_nomcica_kernel, _NOMCICA_SIGNATURE, (num_cols, num_layers, _flags),
+               _nomcica_arrays(locals()), _NOMCICA_ARRAYS, _shapes, num_cols, num_layers)
 
 
 def rrtm_calculate_longwave_fluxes_mcica(
@@ -282,16 +256,8 @@ def rrtm_calculate_longwave_fluxes_mcica(
     num_cols, num_layers = _int32(num_cols), _int32(num_layers)
     if _flags[_CALCULATE_CHANGE_UP_FLUX] == 0:
         duflx_dt = duflxc_dt = np.zeros((num_cols, 1))
-    _call(_mcica_kernel, _MCICA_SIGNATURE, (rrtm_iplon, num_cols, num_layers, _flags),
-          (layer_pressure, interface_pressure, layer_temp, interface_temp, surface_temp,
-           h2o_vmr, o3_vmr, co2_vmr, ch4_vmr, n2o_vmr, o2_vmr, cfc11_vmr, cfc12_vmr, cfc22_vmr,
-           ccl4_vmr, surf_emissivity, cloud_fraction, aerosol_tau, upward_longwave_flux,
-           downward_longwave_flux, longwave_heating_rate, up_lw_flux_clearsky,
-           down_lw_flux_clearsky, lw_heating_rate_clearsky, cloud_tau, cloud_ice_path,
-           cloud_liq_path, cloud_ice_eff_size, cloud_droplet_eff_radius, cloud_fraction_mcica,
-           cloud_tau_mcica, cloud_ice_path_mcica, cloud_liq_path_mcica, cloud_ice_eff_size_mcica,
-           cloud_droplet_eff_radius_mcica, duflx_dt, duflxc_dt),
-          _MCICA_ARRAYS, num_cols, num_layers)
+    run_kernel(_mcica_kernel, _MCICA_SIGNATURE, (rrtm_iplon, num_cols, num_layers, _flags),
+               _mcica_arrays(locals()), _MCICA_ARRAYS, _shapes, num_cols, num_layers)
 
 
 # The kernels take the arrays in the order of the Python calls (the

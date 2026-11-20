@@ -26,6 +26,8 @@ import numba
 from numba import types
 from numba.core.typing import cffi_utils
 
+from ._arrays import contiguous_arguments, copy_back_outputs
+
 _KERNELS = {}
 ONCE_AFTER_INSTALL = "this happens once after install; later runs load it from cache"
 # Python function -> its notice, for the functions given to announce_compiles.
@@ -137,6 +139,31 @@ def compiled_kernel(function, signature):
         kernel = numba.njit(signature, cache=True, nogil=True)(function)
         _KERNELS[key] = (signature, kernel)
         return kernel
+
+
+def run_kernel(function, signature, leading, arrays, table, shapes, num_cols, num_layers):
+    """Run ``function`` compiled for ``signature`` (see ``compiled_kernel``)
+    on ``(*leading, *arrays)``; it returns whether it took the arguments.
+
+    If it does not take them (TypeError from numba's dispatch, or False: a
+    wrong shape), check every array against ``table`` (``(name, shape kind,
+    output)`` for each, in order; ``shapes(num_cols, num_layers)`` maps each
+    kind to its shape), raising with the name of the bad one, and run it on
+    C-contiguous writeable copies, writing outputs back.
+    """
+    kernel = compiled_kernel(function, signature)
+    try:
+        if kernel(*leading, *arrays):
+            return
+    except TypeError:
+        pass
+    shape = shapes(num_cols, num_layers)
+    copy_back = []
+    arrays = contiguous_arguments(
+        arrays, [(name, shape[kind], output) for name, kind, output in table], copy_back)
+    if not kernel(*leading, *arrays):
+        raise RuntimeError("the arguments passed the checks but not the kernel's")
+    copy_back_outputs(copy_back)
 
 
 @numba.njit(cache=True)
