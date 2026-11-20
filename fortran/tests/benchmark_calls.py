@@ -27,7 +27,12 @@ timed with those modules in place of the installed ones:
   pointers built once) and Cython time / bare time, both minimums over the
   same 5 runs, each run timing the Cython call and then the bare one
   (``--runs 5 --save``). Recorded in a second session, in which the Cython
-  times were within 1% of the ``<call>`` values.
+  times were within 1% of the ``<call>`` values. The ``rrtmg_sw*`` entries
+  were added later, before ``_rrtmg_sw.pyx`` was removed: from the in-tree
+  Cython build of that module, whose ``.pyx`` and ``_lib`` were identical to
+  73e8688c's, with ``time_calls_and_bare_min_of_runs(runs=5,
+  calls=("rrtmg_sw", "rrtmg_sw_mcica"))`` and ``NUMBA_NUM_THREADS=1``; its
+  Cython times were within about 1% of the ``<call>`` values too.
 
 Absolute times drift with the machine's state: an earlier baseline was 1.6
 times this one a day later. So the gate is a ratio: a module passes if, for
@@ -63,7 +68,7 @@ MODULES = {
     "rrtmg_sw_mcica": "_rrtmg_sw",
 }
 # Calls whose speed is gated, against a bare call to the same Fortran routines.
-BARE_CALLS = ("emanuel", "rrtmg_lw", "rrtmg_lw_mcica")
+BARE_CALLS = ("emanuel", "rrtmg_lw", "rrtmg_lw_mcica", "rrtmg_sw", "rrtmg_sw_mcica")
 
 
 @contextlib.contextmanager
@@ -141,7 +146,7 @@ def bare_call(name):
     compiled = importlib.import_module("climt_fortran." + MODULES[name] + "_cffi")
     ffi, lib = compiled.ffi, compiled.lib
     init_calls, (_, inputs, _) = record_call(name, num_columns=1)
-    init = {function: {arg: value.item() for arg, value in arguments.items()}
+    init = {function: {arg: value.item() if value.ndim == 0 else value for arg, value in arguments.items()}
             for function, arguments, _ in init_calls}
     resets = []
 
@@ -174,6 +179,45 @@ def bare_call(name):
                                       "downdraft_temp_scale", "downdraft_q_scale",
                                       "cloud_base_mass_flux", "cape")],
             array(np.zeros(1)), array(np.zeros(1))])]
+    elif name.startswith("rrtmg_sw"):
+        lib.rrtmg_sw_set_constants(*[double(value) for value in init["set_constants"].values()])
+        flags = init["initialise_rrtm_radiation_mcica" if name.endswith("mcica") else "initialise_rrtm_radiation"]
+        lib.rrtmg_sw_ini_wrapper(double(flags["cp_d_air"]))
+        num_cols, num_layers = integer(inputs["num_cols"].item()), integer(inputs["num_layers"].item())
+        overlap = integer(flags["cloud_overlap_method"])
+        # The surface albedos go to Fortran in another order than the call's.
+        common = [num_cols, num_layers, overlap, integer(flags["aerosol_input_flag"]),
+                  *[arrays[arg] for arg in ("layer_pressure", "interface_pressure", "layer_temp", "interface_temp",
+                                            "surface_temp", "h2o_vmr", "o3_vmr", "co2_vmr", "ch4_vmr", "n2o_vmr",
+                                            "o2_vmr", "sfc_direct_sw_albedo", "sfc_diffuse_sw_albedo",
+                                            "sfc_direct_nir_albedo", "sfc_diffuse_nir_albedo", "cos_zenith_angle")],
+                  double(inputs["flux_adj_sun_earth"].item()), integer(inputs["day_of_year"].item()),
+                  double(flags["solar_constant"]), integer(flags["solar_var_flag"]),
+                  integer(flags["cloud_props_flag"]), integer(flags["ice_props_flag"]),
+                  integer(flags["liq_droplet_flag"])]
+        fluxes = [arrays[arg] for arg in ("aerosol_tau", "aerosol_single_scat_alb", "aerosol_asym", "aerosol_at_55u",
+                                          "upward_shortwave_flux", "downward_shortwave_flux", "shortwave_heating_rate",
+                                          "up_sw_flux_clearsky", "down_sw_flux_clearsky", "sw_heating_rate_clearsky")]
+        fluxes += [array(np.array(flags["solar_var_banded"])), array(np.array(flags["facular_sunspot_ampl"])),
+                   double(inputs["solar_cycle_fraction"].item())]
+        clouds = ("cloud_fraction", "cloud_tau", "cloud_single_scat_alb", "cloud_asym", "cloud_fwd_scat_frac",
+                  "cloud_ice_path", "cloud_liq_path", "cloud_ice_eff_size", "cloud_droplet_eff_radius")
+        if name == "rrtmg_sw":
+            sequence = [(lib.rrtmg_sw_nomcica_wrapper, common + [arrays[arg] for arg in clouds] + fluxes)]
+        else:
+            # The sub-column generator takes the optical properties last; the
+            # radiation call takes the non-McICA ice size and droplet radius,
+            # as 1.0 passed them.
+            generator_order = clouds[:1] + clouds[5:] + clouds[1:5]
+            sequence = [
+                (lib.mcica_subcol_sw_wrapper, [
+                    integer(inputs["rrtm_iplon"].item()), num_cols, num_layers, overlap,
+                    integer(flags["permute_seed"]), integer(flags["random_number_generator"]),
+                    arrays["layer_pressure"], *[arrays[arg] for arg in generator_order],
+                    *[arrays[arg + "_mcica"] for arg in generator_order]]),
+                (lib.rrtmg_sw_mcica_wrapper, common + [arrays[arg + "_mcica"] for arg in clouds[:7]]
+                 + [arrays["cloud_ice_eff_size"], arrays["cloud_droplet_eff_radius"]] + fluxes),
+            ]
     else:
         lib.rrtmg_set_constants(*[double(value) for value in init["set_constants"].values()])
         flags = init["initialise_rrtm_radiation_mcica" if name.endswith("mcica") else "initialise_rrtm_radiation"]

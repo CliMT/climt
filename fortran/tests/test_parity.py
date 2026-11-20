@@ -77,7 +77,7 @@ def run_call(call, inputs):
     return {name: value for name, value in inputs.items() if isinstance(value, np.ndarray)}
 
 
-@pytest.mark.parametrize("call", ["emanuel", "rrtmg_lw", "rrtmg_lw_mcica"])
+@pytest.mark.parametrize("call", ["emanuel", "rrtmg_lw", "rrtmg_lw_mcica", "rrtmg_sw", "rrtmg_sw_mcica"])
 def test_matches_cython_reference(call):
     outputs = run_call(call, reference_inputs(call))
     for name, expected in reference_outputs(call).items():
@@ -254,12 +254,20 @@ def test_rrtmg_lw_rejects_float32(call, name):
         run_call(call, inputs)
 
 
-def _lw_array_cases():
-    return [(call, name) for call in LW_CALLS
+def _array_cases(calls):
+    """``(call, name)`` for every array argument of each call."""
+    return [(call, name) for call in calls
             for name, value in reference_inputs(call).items() if isinstance(value, np.ndarray)]
 
 
-@pytest.mark.parametrize("call, name", _lw_array_cases())
+def _trailing_axis_cases(calls):
+    """``(call, name)`` for every array argument of more than one axis of each call."""
+    return [(call, name) for call in calls
+            for name, value in reference_inputs(call).items()
+            if isinstance(value, np.ndarray) and value.ndim > 1]
+
+
+@pytest.mark.parametrize("call, name", _array_cases(LW_CALLS))
 def test_rrtmg_lw_rejects_wrong_shape(call, name):
     # Every array, C-contiguous and float64 but one row short: the compiled
     # kernel must refuse it before Fortran runs.
@@ -270,13 +278,7 @@ def test_rrtmg_lw_rejects_wrong_shape(call, name):
         run_call(call, inputs)
 
 
-def _lw_trailing_axis_cases():
-    return [(call, name) for call in LW_CALLS
-            for name, value in reference_inputs(call).items()
-            if isinstance(value, np.ndarray) and value.ndim > 1]
-
-
-@pytest.mark.parametrize("call, name", _lw_trailing_axis_cases())
+@pytest.mark.parametrize("call, name", _trailing_axis_cases(LW_CALLS))
 def test_rrtmg_lw_rejects_wrong_trailing_axis(call, name):
     # One short on the last axis (e.g. 15 of 16 bands of cloud_tau, 139 of
     # 140 g-points of cloud_tau_mcica), C-contiguous: refused before Fortran
@@ -372,6 +374,254 @@ def test_rrtmg_lw_not_slower_than_cython():
     _assert_not_slower_than_cython(LW_CALLS)
 
 
+SW_CALLS = ["rrtmg_sw", "rrtmg_sw_mcica"]
+# The SW arguments RRTMG writes to: fluxes, heating rates, McICA sub-columns.
+SW_OUTPUTS = ("upward_shortwave_flux", "downward_shortwave_flux", "shortwave_heating_rate",
+              "up_sw_flux_clearsky", "down_sw_flux_clearsky", "sw_heating_rate_clearsky",
+              "cloud_fraction_mcica", "cloud_tau_mcica", "cloud_single_scat_alb_mcica",
+              "cloud_asym_mcica", "cloud_fwd_scat_frac_mcica", "cloud_ice_path_mcica",
+              "cloud_liq_path_mcica", "cloud_ice_eff_size_mcica", "cloud_droplet_eff_radius_mcica")
+
+
+def _sw_init(call):
+    """``(module, name, arguments)`` of the initialise call recorded for ``call``."""
+    init = REFERENCE[call + "/init_order"][-1]
+    return cffi_module(call), init, _arguments("%s/init/%s/" % (call, init))
+
+
+def test_reference_exercises_shortwave():
+    # Guard against a vacuous parity check: fluxes are filled, and the McICA
+    # case has clouds in its sub-columns.
+    for call in SW_CALLS:
+        outputs = reference_outputs(call)
+        assert np.all(outputs["downward_shortwave_flux"] > 0), call
+        assert np.all(outputs["upward_shortwave_flux"] > 0), call
+        assert np.any(outputs["shortwave_heating_rate"] != 0), call
+    assert np.any(reference_outputs("rrtmg_sw_mcica")["cloud_fraction_mcica"] > 0)
+    assert np.any(reference_outputs("rrtmg_sw_mcica")["cloud_liq_path_mcica"] > 0)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+def test_rrtmg_sw_fills_non_contiguous_output(call):
+    inputs = reference_inputs(call)
+    for name in SW_OUTPUTS:
+        if name in inputs:
+            inputs[name] = _strided(inputs[name])
+    assert not inputs["upward_shortwave_flux"].flags.c_contiguous
+    outputs = run_call(call, inputs)
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+def test_rrtmg_sw_transposed_input_matches(call):
+    # Every array argument in Fortran order: inputs are read correctly, and
+    # outputs filled in place.
+    inputs = {name: np.asfortranarray(value) if isinstance(value, np.ndarray) else value
+              for name, value in reference_inputs(call).items()}
+    assert not inputs["layer_pressure"].flags.c_contiguous
+    outputs = run_call(call, inputs)
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+def test_rrtmg_sw_read_only_inputs_match(call):
+    # Read-only C-contiguous inputs are copied, as strided ones are.
+    inputs = reference_inputs(call)
+    for name, value in inputs.items():
+        if isinstance(value, np.ndarray) and name not in SW_OUTPUTS:
+            value.flags.writeable = False
+    assert not inputs["layer_pressure"].flags.writeable and inputs["layer_pressure"].flags.c_contiguous
+    outputs = run_call(call, inputs)
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+@pytest.mark.parametrize("name", ["layer_temp", "upward_shortwave_flux", "aerosol_at_55u", "cloud_tau"])
+def test_rrtmg_sw_rejects_float32(call, name):
+    inputs = reference_inputs(call)
+    inputs[name] = inputs[name].astype(np.float32)
+    with pytest.raises(TypeError, match="%s: expected a float64" % name):
+        run_call(call, inputs)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+def test_rrtmg_sw_rejects_read_only_output(call):
+    inputs = reference_inputs(call)
+    inputs["shortwave_heating_rate"].flags.writeable = False
+    with pytest.raises(ValueError, match="shortwave_heating_rate: array is read-only"):
+        run_call(call, inputs)
+
+
+@pytest.mark.parametrize("call, name", _array_cases(SW_CALLS))
+def test_rrtmg_sw_rejects_wrong_shape(call, name):
+    # Every array, C-contiguous and float64 but one row short: refused
+    # before Fortran runs.
+    inputs = reference_inputs(call)
+    inputs[name] = inputs[name][:-1]
+    assert inputs[name].flags.c_contiguous
+    with pytest.raises(ValueError, match="%s: expected shape" % name):
+        run_call(call, inputs)
+
+
+@pytest.mark.parametrize("call, name", _trailing_axis_cases(SW_CALLS))
+def test_rrtmg_sw_rejects_wrong_trailing_axis(call, name):
+    # One short on the last axis (e.g. 13 of 14 bands of cloud_tau, 111 of
+    # 112 g-points of cloud_tau_mcica), C-contiguous: refused before Fortran
+    # writes anything.
+    inputs = reference_inputs(call)
+    inputs[name] = np.ascontiguousarray(inputs[name][..., :-1])
+    flux = "downward_shortwave_flux" if name == "upward_shortwave_flux" else "upward_shortwave_flux"
+    inputs[flux][...] = -1
+    with pytest.raises(ValueError, match="%s: expected shape" % name):
+        run_call(call, inputs)
+    assert np.all(inputs[flux] == -1)
+
+
+def _sw_integer_cases(values):
+    return [(call, name, value) for call in SW_CALLS
+            for name in ("rrtm_iplon", "num_cols", "num_layers", "day_of_year") for value in values
+            if call == "rrtmg_sw_mcica" or name != "rrtm_iplon"]
+
+
+@pytest.mark.parametrize("call, name, value", _sw_integer_cases([2**31, -2**31 - 1, 2**32 + 1]))
+def test_rrtmg_sw_rejects_integers_outside_int32(call, name, value):
+    # 1.0 converted them to int32_t, raising OverflowError; they must not wrap.
+    inputs = reference_inputs(call)
+    inputs[name] = value
+    inputs["upward_shortwave_flux"][...] = -1
+    with pytest.raises(OverflowError):
+        run_call(call, inputs)
+    assert np.all(inputs["upward_shortwave_flux"] == -1)
+
+
+@pytest.mark.parametrize("call, name, value", _sw_integer_cases([2**31 - 1, -2**31]))
+def test_rrtmg_sw_accepts_int32_limits(call, name, value):
+    # The int32_t limits themselves pass the conversion. The array sizes then
+    # disagree with the arrays (a ValueError naming the first array); the
+    # others reach Fortran, which does not use rrtm_iplon and takes the
+    # day of year as given.
+    inputs = reference_inputs(call)
+    inputs[name] = value
+    if name in ("num_cols", "num_layers"):
+        with pytest.raises(ValueError, match="layer_pressure: expected shape"):
+            run_call(call, inputs)
+    else:
+        outputs = run_call(call, inputs)
+        assert np.all(np.isfinite(outputs["upward_shortwave_flux"]))
+        assert np.all(outputs["downward_shortwave_flux"] > 0)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+def test_rrtmg_sw_rejects_non_numeric_scalars(call):
+    inputs = reference_inputs(call)
+    inputs["solar_cycle_fraction"] = "0.5"
+    with pytest.raises(TypeError):
+        run_call(call, inputs)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+def test_rrtmg_sw_accepts_integer_scalars(call):
+    # flux_adj_sun_earth = 1 (an int) is the recorded 1.0.
+    inputs = reference_inputs(call)
+    assert inputs["flux_adj_sun_earth"] == 1.0
+    inputs["flux_adj_sun_earth"] = 1
+    outputs = run_call(call, inputs)
+    for name, expected in reference_outputs(call).items():
+        np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
+
+
+def test_rrtmg_sw_initialise_checks_every_argument_first():
+    # A bad argument raises before RRTMG or this module's state changes.
+    module, init, arguments = _sw_init("rrtmg_sw_mcica")
+    replay_set_up("rrtmg_sw_mcica", module)
+    flags, solar = module._flags.copy(), module._solar_arrays
+    bad = [("permute_seed", 2**31, OverflowError), ("cloud_overlap_method", 1.5, TypeError),
+           ("solar_var_flag", -2**31 - 1, OverflowError),
+           ("facular_sunspot_ampl", np.ones(2, np.float32), TypeError),
+           ("facular_sunspot_ampl", np.ones(1), ValueError),
+           ("solar_var_banded", np.ones(13), ValueError),
+           ("solar_var_banded", np.ones((16, 1)), ValueError),
+           ("solar_constant", "1367", TypeError)]
+    read_only = np.ones(2)
+    read_only.flags.writeable = False
+    bad.append(("facular_sunspot_ampl", read_only, ValueError))
+    plain = {key: value for key, value in arguments.items()
+             if key not in ("permute_seed", "random_number_generator")}
+    for name, value, error in bad:
+        calls = [(module.initialise_rrtm_radiation_mcica, arguments)]
+        if name in plain:
+            calls.append((module.initialise_rrtm_radiation, plain))
+        for initialise, valid in calls:
+            with pytest.raises(error):
+                initialise(**{**valid, name: value})
+            np.testing.assert_array_equal(module._flags, flags)
+            assert module._solar_arrays is solar
+    module.initialise_rrtm_radiation_mcica(**{**arguments, "permute_seed": 2**31 - 1})
+    assert module._flags[module._PERMUTE_SEED] == 2**31 - 1
+    replay_set_up("rrtmg_sw_mcica", module)
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+def test_rrtmg_sw_requires_initialisation(call, monkeypatch):
+    module = cffi_module(call)
+    replay_set_up(call, module)
+    monkeypatch.setattr(module, "_solar_arrays", None)
+    function = getattr(module, REFERENCE[call + "/function"].item())
+    with pytest.raises(ValueError, match="not initialised"):
+        function(*reference_inputs(call).values())
+
+
+@pytest.mark.parametrize("call", SW_CALLS)
+@pytest.mark.parametrize("layout", ["contiguous", "strided"])
+def test_rrtmg_sw_writes_sunspot_amplitudes_back(call, layout):
+    # RRTMG rescales facular_sunspot_ampl (indsolvar) in place, once per
+    # column, by the solar cycle fraction. 1.0 kept the caller's array and
+    # passed it to every call, so the caller's array holds the rescaled
+    # values and the next call starts from them.
+    module, init, arguments = _sw_init(call)
+    amplitudes = np.array([1.2, 0.8]) if layout == "contiguous" else _strided(np.array([1.2, 0.8]))
+    banded = arguments["solar_var_banded"]
+    inputs = reference_inputs(call)
+    inputs["solar_cycle_fraction"] = fraction = 0.2
+    function = getattr(module, REFERENCE[call + "/function"].item())
+    replay_set_up(call, module)
+    try:
+        getattr(module, init)(**{**arguments, "facular_sunspot_ampl": amplitudes, "solar_var_flag": 1})
+        weight = (fraction - 0.0229) / (0.3817 - 0.0229)
+        expected = np.array([1.2, 0.8])
+        for _ in range(2):
+            function(*inputs.values())
+            expected = 1 + weight ** inputs["num_cols"] * (expected - 1)
+            np.testing.assert_allclose(amplitudes, expected, rtol=1e-12)
+        np.testing.assert_array_equal(banded, 1.0)
+    finally:
+        replay_set_up(call, module)
+
+
+@pytest.mark.parametrize("call, flag, value, rewritten", [
+    ("rrtmg_sw", "cloud_overlap_method", 7, 2), ("rrtmg_sw", "aerosol_input_flag", 3, 0),
+    ("rrtmg_sw_mcica", "random_number_generator", 5, 1)])
+def test_rrtmg_sw_keeps_flags_rewritten_by_fortran(call, flag, value, rewritten):
+    # RRTMG replaces an out-of-range overlap method by 2 and aerosol flag by
+    # 0, and the McICA generator a nonzero generator choice by 1, through the
+    # pointers it is given; as in 1.0, later calls see the new values.
+    module, init, arguments = _sw_init(call)
+    replay_set_up(call, module)
+    try:
+        getattr(module, init)(**{**arguments, flag: value})
+        getattr(module, REFERENCE[call + "/function"].item())(*reference_inputs(call).values())
+        assert module._flags[getattr(module, "_" + flag.upper())] == rewritten
+    finally:
+        replay_set_up(call, module)
+
+
+def test_rrtmg_sw_not_slower_than_cython():
+    _assert_not_slower_than_cython(SW_CALLS)
+
+
 @pytest.mark.parametrize("call", BARE_CALLS)
 def test_bare_call_does_the_wrappers_work(call):
     # The speed gate's yardstick: the bare Fortran calls fill the same outputs,
@@ -381,12 +631,13 @@ def test_bare_call_does_the_wrappers_work(call):
     run_bare, _, bare = bare_call(call)
     run_bare()
     for init_function, init_inputs, _ in init_calls:
-        getattr(module, init_function)(*[value.item() for value in init_inputs.values()])
-    arguments = [value.item() if value.ndim == 0 else value.copy() for value in inputs.values()]
+        getattr(module, init_function)(*[_value(value) for value in init_inputs.values()])
+    arguments = [_value(value) for value in inputs.values()]
     getattr(module, function)(*arguments)
     wrapper = {name: value for name, value in zip(inputs, arguments) if isinstance(value, np.ndarray)}
     assert set(wrapper) == set(bare)
     for name in wrapper:
         np.testing.assert_array_equal(bare[name], wrapper[name], err_msg=name)
     if call != "emanuel":
-        assert np.all(wrapper["upward_longwave_flux"] > 0)
+        flux = "upward_longwave_flux" if call.startswith("rrtmg_lw") else "upward_shortwave_flux"
+        assert np.all(wrapper[flux] > 0)

@@ -9,5 +9,9 @@
   "rrtmg_lw/bare": 39.8784845,
   "rrtmg_lw/ratio_to_bare": 1.0690717697659748,
   "rrtmg_lw_mcica/bare": 77.9216085,
-  "rrtmg_lw_mcica/ratio_to_bare": 1.0532629277025254
+  "rrtmg_lw_mcica/ratio_to_bare": 1.0532629277025254,
+  "rrtmg_sw/bare": 117.093038,
+  "rrtmg_sw/ratio_to_bare": 1.0259808785557343,
+  "rrtmg_sw_mcica/bare": 155.269699,
+  "rrtmg_sw_mcica/ratio_to_bare": 1.0106003747711265
 }

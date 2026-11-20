@@ -79,22 +79,20 @@ def compiled_build():
             self.run_command("build")
             native_bdist_wheel.run(self)
 
-    def fortran_extension(name, library, openmp=False):
+    def fortran_extension(name, library):
         """An extension climt_fortran.<name> built from climt_fortran/<name>.pyx and _lib/<system>/<library>."""
-        openmp_flags = ["-fopenmp"] if openmp else []
         return Extension(
             "climt_fortran." + name,
             sources=["climt_fortran/" + name + ".pyx"],
             libraries=config["libraries"],
             include_dirs=include_dirs,
-            extra_compile_args=config["extra_compile_args"] + openmp_flags,
+            extra_compile_args=config["extra_compile_args"],
             library_dirs=config["library_dirs"],
-            extra_link_args=[os.path.join(config["lib_dir"], library)] + openmp_flags + config["extra_link_args"],
+            extra_link_args=[os.path.join(config["lib_dir"], library)] + config["extra_link_args"],
         )
 
     ext_modules = [
         fortran_extension("_simple_physics", "libsimple_physics.a"),
-        fortran_extension("_rrtmg_sw", "librrtmg_sw.a", openmp=True),
         fortran_extension("_dcmip", "libdcmip.a"),
     ]
 
@@ -104,7 +102,8 @@ def compiled_build():
         ext_modules=ext_modules,
         # Each entry builds climt_fortran._<name>_cffi. cffi wraps the
         # build_ext below, so _lib is still built first.
-        cffi_modules=["_cffi_build.py:emanuel_ffi", "_cffi_build.py:rrtmg_lw_ffi"],
+        cffi_modules=["_cffi_build.py:emanuel_ffi", "_cffi_build.py:rrtmg_lw_ffi",
+                      "_cffi_build.py:rrtmg_sw_ffi"],
         cmdclass={
             "build_ext": climt_build_ext,
             "bdist_wheel": climt_bdist_wheel,
