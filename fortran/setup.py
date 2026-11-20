@@ -3,7 +3,7 @@
 """Build script for climt-fortran, the compiled extensions used by climt.
 
 The compiled modules are Cython extensions and, for the libraries already
-moved over, cffi modules (``climt_fortran/_cffi_build.py``).
+moved over, cffi modules (``_cffi_build.py``, next to this file).
 
 Set ``CLIMT_FORTRAN_STUB=1`` to build a stub: a pure-Python wheel with no
 compiled extensions, which needs no compilers, Cython, cffi or numpy.
@@ -105,7 +105,7 @@ def compiled_build():
         ext_modules=ext_modules,
         # Each entry builds climt_fortran._<name>_cffi. cffi wraps the
         # build_ext below, so _lib is still built first.
-        cffi_modules=["climt_fortran/_cffi_build.py:emanuel_ffi"],
+        cffi_modules=["_cffi_build.py:emanuel_ffi"],
         cmdclass={
             "build_ext": climt_build_ext,
             "bdist_wheel": climt_bdist_wheel,

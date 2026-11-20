@@ -1,7 +1,8 @@
 """cffi build script: one compiled module per Fortran library.
 
 Run by setuptools through ``cffi_modules`` in ``setup.py`` (API, out-of-line
-mode). Each ``*_ffi`` object below compiles ``climt_fortran._<name>_cffi``,
+mode). A build-time file only: it lives in ``fortran/`` next to
+``_build_config.py``, outside the installed package. Each ``*_ffi`` object below compiles ``climt_fortran._<name>_cffi``,
 a small extension linked against the static library ``_lib/<system>/lib*.a``.
 The prototypes are those of the routines' ``bind(c)`` names; every argument is
 passed by pointer, as Fortran expects.

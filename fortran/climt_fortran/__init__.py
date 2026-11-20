@@ -17,6 +17,7 @@ def _installed(name: str) -> bool:
     """Whether the compiled code behind module ``name`` is present: its cffi
     module, or the module itself as an extension. A wrapper alone (a stub
     install) does not count."""
+    # Keep in step with _compiled_code_found in climt/_core/fortran.py.
     # Search only this package's directory: importlib.util.find_spec would
     # also ask setuptools' editable-install finder, which maps any
     # climt_fortran.<name> to a source checkout.

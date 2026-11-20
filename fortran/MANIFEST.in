@@ -1,5 +1,6 @@
 include README.rst
 include _build_config.py
+include _cffi_build.py
 recursive-include climt_fortran *.py *.pyx
 recursive-include _lib *
 

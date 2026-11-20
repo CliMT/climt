@@ -8,7 +8,9 @@ arrays.
 ``convect`` checks its arguments in Python, then loops over columns in a
 cached numba function that calls the Fortran routine directly. Converting
 the 24 arguments to cffi pointers in Python instead made a one-column call
-about 1.5 times slower than the Cython version.
+about 1.5 times slower than the Cython version. Each new combination of
+array layouts passed to ``convect`` (e.g. a C-contiguous vs a strided output)
+triggers a fresh numba specialisation, costing about 2.3 s the first time.
 """
 
 import operator
@@ -17,7 +19,7 @@ import numba
 import numpy as np
 
 from . import _emanuel_convection_cffi as _compiled
-from ._arrays import as_double_scalar_pointer, as_int_pointer
+from ._arrays import as_double_scalar_pointer, as_int_pointer, check_array
 from ._numba_cffi import external_function
 
 ffi, lib = _compiled.ffi, _compiled.lib
@@ -61,18 +63,6 @@ def init_emanuel_convection(
         as_int_pointer(ffi, py_least_conv_level),
         *[as_double_scalar_pointer(ffi, value) for value in constants])
     _initialised = True
-
-
-def _check(name, array, dtype, shape=None, output=False):
-    """Raise unless ``array`` is a numpy array of ``dtype`` (and of ``shape``,
-    and writeable if ``output``). Any memory layout is accepted."""
-    if not isinstance(array, np.ndarray) or array.dtype != dtype:
-        found = array.dtype if isinstance(array, np.ndarray) else type(array).__name__
-        raise TypeError("%s: expected a %s array, got %s" % (name, dtype.name, found))
-    if shape is not None and array.shape != shape:
-        raise ValueError("%s: expected shape %s, got %s" % (name, shape, array.shape))
-    if output and not array.flags.writeable:
-        raise ValueError("%s: array is read-only" % name)
 
 
 def convect(
@@ -122,21 +112,21 @@ def convect(
     for name, array, shape in (
             ("temp", temp, levels), ("q", q, levels), ("qs", qs, levels), ("u", u, levels),
             ("v", v, levels), ("pmid", pmid, levels), ("pint", pint, (ncols, nlevs + 1))):
-        _check(name, array, _FLOAT64, shape)
-    _check("conv_state", conv_state, _INT32, columns, output=True)
+        check_array(name, array, _FLOAT64, shape)
+    check_array("conv_state", conv_state, _INT32, columns, output=True)
     for name, array, shape in (
             ("precip", precip, columns), ("downdraft_vel_scale", downdraft_vel_scale, columns),
             ("downdraft_temp_scale", downdraft_temp_scale, columns),
             ("downdraft_q_scale", downdraft_q_scale, columns),
             ("cloud_base_mass_flux", cloud_base_mass_flux, columns), ("cape", cape, columns),
             ("dtemp", dtemp, levels), ("dq", dq, levels), ("du", du, levels), ("dv", dv, levels)):
-        _check(name, array, _FLOAT64, shape, output=True)
+        check_array(name, array, _FLOAT64, shape, output=True)
     if num_tracers == 0:
         tracers = _NO_TRACERS
     elif tracers is None:
         tracers = np.zeros((ncols, num_tracers, nlevs))
     else:
-        _check("tracers", tracers, _FLOAT64)
+        check_array("tracers", tracers, _FLOAT64)
         tracers = np.ascontiguousarray(np.broadcast_to(tracers, (ncols, num_tracers, nlevs)))
     _convect_columns(
         nlevs, ncols, max_conv_lev, num_tracers, dt, temp, q, qs, u, v, pmid, pint,

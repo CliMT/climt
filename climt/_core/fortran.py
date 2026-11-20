@@ -30,6 +30,7 @@ def _reset_cache() -> None:
 
 def _compiled_code_found(full, search_path) -> bool:
     """Whether the compiled code behind module ``full`` is in ``search_path``."""
+    # Keep in step with _installed in fortran/climt_fortran/__init__.py.
     finder = importlib.machinery.PathFinder
     if finder.find_spec(full + "_cffi", search_path) is not None:
         return True

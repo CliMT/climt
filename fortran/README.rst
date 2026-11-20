@@ -59,3 +59,11 @@ The package itself is distributed under climt's BSD licence. The Fortran
 sources under ``_lib/`` keep their original licences and copyright notices,
 which are reproduced in the source files themselves (for example, RRTMG is
 copyright Atmospheric & Environmental Research, Inc.).
+
+Changes in 2.0.0 (unreleased)
+-----------------------------
+
+* climt-fortran now requires numba at run time. Emanuel convection calls
+  Fortran through cffi from a numba kernel, so its first ``convect`` call
+  JIT-compiles: about 2.4 s once per machine, about 0.16 s in later processes
+  (from numba's cache).
