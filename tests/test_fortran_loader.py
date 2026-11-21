@@ -4,6 +4,7 @@ import sys
 import pytest
 
 from climt._core import fortran
+from climt._core.fortran import EXPECTED_INTERFACE_VERSION
 
 ABI_MESSAGE = "numpy.core.multiarray failed to import"
 
@@ -19,7 +20,7 @@ def isolated(monkeypatch):
     fortran._reset_cache()
 
 
-def install_fake(monkeypatch, tmp_path, interface=1, present=fortran.MODULES, failing=(), wrappers_only=()):
+def install_fake(monkeypatch, tmp_path, interface=fortran.EXPECTED_INTERFACE_VERSION, present=fortran.MODULES, failing=(), wrappers_only=()):
     """A fake climt_fortran package on sys.path. Each module in ``present`` or
     ``failing`` gets a wrapper ``<name>.py`` and a stand-in ``<name>_cffi.py``
     for its compiled module; ``wrappers_only`` modules get the wrapper only."""
@@ -55,7 +56,7 @@ def test_available(monkeypatch, tmp_path):
     status = fortran.fortran_status()
     assert status == {
         "state": "available", "installed": True, "version": "9.9.9",
-        "interface_version": 1, "detail": "",
+        "interface_version": EXPECTED_INTERFACE_VERSION, "detail": "",
         "modules": {name: True for name in fortran.MODULES},
     }
     assert fortran.load_extension("_emanuel_convection").LOADED is True
@@ -74,7 +75,7 @@ def test_stub(monkeypatch, tmp_path, wrappers_only):
     assert "gfortran" in message and "instead" not in message
 
 
-@pytest.mark.parametrize("interface", [2, 0, None])
+@pytest.mark.parametrize("interface", [1, 0, None])
 def test_interface_mismatch(monkeypatch, tmp_path, interface):
     install_fake(monkeypatch, tmp_path, interface=interface)
     status = fortran.fortran_status()
@@ -194,3 +195,18 @@ def test_extensions_come_only_from_the_imported_package(monkeypatch, tmp_path):
 
 def test_ported_modules_are_not_loaded():
     assert "_simple_physics" not in fortran.MODULES and "_dcmip" not in fortran.MODULES
+
+
+def test_expects_interface_two():
+    assert EXPECTED_INTERFACE_VERSION == 2
+
+
+def test_interface_one_package_reports_mismatch(monkeypatch, tmp_path):
+    install_fake(monkeypatch, tmp_path, interface=1)
+    assert fortran.fortran_status()["state"] == "interface_mismatch"
+    assert "pip install -U climt climt-fortran" in str(fortran.unavailable_error("RRTMGLongwave"))
+
+
+def test_stub_two_reports_stub(monkeypatch, tmp_path):
+    install_fake(monkeypatch, tmp_path, interface=2, present=(), wrappers_only=fortran.MODULES)
+    assert fortran.fortran_status()["state"] == "stub"

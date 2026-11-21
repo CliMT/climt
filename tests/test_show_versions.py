@@ -69,7 +69,7 @@ def fake_broken_companion(monkeypatch, tmp_path):
     fortran._reset_cache()
     package = tmp_path / "climt_fortran"
     package.mkdir()
-    (package / "__init__.py").write_text('__version__ = "9.9.9"\nINTERFACE_VERSION = 1\n')
+    (package / "__init__.py").write_text('__version__ = "9.9.9"\nINTERFACE_VERSION = %d\n' % fortran.EXPECTED_INTERFACE_VERSION)
     for name in fortran.MODULES:
         (package / (name + ".py")).write_text("LOADED = True\n")
         (package / (name + "_cffi.py")).write_text("")

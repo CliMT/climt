@@ -58,7 +58,7 @@ EmanuelConvection               ImplicitTendencyComponent  True                 
 RRTMGLongwave                   TendencyComponent          True                 climt
 SimplePhysics                   Stepper                    True                 climt
 ...
-climt-fortran: available, version 1.0.0
+climt-fortran: available, version 2.0.0
 numba: installed
 ```
 
@@ -139,7 +139,7 @@ $ pip install ./fortran    # builds the Fortran components
 $ pip install -e .
 ```
 
-Until `climt-fortran` 1.0.0 is published on PyPI, `pip install ./fortran`
+Until `climt-fortran` 2.0.0 is published on PyPI, `pip install ./fortran`
 is required before `pip install -e .`, which otherwise fails because pip
 cannot find a `climt-fortran` to satisfy climt's dependency. Without a
 Fortran toolchain, install the stub instead:

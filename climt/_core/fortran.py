@@ -5,13 +5,13 @@ distribution. This module is the only place the core imports them from.
 
 Each module ``climt_fortran._<name>`` counts as installed when its compiled
 code is present: the cffi module ``_<name>_cffi`` that a Python wrapper
-``_<name>`` calls, or ``_<name>`` itself as an extension module (Cython, in
-climt-fortran 1.x). A wrapper alone, as in a stub install, does not count.
+``_<name>`` calls, or ``_<name>`` itself as an extension module. A wrapper
+alone, as in a stub install, does not count.
 """
 import importlib
 import importlib.machinery
 
-EXPECTED_INTERFACE_VERSION = 1
+EXPECTED_INTERFACE_VERSION = 2
 MODULES = ("_emanuel_convection", "_rrtmg_lw", "_rrtmg_sw")
 
 _PACKAGE = "climt_fortran"

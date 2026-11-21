@@ -5,6 +5,10 @@ History
 Unreleased
 ----------
 
+* **Requires climt-fortran 2.0** — climt now needs ``climt-fortran>=2,<3``
+  (interface version 2): cffi, no Cython; simple physics and dcmip removed
+  from it, now numba in climt.
+
 * **Numba ports** — ``SimplePhysics`` and ``DcmipInitialConditions`` now run
   on numba and no longer need ``climt-fortran``, so they also work in Pyodide.
   ``SimplePhysics``'s kernel takes per-column parameter arrays. Four
