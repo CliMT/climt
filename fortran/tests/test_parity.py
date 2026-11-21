@@ -432,26 +432,41 @@ def test_rrtmg_sw_fills_non_contiguous_output(call):
         np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
 
 
+def _every_other(value):
+    """A view of every other element of a longer 1-D array, holding ``value``."""
+    view = np.zeros(2 * value.size)[::2]
+    view[...] = value
+    return view
+
+
 @pytest.mark.parametrize("call", SW_CALLS)
 def test_rrtmg_sw_transposed_input_matches(call):
-    # Every array argument in Fortran order: inputs are read correctly, and
-    # outputs filled in place.
-    inputs = {name: np.asfortranarray(value) if isinstance(value, np.ndarray) else value
+    # Every array argument in Fortran order, and the 1-D ones (surface
+    # temperature, albedos, zenith angle) every other element of a longer
+    # array: inputs are read correctly, and outputs filled in place.
+    inputs = {name: (np.asfortranarray(value) if value.ndim > 1 else _every_other(value))
+              if isinstance(value, np.ndarray) else value
               for name, value in reference_inputs(call).items()}
     assert not inputs["layer_pressure"].flags.c_contiguous
+    assert not inputs["sfc_direct_sw_albedo"].flags.c_contiguous
     outputs = run_call(call, inputs)
     for name, expected in reference_outputs(call).items():
         np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
 
 
 @pytest.mark.parametrize("call", SW_CALLS)
-def test_rrtmg_sw_read_only_inputs_match(call):
-    # Read-only C-contiguous inputs are copied, as strided ones are.
+@pytest.mark.parametrize("one_d", ["contiguous", "strided"])
+def test_rrtmg_sw_read_only_inputs_match(call, one_d):
+    # Read-only C-contiguous inputs are copied, as strided ones are; also
+    # with the 1-D inputs read-only views of every other element.
     inputs = reference_inputs(call)
     for name, value in inputs.items():
         if isinstance(value, np.ndarray) and name not in SW_OUTPUTS:
+            if one_d == "strided" and value.ndim == 1:
+                inputs[name] = value = _every_other(value)
             value.flags.writeable = False
     assert not inputs["layer_pressure"].flags.writeable and inputs["layer_pressure"].flags.c_contiguous
+    assert inputs["surface_temp"].flags.c_contiguous == (one_d == "contiguous")
     outputs = run_call(call, inputs)
     for name, expected in reference_outputs(call).items():
         np.testing.assert_array_equal(outputs[name], expected, err_msg=name)
