@@ -108,32 +108,93 @@ LW_EXPECTED = {
             "cloud_ice_eff_size_mcica", "cloud_droplet_eff_radius_mcica"])),
     ],
 }
-LW_KERNELS = {
+# Shortwave: as for longwave, with distinct day of year and double scalars.
+SW_FLAGS = dict(cloud_overlap_method=3, cloud_props_flag=5, ice_props_flag=6, liq_droplet_flag=7,
+                aerosol_input_flag=8, solar_var_flag=9)
+SW_MCICA_FLAGS = dict(SW_FLAGS, permute_seed=10, random_number_generator=11)
+SW_IPLON, SW_DAY, SW_FLUX_ADJ, SW_CYCLE, SW_SOLAR_CONSTANT = 2, 17, 1.25, 0.375, 1361.5
+SW_STATE = ["layer_pressure", "interface_pressure", "layer_temp", "interface_temp", "surface_temp", "h2o_vmr",
+            "o3_vmr", "co2_vmr", "ch4_vmr", "n2o_vmr", "o2_vmr", "sfc_direct_sw_albedo", "sfc_diffuse_sw_albedo",
+            "sfc_direct_nir_albedo", "sfc_diffuse_nir_albedo", "cos_zenith_angle"]
+SW_FLUXES = ["aerosol_tau", "aerosol_single_scat_alb", "aerosol_asym", "aerosol_at_55u", "upward_shortwave_flux",
+             "downward_shortwave_flux", "shortwave_heating_rate", "up_sw_flux_clearsky", "down_sw_flux_clearsky",
+             "sw_heating_rate_clearsky", "solar_var_banded", "facular_sunspot_ampl", SW_CYCLE]
+SW_CLOUDS = ["cloud_fraction", "cloud_tau", "cloud_single_scat_alb", "cloud_asym", "cloud_fwd_scat_frac",
+             "cloud_ice_path", "cloud_liq_path", "cloud_ice_eff_size", "cloud_droplet_eff_radius"]
+
+
+def _sw_radiation_call(flags, clouds):
+    """``rrtmg_sw_[no]mcica_wrapper`` as 1.0 called it."""
+    return ([4, 30, flags["cloud_overlap_method"], flags["aerosol_input_flag"]] + SW_STATE
+            + [SW_FLUX_ADJ, SW_DAY, SW_SOLAR_CONSTANT, flags["solar_var_flag"], flags["cloud_props_flag"],
+               flags["ice_props_flag"], flags["liq_droplet_flag"]] + clouds + SW_FLUXES)
+
+
+EXPECTED = {
+    **LW_EXPECTED,
+    "rrtmg_sw": [("rrtmg_sw_nomcica_wrapper", _sw_radiation_call(SW_FLAGS, SW_CLOUDS))],
+    "rrtmg_sw_mcica": [
+        ("mcica_subcol_sw_wrapper", [
+            SW_IPLON, 4, 30, SW_MCICA_FLAGS["cloud_overlap_method"], SW_MCICA_FLAGS["permute_seed"],
+            SW_MCICA_FLAGS["random_number_generator"], "layer_pressure", "cloud_fraction", "cloud_ice_path",
+            "cloud_liq_path", "cloud_ice_eff_size", "cloud_droplet_eff_radius", "cloud_tau",
+            "cloud_single_scat_alb", "cloud_asym", "cloud_fwd_scat_frac", "cloud_fraction_mcica",
+            "cloud_ice_path_mcica", "cloud_liq_path_mcica", "cloud_ice_eff_size_mcica",
+            "cloud_droplet_eff_radius_mcica", "cloud_tau_mcica", "cloud_single_scat_alb_mcica",
+            "cloud_asym_mcica", "cloud_fwd_scat_frac_mcica"]),
+        # The radiation call takes the non-McICA ice size and droplet radius.
+        ("rrtmg_sw_mcica_wrapper", _sw_radiation_call(SW_MCICA_FLAGS, [
+            "cloud_fraction_mcica", "cloud_tau_mcica", "cloud_single_scat_alb_mcica", "cloud_asym_mcica",
+            "cloud_fwd_scat_frac_mcica", "cloud_ice_path_mcica", "cloud_liq_path_mcica", "cloud_ice_eff_size",
+            "cloud_droplet_eff_radius"])),
+    ],
+}
+# For each call: the kernel, its signature, and its ExternalFunction globals.
+KERNELS = {
     "rrtmg_lw": ("_nomcica_kernel", "_NOMCICA_SIGNATURE", {"_rrtmg_lw_nomcica": "rrtmg_lw_nomcica_wrapper"}),
     "rrtmg_lw_mcica": ("_mcica_kernel", "_MCICA_SIGNATURE", {"_mcica_subcol": "mcica_subcol_lw_wrapper",
                                                              "_rrtmg_lw_mcica": "rrtmg_lw_mcica_wrapper"}),
+    "rrtmg_sw": ("_nomcica_kernel", "_NOMCICA_SIGNATURE", {"_rrtmg_sw_nomcica": "rrtmg_sw_nomcica_wrapper"}),
+    "rrtmg_sw_mcica": ("_mcica_kernel", "_MCICA_SIGNATURE", {"_mcica_subcol": "mcica_subcol_sw_wrapper",
+                                                             "_rrtmg_sw_mcica": "rrtmg_sw_mcica_wrapper"}),
 }
 
 
-@pytest.mark.parametrize("call", ["rrtmg_lw", "rrtmg_lw_mcica"])
-def test_rrtmg_lw_argument_order(call, monkeypatch):
-    module = cffi_module(call)
-    kernel, signature, routines = LW_KERNELS[call]
+def _set_up(call, inputs):
+    """Initialise with the distinct flags (and SW scalars) above; return the
+    initialise call's arrays, by name. Changes ``inputs`` to match."""
     init = REFERENCE[call + "/init_order"][-1]
-    flags = LW_MCICA_FLAGS if call == "rrtmg_lw_mcica" else LW_FLAGS
+    arguments = _arguments("%s/init/%s/" % (call, init))
+    mcica = call.endswith("mcica")
+    if call.startswith("rrtmg_lw"):
+        arguments.update(LW_MCICA_FLAGS if mcica else LW_FLAGS)
+        shape = inputs["upward_longwave_flux"].shape
+        inputs.update(duflx_dt=np.zeros(shape), duflxc_dt=np.zeros(shape))  # calculate_change_up_flux=1
+        iplon = LW_IPLON
+    else:
+        arguments.update(SW_MCICA_FLAGS if mcica else SW_FLAGS, solar_constant=SW_SOLAR_CONSTANT)
+        inputs.update(day_of_year=SW_DAY, flux_adj_sun_earth=SW_FLUX_ADJ, solar_cycle_fraction=SW_CYCLE)
+        iplon = SW_IPLON
+    if mcica:
+        inputs["rrtm_iplon"] = iplon
+    getattr(cffi_module(call), init)(**arguments)
+    return {name: value for name, value in arguments.items() if isinstance(value, np.ndarray)}
+
+
+@pytest.mark.parametrize("call", ["rrtmg_lw", "rrtmg_lw_mcica", "rrtmg_sw", "rrtmg_sw_mcica"])
+def test_argument_order(call, monkeypatch):
+    module = cffi_module(call)
+    kernel, signature, routines = KERNELS[call]
     inputs = reference_inputs(call)
-    shape = inputs["upward_longwave_flux"].shape
-    inputs.update(duflx_dt=np.zeros(shape), duflxc_dt=np.zeros(shape))
-    if call == "rrtmg_lw_mcica":
-        inputs["rrtm_iplon"] = LW_IPLON
     replay_set_up(call, module)
     try:
-        getattr(module, init)(**{**_arguments("%s/init/%s/" % (call, init)), **flags})
+        init_arrays = _set_up(call, inputs)
         calls = _record_fortran_calls(monkeypatch, module, kernel, getattr(module, signature), routines)
         getattr(module, REFERENCE[call + "/function"].item())(*inputs.values())
     finally:
         replay_set_up(call, module)
     arrays = {name: value for name, value in inputs.items() if isinstance(value, np.ndarray)}
-    assert [routine for routine, _ in calls] == [routine for routine, _ in LW_EXPECTED[call]]
-    for (routine, recorded), (_, expected) in zip(calls, LW_EXPECTED[call]):
+    arrays.update(init_arrays)
+    assert [routine for routine, _ in calls] == [routine for routine, _ in EXPECTED[call]]
+    for (routine, recorded), (_, expected) in zip(calls, EXPECTED[call]):
         _assert_arguments(routine, recorded, expected, arrays)

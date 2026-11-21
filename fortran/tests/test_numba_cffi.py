@@ -118,7 +118,7 @@ import sys
 import numpy as np
 sys.path.insert(0, %r)
 import test_parity
-for call in ("emanuel", "rrtmg_lw", "rrtmg_lw_mcica"):
+for call in ("emanuel", "rrtmg_lw", "rrtmg_lw_mcica", "rrtmg_sw", "rrtmg_sw_mcica"):
     for _ in range(2):
         test_parity.run_call(call, test_parity.reference_inputs(call))
 inputs = {name: np.asfortranarray(value) if isinstance(value, np.ndarray) else value
@@ -130,6 +130,8 @@ EXPECTED_NOTICES = [
     "combination of array layouts given to convect; later runs load it from cache)",
     NOTICE + "the RRTMG longwave wrapper (this happens once after install; later runs load it from cache)",
     NOTICE + "the RRTMG longwave McICA wrapper (this happens once after install; later runs load it from cache)",
+    NOTICE + "the RRTMG shortwave wrapper (this happens once after install; later runs load it from cache)",
+    NOTICE + "the RRTMG shortwave McICA wrapper (this happens once after install; later runs load it from cache)",
 ]
 
 
