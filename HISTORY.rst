@@ -7,7 +7,8 @@ Unreleased
 
 * **Requires climt-fortran 2.0** — climt now needs ``climt-fortran>=2,<3``
   (interface version 2): cffi, no Cython; simple physics and dcmip removed
-  from it, now numba in climt.
+  from it, now numba in climt. climt-fortran 2 depends on numba, so
+  installing climt where climt-fortran wheels exist pulls numba in.
 
 * **Numba ports** — ``SimplePhysics`` and ``DcmipInitialConditions`` now run
   on numba and no longer need ``climt-fortran``, so they also work in Pyodide.
@@ -34,21 +35,25 @@ Unreleased
   radians. Results with an external SST (the default) are unchanged.
 
 * **Packaging** — climt is now a pure-Python package. The compiled extensions
-  (RRTMG, Fortran Emanuel convection, SimplePhysics, DCMIP initial conditions)
-  moved to the companion package ``climt-fortran``, which pip installs
-  automatically; on platforms without binaries it installs as an empty stub.
-  ``climt.list_components()`` reports which components are available and why
-  not, and using an unavailable one raises ``climt.FortranUnavailableError``
-  (an ``ImportError``) naming the fix. numba is an optional extra,
-  ``pip install "climt[numba]"``. Python 3.10 or newer is declared, and
-  ``setup.py`` is removed in favour of ``pyproject.toml``.
+  (RRTMG and Fortran Emanuel convection) moved to the companion package
+  ``climt-fortran``; climt requires ``climt-fortran>=2,<3``, which pip
+  installs automatically everywhere except Pyodide (emscripten). Simple
+  physics and DCMIP initial conditions are numba code in climt itself, not
+  in ``climt-fortran``. On platforms without binaries ``climt-fortran``
+  installs as a stub. ``climt.list_components()`` reports which components
+  are available and why not, and using an unavailable one raises
+  ``climt.FortranUnavailableError`` (an ``ImportError``) naming the fix.
+  climt itself still lists numba as the optional extra
+  ``pip install "climt[numba]"``, but ``climt-fortran`` 2 requires numba, so
+  any install with compiled ``climt-fortran`` has it. Python 3.10 or newer is
+  declared, and ``setup.py`` is removed in favour of ``pyproject.toml``.
   ``climt.has_fortran_extensions()`` now returns ``True`` only when all the
   extension modules load; it used to check only ``_simple_physics``. The
   ``CLIMT_PURE_PYTHON`` build variable is still accepted but does nothing,
   since every climt build is now pure Python. For a development install,
   ``pip install ./fortran`` (or ``CLIMT_FORTRAN_STUB=1 pip install ./fortran``
   without a Fortran toolchain) must come before ``pip install -e .`` until
-  ``climt-fortran`` 1.0.0 is published on PyPI.
+  ``climt-fortran`` 2.0.0 is published on PyPI.
 
 * **Fix (behaviour change)** — ``SimpleBoundaryLayer`` diffuses dry static
   energy ``Cp T + g z`` instead of temperature, as Frierson, Held &

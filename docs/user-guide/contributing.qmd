@@ -101,6 +101,9 @@ development.
 
     Without a Fortran toolchain, install the stub instead of the first
     `pip` command: `CLIMT_FORTRAN_STUB=1 pip install ./fortran`.
+    Rebuilding `./fortran` deletes stale climt-fortran 1.x (Cython)
+    extension modules left in `fortran/climt_fortran/`, so they cannot
+    shadow the 2.x wrappers.
 
 4.  Create a branch for local development:
 

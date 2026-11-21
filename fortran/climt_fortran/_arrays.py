@@ -44,6 +44,10 @@ def contiguous_arguments(arrays, specs, copy_back):
     result = []
     for array, (name, shape, output) in zip(arrays, specs, strict=True):
         check_array(name, array, _FLOAT64, shape, output)
+        if type(array) is not np.ndarray:
+            # numba rejects some subclasses (np.ma.MaskedArray); a plain view
+            # shares the memory, so outputs still reach the caller's array.
+            array = np.asarray(array)
         flags = array.flags
         if not (flags.c_contiguous and flags.aligned and flags.writeable):
             copy = np.array(array, order="C")  # keeps the caller's values

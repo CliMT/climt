@@ -1,12 +1,25 @@
 import importlib
 import importlib.metadata
+import glob
 import os
-import tomllib
+import subprocess
+import sys
+import zipfile
 from pathlib import Path
 
 import pytest
 
 import climt_fortran
+
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:
+    try:
+        import tomli as tomllib  # fallback for 3.10
+    except ModuleNotFoundError:
+        tomllib = None
+
+PROJECT = Path(__file__).resolve().parent.parent
 
 EXPECTED = ("_emanuel_convection", "_rrtmg_lw", "_rrtmg_sw")
 REQUIRED = os.environ.get("CLIMT_REQUIRE_FORTRAN") == "1"
@@ -42,39 +55,36 @@ def test_extension_exposes_the_functions_climt_calls(name):
         assert callable(getattr(module, function))
 
 
-def test_stub_wheel_has_no_binaries(tmp_path):
-    import glob, subprocess, sys, zipfile
-    from pathlib import Path
-    project = Path(__file__).resolve().parent.parent
+@pytest.fixture(scope="module")
+def stub_wheel_names(tmp_path_factory):
+    """The file names in a stub wheel built from this source tree."""
+    out = tmp_path_factory.mktemp("stub_wheel")
     env = dict(os.environ, CLIMT_FORTRAN_STUB="1")
-    subprocess.run([sys.executable, "-m", "pip", "wheel", str(project), "--no-deps", "-w", str(tmp_path)],
+    subprocess.run([sys.executable, "-m", "pip", "wheel", str(PROJECT), "--no-deps", "-w", str(out)],
                    env=env, check=True)
-    wheels = glob.glob(str(tmp_path / "climt_fortran-*-py3-none-any.whl"))
+    wheels = glob.glob(str(out / "climt_fortran-*-py3-none-any.whl"))
     assert len(wheels) == 1
-    names = zipfile.ZipFile(wheels[0]).namelist()
+    return zipfile.ZipFile(wheels[0]).namelist()
+
+
+def test_stub_wheel_has_no_binaries(stub_wheel_names):
+    names = stub_wheel_names
     assert "climt_fortran/__init__.py" in names
     assert not [n for n in names if n.endswith((".so", ".pyd", ".pyx", ".c", ".a", ".f90", ".F90"))]
 
 
-PROJECT = Path(__file__).resolve().parent.parent
+def test_stub_wheel_has_wrappers_but_no_cffi_modules(stub_wheel_names):
+    names = stub_wheel_names
+    for name in EXPECTED:
+        assert "climt_fortran/" + name + ".py" in names
+    assert not [n for n in names if "_cffi." in n and not n.endswith(".py")]
 
 
 def test_no_cython_in_build_requirements():
+    if tomllib is None:
+        pytest.skip("needs tomllib (Python 3.11+) or tomli")
     with open(PROJECT / "pyproject.toml", "rb") as pyproject:
         requires = tomllib.load(pyproject)["build-system"]["requires"]
     assert not [r for r in requires if r.lower().startswith("cython")]
     assert any(r.startswith("cffi") for r in requires)
     assert not list((PROJECT / "climt_fortran").glob("*.pyx"))
-
-
-def test_stub_has_wrappers_but_no_cffi_modules(tmp_path):
-    import glob, subprocess, sys, zipfile
-    env = dict(os.environ, CLIMT_FORTRAN_STUB="1")
-    subprocess.run([sys.executable, "-m", "pip", "wheel", str(PROJECT), "--no-deps", "-w", str(tmp_path)],
-                   env=env, check=True)
-    wheels = glob.glob(str(tmp_path / "climt_fortran-*-py3-none-any.whl"))
-    assert len(wheels) == 1
-    names = zipfile.ZipFile(wheels[0]).namelist()
-    for name in EXPECTED:
-        assert "climt_fortran/" + name + ".py" in names
-    assert not [n for n in names if "_cffi." in n and not n.endswith(".py")]

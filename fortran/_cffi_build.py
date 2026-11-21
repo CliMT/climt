@@ -27,6 +27,8 @@ def _ffi(module_name, prototypes, static_library, extra_flags=()):
     ffi.set_source(
         "climt_fortran." + module_name,
         "#include <stdint.h>\n" + prototypes,
+        # Relink when the Fortran library changes, not only when the C text does.
+        depends=[os.path.join(_CONFIG["lib_dir"], static_library)],
         libraries=_CONFIG["libraries"],
         library_dirs=_CONFIG["library_dirs"],
         include_dirs=_CONFIG["include_dirs"],

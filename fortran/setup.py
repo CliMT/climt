@@ -53,6 +53,26 @@ def fresh_build_base():
     return path
 
 
+STALE_MODULES = ("_emanuel_convection", "_rrtmg_lw", "_rrtmg_sw")
+
+
+def remove_stale_extensions():
+    """Delete climt-fortran 1.x extension modules left in an in-place checkout.
+
+    A 1.x build left ``climt_fortran/_rrtmg_lw.cpython-*.so`` (and so on)
+    next to the 2.x ``_rrtmg_lw.py``; extension modules win over ``.py``
+    files on import, so the stale one would shadow the new wrapper. Only
+    files whose module name is exactly one of ``STALE_MODULES`` are removed;
+    the ``_*_cffi`` modules are never touched.
+    """
+    package = os.path.join(HERE, "climt_fortran")
+    for filename in sorted(os.listdir(package)):
+        if (filename.partition(".")[0] in STALE_MODULES and "_cffi" not in filename
+                and filename.endswith((".so", ".pyd"))):
+            print("climt-fortran: removing stale 1.x extension " + filename)
+            os.remove(os.path.join(package, filename))
+
+
 def compiled_build():
     """setup() arguments for the real build: the cffi modules, and the
     commands that build _lib first."""
@@ -67,6 +87,7 @@ def compiled_build():
 
     class climt_build_ext(native_build_ext):
         def run(self):
+            remove_stale_extensions()
             build_static_libraries()
             native_build_ext.run(self)
 

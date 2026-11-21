@@ -162,7 +162,6 @@ On Ubuntu Linux, for example, these dependencies can be installed by:
 $ sudo apt-get install gcc
 $ sudo apt-get install gfortran
 $ sudo apt-get install python-dev
-$ sudo pip install -U cython
 $ sudo pip install -U numpy
 ```
 
@@ -170,7 +169,7 @@ use `pip3` and `python3-dev` if you use Python 3.
 
 On Mac OSX, it is recommended that you use
 [anaconda](https://www.continuum.io/downloads) as your python
-distribution. This will eliminate the need to install cython, numpy and
+distribution. This will eliminate the need to install numpy and
 python-dev. Once you have anaconda installed, you will need to do the
 following:
 
