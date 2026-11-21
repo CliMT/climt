@@ -201,6 +201,7 @@ def rrtm_calculate_longwave_fluxes(
     if _flags[_CALCULATE_CHANGE_UP_FLUX] == 0:
         # As in 1.0: RRTMG does not write them, so small placeholders do.
         duflx_dt = duflxc_dt = np.zeros((num_cols, 1))
+    # The parameter names must match the table's (test_argument_order checks).
     run_kernel(_nomcica_kernel, _NOMCICA_SIGNATURE, (num_cols, num_layers, _flags),
                _nomcica_arrays(locals()), _NOMCICA_ARRAYS, _shapes, num_cols, num_layers)
 
@@ -256,6 +257,7 @@ def rrtm_calculate_longwave_fluxes_mcica(
     num_cols, num_layers = _int32(num_cols), _int32(num_layers)
     if _flags[_CALCULATE_CHANGE_UP_FLUX] == 0:
         duflx_dt = duflxc_dt = np.zeros((num_cols, 1))
+    # The parameter names must match the table's (test_argument_order checks).
     run_kernel(_mcica_kernel, _MCICA_SIGNATURE, (rrtm_iplon, num_cols, num_layers, _flags),
                _mcica_arrays(locals()), _MCICA_ARRAYS, _shapes, num_cols, num_layers)
 
@@ -265,6 +267,8 @@ def rrtm_calculate_longwave_fluxes_mcica(
 # Fortran through a small int32 array; the flags through _flags itself, so
 # Fortran's rewrites stick. Each kernel gathers the arrays of _COMMON into
 # one tuple, ``common``, and passes it on with ``*common``.
+# The order of _COMMON is written out again in the helpers' parameters and
+# in each kernel; test_argument_order checks every Fortran call against 1.0's.
 
 @numba.njit(cache=True)
 def _shapes_ok(num_cols, num_layers, flags, layer_pressure, interface_pressure, layer_temp,

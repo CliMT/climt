@@ -147,8 +147,11 @@ def _notices_from_a_process(cache_dir):
     return [line for line in result.stderr.splitlines() if line.startswith(NOTICE)]
 
 
+@pytest.mark.slow
 def test_notice_on_cold_cache_only(tmp_path):
     # A cold numba cache: each wrapper's compile is announced once. A second
     # process loads them from the same cache directory and prints nothing.
+    # Slow (two processes, five cold compiles): deselected by tox's
+    # -m "not slow", still run by a plain pytest fortran/tests.
     assert _notices_from_a_process(tmp_path) == EXPECTED_NOTICES
     assert _notices_from_a_process(tmp_path) == []

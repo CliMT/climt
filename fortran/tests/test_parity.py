@@ -310,15 +310,23 @@ def test_rrtmg_lw_rejects_integers_outside_int32(call, name, value):
     (call, name, value) for call in LW_CALLS for name in ("rrtm_iplon", "num_cols", "num_layers")
     for value in (2**31 - 1, -2**31) if call == "rrtmg_lw_mcica" or name != "rrtm_iplon"])
 def test_rrtmg_lw_accepts_int32_limits(call, name, value):
-    # The int32_t limits themselves pass the conversion. The array sizes then
-    # disagree with the arrays: a ValueError naming the first array (or, for
-    # a negative num_cols, numpy's, from the duflx_dt placeholders, as in
-    # 1.0). Fortran does not use rrtm_iplon.
+    # The int32_t limits themselves pass the conversion. For the array sizes,
+    # calculate_change_up_flux is set, so that no (num_cols, 1) duflx_dt
+    # placeholders are allocated (2**31 - 1 rows would be 17 GB): the sizes
+    # then disagree with the arrays, a ValueError naming the first array.
+    # Fortran does not use rrtm_iplon.
+    module = cffi_module(call)
     inputs = reference_inputs(call)
     inputs[name] = value
     if name in ("num_cols", "num_layers"):
-        with pytest.raises(ValueError, match="layer_pressure: expected shape|negative dimensions"):
-            run_call(call, inputs)
+        init = REFERENCE[call + "/init_order"][-1]
+        replay_set_up(call, module)
+        try:
+            getattr(module, init)(**{**_arguments("%s/init/%s/" % (call, init)), "calculate_change_up_flux": 1})
+            with pytest.raises(ValueError, match="layer_pressure: expected shape"):
+                getattr(module, REFERENCE[call + "/function"].item())(*inputs.values())
+        finally:
+            replay_set_up(call, module)
     else:
         outputs = run_call(call, inputs)
         for output, expected in reference_outputs(call).items():

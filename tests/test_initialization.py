@@ -143,6 +143,15 @@ def assert_state_is_full(state, component):
                     quantity_name, dict_name, missing_dims)
 
 
+def ice_sheet():
+    """IceSheet, which is deprecated (use SeaIce and LandIce): it must warn."""
+    with pytest.warns(DeprecationWarning, match="IceSheet is deprecated"):
+        return IceSheet()
+
+
+ice_sheet.__name__ = "IceSheet"  # the generated tests keep their names
+
+
 def create_default_test_for(cls):
     def test_component(self):
         component = cls()
@@ -193,7 +202,7 @@ class ComponentQuantityInitializationTests(unittest.TestCase):
         RRTMGLongwave,
         RRTMGShortwave,
         EmanuelConvection, SlabSurface,
-        DcmipInitialConditions, IceSheet,
+        DcmipInitialConditions, ice_sheet,
         Instellation
     )
 

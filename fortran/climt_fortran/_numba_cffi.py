@@ -16,7 +16,9 @@ site-packages was read-only).
 Compiling a kernel takes from about 0.4 s to a few seconds. A function given
 to ``announce_compiles`` has its first compile in each process announced on
 stderr, so that the pause is explained; loading it from numba's cache prints
-nothing.
+nothing. The listener behind this is registered with numba for the whole
+process, so it runs at every numba compile, of any package; for functions
+not given to ``announce_compiles`` its cost is a dict lookup.
 """
 
 import sys

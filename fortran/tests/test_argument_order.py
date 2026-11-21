@@ -15,11 +15,14 @@ registered under a new symbol; the test compiles a copy of the kernel whose
 globals name the recorders instead of the routines (not cached, so numba's
 cache never holds it), and has the wrapper use it. Integer and double
 scalars are passed by pointer: they are given distinct values here, and
-compared by value; arrays are compared by address.
+compared by value; the flags and the SW solar constant also by address (in
+the module's ``_flags`` and ``_solar_constant``, where Fortran's rewrites
+must land); arrays by address.
 """
 
 import itertools
 import types
+from typing import NamedTuple
 
 import llvmlite.binding
 import numba
@@ -31,6 +34,23 @@ from climt_fortran import _numba_cffi
 from test_parity import REFERENCE, _arguments, cffi_module, reference_inputs, replay_set_up
 
 _SYMBOLS = itertools.count()
+# Every recording callback ever registered with llvmlite.binding.add_symbol:
+# the symbols cannot be removed, so the callbacks must never be freed.
+_CALLBACKS = []
+
+
+class Held(NamedTuple):
+    """An argument pointing to ``module.<array>[module.<index>]`` (index 0 if
+    None), which holds ``value``: the module's flags and solar constant,
+    passed by pointer so that Fortran's rewrites stick."""
+    array: str
+    index: object
+    value: object
+
+
+def _flag(flags, name):
+    """The expected argument for flag ``name``, set to ``flags[name]``."""
+    return Held("_flags", "_" + name.upper(), flags[name])
 
 
 def _record_fortran_calls(monkeypatch, module, kernel_name, signature, routines):
@@ -39,14 +59,14 @@ def _record_fortran_calls(monkeypatch, module, kernel_name, signature, routines)
     ``ExternalFunction`` to the name of its routine in ``module.lib``.
     Returns the list the calls are appended to, as ``(routine, arguments)``,
     each argument as ``(address, value at that address)``."""
-    ffi, calls, keep = module.ffi, [], []
+    ffi, calls = module.ffi, []
     namespace = dict(vars(module))
     for global_name, routine in routines.items():
         def record(*pointers, routine=routine):
             calls.append((routine, [(int(ffi.cast("uintptr_t", p)), p[0]) for p in pointers]))
 
         callback = ffi.callback(ffi.typeof(getattr(module.lib, routine)), record)
-        keep.append(callback)
+        _CALLBACKS.append(callback)
         symbol = "test_argument_order_%s_%d" % (routine, next(_SYMBOLS))
         llvmlite.binding.add_symbol(symbol, int(ffi.cast("uintptr_t", callback)))
         namespace[global_name] = numba_types.ExternalFunction(symbol, getattr(module, global_name).sig)
@@ -55,16 +75,37 @@ def _record_fortran_calls(monkeypatch, module, kernel_name, signature, routines)
     compiled = numba.njit(signature)(copy)  # not cached
     monkeypatch.setitem(_numba_cffi._KERNELS, (copy, id(signature)), (signature, compiled))
     monkeypatch.setattr(module, kernel_name, copy)
-    monkeypatch.setattr(module, "_recording_callbacks", keep, raising=False)
     return calls
 
 
-def _assert_arguments(routine, recorded, expected, arrays):
+def _expected_pair(module, arrays, expected):
+    """What an argument must be: ``("array", address)`` for a name in
+    ``arrays``, ``("held", (address, value))`` for a ``Held``, else
+    ``("value", expected)``, the value pointed to."""
+    if isinstance(expected, str):
+        return "array", arrays[expected].ctypes.data
+    if isinstance(expected, Held):
+        array = getattr(module, expected.array)
+        index = 0 if expected.index is None else getattr(module, expected.index)
+        return "held", (array.ctypes.data + array.itemsize * index, expected.value)
+    return "value", expected
+
+
+def _found_pair(expected, address, value):
+    """The recorded argument, in the form of ``_expected_pair``."""
+    if isinstance(expected, str):
+        return "array", address
+    if isinstance(expected, Held):
+        return "held", (address, value)
+    return "value", value
+
+
+def _assert_arguments(module, routine, recorded, expected, arrays):
     """``recorded`` arguments of ``routine`` against ``expected``, in order: a
-    name in ``arrays`` is that array's address; a number is the value pointed to."""
-    expected_pairs = [("array", arrays[e].ctypes.data) if isinstance(e, str) else ("value", e) for e in expected]
-    found = [("array", address) if isinstance(e, str) else ("value", value)
-             for e, (address, value) in zip(expected, recorded)]
+    name in ``arrays`` is that array's address, a ``Held`` an address in the
+    module's arrays and its value, a number the value pointed to."""
+    expected_pairs = [_expected_pair(module, arrays, e) for e in expected]
+    found = [_found_pair(e, address, value) for e, (address, value) in zip(expected, recorded)]
     names = {array.ctypes.data: name for name, array in arrays.items()}
     readable = [names.get(v, v) if kind == "array" else v for kind, v in found]
     assert len(recorded) == len(expected), (routine, readable)
@@ -88,8 +129,9 @@ LW_FLUXES = ["aerosol_tau", "upward_longwave_flux", "downward_longwave_flux", "l
 
 def _lw_radiation_call(flags, clouds):
     """``rrtmg_lw_[no]mcica_wrapper`` as 1.0 called it."""
-    return ([4, 30, flags["cloud_overlap_method"], flags["calculate_change_up_flux"]] + LW_STATE
-            + [flags["cloud_props_flag"], flags["ice_props_flag"], flags["liq_droplet_flag"]] + clouds + LW_FLUXES)
+    return ([4, 30, _flag(flags, "cloud_overlap_method"), _flag(flags, "calculate_change_up_flux")] + LW_STATE
+            + [_flag(flags, "cloud_props_flag"), _flag(flags, "ice_props_flag"), _flag(flags, "liq_droplet_flag")]
+            + clouds + LW_FLUXES)
 
 
 LW_EXPECTED = {
@@ -98,8 +140,8 @@ LW_EXPECTED = {
         "cloud_droplet_eff_radius"]))],
     "rrtmg_lw_mcica": [
         ("mcica_subcol_lw_wrapper", [
-            LW_IPLON, 4, 30, LW_MCICA_FLAGS["cloud_overlap_method"], LW_MCICA_FLAGS["permute_seed"],
-            LW_MCICA_FLAGS["random_number_generator"], "layer_pressure", "cloud_fraction", "cloud_ice_path",
+            LW_IPLON, 4, 30, _flag(LW_MCICA_FLAGS, "cloud_overlap_method"), _flag(LW_MCICA_FLAGS, "permute_seed"),
+            _flag(LW_MCICA_FLAGS, "random_number_generator"), "layer_pressure", "cloud_fraction", "cloud_ice_path",
             "cloud_liq_path", "cloud_ice_eff_size", "cloud_droplet_eff_radius", "cloud_tau",
             "cloud_fraction_mcica", "cloud_ice_path_mcica", "cloud_liq_path_mcica", "cloud_ice_eff_size_mcica",
             "cloud_droplet_eff_radius_mcica", "cloud_tau_mcica"]),
@@ -125,9 +167,10 @@ SW_CLOUDS = ["cloud_fraction", "cloud_tau", "cloud_single_scat_alb", "cloud_asym
 
 def _sw_radiation_call(flags, clouds):
     """``rrtmg_sw_[no]mcica_wrapper`` as 1.0 called it."""
-    return ([4, 30, flags["cloud_overlap_method"], flags["aerosol_input_flag"]] + SW_STATE
-            + [SW_FLUX_ADJ, SW_DAY, SW_SOLAR_CONSTANT, flags["solar_var_flag"], flags["cloud_props_flag"],
-               flags["ice_props_flag"], flags["liq_droplet_flag"]] + clouds + SW_FLUXES)
+    return ([4, 30, _flag(flags, "cloud_overlap_method"), _flag(flags, "aerosol_input_flag")] + SW_STATE
+            + [SW_FLUX_ADJ, SW_DAY, Held("_solar_constant", None, SW_SOLAR_CONSTANT), _flag(flags, "solar_var_flag"),
+               _flag(flags, "cloud_props_flag"), _flag(flags, "ice_props_flag"), _flag(flags, "liq_droplet_flag")]
+            + clouds + SW_FLUXES)
 
 
 EXPECTED = {
@@ -135,8 +178,8 @@ EXPECTED = {
     "rrtmg_sw": [("rrtmg_sw_nomcica_wrapper", _sw_radiation_call(SW_FLAGS, SW_CLOUDS))],
     "rrtmg_sw_mcica": [
         ("mcica_subcol_sw_wrapper", [
-            SW_IPLON, 4, 30, SW_MCICA_FLAGS["cloud_overlap_method"], SW_MCICA_FLAGS["permute_seed"],
-            SW_MCICA_FLAGS["random_number_generator"], "layer_pressure", "cloud_fraction", "cloud_ice_path",
+            SW_IPLON, 4, 30, _flag(SW_MCICA_FLAGS, "cloud_overlap_method"), _flag(SW_MCICA_FLAGS, "permute_seed"),
+            _flag(SW_MCICA_FLAGS, "random_number_generator"), "layer_pressure", "cloud_fraction", "cloud_ice_path",
             "cloud_liq_path", "cloud_ice_eff_size", "cloud_droplet_eff_radius", "cloud_tau",
             "cloud_single_scat_alb", "cloud_asym", "cloud_fwd_scat_frac", "cloud_fraction_mcica",
             "cloud_ice_path_mcica", "cloud_liq_path_mcica", "cloud_ice_eff_size_mcica",
@@ -197,4 +240,4 @@ def test_argument_order(call, monkeypatch):
     arrays.update(init_arrays)
     assert [routine for routine, _ in calls] == [routine for routine, _ in EXPECTED[call]]
     for (routine, recorded), (_, expected) in zip(calls, EXPECTED[call]):
-        _assert_arguments(routine, recorded, expected, arrays)
+        _assert_arguments(module, routine, recorded, expected, arrays)

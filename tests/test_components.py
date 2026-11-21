@@ -628,13 +628,12 @@ def test_dcmip_options():
 
 class TestIceSheet(ComponentBaseColumn, ComponentBase3D):
     def get_component_instance(self):
-        return IceSheet()
+        # IceSheet is deprecated (use SeaIce and LandIce): it must warn.
+        with pytest.warns(DeprecationWarning, match="IceSheet is deprecated"):
+            return IceSheet()
 
 
-class TestIceSheetLand(ComponentBaseColumn, ComponentBase3D):
-    def get_component_instance(self):
-        ice = IceSheet()
-        return ice
+class TestIceSheetLand(TestIceSheet):
 
     def get_3d_input_state(self):
         state = super(TestIceSheetLand, self).get_3d_input_state()

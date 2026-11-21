@@ -101,9 +101,10 @@ _SUB_COLUMNS = (
 _SOLAR = (("solar_var_banded", "banded", False), ("facular_sunspot_ampl", "facular", True))
 _NOMCICA_ARRAYS = _COMMON + _SOLAR
 _MCICA_ARRAYS = _COMMON + _SUB_COLUMNS + _SOLAR
-# The array arguments of a public function, by name, from its locals().
-_nomcica_arrays = operator.itemgetter(*[name for name, _, _ in _COMMON])
-_mcica_arrays = operator.itemgetter(*[name for name, _, _ in _COMMON + _SUB_COLUMNS])
+# The array arguments of a public function, by name, from its locals(): those
+# of _*_ARRAYS without the solar variability arrays, which come from _solar().
+_nomcica_call_arrays = operator.itemgetter(*[name for name, _, _ in _COMMON])
+_mcica_call_arrays = operator.itemgetter(*[name for name, _, _ in _COMMON + _SUB_COLUMNS])
 _NDIM = {"layers": 2, "interfaces": 2, "columns": 1, "aerosol": 3, "aerosol_types": 3,
          "cloud_bands": 3, "g_points": 3, "banded": 1, "facular": 1}
 _MIN_SOLAR_SIZES = {"facular_sunspot_ampl": 2, "solar_var_banded": NUM_BANDS}
@@ -273,7 +274,8 @@ def rrtm_calculate_shortwave_fluxes(
     num_cols, num_layers = _int32(num_cols), _int32(num_layers)
     leading = (num_cols, num_layers, _int32(day_of_year), _double(solar_cycle_fraction),
                _double(flux_adj_sun_earth), _flags, _solar_constant)
-    run_kernel(_nomcica_kernel, _NOMCICA_SIGNATURE, leading, _nomcica_arrays(locals()) + _solar(),
+    # The parameter names must match the table's (test_argument_order checks).
+    run_kernel(_nomcica_kernel, _NOMCICA_SIGNATURE, leading, _nomcica_call_arrays(locals()) + _solar(),
                _NOMCICA_ARRAYS, _shapes, num_cols, num_layers)
 
 
@@ -338,7 +340,8 @@ def rrtm_calculate_shortwave_fluxes_mcica(
     num_cols, num_layers = _int32(num_cols), _int32(num_layers)
     leading = (_int32(rrtm_iplon), num_cols, num_layers, _int32(day_of_year),
                _double(solar_cycle_fraction), _double(flux_adj_sun_earth), _flags, _solar_constant)
-    run_kernel(_mcica_kernel, _MCICA_SIGNATURE, leading, _mcica_arrays(locals()) + _solar(),
+    # The parameter names must match the table's (test_argument_order checks).
+    run_kernel(_mcica_kernel, _MCICA_SIGNATURE, leading, _mcica_call_arrays(locals()) + _solar(),
                _MCICA_ARRAYS, _shapes, num_cols, num_layers)
 
 
@@ -348,6 +351,9 @@ def rrtm_calculate_shortwave_fluxes_mcica(
 # solar constant through _flags and _solar_constant themselves, so Fortran's
 # rewrites stick. Each kernel gathers the arrays of _COMMON into one tuple,
 # ``common``, and passes it on with ``*common``.
+# The order of _COMMON is written out again in the parameters of
+# _shapes_ok, _flux_pointers and each kernel, and in each ``common``;
+# test_argument_order checks every Fortran call against 1.0's.
 
 @numba.njit(cache=True)
 def _shapes_ok(num_cols, num_layers, layer_pressure, interface_pressure, layer_temp, interface_temp,
