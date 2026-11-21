@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """Build script for climt-fortran, the compiled extensions used by climt.
 
-The compiled modules are Cython extensions and, for the libraries already
-moved over, cffi modules (``_cffi_build.py``, next to this file).
+The compiled modules are cffi modules (``_cffi_build.py``, next to this file)
+linked against the static Fortran libraries built in ``_lib/``.
 
 Set ``CLIMT_FORTRAN_STUB=1`` to build a stub: a pure-Python wheel with no
-compiled extensions, which needs no compilers, Cython, cffi or numpy.
+compiled extensions, which needs no compilers, cffi or numpy.
 """
 
 import atexit
@@ -15,7 +15,7 @@ import shutil
 import sys
 import tempfile
 
-from setuptools import Extension, setup
+from setuptools import setup
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -26,7 +26,7 @@ with open(os.path.join(HERE, "README.rst")) as readme_file:
 
 metadata = dict(
     name="climt-fortran",
-    version="1.0.0",
+    version="2.0.0",
     description="Compiled Fortran extensions for climt",
     long_description=readme,
     long_description_content_type="text/x-rst",
@@ -54,20 +54,16 @@ def fresh_build_base():
 
 
 def compiled_build():
-    """setup() arguments for the real build: the Cython extensions, the cffi
-    modules, and the commands that build _lib first."""
-    import numpy as np
-    from Cython.Build.Distutils import build_ext as native_build_ext
+    """setup() arguments for the real build: the cffi modules, and the
+    commands that build _lib first."""
+    from setuptools.command.build_ext import build_ext as native_build_ext
 
     try:
         from setuptools.command.bdist_wheel import bdist_wheel as native_bdist_wheel
     except ImportError:
         from wheel.bdist_wheel import bdist_wheel as native_bdist_wheel
 
-    from _build_config import build_config, build_static_libraries
-
-    config = build_config()
-    include_dirs = [np.get_include()] + config["include_dirs"]
+    from _build_config import build_static_libraries
 
     class climt_build_ext(native_build_ext):
         def run(self):
@@ -79,27 +75,9 @@ def compiled_build():
             self.run_command("build")
             native_bdist_wheel.run(self)
 
-    def fortran_extension(name, library):
-        """An extension climt_fortran.<name> built from climt_fortran/<name>.pyx and _lib/<system>/<library>."""
-        return Extension(
-            "climt_fortran." + name,
-            sources=["climt_fortran/" + name + ".pyx"],
-            libraries=config["libraries"],
-            include_dirs=include_dirs,
-            extra_compile_args=config["extra_compile_args"],
-            library_dirs=config["library_dirs"],
-            extra_link_args=[os.path.join(config["lib_dir"], library)] + config["extra_link_args"],
-        )
-
-    ext_modules = [
-        fortran_extension("_simple_physics", "libsimple_physics.a"),
-        fortran_extension("_dcmip", "libdcmip.a"),
-    ]
-
     return dict(
-        # numba: Emanuel's column loop calls Fortran from njit code (speed).
+        # numba: the wrappers call Fortran from njit kernels (speed).
         install_requires=["numpy>=1.16.0", "cffi>=1.17", "numba>=0.59.0"],
-        ext_modules=ext_modules,
         # Each entry builds climt_fortran._<name>_cffi. cffi wraps the
         # build_ext below, so _lib is still built first.
         cffi_modules=["_cffi_build.py:emanuel_ffi", "_cffi_build.py:rrtmg_lw_ffi",
@@ -112,9 +90,9 @@ def compiled_build():
 
 
 if STUB:
-    # No Cython, no numpy, no extensions, no custom commands. Only Python
+    # No cffi, no numpy, no extensions, no custom commands. Only Python
     # modules of the package go into the wheel: package data is off, so
-    # in-place .so/.c/.pyx files next to __init__.py are not collected.
+    # in-place .so files next to __init__.py are not collected.
     setup(
         **metadata,
         install_requires=[],

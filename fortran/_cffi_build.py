@@ -21,7 +21,7 @@ def _ffi(module_name, prototypes, static_library, extra_flags=()):
     """An FFI declaring ``prototypes`` that builds ``climt_fortran.<module_name>``
     linked against ``static_library`` from ``_lib/<system>/``. ``extra_flags``
     go to both the compiler and the linker (``-fopenmp`` for RRTMG, as the
-    Cython extensions had)."""
+    1.0 Cython extensions had)."""
     ffi = cffi.FFI()
     ffi.cdef(prototypes)
     ffi.set_source(

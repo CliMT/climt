@@ -4,11 +4,9 @@ climt-fortran
 
 Compiled Fortran extensions for `climt <https://github.com/CliMT/climt>`_.
 
-This package holds the five compiled extension modules that climt's
-Fortran-backed components use: ``_dcmip`` (``DcmipInitialConditions``),
-``_emanuel_convection`` (``EmanuelConvection``), ``_rrtmg_lw``
-(``RRTMGLongwave``), ``_rrtmg_sw`` (``RRTMGShortwave``) and
-``_simple_physics`` (``SimplePhysics``). It has no user-facing API of its own:
+This package holds the three compiled modules that climt's Fortran-backed
+components use: ``_emanuel_convection`` (``EmanuelConvection``),
+``_rrtmg_lw`` (``RRTMGLongwave``) and ``_rrtmg_sw`` (``RRTMGShortwave``). It has no user-facing API of its own:
 climt finds and loads these modules itself.
 
 Installing
@@ -40,7 +38,8 @@ or, for development, an editable install that builds the extensions in place::
     pip install -e ./fortran
 
 ``setup.py`` first builds the static Fortran libraries in ``_lib/`` with
-``make``, then compiles the Cython wrappers in ``climt_fortran/`` against them.
+``make``, then builds the cffi modules (``_cffi_build.py``) against them; no
+Cython is needed.
 The compilers can be chosen with ``FC`` and ``CC`` and the optimisation flags
 with ``CLIMT_OPT_FLAGS`` (default ``-O3``). On macOS the build looks for a
 Homebrew ``gcc`` if ``FC`` and ``CC`` are not set; with Homebrew gcc you may
@@ -50,8 +49,9 @@ The stub
 --------
 
 Setting ``CLIMT_FORTRAN_STUB=1`` builds a stub instead: a pure-Python
-``py3-none-any`` wheel containing only ``climt_fortran/__init__.py``, which
-needs no compilers, Cython or numpy::
+``py3-none-any`` wheel containing the Python wrappers in ``climt_fortran/``
+but none of the compiled ``_*_cffi`` modules, which needs no compilers, cffi or
+numpy::
 
     CLIMT_FORTRAN_STUB=1 pip install ./fortran
 
@@ -70,7 +70,14 @@ copyright Atmospheric & Environmental Research, Inc.).
 Changes in 2.0.0 (unreleased)
 -----------------------------
 
-* climt-fortran now requires numba at run time. Emanuel convection calls
-  Fortran through cffi from a numba kernel, so its first ``convect`` call
-  JIT-compiles: about 2.4 s once per machine, about 0.16 s in later processes
-  (from numba's cache).
+* Cython is gone: the modules are built with cffi, and building from source
+  no longer needs Cython. ``INTERFACE_VERSION`` is now 2.
+* ``_simple_physics`` and ``_dcmip`` were removed; climt now has numba
+  versions of ``SimplePhysics`` and ``DcmipInitialConditions``.
+* numba is a run-time dependency. The wrappers call Fortran from numba
+  kernels, compiled once per install with numba's bundled LLVM (no system
+  compiler needed) and cached; the first compile is announced by a one-line
+  notice on stderr.
+* Calls into Fortran now release the GIL.
+* Solar variability arrays passed to the shortwave module are now validated.
+* Strided ``facular_sunspot_ampl`` input now works (1.0 misread it).

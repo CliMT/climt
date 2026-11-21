@@ -13,6 +13,7 @@ the pre-port component modules hold the loaded extension (``phys`` in
 the numba port on (after commit b7c3302e) it always refuses; to add a case,
 check out b7c3302e or earlier, with climt-fortran installed, and run it there.
 It also refuses unless ``fortran_status()['state'] == 'available'``.
+It needs a climt-fortran 1.x install (2.0 removed ``_simple_physics`` and ``_dcmip``).
 
 Writes, under ``tests/fixtures/fortran_reference/``:
 
