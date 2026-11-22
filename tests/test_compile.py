@@ -20,6 +20,11 @@ REQUIRED = ["GrayLongwaveRadiation", "CorkLongwaveRadiation", "HeldSuarez",
 COMPILABLE = (sympl.TendencyComponent, sympl.ImplicitTendencyComponent, sympl.DiagnosticComponent)
 OTHERS = sorted(c.__name__ for c in _components.__all__
                 if issubclass(c, COMPILABLE) and c.__name__ not in REQUIRED)
+STEPPERS = ["SimplePhysics", "GridScaleCondensation", "SimpleBoundaryLayer", "DryConvectiveAdjustment"]
+ICE_STEPPERS = ["IceSheet", "LandIce", "SeaIce"]  # an input that grows dims
+OTHER_STEPPERS = sorted(c.__name__ for c in _components.__all__
+                        if issubclass(c, sympl.Stepper)
+                        and c.__name__ not in STEPPERS + ICE_STEPPERS)
 
 
 @pytest.fixture(autouse=True)
@@ -40,7 +45,7 @@ def sympl_call(component, state):
     state = copy.deepcopy(state)
     if isinstance(component, sympl.DiagnosticComponent):
         return {}, component(state)
-    if isinstance(component, sympl.ImplicitTendencyComponent):
+    if isinstance(component, (sympl.ImplicitTendencyComponent, sympl.Stepper)):
         return component(state, timedelta(seconds=DT))
     return component(state)
 
@@ -85,6 +90,12 @@ def check_against_sympl(component, state):
     for name, spec in compiled.tendencies.items():
         assert spec.dims == tuple(state[name].dims)
         assert spec.shape == tuple(state[name].shape)
+    for name, spec in compiled.outputs.items():
+        if name not in state:  # declared units and dims
+            continue
+        assert spec.units == state[name].attrs.get("units", "")
+        assert spec.dims == tuple(state[name].dims)
+        assert spec.shape == tuple(state[name].shape)
     return compiled
 
 
@@ -109,6 +120,75 @@ def test_other_components_match_sympl(name):
     except Exception as err:
         pytest.skip("{} cannot be built or run with defaults: {!r}".format(name, err))
     check_against_sympl(component, state)
+
+
+@pytest.mark.parametrize("name", STEPPERS)
+def test_stepper_matches_sympl(name):
+    component, state = make(name)
+    compiled = check_against_sympl(component, state)
+    assert compiled.kind == "stepper"
+    assert compiled.takes_timestep
+    assert set(compiled.outputs) == set(component.output_properties)
+
+
+@pytest.mark.parametrize("name", STEPPERS)
+def test_stepper_matches_sympl_under_the_unyt_backend(name):
+    sympl.set_backend(climt.UnytBackend())
+    component, state = make(name)
+    check_against_sympl(component, state)
+
+
+@pytest.mark.parametrize("name", OTHER_STEPPERS)
+def test_other_steppers_match_sympl(name):
+    try:
+        component, state = make(name)
+        sympl_call(component, state)
+    except Exception as err:
+        pytest.skip("{} cannot be built or run with defaults: {!r}".format(name, err))
+    check_against_sympl(component, state)
+
+
+@pytest.mark.parametrize("name", ICE_STEPPERS)
+def test_quantity_that_grows_dims_is_refused(name):
+    component, state = make(name)
+    with pytest.raises(climt.CompileError, match="height_on_ice_interface_levels") as info:
+        climt.compile_component(component, state)
+    assert name in str(info.value)
+    assert "broadcast" in str(info.value)
+
+
+@pytest.mark.parametrize("name", ICE_STEPPERS)
+def test_quantity_broadcast_in_the_state_matches_sympl(name):
+    component, state = make(name)
+    quantity = "height_on_ice_interface_levels"
+    old = state[quantity]
+    values = np.broadcast_to(
+        old.values[:, None, None],
+        old.shape + (2, 3))  # make() uses ny=2, nx=3
+    state[quantity] = sympl.DataArray(
+        np.array(values), dims=("ice_interface_levels", "lat", "lon"), attrs=dict(old.attrs))
+    try:
+        sympl_call(component, state)
+    except Exception as err:
+        pytest.skip("sympl cannot run {} on the broadcast state: {!r}".format(name, err))
+    check_against_sympl(component, state)
+
+
+def test_stepper_units_and_dimension_order_are_resolved():
+    component, state = resolved_state("SimplePhysics")
+    compiled = check_against_sympl(component, state)
+    assert compiled.outputs["air_temperature"].dims == ("lon", "lat", "mid_levels")
+
+
+def test_stepper_tendencies_in_diagnostics_match_sympl():
+    base = climt.DryConvectiveAdjustment
+    isolated = type("IsolatedDCA", (base,), {
+        "diagnostic_properties": copy.deepcopy(base.diagnostic_properties),
+        "input_properties": copy.deepcopy(base.input_properties)})
+    component = isolated(tendencies_in_diagnostics=True)
+    state = climt.get_default_state([component], grid_state=climt.get_grid(nx=3, ny=2, nz=10))
+    compiled = check_against_sympl(component, state)
+    assert "air_temperature_tendency_from_IsolatedDCA" in compiled.diagnostics
 
 
 def resolved_state(name):

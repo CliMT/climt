@@ -9,7 +9,9 @@ and returns raw arrays in *canonical form*:
 * a tendency of a quantity in ``state`` has units ``"(<state units>)/s"``
   and the state's dims and shape;
 * a diagnostic in ``state`` has the state's units and dims;
-* a tendency or diagnostic of a quantity not in ``state`` has the
+* a stepper output (the new value of a quantity) in ``state`` has the
+  state's units and dims;
+* a tendency, diagnostic or stepper output of a quantity not in ``state`` has the
   component's declared units and dims, ``"*"`` replaced by the wildcard dims
   in the order sympl matched them.
 
@@ -30,8 +32,9 @@ __all__ = ("ArraySpec", "CompileError", "CompiledComponent", "compile_component"
 
 _PROBE_DIM = "_compile_probe"
 
-# Component base class -> kind. Checked in order. Steppers join in Task 2.
+# Component base class -> kind. Checked in order.
 _KINDS = (
+    (sympl.Stepper, "stepper"),
     (sympl.TendencyComponent, "tendency"),
     (sympl.ImplicitTendencyComponent, "implicit"),
     (sympl.DiagnosticComponent, "diagnostic"),
@@ -125,7 +128,7 @@ class CompiledComponent(object):
     component
         The component it was built from.
     kind : str
-        ``"tendency"``, ``"implicit"`` or ``"diagnostic"``.
+        ``"tendency"``, ``"implicit"``, ``"diagnostic"`` or ``"stepper"``.
     takes_timestep : bool
         True if ``__call__`` requires ``timestep``.
     inputs, tendencies, diagnostics, outputs : dict
@@ -146,6 +149,19 @@ class CompiledComponent(object):
         self._first_plans = first_plans
         self._second_plans = second_plans
         self._array_call = component.array_call
+        # (first, second) of what __call__ returns.
+        if kind == "stepper":
+            self._specs = (diagnostics, outputs)
+            # sympl's Stepper inserts (new - old) / timestep * time_unit for
+            # each output under "<name>_tendency_from_<component name>".
+            self._tendency_diagnostics = (
+                [(component._get_tendency_name(name), name,
+                  component.time_unit_timedelta.total_seconds())
+                 for name in component.output_properties]
+                if component.tendencies_in_diagnostics else [])
+        else:
+            self._specs = (tendencies, diagnostics)
+            self._tendency_diagnostics = []
 
     def __repr__(self):
         return "CompiledComponent({}, kind={!r})".format(
@@ -171,7 +187,8 @@ class CompiledComponent(object):
     def __call__(self, raw, timestep=None, time=None):
         """Run the component on raw canonical arrays; ``raw`` is not modified.
 
-        Returns ``(tendencies, diagnostics)`` as dicts of raw canonical arrays.
+        Returns ``(tendencies, diagnostics)`` as dicts of raw canonical arrays;
+        for a stepper ``(diagnostics, outputs)``, as sympl's Stepper does.
         ``timestep`` is in seconds and is required iff ``takes_timestep``.
         """
         if self.takes_timestep and timestep is None:
@@ -187,6 +204,11 @@ class CompiledComponent(object):
             returned = self._array_call(state, timedelta(seconds=timestep))
         else:
             returned = self._array_call(state)
+        if self._tendency_diagnostics:
+            diagnostics, new_state = returned
+            for out_name, name, time_unit in self._tendency_diagnostics:
+                diagnostics[out_name] = (
+                    (new_state[name] - state[name]) / timestep * time_unit)
         first = {plan.name: plan.apply(returned[plan.source][plan.key])
                  for plan in self._first_plans}
         second = {plan.name: plan.apply(returned[plan.source][plan.key])
@@ -204,7 +226,7 @@ class CompiledComponent(object):
                 for name, array in arrays.items()
             }
 
-        return wrap(first, self.tendencies), wrap(second, self.diagnostics)
+        return wrap(first, self._specs[0]), wrap(second, self._specs[1])
 
 
 def compile_component(component, state):
@@ -212,7 +234,7 @@ def compile_component(component, state):
 
     Parameters
     ----------
-    component : sympl.TendencyComponent, sympl.ImplicitTendencyComponent or sympl.DiagnosticComponent
+    component : sympl.TendencyComponent, sympl.ImplicitTendencyComponent, sympl.DiagnosticComponent or sympl.Stepper
         A component with ``array_call``. sympl's wrappers are refused.
     state : dict
         An example state; its units and dimension order become the canonical
@@ -253,16 +275,22 @@ def compile_component(component, state):
     tendencies = {}
     tendency_plans = []
     for name, properties in getattr(component, "tendency_properties", {}).items():
-        dims = properties.get("dims")
-        if dims is None:
-            if name not in input_properties:
-                raise CompileError(
-                    "{}: tendency {} declares no dims and is not an input".format(cls, name))
-            dims = input_properties[name]["dims"]
+        dims = _declared_dims(cls, "tendency", name, properties, input_properties)
         key = _raw_name(name, properties, input_properties)
         spec, plan = ctx.output(name, properties["units"], dims, key, 0, tendency=True)
         tendencies[name] = spec
         tendency_plans.append(plan)
+
+    # A stepper returns (diagnostics, new_state); the others (x, diagnostics).
+    diagnostic_source = 0 if kind == "stepper" else 1
+    outputs = {}
+    output_plans = []
+    for name, properties in getattr(component, "output_properties", {}).items():
+        dims = _declared_dims(cls, "output", name, properties, input_properties)
+        key = _raw_name(name, properties, input_properties)
+        spec, plan = ctx.output(name, properties["units"], dims, key, 1)
+        outputs[name] = spec
+        output_plans.append(plan)
 
     diagnostics = {}
     diagnostic_plans = []
@@ -271,10 +299,11 @@ def compile_component(component, state):
         if name in added:
             continue
         key = _raw_name(name, properties, input_properties)
-        spec, plan = ctx.output(name, properties["units"], properties["dims"], key, 1)
+        spec, plan = ctx.output(name, properties["units"], properties["dims"], key,
+                                diagnostic_source)
         diagnostics[name] = spec
         diagnostic_plans.append(plan)
-    if getattr(component, "tendencies_in_diagnostics", False):
+    if kind != "stepper" and getattr(component, "tendencies_in_diagnostics", False):
         # sympl inserts each tendency, in its tendency units, under
         # "<name>_tendency_from_<component name>".
         for name, properties in component.tendency_properties.items():
@@ -286,9 +315,24 @@ def compile_component(component, state):
             diagnostics[out_name] = spec
             diagnostic_plans.append(plan)
 
+    if kind == "stepper":
+        first_plans, second_plans = diagnostic_plans, output_plans
+    else:
+        first_plans, second_plans = tendency_plans, diagnostic_plans
     return CompiledComponent(
-        component, kind, inputs, tendencies, diagnostics, {},
-        input_plans, tendency_plans, diagnostic_plans)
+        component, kind, inputs, tendencies, diagnostics, outputs,
+        input_plans, first_plans, second_plans)
+
+
+def _declared_dims(cls, what, name, properties, input_properties):
+    """Declared dims of a tendency or output; sympl falls back to the input's."""
+    dims = properties.get("dims")
+    if dims is None:
+        if name not in input_properties:
+            raise CompileError(
+                "{}: {} {} declares no dims and is not an input".format(cls, what, name))
+        dims = input_properties[name]["dims"]
+    return dims
 
 
 def _kind_of(component, cls):
@@ -296,8 +340,6 @@ def _kind_of(component, cls):
         raise CompileError(
             "{}: sympl wrappers cannot be compiled; compile the wrapped "
             "component instead".format(cls))
-    if isinstance(component, sympl.Stepper):
-        raise CompileError("{}: Stepper components are not supported yet".format(cls))
     for base, kind in _KINDS:
         if isinstance(component, base):
             if not callable(getattr(component, "array_call", None)):
@@ -306,8 +348,8 @@ def _kind_of(component, cls):
                 raise CompileError("{}: components that use tracers are not supported".format(cls))
             return kind
     raise CompileError(
-        "{}: not a sympl TendencyComponent, ImplicitTendencyComponent or "
-        "DiagnosticComponent".format(cls))
+        "{}: not a sympl TendencyComponent, ImplicitTendencyComponent, "
+        "DiagnosticComponent or Stepper".format(cls))
 
 
 def _raw_name(name, properties, input_properties):
@@ -432,8 +474,10 @@ class _Context(object):
         extra = [d for d in expanded if d not in state_spec.dims]
         if extra:
             raise CompileError(
-                "{}: {} is returned with dims {} that it does not have in the "
-                "state {}".format(self.cls, name, extra, state_spec.dims))
+                "{}: {} has dims {} in the state but is returned with dims {}; "
+                "broadcast {} in the example state to dims {}".format(
+                    self.cls, name, state_spec.dims, tuple(expanded), name,
+                    tuple(expanded)))
         lengths = dict(zip(state_spec.dims, state_spec.shape))
         for d in expanded:
             if self.dim_lengths.get(d, lengths[d]) != lengths[d]:
