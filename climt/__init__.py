@@ -28,6 +28,7 @@ from ._components import (
     SlabSurface,
 )
 from ._core import (
+    CompileError,
     ConstantNotFoundError,
     FortranUnavailableError,
     UnytBackend,
@@ -36,6 +37,7 @@ from ._core import (
     bolton_dqsat_dT,
     bolton_q_sat,
     calculate_q_sat,
+    compile_component,
     fortran_status,
     get_constant_checked,
     get_default_state,
@@ -102,6 +104,8 @@ __all__ = (
     SimpleBoundaryLayer,
     show_versions,
     list_components,
+    compile_component,
+    CompileError,
 )
 
 

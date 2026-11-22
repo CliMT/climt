@@ -6,6 +6,7 @@ from .atmospheric_properties import (
     load_atmospheric_properties,
     reset_atmospheric_properties,
 )
+from .compile import CompileError, compile_component
 from .condensibles import (
     CondensibleParams,
     get_condensible_params,
@@ -60,4 +61,6 @@ __all__ = (
     "UnytTimeDelta",
     "list_components",
     "show_versions",
+    "CompileError",
+    "compile_component",
 )
