@@ -7,7 +7,7 @@ Unreleased
 
 * **Per-column Emanuel parameters** — ``EmanuelConvectionPython``'s numba
   kernel takes per-column parameter arrays (all ``EmanuelParams`` fields
-  except ``IPBL``, ``MINORIG`` and ``DELT0``) and has serial and parallel
+  except ``IPBL``, ``MINORIG``, ``DELT0`` and ``RD``) and has serial and parallel
   variants. New ``climt._core.parameters.with_parameters`` returns a copy of
   a component with per-column values for its declared parameters.
 

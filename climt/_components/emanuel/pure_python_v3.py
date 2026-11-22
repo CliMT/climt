@@ -50,7 +50,7 @@ class EmanuelParams(NamedTuple):
 class EmanuelConvectionPython(ImplicitTendencyComponent):
     per_column_parameters = tuple(
         name for name in EmanuelParams._fields
-        if name not in ("IPBL", "MINORIG", "DELT0"))
+        if name not in ("IPBL", "MINORIG", "DELT0", "RD"))
 
     input_properties = {
         "air_temperature": {"dims": ["*", "mid_levels"], "units": "degK"},
@@ -175,17 +175,9 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
             transposed = True
         nlev, ncol = t.shape
         params = self._per_column_params(ncol)
-        rd = params.RD
-        if np.all(rd == rd[0]):
-            qs = compute_qs(t, p, self._cond, float(rd[0]))
-        else:
-            # compute_qs takes a scalar RD; columns are independent.
-            qs = np.empty_like(t)
-            for i in range(ncol):
-                qs[:, i:i + 1] = compute_qs(
-                    np.ascontiguousarray(t[:, i:i + 1]),
-                    np.ascontiguousarray(p[:, i:i + 1]),
-                    self._cond, float(rd[i]))
+        # RD is not a per-column parameter, but with_parameters stores every
+        # field as an (ncol,) array; it holds one value, passed as a scalar.
+        qs = compute_qs(t, p, self._cond, float(np.ravel(self._params.RD)[0]))
         cbmf = state.get("cloud_base_mass_flux", np.zeros(ncol)).copy()
         ntra = 0
         tra = np.zeros((nlev, 1))

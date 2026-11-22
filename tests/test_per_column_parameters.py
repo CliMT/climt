@@ -87,11 +87,12 @@ def test_per_column_equals_columns_alone(name, parameter, values):
     assert varied
 
 
-def test_undeclared_parameter_is_refused():
+@pytest.mark.parametrize("parameter", ["IPBL", "RD"])
+def test_undeclared_parameter_is_refused(parameter):
     with pytest.raises(ValueError) as info:
-        with_parameters(EmanuelConvectionPython(), {"IPBL": np.zeros(6)}, 6)
+        with_parameters(EmanuelConvectionPython(), {parameter: np.zeros(6)}, 6)
     message = str(info.value)
-    for word in ("EmanuelConvectionPython", "IPBL", "ALPHA"):
+    for word in ("EmanuelConvectionPython", parameter, "ALPHA"):
         assert word in message
 
 
