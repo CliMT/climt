@@ -6,6 +6,9 @@ shape ``(ncol,)``, so that every column can have its own value.
 scalars.
 """
 
+import copy
+import typing
+
 import numpy as np
 
 PARALLEL_MIN_COLUMNS = 32
@@ -13,7 +16,10 @@ PARALLEL_MIN_COLUMNS = 32
 
 
 def _field_dtype(cls, name):
-    annotations = getattr(cls, "__annotations__", {})
+    try:
+        annotations = typing.get_type_hints(cls)
+    except Exception:
+        annotations = {}
     return np.int64 if annotations.get(name) is int else np.float64
 
 
@@ -47,3 +53,36 @@ def per_column(params, ncol):
                 "parameter {!r} has shape {}; expected a scalar, shape (1,) "
                 "or shape ({},)".format(name, array.shape, ncol))
     return cls(*fields)
+
+
+def with_parameters(component, values, ncol):
+    """A shallow copy of ``component`` with per-column parameter values.
+
+    Args:
+        component: A component with a NamedTuple ``_params`` and a
+            ``per_column_parameters`` class attribute.
+        values (dict): Parameter name to value (scalar or shape (ncol,)).
+        ncol (int): Number of columns.
+
+    Returns:
+        A shallow copy whose ``_params`` is ``per_column(...)`` of the
+        original's, with the fields named in ``values`` replaced. The
+        original component is not modified.
+
+    Raises:
+        ValueError: If a name is not in
+        ``type(component).per_column_parameters``. The message names the
+        component class, the parameter and the declared names.
+    """
+    cls = type(component)
+    declared = tuple(getattr(cls, "per_column_parameters", ()))
+    for name in values:
+        if name not in declared:
+            raise ValueError(
+                "{} does not declare {!r} as a per-column parameter; "
+                "declared: {}".format(cls.__name__, name, ", ".join(declared)))
+    new = copy.copy(component)
+    new._params = per_column(component._params._replace(**values), ncol)
+    if hasattr(new, "_column_params"):
+        new._column_params = None
+    return new

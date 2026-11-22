@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import types
+
 import numpy as np
 
 try:
@@ -25,3 +27,16 @@ def jit_compile(func=None, backend=np, **kwargs):
     if HAS_NUMBA and backend is np:
         return njit(func, **kwargs)
     return func
+
+
+def _renamed(func, name):
+    """A copy of ``func`` under another name.
+
+    numba's on-disk cache files entries under the function's name and first
+    line and keys them by signature, not by compile options, so a serial and
+    a parallel dispatcher of one function would load each other's code.
+    """
+    clone = types.FunctionType(func.__code__, func.__globals__, name,
+                               func.__defaults__, func.__closure__)
+    clone.__qualname__ = name
+    return clone

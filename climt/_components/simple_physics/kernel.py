@@ -8,12 +8,11 @@ The Fortran module's constants become fields of :class:`SimplePhysicsParams`
 (one value per column) and its switches become :class:`SimplePhysicsFlags`.
 """
 
-import types
 from typing import NamedTuple
 
 import numpy as np
 
-from ..._core.backend import HAS_NUMBA, prange
+from ..._core.backend import HAS_NUMBA, _renamed, prange
 from ..._core.parameters import PARALLEL_MIN_COLUMNS
 
 if HAS_NUMBA:
@@ -286,19 +285,6 @@ def _simple_physics_columns(u, v, t, q, p, p_int, ps, ts, qs, lat, dt,
 
     return (t_out, u_out, v_out, q_out, precip, sensible_heat_flux,
             latent_heat_flux)
-
-
-def _renamed(func, name):
-    """A copy of ``func`` under another name.
-
-    numba's on-disk cache files entries under the function's name and first
-    line and keys them by signature, not by compile options, so a serial and
-    a parallel dispatcher of one function would load each other's code.
-    """
-    clone = types.FunctionType(func.__code__, func.__globals__, name,
-                               func.__defaults__, func.__closure__)
-    clone.__qualname__ = name
-    return clone
 
 
 if HAS_NUMBA:

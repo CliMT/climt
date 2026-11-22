@@ -9,7 +9,8 @@ from sympl import (
 )
 
 from ..._core import ensure_contiguous_state
-from ..._core.backend import jit_compile, prange
+from ..._core.backend import _renamed, prange
+from ..._core.parameters import PARALLEL_MIN_COLUMNS, per_column
 from ..._core.condensibles import get_condensible_params, _lcl_pressure, _sat_vap_pressure, compute_qs
 
 try:
@@ -47,6 +48,10 @@ class EmanuelParams(NamedTuple):
 
 
 class EmanuelConvectionPython(ImplicitTendencyComponent):
+    per_column_parameters = tuple(
+        name for name in EmanuelParams._fields
+        if name not in ("IPBL", "MINORIG", "DELT0"))
+
     input_properties = {
         "air_temperature": {"dims": ["*", "mid_levels"], "units": "degK"},
         "specific_humidity": {"dims": ["*", "mid_levels"], "units": "kg/kg"},
@@ -138,7 +143,18 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
             DELT0=float(self.DELT0),
         )
         self._cond = get_condensible_params()
+        # (params, ncol, per_column(params, ncol)) from the last call.
+        self._column_params = None
         super(EmanuelConvectionPython, self).__init__(**kwargs)
+
+    def _per_column_params(self, ncol):
+        """``per_column(self._params, ncol)``, rebuilt only when ncol or
+        ``_params`` changes."""
+        cached = self._column_params
+        if cached is None or cached[0] is not self._params or cached[1] != ncol:
+            cached = (self._params, ncol, per_column(self._params, ncol))
+            self._column_params = cached
+        return cached[2]
 
     @ensure_contiguous_state
     def array_call(self, state, timestep):
@@ -158,7 +174,18 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
             ph = ph.T
             transposed = True
         nlev, ncol = t.shape
-        qs = compute_qs(t, p, self._cond, self._params.RD)
+        params = self._per_column_params(ncol)
+        rd = params.RD
+        if np.all(rd == rd[0]):
+            qs = compute_qs(t, p, self._cond, float(rd[0]))
+        else:
+            # compute_qs takes a scalar RD; columns are independent.
+            qs = np.empty_like(t)
+            for i in range(ncol):
+                qs[:, i:i + 1] = compute_qs(
+                    np.ascontiguousarray(t[:, i:i + 1]),
+                    np.ascontiguousarray(p[:, i:i + 1]),
+                    self._cond, float(rd[i]))
         cbmf = state.get("cloud_base_mass_flux", np.zeros(ncol)).copy()
         ntra = 0
         tra = np.zeros((nlev, 1))
@@ -183,7 +210,7 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
             delt,
             cbmf,
             tra_vector,
-            self._params,
+            params,
             self._cond,
         )
         ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag = results
@@ -834,8 +861,18 @@ def _convect_functional_np(
     return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
 
 
-@jit_compile(backend=np, parallel=True)
-def _numpy_vectorized_convect(
+@njit
+def _params_at(params, i):
+    """Column ``i``'s values of per-column ``params``, as scalars."""
+    return EmanuelParams(
+        params.IPBL[i], params.MINORIG[i], params.ELCRIT[i], params.TLCRIT[i],
+        params.ENTP[i], params.SIGD[i], params.SIGS[i], params.OMTRAIN[i],
+        params.OMTSNOW[i], params.COEFFR[i], params.COEFFS[i], params.CU[i],
+        params.BETA[i], params.DTMAX[i], params.ALPHA[i], params.DAMP[i],
+        params.CPD[i], params.RD[i], params.G[i], params.DELT0[i])
+
+
+def _convect_columns(
     t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params, cond
 ):
     nlev, ncol = t.shape
@@ -865,7 +902,7 @@ def _numpy_vectorized_convect(
             DELT,
             cbmf[i],
             tra[:, :, i],
-            params,
+            _params_at(params, i),
             cond,
         )
         (
@@ -882,6 +919,30 @@ def _numpy_vectorized_convect(
             iflag[i],
         ) = res
     return ft, fq, fu, fv, precip, wd, tprime, qprime, cbmf_new, outcape, iflag
+
+
+if HAS_NUMBA:
+    _convect_serial = njit(cache=True)(
+        _renamed(_convect_columns, "_convect_serial"))
+    _convect_parallel = njit(parallel=True, cache=True)(
+        _renamed(_convect_columns, "_convect_parallel"))
+else:
+    _convect_serial = _convect_columns
+    _convect_parallel = _convect_columns
+
+
+def _numpy_vectorized_convect(
+    t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra, params, cond
+):
+    """Emanuel convection on every column; ``params`` holds per-column
+    arrays (see :func:`per_column`). Uses the parallel variant at or above
+    PARALLEL_MIN_COLUMNS columns."""
+    if t.shape[1] >= PARALLEL_MIN_COLUMNS:
+        kernel = _convect_parallel
+    else:
+        kernel = _convect_serial
+    return kernel(t, q, qs, u, v, p, ph, ND, NL, NTRA, DELT, cbmf, tra,
+                  params, cond)
 
 
 EmanuelConvectionPythonV3 = EmanuelConvectionPython

@@ -5,6 +5,12 @@ History
 Unreleased
 ----------
 
+* **Per-column Emanuel parameters** — ``EmanuelConvectionPython``'s numba
+  kernel takes per-column parameter arrays (all ``EmanuelParams`` fields
+  except ``IPBL``, ``MINORIG`` and ``DELT0``) and has serial and parallel
+  variants. New ``climt._core.parameters.with_parameters`` returns a copy of
+  a component with per-column values for its declared parameters.
+
 * **Requires climt-fortran 2.0** — climt now needs ``climt-fortran>=2,<3``
   (interface version 2): cffi, no Cython; simple physics and dcmip removed
   from it, now numba in climt. climt-fortran 2 depends on numba, so
