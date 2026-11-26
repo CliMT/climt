@@ -128,7 +128,7 @@ own, to a relative tolerance of 10⁻¹².
 
 `build_column_model(..., threads=None)` sets numba's thread count during
 `run`. By default it uses one thread below `PARALLEL_MIN_COLUMNS` columns
-(currently 4096) and `numba.config.NUMBA_NUM_THREADS` at or above it. Pass
+(32) and `numba.config.NUMBA_NUM_THREADS` at or above it. Pass
 `threads=k` to choose. `run` restores the previous thread count when it
 returns, and also when it raises.
 
@@ -154,8 +154,17 @@ For one column the compiled model is about five times faster than the sympl
 loop. In the sympl loop about 80% of the time is spent outside the
 components' `array_call`; compiled, about 20%. With 16 columns or more the
 physics dominates (2–6% outside), and the time per column settles at about
-0.16 ms per step. Threads help by at most 2%, because most of the step is
-spent in the RRTMG Fortran, which runs serially.
+0.16 ms per step.
+
+For the GMD column, threading gains are negligible: 11 threads differ from one
+thread by 2% or less at every column count, sometimes slower, which is within
+the noise. Most of the step is spent in the RRTMG Fortran, which runs
+serially. For that reason `PARALLEL_MIN_COLUMNS` was left at 32 rather than
+moved on this measurement. Note that the benchmark does not separate the
+thread count from the kernel variant: `PARALLEL_MIN_COLUMNS` also selects the
+serial or parallel numba kernel of `EmanuelConvectionPython` and
+`SimplePhysics`, so at 1 and 16 columns both thread settings ran the serial
+kernels, and at 256 and 4096 both ran the parallel ones.
 
 ## Example
 

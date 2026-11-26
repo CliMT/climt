@@ -26,8 +26,10 @@ Unreleased
 * **Threads** — ``build_column_model(..., threads=None)`` chooses numba's
   thread count for ``ColumnModel.run`` (1 below ``PARALLEL_MIN_COLUMNS``
   columns, else ``NUMBA_NUM_THREADS``); ``run`` restores the previous count on
-  exit, also on an exception. ``PARALLEL_MIN_COLUMNS`` is set from
-  ``benchmarks/scm_build.py`` (results in ``benchmarks/results/scm_build.json``).
+  exit, also on an exception. ``benchmarks/scm_build.py`` (results in
+  ``benchmarks/results/scm_build.json``) shows negligible threading gains
+  for the GMD column, since RRTMG runs serially; ``PARALLEL_MIN_COLUMNS``
+  stays at 32.
   New user-guide page "Column ensembles" and example
   ``examples/scm_ensemble.py``.
 
