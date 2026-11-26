@@ -26,6 +26,9 @@ from ...._core.fortran import load_extension, unavailable_error
 _rrtmg_sw = load_extension("_rrtmg_sw")
 _FORTRAN_AVAILABLE = _rrtmg_sw is not None
 
+# The solar constant the (global) Fortran state was last initialised with.
+_initialised_solar_const = [None]
+
 
 class RRTMGShortwave(TendencyComponent):
     """
@@ -35,6 +38,9 @@ class RRTMGShortwave(TendencyComponent):
     (i.e, emission from the sun).
 
     """
+
+    #: Public name -> attribute holding the per-call value (see Scenarios).
+    grouped_parameters = {"stellar_irradiance": "_solar_const"}
 
     num_shortwave_bands = 14
     num_ecmwf_aerosols = 6
@@ -410,21 +416,25 @@ class RRTMGShortwave(TendencyComponent):
         )
 
         if not mcica:
-            _rrtmg_sw.initialise_rrtm_radiation(
-                self._Cpd,
-                self._solar_const,
-                self._fac_sunspot_coeff,
-                self._solar_var_by_band,
-                self._cloud_overlap,
-                self._cloud_optics,
-                self._ice_props,
-                self._liq_props,
-                self._aerosol_type,
-                self._solar_var_flag,
-            )
+            self._initialise()
 
         self._mcica_cache = {}
         super(RRTMGShortwave, self).__init__(**kwargs)
+
+    def _initialise(self):
+        _rrtmg_sw.initialise_rrtm_radiation(
+            self._Cpd,
+            self._solar_const,
+            self._fac_sunspot_coeff,
+            self._solar_var_by_band,
+            self._cloud_overlap,
+            self._cloud_optics,
+            self._ice_props,
+            self._liq_props,
+            self._aerosol_type,
+            self._solar_var_flag,
+        )
+        _initialised_solar_const[0] = self._solar_const
 
     def _get_mcica_arrays(self, mid_levels, num_cols):
 
@@ -611,6 +621,9 @@ class RRTMGShortwave(TendencyComponent):
                 mcica_properties["cloud_water_droplet_radius"],
             )
         else:
+            # A copy with another _solar_const (grouped_parameters) re-initialises.
+            if _initialised_solar_const[0] != self._solar_const:
+                self._initialise()
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes(
                 state["air_temperature"].shape[1],
                 state["air_temperature"].shape[0],

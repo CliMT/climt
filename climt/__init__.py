@@ -41,6 +41,7 @@ from ._core import (
     build_column_model,
     ColumnModel,
     RunResult,
+    Scenarios,
     fortran_status,
     get_constant_checked,
     get_default_state,
@@ -112,6 +113,7 @@ __all__ = (
     build_column_model,
     ColumnModel,
     RunResult,
+    Scenarios,
 )
 
 

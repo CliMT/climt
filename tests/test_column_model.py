@@ -175,3 +175,149 @@ def test_to_state_round_trips():
     assert restored["time"] == model.time
     np.testing.assert_array_equal(restored["air_temperature"].values,
                                   model.state["air_temperature"])
+
+
+def test_dry_column_matches_sympl_under_the_unyt_backend():
+    sympl.set_backend(climt.UnytBackend())
+    state, kwargs = dry_column()
+    assert isinstance(state["air_temperature"], climt.UnytStateContainer)
+    check_run(dry_column, timestep=climt.UnytTimeDelta(seconds=300))
+
+
+# Scenarios: many single-column scenarios as the columns of one model.
+
+SURFACE_TEMPERATURES = [295., 298., 301., 304.]
+ALPHAS = [0.1, 0.2, 0.2, 0.3]
+DRAG = [7e-4] * 4
+
+
+def scenario_column():
+    """The GMD column with EmanuelConvectionPython; (state, kwargs, components by role)."""
+    state, kwargs = gmd_column("EmanuelConvectionPython")
+    convection, _, radiation_sw, _ = kwargs["tendency_components"]
+    roles = {"convection": convection, "simple_physics": kwargs["steppers"][0],
+             "radiation_sw": radiation_sw}
+    return state, kwargs, roles
+
+
+def alone(surface_temperature=300., alpha=None, drag=None, solar=None):
+    """(state, kwargs) of one scenario run alone, with scalar parameters."""
+    state, kwargs, roles = scenario_column()
+    set_values(state, "surface_temperature", surface_temperature)
+    if alpha is not None:
+        c = roles["convection"]
+        c._params = c._params._replace(ALPHA=alpha)
+    if drag is not None:
+        c = roles["simple_physics"]
+        c._params = c._params._replace(base_momentum_drag_coefficient=drag)
+    if solar is not None:
+        roles["radiation_sw"]._solar_const = solar
+    return state, kwargs
+
+
+def column(model, name, i):
+    from climt._core.column_model import _get_column
+    return _get_column(model.state[name], model.specs[name].dims, model._columns, i)
+
+
+def assert_column_matches(model, i, expected, step):
+    assert model.time == expected["time"]
+    for name in model.state:
+        spec = model.specs[name]
+        value = expected[name]
+        if spec.units and "units" in value.attrs:
+            value = value.to_units(spec.units)
+        value = np.asarray(value.transpose(*spec.dims).values)
+        actual = column(model, name, i)
+        if np.issubdtype(value.dtype, np.number):
+            np.testing.assert_allclose(actual, value, rtol=1e-12, atol=0,
+                                       err_msg="{} of scenario {} at step {}".format(
+                                           name, i, step))
+        else:
+            np.testing.assert_array_equal(actual, value, err_msg=name)
+
+
+def scenario_model(surface_temperatures=SURFACE_TEMPERATURES, alphas=ALPHAS, solar=None):
+    state, kwargs, roles = scenario_column()
+    parameters = {(roles["convection"], "ALPHA"): alphas,
+                  (roles["simple_physics"], "base_momentum_drag_coefficient"): DRAG}
+    if solar is not None:
+        parameters = {(roles["radiation_sw"], "stellar_irradiance"): solar}
+    scenarios = climt.Scenarios(
+        len(surface_temperatures), inputs={"surface_temperature": surface_temperatures},
+        parameters=parameters)
+    return climt.build_column_model(state, scenarios=scenarios, **kwargs)
+
+
+def check_scenarios(model, runs):
+    expected = [sympl_run(state, kwargs, N_STEPS) for state, kwargs in runs]
+    for step in range(N_STEPS):
+        model.step()
+        for i, states in enumerate(expected):
+            assert_column_matches(model, i, states[step], step + 1)
+
+
+def test_scenarios_match_sympl_runs_alone():
+    model = scenario_model()
+    check_scenarios(model, [alone(t, alpha=a, drag=d)
+                            for t, a, d in zip(SURFACE_TEMPERATURES, ALPHAS, DRAG)])
+
+
+def test_identical_scenarios_give_identical_columns():
+    model = scenario_model(surface_temperatures=[295., 298., 298., 304.])
+    model.run(N_STEPS)
+    for name in model.state:
+        np.testing.assert_array_equal(column(model, name, 1), column(model, name, 2),
+                                      err_msg=name)
+
+
+def test_grouped_stellar_irradiance_matches_and_warns():
+    solar = [1360., 1360., 1300., 1300.]
+    with pytest.warns(UserWarning, match="2 groups"):
+        model = scenario_model(solar=solar)
+    check_scenarios(model, [alone(t, solar=s) for t, s in zip(SURFACE_TEMPERATURES, solar)])
+    # The solar constant reaches the Fortran: top-of-atmosphere insolation scales with it.
+    toa = [column(model, "downwelling_shortwave_flux_in_air", i).max() for i in range(4)]
+    np.testing.assert_allclose(toa[2] / toa[0], 1300. / 1360., rtol=1e-9)
+
+
+def test_continuing_a_run():
+    model = scenario_model()
+    model.run(25)
+    model.run(25)
+    fresh = scenario_model()
+    fresh.run(50)
+    assert model.time == fresh.time
+    for name in fresh.state:
+        np.testing.assert_array_equal(model.state[name], fresh.state[name], err_msg=name)
+
+
+def test_to_state_of_a_scenario():
+    model = scenario_model()
+    model.step()
+    restored = model.to_state(scenario=2)
+    assert restored["surface_temperature"].shape == (1, 1)
+    assert restored["air_temperature"].dims == ("mid_levels", "lat", "lon")
+    np.testing.assert_array_equal(restored["air_temperature"].values,
+                                  column(model, "air_temperature", 2))
+
+
+def test_scenario_count_must_match_the_columns():
+    state, kwargs, _ = scenario_column()
+    state = climt._core.column_model._scenario_state(state, 4)[0]
+    with pytest.raises(ValueError, match="3 scenarios.*4 columns"):
+        climt.build_column_model(state, scenarios=climt.Scenarios(3), **kwargs)
+
+
+@pytest.mark.parametrize("scenarios,match", [
+    (lambda c: climt.Scenarios(4, inputs={"surface_temperature": np.ones(3)}),
+     "surface_temperature"),
+    (lambda c: climt.Scenarios(4, inputs={"air_temperature": np.ones((4, 3))}),
+     "air_temperature"),
+    (lambda c: climt.Scenarios(4, parameters={(c, "ALPHA"): np.ones((4, 2))}), "ALPHA"),
+    (lambda c: climt.Scenarios(4, parameters={(c, "IPBL"): np.ones(4)}), "IPBL"),
+])
+def test_scenario_errors(scenarios, match):
+    state, kwargs, roles = scenario_column()
+    with pytest.raises(ValueError, match=match):
+        climt.build_column_model(state, scenarios=scenarios(roles["convection"]), **kwargs)

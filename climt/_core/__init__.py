@@ -6,7 +6,7 @@ from .atmospheric_properties import (
     load_atmospheric_properties,
     reset_atmospheric_properties,
 )
-from .column_model import ColumnModel, RunResult, build_column_model
+from .column_model import ColumnModel, RunResult, Scenarios, build_column_model
 from .compile import CompileError, compile_component
 from .condensibles import (
     CondensibleParams,
@@ -65,6 +65,7 @@ __all__ = (
     "CompileError",
     "compile_component",
     "build_column_model",
+    "Scenarios",
     "ColumnModel",
     "RunResult",
 )

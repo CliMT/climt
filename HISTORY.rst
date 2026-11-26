@@ -14,6 +14,15 @@ Unreleased
   constants once at construction, as ``SimplePhysics`` does: construct a new
   one after changing constants.
 
+* **Scenarios** — ``build_column_model(..., scenarios=climt.Scenarios(n, inputs,
+  parameters))`` runs ``n`` single-column scenarios as the columns of one model
+  (a one-column state is expanded along ``lon``), with per-scenario inputs,
+  per-column parameters and grouped parameters
+  (``RRTMGShortwave.grouped_parameters = {"stellar_irradiance": ...}``; the
+  non-McICA path now re-initialises the Fortran when the solar constant
+  changes). ``ColumnModel.to_state(scenario=i)`` returns one column. A
+  ``UnytTimeDelta`` timestep now works.
+
 * **Per-column Emanuel parameters** — ``EmanuelConvectionPython``'s numba
   kernel takes per-column parameter arrays (all ``EmanuelParams`` fields
   except ``IPBL``, ``MINORIG``, ``DELT0`` and ``RD``) and has serial and parallel
