@@ -188,5 +188,5 @@
       "outside_kernels": 0.023040542789517504
     }
   ],
-  "notes": "Threading gains for the GMD column are negligible (<=2%, within noise) because RRTMG runs serially; PARALLEL_MIN_COLUMNS was left at 32 for that reason. The benchmark does not separate thread count from kernel variant: PARALLEL_MIN_COLUMNS also selects the serial/parallel Emanuel-Python and SimplePhysics kernels, so both thread settings ran the same variant at each column count."
+  "notes": "Threading gains for the GMD column are negligible (within about 8%, with no consistent sign) because RRTMG runs serially; PARALLEL_MIN_COLUMNS was left at 32 for that reason. The benchmark does not separate thread count from kernel variant: PARALLEL_MIN_COLUMNS also selects the serial/parallel Emanuel-Python and SimplePhysics kernels, so both thread settings ran the same variant at each column count. 'commit' is the base commit the benchmark ran on; the script itself was added in 54a98a8b."
 }

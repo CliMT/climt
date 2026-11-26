@@ -157,8 +157,8 @@ physics dominates (2–6% outside), and the time per column settles at about
 0.16 ms per step.
 
 For the GMD column, threading gains are negligible: 11 threads differ from one
-thread by 2% or less at every column count, sometimes slower, which is within
-the noise. Most of the step is spent in the RRTMG Fortran, which runs
+thread by within about 8%, with no consistent sign (at one column with
+`EmanuelConvectionPython`, 11 threads are 8% slower). Most of the step is spent in the RRTMG Fortran, which runs
 serially. For that reason `PARALLEL_MIN_COLUMNS` was left at 32 rather than
 moved on this measurement. Note that the benchmark does not separate the
 thread count from the kernel variant: `PARALLEL_MIN_COLUMNS` also selects the

@@ -28,7 +28,8 @@ Unreleased
   columns, else ``NUMBA_NUM_THREADS``); ``run`` restores the previous count on
   exit, also on an exception. ``benchmarks/scm_build.py`` (results in
   ``benchmarks/results/scm_build.json``) shows negligible threading gains
-  for the GMD column, since RRTMG runs serially; ``PARALLEL_MIN_COLUMNS``
+  for the GMD column (within about 8%, with no consistent sign), since RRTMG
+  runs serially; ``PARALLEL_MIN_COLUMNS``
   stays at 32.
   New user-guide page "Column ensembles" and example
   ``examples/scm_ensemble.py``.
@@ -41,7 +42,7 @@ Unreleased
 * **Per-column Emanuel parameters** — ``EmanuelConvectionPython``'s numba
   kernel takes per-column parameter arrays (all ``EmanuelParams`` fields
   except ``IPBL``, ``MINORIG``, ``DELT0`` and ``RD``) and has serial and parallel
-  variants. New ``climt._core.parameters.with_parameters`` returns a copy of
+  variants. New ``climt.with_parameters`` returns a copy of
   a component with per-column values for its declared parameters.
 
 * **Requires climt-fortran 2.0** — climt now needs ``climt-fortran>=2,<3``

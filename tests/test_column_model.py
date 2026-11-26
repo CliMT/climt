@@ -376,3 +376,7 @@ def test_threads_out_of_range(extra):
     state, kwargs = dry_column()
     with pytest.raises(ValueError, match="threads"):
         climt.build_column_model(state, threads=threads, **kwargs)
+
+
+def test_with_parameters_is_exported():
+    assert climt.with_parameters is climt._core.parameters.with_parameters

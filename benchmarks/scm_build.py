@@ -76,6 +76,7 @@ def make_column(convection, ncol=None):
 
 
 def bench_sympl(convection, ncol, warmup, steps):
+    previous = sympl.get_backend()
     sympl.set_backend(climt.UnytBackend())
     try:
         state, tendency_components, stepper = make_column(convection, ncol)
@@ -105,7 +106,7 @@ def bench_sympl(convection, ncol, warmup, steps):
             state = step(state)
         elapsed = time.perf_counter() - start
     finally:
-        sympl.set_backend(sympl.DataArrayBackend())
+        sympl.set_backend(previous)
     return elapsed, sum(t.total for t in timers)
 
 
@@ -179,6 +180,7 @@ def main():
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w") as f:
         json.dump(out, f, indent=2)
+        f.write("\n")
     print("wrote", args.out)
 
 
