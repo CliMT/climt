@@ -23,6 +23,11 @@ Unreleased
   changes). ``ColumnModel.to_state(scenario=i)`` returns one column. A
   ``UnytTimeDelta`` timestep now works.
 
+* **Threads** — ``build_column_model(..., threads=None)`` chooses numba's
+  thread count for ``ColumnModel.run`` (1 below ``PARALLEL_MIN_COLUMNS``
+  columns, else ``NUMBA_NUM_THREADS``); ``run`` restores the previous count on
+  exit, also on an exception.
+
 * **Per-column Emanuel parameters** — ``EmanuelConvectionPython``'s numba
   kernel takes per-column parameter arrays (all ``EmanuelParams`` fields
   except ``IPBL``, ``MINORIG``, ``DELT0`` and ``RD``) and has serial and parallel

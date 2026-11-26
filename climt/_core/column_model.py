@@ -20,7 +20,7 @@ import numpy as np
 import sympl
 
 from .compile import CompileError, compile_component
-from .parameters import with_parameters
+from .parameters import PARALLEL_MIN_COLUMNS, with_parameters
 
 __all__ = ("ColumnModel", "RunResult", "Scenarios", "build_column_model")
 
@@ -46,16 +46,16 @@ def build_column_model(state, *, timestep, tendency_components=(), diagnostic_co
         Quantities reset to their values in ``state`` after every step.
     scenarios : Scenarios, optional
         Many scenarios run as columns; see ``Scenarios``.
-    threads
-        Not yet supported; must be None.
+    threads : int, optional
+        numba threads used during ``run``. Default: 1 below
+        ``PARALLEL_MIN_COLUMNS`` columns, else ``numba.config.NUMBA_NUM_THREADS``.
+        Ignored without numba.
 
     Raises
     ------
     CompileError
         For any unsupported component or configuration.
     """
-    if threads is not None:
-        raise NotImplementedError("threads are not supported yet")
     if time_stepping not in _TIME_STEPPING:
         raise CompileError(
             "time_stepping {!r} is not supported; use one of {}".format(
@@ -141,8 +141,35 @@ def build_column_model(state, *, timestep, tendency_components=(), diagnostic_co
                 "prescribed quantity {} is not read or written by any component".format(name))
         prescribed_values[name] = raw[name].copy()
 
-    return ColumnModel(raw, specs, state["time"], timestep, diagnostic_cs, tendency_cs,
-                       stepper_cs, order, prescribed_values, columns)
+    model = ColumnModel(raw, specs, state["time"], timestep, diagnostic_cs, tendency_cs,
+                        stepper_cs, order, prescribed_values, columns)
+    model.threads = _choose_threads(state, threads)
+    return model
+
+
+def _numba():
+    try:
+        import numba
+    except ImportError:
+        return None
+    return numba
+
+
+def _choose_threads(state, threads):
+    """The numba thread count for ``run``; None without numba."""
+    numba = _numba()
+    if numba is None:
+        return None
+    available = numba.config.NUMBA_NUM_THREADS
+    if threads is None:
+        lengths = _dim_lengths(state)
+        ncol = int(np.prod([lengths[d] for d in _horizontal_dims(state)]))
+        return 1 if ncol < PARALLEL_MIN_COLUMNS else available
+    if (not isinstance(threads, (int, np.integer)) or isinstance(threads, bool)
+            or not 1 <= threads <= available):
+        raise ValueError("threads must be an integer from 1 to {}, got {!r}"
+                         .format(available, threads))
+    return int(threads)
 
 
 class RunResult(object):
@@ -183,6 +210,8 @@ class ColumnModel(object):
     specs : dict
         ``{name: ArraySpec}`` of ``state``.
     time : datetime.datetime
+    threads : int or None
+        numba's thread count during ``run`` (restored afterwards); None without numba.
     """
 
     def __init__(self, state, specs, time, timestep, diagnostic_components,
@@ -201,6 +230,8 @@ class ColumnModel(object):
         self._history = []
         # (horizontal dims, their lengths) when built with scenarios.
         self._columns = columns
+        # numba threads during run; None without numba.
+        self.threads = None
 
     def step(self):
         """Advance the model one timestep, in place."""
@@ -272,12 +303,20 @@ class ColumnModel(object):
                 raise KeyError("{} is not in the model state".format(name))
         times = []
         stored = {name: [] for name in names}
-        for i in range(n_steps):
-            self.step()
-            if (i + 1) % output_every == 0:
-                times.append(self.time)
-                for name in names:
-                    stored[name].append(np.array(self.state[name]))
+        numba = _numba() if self.threads is not None else None
+        if numba is not None:
+            previous = numba.get_num_threads()
+            numba.set_num_threads(self.threads)
+        try:
+            for i in range(n_steps):
+                self.step()
+                if (i + 1) % output_every == 0:
+                    times.append(self.time)
+                    for name in names:
+                        stored[name].append(np.array(self.state[name]))
+        finally:
+            if numba is not None:
+                numba.set_num_threads(previous)
         arrays = {
             name: (np.stack(values) if values
                    else np.empty((0,) + self.specs[name].shape))

@@ -321,3 +321,58 @@ def test_scenario_errors(scenarios, match):
     state, kwargs, roles = scenario_column()
     with pytest.raises(ValueError, match=match):
         climt.build_column_model(state, scenarios=scenarios(roles["convection"]), **kwargs)
+
+
+# Threads: numba's thread count during run.
+
+def test_threads_default_from_columns():
+    numba = pytest.importorskip("numba")
+    from climt._core.parameters import PARALLEL_MIN_COLUMNS
+    state, kwargs = dry_column()
+    assert climt.build_column_model(state, **kwargs).threads == 1
+    model = climt.build_column_model(
+        state, scenarios=climt.Scenarios(PARALLEL_MIN_COLUMNS), **kwargs)
+    assert model.threads == numba.config.NUMBA_NUM_THREADS
+
+
+def spy_model(threads, raise_on=None):
+    numba = pytest.importorskip("numba")
+    if numba.config.NUMBA_NUM_THREADS < threads:
+        pytest.skip("needs {} numba threads".format(threads))
+    state, kwargs = dry_column()
+    model = climt.build_column_model(state, threads=threads, **kwargs)
+    seen = []
+    step = model.step
+
+    def spy():
+        seen.append(numba.get_num_threads())
+        if raise_on is not None and len(seen) == raise_on:
+            raise RuntimeError("step {}".format(raise_on))
+        step()
+    model.step = spy
+    return numba, model, seen
+
+
+def test_threads_set_during_run_and_restored():
+    numba, model, seen = spy_model(2)
+    numba.set_num_threads(1)
+    model.run(3)
+    assert seen == [2, 2, 2]
+    assert numba.get_num_threads() == 1
+
+
+def test_threads_restored_after_exception():
+    numba, model, seen = spy_model(2, raise_on=3)
+    numba.set_num_threads(1)
+    with pytest.raises(RuntimeError, match="step 3"):
+        model.run(5)
+    assert numba.get_num_threads() == 1
+
+
+@pytest.mark.parametrize("extra", [None, 1])
+def test_threads_out_of_range(extra):
+    numba = pytest.importorskip("numba")
+    threads = 0 if extra is None else numba.config.NUMBA_NUM_THREADS + extra
+    state, kwargs = dry_column()
+    with pytest.raises(ValueError, match="threads"):
+        climt.build_column_model(state, threads=threads, **kwargs)
