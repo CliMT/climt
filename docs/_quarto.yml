@@ -69,6 +69,7 @@ website:
         - user-guide/utilities.qmd
         - user-guide/naming.qmd
         - user-guide/memory_management.qmd
+        - user-guide/column-ensembles.qmd
         - section: "Components"
           contents:
             - user-guide/rrtmg_clouds.qmd

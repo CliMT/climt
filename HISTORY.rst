@@ -26,7 +26,15 @@ Unreleased
 * **Threads** — ``build_column_model(..., threads=None)`` chooses numba's
   thread count for ``ColumnModel.run`` (1 below ``PARALLEL_MIN_COLUMNS``
   columns, else ``NUMBA_NUM_THREADS``); ``run`` restores the previous count on
-  exit, also on an exception.
+  exit, also on an exception. ``PARALLEL_MIN_COLUMNS`` is set from
+  ``benchmarks/scm_build.py`` (results in ``benchmarks/results/scm_build.json``).
+  New user-guide page "Column ensembles" and example
+  ``examples/scm_ensemble.py``.
+
+* **RRTMGShortwave solar constant (behaviour change, sympl path too)** —
+  ``RRTMGShortwave`` now re-initialises the Fortran when its solar constant
+  changes, so two instances with different stellar irradiance each use their
+  own value. Before, the value of the last-constructed instance was used by all.
 
 * **Per-column Emanuel parameters** — ``EmanuelConvectionPython``'s numba
   kernel takes per-column parameter arrays (all ``EmanuelParams`` fields

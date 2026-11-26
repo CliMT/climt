@@ -11,8 +11,14 @@ import typing
 
 import numpy as np
 
-PARALLEL_MIN_COLUMNS = 32
-"""Kernels use their parallel variant at or above this many columns."""
+PARALLEL_MIN_COLUMNS = 4096
+"""Kernels use their parallel variant at or above this many columns.
+
+Set from benchmarks/scm_build.py (benchmarks/results/scm_build.json): the
+smallest measured count (of 16, 256, 4096) at which NUMBA_NUM_THREADS threads
+beat one thread for the GMD column with both Emanuel schemes. The gain is
+about 1-2%, because the serial RRTMG Fortran dominates the step.
+"""
 
 
 def _field_dtype(cls, name):

@@ -164,12 +164,14 @@ def test_per_column_parameters_match_columns_run_alone():
                 atol=0, err_msg="{} column {}".format(name, i))
 
 
-def test_parallel_and_serial_variants_agree():
+def test_parallel_and_serial_variants_agree(monkeypatch):
+    # 64 columns must take the parallel variant, whatever the measured threshold.
+    monkeypatch.setattr(sp_kernel, "PARALLEL_MIN_COLUMNS", 64)
     case = "default"
     reps = 8
     arrays = tuple(np.tile(a, reps) for a in fixture_inputs(case))
     ncol = arrays[2].shape[1]
-    assert ncol == 64 and ncol >= PARALLEL_MIN_COLUMNS
+    assert ncol == 64
     params, flags = build_params_and_flags(case)
     dispatched = call_kernel(simple_physics_kernel, arrays, case, params,
                              flags)

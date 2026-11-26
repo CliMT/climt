@@ -1,0 +1,174 @@
+---
+title: "Column ensembles"
+---
+
+## Introduction
+
+A single-column model run through the usual sympl loop spends most of its
+time outside the physics: converting units, wrapping arrays as quantities and
+checking dimensions on every call. `climt.build_column_model` does that work
+once. It compiles your components against an example state and returns a
+`ColumnModel` that steps plain NumPy arrays, giving the same numbers as the
+sympl loop (to a relative tolerance of 10⁻¹²).
+
+The same machinery runs many single-column *scenarios* as the columns of one
+model: a sweep of surface temperatures, a range of convective parameters, or
+several stellar irradiances, all stepped together.
+
+## Building a column model
+
+``` python
+from datetime import timedelta
+import numpy as np
+import climt
+
+convection = climt.EmanuelConvectionPython()
+tendency_components = [convection, climt.RRTMGLongwave(),
+                       climt.RRTMGShortwave(), climt.SlabSurface()]
+stepper = climt.SimplePhysics()
+state = climt.get_default_state([stepper] + tendency_components)
+state["surface_temperature"].values[:] = 300.
+# ... set the rest of the initial state as in gmd_radiative_convective_unyt.py
+
+model = climt.build_column_model(
+    state,
+    timestep=timedelta(minutes=5),
+    tendency_components=tendency_components,
+    steppers=[stepper],
+    time_stepping="adams_bashforth",   # or "euler"
+    order=3,                           # Adams-Bashforth order, 1 to 4
+    prescribed=["eastward_wind"],      # reset to its initial value each step
+)
+
+model.step()                                   # one step, in place
+result = model.run(2000, output_every=100,
+                   outputs=["air_temperature", "surface_temperature"])
+ds = result.to_xarray()                        # time series as an xarray Dataset
+state = model.to_state()                       # back to a sympl state
+```
+
+Each step applies, in this order, the diagnostic components, the tendency
+components (their tendencies summed in the order given, then stepped with
+Euler or Adams–Bashforth), the steppers, and finally the prescribed
+quantities. This is the order of the sympl loop in
+`examples/gmd_radiative_convective_unyt.py`. Calling `run` again continues
+from where the last call stopped, including the Adams–Bashforth history.
+
+The example state can be a `sympl.DataArray` state or a `UnytStateContainer`
+state. Its units and dimension order become the model's: `model.state` holds
+raw arrays in those units, and `model.specs[name]` gives each array's
+dimensions, shape and units.
+
+## What can be compiled
+
+Any component with an `array_call` can be compiled. The following are refused
+at build time with a `climt.CompileError` that names the component and the
+reason:
+
+- sympl wrappers: `UpdateFrequencyWrapper`, `TimeDifferencingWrapper` and
+  `ScalingWrapper`;
+- time stepping other than `"euler"` and `"adams_bashforth"` (orders 1 to 4);
+- an input missing from the example state. This includes a diagnostic that
+  another component produces: put it in the example state (for instance with
+  `get_default_state` on all the components) before building;
+- a diagnostic produced by two components;
+- units that cannot be converted by a scale and an offset;
+- a tendency of a quantity held in an offset unit, such as `degC`. Use kelvin.
+
+Some components read physical constants at construction:
+`SimplePhysics`, `GrayLongwaveRadiation` and `DryConvectiveAdjustment`. If you
+change a constant with `climt.set_constants_from_dict`, construct the
+component again. Others still read constants on every call: the CORK
+longwave and shortwave schemes, `BergerSolarInsolation` and
+`DcmipInitialConditions`. They give correct results in a compiled model, but
+are slower there than the other components.
+
+## Scenarios
+
+`climt.Scenarios(n, inputs, parameters)` runs `n` scenarios as `n` columns. A
+one-column example state is expanded along `lon` to `n` columns.
+
+``` python
+n = 64
+scenarios = climt.Scenarios(
+    n,
+    inputs={"surface_temperature": np.linspace(295., 305., n)},
+    parameters={(convection, "ALPHA"): np.linspace(0.1, 0.3, n)},
+)
+model = climt.build_column_model(state, scenarios=scenarios, **kwargs)
+column_7 = model.to_state(scenario=7)   # one scenario as a one-column state
+```
+
+**Inputs** are given in the example state's units, either one value per
+scenario (shape `(n,)`, broadcast over the quantity's other dimensions) or a
+full profile per scenario (shape `(n, ...)`). Quantities not listed are the
+same in every column.
+
+**Per-column parameters** are listed in a component class's
+`per_column_parameters`, and every column gets its own value inside the
+compiled kernel. `EmanuelConvectionPython` declares all its `EmanuelParams`
+fields except `IPBL`, `MINORIG`, `DELT0` and `RD`; `SimplePhysics` declares,
+for example, `base_momentum_drag_coefficient`. Outside of scenarios,
+`climt.with_parameters(component, values, ncol)` returns a copy of a
+component with per-column values.
+
+**Grouped parameters** are listed in `grouped_parameters`. They cannot vary
+inside a kernel call, so the columns are split into groups that share a value
+and the component is called once per group. `RRTMGShortwave` groups on
+`stellar_irradiance`.
+
+A per-scenario array of the wrong length or shape, or a parameter the
+component does not declare, is a `ValueError` (or `CompileError`) at build
+time that names the quantity or parameter.
+
+Each column of a scenario model equals a sympl run of that scenario on its
+own, to a relative tolerance of 10⁻¹².
+
+## Threads
+
+`build_column_model(..., threads=None)` sets numba's thread count during
+`run`. By default it uses one thread below `PARALLEL_MIN_COLUMNS` columns
+(currently 4096) and `numba.config.NUMBA_NUM_THREADS` at or above it. Pass
+`threads=k` to choose. `run` restores the previous thread count when it
+returns, and also when it raises.
+
+## Measured speed
+
+`benchmarks/scm_build.py` times the GMD column (Emanuel convection, RRTMG
+longwave and shortwave, slab surface, simple physics): 20 warm-up steps, then
+200 timed steps. The results are in `benchmarks/results/scm_build.json`
+(Apple arm64, 11 cores, numba 0.68).
+
+| Convection | Columns | sympl loop (ms/step) | compiled, 1 thread (ms/step) | compiled, 11 threads (ms/step) |
+|---|---:|---:|---:|---:|
+| `EmanuelConvection` | 1 | 1.78 | 0.34 | 0.34 |
+| `EmanuelConvection` | 16 | 4.13 | 2.63 | 2.61 |
+| `EmanuelConvection` | 256 | | 38.6 | 39.5 |
+| `EmanuelConvection` | 4096 | | 663 | 650 |
+| `EmanuelConvectionPython` | 1 | 1.87 | 0.40 | 0.43 |
+| `EmanuelConvectionPython` | 16 | 4.31 | 2.70 | 2.75 |
+| `EmanuelConvectionPython` | 256 | | 40.5 | 39.6 |
+| `EmanuelConvectionPython` | 4096 | | 657 | 648 |
+
+For one column the compiled model is about five times faster than the sympl
+loop. In the sympl loop about 80% of the time is spent outside the
+components' `array_call`; compiled, about 20%. With 16 columns or more the
+physics dominates (2–6% outside), and the time per column settles at about
+0.16 ms per step. Threads help by at most 2%, because most of the step is
+spent in the RRTMG Fortran, which runs serially.
+
+## Example
+
+`examples/scm_ensemble.py` runs 64 GMD columns over a sweep of surface
+temperature (295–305 K) and Emanuel `ALPHA`, and prints the range of final
+surface temperatures and the run time:
+
+``` bash
+python examples/scm_ensemble.py
+```
+
+## Limits
+
+- No sympl wrappers; apply update frequencies or scalings yourself.
+- Euler and Adams–Bashforth (orders 1 to 4) only.
+- Each column is independent: there is no horizontal transport.

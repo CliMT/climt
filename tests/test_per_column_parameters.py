@@ -120,8 +120,7 @@ def test_simple_physics_copy_does_not_reuse_cache():
 
 
 def test_emanuel_serial_and_parallel_agree():
-    ncol = 64
-    assert ncol >= PARALLEL_MIN_COLUMNS
+    ncol = 64  # both variants are called directly, whatever PARALLEL_MIN_COLUMNS is
     nlev = 30
     rng = np.random.default_rng(0)
     p = np.linspace(1000.0, 30.0, nlev)[:, None] * np.ones((1, ncol))

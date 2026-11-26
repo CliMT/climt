@@ -1,0 +1,191 @@
+{
+  "machine": "Darwin arm64 (11 cores)",
+  "python": "3.11.18",
+  "numba": "0.68.1",
+  "commit": "e073f030",
+  "approach": "C",
+  "steps": 200,
+  "warmup": 20,
+  "results": [
+    {
+      "convection": "EmanuelConvection",
+      "columns": 1,
+      "threads": 1,
+      "path": "sympl",
+      "ms_per_step": 1.778153749764897,
+      "ms_per_step_per_column": 1.778153749764897,
+      "outside_kernels": 0.8303972302415574
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 1,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 0.34034333482850343,
+      "ms_per_step_per_column": 0.34034333482850343,
+      "outside_kernels": 0.23982030389912756
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 1,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 0.3423793747788295,
+      "ms_per_step_per_column": 0.3423793747788295,
+      "outside_kernels": 0.2385553856995022
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 16,
+      "threads": 1,
+      "path": "sympl",
+      "ms_per_step": 4.126591040403582,
+      "ms_per_step_per_column": 0.2579119400252239,
+      "outside_kernels": 0.3823056211607607
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 16,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 2.628021664568223,
+      "ms_per_step_per_column": 0.16425135403551394,
+      "outside_kernels": 0.04324315913387855
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 16,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 2.6126141648273915,
+      "ms_per_step_per_column": 0.16328838530171197,
+      "outside_kernels": 0.042981909694898346
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 256,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 38.57109562493861,
+      "ms_per_step_per_column": 0.15066834228491643,
+      "outside_kernels": 0.020688090199152187
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 256,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 39.52419520996045,
+      "ms_per_step_per_column": 0.15439138753890802,
+      "outside_kernels": 0.021538179552323733
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 4096,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 662.928688749671,
+      "ms_per_step_per_column": 0.16184782440177514,
+      "outside_kernels": 0.020882861383416773
+    },
+    {
+      "convection": "EmanuelConvection",
+      "columns": 4096,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 650.403344585211,
+      "ms_per_step_per_column": 0.15878987904912378,
+      "outside_kernels": 0.021821114507915573
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 1,
+      "threads": 1,
+      "path": "sympl",
+      "ms_per_step": 1.8739683349849656,
+      "ms_per_step_per_column": 1.8739683349849656,
+      "outside_kernels": 0.791355318662766
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 1,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 0.39536792028229684,
+      "ms_per_step_per_column": 0.39536792028229684,
+      "outside_kernels": 0.2141497035684522
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 1,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 0.42532666528131813,
+      "ms_per_step_per_column": 0.42532666528131813,
+      "outside_kernels": 0.2009579679627137
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 16,
+      "threads": 1,
+      "path": "sympl",
+      "ms_per_step": 4.313915835227817,
+      "ms_per_step_per_column": 0.2696197397017386,
+      "outside_kernels": 0.38160496664934695
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 16,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 2.699738960363902,
+      "ms_per_step_per_column": 0.16873368502274388,
+      "outside_kernels": 0.05867590035853554
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 16,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 2.753656664863229,
+      "ms_per_step_per_column": 0.1721035415539518,
+      "outside_kernels": 0.059936222178946785
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 256,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 40.480059170513414,
+      "ms_per_step_per_column": 0.15812523113481802,
+      "outside_kernels": 0.026249779479653568
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 256,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 39.56878374970984,
+      "ms_per_step_per_column": 0.15456556152230405,
+      "outside_kernels": 0.026400311340715188
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 4096,
+      "threads": 1,
+      "path": "compiled",
+      "ms_per_step": 656.9958920800127,
+      "ms_per_step_per_column": 0.16039938771484685,
+      "outside_kernels": 0.02046872480986872
+    },
+    {
+      "convection": "EmanuelConvectionPython",
+      "columns": 4096,
+      "threads": 11,
+      "path": "compiled",
+      "ms_per_step": 648.4752374998061,
+      "ms_per_step_per_column": 0.1583191497802261,
+      "outside_kernels": 0.023040542789517504
+    }
+  ]
+}
