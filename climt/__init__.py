@@ -38,6 +38,9 @@ from ._core import (
     bolton_q_sat,
     calculate_q_sat,
     compile_component,
+    build_column_model,
+    ColumnModel,
+    RunResult,
     fortran_status,
     get_constant_checked,
     get_default_state,
@@ -106,6 +109,9 @@ __all__ = (
     list_components,
     compile_component,
     CompileError,
+    build_column_model,
+    ColumnModel,
+    RunResult,
 )
 
 

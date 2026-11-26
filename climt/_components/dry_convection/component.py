@@ -51,6 +51,19 @@ class DryConvectiveAdjustment(Stepper):
 
     diagnostic_properties = {}
 
+    def __init__(self, **kwargs):
+        # Read once here, not on every call (compiled runs call array_call directly).
+        self._params = DryAdjParams(
+            Cpd=get_constant(
+                "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"
+            ),
+            Cvap=get_constant("heat_capacity_of_vapor_phase", "J/kg/K"),
+            Rdair=get_constant("gas_constant_of_dry_air", "J/kg/degK"),
+            Pref=get_constant("reference_air_pressure", "Pa"),
+            Rv=get_constant("gas_constant_of_vapor_phase", "J/kg/K"),
+        )
+        super(DryConvectiveAdjustment, self).__init__(**kwargs)
+
     def array_call(self, state, time_step):
         t = state["air_temperature"]
         q = state["specific_humidity"]
@@ -63,15 +76,7 @@ class DryConvectiveAdjustment(Stepper):
         p_flat = np.reshape(p, (p.shape[0], -1))
         p_int_flat = np.reshape(p_int, (p_int.shape[0], -1))
 
-        params = DryAdjParams(
-            Cpd=get_constant(
-                "heat_capacity_of_dry_air_at_constant_pressure", "J/kg/degK"
-            ),
-            Cvap=get_constant("heat_capacity_of_vapor_phase", "J/kg/K"),
-            Rdair=get_constant("gas_constant_of_dry_air", "J/kg/degK"),
-            Pref=get_constant("reference_air_pressure", "Pa"),
-            Rv=get_constant("gas_constant_of_vapor_phase", "J/kg/K"),
-        )
+        params = self._params
 
         t_new, q_new = _dry_adj_kernel_np(t_flat, q_flat, p_flat, p_int_flat, params)
 

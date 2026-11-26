@@ -62,6 +62,13 @@ class GrayLongwaveRadiation(TendencyComponent):
         "air_temperature": {"units": "degK s^-1"},
     }
 
+    def __init__(self, **kwargs):
+        # Read once here, not on every call (compiled runs call array_call directly).
+        self._sigma_sb = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
+        self._g = get_constant("gravitational_acceleration", "m/s^2")
+        self._cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
+        super(GrayLongwaveRadiation, self).__init__(**kwargs)
+
     def array_call(self, state):
         t = getattr(state["sl"], "data", state["sl"])
         tau = getattr(state["tau"], "data", state["tau"])
@@ -76,9 +83,9 @@ class GrayLongwaveRadiation(TendencyComponent):
         t_surf_flat = np.reshape(t_surf, (-1,))
         p_int_flat = np.reshape(p_int, (p_int.shape[0], -1))
 
-        sigma_sb = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
-        g = get_constant("gravitational_acceleration", "m/s^2")
-        cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
+        sigma_sb = self._sigma_sb
+        g = self._g
+        cpd = self._cpd
 
         t_flat = np.asarray(t_flat)
         tau_flat = np.asarray(tau_flat)

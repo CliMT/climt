@@ -5,6 +5,15 @@ History
 Unreleased
 ----------
 
+* **Column models on raw arrays** — new ``climt.build_column_model`` compiles
+  tendency, diagnostic and stepper components once against an example state
+  and returns a ``climt.ColumnModel`` whose ``step``/``run`` reproduce the
+  sympl loop (Euler or Adams-Bashforth, prescribed quantities) on NumPy
+  arrays; ``run`` returns a ``climt.RunResult`` with ``to_xarray()``.
+  ``GrayLongwaveRadiation`` and ``DryConvectiveAdjustment`` now read their
+  constants once at construction, as ``SimplePhysics`` does: construct a new
+  one after changing constants.
+
 * **Per-column Emanuel parameters** — ``EmanuelConvectionPython``'s numba
   kernel takes per-column parameter arrays (all ``EmanuelParams`` fields
   except ``IPBL``, ``MINORIG``, ``DELT0`` and ``RD``) and has serial and parallel
