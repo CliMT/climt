@@ -563,6 +563,8 @@ class RRTMGShortwave(TendencyComponent):
                 self._permute_seed,
                 self._random_number_generator,
             )
+            # The non-McICA initialisation is now stale: force it on the next call.
+            _initialised_solar_const[0] = None
 
             _rrtmg_sw.rrtm_calculate_shortwave_fluxes_mcica(
                 self.rrtm_iplon,

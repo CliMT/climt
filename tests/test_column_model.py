@@ -380,3 +380,103 @@ def test_threads_out_of_range(extra):
 
 def test_with_parameters_is_exported():
     assert climt.with_parameters is climt._core.parameters.with_parameters
+
+
+# Final-review fixes.
+
+def dry_scenarios(**scenario_kwargs):
+    state, kwargs = dry_column()
+    return climt.build_column_model(state, scenarios=climt.Scenarios(3, **scenario_kwargs),
+                                    **kwargs)
+
+
+def test_scenario_input_with_units_is_converted():
+    unyt = pytest.importorskip("unyt")
+    celsius = dry_scenarios(
+        inputs={"surface_temperature": unyt.unyt_array([20., 25., 30.], "degC")})
+    kelvin = dry_scenarios(inputs={"surface_temperature": [293.15, 298.15, 303.15]})
+    np.testing.assert_allclose(celsius.state["surface_temperature"],
+                               kelvin.state["surface_temperature"], rtol=1e-12, atol=0)
+
+
+def test_scenario_input_with_dataarray_units_is_converted():
+    value = sympl.DataArray(np.array([20., 25., 30.]), dims=["s"], attrs={"units": "degC"})
+    celsius = dry_scenarios(inputs={"surface_temperature": value})
+    kelvin = dry_scenarios(inputs={"surface_temperature": [293.15, 298.15, 303.15]})
+    np.testing.assert_allclose(celsius.state["surface_temperature"],
+                               kelvin.state["surface_temperature"], rtol=1e-12, atol=0)
+
+
+def test_scenario_input_with_inconvertible_units_is_refused():
+    unyt = pytest.importorskip("unyt")
+    with pytest.raises(ValueError, match="surface_temperature"):
+        dry_scenarios(inputs={"surface_temperature": unyt.unyt_array([1., 2., 3.], "m")})
+
+
+def test_scenario_parameter_with_units_is_refused():
+    unyt = pytest.importorskip("unyt")
+    sw = climt.RRTMGShortwave()
+    with pytest.raises(ValueError, match="stellar_irradiance"):
+        climt.Scenarios(3, parameters={
+            (sw, "stellar_irradiance"): unyt.unyt_array([1360., 1361., 1362.], "W/m**2")})
+
+
+def test_mutating_caller_array_after_build_has_no_effect():
+    temperatures = np.array([290., 300., 310.])
+    model = dry_scenarios(inputs={"surface_temperature": temperatures})
+    before = model.state["surface_temperature"].copy()
+    temperatures[:] = 0.
+    model.step()
+    fresh = dry_scenarios(inputs={"surface_temperature": [290., 300., 310.]})
+    fresh.step()
+    np.testing.assert_array_equal(model.state["air_temperature"],
+                                  fresh.state["air_temperature"])
+    assert before.min() == 290.
+
+
+def test_scenario_arrays_are_copies():
+    temperatures = np.array([290., 300., 310.])
+    scenarios = climt.Scenarios(3, inputs={"surface_temperature": temperatures})
+    temperatures[:] = 0.
+    np.testing.assert_array_equal(scenarios.inputs["surface_temperature"], [290., 300., 310.])
+
+
+def test_grouped_and_per_column_parameters_on_one_component_are_refused():
+    state, kwargs, roles = scenario_column()
+    sw = roles["radiation_sw"]
+    cls = type(sw)
+    original = cls.__dict__.get("per_column_parameters")
+    cls.per_column_parameters = ("fake",)
+    try:
+        scenarios = climt.Scenarios(4, parameters={(sw, "stellar_irradiance"): np.ones(4),
+                                                   (sw, "fake"): np.ones(4)})
+        with pytest.raises(climt.CompileError, match="grouped and per-column"):
+            climt.build_column_model(state, scenarios=scenarios, **kwargs)
+    finally:
+        if original is None:
+            del cls.per_column_parameters
+        else:
+            cls.per_column_parameters = original
+
+
+def test_slab_surface_with_ekman_refused_with_scenarios():
+    state, kwargs = gmd_column()
+    kwargs["tendency_components"][3] = climt.SlabSurface(include_ekman=True)
+    with pytest.raises(climt.CompileError, match="SlabSurface.*Ekman"):
+        climt.build_column_model(state, scenarios=climt.Scenarios(4), **kwargs)
+
+
+@pytest.mark.parametrize("order", [True, False])
+def test_bool_order_is_refused(order):
+    state, kwargs = dry_column()
+    kwargs["time_stepping"] = "adams_bashforth"
+    with pytest.raises(climt.CompileError, match="order"):
+        climt.build_column_model(state, order=order, **kwargs)
+
+
+@pytest.mark.parametrize("args,match", [((-1,), "n_steps"), ((2, 0), "output_every")])
+def test_run_argument_validation(args, match):
+    state, kwargs = dry_column()
+    model = climt.build_column_model(state, **kwargs)
+    with pytest.raises(ValueError, match=match):
+        model.run(*args)

@@ -21,7 +21,10 @@ Unreleased
   (``RRTMGShortwave.grouped_parameters = {"stellar_irradiance": ...}``; the
   non-McICA path now re-initialises the Fortran when the solar constant
   changes). ``ColumnModel.to_state(scenario=i)`` returns one column. A
-  ``UnytTimeDelta`` timestep now works.
+  ``UnytTimeDelta`` timestep now works. A scenario input carrying units
+  (a unyt array, or a ``DataArray`` with ``units``) is converted to the
+  state's units at build time (e.g. ``degC`` to ``K``); a scenario parameter
+  carrying units is refused.
 
 * **Threads** — ``build_column_model(..., threads=None)`` chooses numba's
   thread count for ``ColumnModel.run`` (1 below ``PARALLEL_MIN_COLUMNS``

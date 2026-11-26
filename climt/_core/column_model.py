@@ -64,13 +64,21 @@ def build_column_model(state, *, timestep, tendency_components=(), diagnostic_co
         order = 1
     if isinstance(order, float) and order.is_integer():
         order = int(order)
-    if not isinstance(order, int) or not 1 <= order <= 4:
+    if (not isinstance(order, int) or isinstance(order, bool)
+            or not 1 <= order <= 4):
         raise CompileError("Adams-Bashforth order must be an integer from 1 to 4, got {!r}"
                            .format(order))
 
     columns = None
     grouped = {}
     if scenarios is not None:
+        for component in (list(diagnostic_components) + list(tendency_components)
+                          + list(steppers)):
+            if getattr(component, "_include_ekman", False):
+                raise CompileError(
+                    "{}: include_ekman=True couples neighbouring columns through the "
+                    "Ekman convergence; it cannot be used with scenarios".format(
+                        type(component).__name__))
         state, columns = _scenario_state(state, scenarios.n)
         replace, grouped = _resolve_parameters(scenarios)
         diagnostic_components = [replace.get(id(c), c) for c in diagnostic_components]
@@ -130,6 +138,7 @@ def build_column_model(state, *, timestep, tendency_components=(), diagnostic_co
             if name not in raw:
                 raise ValueError(
                     "scenario input {} is not read or written by any component".format(name))
+            value = _convert_input(name, value, specs[name].units)
             _set_columns(raw[name], specs[name].dims, columns, value, name)
 
     prescribed_values = {}
@@ -297,6 +306,13 @@ class ColumnModel(object):
 
         ``outputs`` names the quantities to store (default: all of ``state``).
         """
+        if (not isinstance(n_steps, (int, np.integer)) or isinstance(n_steps, bool)
+                or n_steps < 0):
+            raise ValueError("n_steps must be a non-negative integer, got {!r}".format(n_steps))
+        if (not isinstance(output_every, (int, np.integer)) or isinstance(output_every, bool)
+                or output_every < 1):
+            raise ValueError("output_every must be a positive integer, got {!r}"
+                             .format(output_every))
         names = list(self.state) if outputs is None else list(outputs)
         for name in names:
             if name not in self.state:
@@ -348,13 +364,17 @@ class Scenarios(object):
     n : int
         Number of scenarios.
     inputs : dict, optional
-        ``{quantity name: array}`` in the example state's units, of shape
+        ``{quantity name: array}``, of shape
         ``(n,)`` (one value per scenario, broadcast over the quantity's other
-        dims) or ``(n, *quantity shape without its horizontal dims)``.
+        dims) or ``(n, *quantity shape without its horizontal dims)``. A plain
+        array is in the example state's units; an array carrying units (a unyt
+        array, or a ``DataArray`` with a ``units`` attribute) is converted to
+        them at build time.
     parameters : dict, optional
         ``{(component, name): array of shape (n,)}``; ``name`` is in
         ``type(component).per_column_parameters`` or
-        ``type(component).grouped_parameters``.
+        ``type(component).grouped_parameters``. Values are plain numbers in
+        the component's own units; a value carrying units is refused.
 
     Raises
     ------
@@ -369,7 +389,11 @@ class Scenarios(object):
         self.n = int(n)
         self.inputs = {}
         for name, value in (inputs or {}).items():
-            value = np.asarray(value)
+            units = _units_of(value)
+            if units is None:
+                value = np.array(value)
+            else:
+                value = _WithUnits(np.array(_magnitude(value), dtype=float), units)
             if value.ndim == 0 or value.shape[0] != self.n:
                 raise ValueError(
                     "scenario input {} has shape {}; expected ({}, ...)".format(
@@ -378,12 +402,62 @@ class Scenarios(object):
         self.parameters = {}
         for key, value in (parameters or {}).items():
             component, name = key
-            value = np.asarray(value, dtype=np.float64)
+            if _units_of(value) is not None:
+                raise ValueError(
+                    "scenario parameter {} of {} carries units; give plain numbers in the "
+                    "component's own units".format(name, type(component).__name__))
+            value = np.array(value, dtype=np.float64)
             if value.shape != (self.n,):
                 raise ValueError(
                     "scenario parameter {} of {} has shape {}; expected ({},)".format(
                         name, type(component).__name__, value.shape, self.n))
             self.parameters[key] = value
+
+
+def _units_of(value):
+    """The units string ``value`` carries, or None."""
+    if hasattr(value, "units"):
+        return str(value.units)
+    attrs = getattr(value, "attrs", None)
+    if isinstance(attrs, dict) and "units" in attrs:
+        return attrs["units"]
+    return None
+
+
+def _magnitude(value):
+    """The plain numbers of a value carrying units (pint, unyt or DataArray)."""
+    if hasattr(value, "magnitude"):
+        return value.magnitude
+    if hasattr(value, "units"):
+        return np.asarray(value)
+    return value.values
+
+
+class _WithUnits(object):
+    """A scenario input array (a copy) with the units it was given in."""
+
+    def __init__(self, array, units):
+        self.array = array
+        self.units = units
+        self.shape = array.shape
+        self.ndim = array.ndim
+
+
+def _convert_input(name, value, to_units):
+    """``value`` as a plain array in ``to_units``, converted by the active backend."""
+    if not isinstance(value, _WithUnits):
+        return value
+    backend = sympl.get_backend()
+    flat = value.array.reshape(-1)
+    dim = "_scenario_values"
+    try:
+        quantity = backend.create_quantity(flat, name, value.units, (dim,))
+        out = np.array(backend.get_array(quantity, name, to_units, [dim], {dim: flat.size}),
+                       dtype=float)
+    except Exception as err:
+        raise ValueError("scenario input {}: cannot convert {!r} to {!r}: {}".format(
+            name, value.units, to_units, err)) from err
+    return out.reshape(value.shape)
 
 
 def _horizontal_dims(state):
@@ -453,6 +527,10 @@ def _resolve_parameters(scenarios):
         per_column = tuple(getattr(cls, "per_column_parameters", ()))
         group_names = dict(getattr(cls, "grouped_parameters", {}))
         column_values = {}
+        if (any(n in group_names for n in values)
+                and any(n in per_column and n not in group_names for n in values)):
+            raise CompileError("{}: grouped and per-column scenario parameters on one "
+                               "component are not supported".format(cls.__name__))
         for name, value in values.items():
             if name in group_names:
                 grouped.setdefault(key, {})[group_names[name]] = value

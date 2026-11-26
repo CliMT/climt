@@ -156,10 +156,10 @@ components' `array_call`; compiled, about 20%. With 16 columns or more the
 physics dominates (2–6% outside), and the time per column settles at about
 0.16 ms per step.
 
-For the GMD column, threading gains are negligible: 11 threads differ from one
-thread by within about 8%, with no consistent sign (at one column with
-`EmanuelConvectionPython`, 11 threads are 8% slower). Most of the step is spent in the RRTMG Fortran, which runs
-serially. For that reason `PARALLEL_MIN_COLUMNS` was left at 32 rather than
+For the GMD column, threading gains are negligible: 11 threads are within
+about 8% of one thread, with no consistent sign (at one column with
+`EmanuelConvectionPython`, 11 threads are 8% slower). Most of the step is
+spent in the RRTMG Fortran, which runs serially. For that reason `PARALLEL_MIN_COLUMNS` was left at 32 rather than
 moved on this measurement. Note that the benchmark does not separate the
 thread count from the kernel variant: `PARALLEL_MIN_COLUMNS` also selects the
 serial or parallel numba kernel of `EmanuelConvectionPython` and
@@ -181,3 +181,5 @@ python examples/scm_ensemble.py
 - No sympl wrappers; apply update frequencies or scalings yourself.
 - Euler and Adams–Bashforth (orders 1 to 4) only.
 - Each column is independent: there is no horizontal transport.
+  `SlabSurface(include_ekman=True)` couples neighbouring columns, so it is
+  refused with scenarios.
