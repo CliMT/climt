@@ -127,52 +127,28 @@ def _convect_functional_jax(
     OUTCAPE = 0.0
 
     # --- Block 2: Thermodynamic profiles ---
-    TH = jnp.zeros(NL + 1)
-    for i in range(NL + 1):
-        qi = Q[i]
-        RDCP = (params.RD * (1.0 - qi) + qi * cond.RV) / (
-            params.CPD * (1.0 - qi) + qi * cond.CPV
-        )
-        TH = TH.at[i].set(T[i] * (1000.0 / P[i]) ** RDCP)
+    T_nl = T[:NL + 1]
+    Q_nl = Q[:NL + 1]
+    P_nl = P[:NL + 1]
 
-    GZ = jnp.zeros(ND + 1)
-    CPN = jnp.zeros(ND + 1)
-    H = jnp.zeros(ND + 1)
-    LV = jnp.zeros(ND + 1)
-    HM = jnp.zeros(ND + 1)
-    TV = jnp.zeros(ND + 1)
-
-    q0 = Q[0]
-    t0 = T[0]
-    cpn0 = params.CPD * (1.0 - q0) + q0 * cond.CPV
-    CPN = CPN.at[0].set(cpn0)
-    H = H.at[0].set(t0 * cpn0)
-    lv0 = cond.LV0 - CPVMCL * (t0 - cond.T_freeze)
-    LV = LV.at[0].set(lv0)
-    HM = HM.at[0].set(lv0 * q0)
-    TV = TV.at[0].set(t0 * (1.0 + q0 * EPSI - q0))
-
-    for i in range(1, NL + 1):
-        qi = Q[i]
-        ti = T[i]
-        qim1 = Q[i - 1]
-        tim1 = T[i - 1]
-        TVX = ti * (1.0 + qi * EPSI - qi)
-        TVY = tim1 * (1.0 + qim1 * EPSI - qim1)
-        gz_i = GZ[i - 1] + 0.5 * params.RD * (TVX + TVY) * (P[i - 1] - P[i]) / PH[i]
-        GZ = GZ.at[i].set(gz_i)
-        cpn_i = params.CPD * (1.0 - qi) + cond.CPV * qi
-        CPN = CPN.at[i].set(cpn_i)
-        H = H.at[i].set(ti * cpn_i + gz_i)
-        lv_i = cond.LV0 - CPVMCL * (ti - cond.T_freeze)
-        LV = LV.at[i].set(lv_i)
-        hm_i = (
-            (params.CPD * (1.0 - qi) + cond.CL * qi) * (ti - t0)
-            + lv_i * qi
-            + gz_i
-        )
-        HM = HM.at[i].set(hm_i)
-        TV = TV.at[i].set(TVX)
+    TV_nl = T_nl * (1.0 + Q_nl * EPSI - Q_nl)
+    dgz = 0.5 * params.RD * (TV_nl[1:] + TV_nl[:-1]) * (P_nl[:-1] - P_nl[1:]) / PH[1:NL + 1]
+    GZ_nl = jnp.concatenate([jnp.zeros(1), jnp.cumsum(dgz)])
+    CPN_nl = params.CPD * (1.0 - Q_nl) + cond.CPV * Q_nl
+    H_nl = T_nl * CPN_nl + GZ_nl
+    LV_nl = cond.LV0 - CPVMCL * (T_nl - cond.T_freeze)
+    HM_nl = (
+        (params.CPD * (1.0 - Q_nl) + cond.CL * Q_nl) * (T_nl - T_nl[0])
+        + LV_nl * Q_nl
+        + GZ_nl
+    )
+    pad_nl_to_nd1 = jnp.zeros(ND - NL)
+    GZ = jnp.concatenate([GZ_nl, pad_nl_to_nd1])
+    CPN = jnp.concatenate([CPN_nl, pad_nl_to_nd1])
+    H = jnp.concatenate([H_nl, pad_nl_to_nd1])
+    LV = jnp.concatenate([LV_nl, pad_nl_to_nd1])
+    HM = jnp.concatenate([HM_nl, pad_nl_to_nd1])
+    TV = jnp.concatenate([TV_nl, pad_nl_to_nd1])
 
     # Vectorized IHMIN: find index where HM is local minimum and i+1 >= MINORIG
     indices = jnp.arange(ND + 1)
@@ -198,12 +174,13 @@ def _convect_functional_jax(
     active = active & ~exit1
 
     RH = Q[NK] / jnp.maximum(QS[NK], 1.0e-30)
+    RH_safe = jnp.maximum(RH, 1.0e-30)
     if cond.species_id == 0:
         CHI = T[NK] / jnp.maximum(1669.0 - 122.0 * RH - T[NK], 1.0e-30)
-        PLCL = P[NK] * (RH ** CHI)
+        PLCL = jnp.where(Q[NK] > 0.0, P[NK] * (RH_safe ** CHI), 0.0)
     else:
         chi = cond.RV * T[NK] / cond.LV0
-        PLCL = P[NK] * (RH ** chi)
+        PLCL = jnp.where(Q[NK] > 0.0, P[NK] * (RH_safe ** chi), 0.0)
 
     # Exit condition 2: PLCL out of range
     exit2 = (PLCL < 200.0) | (PLCL >= 2000.0)
@@ -228,10 +205,9 @@ def _convect_functional_jax(
     TVP, TP, CLW = _tlift_functional_jax(
         P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params, cond
     )
-    # Variable-bound loop [NK, ICB+1) → full range with mask
-    for i in range(NL + 1):
-        in_range = (i >= NK) & (i <= ICB)
-        TVP = TVP.at[i].set(jnp.where(in_range, TVP[i] - TP[i] * Q[NK], TVP[i]))
+    lvl_nd = jnp.arange(ND)
+    in_nk_icb = (lvl_nd <= NL) & (lvl_nd >= NK) & (lvl_nd <= ICB)
+    TVP = jnp.where(in_nk_icb, TVP - TP * Q[NK], TVP)
 
     # Early return: CBMF == 0 and TVP[ICB] too cold → fold into active flag
     exit4 = (CBMF == 0.0) & (TVP[ICB] <= (TV[ICB] - params.DTMAX))
@@ -244,25 +220,24 @@ def _convect_functional_jax(
     )
 
     # --- Block 6: EP/SIGP ---
-    # Full-range computation with jnp.where masks instead of traced-bound loops
-    EP = jnp.zeros(ND)
     SIGP = jnp.full(ND, params.SIGS)
+    TCA = TP[:NL + 1] - cond.T_freeze
+    ELACRIT = jnp.where(
+        TCA >= 0.0,
+        params.ELCRIT,
+        params.ELCRIT * (1.0 - TCA / params.TLCRIT),
+    )
+    ELACRIT = jnp.maximum(ELACRIT, 0.0)
+    EPMAX = 0.999
+    ep_nl = EPMAX * (1.0 - ELACRIT / jnp.maximum(CLW[:NL + 1], 1.0e-8))
+    ep_nl = jnp.maximum(jnp.minimum(ep_nl, EPMAX), 0.0)
+    EP = jnp.concatenate([
+        jnp.where(jnp.arange(NL + 1) > NK, ep_nl, 0.0),
+        jnp.zeros(ND - NL - 1),
+    ])
 
-    for i in range(NL + 1):
-        in_nk_range = (i > NK)
-        TCA = TP[i] - cond.T_freeze
-        ELACRIT = jnp.where(TCA >= 0.0, params.ELCRIT,
-                            params.ELCRIT * (1.0 - TCA / params.TLCRIT))
-        ELACRIT = jnp.maximum(ELACRIT, 0.0)
-        EPMAX = 0.999
-        ep_i = EPMAX * (1.0 - ELACRIT / jnp.maximum(CLW[i], 1.0e-8))
-        ep_i = jnp.maximum(jnp.minimum(ep_i, EPMAX), 0.0)
-        EP = EP.at[i].set(jnp.where(in_nk_range, ep_i, 0.0))
-
-    # TVP adjustment for [ICB+1, NL+1) → full range with mask
-    for i in range(NL + 1):
-        in_range = (i > ICB)
-        TVP = TVP.at[i].set(jnp.where(in_range, TVP[i] - TP[i] * Q[NK], TVP[i]))
+    in_above_icb = (lvl_nd <= NL) & (lvl_nd > ICB)
+    TVP = jnp.where(in_above_icb, TVP - TP * Q[NK], TVP)
 
     # --- Block 7: Setup matrices ---
     HP = jnp.array(H)
@@ -271,9 +246,7 @@ def _convect_functional_jax(
     WT = jnp.full(ND + 1, params.OMTSNOW)
     MP = jnp.zeros(ND + 1)
     M = jnp.zeros(ND + 1)
-    LVCP = jnp.zeros(ND + 1)
-    for i in range(NL + 1):
-        LVCP = LVCP.at[i].set(LV[i] / CPN[i])
+    LVCP = jnp.concatenate([LV[:NL + 1] / CPN[:NL + 1], jnp.zeros(ND - NL)])
 
     ELIJ = jnp.zeros((ND + 1, ND + 1))
     MENT = jnp.zeros((ND + 1, ND + 1))
