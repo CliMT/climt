@@ -4,4 +4,31 @@
 IceSheet(maximum_snow_ice_height=10, **kwargs)
 ```
 
-1-d snow-ice energy balance model.
+Deprecated monolithic 1-d snow-ice energy balance model.
+
+.. deprecated::
+    ``IceSheet`` used to handle ``sea_ice``, ``land_ice`` and ``land``
+    columns in a single component with a hand-rolled tridiagonal solve.
+    It has been split into :class:`~climt._components.sea_ice.SeaIce`
+    (owns ``area_type == "sea_ice"``) and
+    :class:`~climt._components.land_ice.LandIce` (owns
+    ``area_type in ("land", "land_ice")``), each built on the shared
+    implicit column solver in :mod:`climt._core.snow_ice_column`, with
+    defect fixes relative to this monolith documented in their
+    docstrings (basal boundary condition, thickness clamping, albedo
+    configuration, melt-energy handling).
+
+    ``IceSheet`` is now a thin dispatching shim that constructs a
+    ``SeaIce`` and a ``LandIce`` instance and merges their per-column
+    results, kept only so that existing callers keep working. New code
+    should use ``SeaIce``/``LandIce`` directly.
+
+    **Known behavior change:** the ``surface_downward_heat_flux_in_sea_ice``
+    diagnostic is now produced only by the internal ``SeaIce`` instance,
+    so it is meaningful only on ``sea_ice`` columns. Unlike the old
+    monolith -- which computed a conducted surface flux uniformly for
+    ``sea_ice``, ``land_ice`` *and* ``land`` columns -- this shim reports
+    the registered default of ``0.0`` on ``land``/``land_ice`` columns
+    for this diagnostic. Callers needing an equivalent conducted-flux
+    diagnostic on land/land-ice columns should use ``LandIce``'s
+    ``upward_heat_flux_at_ground_level_in_soil`` instead.

@@ -1,7 +1,7 @@
 # DryConvectiveAdjustment { #climt.DryConvectiveAdjustment }
 
 ```python
-DryConvectiveAdjustment()
+DryConvectiveAdjustment(**kwargs)
 ```
 
 A conservative scheme to keep the temperature profile close to the

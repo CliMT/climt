@@ -1,6 +1,6 @@
 # GrayLongwaveRadiation { #climt.GrayLongwaveRadiation }
 
 ```python
-GrayLongwaveRadiation()
+GrayLongwaveRadiation(**kwargs)
 ```
 

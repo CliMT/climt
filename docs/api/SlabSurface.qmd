@@ -1,7 +1,7 @@
 # SlabSurface { #climt.SlabSurface }
 
 ```python
-SlabSurface()
+SlabSurface(include_ekman=False, equatorial_ekman_cap_latitude=5.0, **kwargs)
 ```
 
 Calculate the surface energy balance.

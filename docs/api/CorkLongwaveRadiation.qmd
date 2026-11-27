@@ -6,6 +6,7 @@ _components.cork.lw.component.CorkLongwaveRadiation(
     table=None,
     coefficients='solar_composition',
     rosseland_mean_fit='freedman2014',
+    diffusivity_factor=DIFFUSIVITY_FACTOR,
     **kwargs,
 )
 ```
