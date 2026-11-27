@@ -4,13 +4,18 @@ Mirrors the Numba oracles ``planck_sources_kernel`` and
 ``_lw_transport_kernel``. Valid for the non-ESFT additive case where the
 g-point grid is not expanded (nband==nband_orig, ngpt==ngpt_orig).
 """
+from typing import NamedTuple
+
 import jax
-jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 from jax import lax
+import numpy as np
 
-from ..optics.correlated_k_jax import _bracket
+from ..common import MOLAR_MASS, MOLAR_MASS_DRY_AIR
 from ..optics.correlated_k import _CO2_INTERP_LOGK
+from ..optics.correlated_k_jax import _bracket, compute_tau_jax
+
+jax.config.update("jax_enable_x64", True)
 
 DIFFUSIVITY_FACTOR = 1.66
 
@@ -83,11 +88,6 @@ def lw_transport_jax(tau, planck_source, surface_source, emissivity, weights):
 # ---------------------------------------------------------------------------
 # Phase 3 — static table container + differentiable orchestrator
 # ---------------------------------------------------------------------------
-from typing import NamedTuple
-import numpy as np
-
-from ..optics.correlated_k_jax import compute_tau_jax
-from ..common import MOLAR_MASS, MOLAR_MASS_DRY_AIR
 
 # Mass ratio M_H2O / M_dry_air, for specific humidity -> H2O VMR conversion.
 _M_H2O_RATIO = MOLAR_MASS["h2o"] / MOLAR_MASS_DRY_AIR
@@ -179,8 +179,10 @@ def cork_lw_jax(T, p, p_int, T_surf, h2o, co2, emissivity, tau_cloud,
     gas_amounts = air[None, :, :]                       # (1,nlev,ncol)
 
     h2o_vmr = h2o / jnp.maximum(h2o + (1.0 - h2o) * _M_H2O_RATIO, 1e-30)
-    x_lo = jnp.exp(jtable.log_x_grid[0]); x_hi = jnp.exp(jtable.log_x_grid[-1])
-    c_lo = jnp.exp(jtable.log_c_grid[0]); c_hi = jnp.exp(jtable.log_c_grid[-1])
+    x_lo = jnp.exp(jtable.log_x_grid[0])
+    x_hi = jnp.exp(jtable.log_x_grid[-1])
+    c_lo = jnp.exp(jtable.log_c_grid[0])
+    c_hi = jnp.exp(jtable.log_c_grid[-1])
     log_p = jnp.log(jnp.maximum(p, 1.0))
     log_x = jnp.log(jnp.maximum(jnp.clip(h2o_vmr, x_lo, x_hi), 1e-30))
     log_c = jnp.log(jnp.maximum(jnp.clip(co2, c_lo, c_hi), 1e-30))

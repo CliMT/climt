@@ -6,8 +6,9 @@ k-table; gradients flow through the fractional interpolation weights, which
 are smooth functions of the atmospheric state.
 """
 import jax
-jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
+
+jax.config.update("jax_enable_x64", True)
 
 FLOOR = 1e-40
 

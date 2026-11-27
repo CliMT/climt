@@ -1,10 +1,14 @@
-import jax
+import pytest
+
+jax = pytest.importorskip("jax")
+pytestmark = pytest.mark.jax
+
 jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_platform_name", "cpu")
-import jax.numpy as jnp
-import numpy as np
-import pytest
-from climt._components.cork.optics.correlated_k import load_k_table
+
+import jax.numpy as jnp  # noqa: E402
+import numpy as np  # noqa: E402
+from climt._components.cork.optics.correlated_k import load_k_table  # noqa: E402
 
 
 def test_cork_lw_table_roundtrip_shapes():

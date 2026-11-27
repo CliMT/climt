@@ -419,8 +419,10 @@ class CorkLongwaveRadiation(TendencyComponent):
         g = get_constant("gravitational_acceleration", "m/s^2")
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
-        T = state["T"]; orig_shape_T = T.shape
-        p_int = state["p_int"]; orig_shape_pint = p_int.shape
+        T = state["T"]
+        orig_shape_T = T.shape
+        p_int = state["p_int"]
+        orig_shape_pint = p_int.shape
         nlev = T.shape[0]
         T_flat = T.reshape(nlev, -1)
         ncol = T_flat.shape[1]

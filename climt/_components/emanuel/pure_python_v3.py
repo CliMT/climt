@@ -929,6 +929,7 @@ def compute_qs_jax(T, P, cond, RD):
     es = _sat_vap_pressure_jax(T, cond.species_id)
     return EPS * es / (P - (1.0 - EPS) * es)
 
+
 def _tlift_functional_jax(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, params, cond):
     # KK is always a Python literal (1 or 2) — static control flow on KK is fine.
     CPVMCL = cond.CL - cond.CPV
@@ -1004,7 +1005,6 @@ def _convect_functional_jax(
     FQ = jnp.zeros(ND)
     FU = jnp.zeros(ND)
     FV = jnp.zeros(ND)
-    FTRA = jnp.zeros((ND, 1))
 
     CPVMCL = cond.CL - cond.CPV
     EPS = params.RD / cond.RV
@@ -1158,7 +1158,6 @@ def _convect_functional_jax(
 
     # --- Block 7: Setup matrices ---
     HP = jnp.array(H)
-    NENT = jnp.zeros(ND + 1, dtype=jnp.int32)
     WATER = jnp.zeros(ND + 1)
     EVAP = jnp.zeros(ND + 1)
     WT = jnp.full(ND + 1, params.OMTSNOW)
@@ -1194,9 +1193,11 @@ def _convect_functional_jax(
 
     # INB1: (last level in range where BY >= 0) + 1, default ICB+1
     inb1_cand = cape_mask & (BY_all >= 0.0)
-    INB1 = jnp.where(jnp.any(inb1_cand),
-                      jnp.max(jnp.where(inb1_cand, cape_lvl, -1)) + 1,
-                      ICB + 1)
+    INB1 = jnp.where(
+        jnp.any(inb1_cand),
+        jnp.max(jnp.where(inb1_cand, cape_lvl, -1)) + 1,
+        ICB + 1,
+    )
 
     # INB from CAPE: (last level where cumulative CAPE > 0) + 1, default ICB+1
     inb_cand = cape_mask & (CAPE_cum > 0.0)
@@ -1570,10 +1571,12 @@ def _convect_functional_jax(
         UP = UP.at[level].set(jnp.where(k_valid, UP_sc[k], UP[level]))
         VP = VP.at[level].set(jnp.where(k_valid, VP_sc[k], VP[level]))
 
-    PRECIP = jnp.where(ep_active,
+    PRECIP = jnp.where(
+        ep_active,
         PRECIP + WT_sc[INB] * params.SIGD * WATER_sc[INB]
         * 3600.0 * 24000.0 / (cond.ROWL * params.G),
-        PRECIP)
+        PRECIP,
+    )
 
     # --- Blocks 13–15: Tendency accumulation (differentiable) ---
     WD = params.BETA * jnp.abs(MP[ICB]) * 0.01 * params.RD * T_pad[ICB] / (params.SIGD * P[ICB])
@@ -1630,9 +1633,11 @@ def _convect_functional_jax(
         CPINV_i = CPINV_all[i]
 
         # AMP1: mass flux part
-        AMP1_mass = jnp.where(i >= NK,
+        AMP1_mass = jnp.where(
+            i >= NK,
             jnp.sum(jnp.where((lvl_m >= i + 1) & (lvl_m <= INB + 1), M, 0.0)),
-            0.0)
+            0.0,
+        )
         # AMP1: entrainment part — sum MENT[k, jj] for k<=i, jj>i, jj<=INB+1
         k_le_i = (lvl_m[:, None] <= i)           # (ND+1, 1) broadcast
         jj_gt_i = (lvl_m[None, :] >= i + 1) & (lvl_m[None, :] <= INB + 1)  # (1, ND+1)
