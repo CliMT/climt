@@ -200,10 +200,12 @@ def _convect_functional_jax(
     TVP, TP, CLW = _tlift_functional_jax(
         P, T, Q, QS, GZ, ICB, NK, ND, NL, 1, TVP, TP, CLW, params, cond
     )
-    # Variable-bound loop [NK, ICB+1) → full range with mask
-    for i in range(NL + 1):
-        in_range = (i >= NK) & (i <= ICB)
-        TVP = TVP.at[i].set(jnp.where(in_range, TVP[i] - TP[i] * Q[NK], TVP[i]))
+    # Variable-bound range [NK, ICB+1) (vectorized)
+    TVP = jnp.where(
+        (p_indices <= NL) & (p_indices >= NK) & (p_indices <= ICB),
+        TVP - TP * Q[NK],
+        TVP,
+    )
 
     # Early return: CBMF == 0 and TVP[ICB] too cold → fold into active flag
     exit4 = (CBMF == 0.0) & (TVP[ICB] <= (TV[ICB] - params.DTMAX))
@@ -215,26 +217,26 @@ def _convect_functional_jax(
         P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params, cond
     )
 
-    # --- Block 6: EP/SIGP ---
-    # Full-range computation with jnp.where masks instead of traced-bound loops
-    EP = jnp.zeros(ND)
+    # --- Block 6: EP/SIGP (vectorized) ---
     SIGP = jnp.full(ND, params.SIGS)
+    TCA = TP - cond.T_freeze
+    ELACRIT = jnp.where(
+        TCA >= 0.0,
+        params.ELCRIT,
+        params.ELCRIT * (1.0 - TCA / params.TLCRIT),
+    )
+    ELACRIT = jnp.maximum(ELACRIT, 0.0)
+    EPMAX = 0.999
+    ep_all = EPMAX * (1.0 - ELACRIT / jnp.maximum(CLW, 1.0e-8))
+    ep_all = jnp.maximum(jnp.minimum(ep_all, EPMAX), 0.0)
+    EP = jnp.where((p_indices <= NL) & (p_indices > NK), ep_all, 0.0)
 
-    for i in range(NL + 1):
-        in_nk_range = (i > NK)
-        TCA = TP[i] - cond.T_freeze
-        ELACRIT = jnp.where(TCA >= 0.0, params.ELCRIT,
-                            params.ELCRIT * (1.0 - TCA / params.TLCRIT))
-        ELACRIT = jnp.maximum(ELACRIT, 0.0)
-        EPMAX = 0.999
-        ep_i = EPMAX * (1.0 - ELACRIT / jnp.maximum(CLW[i], 1.0e-8))
-        ep_i = jnp.maximum(jnp.minimum(ep_i, EPMAX), 0.0)
-        EP = EP.at[i].set(jnp.where(in_nk_range, ep_i, 0.0))
-
-    # TVP adjustment for [ICB+1, NL+1) → full range with mask
-    for i in range(NL + 1):
-        in_range = (i > ICB)
-        TVP = TVP.at[i].set(jnp.where(in_range, TVP[i] - TP[i] * Q[NK], TVP[i]))
+    # TVP adjustment for [ICB+1, NL+1) (vectorized)
+    TVP = jnp.where(
+        (p_indices <= NL) & (p_indices > ICB),
+        TVP - TP * Q[NK],
+        TVP,
+    )
 
     # --- Block 7: Setup matrices ---
     HP = jnp.array(H)
@@ -243,9 +245,8 @@ def _convect_functional_jax(
     WT = jnp.full(ND + 1, params.OMTSNOW)
     MP = jnp.zeros(ND + 1)
     M = jnp.zeros(ND + 1)
-    LVCP = jnp.zeros(ND + 1)
-    for i in range(NL + 1):
-        LVCP = LVCP.at[i].set(LV[i] / CPN[i])
+    safe_cpn = jnp.where(indices <= NL, CPN, 1.0)
+    LVCP = jnp.where(indices <= NL, LV / safe_cpn, 0.0)
 
     ELIJ = jnp.zeros((ND + 1, ND + 1))
     MENT = jnp.zeros((ND + 1, ND + 1))
