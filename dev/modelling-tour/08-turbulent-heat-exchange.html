@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-9e5517263bf4e3ad1491def691cc4b21.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-292375ed67d780c217b0233d165e2a8c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
 <link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -498,7 +498,7 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoicHJpbnQoXCJ0ZW5kZW5jaWVz
 <li><strong><code>'external'</code></strong> — another component has computed the fluxes. They become <em>inputs</em>, and the scheme applies them as given.</li>
 <li><strong><code>None</code></strong> — no surface exchange at all. The diffusion only mixes the column internally, with no-flux boundaries, and conserves every column integral exactly.</li>
 </ul>
-<p>The trap is pairing <code>'bulk'</code> with a component that <em>also</em> applies surface fluxes. Both then heat the lowest layer, and the surface loses the heat twice, with no error message. climt’s classic case is <code>SimplePhysics(surface_fluxes=True)</code>, which computes and applies its own. It is a compiled component and does not run in this browser, but the trap is real wherever it does. A code exercise below has you watch the flux entries move between inputs and diagnostics as the mode changes.</p>
+<p>The trap is pairing <code>'bulk'</code> with a component that <em>also</em> applies surface fluxes. Both then heat the lowest layer, and the surface loses the heat twice, with no error message. climt’s classic case is <code>SimplePhysics(surface_fluxes=True)</code>, which computes and applies its own. This tour does not use it, but the trap is real wherever it runs. A code exercise below has you watch the flux entries move between inputs and diagnostics as the mode changes.</p>
 </div>
 </div>
 </section>
@@ -1475,8 +1475,8 @@ window._ojs.runtime.interpretFromScriptTags();
 <span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a>The trap is pairing <span class="in">`'bulk'`</span> with a component that *also* applies surface fluxes.</span>
 <span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a>Both then heat the lowest layer, and the surface loses the heat twice, with no</span>
 <span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a>error message. climt's classic case is <span class="in">`SimplePhysics(surface_fluxes=True)`</span>, which</span>
-<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a>computes and applies its own. It is a compiled component and does not run in this</span>
-<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a>browser, but the trap is real wherever it does. A code exercise below has you</span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a>computes and applies its own. This tour does not use it, but the trap is real</span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a>wherever it runs. A code exercise below has you</span>
 <span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a>watch the flux entries move between inputs and diagnostics as the mode changes.</span>
 <span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a></span>

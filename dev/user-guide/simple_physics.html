@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-9e5517263bf4e3ad1491def691cc4b21.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-292375ed67d780c217b0233d165e2a8c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -245,6 +245,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../user-guide/memory_management.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Memory management</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../user-guide/column-ensembles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Column ensembles</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -443,19 +449,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ol>
 <p>Each piece can be toggled independently, so <code>SimplePhysics</code> can act as a complete minimal physics suite or contribute just one process alongside other <code>climt</code> components.</p>
 <p><code>SimplePhysics</code> is an <a href="../user-guide/component_types.html"><code>ImplicitTendencyComponent</code></a>-style <a href="../user-guide/component_types.html"><code>Stepper</code></a>: it applies its parameterisations over a timestep and returns the updated state plus flux diagnostics.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p><code>SimplePhysics</code> wraps a compiled (Fortran) extension. It must be built (as part of the normal <code>climt</code> installation) before it can be constructed; a source checkout without the compiled extensions cannot import it.</p>
-</div>
-</div>
 </section>
 <section id="configuration" class="level2">
 <h2 class="anchored" data-anchor-id="configuration">Configuration</h2>
@@ -492,7 +485,7 @@ Note
 <tr class="odd">
 <td><code>simulate_cyclone</code></td>
 <td><code>False</code></td>
-<td>Configure for the original tropical-cyclone test case.</td>
+<td>Configure for the original tropical-cyclone test case. With an internal SST, <code>True</code> gives a constant 302.15 K and <code>False</code> the latitude-dependent SST of the moist baroclinic wave test.</td>
 </tr>
 <tr class="even">
 <td><code>large_scale_condensation</code></td>
@@ -1141,97 +1134,91 @@ Note
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`Stepper`</span><span class="co">](component_types.qmd)</span>: it applies its parameterisations over a</span>
 <span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>timestep and returns the updated state plus flux diagnostics.</span>
 <span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="in">`SimplePhysics`</span> wraps a compiled (Fortran) extension. It must be built (as part</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>of the normal <span class="in">`climt`</span> installation) before it can be constructed; a source</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>checkout without the compiled extensions cannot import it.</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="fu">## Configuration</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="fu">## Configuration</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>The three parameterisations, and several behavioural options, are controlled by</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>boolean flags and tuning constants at construction. The most important decision</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>is which processes <span class="in">`SimplePhysics`</span> should own versus defer to other components:</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>if you already run a <span class="in">`climt`</span> boundary layer or surface-flux component, turn the</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>corresponding flag off to avoid double-counting.</span>
 <span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>The three parameterisations, and several behavioural options, are controlled by</span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>boolean flags and tuning constants at construction. The most important decision</span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>is which processes <span class="in">`SimplePhysics`</span> should own versus defer to other components:</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>if you already run a <span class="in">`climt`</span> boundary layer or surface-flux component, turn the</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>corresponding flag off to avoid double-counting.</span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructor</span></span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>climt.SimplePhysics(simulate_cyclone<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>                    large_scale_condensation<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>                    boundary_layer<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>                    surface_fluxes<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_temperature<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_specific_humidity<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>                    top_of_boundary_layer<span class="op">=</span><span class="fl">85000.0</span>,</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>                    boundary_layer_influence_height<span class="op">=</span><span class="fl">20000.0</span>,</span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>                    drag_coefficient_heat_fluxes<span class="op">=</span><span class="fl">0.0011</span>,</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>                    base_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.0007</span>,</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>                    wind_dependent_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.000065</span>,</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>                    maximum_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.002</span>)</span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Argument <span class="pp">|</span> Default <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|---------|-------------|</span></span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`simulate_cyclone`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Configure for the original tropical-cyclone test case. <span class="pp">|</span></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`large_scale_condensation`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Add moistening/heating tendencies from large-scale condensation. <span class="pp">|</span></span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`boundary_layer`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Apply the simple boundary-layer diffusion. Keep <span class="in">`True`</span> unless another boundary-layer component is used. <span class="pp">|</span></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_fluxes`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Compute surface fluxes. Keep <span class="in">`True`</span> unless the fluxes come from another component. <span class="pp">|</span></span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`use_external_surface_temperature`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Use <span class="in">`surface_temperature`</span> from the state; if <span class="in">`False`</span>, an internal SST is generated. <span class="pp">|</span></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`use_external_surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Use <span class="in">`surface_specific_humidity`</span> from the state rather than assuming saturation. <span class="pp">|</span></span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`top_of_boundary_layer`</span> <span class="pp">|</span> <span class="in">`85000.0`</span> <span class="pp">|</span> Pressure (Pa) of the boundary-layer top. <span class="pp">|</span></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`boundary_layer_influence_height`</span> <span class="pp">|</span> <span class="in">`20000.0`</span> <span class="pp">|</span> Depth scale (Pa) over which boundary-layer mixing tapers. <span class="pp">|</span></span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`drag_coefficient_heat_fluxes`</span> <span class="pp">|</span> <span class="in">`0.0011`</span> <span class="pp">|</span> Bulk transfer coefficient for the heat/moisture fluxes. <span class="pp">|</span></span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`base_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.0007`</span> <span class="pp">|</span> Constant term of the momentum drag coefficient. <span class="pp">|</span></span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`wind_dependent_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.000065`</span> <span class="pp">|</span> Wind-speed-dependent term of the momentum drag. <span class="pp">|</span></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`maximum_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.002`</span> <span class="pp">|</span> Cap on the momentum drag coefficient. <span class="pp">|</span></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## State</span></span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|</span></span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_temperature`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_pressure`</span>, <span class="in">`air_pressure_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[mid_levels/interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span></span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`surface_air_pressure`</span>, <span class="in">`surface_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`Pa`</span>, <span class="in">`degK`</span> <span class="pp">|</span></span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`specific_humidity`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
-<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`latitude`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degrees_north`</span> <span class="pp">|</span></span>
-<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> out <span class="pp">|</span> <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> as above <span class="pp">|</span></span>
-<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`stratiform_precipitation_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_upward_latent_heat_flux`</span>, <span class="in">`surface_upward_sensible_heat_flux`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`W m^-2`</span> <span class="pp">|</span></span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example</span></span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
-<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
-<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
-<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics()</span>
-<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([physics], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">16</span>, ny<span class="op">=</span><span class="dv">8</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
-<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> physics(state, timedelta(seconds<span class="op">=</span><span class="dv">1800</span>))</span>
-<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"stratiform_precipitation_rate"</span>].values)</span>
-<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>To use <span class="in">`SimplePhysics`</span> only for its boundary layer (fluxes and condensation</span>
-<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>handled elsewhere):</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructor</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>climt.SimplePhysics(simulate_cyclone<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>                    large_scale_condensation<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>                    boundary_layer<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>                    surface_fluxes<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_temperature<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>                    use_external_surface_specific_humidity<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>                    top_of_boundary_layer<span class="op">=</span><span class="fl">85000.0</span>,</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>                    boundary_layer_influence_height<span class="op">=</span><span class="fl">20000.0</span>,</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>                    drag_coefficient_heat_fluxes<span class="op">=</span><span class="fl">0.0011</span>,</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>                    base_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.0007</span>,</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>                    wind_dependent_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.000065</span>,</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>                    maximum_momentum_drag_coefficient<span class="op">=</span><span class="fl">0.002</span>)</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Argument <span class="pp">|</span> Default <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|---------|-------------|</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`simulate_cyclone`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Configure for the original tropical-cyclone test case. With an internal SST, <span class="in">`True`</span> gives a constant 302.15 K and <span class="in">`False`</span> the latitude-dependent SST of the moist baroclinic wave test. <span class="pp">|</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`large_scale_condensation`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Add moistening/heating tendencies from large-scale condensation. <span class="pp">|</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`boundary_layer`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Apply the simple boundary-layer diffusion. Keep <span class="in">`True`</span> unless another boundary-layer component is used. <span class="pp">|</span></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`surface_fluxes`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Compute surface fluxes. Keep <span class="in">`True`</span> unless the fluxes come from another component. <span class="pp">|</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`use_external_surface_temperature`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Use <span class="in">`surface_temperature`</span> from the state; if <span class="in">`False`</span>, an internal SST is generated. <span class="pp">|</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`use_external_surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Use <span class="in">`surface_specific_humidity`</span> from the state rather than assuming saturation. <span class="pp">|</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`top_of_boundary_layer`</span> <span class="pp">|</span> <span class="in">`85000.0`</span> <span class="pp">|</span> Pressure (Pa) of the boundary-layer top. <span class="pp">|</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`boundary_layer_influence_height`</span> <span class="pp">|</span> <span class="in">`20000.0`</span> <span class="pp">|</span> Depth scale (Pa) over which boundary-layer mixing tapers. <span class="pp">|</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`drag_coefficient_heat_fluxes`</span> <span class="pp">|</span> <span class="in">`0.0011`</span> <span class="pp">|</span> Bulk transfer coefficient for the heat/moisture fluxes. <span class="pp">|</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`base_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.0007`</span> <span class="pp">|</span> Constant term of the momentum drag coefficient. <span class="pp">|</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`wind_dependent_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.000065`</span> <span class="pp">|</span> Wind-speed-dependent term of the momentum drag. <span class="pp">|</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`maximum_momentum_drag_coefficient`</span> <span class="pp">|</span> <span class="in">`0.002`</span> <span class="pp">|</span> Cap on the momentum drag coefficient. <span class="pp">|</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## State</span></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|</span></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_temperature`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_pressure`</span>, <span class="in">`air_pressure_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[mid_levels/interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`surface_air_pressure`</span>, <span class="in">`surface_temperature`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`Pa`</span>, <span class="in">`degK`</span> <span class="pp">|</span></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`specific_humidity`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`surface_specific_humidity`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`kg/kg`</span> <span class="pp">|</span></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`latitude`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degrees_north`</span> <span class="pp">|</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> out <span class="pp">|</span> <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, <span class="in">`northward_wind`</span>, <span class="in">`eastward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> as above <span class="pp">|</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`stratiform_precipitation_rate`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_upward_latent_heat_flux`</span>, <span class="in">`surface_upward_sensible_heat_flux`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`W m^-2`</span> <span class="pp">|</span></span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example</span></span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> timedelta</span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics()</span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([physics], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">16</span>, ny<span class="op">=</span><span class="dv">8</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>diagnostics, new_state <span class="op">=</span> physics(state, timedelta(seconds<span class="op">=</span><span class="dv">1800</span>))</span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(diagnostics[<span class="st">"stratiform_precipitation_rate"</span>].values)</span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>To use <span class="in">`SimplePhysics`</span> only for its boundary layer (fluxes and condensation</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>handled elsewhere):</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics(surface_fluxes<span class="op">=</span><span class="va">False</span>, large_scale_condensation<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
 <span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> climt.SimplePhysics(surface_fluxes<span class="op">=</span><span class="va">False</span>, large_scale_condensation<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Component wrapper: <span class="co">[</span><span class="ot">`climt/_components/simple_physics/component.py`</span><span class="co">](https://github.com/CliMT/climt/tree/develop/climt/_components/simple_physics)</span></span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a><span class="fu">### Reference</span></span>
 <span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
-<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Component wrapper: <span class="co">[</span><span class="ot">`climt/_components/simple_physics/component.py`</span><span class="co">](https://github.com/CliMT/climt/tree/develop/climt/_components/simple_physics)</span></span>
-<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a><span class="fu">### Reference</span></span>
-<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>Reed, K. A. &amp; Jablonowski, C. (2012). *Idealized tropical cyclone simulations of</span>
-<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a>intermediate complexity: a test case for AGCMs.* J. Adv. Model. Earth Syst.</span>
-<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a>**4**, M04001.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a>Reed, K. A. &amp; Jablonowski, C. (2012). *Idealized tropical cyclone simulations of</span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>intermediate complexity: a test case for AGCMs.* J. Adv. Model. Earth Syst.</span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a>**4**, M04001.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

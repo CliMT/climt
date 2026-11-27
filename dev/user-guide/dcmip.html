@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-40cd9bb16e81c53a65da4d2a95e5b683.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-9e5517263bf4e3ad1491def691cc4b21.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-292375ed67d780c217b0233d165e2a8c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -245,6 +245,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../user-guide/memory_management.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Memory management</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../user-guide/column-ensembles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Column ensembles</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -441,19 +447,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Baroclinic wave</strong> (<code>condition_type="baroclinic_wave"</code>) — a balanced mid-latitude jet, optionally seeded with a localised perturbation that grows into a baroclinic wave. The canonical test of a dynamical core’s ability to represent developing extratropical cyclones.</li>
 <li><strong>Tropical cyclone</strong> (<code>condition_type="tropical_cyclone"</code>) — an axisymmetric warm-core vortex in a moist tropical environment.</li>
 </ul>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p><code>DcmipInitialConditions</code> wraps a compiled extension providing the DCMIP reference routines, and must be built (as part of the normal <code>climt</code> installation) before it can be constructed.</p>
-</div>
-</div>
 </section>
 <section id="usage-pattern" class="level2">
 <h2 class="anchored" data-anchor-id="usage-pattern">Usage pattern</h2>
@@ -1093,77 +1086,71 @@ Note
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Tropical cyclone** (<span class="in">`condition_type="tropical_cyclone"`</span>) — an axisymmetric</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  warm-core vortex in a moist tropical environment.</span>
 <span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="in">`DcmipInitialConditions`</span> wraps a compiled extension providing the DCMIP</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>reference routines, and must be built (as part of the normal <span class="in">`climt`</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>installation) before it can be constructed.</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="fu">## Usage pattern</span></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>Because it produces a *diagnostic* state from the grid, <span class="in">`DcmipInitialConditions`</span></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>is run once at setup: build a default state to get the grid and hybrid</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>coordinate, call the component, and merge its output back into the state before</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>starting the integration.</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>The component reads the hybrid sigma-pressure <span class="in">`a`</span>/<span class="in">`b`</span> coordinate arrays and the</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>grid coordinates, and returns the full prognostic set (<span class="in">`eastward_wind`</span>,</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="in">`northward_wind`</span>, <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, the pressure fields,</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="in">`surface_air_pressure`</span> and <span class="in">`surface_geopotential`</span>).</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructor</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="fu">## Usage pattern</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>Because it produces a *diagnostic* state from the grid, <span class="in">`DcmipInitialConditions`</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>is run once at setup: build a default state to get the grid and hybrid</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>coordinate, call the component, and merge its output back into the state before</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>starting the integration.</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>The component reads the hybrid sigma-pressure <span class="in">`a`</span>/<span class="in">`b`</span> coordinate arrays and the</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>grid coordinates, and returns the full prognostic set (<span class="in">`eastward_wind`</span>,</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="in">`northward_wind`</span>, <span class="in">`air_temperature`</span>, <span class="in">`specific_humidity`</span>, the pressure fields,</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="in">`surface_air_pressure`</span> and <span class="in">`surface_geopotential`</span>).</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="fu">## Constructor</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>climt.DcmipInitialConditions(condition_type<span class="op">=</span><span class="st">"baroclinic_wave"</span>,</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>                             add_perturbation<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>                             moist<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>climt.DcmipInitialConditions(condition_type<span class="op">=</span><span class="st">"baroclinic_wave"</span>,</span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>                             add_perturbation<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>                             moist<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Argument <span class="pp">|</span> Default <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|---------|-------------|</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`condition_type`</span> <span class="pp">|</span> <span class="in">`"baroclinic_wave"`</span> <span class="pp">|</span> <span class="in">`"baroclinic_wave"`</span> or <span class="in">`"tropical_cyclone"`</span>. <span class="pp">|</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`add_perturbation`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Add the localised perturbation that seeds the wave. Applies to the baroclinic-wave case. <span class="pp">|</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`moist`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Generate a moist (rather than dry) initial state. <span class="pp">|</span></span>
 <span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Argument <span class="pp">|</span> Default <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|---------|-------------|</span></span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`condition_type`</span> <span class="pp">|</span> <span class="in">`"baroclinic_wave"`</span> <span class="pp">|</span> <span class="in">`"baroclinic_wave"`</span> or <span class="in">`"tropical_cyclone"`</span>. <span class="pp">|</span></span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`add_perturbation`</span> <span class="pp">|</span> <span class="in">`True`</span> <span class="pp">|</span> Add the localised perturbation that seeds the wave. Applies to the baroclinic-wave case. <span class="pp">|</span></span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`moist`</span> <span class="pp">|</span> <span class="in">`False`</span> <span class="pp">|</span> Generate a moist (rather than dry) initial state. <span class="pp">|</span></span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## State</span></span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span> Alias <span class="pp">|</span></span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|-------|</span></span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`latitude`</span>, <span class="in">`longitude`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degrees_north`</span> / <span class="in">`degrees_east`</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_pressure`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span> <span class="in">`ak`</span> <span class="pp">|</span></span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span> <span class="in">`bk`</span> <span class="pp">|</span></span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`eastward_wind`</span>, <span class="in">`northward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`air_temperature`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`specific_humidity`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`g/g`</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`air_pressure`</span>, <span class="in">`air_pressure_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[mid_levels/interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_air_pressure`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_geopotential`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m^2 s^-2`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a><span class="fu">## State</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Quantity <span class="pp">|</span> Dims <span class="pp">|</span> Units <span class="pp">|</span> Alias <span class="pp">|</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|----------|------|-------|-------|</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`latitude`</span>, <span class="in">`longitude`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`degrees_north`</span> / <span class="in">`degrees_east`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`air_pressure`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`atmosphere_hybrid_sigma_pressure_a_coordinate_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span> <span class="in">`ak`</span> <span class="pp">|</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> in <span class="pp">|</span> <span class="in">`atmosphere_hybrid_sigma_pressure_b_coordinate_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`dimensionless`</span> <span class="pp">|</span> <span class="in">`bk`</span> <span class="pp">|</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`eastward_wind`</span>, <span class="in">`northward_wind`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`m s^-1`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`air_temperature`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`degK`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`specific_humidity`</span> <span class="pp">|</span> <span class="in">`[mid_levels, *]`</span> <span class="pp">|</span> <span class="in">`g/g`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`air_pressure`</span>, <span class="in">`air_pressure_on_interface_levels`</span> <span class="pp">|</span> <span class="in">`[mid_levels/interface_levels, *]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_air_pressure`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`Pa`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diag <span class="pp">|</span> <span class="in">`surface_geopotential`</span> <span class="pp">|</span> <span class="in">`[*]`</span> <span class="pp">|</span> <span class="in">`m^2 s^-2`</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
 <span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example</span></span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> climt</span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> climt <span class="im">import</span> get_default_state, get_grid</span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>ic <span class="op">=</span> climt.DcmipInitialConditions(condition_type<span class="op">=</span><span class="st">"baroclinic_wave"</span>,</span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>                                  add_perturbation<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([ic], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">128</span>, ny<span class="op">=</span><span class="dv">62</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>ic <span class="op">=</span> climt.DcmipInitialConditions(condition_type<span class="op">=</span><span class="st">"baroclinic_wave"</span>,</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>                                  add_perturbation<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> get_default_state([ic], grid_state<span class="op">=</span>get_grid(nx<span class="op">=</span><span class="dv">128</span>, ny<span class="op">=</span><span class="dv">62</span>, nz<span class="op">=</span><span class="dv">30</span>))</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the balanced initial state and merge it in.</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>state.update(ic(state))</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="co"># `state` now holds a DCMIP baroclinic-wave initial condition, ready to</span></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a><span class="co"># hand to a dynamical core.</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the balanced initial state and merge it in.</span></span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>state.update(ic(state))</span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a><span class="co"># `state` now holds a DCMIP baroclinic-wave initial condition, ready to</span></span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="co"># hand to a dynamical core.</span></span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Component wrapper: <span class="co">[</span><span class="ot">`climt/_components/dcmip/component.py`</span><span class="co">](https://github.com/CliMT/climt/tree/develop/climt/_components/dcmip)</span></span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="fu">### Reference</span></span>
 <span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a><span class="fu">## Source</span></span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Component wrapper: <span class="co">[</span><span class="ot">`climt/_components/dcmip/component.py`</span><span class="co">](https://github.com/CliMT/climt/tree/develop/climt/_components/dcmip)</span></span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a><span class="fu">### Reference</span></span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>Ullrich, P. A. et al. (2012). *Dynamical Core Model Intercomparison Project</span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>(DCMIP) test case document.*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>Ullrich, P. A. et al. (2012). *Dynamical Core Model Intercomparison Project</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>(DCMIP) test case document.*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

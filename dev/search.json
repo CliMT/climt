@@ -81,7 +81,7 @@
     "href": "api/DryConvectiveAdjustment.html",
     "title": "",
     "section": "",
-    "text": "Code\n\n\n\n\n\nDryConvectiveAdjustment\nDryConvectiveAdjustment()\nA conservative scheme to keep the temperature profile close to the dry adiabat if it is super-adiabatic."
+    "text": "Code\n\n\n\n\n\nDryConvectiveAdjustment\nDryConvectiveAdjustment(**kwargs)\nA conservative scheme to keep the temperature profile close to the dry adiabat if it is super-adiabatic."
   },
   {
     "objectID": "api/CorkShortwaveRadiation.html",
@@ -2077,6 +2077,197 @@
     ]
   },
   {
+    "objectID": "user-guide/column-ensembles.html",
+    "href": "user-guide/column-ensembles.html",
+    "title": "Column ensembles",
+    "section": "",
+    "text": "A single-column model run through the usual sympl loop spends most of its time outside the physics: converting units, wrapping arrays as quantities and checking dimensions on every call. climt.build_column_model does that work once. It compiles your components against an example state and returns a ColumnModel that steps plain NumPy arrays, giving the same numbers as the sympl loop (to a relative tolerance of 10⁻¹²).\nThe same machinery runs many single-column scenarios as the columns of one model: a sweep of surface temperatures, a range of convective parameters, or several stellar irradiances, all stepped together.",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#introduction",
+    "href": "user-guide/column-ensembles.html#introduction",
+    "title": "Column ensembles",
+    "section": "",
+    "text": "A single-column model run through the usual sympl loop spends most of its time outside the physics: converting units, wrapping arrays as quantities and checking dimensions on every call. climt.build_column_model does that work once. It compiles your components against an example state and returns a ColumnModel that steps plain NumPy arrays, giving the same numbers as the sympl loop (to a relative tolerance of 10⁻¹²).\nThe same machinery runs many single-column scenarios as the columns of one model: a sweep of surface temperatures, a range of convective parameters, or several stellar irradiances, all stepped together.",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#building-a-column-model",
+    "href": "user-guide/column-ensembles.html#building-a-column-model",
+    "title": "Column ensembles",
+    "section": "Building a column model",
+    "text": "Building a column model\nfrom datetime import timedelta\nimport numpy as np\nimport climt\n\nconvection = climt.EmanuelConvectionPython()\ntendency_components = [convection, climt.RRTMGLongwave(),\n                       climt.RRTMGShortwave(), climt.SlabSurface()]\nstepper = climt.SimplePhysics()\nstate = climt.get_default_state([stepper] + tendency_components)\nstate[\"surface_temperature\"].values[:] = 300.\n# ... set the rest of the initial state as in gmd_radiative_convective_unyt.py\n\nmodel = climt.build_column_model(\n    state,\n    timestep=timedelta(minutes=5),\n    tendency_components=tendency_components,\n    steppers=[stepper],\n    time_stepping=\"adams_bashforth\",   # or \"euler\"\n    order=3,                           # Adams-Bashforth order, 1 to 4\n    prescribed=[\"eastward_wind\"],      # reset to its initial value each step\n)\n\nmodel.step()                                   # one step, in place\nresult = model.run(2000, output_every=100,\n                   outputs=[\"air_temperature\", \"surface_temperature\"])\nds = result.to_xarray()                        # time series as an xarray Dataset\nstate = model.to_state()                       # back to a sympl state\nEach step applies, in this order, the diagnostic components, the tendency components (their tendencies summed in the order given, then stepped with Euler or Adams–Bashforth), the steppers, and finally the prescribed quantities. This is the order of the sympl loop in examples/gmd_radiative_convective_unyt.py. Calling run again continues from where the last call stopped, including the Adams–Bashforth history.\nThe example state can be a sympl.DataArray state or a UnytStateContainer state. Its units and dimension order become the model’s: model.state holds raw arrays in those units, and model.specs[name] gives each array’s dimensions, shape and units.",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#what-can-be-compiled",
+    "href": "user-guide/column-ensembles.html#what-can-be-compiled",
+    "title": "Column ensembles",
+    "section": "What can be compiled",
+    "text": "What can be compiled\nAny component with an array_call can be compiled. The following are refused at build time with a climt.CompileError that names the component and the reason:\n\nsympl wrappers: UpdateFrequencyWrapper, TimeDifferencingWrapper and ScalingWrapper;\ntime stepping other than \"euler\" and \"adams_bashforth\" (orders 1 to 4);\nan input missing from the example state. This includes a diagnostic that another component produces: put it in the example state (for instance with get_default_state on all the components) before building;\na diagnostic produced by two components;\nunits that cannot be converted by a scale and an offset;\na tendency of a quantity held in an offset unit, such as degC. Use kelvin.\n\nSome components read physical constants at construction: SimplePhysics, GrayLongwaveRadiation and DryConvectiveAdjustment. If you change a constant with climt.set_constants_from_dict, construct the component again. Others still read constants on every call: the CORK longwave and shortwave schemes, BergerSolarInsolation and DcmipInitialConditions. They give correct results in a compiled model, but are slower there than the other components.",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#scenarios",
+    "href": "user-guide/column-ensembles.html#scenarios",
+    "title": "Column ensembles",
+    "section": "Scenarios",
+    "text": "Scenarios\nclimt.Scenarios(n, inputs, parameters) runs n scenarios as n columns. A one-column example state is expanded along lon to n columns.\nn = 64\nscenarios = climt.Scenarios(\n    n,\n    inputs={\"surface_temperature\": np.linspace(295., 305., n)},\n    parameters={(convection, \"ALPHA\"): np.linspace(0.1, 0.3, n)},\n)\nmodel = climt.build_column_model(state, scenarios=scenarios, **kwargs)\ncolumn_7 = model.to_state(scenario=7)   # one scenario as a one-column state\nInputs are given in the example state’s units, either one value per scenario (shape (n,), broadcast over the quantity’s other dimensions) or a full profile per scenario (shape (n, ...)). Quantities not listed are the same in every column.\nPer-column parameters are listed in a component class’s per_column_parameters, and every column gets its own value inside the compiled kernel. EmanuelConvectionPython declares all its EmanuelParams fields except IPBL, MINORIG, DELT0 and RD; SimplePhysics declares, for example, base_momentum_drag_coefficient. Outside of scenarios, climt.with_parameters(component, values, ncol) returns a copy of a component with per-column values.\nGrouped parameters are listed in grouped_parameters. They cannot vary inside a kernel call, so the columns are split into groups that share a value and the component is called once per group. RRTMGShortwave groups on stellar_irradiance.\nA per-scenario array of the wrong length or shape, or a parameter the component does not declare, is a ValueError (or CompileError) at build time that names the quantity or parameter.\nEach column of a scenario model equals a sympl run of that scenario on its own, to a relative tolerance of 10⁻¹².",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#threads",
+    "href": "user-guide/column-ensembles.html#threads",
+    "title": "Column ensembles",
+    "section": "Threads",
+    "text": "Threads\nbuild_column_model(..., threads=None) sets numba’s thread count during run. By default it uses one thread below PARALLEL_MIN_COLUMNS columns (32) and numba.config.NUMBA_NUM_THREADS at or above it. Pass threads=k to choose. run restores the previous thread count when it returns, and also when it raises.",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#measured-speed",
+    "href": "user-guide/column-ensembles.html#measured-speed",
+    "title": "Column ensembles",
+    "section": "Measured speed",
+    "text": "Measured speed\nbenchmarks/scm_build.py times the GMD column (Emanuel convection, RRTMG longwave and shortwave, slab surface, simple physics): 20 warm-up steps, then 200 timed steps. The results are in benchmarks/results/scm_build.json (Apple arm64, 11 cores, numba 0.68).\n\n\n\n\n\n\n\n\n\n\nConvection\nColumns\nsympl loop (ms/step)\ncompiled, 1 thread (ms/step)\ncompiled, 11 threads (ms/step)\n\n\n\n\nEmanuelConvection\n1\n1.78\n0.34\n0.34\n\n\nEmanuelConvection\n16\n4.13\n2.63\n2.61\n\n\nEmanuelConvection\n256\n\n38.6\n39.5\n\n\nEmanuelConvection\n4096\n\n663\n650\n\n\nEmanuelConvectionPython\n1\n1.87\n0.40\n0.43\n\n\nEmanuelConvectionPython\n16\n4.31\n2.70\n2.75\n\n\nEmanuelConvectionPython\n256\n\n40.5\n39.6\n\n\nEmanuelConvectionPython\n4096\n\n657\n648\n\n\n\nFor one column the compiled model is about five times faster than the sympl loop. In the sympl loop about 80% of the time is spent outside the components’ array_call; compiled, about 20%. With 16 columns or more the physics dominates (2–6% outside), and the time per column settles at about 0.16 ms per step.\nFor the GMD column, threading gains are negligible: 11 threads are within about 8% of one thread, with no consistent sign (at one column with EmanuelConvectionPython, 11 threads are 8% slower). Most of the step is spent in the RRTMG Fortran, which runs serially. For that reason PARALLEL_MIN_COLUMNS was left at 32 rather than moved on this measurement. Note that the benchmark does not separate the thread count from the kernel variant: PARALLEL_MIN_COLUMNS also selects the serial or parallel numba kernel of EmanuelConvectionPython and SimplePhysics, so at 1 and 16 columns both thread settings ran the serial kernels, and at 256 and 4096 both ran the parallel ones.",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#example",
+    "href": "user-guide/column-ensembles.html#example",
+    "title": "Column ensembles",
+    "section": "Example",
+    "text": "Example\nexamples/scm_ensemble.py runs 64 GMD columns over a sweep of surface temperature (295–305 K) and Emanuel ALPHA, and prints the range of final surface temperatures and the run time:\npython examples/scm_ensemble.py",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/column-ensembles.html#limits",
+    "href": "user-guide/column-ensembles.html#limits",
+    "title": "Column ensembles",
+    "section": "Limits",
+    "text": "Limits\n\nNo sympl wrappers; apply update frequencies or scalings yourself.\nEuler and Adams–Bashforth (orders 1 to 4) only.\nEach column is independent: there is no horizontal transport. SlabSurface(include_ekman=True) couples neighbouring columns, so it is refused with scenarios.",
+    "crumbs": [
+      "User Guide",
+      "Column ensembles"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html",
+    "href": "user-guide/authors.html",
+    "title": "Authors",
+    "section": "",
+    "text": "Rodrigo Caballero &lt;rodrigo.caballero@misu.su.se&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html#original-creator",
+    "href": "user-guide/authors.html#original-creator",
+    "title": "Authors",
+    "section": "",
+    "text": "Rodrigo Caballero &lt;rodrigo.caballero@misu.su.se&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html#development-lead",
+    "href": "user-guide/authors.html#development-lead",
+    "title": "Authors",
+    "section": "Development Lead",
+    "text": "Development Lead\n\nJoy Monteiro &lt;joy.monteiro@misu.su.se&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "user-guide/authors.html#contributors",
+    "href": "user-guide/authors.html#contributors",
+    "title": "Authors",
+    "section": "Contributors",
+    "text": "Contributors\n\nJeremy McGibbon &lt;mcgibbon@uw.edu&gt;\nSergey Kosukhin &lt;sergey.kosukhin@mpimet.mpg.de&gt;\nSally Dacie &lt;sally.dacie@mpimet.mpg.de&gt;\nRaymond Pierrehumbert &lt;raymond.pierrehumbert@physics.ox.ac.uk&gt;\nDargan Frierson &lt;dargan@atmos.washington.edu&gt;\nJonathan Mitchell &lt;jonmitch@ucla.edu&gt;\nSuhas D L &lt;suhasd@iisc.ac.in&gt;\nAbel Shibu &lt;abel.shibu@students.iiserpune.ac.in&gt;\nMonali Vadje &lt;monali.sv4@gmail.com&gt;",
+    "crumbs": [
+      "User Guide",
+      "Project",
+      "Authors"
+    ]
+  },
+  {
+    "objectID": "get-started/installation.html",
+    "href": "get-started/installation.html",
+    "title": "Installation",
+    "section": "",
+    "text": "Note\n\n\n\nThe GFS dynamical core has been made into a seperate package called gfs_dynamical_core for ease of maintenance.\n\n\nIf you need the dynamical core, please install this package from source or directly using pip. Doing this will automatically install climt as well.\n$ pip install gfs_dynamical_core\nYou can install climt by simply typing\n$ pip install climt\nThis is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with sudo. On Mac, it is recommended to use the anaconda python distribution to make installation simpler.\n\n\nclimt itself is pure Python. It brings in a companion package, climt-fortran, which carries the Fortran-backed components (RRTMG and the Fortran Emanuel convection scheme):\n\non Linux (x86-64) and macOS on Apple silicon (macOS 15 or newer), for CPython 3.10–3.12, climt-fortran is a compiled wheel and everything works;\neverywhere else it is an empty stub. Components that need Fortran raise a clear error when you try to use them; everything else works, including the CORK correlated-k radiation scheme.\n\nTo check at runtime:\nimport climt\nclimt.has_fortran_extensions()   # False with the stub\nclimt.list_components()\nname                            kind                       available  requires  source\nCorkLongwaveRadiation           TendencyComponent          True                 climt\nEmanuelConvection               ImplicitTendencyComponent  True                 climt\nRRTMGLongwave                   TendencyComponent          True                 climt\nSimplePhysics                   Stepper                    True                 climt\n...\nclimt-fortran: available, version 2.0.0\nnumba: installed\nThe climt-fortran: line says whether the companion is available, missing, a stub without binaries, broken (with the reason it failed to load) or an interface_mismatch with this version of climt. climt.show_versions() reports the same reason on its fortran_extensions line.\nIf an installed binary is faulty (for example it fails to load against your NumPy), remove it with pip uninstall climt-fortran; climt keeps working without the Fortran components. To build the binaries from source instead (needs gfortran and a C compiler), replacing the stub or a faulty binary:\n$ pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran\n--force-reinstall is needed because pip otherwise considers the installed stub or binary to satisfy the requirement and does nothing.\nSome pure-Python components run much faster with numba, which is an optional extra:\n$ pip install \"climt[numba]\"\n\n\n\n\n\n\nNoteWindows is not tested\n\n\n\nclimt no longer builds or tests Windows binaries. On Windows climt-fortran installs as the empty stub, so climt installs without a compiler but has no Fortran components. Building from source on Windows may still work but is unsupported — if you need the compiled components there, the Windows Subsystem for Linux is the recommended route.\n\n\n\n\n\n\n\n\nNote\n\n\n\nIf you are not using Anaconda, please ensure you have the libpython library installed. See the next section for instructions to install libpython.\n\n\nSince by default pip attempts to install a binary wheel, you won’t need a compiler on your system.\nIf you don’t have pip installed, this Python installation guide can guide you through the process.",
+    "crumbs": [
+      "Get Started",
+      "Installation"
+    ]
+  },
+  {
+    "objectID": "get-started/installation.html#stable-release",
+    "href": "get-started/installation.html#stable-release",
+    "title": "Installation",
+    "section": "",
+    "text": "Note\n\n\n\nThe GFS dynamical core has been made into a seperate package called gfs_dynamical_core for ease of maintenance.\n\n\nIf you need the dynamical core, please install this package from source or directly using pip. Doing this will automatically install climt as well.\n$ pip install gfs_dynamical_core\nYou can install climt by simply typing\n$ pip install climt\nThis is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with sudo. On Mac, it is recommended to use the anaconda python distribution to make installation simpler.\n\n\nclimt itself is pure Python. It brings in a companion package, climt-fortran, which carries the Fortran-backed components (RRTMG and the Fortran Emanuel convection scheme):\n\non Linux (x86-64) and macOS on Apple silicon (macOS 15 or newer), for CPython 3.10–3.12, climt-fortran is a compiled wheel and everything works;\neverywhere else it is an empty stub. Components that need Fortran raise a clear error when you try to use them; everything else works, including the CORK correlated-k radiation scheme.\n\nTo check at runtime:\nimport climt\nclimt.has_fortran_extensions()   # False with the stub\nclimt.list_components()\nname                            kind                       available  requires  source\nCorkLongwaveRadiation           TendencyComponent          True                 climt\nEmanuelConvection               ImplicitTendencyComponent  True                 climt\nRRTMGLongwave                   TendencyComponent          True                 climt\nSimplePhysics                   Stepper                    True                 climt\n...\nclimt-fortran: available, version 2.0.0\nnumba: installed\nThe climt-fortran: line says whether the companion is available, missing, a stub without binaries, broken (with the reason it failed to load) or an interface_mismatch with this version of climt. climt.show_versions() reports the same reason on its fortran_extensions line.\nIf an installed binary is faulty (for example it fails to load against your NumPy), remove it with pip uninstall climt-fortran; climt keeps working without the Fortran components. To build the binaries from source instead (needs gfortran and a C compiler), replacing the stub or a faulty binary:\n$ pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran\n--force-reinstall is needed because pip otherwise considers the installed stub or binary to satisfy the requirement and does nothing.\nSome pure-Python components run much faster with numba, which is an optional extra:\n$ pip install \"climt[numba]\"\n\n\n\n\n\n\nNoteWindows is not tested\n\n\n\nclimt no longer builds or tests Windows binaries. On Windows climt-fortran installs as the empty stub, so climt installs without a compiler but has no Fortran components. Building from source on Windows may still work but is unsupported — if you need the compiled components there, the Windows Subsystem for Linux is the recommended route.\n\n\n\n\n\n\n\n\nNote\n\n\n\nIf you are not using Anaconda, please ensure you have the libpython library installed. See the next section for instructions to install libpython.\n\n\nSince by default pip attempts to install a binary wheel, you won’t need a compiler on your system.\nIf you don’t have pip installed, this Python installation guide can guide you through the process.",
+    "crumbs": [
+      "Get Started",
+      "Installation"
+    ]
+  },
+  {
+    "objectID": "get-started/installation.html#installing-from-source",
+    "href": "get-started/installation.html#installing-from-source",
+    "title": "Installation",
+    "section": "Installing from source",
+    "text": "Installing from source\nThe sources for climt can be downloaded from the Github repo.\nYou can either clone the public repository:\n$ git clone git://github.com/CliMT/climt\nOr download the tarball:\n$ curl  -OL https://github.com/CliMT/climt/tarball/master\nOnce you have a copy of the source, you can install it with:\n$ pip install -r requirements_dev.txt\n$ pip install ./fortran    # builds the Fortran components\n$ pip install -e .\nUntil climt-fortran 2.0.0 is published on PyPI, pip install ./fortran is required before pip install -e ., which otherwise fails because pip cannot find a climt-fortran to satisfy climt’s dependency. Without a Fortran toolchain, install the stub instead:\n$ CLIMT_FORTRAN_STUB=1 pip install ./fortran\nOnce climt-fortran is on PyPI you may skip this step and let pip install the published package. These commands may require the use of sudo.\n\nDependencies for source installations\nclimt depends on some easily installable libraries. For an installation from source, it also requires that C and fortran compilers be installed.\nOn Ubuntu Linux, for example, these dependencies can be installed by:\n$ sudo apt-get install gcc\n$ sudo apt-get install gfortran\n$ sudo apt-get install python-dev\n$ sudo pip install -U numpy\nuse pip3 and python3-dev if you use Python 3.\nOn Mac OSX, it is recommended that you use anaconda as your python distribution. This will eliminate the need to install numpy and python-dev. Once you have anaconda installed, you will need to do the following:\n$ brew install gcc\n$ export CC=gcc-x\n$ export FC=gfortran-x\nWhere gcc-x,gfortran-x are the names of the C,Fortran compilers that Homebrew installs. Exporting the name of the compiler is essential on Mac since the default compiler that ships with Mac (called gcc, but is actually a different compiler) cannot compile OpenMP programs, like the dynamical core in climt.",
+    "crumbs": [
+      "Get Started",
+      "Installation"
+    ]
+  },
+  {
+    "objectID": "get-started/quickstart.html",
+    "href": "get-started/quickstart.html",
+    "title": "Quickstart",
+    "section": "",
+    "text": "Let us start with a simple climt model which is not very useful, but helps illustrate how to use climt:\nimport climt\n\n# Create some components\nradiation = climt.GrayLongwaveRadiation()\n\nsurface = climt.SlabSurface()\n\n# Get a state dictionary filled with required quantities\n# for the components to run\nstate = climt.get_default_state([radiation, surface])\n\n# Run components\ntendencies, diagnostics = radiation(state)\n\n# See output\ntendencies.keys()\ntendencies['air_temperature']\nHere, all the essential aspects of creating and running a model in climt are present:\n\nImport the climt package\nCreate one or many components\nCreate a state dictionary using get_default_state\nRun the components\nDo something with the output\n\nVariables radiation and surface are two components that we create. All climt components take a lot of optional arguments: However, by design, the default options (which are used if you don’t specify any arguments) are meant to be scientifically meaningful.\nThe variables state, tendencies and diagnostics are dictionaries which contain quantities which act either as inputs to components or outputs from components.\nThe function get_default_state(), if called only with a list of components, will provide a set of quantities which represent a single column of the atmosphere. These default values may or may not be meaningful in your context, so it is best to see what they are and change them according to your needs.\n\n\n\n\n\n\nNote\n\n\n\nThe square brackets are required in the call to get_default_state, even if it is one component: climt.get_default_state([radiation]) is the correct syntax.\n\n\nBuilding more sophisticated models and running them is merely an extended version of the above simple example. climt makes heavy use of Sympl, and knowledge of Sympl is necessary to use climt to its full capabilities. So, do go through Sympl’s docs!",
+    "crumbs": [
+      "Get Started",
+      "Quickstart"
+    ]
+  },
+  {
     "objectID": "user-guide/bucket_hydrology.html",
     "href": "user-guide/bucket_hydrology.html",
     "title": "BucketHydrology",
@@ -2185,98 +2376,6 @@
     ]
   },
   {
-    "objectID": "get-started/quickstart.html",
-    "href": "get-started/quickstart.html",
-    "title": "Quickstart",
-    "section": "",
-    "text": "Let us start with a simple climt model which is not very useful, but helps illustrate how to use climt:\nimport climt\n\n# Create some components\nradiation = climt.GrayLongwaveRadiation()\n\nsurface = climt.SlabSurface()\n\n# Get a state dictionary filled with required quantities\n# for the components to run\nstate = climt.get_default_state([radiation, surface])\n\n# Run components\ntendencies, diagnostics = radiation(state)\n\n# See output\ntendencies.keys()\ntendencies['air_temperature']\nHere, all the essential aspects of creating and running a model in climt are present:\n\nImport the climt package\nCreate one or many components\nCreate a state dictionary using get_default_state\nRun the components\nDo something with the output\n\nVariables radiation and surface are two components that we create. All climt components take a lot of optional arguments: However, by design, the default options (which are used if you don’t specify any arguments) are meant to be scientifically meaningful.\nThe variables state, tendencies and diagnostics are dictionaries which contain quantities which act either as inputs to components or outputs from components.\nThe function get_default_state(), if called only with a list of components, will provide a set of quantities which represent a single column of the atmosphere. These default values may or may not be meaningful in your context, so it is best to see what they are and change them according to your needs.\n\n\n\n\n\n\nNote\n\n\n\nThe square brackets are required in the call to get_default_state, even if it is one component: climt.get_default_state([radiation]) is the correct syntax.\n\n\nBuilding more sophisticated models and running them is merely an extended version of the above simple example. climt makes heavy use of Sympl, and knowledge of Sympl is necessary to use climt to its full capabilities. So, do go through Sympl’s docs!",
-    "crumbs": [
-      "Get Started",
-      "Quickstart"
-    ]
-  },
-  {
-    "objectID": "get-started/installation.html",
-    "href": "get-started/installation.html",
-    "title": "Installation",
-    "section": "",
-    "text": "Note\n\n\n\nThe GFS dynamical core has been made into a seperate package called gfs_dynamical_core for ease of maintenance.\n\n\nIf you need the dynamical core, please install this package from source or directly using pip. Doing this will automatically install climt as well.\n$ pip install gfs_dynamical_core\nYou can install climt by simply typing\n$ pip install climt\nThis is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with sudo. On Mac, it is recommended to use the anaconda python distribution to make installation simpler.\n\n\nclimt itself is pure Python. It brings in a companion package, climt-fortran, which carries the Fortran-backed components (RRTMG, the Fortran Emanuel convection scheme, SimplePhysics and the DCMIP initial conditions):\n\non Linux (x86-64) and macOS on Apple silicon (macOS 15 or newer), for CPython 3.10–3.12, climt-fortran is a compiled wheel and everything works;\neverywhere else it is an empty stub. Components that need Fortran raise a clear error when you try to use them; everything else works, including the CORK correlated-k radiation scheme.\n\nTo check at runtime:\nimport climt\nclimt.has_fortran_extensions()   # False with the stub\nclimt.list_components()\nname                            kind                       available  requires  source\nCorkLongwaveRadiation           TendencyComponent          True                 climt\nEmanuelConvection               ImplicitTendencyComponent  True                 climt\nRRTMGLongwave                   TendencyComponent          True                 climt\nSimplePhysics                   Stepper                    True                 climt\n...\nclimt-fortran: available, version 1.0.0\nnumba: installed\nThe climt-fortran: line says whether the companion is available, missing, a stub without binaries, broken (with the reason it failed to load) or an interface_mismatch with this version of climt. climt.show_versions() reports the same reason on its fortran_extensions line.\nIf an installed binary is faulty (for example it fails to load against your NumPy), remove it with pip uninstall climt-fortran; climt keeps working without the Fortran components. To build the binaries from source instead (needs gfortran and a C compiler), replacing the stub or a faulty binary:\n$ pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran\n--force-reinstall is needed because pip otherwise considers the installed stub or binary to satisfy the requirement and does nothing.\nSome pure-Python components run much faster with numba, which is an optional extra:\n$ pip install \"climt[numba]\"\n\n\n\n\n\n\nNoteWindows is not tested\n\n\n\nclimt no longer builds or tests Windows binaries. On Windows climt-fortran installs as the empty stub, so climt installs without a compiler but has no Fortran components. Building from source on Windows may still work but is unsupported — if you need the compiled components there, the Windows Subsystem for Linux is the recommended route.\n\n\n\n\n\n\n\n\nNote\n\n\n\nIf you are not using Anaconda, please ensure you have the libpython library installed. See the next section for instructions to install libpython.\n\n\nSince by default pip attempts to install a binary wheel, you won’t need a compiler on your system.\nIf you don’t have pip installed, this Python installation guide can guide you through the process.",
-    "crumbs": [
-      "Get Started",
-      "Installation"
-    ]
-  },
-  {
-    "objectID": "get-started/installation.html#stable-release",
-    "href": "get-started/installation.html#stable-release",
-    "title": "Installation",
-    "section": "",
-    "text": "Note\n\n\n\nThe GFS dynamical core has been made into a seperate package called gfs_dynamical_core for ease of maintenance.\n\n\nIf you need the dynamical core, please install this package from source or directly using pip. Doing this will automatically install climt as well.\n$ pip install gfs_dynamical_core\nYou can install climt by simply typing\n$ pip install climt\nThis is the preferred method to install climt, as it will always install the most recent stable release. On Ubuntu Linux, you might need to prefix the above command with sudo. On Mac, it is recommended to use the anaconda python distribution to make installation simpler.\n\n\nclimt itself is pure Python. It brings in a companion package, climt-fortran, which carries the Fortran-backed components (RRTMG, the Fortran Emanuel convection scheme, SimplePhysics and the DCMIP initial conditions):\n\non Linux (x86-64) and macOS on Apple silicon (macOS 15 or newer), for CPython 3.10–3.12, climt-fortran is a compiled wheel and everything works;\neverywhere else it is an empty stub. Components that need Fortran raise a clear error when you try to use them; everything else works, including the CORK correlated-k radiation scheme.\n\nTo check at runtime:\nimport climt\nclimt.has_fortran_extensions()   # False with the stub\nclimt.list_components()\nname                            kind                       available  requires  source\nCorkLongwaveRadiation           TendencyComponent          True                 climt\nEmanuelConvection               ImplicitTendencyComponent  True                 climt\nRRTMGLongwave                   TendencyComponent          True                 climt\nSimplePhysics                   Stepper                    True                 climt\n...\nclimt-fortran: available, version 1.0.0\nnumba: installed\nThe climt-fortran: line says whether the companion is available, missing, a stub without binaries, broken (with the reason it failed to load) or an interface_mismatch with this version of climt. climt.show_versions() reports the same reason on its fortran_extensions line.\nIf an installed binary is faulty (for example it fails to load against your NumPy), remove it with pip uninstall climt-fortran; climt keeps working without the Fortran components. To build the binaries from source instead (needs gfortran and a C compiler), replacing the stub or a faulty binary:\n$ pip install --force-reinstall --no-deps --no-binary climt-fortran climt-fortran\n--force-reinstall is needed because pip otherwise considers the installed stub or binary to satisfy the requirement and does nothing.\nSome pure-Python components run much faster with numba, which is an optional extra:\n$ pip install \"climt[numba]\"\n\n\n\n\n\n\nNoteWindows is not tested\n\n\n\nclimt no longer builds or tests Windows binaries. On Windows climt-fortran installs as the empty stub, so climt installs without a compiler but has no Fortran components. Building from source on Windows may still work but is unsupported — if you need the compiled components there, the Windows Subsystem for Linux is the recommended route.\n\n\n\n\n\n\n\n\nNote\n\n\n\nIf you are not using Anaconda, please ensure you have the libpython library installed. See the next section for instructions to install libpython.\n\n\nSince by default pip attempts to install a binary wheel, you won’t need a compiler on your system.\nIf you don’t have pip installed, this Python installation guide can guide you through the process.",
-    "crumbs": [
-      "Get Started",
-      "Installation"
-    ]
-  },
-  {
-    "objectID": "get-started/installation.html#installing-from-source",
-    "href": "get-started/installation.html#installing-from-source",
-    "title": "Installation",
-    "section": "Installing from source",
-    "text": "Installing from source\nThe sources for climt can be downloaded from the Github repo.\nYou can either clone the public repository:\n$ git clone git://github.com/CliMT/climt\nOr download the tarball:\n$ curl  -OL https://github.com/CliMT/climt/tarball/master\nOnce you have a copy of the source, you can install it with:\n$ pip install -r requirements_dev.txt\n$ pip install ./fortran    # builds the Fortran components\n$ pip install -e .\nUntil climt-fortran 1.0.0 is published on PyPI, pip install ./fortran is required before pip install -e ., which otherwise fails because pip cannot find a climt-fortran to satisfy climt’s dependency. Without a Fortran toolchain, install the stub instead:\n$ CLIMT_FORTRAN_STUB=1 pip install ./fortran\nOnce climt-fortran is on PyPI you may skip this step and let pip install the published package. These commands may require the use of sudo.\n\nDependencies for source installations\nclimt depends on some easily installable libraries. For an installation from source, it also requires that C and fortran compilers be installed.\nOn Ubuntu Linux, for example, these dependencies can be installed by:\n$ sudo apt-get install gcc\n$ sudo apt-get install gfortran\n$ sudo apt-get install python-dev\n$ sudo pip install -U cython\n$ sudo pip install -U numpy\nuse pip3 and python3-dev if you use Python 3.\nOn Mac OSX, it is recommended that you use anaconda as your python distribution. This will eliminate the need to install cython, numpy and python-dev. Once you have anaconda installed, you will need to do the following:\n$ brew install gcc\n$ export CC=gcc-x\n$ export FC=gfortran-x\nWhere gcc-x,gfortran-x are the names of the C,Fortran compilers that Homebrew installs. Exporting the name of the compiler is essential on Mac since the default compiler that ships with Mac (called gcc, but is actually a different compiler) cannot compile OpenMP programs, like the dynamical core in climt.",
-    "crumbs": [
-      "Get Started",
-      "Installation"
-    ]
-  },
-  {
-    "objectID": "user-guide/authors.html",
-    "href": "user-guide/authors.html",
-    "title": "Authors",
-    "section": "",
-    "text": "Rodrigo Caballero &lt;rodrigo.caballero@misu.su.se&gt;",
-    "crumbs": [
-      "User Guide",
-      "Project",
-      "Authors"
-    ]
-  },
-  {
-    "objectID": "user-guide/authors.html#original-creator",
-    "href": "user-guide/authors.html#original-creator",
-    "title": "Authors",
-    "section": "",
-    "text": "Rodrigo Caballero &lt;rodrigo.caballero@misu.su.se&gt;",
-    "crumbs": [
-      "User Guide",
-      "Project",
-      "Authors"
-    ]
-  },
-  {
-    "objectID": "user-guide/authors.html#development-lead",
-    "href": "user-guide/authors.html#development-lead",
-    "title": "Authors",
-    "section": "Development Lead",
-    "text": "Development Lead\n\nJoy Monteiro &lt;joy.monteiro@misu.su.se&gt;",
-    "crumbs": [
-      "User Guide",
-      "Project",
-      "Authors"
-    ]
-  },
-  {
-    "objectID": "user-guide/authors.html#contributors",
-    "href": "user-guide/authors.html#contributors",
-    "title": "Authors",
-    "section": "Contributors",
-    "text": "Contributors\n\nJeremy McGibbon &lt;mcgibbon@uw.edu&gt;\nSergey Kosukhin &lt;sergey.kosukhin@mpimet.mpg.de&gt;\nSally Dacie &lt;sally.dacie@mpimet.mpg.de&gt;\nRaymond Pierrehumbert &lt;raymond.pierrehumbert@physics.ox.ac.uk&gt;\nDargan Frierson &lt;dargan@atmos.washington.edu&gt;\nJonathan Mitchell &lt;jonmitch@ucla.edu&gt;\nSuhas D L &lt;suhasd@iisc.ac.in&gt;\nAbel Shibu &lt;abel.shibu@students.iiserpune.ac.in&gt;\nMonali Vadje &lt;monali.sv4@gmail.com&gt;",
-    "crumbs": [
-      "User Guide",
-      "Project",
-      "Authors"
-    ]
-  },
-  {
     "objectID": "user-guide/component_manual.html",
     "href": "user-guide/component_manual.html",
     "title": "Component Manual",
@@ -2378,7 +2477,7 @@
     "href": "user-guide/contributing.html#get-started",
     "title": "Contributing",
     "section": "Get Started!",
-    "text": "Get Started!\nReady to contribute? Here’s how to set up climt for local development.\n\nFork the climt repo on GitHub.\nClone your fork locally:\n$ git clone git@github.com:your_name_here/climt.git\nInstall your local copy into a virtualenv. Install the Fortran companion in fortran/ and then climt, both in editable mode:\n$ mkvirtualenv climt\n$ cd climt/\n$ export SDKROOT=\"$(xcrun --show-sdk-path)\"   # macOS with Homebrew gcc only\n$ pip install -e ./fortran\n$ pip install -e .\nWithout a Fortran toolchain, install the stub instead of the first pip command: CLIMT_FORTRAN_STUB=1 pip install ./fortran.\nCreate a branch for local development:\n$ git checkout -b name-of-your-bugfix-or-feature\nNow you can make your changes locally.\nWhen you’re done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox:\n$ flake8 climt tests\n$ pytest\n$ tox -e py311        # with the Fortran binaries\n$ tox -e py311-pure   # with the climt-fortran stub\nTo get flake8 and tox, just pip install them into your virtualenv.\nCommit your changes and push your branch to GitHub:\n$ git add .\n$ git commit -m \"Your detailed description of your changes.\"\n$ git push origin name-of-your-bugfix-or-feature\nSubmit a pull request through the GitHub website.",
+    "text": "Get Started!\nReady to contribute? Here’s how to set up climt for local development.\n\nFork the climt repo on GitHub.\nClone your fork locally:\n$ git clone git@github.com:your_name_here/climt.git\nInstall your local copy into a virtualenv. Install the Fortran companion in fortran/ and then climt, both in editable mode:\n$ mkvirtualenv climt\n$ cd climt/\n$ export SDKROOT=\"$(xcrun --show-sdk-path)\"   # macOS with Homebrew gcc only\n$ pip install -e ./fortran\n$ pip install -e .\nWithout a Fortran toolchain, install the stub instead of the first pip command: CLIMT_FORTRAN_STUB=1 pip install ./fortran. Rebuilding ./fortran deletes stale climt-fortran 1.x (Cython) extension modules left in fortran/climt_fortran/, so they cannot shadow the 2.x wrappers.\nCreate a branch for local development:\n$ git checkout -b name-of-your-bugfix-or-feature\nNow you can make your changes locally.\nWhen you’re done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox:\n$ flake8 climt tests\n$ pytest\n$ tox -e py311        # with the Fortran binaries\n$ tox -e py311-pure   # with the climt-fortran stub\nTo get flake8 and tox, just pip install them into your virtualenv.\nCommit your changes and push your branch to GitHub:\n$ git add .\n$ git commit -m \"Your detailed description of your changes.\"\n$ git push origin name-of-your-bugfix-or-feature\nSubmit a pull request through the GitHub website.",
     "crumbs": [
       "User Guide",
       "Project",
@@ -2426,7 +2525,7 @@
     "href": "user-guide/dcmip.html",
     "title": "DCMIP initial conditions",
     "section": "",
-    "text": "DcmipInitialConditions provides climt’s interface to the DCMIP (Dynamical Core Model Intercomparison Project) analytic initial conditions. Unlike the other components documented here, it is not a physics parameterisation — it is a DiagnosticComponent that generates a balanced initial atmospheric state (winds, temperature, humidity, surface fields) from the grid geometry, for spinning up and testing dynamical cores.\nIt currently exposes two of the standard DCMIP test cases:\n\nBaroclinic wave (condition_type=\"baroclinic_wave\") — a balanced mid-latitude jet, optionally seeded with a localised perturbation that grows into a baroclinic wave. The canonical test of a dynamical core’s ability to represent developing extratropical cyclones.\nTropical cyclone (condition_type=\"tropical_cyclone\") — an axisymmetric warm-core vortex in a moist tropical environment.\n\n\n\n\n\n\n\nNote\n\n\n\nDcmipInitialConditions wraps a compiled extension providing the DCMIP reference routines, and must be built (as part of the normal climt installation) before it can be constructed.",
+    "text": "DcmipInitialConditions provides climt’s interface to the DCMIP (Dynamical Core Model Intercomparison Project) analytic initial conditions. Unlike the other components documented here, it is not a physics parameterisation — it is a DiagnosticComponent that generates a balanced initial atmospheric state (winds, temperature, humidity, surface fields) from the grid geometry, for spinning up and testing dynamical cores.\nIt currently exposes two of the standard DCMIP test cases:\n\nBaroclinic wave (condition_type=\"baroclinic_wave\") — a balanced mid-latitude jet, optionally seeded with a localised perturbation that grows into a baroclinic wave. The canonical test of a dynamical core’s ability to represent developing extratropical cyclones.\nTropical cyclone (condition_type=\"tropical_cyclone\") — an axisymmetric warm-core vortex in a moist tropical environment.",
     "crumbs": [
       "User Guide",
       "Components",
@@ -2438,7 +2537,7 @@
     "href": "user-guide/dcmip.html#introduction",
     "title": "DCMIP initial conditions",
     "section": "",
-    "text": "DcmipInitialConditions provides climt’s interface to the DCMIP (Dynamical Core Model Intercomparison Project) analytic initial conditions. Unlike the other components documented here, it is not a physics parameterisation — it is a DiagnosticComponent that generates a balanced initial atmospheric state (winds, temperature, humidity, surface fields) from the grid geometry, for spinning up and testing dynamical cores.\nIt currently exposes two of the standard DCMIP test cases:\n\nBaroclinic wave (condition_type=\"baroclinic_wave\") — a balanced mid-latitude jet, optionally seeded with a localised perturbation that grows into a baroclinic wave. The canonical test of a dynamical core’s ability to represent developing extratropical cyclones.\nTropical cyclone (condition_type=\"tropical_cyclone\") — an axisymmetric warm-core vortex in a moist tropical environment.\n\n\n\n\n\n\n\nNote\n\n\n\nDcmipInitialConditions wraps a compiled extension providing the DCMIP reference routines, and must be built (as part of the normal climt installation) before it can be constructed.",
+    "text": "DcmipInitialConditions provides climt’s interface to the DCMIP (Dynamical Core Model Intercomparison Project) analytic initial conditions. Unlike the other components documented here, it is not a physics parameterisation — it is a DiagnosticComponent that generates a balanced initial atmospheric state (winds, temperature, humidity, surface fields) from the grid geometry, for spinning up and testing dynamical cores.\nIt currently exposes two of the standard DCMIP test cases:\n\nBaroclinic wave (condition_type=\"baroclinic_wave\") — a balanced mid-latitude jet, optionally seeded with a localised perturbation that grows into a baroclinic wave. The canonical test of a dynamical core’s ability to represent developing extratropical cyclones.\nTropical cyclone (condition_type=\"tropical_cyclone\") — an axisymmetric warm-core vortex in a moist tropical environment.",
     "crumbs": [
       "User Guide",
       "Components",
@@ -3278,7 +3377,7 @@
     "href": "user-guide/simple_physics.html",
     "title": "SimplePhysics",
     "section": "",
-    "text": "SimplePhysics is climt’s interface to the Reed & Jablonowski (2012) simple-physics package — a compact, self-contained set of parameterisations originally designed as an intermediate-complexity test case for atmospheric general circulation models (its first application was idealised tropical-cyclone simulation). It bundles three pieces of physics into one component:\n\nLarge-scale condensation — removes supersaturation and adds the associated moistening/heating tendencies.\nA simple boundary layer — vertical diffusion of heat, moisture and momentum near the surface.\nBulk surface fluxes — sensible heat, latent heat and momentum exchange with the surface.\n\nEach piece can be toggled independently, so SimplePhysics can act as a complete minimal physics suite or contribute just one process alongside other climt components.\nSimplePhysics is an ImplicitTendencyComponent-style Stepper: it applies its parameterisations over a timestep and returns the updated state plus flux diagnostics.\n\n\n\n\n\n\nNote\n\n\n\nSimplePhysics wraps a compiled (Fortran) extension. It must be built (as part of the normal climt installation) before it can be constructed; a source checkout without the compiled extensions cannot import it.",
+    "text": "SimplePhysics is climt’s interface to the Reed & Jablonowski (2012) simple-physics package — a compact, self-contained set of parameterisations originally designed as an intermediate-complexity test case for atmospheric general circulation models (its first application was idealised tropical-cyclone simulation). It bundles three pieces of physics into one component:\n\nLarge-scale condensation — removes supersaturation and adds the associated moistening/heating tendencies.\nA simple boundary layer — vertical diffusion of heat, moisture and momentum near the surface.\nBulk surface fluxes — sensible heat, latent heat and momentum exchange with the surface.\n\nEach piece can be toggled independently, so SimplePhysics can act as a complete minimal physics suite or contribute just one process alongside other climt components.\nSimplePhysics is an ImplicitTendencyComponent-style Stepper: it applies its parameterisations over a timestep and returns the updated state plus flux diagnostics.",
     "crumbs": [
       "User Guide",
       "Components",
@@ -3290,7 +3389,7 @@
     "href": "user-guide/simple_physics.html#introduction",
     "title": "SimplePhysics",
     "section": "",
-    "text": "SimplePhysics is climt’s interface to the Reed & Jablonowski (2012) simple-physics package — a compact, self-contained set of parameterisations originally designed as an intermediate-complexity test case for atmospheric general circulation models (its first application was idealised tropical-cyclone simulation). It bundles three pieces of physics into one component:\n\nLarge-scale condensation — removes supersaturation and adds the associated moistening/heating tendencies.\nA simple boundary layer — vertical diffusion of heat, moisture and momentum near the surface.\nBulk surface fluxes — sensible heat, latent heat and momentum exchange with the surface.\n\nEach piece can be toggled independently, so SimplePhysics can act as a complete minimal physics suite or contribute just one process alongside other climt components.\nSimplePhysics is an ImplicitTendencyComponent-style Stepper: it applies its parameterisations over a timestep and returns the updated state plus flux diagnostics.\n\n\n\n\n\n\nNote\n\n\n\nSimplePhysics wraps a compiled (Fortran) extension. It must be built (as part of the normal climt installation) before it can be constructed; a source checkout without the compiled extensions cannot import it.",
+    "text": "SimplePhysics is climt’s interface to the Reed & Jablonowski (2012) simple-physics package — a compact, self-contained set of parameterisations originally designed as an intermediate-complexity test case for atmospheric general circulation models (its first application was idealised tropical-cyclone simulation). It bundles three pieces of physics into one component:\n\nLarge-scale condensation — removes supersaturation and adds the associated moistening/heating tendencies.\nA simple boundary layer — vertical diffusion of heat, moisture and momentum near the surface.\nBulk surface fluxes — sensible heat, latent heat and momentum exchange with the surface.\n\nEach piece can be toggled independently, so SimplePhysics can act as a complete minimal physics suite or contribute just one process alongside other climt components.\nSimplePhysics is an ImplicitTendencyComponent-style Stepper: it applies its parameterisations over a timestep and returns the updated state plus flux diagnostics.",
     "crumbs": [
       "User Guide",
       "Components",
@@ -3314,7 +3413,7 @@
     "href": "user-guide/simple_physics.html#constructor",
     "title": "SimplePhysics",
     "section": "Constructor",
-    "text": "Constructor\nclimt.SimplePhysics(simulate_cyclone=False,\n                    large_scale_condensation=True,\n                    boundary_layer=True,\n                    surface_fluxes=True,\n                    use_external_surface_temperature=True,\n                    use_external_surface_specific_humidity=False,\n                    top_of_boundary_layer=85000.0,\n                    boundary_layer_influence_height=20000.0,\n                    drag_coefficient_heat_fluxes=0.0011,\n                    base_momentum_drag_coefficient=0.0007,\n                    wind_dependent_momentum_drag_coefficient=0.000065,\n                    maximum_momentum_drag_coefficient=0.002)\n\n\n\n\n\n\n\n\nArgument\nDefault\nDescription\n\n\n\n\nsimulate_cyclone\nFalse\nConfigure for the original tropical-cyclone test case.\n\n\nlarge_scale_condensation\nTrue\nAdd moistening/heating tendencies from large-scale condensation.\n\n\nboundary_layer\nTrue\nApply the simple boundary-layer diffusion. Keep True unless another boundary-layer component is used.\n\n\nsurface_fluxes\nTrue\nCompute surface fluxes. Keep True unless the fluxes come from another component.\n\n\nuse_external_surface_temperature\nTrue\nUse surface_temperature from the state; if False, an internal SST is generated.\n\n\nuse_external_surface_specific_humidity\nFalse\nUse surface_specific_humidity from the state rather than assuming saturation.\n\n\ntop_of_boundary_layer\n85000.0\nPressure (Pa) of the boundary-layer top.\n\n\nboundary_layer_influence_height\n20000.0\nDepth scale (Pa) over which boundary-layer mixing tapers.\n\n\ndrag_coefficient_heat_fluxes\n0.0011\nBulk transfer coefficient for the heat/moisture fluxes.\n\n\nbase_momentum_drag_coefficient\n0.0007\nConstant term of the momentum drag coefficient.\n\n\nwind_dependent_momentum_drag_coefficient\n0.000065\nWind-speed-dependent term of the momentum drag.\n\n\nmaximum_momentum_drag_coefficient\n0.002\nCap on the momentum drag coefficient.",
+    "text": "Constructor\nclimt.SimplePhysics(simulate_cyclone=False,\n                    large_scale_condensation=True,\n                    boundary_layer=True,\n                    surface_fluxes=True,\n                    use_external_surface_temperature=True,\n                    use_external_surface_specific_humidity=False,\n                    top_of_boundary_layer=85000.0,\n                    boundary_layer_influence_height=20000.0,\n                    drag_coefficient_heat_fluxes=0.0011,\n                    base_momentum_drag_coefficient=0.0007,\n                    wind_dependent_momentum_drag_coefficient=0.000065,\n                    maximum_momentum_drag_coefficient=0.002)\n\n\n\n\n\n\n\n\nArgument\nDefault\nDescription\n\n\n\n\nsimulate_cyclone\nFalse\nConfigure for the original tropical-cyclone test case. With an internal SST, True gives a constant 302.15 K and False the latitude-dependent SST of the moist baroclinic wave test.\n\n\nlarge_scale_condensation\nTrue\nAdd moistening/heating tendencies from large-scale condensation.\n\n\nboundary_layer\nTrue\nApply the simple boundary-layer diffusion. Keep True unless another boundary-layer component is used.\n\n\nsurface_fluxes\nTrue\nCompute surface fluxes. Keep True unless the fluxes come from another component.\n\n\nuse_external_surface_temperature\nTrue\nUse surface_temperature from the state; if False, an internal SST is generated.\n\n\nuse_external_surface_specific_humidity\nFalse\nUse surface_specific_humidity from the state rather than assuming saturation.\n\n\ntop_of_boundary_layer\n85000.0\nPressure (Pa) of the boundary-layer top.\n\n\nboundary_layer_influence_height\n20000.0\nDepth scale (Pa) over which boundary-layer mixing tapers.\n\n\ndrag_coefficient_heat_fluxes\n0.0011\nBulk transfer coefficient for the heat/moisture fluxes.\n\n\nbase_momentum_drag_coefficient\n0.0007\nConstant term of the momentum drag coefficient.\n\n\nwind_dependent_momentum_drag_coefficient\n0.000065\nWind-speed-dependent term of the momentum drag.\n\n\nmaximum_momentum_drag_coefficient\n0.002\nCap on the momentum drag coefficient.",
     "crumbs": [
       "User Guide",
       "Components",
@@ -4029,7 +4128,7 @@
     "href": "modelling-tour/08-turbulent-heat-exchange.html#the-discontinuity-eroded",
     "title": "Turbulent heat exchange",
     "section": "The discontinuity, eroded",
-    "text": "The discontinuity, eroded\nTwo runs. The first is page 7’s column with no boundary layer, stepped 900 times at 12 hours, exactly as there. The second adds the boundary layer and steps hourly, 12 000 times — 500 days.\nWhy hourly? The purely radiative column’s equilibrium does not depend on the timestep: at 12 h and at 1 h it lands on the same 15.15 K. The turbulent column’s does. Stepped at 12 h its sensible heat flux settles at 33.4 W m⁻²; at 1 h, at 30.3; at 30 minutes, at 29.6. Only the last two agree, to about 2 %, so this page steps hourly. A timestep is part of a model’s configuration, and this is how you find out whether yours is short enough: halve it and see whether the answer moves.\nThis cell takes about two and a half minutes in a browser — 12 000 steps at about 12 ms each in Pyodide (measured with the JIT off, the native stand-in for the browser). The spinner is expected. The knob cells further down start from the equilibrium it finds, and are much quicker.\n\n\n\n\n\n\n\n\n\n\n\n\nNoteIf the live cell did not run\n\n\n\n\n\n\n\n\nLeft: the radiative-equilibrium column near the surface, with the ground 15.15 K warmer than the lowest air layer. Right: the same column with a boundary layer, where the jump is down to about 6 K. Below: the sensible heat flux over 500 days, rising in the first weeks and settling on a flat line near 30 W m⁻².\n\n\nThis is the figure the cell above produces. Live cells need WebAssembly; if your browser blocks it, the static version is here.\n\n\n\nThe jump falls from 15.15 K to 5.95 K. The boundary layer carries 30.3 W m⁻² of sensible heat from the ground into the air, and that heat no longer has to leave the surface as radiation. So the surface cools, from 335.53 K to 333.45 K. The lowest air warms, and the jump closes from both sides.\nLook at the flux panel before moving on. Once the column has warmed, the flux settles to a flat line. The scheme chooses the depth of the boundary layer level by level, as the lowest height where the bulk Richardson number exceeds its critical value, and at equilibrium that depth holds at 2.5 km, step after step (scripts/experiments/tour_page8_measurements.py). It mixes dry static energy, c_p T + g z, so the air it mixes is pulled toward the dry adiabat rather than toward one temperature. Every number on this page is still a 30-day mean, which is what record.mean returns. At this equilibrium that is the same as the last step’s value, but it is the safe habit for a run that has not finished settling, and the knob runs below are shorter.\n\n\n\n\n\n\nNoteclimt craft: a Stepper in the loop\n\n\n\nPage 7 said a Stepper returns the new state directly, rather than a rate, and that stepping.integrate’s second list was for them. This is the first page to fill it:\n\n\n\n\n\n\nSimpleBoundaryLayer solves its vertical diffusion implicitly — it computes the profile at the end of the step directly, which stays stable for timesteps that would blow up an explicit rate. Its answer is a new temperature, humidity and wind, not a tendency, so it cannot go inside AdamsBashforth, which sums rates. It is called inside the same loop instead, after the tendency update, on the state the radiation and the slab have just produced. Both lists are in the loop page 7 printed; import inspect; print(inspect.getsource(stepping.integrate)) shows it again, with the one addition this page needs — the after_step hook, which the recorder above uses.\n\n\n\n\n\n\n\n\nNoteclimt craft: diagnostics that are fluxes\n\n\n\nbudgets.sensible_heat_flux reads surface_upward_sensible_heat_flux out of the state, and that quantity is a diagnostic of the boundary layer. It is the flux the scheme applied: evaluated after the implicit solve, from the temperature of the lowest layer at the end of the step, so the column’s heat budget closes to round-off. It is not a formula applied to the state afterwards, which would give a slightly different number. What you plotted is what the model did.\nSlabSurface reads the same quantity as an input, and takes that heat out of the ocean. One number, written by one component and read by another, is how the surface’s energy budget and the atmosphere’s stay the same budget.\n\n\n\n\n\n\n\n\nNoteclimt craft: three surface-flux modes, and the double-counting trap\n\n\n\nSimpleBoundaryLayer(surface_fluxes=...) takes one of three values, and which one you want depends on what else is in the column:\n\n'bulk' (the default, used here) — the scheme computes the surface fluxes itself from its own exchange coefficient, applies them, and reports them as diagnostics.\n'external' — another component has computed the fluxes. They become inputs, and the scheme applies them as given.\nNone — no surface exchange at all. The diffusion only mixes the column internally, with no-flux boundaries, and conserves every column integral exactly.\n\nThe trap is pairing 'bulk' with a component that also applies surface fluxes. Both then heat the lowest layer, and the surface loses the heat twice, with no error message. climt’s classic case is SimplePhysics(surface_fluxes=True), which computes and applies its own. It is a compiled component and does not run in this browser, but the trap is real wherever it does. A code exercise below has you watch the flux entries move between inputs and diagnostics as the mode changes.",
+    "text": "The discontinuity, eroded\nTwo runs. The first is page 7’s column with no boundary layer, stepped 900 times at 12 hours, exactly as there. The second adds the boundary layer and steps hourly, 12 000 times — 500 days.\nWhy hourly? The purely radiative column’s equilibrium does not depend on the timestep: at 12 h and at 1 h it lands on the same 15.15 K. The turbulent column’s does. Stepped at 12 h its sensible heat flux settles at 33.4 W m⁻²; at 1 h, at 30.3; at 30 minutes, at 29.6. Only the last two agree, to about 2 %, so this page steps hourly. A timestep is part of a model’s configuration, and this is how you find out whether yours is short enough: halve it and see whether the answer moves.\nThis cell takes about two and a half minutes in a browser — 12 000 steps at about 12 ms each in Pyodide (measured with the JIT off, the native stand-in for the browser). The spinner is expected. The knob cells further down start from the equilibrium it finds, and are much quicker.\n\n\n\n\n\n\n\n\n\n\n\n\nNoteIf the live cell did not run\n\n\n\n\n\n\n\n\nLeft: the radiative-equilibrium column near the surface, with the ground 15.15 K warmer than the lowest air layer. Right: the same column with a boundary layer, where the jump is down to about 6 K. Below: the sensible heat flux over 500 days, rising in the first weeks and settling on a flat line near 30 W m⁻².\n\n\nThis is the figure the cell above produces. Live cells need WebAssembly; if your browser blocks it, the static version is here.\n\n\n\nThe jump falls from 15.15 K to 5.95 K. The boundary layer carries 30.3 W m⁻² of sensible heat from the ground into the air, and that heat no longer has to leave the surface as radiation. So the surface cools, from 335.53 K to 333.45 K. The lowest air warms, and the jump closes from both sides.\nLook at the flux panel before moving on. Once the column has warmed, the flux settles to a flat line. The scheme chooses the depth of the boundary layer level by level, as the lowest height where the bulk Richardson number exceeds its critical value, and at equilibrium that depth holds at 2.5 km, step after step (scripts/experiments/tour_page8_measurements.py). It mixes dry static energy, c_p T + g z, so the air it mixes is pulled toward the dry adiabat rather than toward one temperature. Every number on this page is still a 30-day mean, which is what record.mean returns. At this equilibrium that is the same as the last step’s value, but it is the safe habit for a run that has not finished settling, and the knob runs below are shorter.\n\n\n\n\n\n\nNoteclimt craft: a Stepper in the loop\n\n\n\nPage 7 said a Stepper returns the new state directly, rather than a rate, and that stepping.integrate’s second list was for them. This is the first page to fill it:\n\n\n\n\n\n\nSimpleBoundaryLayer solves its vertical diffusion implicitly — it computes the profile at the end of the step directly, which stays stable for timesteps that would blow up an explicit rate. Its answer is a new temperature, humidity and wind, not a tendency, so it cannot go inside AdamsBashforth, which sums rates. It is called inside the same loop instead, after the tendency update, on the state the radiation and the slab have just produced. Both lists are in the loop page 7 printed; import inspect; print(inspect.getsource(stepping.integrate)) shows it again, with the one addition this page needs — the after_step hook, which the recorder above uses.\n\n\n\n\n\n\n\n\nNoteclimt craft: diagnostics that are fluxes\n\n\n\nbudgets.sensible_heat_flux reads surface_upward_sensible_heat_flux out of the state, and that quantity is a diagnostic of the boundary layer. It is the flux the scheme applied: evaluated after the implicit solve, from the temperature of the lowest layer at the end of the step, so the column’s heat budget closes to round-off. It is not a formula applied to the state afterwards, which would give a slightly different number. What you plotted is what the model did.\nSlabSurface reads the same quantity as an input, and takes that heat out of the ocean. One number, written by one component and read by another, is how the surface’s energy budget and the atmosphere’s stay the same budget.\n\n\n\n\n\n\n\n\nNoteclimt craft: three surface-flux modes, and the double-counting trap\n\n\n\nSimpleBoundaryLayer(surface_fluxes=...) takes one of three values, and which one you want depends on what else is in the column:\n\n'bulk' (the default, used here) — the scheme computes the surface fluxes itself from its own exchange coefficient, applies them, and reports them as diagnostics.\n'external' — another component has computed the fluxes. They become inputs, and the scheme applies them as given.\nNone — no surface exchange at all. The diffusion only mixes the column internally, with no-flux boundaries, and conserves every column integral exactly.\n\nThe trap is pairing 'bulk' with a component that also applies surface fluxes. Both then heat the lowest layer, and the surface loses the heat twice, with no error message. climt’s classic case is SimplePhysics(surface_fluxes=True), which computes and applies its own. This tour does not use it, but the trap is real wherever it runs. A code exercise below has you watch the flux entries move between inputs and diagnostics as the mode changes.",
     "crumbs": [
       "Modelling Tour",
       "Turbulent heat exchange"
@@ -4432,7 +4531,7 @@
     "href": "api/GrayLongwaveRadiation.html",
     "title": "",
     "section": "",
-    "text": "Code\n\n\n\n\n\nGrayLongwaveRadiation\nGrayLongwaveRadiation()"
+    "text": "Code\n\n\n\n\n\nGrayLongwaveRadiation\nGrayLongwaveRadiation(**kwargs)"
   },
   {
     "objectID": "api/HeldSuarez.html",
