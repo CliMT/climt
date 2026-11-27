@@ -5,6 +5,20 @@ History
 Unreleased
 ----------
 
+* **New feature** — Differentiable JAX kernels for ``EmanuelConvectionPython``
+  and ``CorkLongwaveRadiation`` (7-D pre-mixed correlated-k path), merged from
+  ``jax-research`` behind parity tests against the numba reference kernels
+  (``rtol = atol = 1e-10`` for Emanuel; ``rtol = 1e-6`` for CORK longwave) and
+  available via the optional ``climt[jax]`` extra (``jax>=0.10.1``,
+  ``jaxlib>=0.10.1``). JAX is imported lazily so ``import climt`` never loads
+  JAX or mutates its global configuration; calling a JAX kernel with 64-bit
+  mode disabled raises ``JaxPrecisionError`` with the fix, and uncovered CORK
+  configurations raise explicit ``NotImplementedError`` messages. Vectorising
+  the Emanuel JAX kernel's per-level loops reduced its traced graph from
+  63,262 to 2,983 forward equations (180,701 to 5,152 for ``jax.grad``) and
+  cut CPU gradient first-call compile time from ~751 s to ~2.5 s (pinned by
+  ``tests/test_emanuel_jax_budget.py``).
+
 * **Fix (behaviour change)** — ``SimpleBoundaryLayer`` diffuses dry static
   energy ``Cp T + g z`` instead of temperature, as Frierson, Held &
   Zurita-Gotor (2006) do. Diffusing ``T`` itself pulled a well-mixed boundary
