@@ -462,76 +462,81 @@ def _convect_functional_jax(
 
     SIJ = SIJ.at[INB, INB].set(1.0)
 
-    # --- Block 11 second half: SCRIT normalization (JIT-compatible) ---
-    # Static-range loops with masks (ICB, INB are traced)
-    for i in range(NL + 1):
-        i_active = (i >= ICB + 1) & (i <= INB) & (NENT_count[i] > 0)
+    # --- Block 11 second half: SCRIT normalization (vectorized + lax.scan over j) ---
+    i_active_scrit = (lvl <= NL) & (lvl >= ICB + 1) & (lvl <= INB) & (NENT_count > 0)
 
-        QP1 = Q_pad[NK] - EP_pad[i] * CLW_pad[i]
-        ANUM_s = H[i] - HP[i] - LV[i] * (QP1 - QS_pad[i])
-        DENOM_s = H[i] - HP[i] + LV[i] * (Q_pad[i] - QP1)
-        DENOM_s = jnp.where(jnp.abs(DENOM_s) < 0.01, 0.01, DENOM_s)
-        SCRIT = ANUM_s / DENOM_s
-        ALT = QP1 - QS_pad[i] + SCRIT * (Q_pad[i] - QP1)
-        SCRIT = jnp.where(ALT < 0.0, 1.0, SCRIT)
-        SCRIT = jnp.maximum(SCRIT, 0.0)
+    QP1_vec = Q_pad[NK] - EP_pad * CLW_pad
+    ANUM_s = H - HP - LV * (QP1_vec - QS_pad)
+    DENOM_s = H - HP + LV * (Q_pad - QP1_vec)
+    DENOM_s = jnp.where(jnp.abs(DENOM_s) < 0.01, 0.01, DENOM_s)
+    SCRIT_vec = ANUM_s / DENOM_s
+    ALT_vec = QP1_vec - QS_pad + SCRIT_vec * (Q_pad - QP1_vec)
+    SCRIT_vec = jnp.where(ALT_vec < 0.0, 1.0, SCRIT_vec)
+    SCRIT_vec = jnp.maximum(SCRIT_vec, 0.0)
 
-        ASIJ_acc = 0.0
-        SMIN = 1.0
-        weights = jnp.zeros(ND + 1)
-        for j in range(NL + 1):
-            j_valid = (j >= ICB) & (j <= INB)
-            sij_ij = SIJ[i, j]
-            is_ent_j = (sij_ij > 0.0) & (sij_ij < 0.9) & j_valid
-            if j > i:
-                SMID = jnp.minimum(sij_ij, SCRIT)
-                SJMAX = SMID
-                SJMIN = SMID
-                sij_next = SIJ[i, min(j + 1, ND)]
-                sij_prev = SIJ[i, max(j - 1, 0)]
-                update_minmax = (SMID < SMIN) & (sij_next < SMID)
-                SJMAX = jnp.where(update_minmax, jnp.minimum(jnp.minimum(sij_next, sij_ij), SCRIT), SJMAX)
-                SJMIN = jnp.where(update_minmax, jnp.minimum(jnp.maximum(sij_prev, sij_ij), SCRIT), SJMIN)
-                SMIN = jnp.where(update_minmax & is_ent_j, SMID, SMIN)
-            else:
-                sij_next = SIJ[i, min(j + 1, ND)]
-                sij_prev = SIJ[i, max(j - 1, 0)] if j > 0 else 0.0
-                SJMAX = jnp.maximum(sij_next, SCRIT)
-                SMID = jnp.maximum(sij_ij, SCRIT)
-                SJMIN = jnp.maximum(sij_prev, SCRIT)
+    SIJ_next = jnp.concatenate([SIJ[:, 1:], SIJ[:, -1:]], axis=1)
+    SIJ_prev = jnp.concatenate([jnp.zeros((ND + 1, 1)), SIJ[:, :-1]], axis=1)
+    dph_sub = PH[:NL + 1] - PH[1:NL + 2]
 
-            w = (jnp.abs(SJMAX - SMID) + jnp.abs(SJMIN - SMID)) * (PH[j] - PH[j + 1])
-            w = jnp.where(is_ent_j, w, 0.0)
-            weights = weights.at[j].set(w)
-            ASIJ_acc = ASIJ_acc + w
+    def _scrit_weight_step(smin, step_in):
+        j_idx, sij_col, sij_next_col, sij_prev_col, dph_j = step_in
+        j_valid = (j_idx >= ICB) & (j_idx <= INB)
+        is_ent_j = (sij_col > 0.0) & (sij_col < 0.9) & j_valid
+        j_gt_i = j_idx > lvl
 
-        ASIJ_acc = jnp.maximum(ASIJ_acc, 1.0e-21)
-        MENT_row = MENT[i, :] * weights / ASIJ_acc
-        ment_sum = jnp.sum(MENT_row)
+        smid_gt = jnp.minimum(sij_col, SCRIT_vec)
+        update_minmax = (smid_gt < smin) & (sij_next_col < smid_gt)
+        sjmax_gt = jnp.where(
+            update_minmax,
+            jnp.minimum(jnp.minimum(sij_next_col, sij_col), SCRIT_vec),
+            smid_gt,
+        )
+        sjmin_gt = jnp.where(
+            update_minmax,
+            jnp.minimum(jnp.maximum(sij_prev_col, sij_col), SCRIT_vec),
+            smid_gt,
+        )
+        smin_next = jnp.where(j_gt_i & update_minmax & is_ent_j, smid_gt, smin)
 
-        # If sum of MENT is tiny, fall back to diagonal
-        tiny = (ment_sum < 1.0e-18)
-        MENT_fallback = jnp.zeros(ND + 1).at[i].set(M[i])
-        QENT_fallback = QENT[i, :].at[i].set(Q_pad[NK] - EP_pad[i] * CLW_pad[i])
-        UENT_fallback = UENT[i, :].at[i].set(U_pad[NK])
-        VENT_fallback = VENT[i, :].at[i].set(V_pad[NK])
-        ELIJ_fallback = ELIJ[i, :].at[i].set(CLW_pad[i])
-        SIJ_fallback = SIJ[i, :].at[i].set(1.0)
+        sjmax_le = jnp.maximum(sij_next_col, SCRIT_vec)
+        smid_le = jnp.maximum(sij_col, SCRIT_vec)
+        sjmin_le = jnp.maximum(sij_prev_col, SCRIT_vec)
 
-        new_ment_row = jnp.where(tiny, MENT_fallback, MENT_row)
-        new_qent_row = jnp.where(tiny, QENT_fallback, QENT[i, :])
-        new_uent_row = jnp.where(tiny, UENT_fallback, UENT[i, :])
-        new_vent_row = jnp.where(tiny, VENT_fallback, VENT[i, :])
-        new_elij_row = jnp.where(tiny, ELIJ_fallback, ELIJ[i, :])
-        new_sij_row = jnp.where(tiny, SIJ_fallback, SIJ[i, :])
+        sjmax = jnp.where(j_gt_i, sjmax_gt, sjmax_le)
+        smid = jnp.where(j_gt_i, smid_gt, smid_le)
+        sjmin = jnp.where(j_gt_i, sjmin_gt, sjmin_le)
 
-        # Only update if i_active (has entraining levels and in valid range)
-        MENT = MENT.at[i, :].set(jnp.where(i_active, new_ment_row, MENT[i, :]))
-        QENT = QENT.at[i, :].set(jnp.where(i_active, new_qent_row, QENT[i, :]))
-        UENT = UENT.at[i, :].set(jnp.where(i_active, new_uent_row, UENT[i, :]))
-        VENT = VENT.at[i, :].set(jnp.where(i_active, new_vent_row, VENT[i, :]))
-        ELIJ = ELIJ.at[i, :].set(jnp.where(i_active, new_elij_row, ELIJ[i, :]))
-        SIJ = SIJ.at[i, :].set(jnp.where(i_active, new_sij_row, SIJ[i, :]))
+        w_col = (jnp.abs(sjmax - smid) + jnp.abs(sjmin - smid)) * dph_j
+        w_col = jnp.where(is_ent_j, w_col, 0.0)
+        return smin_next, w_col
+
+    _, w_cols = jax.lax.scan(
+        _scrit_weight_step,
+        jnp.ones(ND + 1),
+        (
+            jnp.arange(NL + 1),
+            SIJ[:, :NL + 1].T,
+            SIJ_next[:, :NL + 1].T,
+            SIJ_prev[:, :NL + 1].T,
+            dph_sub,
+        ),
+    )
+    weights_2d = jnp.concatenate([w_cols.T, jnp.zeros((ND + 1, ND - NL))], axis=1)
+    ASIJ_acc = jnp.maximum(jnp.sum(weights_2d, axis=1), 1.0e-21)
+    MENT_norm = MENT * weights_2d / ASIJ_acc[:, None]
+    ment_sum = jnp.sum(MENT_norm, axis=1)
+
+    tiny_1d = ment_sum < 1.0e-18
+    MENT_fallback_2d = jnp.where(diag_mask, M[:, None], 0.0)
+    new_ment_2d = jnp.where(tiny_1d[:, None], MENT_fallback_2d, MENT_norm)
+    MENT = jnp.where(i_active_scrit[:, None], new_ment_2d, MENT)
+
+    diag_tiny = diag_mask & (i_active_scrit & tiny_1d)[:, None]
+    QENT = jnp.where(diag_tiny, QP1_vec[:, None], QENT)
+    UENT = jnp.where(diag_tiny, U_pad[NK], UENT)
+    VENT = jnp.where(diag_tiny, V_pad[NK], VENT)
+    ELIJ = jnp.where(diag_tiny, CLW_pad[:, None], ELIJ)
+    SIJ = jnp.where(diag_tiny, 1.0, SIJ)
 
     # --- Block 12: Downdraft (differentiable) ---
     # Pre-compute WDTRAIN for all levels as a vectorized operation.
