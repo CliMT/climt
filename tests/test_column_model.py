@@ -3,6 +3,7 @@
 The oracle is the sympl loop of examples/gmd_radiative_convective_unyt.py.
 """
 import copy
+import warnings
 from datetime import timedelta
 
 import numpy as np
@@ -273,8 +274,12 @@ def test_identical_scenarios_give_identical_columns():
 
 def test_grouped_stellar_irradiance_matches_and_warns():
     solar = [1360., 1360., 1300., 1300.]
-    with pytest.warns(UserWarning, match="2 groups"):
+    # Not pytest.warns: it would turn a FortranUnavailableError (pure install)
+    # into "DID NOT WARN" before conftest can report it as a skip.
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
         model = scenario_model(solar=solar)
+    assert any(issubclass(w.category, UserWarning) and "2 groups" in str(w.message) for w in caught)
     check_scenarios(model, [alone(t, solar=s) for t, s in zip(SURFACE_TEMPERATURES, solar)])
     # The solar constant reaches the Fortran: top-of-atmosphere insolation scales with it.
     toa = [column(model, "downwelling_shortwave_flux_in_air", i).max() for i in range(4)]

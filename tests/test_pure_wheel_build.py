@@ -67,7 +67,7 @@ def test_wheel_metadata(built_wheel):
     requires = [line.split(":", 1)[1].strip() for line in metadata.splitlines() if line.startswith("Requires-Dist:")]
     fortran = [r for r in requires if r.startswith("climt-fortran")]
     assert len(fortran) == 1
-    assert ">=1.0" in fortran[0] and "<2" in fortran[0]
+    assert ">=2" in fortran[0] and "<3" in fortran[0]
     assert "sys_platform" in fortran[0] and "emscripten" in fortran[0] and "extra" not in fortran[0]
     assert not [r for r in requires if r.lower().startswith("cython")]
     assert [r for r in requires if r.startswith("numba") and 'extra == "numba"' in r.replace("'", '"')]
