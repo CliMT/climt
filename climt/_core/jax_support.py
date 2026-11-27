@@ -20,10 +20,13 @@ def is_jax_array(value) -> bool:
     return isinstance(value, jax.Array)
 
 
-def require_x64() -> None:
-    """Raise JaxPrecisionError unless jax.config.jax_enable_x64 is True. The
-    message contains: jax.config.update("jax_enable_x64", True)"""
+def require_x64(*arrays) -> None:
+    """Raise JaxPrecisionError unless jax.config.jax_enable_x64 is True and
+    every floating-point JAX array among ``arrays`` is float64 (x64 mode on
+    does not stop a caller passing explicit float32 arrays). The message
+    contains: jax.config.update("jax_enable_x64", True)"""
     import jax
+    import jax.numpy as jnp
 
     if not jax.config.jax_enable_x64:
         raise JaxPrecisionError(
@@ -31,6 +34,16 @@ def require_x64() -> None:
             "but JAX x64 mode is disabled. Enable it before creating JAX "
             'arrays with: jax.config.update("jax_enable_x64", True)'
         )
+    for array in arrays:
+        if not is_jax_array(array):
+            continue
+        if jnp.issubdtype(array.dtype, jnp.floating) and array.dtype != jnp.float64:
+            raise JaxPrecisionError(
+                f"CliMT's JAX kernels require float64 arrays, got {array.dtype}. "
+                "Enable 64-bit mode before creating JAX arrays with: "
+                'jax.config.update("jax_enable_x64", True), and do not pass an '
+                "explicit lower-precision dtype."
+            )
 
 
 def count_jaxpr_equations(function, *args) -> int:

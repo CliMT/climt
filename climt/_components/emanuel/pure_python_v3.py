@@ -168,7 +168,7 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
         # Same coercion, same reason, as sea_ice/component.py.
         delt = float(timestep.total_seconds())
         if any(is_jax_array(v) for v in state.values()):
-            require_x64()
+            require_x64(*state.values())
             import jax.numpy as jnp
             from .kernel_jax import compute_qs_jax, emanuel_convect_jax
 

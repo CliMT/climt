@@ -213,7 +213,7 @@ class CorkLongwaveRadiation(TendencyComponent):
 
     def array_call(self, state):
         if any(is_jax_array(v) for v in state.values()):
-            require_x64()
+            require_x64(*state.values())
             if self._optics_mode != "correlated_k":
                 raise NotImplementedError(
                     "CorkLongwaveRadiation JAX kernel requires optics='correlated_k', "
@@ -224,10 +224,26 @@ class CorkLongwaveRadiation(TendencyComponent):
                     "CorkLongwaveRadiation JAX kernel requires a pre-mixed background "
                     "correlated-k table."
                 )
-            if self._table["k_coefficients"].ndim != 7:
+            k_coefficients = self._table["k_coefficients"]
+            if k_coefficients.ndim != 7:
                 raise NotImplementedError(
                     "CorkLongwaveRadiation JAX kernel requires a 7-dimensional "
-                    f"pre-mixed correlated-k table, got {self._table['k_coefficients'].ndim}-D."
+                    f"pre-mixed correlated-k table, got {k_coefficients.ndim}-D."
+                )
+            # The JAX optics give every gas the column air mass, where the
+            # NumPy path gives gases after the first zero amount, so a
+            # multi-gas table would be silently wrong rather than refused.
+            overlap = str(self._table.get("overlap_method", np.array("additive")))
+            if (
+                k_coefficients.shape[0] != 1
+                or overlap != "additive"
+                or "h2o_vmr_grid" not in self._table
+                or not self._has_co2_axis
+            ):
+                raise NotImplementedError(
+                    "CorkLongwaveRadiation JAX kernel requires a single-gas, "
+                    "additive-overlap correlated-k table with H2O and CO2 axes; "
+                    f"got {k_coefficients.shape[0]} gas(es), overlap={overlap!r}."
                 )
             if self._diagnostics_level != 0:
                 raise NotImplementedError(

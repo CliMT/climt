@@ -116,3 +116,40 @@ def test_dispatch_triggers_on_non_temperature_jax_input():
 
     g_q = jax.grad(em_loss_wrt_q)(jnp.asarray(em_np["specific_humidity"]))
     assert jnp.all(jnp.isfinite(g_q)) and jnp.any(g_q != 0.0)
+
+
+def test_float32_arrays_with_x64_enabled_are_refused():
+    from datetime import timedelta
+    from climt._core.jax_support import JaxPrecisionError
+
+    jax.config.update("jax_enable_x64", True)
+    state_em = {
+        k: jnp.ones((30, 1), dtype=jnp.float32)
+        for k in ("air_temperature", "specific_humidity", "air_pressure", "eastward_wind", "northward_wind")
+    }
+    state_em["air_pressure_on_interface_levels"] = jnp.ones((31, 1), dtype=jnp.float32)
+    with pytest.raises(JaxPrecisionError, match="float32") as exc_em:
+        climt.EmanuelConvectionPython().array_call(state_em, timedelta(minutes=15))
+    assert 'jax.config.update("jax_enable_x64", True)' in str(exc_em.value)
+
+    comp_lw = climt.CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    with pytest.raises(JaxPrecisionError, match="float32"):
+        comp_lw.array_call({"T": jnp.ones((20, 2), dtype=jnp.float32)})
+
+
+@pytest.mark.parametrize("change, word", [
+    ({"overlap_method": np.array("esft")}, "additive"),
+    ({"k_coefficients": np.zeros((2, 2, 2, 2, 2, 2, 2))}, "single-gas"),
+    ({"co2_vmr_grid": None}, "CO2"),
+])
+def test_cork_lw_refuses_7d_tables_the_jax_optics_do_not_cover(change, word):
+    jax.config.update("jax_enable_x64", True)
+    component = climt.CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    table = dict(component._table, **change)
+    if change.get("co2_vmr_grid", ...) is None:
+        del table["co2_vmr_grid"]
+        component._has_co2_axis = False
+    component._table = table
+    with pytest.raises(NotImplementedError, match=word) as info:
+        component.array_call({"T": jnp.ones((20, 2))})
+    assert "CorkLongwaveRadiation" in str(info.value)

@@ -44,3 +44,13 @@ def test_emanuel_jax_zero_humidity_gradient_is_finite():
     gT, gq = jax.grad(loss, argnums=(0, 1))(T0, q0)
     assert jnp.all(jnp.isfinite(gT)), "Non-finite temperature gradient on q=0 column"
     assert jnp.all(jnp.isfinite(gq)), "Non-finite humidity gradient on q=0 column"
+
+
+def test_sat_vap_pressure_jax_grad_finite_at_extreme_cold():
+    """jnp.where differentiates both branches; neither may produce inf there."""
+    from climt._components.emanuel.kernel_jax import _sat_vap_pressure_jax
+
+    temps = jnp.array([28.0, 29.65, 180.0, 273.15, 300.0], dtype=jnp.float64)
+    for species_id in (0, 1, 2):
+        grad = jax.grad(lambda t: jnp.sum(_sat_vap_pressure_jax(t, species_id)))(temps)
+        assert jnp.all(jnp.isfinite(grad)), f"species {species_id}: {grad}"

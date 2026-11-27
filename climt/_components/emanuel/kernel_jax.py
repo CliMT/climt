@@ -19,15 +19,22 @@ def _sat_vap_pressure_jax(T, species_id):
     """JAX mirror of condensibles._sat_vap_pressure (hPa). species_id is static."""
     if species_id == 0:  # H2O
         TC = T - 273.15
+        # jnp.where differentiates both branches, so each gets an operand that
+        # is safe on its unselected side: otherwise 1/(243.5 + TC) at
+        # T = 29.65 K, or log(T) at T <= 0, puts 0 * inf = NaN in the gradient.
+        TC_warm = jnp.where(TC >= 0.0, TC, 0.0)
+        T_cold = jnp.where(TC < 0.0, jnp.maximum(T, 1.0), 273.15)
         return jnp.where(
             TC >= 0.0,
-            6.112 * jnp.exp(17.67 * TC / (243.5 + TC)),
-            jnp.exp(23.33086 - 6111.72784 / T + 0.15215 * jnp.log(T)),
+            6.112 * jnp.exp(17.67 * TC_warm / (243.5 + TC_warm)),
+            jnp.exp(23.33086 - 6111.72784 / T_cold + 0.15215 * jnp.log(T_cold)),
         )
     elif species_id == 1:  # CH4
-        return 1013.25 * jnp.exp((5.1e5 / 518.3) * (1.0 / 111.65 - 1.0 / T))
+        T_safe = jnp.maximum(T, 1.0)
+        return 1013.25 * jnp.exp((5.1e5 / 518.3) * (1.0 / 111.65 - 1.0 / T_safe))
     else:  # CO2
-        return 1013.25 * jnp.exp((5.71e5 / 188.9) * (1.0 / 194.7 - 1.0 / T))
+        T_safe = jnp.maximum(T, 1.0)
+        return 1013.25 * jnp.exp((5.71e5 / 188.9) * (1.0 / 194.7 - 1.0 / T_safe))
 
 
 def compute_qs_jax(T, P, cond, RD):
