@@ -31,3 +31,43 @@ def require_x64() -> None:
             "but JAX x64 mode is disabled. Enable it before creating JAX "
             'arrays with: jax.config.update("jax_enable_x64", True)'
         )
+
+
+def count_jaxpr_equations(function, *args) -> int:
+    """Trace function(*args) with jax.make_jaxpr and return the number of
+    equations, descending into every nested jaxpr (jit, scan, cond, while
+    bodies) and counting each nested jaxpr object once."""
+    import jax
+    try:
+        from jax.extend.core import ClosedJaxpr, Jaxpr
+    except ImportError:  # pragma: no cover - older JAX fallback
+        from jax.core import ClosedJaxpr, Jaxpr
+
+    closed = jax.make_jaxpr(function)(*args)
+    seen = set()
+
+    def _iter_nested(obj):
+        if isinstance(obj, ClosedJaxpr):
+            yield obj.jaxpr
+        elif isinstance(obj, Jaxpr):
+            yield obj
+        elif isinstance(obj, (tuple, list)):
+            for item in obj:
+                yield from _iter_nested(item)
+        elif isinstance(obj, dict):
+            for val in obj.values():
+                yield from _iter_nested(val)
+
+    def _count(jaxpr) -> int:
+        key = id(jaxpr)
+        if key in seen:
+            return 0
+        seen.add(key)
+        total = len(jaxpr.eqns)
+        for eqn in jaxpr.eqns:
+            for val in eqn.params.values():
+                for sub in _iter_nested(val):
+                    total += _count(sub)
+        return total
+
+    return _count(closed.jaxpr)

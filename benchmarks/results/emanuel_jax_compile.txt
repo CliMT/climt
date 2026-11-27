@@ -1,0 +1,8 @@
+========================================================================
+date:    2026-11-27T08:27:56
+label:   baseline (as merged)
+jax:     0.10.1
+machine: arm64
+shape:   nlev=30, ncol=1
+forward: eqns= 63262  trace=  4.239s  first_call= 13.416s  steady_median=  0.584ms
+grad:    eqns=180701  trace= 18.059s  first_call=751.103s  steady_median=  5.321ms
