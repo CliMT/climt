@@ -25,11 +25,7 @@ def test_jax_vs_numpy_parity(nlev, ncol, profile):
             np.asarray(tend_jax[key]), tend_np[key], atol=1e-10, rtol=1e-10,
             err_msg=f"Tendency '{key}' (nlev={nlev}, ncol={ncol}, {profile})",
         )
-    for key in [
-        "convective_precipitation_rate",
-        "cloud_base_mass_flux",
-        "atmosphere_convective_available_potential_energy",
-    ]:
+    for key in diag_np:
         np.testing.assert_allclose(
             np.asarray(diag_jax[key]), diag_np[key], atol=1e-10, rtol=1e-10,
             err_msg=f"Diagnostic '{key}' (nlev={nlev}, ncol={ncol}, {profile})",

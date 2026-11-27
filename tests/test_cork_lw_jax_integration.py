@@ -20,11 +20,11 @@ def test_cork_lw_table_roundtrip_shapes():
     assert jt.has_cont is True and jt.co2_logk is True
 
 
-def _make_state(nlev, ncol, as_jax):
+def _make_state(nlev, ncol, as_jax, **comp_kwargs):
     from climt import get_grid, get_default_state
     from climt._components.cork import CorkLongwaveRadiation
     from climt._core.util import numpy_version_of
-    comp = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    comp = CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw", **comp_kwargs)
     grid = get_grid(nx=ncol, ny=1, nz=nlev)
     state = get_default_state([comp], grid_state=grid)
     raw = numpy_version_of(state)
@@ -54,9 +54,37 @@ def test_array_call_jax_matches_numpy():
     tend_np, diag_np = comp.array_call(s_np)
     tend_jx, diag_jx = comp.array_call(s_jx)
     np.testing.assert_allclose(np.asarray(tend_jx["T"]), tend_np["T"], rtol=1e-6, atol=1e-9)
-    for key in ("upwelling_longwave_flux_in_air", "downwelling_longwave_flux_in_air"):
+    for key in diag_np:
         np.testing.assert_allclose(
-            np.asarray(diag_jx[key]), diag_np[key], rtol=1e-6, atol=1e-6)
+            np.asarray(diag_jx[key]), diag_np[key], rtol=1e-6, atol=1e-6,
+            err_msg=f"Diagnostic '{key}'",
+        )
+
+
+def test_array_call_jax_matches_numpy_custom_diffusivity_factor():
+    nlev, ncol = 20, 2
+    comp, s_np = _make_state(nlev, ncol, as_jax=False, diffusivity_factor=2.0)
+    _, s_jx = _make_state(nlev, ncol, as_jax=True, diffusivity_factor=2.0)
+    tend_np, diag_np = comp.array_call(s_np)
+    tend_jx, diag_jx = comp.array_call(s_jx)
+    np.testing.assert_allclose(np.asarray(tend_jx["T"]), tend_np["T"], rtol=1e-6, atol=1e-9)
+    for key in diag_np:
+        np.testing.assert_allclose(
+            np.asarray(diag_jx[key]), diag_np[key], rtol=1e-6, atol=1e-6,
+            err_msg=f"Diagnostic '{key}' (diffusivity_factor=2.0)",
+        )
+
+
+def test_fresh_component_lazy_table_survives_make_jaxpr_then_eager_call():
+    nlev, ncol = 20, 2
+    comp, s_jx = _make_state(nlev, ncol, as_jax=True)
+    _, s_np = _make_state(nlev, ncol, as_jax=False)
+    # Trace first on a brand-new component (before any eager array_call)
+    jax.make_jaxpr(comp.array_call)(s_jx)
+    # Subsequent eager call must not hit UnexpectedTracerError
+    tend_jx, _ = comp.array_call(s_jx)
+    tend_np, _ = comp.array_call(s_np)
+    np.testing.assert_allclose(np.asarray(tend_jx["T"]), tend_np["T"], rtol=1e-6, atol=1e-9)
 
 
 def _core_args(nlev, ncol):

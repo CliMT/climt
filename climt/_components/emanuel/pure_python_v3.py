@@ -167,14 +167,20 @@ class EmanuelConvectionPython(ImplicitTendencyComponent):
         # DTMA term from the dimensionless CBMF in _numpy_vectorized_convect.
         # Same coercion, same reason, as sea_ice/component.py.
         delt = float(timestep.total_seconds())
-        if is_jax_array(t):
+        if any(is_jax_array(v) for v in state.values()):
             require_x64()
             import jax.numpy as jnp
             from .kernel_jax import compute_qs_jax, emanuel_convect_jax
 
+            t = jnp.asarray(t)
+            q = jnp.asarray(q)
+            u = jnp.asarray(u)
+            v = jnp.asarray(v)
+            p = jnp.asarray(p)
+            ph = jnp.asarray(ph)
             qs = compute_qs_jax(t, p, self._cond, self._params.RD)
             cbmf_val = state.get("cloud_base_mass_flux", None)
-            cbmf = jnp.zeros(ncol) if cbmf_val is None else jnp.array(cbmf_val)
+            cbmf = jnp.zeros(ncol) if cbmf_val is None else jnp.asarray(cbmf_val)
             results = emanuel_convect_jax(
                 t, q, qs, u, v, p, ph,
                 nlev, nlev - 3, 0, delt, cbmf, self._params, self._cond,

@@ -212,7 +212,7 @@ class CorkLongwaveRadiation(TendencyComponent):
         return self._num_bands
 
     def array_call(self, state):
-        if is_jax_array(state["T"]):
+        if any(is_jax_array(v) for v in state.values()):
             require_x64()
             if self._optics_mode != "correlated_k":
                 raise NotImplementedError(
@@ -433,28 +433,30 @@ class CorkLongwaveRadiation(TendencyComponent):
         g = get_constant("gravitational_acceleration", "m/s^2")
         cpd = get_constant("heat_capacity_of_dry_air_at_constant_pressure", "J/kg/K")
 
-        T = state["T"]
+        T = jnp.asarray(state["T"])
         orig_shape_T = T.shape
-        p_int = state["p_int"]
+        p_int = jnp.asarray(state["p_int"])
         orig_shape_pint = p_int.shape
         nlev = T.shape[0]
         T_flat = T.reshape(nlev, -1)
         ncol = T_flat.shape[1]
-        p_flat = state["p"].reshape(nlev, -1)
+        p_flat = jnp.asarray(state["p"]).reshape(nlev, -1)
         p_int_flat = p_int.reshape(nlev + 1, -1)
-        T_surf_flat = state["T_surf"].reshape(-1)
+        T_surf_flat = jnp.asarray(state["T_surf"]).reshape(-1)
         nband = self._num_bands
-        emissivity = state["emissivity"].reshape(nband, ncol)
-        h2o = state["h2o"].reshape(nlev, ncol)
-        co2 = state["co2"].reshape(nlev, ncol)
-        tau_cloud = state["tau_cloud_lw"].reshape(nlev, ncol, nband)
+        emissivity = jnp.asarray(state["emissivity"]).reshape(nband, ncol)
+        h2o = jnp.asarray(state["h2o"]).reshape(nlev, ncol)
+        co2 = jnp.asarray(state["co2"]).reshape(nlev, ncol)
+        tau_cloud = jnp.asarray(state["tau_cloud_lw"]).reshape(nlev, ncol, nband)
 
         tendency, up_broad, down_broad, up_band, down_band, tau = cork_lw_jax(
             T_flat, p_flat, p_int_flat, T_surf_flat, h2o, co2,
-            emissivity, tau_cloud, self._jax_table, sigma, g, cpd)
+            emissivity, tau_cloud, self._jax_table, sigma, g, cpd,
+            diffusivity_factor=self._diffusivity_factor,
+        )
 
         weights = self._jax_table.gpoint_weights
-        D = 1.66
+        D = self._diffusivity_factor
         tau_band = jnp.einsum("bgnc,bg->bnc", tau, weights)          # (nband,nlev,ncol)
         trans_band = jnp.exp(-D * tau_band)
         hr_band = jnp.stack([

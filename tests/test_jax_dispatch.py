@@ -84,3 +84,35 @@ def test_cork_lw_refuses_non_7d_or_non_premixed_table():
 def test_has_jax_kernel_flags():
     flagged = {cls.__name__ for cls in climt._components.__all__ if getattr(cls, "has_jax_kernel", False)}
     assert flagged == {"EmanuelConvectionPython", "CorkLongwaveRadiation"}
+
+
+def test_dispatch_triggers_on_non_temperature_jax_input():
+    jax.config.update("jax_enable_x64", True)
+    from tests.jax_cases import emanuel_case
+    from tests.test_cork_lw_jax_integration import _make_state
+
+    # 1. Uncovered CORK config with NumPy T and JAX T_surf must still raise NotImplementedError
+    parmentier = climt.CorkLongwaveRadiation(optics="parmentier")
+    with pytest.raises(NotImplementedError, match="optics") as info:
+        parmentier.array_call({"T": np.ones((10, 1)), "T_surf": jnp.ones((1,))})
+    assert "CorkLongwaveRadiation" in str(info.value)
+
+    # 2. Supported CORK config: jax.grad w.r.t. T_surf with NumPy T
+    comp, s_np = _make_state(20, 2, as_jax=False)
+
+    def olr_wrt_tsurf(T_surf):
+        _, diag = comp.array_call({**s_np, "T_surf": T_surf})
+        return diag["upwelling_longwave_flux_in_air"][-1].sum()
+
+    g_ts = jax.grad(olr_wrt_tsurf)(jnp.asarray(s_np["T_surf"]))
+    assert jnp.all(jnp.isfinite(g_ts)) and float(g_ts.sum()) > 0.0
+
+    # 3. Emanuel: jax.grad w.r.t. specific_humidity with NumPy air_temperature
+    conv, em_np, timestep = emanuel_case(nlev=30, ncol=1, profile="unstable", as_jax=False)
+
+    def em_loss_wrt_q(q):
+        tend, _ = conv.array_call({**em_np, "specific_humidity": q}, timestep)
+        return jnp.sum(tend["air_temperature"] ** 2)
+
+    g_q = jax.grad(em_loss_wrt_q)(jnp.asarray(em_np["specific_humidity"]))
+    assert jnp.all(jnp.isfinite(g_q)) and jnp.any(g_q != 0.0)

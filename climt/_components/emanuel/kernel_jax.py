@@ -116,7 +116,7 @@ def _convect_functional_jax(
     WD = 0.0
     TPRIME = 0.0
     QPRIME = 0.0
-    IFLAG = 0
+    IFLAG = jnp.int32(0)
     OUTCAPE = 0.0
 
     # --- Block 2: Thermodynamic profiles (vectorized + cumsum for GZ) ---
@@ -170,12 +170,15 @@ def _convect_functional_jax(
     active = active & ~exit1
 
     RH = Q[NK] / jnp.maximum(QS[NK], 1.0e-30)
+    # Guard RH away from 0 when Q[NK] <= 0 (already exiting via exit1) so
+    # reverse-mode AD through RH ** CHI never hits 0 * inf = NaN.
+    RH_safe = jnp.where(Q[NK] > 0.0, RH, 1.0)
     if cond.species_id == 0:
-        CHI = T[NK] / jnp.maximum(1669.0 - 122.0 * RH - T[NK], 1.0e-30)
-        PLCL = P[NK] * (RH ** CHI)
+        CHI = T[NK] / jnp.maximum(1669.0 - 122.0 * RH_safe - T[NK], 1.0e-30)
+        PLCL = P[NK] * (RH_safe ** CHI)
     else:
         chi = cond.RV * T[NK] / cond.LV0
-        PLCL = P[NK] * (RH ** chi)
+        PLCL = P[NK] * (RH_safe ** chi)
 
     # Exit condition 2: PLCL out of range
     exit2 = (PLCL < 200.0) | (PLCL >= 2000.0)
@@ -211,7 +214,7 @@ def _convect_functional_jax(
     exit4 = (CBMF == 0.0) & (TVP[ICB] <= (TV[ICB] - params.DTMAX))
     active = active & ~exit4
 
-    IFLAG = jnp.where(IFLAG != 4, 1, IFLAG)
+    IFLAG = jnp.where(active & (IFLAG != 4), jnp.int32(1), IFLAG)
 
     TVP, TP, CLW = _tlift_functional_jax(
         P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params, cond
@@ -325,7 +328,8 @@ def _convect_functional_jax(
     CBMF = (1.0 - DAMPS) * CBMF + 0.1 * params.ALPHA * DTMA
     CBMF = jnp.maximum(CBMF, 0.0)
 
-    # Early return → active flag
+    # Early return → active flag (OUTCAPE is already computed before exit5)
+    active_before_exit5 = active
     exit5 = (CBMF == 0.0) & (CBMFOLD == 0.0)
     active = active & ~exit5
 
@@ -679,7 +683,7 @@ def _convect_functional_jax(
     lvl_m = jnp.arange(ND + 1)
     AM = jnp.where(NK == 0, jnp.sum(jnp.where((lvl_m >= 1) & (lvl_m <= INB), M, 0.0)), 0.0)
 
-    IFLAG = jnp.where((2.0 * params.G * DPINV_0 * AM) >= DELTI, 4, IFLAG)
+    IFLAG = jnp.where(active & ((2.0 * params.G * DPINV_0 * AM) >= DELTI), jnp.int32(4), IFLAG)
 
     FT = FT.at[0].add(
         params.G * DPINV_0 * AM * (T_pad[1] - T_pad[0] + (GZ[1] - GZ[0]) / CPN[0])
@@ -725,8 +729,8 @@ def _convect_functional_jax(
     AMP1 = AMP1_mass + AMP1_ent
 
     IFLAG = jnp.where(
-        jnp.any(i_active & ((2.0 * params.G * DPINV_int * AMP1) >= DELTI)),
-        4,
+        active & jnp.any(i_active & ((2.0 * params.G * DPINV_int * AMP1) >= DELTI)),
+        jnp.int32(4),
         IFLAG,
     )
 
@@ -857,7 +861,7 @@ def _convect_functional_jax(
     TPRIME = jnp.where(active, TPRIME, zero)
     QPRIME = jnp.where(active, QPRIME, zero)
     CBMF = jnp.where(active, CBMF, zero)
-    OUTCAPE = jnp.where(active, OUTCAPE, zero)
+    OUTCAPE = jnp.where(active_before_exit5, OUTCAPE, zero)
 
     return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
 
