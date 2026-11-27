@@ -32,7 +32,10 @@ def planck_sources_jax(planck_frac, T_grid, T, T_surf, sigma):
     return planck_src, surf_src
 
 
-def lw_transport_jax(tau, planck_source, surface_source, emissivity, weights):
+def lw_transport_jax(
+    tau, planck_source, surface_source, emissivity, weights,
+    diffusivity_factor=DIFFUSIVITY_FACTOR,
+):
     """Differentiable LW radiative-transfer solver using ``jax.lax.scan``.
 
     Mirrors the Numba oracle ``lw_transport`` / ``_lw_transport_kernel`` for
@@ -44,6 +47,7 @@ def lw_transport_jax(tau, planck_source, surface_source, emissivity, weights):
         surface_source: (nband, ngpt, ncol) surface Planck source, W/m^2
         emissivity: (nband, ncol) surface emissivity per band
         weights: (nband, ngpt) g-point quadrature weights
+        diffusivity_factor: two-stream diffusivity factor (default 1.66)
 
     Returns:
         up_band: (nband, nlev+1, ncol) weighted upward flux per band
@@ -52,7 +56,7 @@ def lw_transport_jax(tau, planck_source, surface_source, emissivity, weights):
         down_broad: (nlev+1, ncol) broadband downward flux
     """
     nband, ngpt, nlev, ncol = tau.shape
-    D = DIFFUSIVITY_FACTOR
+    D = diffusivity_factor
     trans = jnp.exp(-D * tau)                       # (nband,ngpt,nlev,ncol)
     trans_lev = jnp.moveaxis(trans, 2, 0)           # (nlev,nband,ngpt,ncol)
     planck_lev = jnp.moveaxis(planck_source, 2, 0)  # (nlev,nband,ngpt,ncol)
@@ -145,7 +149,7 @@ def _heating_rate_jax(net_flux, p_int, g, cpd):
 
 
 def cork_lw_jax(T, p, p_int, T_surf, h2o, co2, emissivity, tau_cloud,
-                jtable, sigma, g, cpd):
+                jtable, sigma, g, cpd, diffusivity_factor=DIFFUSIVITY_FACTOR):
     """Differentiable LW orchestrator: optics -> Planck -> transport -> heating.
 
     Args:
@@ -197,7 +201,9 @@ def cork_lw_jax(T, p, p_int, T_surf, h2o, co2, emissivity, tau_cloud,
         jtable.planck_frac, jtable.T_grid, T, T_surf, sigma)
 
     up_band, down_band, up_broad, down_broad = lw_transport_jax(
-        tau, planck_src, surf_src, emissivity, jtable.gpoint_weights)
+        tau, planck_src, surf_src, emissivity, jtable.gpoint_weights,
+        diffusivity_factor=diffusivity_factor,
+    )
 
     net_flux = up_broad - down_broad
     tendency = _heating_rate_jax(net_flux, p_int, g, cpd)

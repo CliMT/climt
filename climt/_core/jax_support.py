@@ -16,16 +16,27 @@ def is_jax_array(value) -> bool:
     return array_type is not None and isinstance(value, array_type)
 
 
-def require_x64() -> None:
-    """Raise JaxPrecisionError unless jax.config.jax_enable_x64 is True. The
-    message contains: jax.config.update("jax_enable_x64", True)"""
+def require_x64(*arrays) -> None:
+    """Raise JaxPrecisionError unless jax.config.jax_enable_x64 is True and
+    any supplied floating-point JAX arrays are float64. The message contains:
+    jax.config.update("jax_enable_x64", True)"""
     import jax
+    import jax.numpy as jnp
 
     if not jax.config.jax_enable_x64:
         raise JaxPrecisionError(
             "climt's JAX kernels require 64-bit floating-point precision; enable it "
             'before creating JAX arrays with jax.config.update("jax_enable_x64", True)'
         )
+    for arr in arrays:
+        if arr is not None and is_jax_array(arr):
+            dtype = getattr(arr, "dtype", None)
+            if dtype is not None and jnp.issubdtype(dtype, jnp.floating) and dtype != jnp.float64:
+                raise JaxPrecisionError(
+                    f"climt's JAX kernels require float64 arrays, got {dtype}; enable "
+                    "64-bit mode before creating JAX arrays with "
+                    'jax.config.update("jax_enable_x64", True)'
+                )
 
 
 def count_jaxpr_equations(function, *args) -> int:

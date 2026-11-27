@@ -14,15 +14,21 @@ def _sat_vap_pressure_jax(T, species_id):
     """JAX mirror of condensibles._sat_vap_pressure (hPa). species_id is static."""
     if species_id == 0:  # H2O
         TC = T - 273.15
+        # Safe operands in both branches so reverse-mode AD never evaluates
+        # 1/(243.5 + TC) <= 0 or log(T <= 0) on the unselected side of jnp.where.
+        TC_warm = jnp.where(TC >= 0.0, TC, 0.0)
+        T_cold = jnp.where(TC < 0.0, jnp.maximum(T, 1.0), 273.15)
         return jnp.where(
             TC >= 0.0,
-            6.112 * jnp.exp(17.67 * TC / (243.5 + TC)),
-            jnp.exp(23.33086 - 6111.72784 / T + 0.15215 * jnp.log(T)),
+            6.112 * jnp.exp(17.67 * TC_warm / (243.5 + TC_warm)),
+            jnp.exp(23.33086 - 6111.72784 / T_cold + 0.15215 * jnp.log(T_cold)),
         )
     elif species_id == 1:  # CH4
-        return 1013.25 * jnp.exp((5.1e5 / 518.3) * (1.0 / 111.65 - 1.0 / T))
+        T_safe = jnp.maximum(T, 1.0)
+        return 1013.25 * jnp.exp((5.1e5 / 518.3) * (1.0 / 111.65 - 1.0 / T_safe))
     else:  # CO2
-        return 1013.25 * jnp.exp((5.71e5 / 188.9) * (1.0 / 194.7 - 1.0 / T))
+        T_safe = jnp.maximum(T, 1.0)
+        return 1013.25 * jnp.exp((5.71e5 / 188.9) * (1.0 / 194.7 - 1.0 / T_safe))
 
 
 def compute_qs_jax(T, P, cond, RD):
@@ -118,7 +124,7 @@ def _convect_functional_jax(
     WD = 0.0
     TPRIME = 0.0
     QPRIME = 0.0
-    IFLAG = 0
+    IFLAG = jnp.int32(0)
     OUTCAPE = 0.0
 
     # --- Block 2: Thermodynamic profiles ---
@@ -179,7 +185,7 @@ def _convect_functional_jax(
 
     # Exit condition 2: PLCL out of range
     exit2 = (PLCL < 200.0) | (PLCL >= 2000.0)
-    IFLAG = jnp.where(exit2 & active, 2, IFLAG)
+    IFLAG = jnp.where(exit2 & active, jnp.int32(2), IFLAG)
     active = active & ~exit2
 
     # Vectorized ICB: first index > NK where P < PLCL, default NL-1
@@ -190,7 +196,7 @@ def _convect_functional_jax(
 
     # Exit condition 3: ICB >= NL-1
     exit3 = ICB >= (NL - 1)
-    IFLAG = jnp.where(exit3 & active, 3, IFLAG)
+    IFLAG = jnp.where(exit3 & active, jnp.int32(3), IFLAG)
     active = active & ~exit3
 
     # --- Block 5: TLIFT ---
@@ -208,7 +214,7 @@ def _convect_functional_jax(
     exit4 = (CBMF == 0.0) & (TVP[ICB] <= (TV[ICB] - params.DTMAX))
     active = active & ~exit4
 
-    IFLAG = jnp.where(IFLAG != 4, 1, IFLAG)
+    IFLAG = jnp.where(active & (IFLAG != 4), jnp.int32(1), IFLAG)
 
     TVP, TP, CLW = _tlift_functional_jax(
         P, T, Q, QS, GZ, ICB, NK, ND, NL, 2, TVP, TP, CLW, params, cond
@@ -291,7 +297,7 @@ def _convect_functional_jax(
     CAPE = CAPEM + BYP
     DEFRAC = jnp.maximum(CAPEM - CAPE, 0.001)
     FRAC = jnp.minimum(jnp.maximum(-CAPE / DEFRAC, 0.0), 1.0)
-    OUTCAPE = CAPE
+    OUTCAPE = jnp.where(active, CAPE, 0.0)
 
     # --- Block 9: HP update, CBMF (JIT-compatible) ---
     # HP update: full range with mask for [ICB, INB+1)
@@ -682,7 +688,7 @@ def _convect_functional_jax(
     lvl_m = jnp.arange(ND + 1)
     AM = jnp.where(NK == 0, jnp.sum(jnp.where((lvl_m >= 1) & (lvl_m <= INB), M, 0.0)), 0.0)
 
-    IFLAG = jnp.where((2.0 * params.G * DPINV_0 * AM) >= DELTI, 4, IFLAG)
+    IFLAG = jnp.where(active & ((2.0 * params.G * DPINV_0 * AM) >= DELTI), jnp.int32(4), IFLAG)
 
     ft_0 = (
         params.G * DPINV_0 * AM * (T_pad[1] - T_pad[0] + (GZ[1] - GZ[0]) / CPN[0])
@@ -729,7 +735,7 @@ def _convect_functional_jax(
     AMP1_ent = jnp.sum(jnp.where(k_le_i & jj_gt_i, MENT[None, :, :], 0.0), axis=(1, 2))
     AMP1 = AMP1_mass + AMP1_ent
 
-    IFLAG = jnp.where(jnp.any(i_act & ((2.0 * params.G * DPINV_int * AMP1) >= DELTI)), 4, IFLAG)
+    IFLAG = jnp.where(active & jnp.any(i_act & ((2.0 * params.G * DPINV_int * AMP1) >= DELTI)), jnp.int32(4), IFLAG)
 
     jj_ge_i = (lvl_m[None, :, None] >= i_vec[:, None, None]) & (lvl_m[None, :, None] <= INB)
     k_lt_i = lvl_m[None, None, :] < i_vec[:, None, None]
@@ -864,7 +870,6 @@ def _convect_functional_jax(
     TPRIME = jnp.where(active, TPRIME, zero)
     QPRIME = jnp.where(active, QPRIME, zero)
     CBMF = jnp.where(active, CBMF, zero)
-    OUTCAPE = jnp.where(active, OUTCAPE, zero)
 
     return FT, FQ, FU, FV, PRECIP, WD, TPRIME, QPRIME, CBMF, OUTCAPE, IFLAG
 

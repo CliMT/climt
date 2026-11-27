@@ -211,16 +211,25 @@ class CorkLongwaveRadiation(TendencyComponent):
 
     def array_call(self, state):
         if is_jax_array(state["T"]):
-            require_x64()
+            require_x64(*state.values())
             if self._optics_mode != "correlated_k":
                 raise NotImplementedError(
                     "CorkLongwaveRadiation has no JAX kernel for "
                     f"optics={self._optics_mode!r}; only optics='correlated_k' is supported."
                 )
-            if self._table["k_coefficients"].ndim != 7 or not self._premixed_bg:
+            overlap = str(self._table.get("overlap_method", np.array("additive")))
+            if (
+                self._table["k_coefficients"].ndim != 7
+                or self._table["k_coefficients"].shape[0] != 1
+                or not self._premixed_bg
+                or "h2o_vmr_grid" not in self._table
+                or not self._has_co2_axis
+                or overlap != "additive"
+            ):
                 raise NotImplementedError(
                     "CorkLongwaveRadiation's JAX kernel requires a 7-dimensional "
-                    "pre-mixed background correlated_k table."
+                    "single-gas additive pre-mixed background correlated_k table "
+                    "with H2O and CO2 axes."
                 )
             if self._diagnostics_level != 0:
                 raise NotImplementedError(
@@ -446,10 +455,12 @@ class CorkLongwaveRadiation(TendencyComponent):
 
         tendency, up_broad, down_broad, up_band, down_band, tau = cork_lw_jax(
             T_flat, p_flat, p_int_flat, T_surf_flat, h2o, co2,
-            emissivity, tau_cloud, self._jax_table, sigma, g, cpd)
+            emissivity, tau_cloud, self._jax_table, sigma, g, cpd,
+            diffusivity_factor=self._diffusivity_factor,
+        )
 
         weights = self._jax_table.gpoint_weights
-        D = 1.66
+        D = self._diffusivity_factor
         tau_band = jnp.einsum("bgnc,bg->bnc", tau, weights)          # (nband,nlev,ncol)
         trans_band = jnp.exp(-D * tau_band)
         hr_band = jnp.stack([

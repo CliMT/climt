@@ -91,3 +91,43 @@ def test_cork_lw_lazy_table_inside_jit_does_not_leak_tracers():
 def test_has_jax_kernel_flags():
     flagged = {cls.__name__ for cls in climt._components.__all__ if getattr(cls, "has_jax_kernel", False)}
     assert flagged == {"EmanuelConvectionPython", "CorkLongwaveRadiation"}
+
+
+def test_float32_arrays_with_x64_enabled_are_refused():
+    from datetime import timedelta
+    from climt._core.jax_support import JaxPrecisionError
+
+    jax.config.update("jax_enable_x64", True)
+    state_em = {
+        k: jnp.ones((30, 1), dtype=jnp.float32)
+        for k in ("air_temperature", "specific_humidity", "air_pressure", "eastward_wind", "northward_wind")
+    }
+    state_em["air_pressure_on_interface_levels"] = jnp.ones((31, 1), dtype=jnp.float32)
+    with pytest.raises(JaxPrecisionError) as exc_em:
+        climt.EmanuelConvectionPython().array_call(state_em, timedelta(minutes=15))
+    assert 'jax.config.update("jax_enable_x64", True)' in str(exc_em.value)
+
+    comp_lw = climt.CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    nband = comp_lw.num_longwave_bands
+    state_lw = {
+        "T": jnp.full((10, 2), 280.0, dtype=jnp.float32),
+        "p": jnp.full((10, 2), 50000.0, dtype=jnp.float32),
+        "p_int": jnp.linspace(100000.0, 0.0, 11, dtype=jnp.float32)[:, None] * jnp.ones((1, 2), dtype=jnp.float32),
+        "T_surf": jnp.full((2,), 290.0, dtype=jnp.float32),
+        "emissivity": jnp.ones((nband, 2), dtype=jnp.float32),
+        "h2o": jnp.full((10, 2), 0.005, dtype=jnp.float32),
+        "co2": jnp.full((10, 2), 400e-6, dtype=jnp.float32),
+        "tau_cloud_lw": jnp.zeros((10, 2, nband), dtype=jnp.float32),
+    }
+    with pytest.raises(JaxPrecisionError) as exc_lw:
+        comp_lw.array_call(state_lw)
+    assert 'jax.config.update("jax_enable_x64", True)' in str(exc_lw.value)
+
+
+def test_cork_lw_refuses_esft_or_multigas_7d_table():
+    jax.config.update("jax_enable_x64", True)
+    comp = climt.CorkLongwaveRadiation(optics="correlated_k", table="earth_low_res_lw")
+    comp._table = dict(comp._table, overlap_method=np.array("esft"))
+    with pytest.raises(NotImplementedError, match="additive") as info:
+        comp.array_call({"T": jnp.ones((20, 2), dtype=jnp.float64)})
+    assert "CorkLongwaveRadiation" in str(info.value)

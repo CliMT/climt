@@ -60,6 +60,24 @@ def test_array_call_jax_matches_numpy():
             np.asarray(diag_jx[key]), diag_np[key], rtol=1e-6, atol=1e-6)
 
 
+def test_array_call_jax_respects_diffusivity_factor():
+    from climt._components.cork import CorkLongwaveRadiation
+
+    nlev, ncol = 20, 3
+    _, s_np = _make_state(nlev, ncol, as_jax=False)
+    _, s_jx = _make_state(nlev, ncol, as_jax=True)
+    comp = CorkLongwaveRadiation(
+        optics="correlated_k", table="earth_low_res_lw", diffusivity_factor=2.0
+    )
+    tend_np, diag_np = comp.array_call(s_np)
+    tend_jx, diag_jx = comp.array_call(s_jx)
+    np.testing.assert_allclose(np.asarray(tend_jx["T"]), tend_np["T"], rtol=1e-6, atol=1e-9)
+    for key in diag_np:
+        np.testing.assert_allclose(
+            np.asarray(diag_jx[key]), diag_np[key], rtol=1e-6, atol=1e-6, err_msg=key
+        )
+
+
 def _core_args(nlev, ncol):
     from climt._components.cork.lw.kernels_jax import build_cork_lw_table
 

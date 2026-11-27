@@ -29,3 +29,11 @@ def test_emanuel_jax_differentiation_direct(profile):
     assert jnp.all(jnp.isfinite(gradient)), f"Gradient has non-finite entries for profile={profile!r}"
     if profile == "unstable":
         assert jnp.any(gradient != 0.0), "Gradient is zero on unstable profile."
+
+
+def test_sat_vap_pressure_jax_grad_finite_at_extreme_cold():
+    from climt._components.emanuel.kernel_jax import _sat_vap_pressure_jax
+
+    temps = jnp.array([28.0, 29.65, 180.0, 273.15, 300.0], dtype=jnp.float64)
+    grad = jax.grad(lambda t: jnp.sum(_sat_vap_pressure_jax(t, 0)))(temps)
+    assert jnp.all(jnp.isfinite(grad)), f"Non-finite gradient in _sat_vap_pressure_jax: {grad}"

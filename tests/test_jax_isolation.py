@@ -62,3 +62,12 @@ def test_climt_never_changes_jax_config():
                 offenders.append(str(p))
                 break
     assert offenders == []
+
+
+def test_py312_jax_tox_env_runs_isolation_tests():
+    import configparser
+
+    cfg = configparser.ConfigParser()
+    cfg.read(REPO / "tox.ini")
+    commands = cfg.get("testenv:py312-jax", "commands")
+    assert "test_jax_isolation.py" in commands
