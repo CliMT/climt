@@ -1,19 +1,21 @@
 # tests/test_emanuel_jax_parity.py
-import jax
+import pytest
+
+jax = pytest.importorskip("jax")
+pytestmark = pytest.mark.jax
 jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_platform_name", "cpu")
-import jax.numpy as jnp
-import numpy as np
-import pytest
-from datetime import timedelta
-from climt import EmanuelConvection, get_default_state, get_grid
-from climt._components.emanuel.pure_python_v3 import EmanuelConvectionPythonV3
-from climt._core.util import numpy_version_of
+
+import jax.numpy as jnp  # noqa: E402
+import numpy as np  # noqa: E402
+from datetime import timedelta  # noqa: E402
+from climt import EmanuelConvectionPython, get_default_state, get_grid  # noqa: E402
+from climt._core.util import numpy_version_of  # noqa: E402
 
 
 def create_test_state(nlev, ncol, moisture_type="moist"):
     grid = get_grid(nx=ncol, ny=1, nz=nlev, p_surf_in_Pa=101325.0)
-    state = get_default_state([EmanuelConvection()], grid_state=grid)
+    state = get_default_state([EmanuelConvectionPython()], grid_state=grid)
     state["air_temperature"].values[:] = 300.0
     q = np.zeros_like(state["specific_humidity"].values)
     if moisture_type == "moist":
@@ -49,7 +51,7 @@ def test_jax_vs_numpy_parity(ncol, moisture_type):
     state = create_test_state(nlev, ncol, moisture_type)
     timestep = timedelta(minutes=15)
     raw_state = numpy_version_of(state)
-    conv = EmanuelConvectionPythonV3()
+    conv = EmanuelConvectionPython()
 
     np_state = make_column_state(raw_state, nlev, ncol, as_jax=False)
     jax_state = make_column_state(raw_state, nlev, ncol, as_jax=True)

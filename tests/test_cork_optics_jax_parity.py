@@ -1,10 +1,13 @@
 # tests/test_cork_optics_jax_parity.py
-import jax
+import pytest
+
+jax = pytest.importorskip("jax")
+pytestmark = pytest.mark.jax
 jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_platform_name", "cpu")
-import jax.numpy as jnp
-import numpy as np
-import pytest
+
+import jax.numpy as jnp  # noqa: E402
+import numpy as np  # noqa: E402
 
 
 def _build(tmp_path, k, cont=None):
