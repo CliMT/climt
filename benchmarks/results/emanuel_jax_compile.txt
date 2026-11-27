@@ -6,3 +6,32 @@ machine: arm64
 shape:   nlev=30, ncol=1
 forward: eqns= 63262  trace=  4.239s  first_call= 13.416s  steady_median=  0.584ms
 grad:    eqns=180701  trace= 18.059s  first_call=751.103s  steady_median=  5.321ms
+========================================================================
+date:    2026-11-27T08:44:38
+label:   vectorise Block 11 SCRIT
+jax:     0.10.1
+machine: arm64
+shape:   nlev=30, ncol=1
+forward: eqns= 29493  trace=  1.881s  first_call=  6.000s  steady_median=  0.343ms
+========================================================================
+date:    2026-11-27T08:46:54
+label:   vectorise Block 13 interior tendencies
+jax:     0.10.1
+machine: arm64
+shape:   nlev=30, ncol=1
+forward: eqns= 19027  trace=  1.289s  first_call=  4.245s  steady_median=  0.309ms
+========================================================================
+date:    2026-11-27T08:49:55
+label:   vectorise tlift
+jax:     0.10.1
+machine: arm64
+shape:   nlev=30, ncol=1
+forward: eqns=  7528  trace=  0.625s  first_call=  1.872s  steady_median=  0.169ms
+========================================================================
+date:    2026-11-27T08:52:36
+label:   after regrouping
+jax:     0.10.1
+machine: arm64
+shape:   nlev=30, ncol=1
+forward: eqns=  2983  trace=  0.286s  first_call=  0.750s  steady_median=  0.113ms
+grad:    eqns=  5152  trace=  0.741s  first_call=  2.497s  steady_median=  0.436ms
