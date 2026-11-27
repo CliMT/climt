@@ -732,99 +732,120 @@ def _convect_functional_jax(
         jnp.where(j_mask_surf, MENT[:, 0] * (VENT[:, 0] - V_pad[0]), 0.0)))
 
     # --- Interior levels (i=1..INB) ---
-    # Precompute AMP1[i] and AD[i] for all levels i=1..INB as arrays.
-    #
-    # AMP1[i] = sum of M[ii] for ii in [i+1, INB+1] (when i >= NK)
-    #         + sum of MENT[k, jj] for k in [0..i], jj in [i+1, INB+1]
-    #
-    # AD[i] = sum of MENT[jj, k] for k in [0..i-1], jj in [i, INB]
+    # Vectorized computation of AMP1, AD, and tendencies for all i=1..ND-1.
+    i_idx = jnp.arange(1, ND)
+    i_active = i_idx <= INB
+    DPINV_int = DPINV_all[1:]
+    CPINV_int = CPINV_all[1:]
 
-    for i in range(1, ND):
-        i_active = (i <= INB)  # mask: only compute when i <= INB
-        DPINV_i = DPINV_all[i]
-        CPINV_i = CPINV_all[i]
+    # AMP1[i] = sum_{m=i+1..INB+1} M[m] (when i >= NK)
+    #         + sum_{k=0..i, jj=i+1..INB+1} MENT[k, jj]
+    M_inb = jnp.where(lvl_m <= INB + 1, M, 0.0)
+    M_suffix = jnp.cumsum(M_inb[::-1])[::-1]
+    AMP1_mass = jnp.where(i_idx >= NK, M_suffix[2:], 0.0)
 
-        # AMP1: mass flux part
-        AMP1_mass = jnp.where(
-            i >= NK,
-            jnp.sum(jnp.where((lvl_m >= i + 1) & (lvl_m <= INB + 1), M, 0.0)),
-            0.0,
+    MENT_inb = jnp.where(lvl_m[None, :] <= INB + 1, MENT, 0.0)
+    row_cs = jnp.cumsum(MENT_inb, axis=0)
+    AMP1_ent = jnp.sum(
+        jnp.where(lvl_m[None, :] >= lvl_m[:, None] + 1, row_cs, 0.0), axis=1
+    )[1:ND]
+    AMP1 = AMP1_mass + AMP1_ent
+
+    IFLAG = jnp.where(
+        jnp.any(i_active & ((2.0 * params.G * DPINV_int * AMP1) >= DELTI)),
+        4,
+        IFLAG,
+    )
+
+    # AD[i] = sum_{k=0..i-1, jj=i..INB} MENT[jj, k]
+    MENT_rows = jnp.where(lvl_m[:, None] <= INB, MENT, 0.0)
+    rev_row_cs = jnp.cumsum(MENT_rows[::-1, :], axis=0)[::-1, :]
+    AD = jnp.sum(
+        jnp.where(lvl_m[None, :] < lvl_m[:, None], rev_row_cs, 0.0), axis=1
+    )[1:ND]
+
+    T_i = T_pad[1:ND]
+    T_p1 = T_pad[2:ND + 1]
+    T_m1 = T_pad[0:ND - 1]
+    GZ_i = GZ[1:ND]
+    GZ_p1 = GZ[2:ND + 1]
+    GZ_m1 = GZ[0:ND - 1]
+    Q_i = Q_pad[1:ND]
+    U_i = U_pad[1:ND]
+    V_i = V_pad[1:ND]
+
+    ft_adv = (
+        params.G * DPINV_int * (
+            AMP1 * (T_p1 - T_i + (GZ_p1 - GZ_i) * CPINV_int)
+            - AD * (T_i - T_m1 + (GZ_i - GZ_m1) * CPINV_int)
         )
-        # AMP1: entrainment part — sum MENT[k, jj] for k<=i, jj>i, jj<=INB+1
-        k_le_i = (lvl_m[:, None] <= i)           # (ND+1, 1) broadcast
-        jj_gt_i = (lvl_m[None, :] >= i + 1) & (lvl_m[None, :] <= INB + 1)  # (1, ND+1)
-        AMP1_ent = jnp.sum(jnp.where(k_le_i & jj_gt_i, MENT, 0.0))
-        AMP1 = AMP1_mass + AMP1_ent
+        - params.SIGD * LVCP[1:ND] * EVAP[1:ND]
+    )
+    ft_self = (
+        params.G * DPINV_int * jnp.diag(MENT)[1:ND]
+        * (HP[1:ND] - H[1:ND] + T_i * (cond.CPV - params.CPD) * (Q_i - jnp.diag(QENT)[1:ND]))
+        * CPINV_int
+    )
+    ft_water = (
+        params.SIGD * WT[2:ND + 1] * (cond.CL - params.CPD)
+        * WATER[2:ND + 1] * (T_p1 - T_i)
+        * DPINV_int * CPINV_int
+    )
+    FT = FT.at[1:].add(jnp.where(i_active, ft_adv + ft_self + ft_water, 0.0))
 
-        IFLAG = jnp.where(i_active & ((2.0 * params.G * DPINV_i * AMP1) >= DELTI), 4, IFLAG)
+    fq_adv = params.G * DPINV_int * (AMP1 * (Q_pad[2:ND + 1] - Q_i) - AD * (Q_i - Q_pad[0:ND - 1]))
+    fu_adv = params.G * DPINV_int * (AMP1 * (U_pad[2:ND + 1] - U_i) - AD * (U_i - U_pad[0:ND - 1]))
+    fv_adv = params.G * DPINV_int * (AMP1 * (V_pad[2:ND + 1] - V_i) - AD * (V_i - V_pad[0:ND - 1]))
 
-        # AD: sum MENT[jj, k] for k < i, jj in [i, INB]
-        k_lt_i = (lvl_m[None, :] < i)            # columns k < i
-        jj_ge_i = (lvl_m[:, None] >= i) & (lvl_m[:, None] <= INB)  # rows jj >= i, jj <= INB
-        AD = jnp.sum(jnp.where(jj_ge_i & k_lt_i, MENT, 0.0))
+    MENT_cols = MENT[:, 1:ND]
+    k_below_2d = lvl_m[:, None] < i_idx[None, :]
+    AWAT_2d = jnp.maximum(
+        ELIJ[:, 1:ND] - (1.0 - EP_pad[None, 1:ND]) * CLW_pad[None, 1:ND], 0.0
+    )
+    fq_ment_below = params.G * DPINV_int * jnp.sum(
+        jnp.where(k_below_2d, MENT_cols * (QENT[:, 1:ND] - AWAT_2d - Q_i[None, :]), 0.0),
+        axis=0,
+    )
+    fu_ment_below = params.G * DPINV_int * jnp.sum(
+        jnp.where(k_below_2d, MENT_cols * (UENT[:, 1:ND] - U_i[None, :]), 0.0),
+        axis=0,
+    )
+    fv_ment_below = params.G * DPINV_int * jnp.sum(
+        jnp.where(k_below_2d, MENT_cols * (VENT[:, 1:ND] - V_i[None, :]), 0.0),
+        axis=0,
+    )
 
-        # FT: advection + evaporation + self-entrainment + water loading
-        ft_adv = (
-            params.G * DPINV_i * (
-                AMP1 * (T_pad[i + 1] - T_pad[i] + (GZ[i + 1] - GZ[i]) * CPINV_i)
-                - AD * (T_pad[i] - T_pad[i - 1] + (GZ[i] - GZ[i - 1]) * CPINV_i)
-            )
-            - params.SIGD * LVCP[i] * EVAP[i]
-        )
-        ft_self = (
-            params.G * DPINV_i * MENT[i, i]
-            * (HP[i] - H[i] + T_pad[i] * (cond.CPV - params.CPD) * (Q_pad[i] - QENT[i, i]))
-            * CPINV_i
-        )
-        ft_water = (
-            params.SIGD * WT[i + 1] * (cond.CL - params.CPD)
-            * WATER[i + 1] * (T_pad[i + 1] - T_pad[i])
-            * DPINV_i * CPINV_i
-        )
-        FT = FT.at[i].add(jnp.where(i_active, ft_adv + ft_self + ft_water, 0.0))
+    k_above_2d = (lvl_m[:, None] >= i_idx[None, :]) & (lvl_m[:, None] <= INB)
+    fq_ment_above = params.G * DPINV_int * jnp.sum(
+        jnp.where(k_above_2d, MENT_cols * (QENT[:, 1:ND] - Q_i[None, :]), 0.0),
+        axis=0,
+    )
+    fu_ment_above = params.G * DPINV_int * jnp.sum(
+        jnp.where(k_above_2d, MENT_cols * (UENT[:, 1:ND] - U_i[None, :]), 0.0),
+        axis=0,
+    )
+    fv_ment_above = params.G * DPINV_int * jnp.sum(
+        jnp.where(k_above_2d, MENT_cols * (VENT[:, 1:ND] - V_i[None, :]), 0.0),
+        axis=0,
+    )
 
-        # FQ, FU, FV: advection terms
-        fq_adv = params.G * DPINV_i * (AMP1 * (Q_pad[i + 1] - Q_pad[i]) - AD * (Q_pad[i] - Q_pad[i - 1]))
-        fu_adv = params.G * DPINV_i * (AMP1 * (U_pad[i + 1] - U_pad[i]) - AD * (U_pad[i] - U_pad[i - 1]))
-        fv_adv = params.G * DPINV_i * (AMP1 * (V_pad[i + 1] - V_pad[i]) - AD * (V_pad[i] - V_pad[i - 1]))
+    fq_down = (
+        params.SIGD * EVAP[1:ND]
+        + params.G * (MP[2:ND + 1] * (QP[2:ND + 1] - Q_i) - MP[1:ND] * (QP[1:ND] - Q_pad[0:ND - 1]))
+        * DPINV_int
+    )
+    fu_down = (
+        params.G * (MP[2:ND + 1] * (UP[2:ND + 1] - U_i) - MP[1:ND] * (UP[1:ND] - U_pad[0:ND - 1]))
+        * DPINV_int
+    )
+    fv_down = (
+        params.G * (MP[2:ND + 1] * (VP[2:ND + 1] - V_i) - MP[1:ND] * (VP[1:ND] - V_pad[0:ND - 1]))
+        * DPINV_int
+    )
 
-        # MENT contributions for k < i (with AWAT water term in FQ)
-        k_below = (lvl_m < i)  # (ND+1,)
-        AWAT_vec = jnp.maximum(ELIJ[:, i] - (1.0 - EP_pad[i]) * CLW_pad[i], 0.0)  # (ND+1,)
-        fq_ment_below = params.G * DPINV_i * jnp.sum(
-            jnp.where(k_below, MENT[:, i] * (QENT[:, i] - AWAT_vec - Q_pad[i]), 0.0))
-        fu_ment_below = params.G * DPINV_i * jnp.sum(
-            jnp.where(k_below, MENT[:, i] * (UENT[:, i] - U_pad[i]), 0.0))
-        fv_ment_below = params.G * DPINV_i * jnp.sum(
-            jnp.where(k_below, MENT[:, i] * (VENT[:, i] - V_pad[i]), 0.0))
-
-        # MENT contributions for k >= i (no AWAT)
-        k_above = (lvl_m >= i) & (lvl_m <= INB)  # (ND+1,)
-        fq_ment_above = params.G * DPINV_i * jnp.sum(
-            jnp.where(k_above, MENT[:, i] * (QENT[:, i] - Q_pad[i]), 0.0))
-        fu_ment_above = params.G * DPINV_i * jnp.sum(
-            jnp.where(k_above, MENT[:, i] * (UENT[:, i] - U_pad[i]), 0.0))
-        fv_ment_above = params.G * DPINV_i * jnp.sum(
-            jnp.where(k_above, MENT[:, i] * (VENT[:, i] - V_pad[i]), 0.0))
-
-        # Downdraft mass flux contributions
-        fq_down = (
-            params.SIGD * EVAP[i]
-            + params.G * (MP[i + 1] * (QP[i + 1] - Q_pad[i]) - MP[i] * (QP[i] - Q_pad[i - 1]))
-            * DPINV_i
-        )
-        fu_down = (
-            params.G * (MP[i + 1] * (UP[i + 1] - U_pad[i]) - MP[i] * (UP[i] - U_pad[i - 1]))
-            * DPINV_i
-        )
-        fv_down = (
-            params.G * (MP[i + 1] * (VP[i + 1] - V_pad[i]) - MP[i] * (VP[i] - V_pad[i - 1]))
-            * DPINV_i
-        )
-
-        FQ = FQ.at[i].add(jnp.where(i_active, fq_adv + fq_ment_below + fq_ment_above + fq_down, 0.0))
-        FU = FU.at[i].add(jnp.where(i_active, fu_adv + fu_ment_below + fu_ment_above + fu_down, 0.0))
-        FV = FV.at[i].add(jnp.where(i_active, fv_adv + fv_ment_below + fv_ment_above + fv_down, 0.0))
+    FQ = FQ.at[1:].add(jnp.where(i_active, fq_adv + fq_ment_below + fq_ment_above + fq_down, 0.0))
+    FU = FU.at[1:].add(jnp.where(i_active, fu_adv + fu_ment_below + fu_ment_above + fu_down, 0.0))
+    FV = FV.at[1:].add(jnp.where(i_active, fv_adv + fv_ment_below + fv_ment_above + fv_down, 0.0))
 
     # --- Block 14: FRAC smoothing at INB (differentiable) ---
     ph_ratio = (PH[INB] - PH[INB + 1]) / (PH[INB - 1] - PH[INB])
