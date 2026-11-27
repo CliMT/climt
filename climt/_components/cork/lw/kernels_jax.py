@@ -6,16 +6,13 @@ g-point grid is not expanded (nband==nband_orig, ngpt==ngpt_orig).
 """
 from typing import NamedTuple
 
-import jax
+import jax.numpy as jnp
 import numpy as np
+from jax import lax
 
-jax.config.update("jax_enable_x64", True)
-import jax.numpy as jnp  # noqa: E402
-from jax import lax  # noqa: E402
-
-from ..common import MOLAR_MASS, MOLAR_MASS_DRY_AIR  # noqa: E402
-from ..optics.correlated_k import _CO2_INTERP_LOGK  # noqa: E402
-from ..optics.correlated_k_jax import _bracket, compute_tau_jax  # noqa: E402
+from ..common import MOLAR_MASS, MOLAR_MASS_DRY_AIR
+from ..optics.correlated_k import _CO2_INTERP_LOGK
+from ..optics.correlated_k_jax import _bracket, compute_tau_jax
 
 DIFFUSIVITY_FACTOR = 1.66
 

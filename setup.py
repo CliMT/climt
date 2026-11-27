@@ -319,6 +319,9 @@ setup(
         ]
     },
     install_requires=requirements,
+    extras_require={
+        "jax": ["jax>=0.10.1", "jaxlib>=0.10.1"],
+    },
     cmdclass=cmdclass,
     ext_modules=ext_modules,
     include_dirs=include_dirs,
