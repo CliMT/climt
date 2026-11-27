@@ -119,53 +119,32 @@ def _convect_functional_jax(
     IFLAG = 0
     OUTCAPE = 0.0
 
-    # --- Block 2: Thermodynamic profiles ---
-    TH = jnp.zeros(NL + 1)
-    for i in range(NL + 1):
-        qi = Q[i]
-        RDCP = (params.RD * (1.0 - qi) + qi * cond.RV) / (
-            params.CPD * (1.0 - qi) + qi * cond.CPV
-        )
-        TH = TH.at[i].set(T[i] * (1000.0 / P[i]) ** RDCP)
+    # --- Block 2: Thermodynamic profiles (vectorized + cumsum for GZ) ---
+    q_sub = Q[:NL + 1]
+    t_sub = T[:NL + 1]
+    pad_tail = jnp.zeros(ND - NL)
 
-    GZ = jnp.zeros(ND + 1)
-    CPN = jnp.zeros(ND + 1)
-    H = jnp.zeros(ND + 1)
-    LV = jnp.zeros(ND + 1)
-    HM = jnp.zeros(ND + 1)
-    TV = jnp.zeros(ND + 1)
+    TV_sub = t_sub * (1.0 + q_sub * EPSI - q_sub)
+    dgz = (
+        0.5 * params.RD * (TV_sub[1:] + TV_sub[:-1])
+        * (P[:NL] - P[1:NL + 1]) / PH[1:NL + 1]
+    )
+    GZ_sub = jnp.concatenate([jnp.zeros(1), jnp.cumsum(dgz)])
+    CPN_sub = params.CPD * (1.0 - q_sub) + cond.CPV * q_sub
+    H_sub = t_sub * CPN_sub + GZ_sub
+    LV_sub = cond.LV0 - CPVMCL * (t_sub - cond.T_freeze)
+    HM_sub = (
+        (params.CPD * (1.0 - q_sub) + cond.CL * q_sub) * (t_sub - t_sub[0])
+        + LV_sub * q_sub
+        + GZ_sub
+    )
 
-    q0 = Q[0]
-    t0 = T[0]
-    cpn0 = params.CPD * (1.0 - q0) + q0 * cond.CPV
-    CPN = CPN.at[0].set(cpn0)
-    H = H.at[0].set(t0 * cpn0)
-    lv0 = cond.LV0 - CPVMCL * (t0 - cond.T_freeze)
-    LV = LV.at[0].set(lv0)
-    HM = HM.at[0].set(lv0 * q0)
-    TV = TV.at[0].set(t0 * (1.0 + q0 * EPSI - q0))
-
-    for i in range(1, NL + 1):
-        qi = Q[i]
-        ti = T[i]
-        qim1 = Q[i - 1]
-        tim1 = T[i - 1]
-        TVX = ti * (1.0 + qi * EPSI - qi)
-        TVY = tim1 * (1.0 + qim1 * EPSI - qim1)
-        gz_i = GZ[i - 1] + 0.5 * params.RD * (TVX + TVY) * (P[i - 1] - P[i]) / PH[i]
-        GZ = GZ.at[i].set(gz_i)
-        cpn_i = params.CPD * (1.0 - qi) + cond.CPV * qi
-        CPN = CPN.at[i].set(cpn_i)
-        H = H.at[i].set(ti * cpn_i + gz_i)
-        lv_i = cond.LV0 - CPVMCL * (ti - cond.T_freeze)
-        LV = LV.at[i].set(lv_i)
-        hm_i = (
-            (params.CPD * (1.0 - qi) + cond.CL * qi) * (ti - t0)
-            + lv_i * qi
-            + gz_i
-        )
-        HM = HM.at[i].set(hm_i)
-        TV = TV.at[i].set(TVX)
+    GZ = jnp.concatenate([GZ_sub, pad_tail])
+    CPN = jnp.concatenate([CPN_sub, pad_tail])
+    H = jnp.concatenate([H_sub, pad_tail])
+    LV = jnp.concatenate([LV_sub, pad_tail])
+    HM = jnp.concatenate([HM_sub, pad_tail])
+    TV = jnp.concatenate([TV_sub, pad_tail])
 
     # Vectorized IHMIN: find index where HM is local minimum and i+1 >= MINORIG
     indices = jnp.arange(ND + 1)
