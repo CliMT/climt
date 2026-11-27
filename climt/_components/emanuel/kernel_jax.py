@@ -47,45 +47,51 @@ def _tlift_functional_jax(P, T, Q, QS, GZ, ICB, NK, ND, NL, KK, TVP, TPK, CLW, p
     )
     CPP = params.CPD * (1.0 - qNK) + qNK * cond.CPV
     CPINV = 1.0 / CPP
+
+    lvl = jnp.arange(NL + 1)
+    T_nl = T[:NL + 1]
+    QS_nl = QS[:NL + 1]
+    P_nl = P[:NL + 1]
+    GZ_nl = GZ[:NL + 1]
+    TVP_nl = TVP[:NL + 1]
+    TPK_nl = TPK[:NL + 1]
+    CLW_nl = CLW[:NL + 1]
+
     if KK == 1:
-        # ICB and NK are traced → use full range with masks
-        for i in range(NL + 1):
-            CLW = CLW.at[i].set(jnp.where(i < ICB, 0.0, CLW[i]))
-        for i in range(NL + 1):
-            tpk_i = tNK - (GZ[i] - gzNK) * CPINV
-            in_range = (i >= NK) & (i < ICB)
-            TPK = TPK.at[i].set(jnp.where(in_range, tpk_i, TPK[i]))
-            TVP = TVP.at[i].set(jnp.where(in_range, tpk_i * (1.0 + qNK * EPSI), TVP[i]))
-    # Outer saturation-adjustment loop.
-    # KK==1: original range(ICB, ICB+1) → mask i == ICB
-    # KK==2: original range(ICB+1, NL+1) → mask i > ICB
-    # ICB is traced, so use full static range with jnp.where guards.
-    for i in range(NL + 1):
-        if KK == 1:
-            loop_mask = (i == ICB)
-        else:
-            loop_mask = (i > ICB)
-        TG = T[i]
-        QG = QS[i]
-        ALV = cond.LV0 - CPVMCL * (T[i] - cond.T_freeze)
-        ti = T[i]
-        gzi = GZ[i]
-        pi = P[i]
-        for j in range(2):
-            S = 1.0 / (params.CPD + ALV * ALV * QG / (cond.RV * ti * ti))
-            AHG = (
-                params.CPD * TG
-                + (cond.CL - params.CPD) * qNK * ti
-                + ALV * QG
-                + gzi
-            )
-            TG = jnp.maximum(TG + S * (AH0 - AHG), 35.0)
-            ES = _sat_vap_pressure_jax(TG, cond.species_id)
-            QG = EPS * ES / (pi - ES * (1.0 - EPS))
-        tpk_i = (AH0 - (cond.CL - params.CPD) * qNK * ti - gzi - ALV * QG) / params.CPD
-        TPK = TPK.at[i].set(jnp.where(loop_mask, tpk_i, TPK[i]))
-        CLW = CLW.at[i].set(jnp.where(loop_mask, jnp.maximum(0.0, qNK - QG), CLW[i]))
-        TVP = TVP.at[i].set(jnp.where(loop_mask, tpk_i * (1.0 + (QG / (1.0 - qNK)) * EPSI), TVP[i]))
+        CLW_nl = jnp.where(lvl < ICB, 0.0, CLW_nl)
+        tpk_dry = tNK - (GZ_nl - gzNK) * CPINV
+        in_dry = (lvl >= NK) & (lvl < ICB)
+        TPK_nl = jnp.where(in_dry, tpk_dry, TPK_nl)
+        TVP_nl = jnp.where(in_dry, tpk_dry * (1.0 + qNK * EPSI), TVP_nl)
+
+    # Outer saturation-adjustment over levels 0..NL (2 fixed Newton iterations unrolled).
+    loop_mask = (lvl == ICB) if KK == 1 else (lvl > ICB)
+    TG = T_nl
+    QG = QS_nl
+    ALV = cond.LV0 - CPVMCL * (T_nl - cond.T_freeze)
+    for _ in range(2):
+        S = 1.0 / (params.CPD + ALV * ALV * QG / (cond.RV * T_nl * T_nl))
+        AHG = (
+            params.CPD * TG
+            + (cond.CL - params.CPD) * qNK * T_nl
+            + ALV * QG
+            + GZ_nl
+        )
+        TG = jnp.maximum(TG + S * (AH0 - AHG), 35.0)
+        ES = _sat_vap_pressure_jax(TG, cond.species_id)
+        QG = EPS * ES / jnp.maximum(P_nl - ES * (1.0 - EPS), 1.0e-30)
+    tpk_sat = (AH0 - (cond.CL - params.CPD) * qNK * T_nl - GZ_nl - ALV * QG) / params.CPD
+    TPK_nl = jnp.where(loop_mask, tpk_sat, TPK_nl)
+    CLW_nl = jnp.where(loop_mask, jnp.maximum(0.0, qNK - QG), CLW_nl)
+    TVP_nl = jnp.where(
+        loop_mask,
+        tpk_sat * (1.0 + (QG / jnp.maximum(1.0 - qNK, 1.0e-30)) * EPSI),
+        TVP_nl,
+    )
+
+    TVP = jnp.concatenate([TVP_nl, TVP[NL + 1:]])
+    TPK = jnp.concatenate([TPK_nl, TPK[NL + 1:]])
+    CLW = jnp.concatenate([CLW_nl, CLW[NL + 1:]])
     return TVP, TPK, CLW
 
 
