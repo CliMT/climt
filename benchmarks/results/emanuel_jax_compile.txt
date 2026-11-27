@@ -1,0 +1,8 @@
+============================================================================
+label: baseline (as merged)
+date: 2026-11-27T08:46:39
+jax_version: 0.10.1
+machine: arm64
+nlev: 30  ncol: 1
+forward:  equations=63262  trace=4.577s  first_call=16.392s  steady_median=0.624ms (0.000624s)
+gradient: equations=180701  trace=20.229s  first_call=719.943s  steady_median=4.834ms (0.004834s)

@@ -26,3 +26,35 @@ def require_x64() -> None:
             "climt's JAX kernels require 64-bit floating-point precision; enable it "
             'before creating JAX arrays with jax.config.update("jax_enable_x64", True)'
         )
+
+
+def count_jaxpr_equations(function, *args) -> int:
+    """Trace function(*args) with jax.make_jaxpr and return the number of
+    equations, descending into every nested jaxpr (jit, scan, cond, while
+    bodies) and counting each nested jaxpr object once."""
+    import jax
+
+    closed = jax.make_jaxpr(function)(*args)
+    seen_ids = set()
+    seen_objs = []
+
+    def _walk(obj) -> int:
+        if hasattr(obj, "jaxpr") and hasattr(obj, "consts"):
+            obj = obj.jaxpr
+        if hasattr(obj, "eqns") and hasattr(obj, "invars"):
+            if id(obj) in seen_ids:
+                return 0
+            seen_ids.add(id(obj))
+            seen_objs.append(obj)
+            total = len(obj.eqns)
+            for eqn in obj.eqns:
+                for param_val in eqn.params.values():
+                    total += _walk(param_val)
+            return total
+        if isinstance(obj, (tuple, list)):
+            return sum(_walk(item) for item in obj)
+        if isinstance(obj, dict):
+            return sum(_walk(item) for item in obj.values())
+        return 0
+
+    return _walk(closed)
