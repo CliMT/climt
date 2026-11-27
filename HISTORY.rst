@@ -5,6 +5,14 @@ History
 Unreleased
 ----------
 
+* **Feature** — Differentiable 64-bit JAX kernels for
+  ``EmanuelConvectionPython`` and ``CorkLongwaveRadiation`` (correlated-k 7-D
+  pre-mixed background tables at ``diagnostics_level=0``), imported lazily via
+  the optional ``climt[jax]`` extra so ``import climt`` never imports ``jax``
+  or alters global JAX configuration. Calling a JAX kernel without
+  ``jax_enable_x64`` raises ``JaxPrecisionError``, and uncovered
+  ``CorkLongwaveRadiation`` configurations raise ``NotImplementedError``.
+
 * **Fix (behaviour change)** — ``SimpleBoundaryLayer`` diffuses dry static
   energy ``Cp T + g z`` instead of temperature, as Frierson, Held &
   Zurita-Gotor (2006) do. Diffusing ``T`` itself pulled a well-mixed boundary

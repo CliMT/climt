@@ -6,3 +6,25 @@ machine: arm64
 nlev: 30  ncol: 1
 forward:  equations=63262  trace=4.577s  first_call=16.392s  steady_median=0.624ms (0.000624s)
 gradient: equations=180701  trace=20.229s  first_call=719.943s  steady_median=4.834ms (0.004834s)
+============================================================================
+label: after thermodynamic and parcel setup
+date: 2026-11-27T09:12:04
+jax_version: 0.10.1
+machine: arm64
+nlev: 30  ncol: 1
+forward:  equations=50444  trace=3.491s  first_call=11.741s  steady_median=0.510ms (0.000510s)
+============================================================================
+label: after SCRIT entrainment normalisation
+date: 2026-11-27T09:15:11
+jax_version: 0.10.1
+machine: arm64
+nlev: 30  ncol: 1
+forward:  equations=16776  trace=1.101s  first_call=2.848s  steady_median=0.221ms (0.000221s)
+============================================================================
+label: after regrouping
+date: 2026-11-27T09:18:50
+jax_version: 0.10.1
+machine: arm64
+nlev: 30  ncol: 1
+forward:  equations=3123  trace=0.275s  first_call=0.751s  steady_median=0.108ms (0.000108s)
+gradient: equations=5392  trace=0.709s  first_call=2.122s  steady_median=0.337ms (0.000337s)

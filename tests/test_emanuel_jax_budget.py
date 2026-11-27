@@ -1,3 +1,20 @@
+"""Compile-time and traced-graph-size budget tests for the Emanuel JAX kernel.
+
+Measured on ``arm64`` (Apple Silicon CPU) with JAX ``0.10.1`` at ``nlev=30, ncol=1``:
+- Baseline (as merged, Task 3):
+  - Forward:  63,262 equations, 16.392 s first call (0.624 ms steady median)
+  - Gradient: 180,701 equations, 719.943 s first call (4.834 ms steady median)
+- Achieved (after loop regrouping, Task 4):
+  - Forward:  3,123 equations, 0.751 s first call (0.108 ms steady median)
+  - Gradient: 5,392 equations, 2.122 s first call (0.337 ms steady median)
+
+Pinned limits are 1.10x the achieved equation counts rounded up to the next 100
+(3,500 forward; 6,000 gradient). Neither graph-size test exceeds 1 s, so both
+run in the default (non-slow) ``jax`` suite.
+"""
+import os
+import time
+
 import pytest
 
 jax = pytest.importorskip("jax")
@@ -7,6 +24,11 @@ jax.config.update("jax_platform_name", "cpu")
 
 import jax.numpy as jnp                                  # noqa: E402
 from climt._core.jax_support import count_jaxpr_equations   # noqa: E402
+from tests.jax_cases import emanuel_case, emanuel_forward, emanuel_loss  # noqa: E402
+
+FORWARD_EQUATION_LIMIT = 3500
+GRADIENT_EQUATION_LIMIT = 6000
+SCALE = float(os.environ.get("CLIMT_JAX_BUDGET_SCALE", "1.0"))
 
 
 def test_count_is_exact_on_a_known_program():
@@ -54,14 +76,11 @@ def test_count_descends_into_cond_while_and_deduplicates_nested_jaxpr():
     inner = jax.jit(lambda x: jnp.sin(x) + jnp.cos(x))  # 3 eqns inside
 
     def program(x):
-        # Calling the same jitted function on identical abstract shapes reuses
-        # the inner Jaxpr object, which must be counted once.
         y = inner(x) + inner(x)
         y = jax.lax.cond(y > 0.0, lambda z: z * 2.0, lambda z: z - 1.0, y)
         return jax.lax.while_loop(lambda z: z < 10.0, lambda z: z + 1.0, y)
 
     closed = jax.make_jaxpr(program)(jnp.asarray(1.0))
-    # Verify against manual set of unique Jaxpr objects in closed:
     seen = set()
 
     def manual(j):
@@ -79,3 +98,31 @@ def test_count_descends_into_cond_while_and_deduplicates_nested_jaxpr():
         return total
 
     assert count_jaxpr_equations(program, jnp.asarray(1.0)) == manual(closed.jaxpr)
+
+
+def test_forward_graph_size():
+    component, state, timestep = emanuel_case()
+    count = count_jaxpr_equations(emanuel_forward(component, state, timestep), state["air_temperature"])
+    assert count <= FORWARD_EQUATION_LIMIT, count
+
+
+def test_gradient_graph_size():
+    component, state, timestep = emanuel_case()
+    count = count_jaxpr_equations(jax.grad(emanuel_loss(component, state, timestep)), state["air_temperature"])
+    assert count <= GRADIENT_EQUATION_LIMIT, count
+
+
+@pytest.mark.slow
+def test_forward_first_call_within_budget():
+    component, state, timestep = emanuel_case()
+    start = time.perf_counter()
+    jax.block_until_ready(jax.jit(emanuel_forward(component, state, timestep))(state["air_temperature"]))
+    assert time.perf_counter() - start <= 30.0 * SCALE
+
+
+@pytest.mark.slow
+def test_gradient_first_call_within_budget():
+    component, state, timestep = emanuel_case()
+    start = time.perf_counter()
+    jax.block_until_ready(jax.jit(jax.grad(emanuel_loss(component, state, timestep)))(state["air_temperature"]))
+    assert time.perf_counter() - start <= 120.0 * SCALE
