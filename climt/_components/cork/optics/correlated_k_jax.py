@@ -5,10 +5,7 @@ Mirrors the Numba oracle ``_ck_tau_additive_co2_kernel`` in
 k-table; gradients flow through the fractional interpolation weights, which
 are smooth functions of the atmospheric state.
 """
-import jax
 import jax.numpy as jnp
-
-jax.config.update("jax_enable_x64", True)
 
 FLOOR = 1e-40
 

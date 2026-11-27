@@ -1,13 +1,7 @@
 import numpy as np
 from sympl import TendencyComponent, get_constant
 
-try:
-    import jax
-    import jax.numpy as jnp
-    HAS_JAX = True
-except ImportError:
-    HAS_JAX = False
-
+from climt._core.jax_support import is_jax_array, require_x64
 from ..common import (
     MOLAR_MASS,
     MOLAR_MASS_DRY_AIR,
@@ -25,6 +19,8 @@ from .kernels import DIFFUSIVITY_FACTOR, lw_transport, planck_sources_kernel
 
 
 class CorkLongwaveRadiation(TendencyComponent):
+    has_jax_kernel = True
+
     # Class-level default, so an instance pickled before ``diffusivity_factor``
     # existed (climt <= 0.30.0) still resolves it after unpickling here instead
     # of raising AttributeError from array_call. Instances always shadow it with
@@ -68,14 +64,6 @@ class CorkLongwaveRadiation(TendencyComponent):
             raise ValueError(f"Unknown optics mode: {optics}")
 
         self._jax_table = None
-        if optics == "correlated_k" and HAS_JAX:
-            try:
-                if self._table["k_coefficients"].ndim == 7 and self._premixed_bg:
-                    from .kernels_jax import build_cork_lw_table
-                    self._jax_table = build_cork_lw_table(self._table)
-            except Exception:
-                self._jax_table = None
-
         self._diagnostics_level = kwargs.pop("diagnostics_level", 0)
         from climt._core.initialization import set_num_longwave_bands
         set_num_longwave_bands(self._num_bands)
@@ -222,9 +210,29 @@ class CorkLongwaveRadiation(TendencyComponent):
         return self._num_bands
 
     def array_call(self, state):
-        if (HAS_JAX and self._jax_table is not None
-                and self._diagnostics_level == 0
-                and isinstance(state["T"], jax.Array)):
+        if is_jax_array(state["T"]):
+            require_x64()
+            if self._optics_mode != "correlated_k":
+                raise NotImplementedError(
+                    "CorkLongwaveRadiation has no JAX kernel for "
+                    f"optics={self._optics_mode!r}; only optics='correlated_k' is supported."
+                )
+            if self._table["k_coefficients"].ndim != 7 or not self._premixed_bg:
+                raise NotImplementedError(
+                    "CorkLongwaveRadiation's JAX kernel requires a 7-dimensional "
+                    "pre-mixed background correlated_k table."
+                )
+            if self._diagnostics_level != 0:
+                raise NotImplementedError(
+                    "CorkLongwaveRadiation's JAX kernel does not support "
+                    f"diagnostics_level={self._diagnostics_level}; set diagnostics_level=0."
+                )
+            if self._jax_table is None:
+                import jax
+                from .kernels_jax import build_cork_lw_table
+
+                with jax.ensure_compile_time_eval():
+                    self._jax_table = build_cork_lw_table(self._table)
             return self._array_call_jax(state)
         T = state["T"]
         p = state["p"]
@@ -414,6 +422,7 @@ class CorkLongwaveRadiation(TendencyComponent):
         return ({"T": tendency}, diagnostics)
 
     def _array_call_jax(self, state):
+        import jax.numpy as jnp
         from .kernels_jax import cork_lw_jax
         sigma = get_constant("stefan_boltzmann_constant", "W/m^2/K^4")
         g = get_constant("gravitational_acceleration", "m/s^2")
