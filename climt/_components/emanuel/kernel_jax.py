@@ -670,18 +670,17 @@ def _convect_functional_jax(
     _, scan_out = jax.lax.scan(downdraft_step, init_carry, jnp.arange(NL + 1))
     WATER_sc, WT_sc, MP_sc, EVAP_sc, QP_sc, UP_sc, VP_sc = scan_out
 
-    # Scatter scan results into full arrays (static loop with mask)
-    for k in range(NL + 1):
-        level_raw = INB - k
-        level = jnp.maximum(level_raw, 0)  # safe index
-        k_valid = (level_raw >= 0) & ep_active
-        WATER = WATER.at[level].set(jnp.where(k_valid, WATER_sc[k], WATER[level]))
-        WT = WT.at[level].set(jnp.where(k_valid, WT_sc[k], WT[level]))
-        MP = MP.at[level].set(jnp.where(k_valid, MP_sc[k], MP[level]))
-        EVAP = EVAP.at[level].set(jnp.where(k_valid, EVAP_sc[k], EVAP[level]))
-        QP = QP.at[level].set(jnp.where(k_valid, QP_sc[k], QP[level]))
-        UP = UP.at[level].set(jnp.where(k_valid, UP_sc[k], UP[level]))
-        VP = VP.at[level].set(jnp.where(k_valid, VP_sc[k], VP[level]))
+    # Gather scan results into full arrays: level = INB - k <=> k = INB - level
+    k_src = INB - lvl
+    scatter_mask = (k_src >= 0) & (k_src <= NL) & ep_active
+    k_safe = jnp.clip(k_src, 0, NL)
+    WATER = jnp.where(scatter_mask, WATER_sc[k_safe], WATER)
+    WT = jnp.where(scatter_mask, WT_sc[k_safe], WT)
+    MP = jnp.where(scatter_mask, MP_sc[k_safe], MP)
+    EVAP = jnp.where(scatter_mask, EVAP_sc[k_safe], EVAP)
+    QP = jnp.where(scatter_mask, QP_sc[k_safe], QP)
+    UP = jnp.where(scatter_mask, UP_sc[k_safe], UP)
+    VP = jnp.where(scatter_mask, VP_sc[k_safe], VP)
 
     PRECIP = jnp.where(
         ep_active,
